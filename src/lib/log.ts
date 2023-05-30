@@ -241,7 +241,7 @@ export class Log {
     );
   }
 
-  async* logGeneratorDuration<T, TReturn>(logOpts: LogPhaseMetadata, generator: AsyncGenerator<T, TReturn, void>) {
+  async *logGeneratorDuration<T, TReturn>(logOpts: LogPhaseMetadata, generator: AsyncGenerator<T, TReturn, void>) {
     const startTime = new Date();
     const logOptsWithoutMetadata = _.omit(logOpts, 'level');
     const { phase, level = 'info' } = logOpts;

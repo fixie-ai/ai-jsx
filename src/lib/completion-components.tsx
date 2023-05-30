@@ -30,13 +30,13 @@ export async function* Completion(
   yield accumulatedResponse;
 }
 
-export function SystemMessage(props, children: LLMx.Node[]) {
+export function SystemMessage(props: any, children: LLMx.Node[]) {
   return children;
 }
-export function UserMessage(props, children: LLMx.Node[]) {
+export function UserMessage(props: any, children: LLMx.Node[]) {
   return children;
 }
-export function AssistantMessage(props, children: LLMx.Node[]) {
+export function AssistantMessage(props: any, children: LLMx.Node[]) {
   return children;
 }
 
@@ -53,6 +53,8 @@ export async function* ChatCompletion(
       // The validation here will throw an error for fragments, which is not necessarily what we want –
       // the fragment could contain the proper children.
 
+      // Not bothering to fix the types here because we may rip this out.
+      // @ts-expect-error
       const childComponent = child[createElementArgs];
       if (!childComponent) {
         throw new Error(
@@ -77,6 +79,8 @@ export async function* ChatCompletion(
           );
       }
 
+      // Not bothering to fix the types here because we may rip this out.
+      // @ts-expect-error
       const renderResult = await LLMx.render(child());
       log.trace({ renderResult, childType }, 'ChatCompletion child render result');
       return {

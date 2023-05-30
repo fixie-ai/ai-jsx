@@ -79,7 +79,7 @@ export function openAIChat(
     return response.data;
   });
 }
-openAIChat.stream = function(params: OpenAIChatParams, opts: ModelCallOptions) {
+openAIChat.stream = function (params: OpenAIChatParams, opts: ModelCallOptions = {}) {
   const paramsToUse = {
     ...defaultChatParams.openai[params.model],
     ...omitKeysWithUndefinedValues(params),
@@ -94,7 +94,7 @@ openAIChat.stream = function(params: OpenAIChatParams, opts: ModelCallOptions) {
     ...optsToUse,
   });
 };
-openAIChat.simpleStream = async function* (params: OpenAIChatParams, opts: ModelCallOptions) {
+openAIChat.simpleStream = async function* (params: OpenAIChatParams, opts: ModelCallOptions = {}) {
   const paramsToUse = {
     ...defaultChatParams.openai[params.model],
     ...omitKeysWithUndefinedValues(params),
@@ -148,7 +148,7 @@ export function openAICompletion(
   });
 }
 
-openAICompletion.simple = async function* simple(params: OpenAICompletionParams, opts: ModelCallOptions) {
+openAICompletion.simple = async function* simple(params: OpenAICompletionParams, opts: ModelCallOptions = {}) {
   if (params.n) {
     throw new Error('simple only returns a single choice. Use stream for multiple choices.');
   }
@@ -158,7 +158,7 @@ openAICompletion.simple = async function* simple(params: OpenAICompletionParams,
 
 // Instead of async iterators, maybe we actually want to use streams.
 
-openAICompletion.stream = function stream(params: OpenAICompletionParams, opts: ModelCallOptions) {
+openAICompletion.stream = function stream(params: OpenAICompletionParams, opts: ModelCallOptions = {}) {
   const paramsToUse = {
     ...defaultCompletionParams.openai[params.model],
     ...omitKeysWithUndefinedValues(params),
@@ -177,7 +177,10 @@ openAICompletion.stream = function stream(params: OpenAICompletionParams, opts: 
   );
 };
 
-openAICompletion.simpleStream = async function* simpleStream(params: OpenAICompletionParams, opts: ModelCallOptions) {
+openAICompletion.simpleStream = async function* simpleStream(
+  params: OpenAICompletionParams,
+  opts: ModelCallOptions = {}
+) {
   if (params.n) {
     throw new Error('simpleStream only returns a single choice. Use stream for multiple choices.');
   }
@@ -190,6 +193,8 @@ function omitKeysWithUndefinedValues<T extends Record<string | number | symbol, 
   const result = {};
   for (const [key, value] of Object.entries(obj)) {
     if (value !== undefined) {
+      // I'm confident this is safe.
+      // @ts-expect-error
       result[key] = value;
     }
   }
@@ -199,14 +204,16 @@ async function* openAICallToAsyncIterator(
   openAIAPICall: () => ReturnType<typeof openai.createCompletion | typeof openai.createChatCompletion>,
   logOpts: any
 ) {
-  const responseLines = [];
+  const responseParts: any[] = [];
   const eventEmitter = new EventEmitter();
   let isDone = false;
 
+  // This is busted from a logging perspective. `response.data` is not what the logger is expecting it to be.
   log.modelCall(logOpts, async () => {
     const response = await openAIAPICall();
 
-    for await (const chunk of response.data) {
+    // As OpenAI's type docs note, it uses [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#event_stream_format).
+    for await (const chunk of response.data as unknown as string[]) {
       const lines = _.compact(chunk.toString().split('\n'));
       for (const line of lines) {
         log.trace({ line }, 'Received line');
@@ -215,12 +222,12 @@ async function* openAICallToAsyncIterator(
         if (sliced === '[DONE]') {
           isDone = true;
           eventEmitter.emit('got-line');
-          return;
+          return response.data;
         }
 
         try {
           const parsed = JSON.parse(sliced);
-          responseLines.push(parsed);
+          responseParts.push(parsed);
         } catch {
           /**
            * I'm not sure why we want to bail in this case, but it's what Peter had, which is as good a reason as any to
@@ -228,7 +235,7 @@ async function* openAICallToAsyncIterator(
            */
           log.trace({ sliced }, 'Exiting because this line is not JSON');
           isDone = true;
-          return;
+          return response.data;
         } finally {
           eventEmitter.emit('got-line');
         }
@@ -239,8 +246,8 @@ async function* openAICallToAsyncIterator(
   });
 
   while (true) {
-    if (responseLines.length) {
-      const nextResponseLine = responseLines.shift();
+    if (responseParts.length) {
+      const nextResponseLine = responseParts.shift();
       log.trace({ nextResponseLine }, 'emitting line');
       yield nextResponseLine;
       continue;

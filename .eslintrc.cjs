@@ -28,7 +28,7 @@ module.exports = {
 
     'no-trailing-spaces': 'warn',
 
-    // Disable style rules to let dprint own it
+    // Disable style rules to let prettier own it
     'object-curly-spacing': 'off',
     'comma-dangle': 'off',
     'max-len': 'off',
@@ -36,12 +36,14 @@ module.exports = {
     'no-mixed-operators': 'off',
     'no-console': 'off',
     'arrow-parens': 'off',
+    'generator-star-spacing': 'off',
+    'space-before-function-paren': 'off',
 
     // Add additional strictness beyond the recommended set
     '@typescript-eslint/parameter-properties': ['warn', { prefer: 'parameter-properties' }],
     '@typescript-eslint/prefer-readonly': 'warn',
     '@typescript-eslint/switch-exhaustiveness-check': 'warn',
     '@typescript-eslint/no-base-to-string': 'error',
-    '@typescript-eslint/no-unnecessary-condition': ['warn', { allowConstantLoopConditions: true }], 
+    '@typescript-eslint/no-unnecessary-condition': ['warn', { allowConstantLoopConditions: true }],
   },
 };
