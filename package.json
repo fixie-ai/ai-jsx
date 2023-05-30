@@ -30,7 +30,7 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "typecheck": "tsc -p .",
-    "test": "yarn run format:check && yarn run lint"
+    "test": "yarn run format:check && yarn run lint && yarn run typecheck"
   },
   "volta": {
     "node": "18.15.0"

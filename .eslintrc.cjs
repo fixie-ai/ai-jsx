@@ -20,7 +20,8 @@ module.exports = {
     'no-magic-numbers': 'off',
     '@typescript-eslint/no-magic-numbers': 'off',
 
-    camelcase: ['warn', { allow: ['base_prompt', 'few_shots', 'entry_point', 'content_type', 'max_tokens'] }],
+    // There are too many third-party libs that use camelcase.
+    camelcase: ['off'],
 
     'no-use-before-define': 'off',
     '@typescript-eslint/no-use-before-define': ['error', { functions: false, variables: true }],
