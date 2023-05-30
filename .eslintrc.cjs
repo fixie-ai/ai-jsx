@@ -40,8 +40,8 @@ module.exports = {
     // Add additional strictness beyond the recommended set
     '@typescript-eslint/parameter-properties': ['warn', { prefer: 'parameter-properties' }],
     '@typescript-eslint/prefer-readonly': 'warn',
-    '@typescript-eslint/strict-boolean-expressions': 'warn',
     '@typescript-eslint/switch-exhaustiveness-check': 'warn',
     '@typescript-eslint/no-base-to-string': 'error',
+    '@typescript-eslint/no-unnecessary-condition': ['warn', { allowConstantLoopConditions: true }], 
   },
 };

@@ -42,9 +42,13 @@ function memoize(node: Node): Node {
   let nextPromise: Promise<void> | null = null;
 
   async function* memoizedGenerator() {
+    // Our types are misleading Eslint here.
+    /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */
     if (generator === null) {
       return '';
     }
+    // Our types are misleading Eslint here.
+    /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */
     if (generator === undefined) {
       throw new Error('Component cannot return undefined. Did you forget a `return`?');
     }
@@ -191,7 +195,7 @@ export async function render(node: Node) {
   return finalResult;
 }
 
-export async function show(node: Node, opts: ShowOptions | undefined = { stream: true }) {
+export function show(node: Node, opts: ShowOptions | undefined = { stream: true }) {
   const showLifespanId = uuidv4();
   return log.logPhase({ phase: 'show', level: 'trace', opts, showLifespanId }, async () => {
     if (opts.stream) {

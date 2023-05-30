@@ -1,4 +1,5 @@
-/* @ts-nocheck eslint-disable */
+/* @ts-nocheck */
+/* eslint-disable */
 // This file is busted.
 
 import _ from 'lodash';

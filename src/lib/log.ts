@@ -8,7 +8,6 @@ import pinoPretty from 'pino-pretty';
 import fs from 'node:fs';
 import { ModelResponse, OpenAIChatParams, OpenAICompletionParams } from './models';
 import { WandBObserver } from './wandb';
-import { MergeDeep } from 'type-fest';
 import { TypedEmitter } from 'tiny-typed-emitter';
 
 export const getLogName = _.once(() => {
@@ -66,9 +65,9 @@ export type ModelPhaseEndLog = Omit<
 export type AIJSXLog = ModelPhaseStartLog | ModelPhaseEndLog | BaseAIJSXLog | PinoMessage;
 
 interface LogEventMap {
-  message: (message: AIJSXLog) => void;
-  'model-call-start': (data: ModelPhaseStartLog) => void;
-  'model-call-end': (data: ModelPhaseEndLog) => void;
+  message: (logLine: AIJSXLog) => void;
+  'model-call-start': (logLine: ModelPhaseStartLog) => void;
+  'model-call-end': (logLine: ModelPhaseEndLog) => void;
 }
 
 class LogEventEmitter extends TypedEmitter<LogEventMap> {}
@@ -102,13 +101,13 @@ export class Log {
      * listen for all events and filter them.
      */
     this.on('message', (message) => {
-      if ('phase' in message && message.phase === 'modelCall') {
-        if ('start' in message && message.start) {
+      if ('phase' in message) {
+        if ('start' in message) {
           this.eventEmitter.emit('model-call-start', message);
           return;
         }
-        // This `'end' in` check should be unnecessary.
-        if ('end' in message && message.end) {
+        // This `'end' in` check should be unnecessary, but TS isn't type narrowing as well as it could.
+        if ('end' in message) {
           this.eventEmitter.emit('model-call-end', message);
         }
       }
@@ -275,7 +274,7 @@ export class Log {
 
 const log = Log.create({
   fileLevel: 'trace',
-  stdoutLevel: (process.env.loglevel as pino.LevelWithSilent) || 'silent',
+  stdoutLevel: (process.env.loglevel as pino.LevelWithSilent | undefined) ?? 'silent',
 }).child({
   lifetimeId: uuidv4(),
 });

@@ -118,7 +118,7 @@ export class WandBObserver {
       throw new Error('Run not started');
     }
 
-    this.updateRun({
+    await this.updateRun({
       complete: true,
       exitcode: 0,
     });

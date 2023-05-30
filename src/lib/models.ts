@@ -245,6 +245,8 @@ async function* openAICallToAsyncIterator(
       yield nextResponseLine;
       continue;
     }
+    // Eslint's control flow analysis is mistaken.
+    /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */
     if (isDone) {
       return;
     }
