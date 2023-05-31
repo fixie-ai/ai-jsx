@@ -47,7 +47,7 @@ export async function* ChatCompletion(props: {
   stop?: string[];
   children: LLMx.Node;
 }) {
-  yield '▁';
+  yield <AssistantMessage>▁</AssistantMessage>;
 
   const messageElements = await LLMx.partialRender(
     props.children,
@@ -92,8 +92,8 @@ export async function* ChatCompletion(props: {
   let lastMessage;
   for await (const partialMessage of messageStream) {
     lastMessage = partialMessage.content;
-    yield `${partialMessage.content}█`;
+    yield <AssistantMessage>{partialMessage.content}█</AssistantMessage>;
   }
 
-  yield lastMessage;
+  yield <AssistantMessage>{lastMessage}</AssistantMessage>;
 }
