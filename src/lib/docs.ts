@@ -2,7 +2,7 @@ import { Jsonifiable } from 'type-fest';
 
 export interface Document<Metadata extends Jsonifiable = Jsonifiable> {
   pageContent: string;
-  metadata: Metadata;
+  metadata?: Metadata;
 }
 
 /**
@@ -23,3 +23,20 @@ export type Chunk = <T extends string | Document>(text: T) => Promise<T[]>;
  * of loaders.
  */
 export type Load = (...args: any[]) => Promise<Document[]>;
+
+export interface VectorSearchResult {
+  document: Document;
+  score: number;
+}
+
+/**
+ * This is a simplified version of LangChain's `VectorStore`.
+ */
+export interface VectorStore<Filter = unknown> {
+  // Hmm. If we have this return value, then VectorStore['search'] does not extend `Load`.
+  // If we wanted to fix this, we'd need a both `search` and `searchWithScores` method.
+  // We could also have a `loadFromVectorStore` method.
+  //    const loadFromVectorStore = (vs: VectorStore, query, opts) => _.map(vs.search(query, opts), 'document');
+
+  search(query: string, opts: { filter?: Filter; limit: number }): Promise<VectorSearchResult[]>;
+}
