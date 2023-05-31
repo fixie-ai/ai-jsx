@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 export type Component<P> = (props: P) => Renderable;
 export type Literal = string | number | null | undefined | boolean;
-export interface Element<P> {
+export interface Element<P extends {}> {
   tag: Component<P>;
   props: P;
 }
@@ -12,7 +12,8 @@ export type Node = Element<any> | Literal | Node[];
 
 export type Renderable = Node | Promise<Renderable> | AsyncGenerator<Renderable>;
 
-export type ElementSelector = (e: Element<any>) => boolean;
+export type ElementPredicate = (e: Element<any>) => boolean;
+export type PropsOfComponent<T extends Component<any>> = T extends Component<infer P> ? P : never;
 
 export declare namespace JSX {
   interface ElementChildrenAttribute {
@@ -45,7 +46,7 @@ export function createElement(tag: any, props: any, ...children: any[]): Element
   return result;
 }
 
-export function isElement(value: Renderable): value is Element<any> {
+export function isElement(value: unknown): value is Element<any> {
   return value !== null && typeof value === 'object' && 'tag' in value;
 }
 
@@ -53,97 +54,86 @@ export function Fragment({ children }: { children: Node }): Renderable {
   return children;
 }
 
-export function debug(value: any, indent: string = '', context: 'code' | 'children' | 'props' = 'code'): string {
-  const type = typeof value;
-  switch (type) {
-    case 'string':
-      if (context === 'props' || context === 'code') {
-        return JSON.stringify(value);
-      }
-      return `{${JSON.stringify(value)}}`;
+export function debug(value: unknown, indent: string = '', context: 'code' | 'children' | 'props' = 'code'): string {
+  if (typeof value === 'string') {
+    if (context === 'props' || context === 'code') {
+      return JSON.stringify(value);
+    }
+    return `{${JSON.stringify(value)}}`;
+  } else if (typeof value === 'number' || typeof value === 'bigint') {
+    if (context === 'props' || context === 'children') {
+      return `{${value.toString()}}`;
+    }
+    return value.toString();
+  } else if (typeof value === 'boolean' || typeof value === 'undefined') {
+    return '';
+  } else if (value === null) {
+    switch (context) {
+      case 'code':
+        return 'null';
+      case 'children':
+        return '{null}';
+      case 'props':
+        return '{null}';
+    }
+  } else if (isElement(value)) {
+    const tag = value.tag === Fragment ? '' : value.tag.name;
+    const childIndent = `${indent}  `;
+    const children = debug(value.props.children, childIndent, 'children');
 
-    case 'number':
-    case 'bigint':
-      if (context === 'props' || context === 'children') {
-        return `{${value.toString()}}`;
-      }
-      return value.toString();
-
-    case 'boolean':
-    case 'undefined':
-      return '';
-    case 'object':
-      if (value === null) {
-        switch (context) {
-          case 'code':
-            return 'null';
-          case 'children':
-            return '{null}';
-          case 'props':
-            return '{null}';
-        }
-      } else if (isElement(value)) {
-        const tag = value.tag === Fragment ? '' : value.tag.name;
-        const childIndent = `${indent}  `;
-        const children = debug(value.props.children, childIndent, 'children');
-
-        const results = [];
-        if (value.props) {
-          for (const key of Object.keys(value.props)) {
-            const propValue = value.props[key];
-            if (key === 'children' || propValue === undefined) {
-              continue;
-            } else {
-              results.push(` ${key}=${debug(propValue, indent, 'props')}`);
-            }
-          }
-        }
-
-        const propsString = results.join('');
-
-        let child: string;
-        if (children !== '') {
-          child = `<${tag}${propsString}>\n${childIndent}${children}\n${indent}</${tag}>`;
-        } else if (value.tag !== Fragment) {
-          child = `<${tag}${propsString} />`;
+    const results = [];
+    if (value.props) {
+      for (const key of Object.keys(value.props)) {
+        const propValue = value.props[key];
+        if (key === 'children' || propValue === undefined) {
+          continue;
         } else {
-          child = '<></>';
+          results.push(` ${key}=${debug(propValue, indent, 'props')}`);
         }
-        switch (context) {
-          case 'code':
-          case 'children':
-            return child;
-          case 'props':
-            return `{${child}}`;
-        }
-      } else if (Array.isArray(value)) {
-        const filter =
-          context === 'children'
-            ? (x: unknown) =>
-                x !== undefined && x !== null && typeof x !== 'boolean' && !(Array.isArray(x) && x.length == 0)
-            : () => true;
-        const values = value.filter(filter).map((v) => debug(v, indent, context === 'children' ? 'children' : 'code'));
-        switch (context) {
-          case 'children':
-            return values.join(`\n${indent}`);
-          case 'props':
-            return `{[${values.join(', ')}]}`;
-          case 'code':
-            return `[${values.join(', ')}]`;
-        }
-      } else {
-        if (context === 'props' || context === 'children') {
-          return `{${JSON.stringify(value)}}`;
-        }
-        return JSON.stringify(value);
       }
-      break;
-    case 'function':
-    case 'symbol':
-      if (context === 'props' || context === 'children') {
-        return `{${value}}`;
-      }
-      return value.toString();
+    }
+
+    const propsString = results.join('');
+
+    const child =
+      children !== ''
+        ? `<${tag}${propsString}>\n${childIndent}${children}\n${indent}</${tag}>`
+        : value.tag !== Fragment
+        ? `<${tag}${propsString} />`
+        : '<></>';
+
+    switch (context) {
+      case 'code':
+      case 'children':
+        return child;
+      case 'props':
+        return `{${child}}`;
+    }
+  } else if (Array.isArray(value)) {
+    const filter =
+      context === 'children'
+        ? (x: unknown) =>
+            x !== undefined && x !== null && typeof x !== 'boolean' && !(Array.isArray(x) && x.length == 0)
+        : () => true;
+    const values = value.filter(filter).map((v) => debug(v, indent, context === 'children' ? 'children' : 'code'));
+    switch (context) {
+      case 'children':
+        return values.join(`\n${indent}`);
+      case 'props':
+        return `{[${values.join(', ')}]}`;
+      case 'code':
+        return `[${values.join(', ')}]`;
+    }
+  } else if (typeof value === 'object') {
+    if (context === 'props' || context === 'children') {
+      return `{${JSON.stringify(value)}}`;
+    }
+    return JSON.stringify(value);
+  } else if (typeof value === 'function' || typeof value === 'symbol') {
+    if (context === 'props' || context === 'children') {
+      return `{${value.toString()}}`;
+    }
+    return value.toString();
   }
 
   return '';
@@ -151,7 +141,7 @@ export function debug(value: any, indent: string = '', context: 'code' | 'childr
 
 export async function partialRender(
   renderable: Renderable,
-  shouldStop: ElementSelector
+  shouldStop: ElementPredicate
 ): Promise<(string | Element<any>)[]> {
   if (typeof renderable === 'string') {
     return [renderable];

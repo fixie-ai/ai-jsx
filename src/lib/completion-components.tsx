@@ -59,18 +59,18 @@ export async function* ChatCompletion(props: {
       switch (message.tag) {
         case SystemMessage:
           return {
-            role: 'system' as const,
+            role: 'system',
             content: await LLMx.render(message),
           };
         case UserMessage:
           return {
-            role: 'user' as const,
+            role: 'user',
             content: await LLMx.render(message),
-            name: message.props.name as string,
+            name: (message.props as LLMx.PropsOfComponent<typeof UserMessage>).name,
           };
         case AssistantMessage:
           return {
-            role: 'assistant' as const,
+            role: 'assistant',
             content: await LLMx.render(message),
           };
         default:
