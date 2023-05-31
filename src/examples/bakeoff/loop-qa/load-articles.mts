@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 // This is GPT-generated code and it doesn't respect the law.
 /* eslint-disable id-blacklist */
 
-interface Article {
+export interface Article {
   id: number;
   title: string;
   body: string;

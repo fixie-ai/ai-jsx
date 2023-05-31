@@ -2,7 +2,8 @@ import { Jsonifiable } from 'type-fest';
 import { LangChainWrapper, log } from '.';
 import { TokenTextSplitter } from 'langchain/text_splitter';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
-import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
+import { Document as LangChainDocument } from 'langchain/document';
+import { Embeddings } from 'langchain/dist/embeddings/base';
 
 export interface Document<Metadata extends Jsonifiable = Jsonifiable> {
   pageContent: string;
@@ -15,7 +16,14 @@ export interface Document<Metadata extends Jsonifiable = Jsonifiable> {
  * In LangChain, this is called "split". We use the phrase "chunk", because the cannonical term for the output
  * of this process is "chunks".
  */
-export type Chunker = (doc: Document, ...args: any[]) => Promise<Document[]>;
+export type Chunker = <Metadata extends Jsonifiable = Jsonifiable>(
+  doc: Document<Metadata>,
+  ...args: any[]
+) => Promise<Document<Metadata>[]>;
+export type ChunkMany = <Metadata extends Jsonifiable = Jsonifiable>(
+  doc: Document<Metadata>[],
+  ...args: any[]
+) => Promise<Document<Metadata>[]>;
 
 /**
  * Load Documents from a source.
@@ -37,24 +45,53 @@ export type Chunker = (doc: Document, ...args: any[]) => Promise<Document[]>;
 // TODO: maybe rename to DocumentProvider
 export type Loader = (...args: any[]) => Promise<Document[]>;
 
-export interface VectorSearchResult {
-  document: Document;
+export interface VectorSearchResult<Metadata extends Jsonifiable = Jsonifiable> {
+  document: Document<Metadata>;
   score: number;
 }
 
 /**
  * This is a simplified version of LangChain's `VectorStore`.
  */
-export interface VectorStore<Filter = unknown> {
+export interface VectorStore {
   // Hmm. If we have this return value, then VectorStore['search'] does not extend `Load`.
   // If we wanted to fix this, we'd need a both `search` and `searchWithScores` method.
   // We could also have a `loadFromVectorStore` method.
   //    const loadFromVectorStore = (vs: VectorStore, query, opts) => _.map(vs.search(query, opts), 'document');
 
-  search(query: string, opts: { filter?: Filter; limit: number }): Promise<VectorSearchResult[]>;
+  search<Filter = unknown>(query: string, opts: { filter?: Filter; limit: number }): Promise<VectorSearchResult[]>;
 }
 
-export const defaultChunker: Chunker = (doc, opts: ConstructorParameters<typeof TokenTextSplitter>) => {
+export class DefaultInMemoryVectorStore<Metadata extends Jsonifiable = Jsonifiable> implements VectorStore {
+  private constructor(private readonly langChainVectorStore: MemoryVectorStore) {}
+
+  static async fromDocuments<Metadata extends Jsonifiable = Jsonifiable>(
+    docs: Document<Metadata>[],
+    embeddings: Embeddings
+  ) {
+    const lcMemoryStore = await MemoryVectorStore.fromDocuments(
+      docs.map((doc) => toLangChainDoc(doc)),
+      embeddings
+    );
+    return new this<Metadata>(lcMemoryStore);
+  }
+
+  async search<Filter = never>(
+    query: string,
+    opts: { filter?: Filter | undefined; limit: number }
+  ): Promise<VectorSearchResult<Metadata>[]> {
+    const docs = await this.langChainVectorStore.similaritySearchWithScore(query, opts.limit);
+    return docs.map(([doc, score]) => ({
+      document: doc as Document<Metadata>,
+      score,
+    }));
+  }
+}
+
+export const defaultChunker = <Metadata extends Jsonifiable = Jsonifiable>(
+  doc: Document<Metadata>,
+  opts: ConstructorParameters<typeof TokenTextSplitter>
+) => {
   const splitterLog = log.child({ chunkOpts: opts });
   const splitter = new LangChainWrapper.ObservableLangChainTextSplitter(
     new TokenTextSplitter({
@@ -66,6 +103,9 @@ export const defaultChunker: Chunker = (doc, opts: ConstructorParameters<typeof 
     splitterLog
   );
 
+  // This is complaining because {} doesn't necessary satisfy Metadata, since Metadata could have required fields.
+  // However, I think it's unlikely to cause a problem in practice at this point.
+  // @ts-expect-error
   doc.metadata = doc.metadata ?? {};
 
   return splitter.splitDocuments([
@@ -74,3 +114,12 @@ export const defaultChunker: Chunker = (doc, opts: ConstructorParameters<typeof 
     doc,
   ]);
 };
+
+export const defaultChunkMany = async <Metadata extends Jsonifiable = Jsonifiable>(
+  docs: Document<Metadata>[],
+  opts?: Parameters<ChunkMany>[1]
+) => (await Promise.all(docs.map((doc) => defaultChunker(doc, opts)))).flat();
+
+export function toLangChainDoc(doc: Document): LangChainDocument {
+  return doc as LangChainDocument;
+}

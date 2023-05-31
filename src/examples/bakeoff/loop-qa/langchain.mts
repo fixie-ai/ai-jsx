@@ -1,15 +1,16 @@
+// This script assumes that ./load-articles has been run first.
+
 import { OpenAI } from 'langchain/llms/openai';
 import { RetrievalQAChain } from 'langchain/chains';
 import { PromptTemplate } from 'langchain/prompts';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
-import { WandbTracer } from '@nick.heiner/wandb-fork/integrations/langchain';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { globbySync } from 'globby';
 import { loadJsonFile } from 'load-json-file';
-import { JsonObject } from 'type-fest';
 import { CharacterTextSplitter } from 'langchain/text_splitter';
+import { Article } from './load-articles.mjs';
 
 // Initialize the LLM to use to answer the question.
 const model = new OpenAI();
@@ -26,10 +27,10 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataFiles = globbySync(path.join(dirname, 'data', '*.json'));
 const docs = await Promise.all(
   dataFiles.map(async (dataFile) => {
-    const { body, ...rest } = await loadJsonFile<JsonObject>(dataFile);
+    const { body, ...rest } = (await loadJsonFile(dataFile)) as Article;
     return {
-      pageContent: body as string,
-      metadata: rest as Record<string, any>,
+      pageContent: body,
+      metadata: rest,
     };
   })
 );
@@ -37,10 +38,10 @@ const docs = await Promise.all(
 const splitter = new CharacterTextSplitter();
 const splitDocs = await splitter.splitDocuments(docs);
 
-// // Create a vector store from the documents.
+// Create a vector store from the documents.
 const vectorStore = await MemoryVectorStore.fromDocuments(splitDocs, new OpenAIEmbeddings());
 
-// // Create a chain that uses the OpenAI LLM and HNSWLib vector store.
+// Create a chain that uses the OpenAI LLM and HNSWLib vector store.
 const qaChain = RetrievalQAChain.fromLLM(model, vectorStore.asRetriever(), {
   prompt: new PromptTemplate({
     template: `You are a customer service agent. Answer questions truthfully.
@@ -50,10 +51,8 @@ const qaChain = RetrievalQAChain.fromLLM(model, vectorStore.asRetriever(), {
 });
 
 async function main() {
-  const wbTracer = await WandbTracer.init({ project: 'langchain-test' });
-
   async function askAndAnswer(query: string) {
-    const { text: answer } = await qaChain.call({ query }, wbTracer);
+    const { text: answer } = await qaChain.call({ query });
 
     console.log('Q:', query);
     console.log(answer);
@@ -65,7 +64,6 @@ async function main() {
     askAndAnswer('Does Loop offer roadside assistance?'),
     askAndAnswer('How do I file a claim?'),
   ]);
-  await WandbTracer.finish();
 }
 
 main();

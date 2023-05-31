@@ -134,7 +134,7 @@ export class Log {
     pinoStream.pipe(process.stdout);
     const pinoFile = fs.createWriteStream('llmx.log', { flags: 'w+' });
     const fakePino = pino();
-    const log = new Log(
+    const log = new this(
       pino(optionsWithDefaults, {
         /**
          * Ideally, we would use Pino transports for everything. However, if we want to give the user the ability
