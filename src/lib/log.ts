@@ -10,6 +10,9 @@ import { ModelResponse, OpenAIChatParams, OpenAICompletionParams } from './model
 import { WandBObserver } from './wandb';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { DocumentLoader } from 'langchain/dist/document_loaders/base';
+import { LangChainTextSplitter } from './langchain-wrapper';
+import { Document } from './docs';
+import { TextSplitterChunkHeaderOptions } from 'langchain/text_splitter';
 
 export const getLogName = _.once(() => {
   const packageJsonPath = findUpSync(process.cwd());
@@ -222,18 +225,43 @@ export class Log {
   }
 
   docLoad(callFn: () => ReturnType<DocumentLoader['load']>) {
-    return this.logPhase({ phase: 'docLoad', level: 'info' }, async (_logProgress, additionalLogData) => {
+    return this.logPhase({ phase: 'docLoad', level: 'debug' }, async (_logProgress, additionalLogData) => {
       const docs = await callFn();
-      additionalLogData({ docs });
+      additionalLogData({ outputDocs: docs });
       return docs;
     });
   }
   docLoadAndSplit(callFn: () => ReturnType<DocumentLoader['load']>) {
-    return this.logPhase({ phase: 'docLoadAndSplit', level: 'info' }, async (_logProgress, additionalLogData) => {
+    return this.logPhase({ phase: 'docLoadAndSplit', level: 'debug' }, async (_logProgress, additionalLogData) => {
       const docs = await callFn();
-      additionalLogData({ docs });
+      additionalLogData({ outputDocs: docs });
       return docs;
     });
+  }
+  splitDocs(docs: Document[], callFn: () => ReturnType<LangChainTextSplitter['splitDocuments']>) {
+    return this.logPhase(
+      { phase: 'docSplit', level: 'debug', inputDocs: docs },
+      async (_logProgress, additionalLogData) => {
+        const docs = await callFn();
+        additionalLogData({ outputDocs: docs });
+        return docs;
+      }
+    );
+  }
+  createDocs(
+    texts: string[],
+    metadatas: Record<string, any>[] | undefined,
+    chunkHeaderOptions: TextSplitterChunkHeaderOptions | undefined,
+    callFn: () => ReturnType<LangChainTextSplitter['createDocuments']>
+  ) {
+    return this.logPhase(
+      { phase: 'docCreate', level: 'debug', texts, metadatas, chunkHeaderOptions },
+      async (_logProgress, additionalLogData) => {
+        const docs = await callFn();
+        additionalLogData({ outputDocs: docs });
+        return docs;
+      }
+    );
   }
 
   modelCall<Result extends ModelResponse>(callOpts: ModelPhaseStartLogInputs, callFn: () => Promise<Result>) {
