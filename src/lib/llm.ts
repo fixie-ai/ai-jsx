@@ -4,10 +4,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 export type Component<P> = (props: P) => Renderable;
 export type Literal = string | number | null | undefined | boolean;
-export type Element<P> = {
+export interface Element<P> {
   tag: Component<P>;
   props: P;
-};
+}
 export type Node = Element<any> | Literal | Node[];
 
 export type Renderable = Node | Promise<Renderable> | AsyncGenerator<Renderable>;
@@ -59,16 +59,16 @@ export function debug(value: any, indent: string = '', context: 'code' | 'childr
     case 'string':
       if (context === 'props' || context === 'code') {
         return JSON.stringify(value);
-      } else {
-        return `{${JSON.stringify(value)}}`;
       }
+      return `{${JSON.stringify(value)}}`;
+
     case 'number':
     case 'bigint':
       if (context === 'props' || context === 'children') {
         return `{${value.toString()}}`;
-      } else {
-        return value.toString();
       }
+      return value.toString();
+
     case 'boolean':
     case 'undefined':
       return '';
@@ -84,7 +84,7 @@ export function debug(value: any, indent: string = '', context: 'code' | 'childr
         }
       } else if (isElement(value)) {
         const tag = value.tag === Fragment ? '' : value.tag.name;
-        const childIndent = indent + '  ';
+        const childIndent = `${indent}  `;
         const children = debug(value.props.children, childIndent, 'children');
 
         const results = [];
@@ -104,8 +104,10 @@ export function debug(value: any, indent: string = '', context: 'code' | 'childr
         let child: string;
         if (children !== '') {
           child = `<${tag}${propsString}>\n${childIndent}${children}\n${indent}</${tag}>`;
-        } else {
+        } else if (value.tag !== Fragment) {
           child = `<${tag}${propsString} />`;
+        } else {
+          child = '<></>';
         }
         switch (context) {
           case 'code':
@@ -115,16 +117,15 @@ export function debug(value: any, indent: string = '', context: 'code' | 'childr
             return `{${child}}`;
         }
       } else if (Array.isArray(value)) {
-        if (context === 'children') {
-          value = value.filter(
-            (x) => x !== undefined && x !== null && typeof x !== 'boolean' && !(Array.isArray(x) && x.length == 0)
-          );
-        }
-
-        const values = value.map((v: any) => debug(v, indent, context === 'children' ? 'children' : 'code'));
+        const filter =
+          context === 'children'
+            ? (x: unknown) =>
+                x !== undefined && x !== null && typeof x !== 'boolean' && !(Array.isArray(x) && x.length == 0)
+            : () => true;
+        const values = value.filter(filter).map((v) => debug(v, indent, context === 'children' ? 'children' : 'code'));
         switch (context) {
           case 'children':
-            return values.join('\n' + indent);
+            return values.join(`\n${indent}`);
           case 'props':
             return `{[${values.join(', ')}]}`;
           case 'code':
@@ -133,20 +134,19 @@ export function debug(value: any, indent: string = '', context: 'code' | 'childr
       } else {
         if (context === 'props' || context === 'children') {
           return `{${JSON.stringify(value)}}`;
-        } else {
-          return JSON.stringify(value);
         }
+        return JSON.stringify(value);
       }
+      break;
     case 'function':
     case 'symbol':
       if (context === 'props' || context === 'children') {
         return `{${value}}`;
-      } else {
-        return value.toString();
       }
-    default:
-      return '';
+      return value.toString();
   }
+
+  return '';
 }
 
 export async function partialRender(
@@ -165,20 +165,18 @@ export async function partialRender(
   } else if (isElement(renderable)) {
     if (shouldStop(renderable)) {
       return [renderable];
-    } else {
-      const rendered = renderable.tag(renderable.props);
-      return await partialRender(rendered, shouldStop);
     }
+    const rendered = renderable.tag(renderable.props);
+    return partialRender(rendered, shouldStop);
   } else if (renderable instanceof Promise) {
-    return await renderable.then((r) => partialRender(r, shouldStop));
-  } else {
-    // Exhaust the iterator.
-    let lastValue: Renderable = '';
-    for await (const value of renderable as any) {
-      lastValue = value;
-    }
-    return await partialRender(lastValue, shouldStop);
+    return renderable.then((r) => partialRender(r, shouldStop));
   }
+  // Exhaust the iterator.
+  let lastValue: Renderable = '';
+  for await (const value of renderable as any) {
+    lastValue = value;
+  }
+  return partialRender(lastValue, shouldStop);
 }
 
 export async function render(renderable: Renderable): Promise<string> {
@@ -202,7 +200,7 @@ async function* renderGenerator(renderable: Renderable): AsyncGenerator<string> 
       g.next().then((x) => [g, x] as [AsyncGenerator<string>, IteratorResult<string>]);
     const promises = generators.map(nextPromise);
 
-    while (finished.indexOf(false) !== -1) {
+    while (finished.includes(false)) {
       yield currentValues.join('');
       const [generator, value] = await Promise.race(promises);
       const index = generators.indexOf(generator);

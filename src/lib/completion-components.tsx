@@ -1,5 +1,5 @@
 import { openAIChat } from '../lib/models';
-import { LLMx, Models, log } from '../lib';
+import { LLMx, Models } from '../lib';
 import { ChatCompletionRequestMessage } from 'openai';
 
 export async function* Completion(props: {
@@ -66,7 +66,7 @@ export async function* ChatCompletion(props: {
           return {
             role: 'user' as const,
             content: await LLMx.render(message),
-            name: message.props['name'] as string,
+            name: message.props.name as string,
           };
         case AssistantMessage:
           return {

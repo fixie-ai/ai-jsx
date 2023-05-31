@@ -13,16 +13,15 @@ function SystemMessages(props: {
 }) {
   if (props.children.length == 0) {
     return <></>;
-  } else {
-    return (
-      <>
-        {props.prefix}
-        <SystemMessage>{props.children[0]}</SystemMessage>
-        {props.suffix}
-        <SystemMessages {...props}>{props.children.slice(1)}</SystemMessages>
-      </>
-    );
   }
+  return (
+    <>
+      {props.prefix}
+      <SystemMessage>{props.children[0]}</SystemMessage>
+      {props.suffix}
+      <SystemMessages {...props}>{props.children.slice(1)}</SystemMessages>
+    </>
+  );
 }
 
 function App() {
