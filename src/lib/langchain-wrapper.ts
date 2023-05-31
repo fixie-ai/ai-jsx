@@ -15,8 +15,4 @@ export class ObservableLangChainDocumentLoader implements DocumentLoader {
   }
 }
 
-import { IMSDBLoader } from 'langchain/document_loaders/web/imsdb';
-const loader = new IMSDBLoader('https://imsdb.com/scripts/BlacKkKlansman.html');
-const obserableLoader = new ObservableLangChainDocumentLoader(loader, log);
 
-await obserableLoader.loadAndSplit();
