@@ -668,7 +668,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fixieai/ai-jsx@workspace:."
   dependencies:
-    "@nick.heiner/wandb-fork": "npm:0.5.2-0"
+    "@nick.heiner/wandb-fork": "npm:0.5.2-2"
     "@tsconfig/node18": "npm:^2.0.1"
     "@types/eslint": "npm:^8"
     "@types/lodash": "npm:^4.14.194"
@@ -682,6 +682,7 @@ __metadata:
     eslint: "npm:^8.40.0"
     eslint-config-nth: "npm:^2.0.1"
     find-up: "npm:^6.3.0"
+    globby: "npm:^13.1.4"
     got: "npm:^12.6.0"
     graphql: "npm:^16.6.0"
     jest: "npm:^29.5.0"
@@ -1072,9 +1073,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nick.heiner/wandb-fork@npm:0.5.2-0":
-  version: 0.5.2-0
-  resolution: "@nick.heiner/wandb-fork@npm:0.5.2-0"
+"@nick.heiner/wandb-fork@npm:0.5.2-2":
+  version: 0.5.2-2
+  resolution: "@nick.heiner/wandb-fork@npm:0.5.2-2"
   dependencies:
     cross-fetch: "npm:^3.1.5"
     graphql-request: "npm:^5.2.0"
@@ -1084,7 +1085,7 @@ __metadata:
   peerDependenciesMeta:
     langchain:
       optional: true
-  checksum: 822c0123f16f93ea159a0e842393b45e72aacc260d19d2b0098b7c190029e23231b30a4506f8da8113de3d69e136906e0405cf2ece3ff95cb563fd7d11595742
+  checksum: 8f88d9457e604957b47dad0605b92674676307f7015e39128e4a90ef52a8fb416eaf19e5ed17f41c99e77b56d96dde5da4564d8f00121e6ab905f59d851de10b
   languageName: node
   linkType: hard
 
@@ -3277,7 +3278,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-glob@npm:^3.2.9":
+"fast-glob@npm:^3.2.11, fast-glob@npm:^3.2.9":
   version: 3.2.12
   resolution: "fast-glob@npm:3.2.12"
   dependencies:
@@ -3694,6 +3695,19 @@ __metadata:
     merge2: "npm:^1.4.1"
     slash: "npm:^3.0.0"
   checksum: 3047df770874d103dafe26084f998f562e8a8e2930896940e0bdbdc27c1f7574570f231dc2aa981d941dc84c93db05ce7cd81667488b040412e88740186fc22e
+  languageName: node
+  linkType: hard
+
+"globby@npm:^13.1.4":
+  version: 13.1.4
+  resolution: "globby@npm:13.1.4"
+  dependencies:
+    dir-glob: "npm:^3.0.1"
+    fast-glob: "npm:^3.2.11"
+    ignore: "npm:^5.2.0"
+    merge2: "npm:^1.4.1"
+    slash: "npm:^4.0.0"
+  checksum: 3e433409da6b65206694b0d3fec692f42b9eb9a1d1406851a1237508e6dd12a4e70c3ba3d7b6b26a8c8e71aab6a84e648fca6b955abc18dd37341a44ac341567
   languageName: node
   linkType: hard
 
@@ -6574,6 +6588,13 @@ __metadata:
   version: 3.0.0
   resolution: "slash@npm:3.0.0"
   checksum: b88a0f1086e3cd20c8b61f50d8afff5fba83f95167a86432f54387565c9424e5d1970612371f768c128ed4b5b1c427120382bafc8c9edf0b3737eb226b733687
+  languageName: node
+  linkType: hard
+
+"slash@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "slash@npm:4.0.0"
+  checksum: 0327fcda20ceb59983f59b6016ecc1d8a0c750a66af0205cdb0d0b92b857586c847515d3098a7538816c61a145d3822aec5509b0fe5c9ccff14789e0603c8ea1
   languageName: node
   linkType: hard
 

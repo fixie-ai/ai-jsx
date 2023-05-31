@@ -34,6 +34,7 @@ export type Chunker = (doc: Document, ...args: any[]) => Promise<Document[]>;
  * In LangChain, there are loaders and retrievers. In AI.JSX, there are only loaders. Retrievers are a special
  * case of loaders.
  */
+// TODO: maybe rename to DocumentProvider
 export type Loader = (...args: any[]) => Promise<Document[]>;
 
 export interface VectorSearchResult {
