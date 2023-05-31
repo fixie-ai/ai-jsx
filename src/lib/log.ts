@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import { ModelResponse, OpenAIChatParams, OpenAICompletionParams } from './models';
 import { WandBObserver } from './wandb';
 import { TypedEmitter } from 'tiny-typed-emitter';
+import { DocumentLoader } from 'langchain/dist/document_loaders/base';
 
 export const getLogName = _.once(() => {
   const packageJsonPath = findUpSync(process.cwd());
@@ -218,6 +219,21 @@ export class Log {
     const durationStats = getDurationStats();
     childLog[level]({ ...logOptsAdditions, ...durationStats, end: true }, `Completed ${phase}`);
     return returnVal;
+  }
+
+  docLoad(callFn: () => ReturnType<DocumentLoader['load']>) {
+    return this.logPhase({ phase: 'docLoad', level: 'info' }, async (_logProgress, additionalLogData) => {
+      const docs = await callFn();
+      additionalLogData({ docs });
+      return docs;
+    });
+  }
+  docLoadAndSplit(callFn: () => ReturnType<DocumentLoader['load']>) {
+    return this.logPhase({ phase: 'docLoadAndSplit', level: 'info' }, async (_logProgress, additionalLogData) => {
+      const docs = await callFn();
+      additionalLogData({ docs });
+      return docs;
+    });
   }
 
   modelCall<Result extends ModelResponse>(callOpts: ModelPhaseStartLogInputs, callFn: () => Promise<Result>) {
