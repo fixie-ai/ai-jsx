@@ -29,7 +29,6 @@ export type OpenAICompletionParams = Merge<
 export const defaultCompletionParams = {
   openai: {
     'text-davinci-003': {
-      max_tokens: 4096,
       temperature: 0,
     },
   },
@@ -48,7 +47,6 @@ export type OpenAIChatParams = Merge<
 export const defaultChatParams = {
   openai: {
     'gpt-3.5-turbo': {
-      max_tokens: 4096,
       temperature: 0,
     },
   },
