@@ -2,7 +2,7 @@ import { Jsonifiable } from 'type-fest';
 import { LangChainWrapper, log } from '.';
 import { TokenTextSplitter } from 'langchain/text_splitter';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
-import { OpenAIEmbeddings } from "langchain/embeddings/openai";
+import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 
 export interface Document<Metadata extends Jsonifiable = Jsonifiable> {
   pageContent: string;

@@ -1,4 +1,10 @@
-import { Configuration, CreateChatCompletionResponse, CreateCompletionResponse, CreateEmbeddingRequest, OpenAIApi } from 'openai';
+import {
+  Configuration,
+  CreateChatCompletionResponse,
+  CreateCompletionResponse,
+  CreateEmbeddingRequest,
+  OpenAIApi,
+} from 'openai';
 import log from './log';
 import { Merge, ValueOf } from 'type-fest';
 import EventEmitter from 'node:events';
@@ -48,10 +54,13 @@ export const defaultChatParams = {
   },
 };
 
-export type OpenAIEmbeddingModels = 'text-embedding-ada-002' | 'text-search-ada-doc-001'
-export type EmbeddingParams = Merge<CreateEmbeddingRequest, {
-  model: OpenAIEmbeddingModels;
-}>
+export type OpenAIEmbeddingModels = 'text-embedding-ada-002' | 'text-search-ada-doc-001';
+export type EmbeddingParams = Merge<
+  CreateEmbeddingRequest,
+  {
+    model: OpenAIEmbeddingModels;
+  }
+>;
 
 /**
  * Idea: set maxTokens to be whatever the prompt leaves room for.
@@ -63,7 +72,7 @@ export interface ModelCallOptions {
 export type ModelResponse = CreateChatCompletionResponse | CreateCompletionResponse;
 
 export function openAIEmbed(params: EmbeddingParams) {
-  return log.logPhase({phase: 'embed', params }, () => openai.createEmbedding(params));
+  return log.logPhase({ phase: 'embed', params }, () => openai.createEmbedding(params));
 }
 
 // The return type annotation here seems like it should be unnecessary.

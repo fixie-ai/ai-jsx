@@ -668,7 +668,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fixieai/ai-jsx@workspace:."
   dependencies:
-    "@nick.heiner/wandb-fork": "npm:0.5.2-2"
+    "@nick.heiner/wandb-fork": "npm:0.5.2-5"
     "@tsconfig/node18": "npm:^2.0.1"
     "@types/eslint": "npm:^8"
     "@types/lodash": "npm:^4.14.194"
@@ -1073,9 +1073,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nick.heiner/wandb-fork@npm:0.5.2-2":
-  version: 0.5.2-2
-  resolution: "@nick.heiner/wandb-fork@npm:0.5.2-2"
+"@nick.heiner/wandb-fork@npm:0.5.2-5":
+  version: 0.5.2-5
+  resolution: "@nick.heiner/wandb-fork@npm:0.5.2-5"
   dependencies:
     cross-fetch: "npm:^3.1.5"
     graphql-request: "npm:^5.2.0"
@@ -1085,7 +1085,7 @@ __metadata:
   peerDependenciesMeta:
     langchain:
       optional: true
-  checksum: 8f88d9457e604957b47dad0605b92674676307f7015e39128e4a90ef52a8fb416eaf19e5ed17f41c99e77b56d96dde5da4564d8f00121e6ab905f59d851de10b
+  checksum: bf5cc0affa0ccccc6406058914d78e32b1c749268f14f383bad27d5af7f75c5af32962aff1b439c4550716b0952e716904a11e508fc3943641a3e7508ec425f1
   languageName: node
   linkType: hard
 

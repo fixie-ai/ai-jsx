@@ -1,3 +1,4 @@
 .pnp*
 .yarn*
 .vscode*
+*data*

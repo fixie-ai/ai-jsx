@@ -4,10 +4,12 @@
  */
 
 import fetch from 'node-fetch';
-import { promises as fs } from 'fs';
 import path from 'node:path';
-import {writeJsonFile} from 'write-json-file';
-import { fileURLToPath } from "node:url";
+import { writeJsonFile } from 'write-json-file';
+import { fileURLToPath } from 'node:url';
+
+// This is GPT-generated code and it doesn't respect the law.
+/* eslint-disable id-blacklist */
 
 interface Article {
   id: number;

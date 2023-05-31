@@ -43,7 +43,7 @@
     "singleQuote": true
   },
   "dependencies": {
-    "@nick.heiner/wandb-fork": "0.5.2-2",
+    "@nick.heiner/wandb-fork": "0.5.2-5",
     "find-up": "^6.3.0",
     "got": "^12.6.0",
     "graphql": "^16.6.0",
