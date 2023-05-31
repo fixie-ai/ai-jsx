@@ -1,14 +1,15 @@
 import { openAIChat } from '../lib/models';
 import { LLMx, Models, log } from '../lib';
-import { createElementArgs } from './llm';
-import { ChatCompletionRequestMessageRoleEnum } from 'openai';
+import { ChatCompletionRequestMessage } from 'openai';
 
-export async function* Completion(
-  props: { temperature?: number; maxTokens?: number; stop?: string[] },
-  children: LLMx.Node[]
-) {
+export async function* Completion(props: {
+  temperature?: number;
+  maxTokens?: number;
+  stop?: string[];
+  children: LLMx.Node;
+}) {
   yield '▁';
-  let prompt = await LLMx.render(children);
+  let prompt = await LLMx.render(props.children);
   while (prompt.length > 0 && prompt.endsWith(' ')) {
     prompt = prompt.slice(0, prompt.length - 1);
   }
@@ -30,63 +31,53 @@ export async function* Completion(
   yield accumulatedResponse;
 }
 
-export function SystemMessage(props: any, children: LLMx.Node[]) {
+export function SystemMessage({ children }: { children: LLMx.Node }) {
   return children;
 }
-export function UserMessage(props: any, children: LLMx.Node[]) {
+export function UserMessage({ children }: { name?: string; children: LLMx.Node }) {
   return children;
 }
-export function AssistantMessage(props: any, children: LLMx.Node[]) {
+export function AssistantMessage({ children }: { children: LLMx.Node }) {
   return children;
 }
 
-type ChatPart = typeof SystemMessage | typeof UserMessage | typeof AssistantMessage;
-
-export async function* ChatCompletion(
-  props: { temperature?: number; maxTokens?: number; stop?: string[] },
-  children: ChatPart[]
-) {
+export async function* ChatCompletion(props: {
+  temperature?: number;
+  maxTokens?: number;
+  stop?: string[];
+  children: LLMx.Node;
+}) {
   yield '▁';
 
-  const chatMessagesOfChildren = await Promise.all(
-    children.map(async (child) => {
-      // The validation here will throw an error for fragments, which is not necessarily what we want –
-      // the fragment could contain the proper children.
+  const messageElements = await LLMx.partialRender(
+    props.children,
+    (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage
+  );
 
-      // Not bothering to fix the types here because we may rip this out.
-      // @ts-expect-error
-      const childComponent = child[createElementArgs];
-      if (!childComponent) {
-        throw new Error(
-          `ChatCompletion's child components must be SystemMessage, UserMessage, or AssistantMessage, but this child was ${child}`
-        );
-      }
-      const childComponentFn = childComponent[0];
-      let childType: ChatCompletionRequestMessageRoleEnum;
-      switch (childComponentFn) {
+  const messages: ChatCompletionRequestMessage[] = await Promise.all(
+    messageElements.filter(LLMx.isElement).map(async (message) => {
+      switch (message.tag) {
         case SystemMessage:
-          childType = 'system';
-          break;
+          return {
+            role: 'system' as const,
+            content: await LLMx.render(message),
+          };
         case UserMessage:
-          childType = 'user';
-          break;
+          return {
+            role: 'user' as const,
+            content: await LLMx.render(message),
+            name: message.props['name'] as string,
+          };
         case AssistantMessage:
-          childType = 'assistant';
-          break;
+          return {
+            role: 'assistant' as const,
+            content: await LLMx.render(message),
+          };
         default:
           throw new Error(
-            `ChatCompletion's child components must be SystemMessage, UserMessage, or AssistantMessage, but this child was ${child}`
+            `ChatCompletion's prompts must be SystemMessage, UserMessage, or AssistantMessage, but this child was ${message.tag.name}`
           );
       }
-
-      // Not bothering to fix the types here because we may rip this out.
-      // @ts-expect-error
-      const renderResult = await LLMx.render(child());
-      log.trace({ renderResult, childType }, 'ChatCompletion child render result');
-      return {
-        role: childType,
-        content: renderResult,
-      };
     })
   );
 
@@ -94,7 +85,7 @@ export async function* ChatCompletion(
     model: 'gpt-3.5-turbo',
     max_tokens: props.maxTokens,
     temperature: props.temperature,
-    messages: chatMessagesOfChildren,
+    messages,
     stop: props.stop,
   });
 

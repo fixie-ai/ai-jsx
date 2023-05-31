@@ -682,6 +682,7 @@ __metadata:
     eslint-config-nth: "npm:^2.0.1"
     find-up: "npm:^6.3.0"
     got: "npm:^12.6.0"
+    graphql: "npm:^16.6.0"
     jest: "npm:^29.5.0"
     langchain: "npm:^0.0.81"
     load-json-file: "npm:^7.0.1"
@@ -3646,6 +3647,13 @@ __metadata:
   peerDependencies:
     graphql: 14 - 16
   checksum: 12d44536ea429632be0e421b497c9bf7992d21ec3a7b50d2bf5a647cad7312631ced1f4381318d6abb413d991c8e0cda6c13e66e0b7e5251da04e0a8dade1142
+  languageName: node
+  linkType: hard
+
+"graphql@npm:^16.6.0":
+  version: 16.6.0
+  resolution: "graphql@npm:16.6.0"
+  checksum: 686582916b9ca247f3562f086c34a6363155475da909e1f891f9a76a3b5273ed6c7034cd5a82e768670ac5a74d539a6f1be282253a92b49be3a489fc82e83a5b
   languageName: node
   linkType: hard
 

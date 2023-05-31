@@ -1,204 +1,239 @@
-// Disabling type checking until Peter and I can merge our changes.
-// @ts-nocheck
-
 import * as readline from 'readline/promises';
 import { log } from './';
 import { v4 as uuidv4 } from 'uuid';
 
-const wellKnownComponents = {
-  br: function br() {
-    return '\n';
-  },
+export type Component<P> = (props: P) => Renderable;
+export type Literal = string | number | null | undefined | boolean;
+export type Element<P> = {
+  tag: Component<P>;
+  props: P;
 };
+export type Node = Element<any> | Literal | Node[];
 
-export const createElementArgs = Symbol();
+export type Renderable = Node | Promise<Renderable> | AsyncGenerator<Renderable>;
 
-export type Component = keyof typeof wellKnownComponents | ((props: object, children: Node[]) => Node);
-export type Node = string | Promise<Node> | (() => Node) | Node[] | AsyncGenerator<Node>;
+export type ElementSelector = (e: Element<any>) => boolean;
 
-function memoize(node: Node): Node {
-  if (typeof node === 'string') {
-    return node;
-  } else if (typeof node === 'function') {
-    let value = null;
-    let isMemoized = false;
-
-    return () => {
-      if (isMemoized) {
-        return value;
-      }
-
-      value = memoize(node());
-      isMemoized = true;
-      return value;
-    };
-  } else if (Array.isArray(node)) {
-    return node.map(memoize);
-  } else if (node instanceof Promise) {
-    return node.then(memoize);
+export declare namespace JSX {
+  interface ElementChildrenAttribute {
+    children: {};
   }
-  // It's an async generator (which is mutable). We set up some machinery to buffer the
-  // results so that we can create memoized generators as necessary.
-  const generator = node;
-  const sink: Node[] = [];
-  let completed = false;
-  let nextPromise: Promise<void> | null = null;
-
-  async function* memoizedGenerator() {
-    // Our types are misleading Eslint here.
-    /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */
-    if (generator === null) {
-      return '';
-    }
-    // Our types are misleading Eslint here.
-    /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */
-    if (generator === undefined) {
-      throw new Error('Component cannot return undefined. Did you forget a `return`?');
-    }
-    // console.log('invoke memoizedGenerator', generator)
-    let index = 0;
-    while (true) {
-      if (index < sink.length) {
-        yield sink[index++];
-        continue;
-      } else if (completed) {
-        break;
-      } else if (nextPromise == null) {
-        nextPromise = generator.next().then((result) => {
-          if (result.done) {
-            completed = true;
-          } else {
-            sink.push(memoize(result.value));
-          }
-          nextPromise = null;
-        });
-      }
-
-      await nextPromise;
-    }
-  }
-
-  return () => memoizedGenerator();
 }
 
-/**
- * Referenced in tscconfig.json.
- */
-export function createElement(component: Component, props: object | null, ...children: Node[]): Node {
-  const fn = typeof component === 'function' ? component : wellKnownComponents[component];
+export function createElement<T extends Component<P>, P extends { children: C }, C>(
+  tag: T,
+  props: Omit<P, 'children'>,
+  child: C
+): Element<P>;
+export function createElement<T extends Component<P>, P extends { children: C[] }, C>(
+  tag: T,
+  props: Omit<P, 'children'>,
+  ...children: C[]
+): Element<P>;
+export function createElement(tag: any, props: any, ...children: any[]): Element<any> {
+  const propsToPass = {
+    ...(props ?? {}),
+    children: children.length == 1 ? children[0] : children,
+  };
 
-  const propsToPass = props ?? {};
-  const flattenedChildren = children.flat();
-  // const bound = () => fn(propsToPass, flattenedChildren);
-  const bound = memoize(() => fn(propsToPass, flattenedChildren));
-  bound[createElementArgs] = [fn, propsToPass, flattenedChildren];
-  return bound;
+  const result = {
+    tag,
+    props: propsToPass,
+  };
+  Object.freeze(propsToPass);
+  Object.freeze(result);
+  return result;
 }
 
-/**
- * Referenced in tsconfig.json
- */
-export function Fragment(props, ...children: Node[]): Node {
+export function isElement(value: Renderable): value is Element<any> {
+  return value !== null && typeof value === 'object' && 'tag' in value;
+}
+
+export function Fragment({ children }: { children: Node }): Renderable {
   return children;
 }
 
-export function Debug(node: Node): string {
-  // console.log(typeof node, node, Object.keys(node))
-  if (typeof node === 'string') {
-    return `{${JSON.stringify(node)}}`;
-  } else if (typeof node === 'function') {
-    if (createElementArgs in node) {
-      const [fn, props, children] = (node as any)[createElementArgs];
-
-      const propsString =
-        props === null
-          ? ''
-          : ` ${Object.keys(props)
-              .map((key) => `${key}={${JSON.stringify(props[key])}}`)
-              .join(' ')}`;
-      if (children.length > 0) {
-        return `<${fn.name}${propsString}>${Debug(children)}</${fn.name}>`;
+export function debug(value: any, indent: string = '', context: 'code' | 'children' | 'props' = 'code'): string {
+  const type = typeof value;
+  switch (type) {
+    case 'string':
+      if (context === 'props' || context === 'code') {
+        return JSON.stringify(value);
+      } else {
+        return `{${JSON.stringify(value)}}`;
       }
-      return `<${fn.name}${propsString} />`;
-    }
-    return '[Function]';
-  } else if (Array.isArray(node)) {
-    return node.map(Debug).join('');
-  } else if (node instanceof Promise) {
-    return '[Promise]';
-  }
-  return '[Generator]';
-}
-
-export function GetProps(component: Component, node: Node) {
-  if (typeof node === 'function') {
-    const [c, props] = node[createElementArgs];
-    if (c === component) {
-      return props || {};
-    }
-  }
-
-  return null;
-}
-
-function renderNodeToGenerator(node: Node): AsyncGenerator<string> {
-  async function* inner() {
-    if (typeof node === 'string') {
-      yield node;
-    } else if (typeof node === 'function') {
-      yield* renderNodeToGenerator(node());
-    } else if (Array.isArray(node)) {
-      if (node.length == 1) {
-        yield* renderNodeToGenerator(node[0]);
-        return;
+    case 'number':
+    case 'bigint':
+      if (context === 'props' || context === 'children') {
+        return `{${value.toString()}}`;
+      } else {
+        return value.toString();
       }
+    case 'boolean':
+    case 'undefined':
+      return '';
+    case 'object':
+      if (value === null) {
+        switch (context) {
+          case 'code':
+            return 'null';
+          case 'children':
+            return '{null}';
+          case 'props':
+            return '{null}';
+        }
+      } else if (isElement(value)) {
+        const tag = value.tag === Fragment ? '' : value.tag.name;
+        const childIndent = indent + '  ';
+        const children = debug(value.props.children, childIndent, 'children');
 
-      const generators = node.map((n) => renderNodeToGenerator(n));
-      const currentValues: string[] = generators.map(() => '');
-      const finished = generators.map(() => false);
-      const nextPromise = (g: AsyncGenerator) =>
-        g.next().then((x) => [g, x] as [AsyncGenerator<string>, IteratorResult<string>]);
-      const promises = generators.map(nextPromise);
+        const results = [];
+        if (value.props) {
+          for (const key of Object.keys(value.props)) {
+            const propValue = value.props[key];
+            if (key === 'children' || propValue === undefined) {
+              continue;
+            } else {
+              results.push(` ${key}=${debug(propValue, indent, 'props')}`);
+            }
+          }
+        }
 
-      while (finished.includes(false)) {
-        yield currentValues.join('');
-        const [generator, value] = await Promise.race(promises);
-        const index = generators.indexOf(generator);
+        const propsString = results.join('');
 
-        if (value.done) {
-          finished[index] = true;
-          promises[index] = new Promise(() => false);
+        let child: string;
+        if (children !== '') {
+          child = `<${tag}${propsString}>\n${childIndent}${children}\n${indent}</${tag}>`;
         } else {
-          currentValues[index] = value.value;
-          promises[index] = nextPromise(generator);
+          child = `<${tag}${propsString} />`;
+        }
+        switch (context) {
+          case 'code':
+          case 'children':
+            return child;
+          case 'props':
+            return `{${child}}`;
+        }
+      } else if (Array.isArray(value)) {
+        if (context === 'children') {
+          value = value.filter(
+            (x) => x !== undefined && x !== null && typeof x !== 'boolean' && !(Array.isArray(x) && x.length == 0)
+          );
+        }
+
+        const values = value.map((v: any) => debug(v, indent, context === 'children' ? 'children' : 'code'));
+        switch (context) {
+          case 'children':
+            return values.join('\n' + indent);
+          case 'props':
+            return `{[${values.join(', ')}]}`;
+          case 'code':
+            return `[${values.join(', ')}]`;
+        }
+      } else {
+        if (context === 'props' || context === 'children') {
+          return `{${JSON.stringify(value)}}`;
+        } else {
+          return JSON.stringify(value);
         }
       }
+    case 'function':
+    case 'symbol':
+      if (context === 'props' || context === 'children') {
+        return `{${value}}`;
+      } else {
+        return value.toString();
+      }
+    default:
+      return '';
+  }
+}
 
-      yield currentValues.join('');
-    } else if (node instanceof Promise) {
-      yield* renderNodeToGenerator(await node);
+export async function partialRender(
+  renderable: Renderable,
+  shouldStop: ElementSelector
+): Promise<(string | Element<any>)[]> {
+  if (typeof renderable === 'string') {
+    return [renderable];
+  } else if (typeof renderable === 'number') {
+    return [renderable.toString()];
+  } else if (typeof renderable === 'undefined' || typeof renderable === 'boolean' || renderable === null) {
+    return [];
+  } else if (Array.isArray(renderable)) {
+    const rendered = await Promise.all(renderable.map((r) => partialRender(r, shouldStop)));
+    return rendered.flat();
+  } else if (isElement(renderable)) {
+    if (shouldStop(renderable)) {
+      return [renderable];
     } else {
-      for await (const n of node) {
-        yield* renderNodeToGenerator(n);
+      const rendered = renderable.tag(renderable.props);
+      return await partialRender(rendered, shouldStop);
+    }
+  } else if (renderable instanceof Promise) {
+    return await renderable.then((r) => partialRender(r, shouldStop));
+  } else {
+    // Exhaust the iterator.
+    let lastValue: Renderable = '';
+    for await (const value of renderable as any) {
+      lastValue = value;
+    }
+    return await partialRender(lastValue, shouldStop);
+  }
+}
+
+export async function render(renderable: Renderable): Promise<string> {
+  const elementsOrStrings = await partialRender(renderable, () => false);
+  return elementsOrStrings.join('');
+}
+
+async function* renderGenerator(renderable: Renderable): AsyncGenerator<string> {
+  // TODO: combine with partialRender
+  if (typeof renderable === 'string') {
+    yield renderable;
+  } else if (typeof renderable === 'number') {
+    yield renderable.toString();
+  } else if (typeof renderable === 'boolean' || typeof renderable === 'undefined' || renderable === null) {
+    yield '';
+  } else if (Array.isArray(renderable)) {
+    const generators = renderable.map(renderGenerator);
+    const currentValues: string[] = generators.map(() => '');
+    const finished = generators.map(() => false);
+    const nextPromise = (g: AsyncGenerator) =>
+      g.next().then((x) => [g, x] as [AsyncGenerator<string>, IteratorResult<string>]);
+    const promises = generators.map(nextPromise);
+
+    while (finished.indexOf(false) !== -1) {
+      yield currentValues.join('');
+      const [generator, value] = await Promise.race(promises);
+      const index = generators.indexOf(generator);
+
+      if (value.done) {
+        finished[index] = true;
+        promises[index] = new Promise(() => false);
+      } else {
+        currentValues[index] = value.value;
+        promises[index] = nextPromise(generator);
       }
     }
-  }
 
-  return log.logGeneratorDuration({ phase: 'renderNodeToGenerator', level: 'trace', node: Debug(node) }, inner());
+    yield currentValues.join('');
+  } else if (renderable instanceof Promise) {
+    yield* renderGenerator(await (renderable as any));
+  } else if (isElement(renderable)) {
+    yield* renderGenerator(renderable.tag(renderable.props));
+  } else {
+    for await (const n of renderable) {
+      yield* renderGenerator(n);
+    }
+  }
 }
 
 interface ShowOptions {
   stream: boolean;
-}
-export async function render(node: Node) {
-  let finalResult = '';
-  for await (const page of renderNodeToGenerator(node)) {
-    finalResult = page;
-  }
-  return finalResult;
+  step: boolean;
 }
 
-export function show(node: Node, opts: ShowOptions | undefined = { stream: true }) {
+export function show(node: Node, opts: ShowOptions | undefined = { stream: true, step: false }) {
   const showLifespanId = uuidv4();
   return log.logPhase({ phase: 'show', level: 'trace', opts, showLifespanId }, async () => {
     if (opts.stream) {
@@ -214,7 +249,7 @@ export function show(node: Node, opts: ShowOptions | undefined = { stream: true 
       const rl = readline.createInterface(process.stdin, process.stdout);
       let lastPage = '';
       const cursor = new readline.Readline(process.stdout);
-      for await (const page of renderNodeToGenerator(node)) {
+      for await (const page of renderGenerator(node)) {
         for (const line of lastPage.split('\n').reverse()) {
           cursor.clearLine(0);
           cursor.moveCursor(-line.length, -1);
@@ -224,6 +259,11 @@ export function show(node: Node, opts: ShowOptions | undefined = { stream: true 
 
         rl.write(`${page}\n`);
         lastPage = `${page}\n`;
+
+        if (opts.step) {
+          await rl.question('Continue?');
+          lastPage += 'Continue?\n';
+        }
       }
       rl.close();
       return;
