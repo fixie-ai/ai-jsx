@@ -58,13 +58,10 @@ export interface ModelPhaseStartLog extends BaseAIJSXLog, PhaseStart {
 
 export type ModelPhaseStartLogInputs = Pick<ModelPhaseStartLog, 'callName' | 'params'>;
 
-export type ModelPhaseEndLog = Omit<
-  Omit<ModelPhaseStartLog, 'start'> &
+export type ModelPhaseEndLog = Omit<ModelPhaseStartLog, 'start'> &
     PhaseEnd & {
       modelResponse: ModelResponse;
-    },
-  'level'
->;
+    };
 
 export type AIJSXLog = ModelPhaseStartLog | ModelPhaseEndLog | BaseAIJSXLog | PinoMessage;
 
@@ -95,27 +92,6 @@ export class Log {
     this.eventEmitter = eventEmitter;
     this.on = this.eventEmitter.on.bind(this.eventEmitter);
     this.off = this.eventEmitter.off.bind(this.eventEmitter);
-
-    /**
-     * Rather than have privileged events emitted at particular points, the logger should drive everything off
-     * the log stream. This will make the types ultimately simpler and force consistency, because there's no risk of
-     * the prvileged events being subtly different from the log stream.
-     *
-     * However, we will emit events, driven by the log stream, under particular names, so devs don't always need to
-     * listen for all events and filter them.
-     */
-    this.on('message', (message) => {
-      if ('phase' in message) {
-        if ('start' in message) {
-          this.eventEmitter.emit('model-call-start', message);
-          return;
-        }
-        // This `'end' in` check should be unnecessary, but TS isn't type narrowing as well as it could.
-        if ('end' in message) {
-          this.eventEmitter.emit('model-call-end', message);
-        }
-      }
-    });
   }
 
   static create(
@@ -145,7 +121,7 @@ export class Log {
          * So we reimplement the console and file writing logic ourselves.
          */
         write(msgStr) {
-          const message = JSON.parse(msgStr) as PinoMessage;
+          const message = JSON.parse(msgStr) as AIJSXLog;
           /**
            * Ideally, we'd use the present Pino instance to look up `levels.` However, because we're passing this value
            * into Pino in the constructor, we don't have the instance to use. So we construct a fake instance and use
@@ -163,7 +139,37 @@ export class Log {
             pinoFile.write(msgStr);
           }
 
+          /**
+           * The event emitter is shared between all instances, so if you call the pub/sub methods on a child, you'll
+           * see all events globally, not just those pertaining to the child.
+           * 
+           * This might be counter-intuitive in some specific cases, but I think most of the time, it'll do what people
+           * want by default. Also, if we wanted to implement child-specific events, we'd need event-bubbling logic / 
+           * to think more about what those semantics look like, which I don't want to do.
+           * 
+           * The point of creating a child logger is a curry for metadata. It's not a way to get more focused events.
+           */
+
           log.eventEmitter.emit('message', message);
+
+          /**
+           * Rather than have privileged events emitted at particular points, the logger should drive everything off
+           * the log stream. This will make the types ultimately simpler and force consistency, because there's no risk of
+           * the prvileged events being subtly different from the log stream.
+           *
+           * However, we will emit events, driven by the log stream, under particular names, so devs don't always need to
+           * listen for all events and filter them.
+           */
+          if ('phase' in message) {
+            if ('start' in message) {
+              log.eventEmitter.emit('model-call-start', message);
+              return;
+            }
+            // This `'end' in` check should be unnecessary, but TS isn't type narrowing as well as it could.
+            if ('end' in message) {
+              log.eventEmitter.emit('model-call-end', message);
+            }
+          }
         },
       }),
       new LogEventEmitter()
