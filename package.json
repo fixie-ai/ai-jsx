@@ -20,7 +20,8 @@
     "ts-node": "^10.9.1",
     "tsx": "^3.12.7",
     "type-fest": "^3.10.0",
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.4",
+    "write-json-file": "^5.0.0"
   },
   "type": "module",
   "scripts": {
