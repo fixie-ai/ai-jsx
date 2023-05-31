@@ -43,6 +43,7 @@
     "@nick.heiner/wandb-fork": "0.5.2-0",
     "find-up": "^6.3.0",
     "got": "^12.6.0",
+    "graphql": "^16.6.0",
     "jest": "^29.5.0",
     "langchain": "^0.0.81",
     "load-json-file": "^7.0.1",
