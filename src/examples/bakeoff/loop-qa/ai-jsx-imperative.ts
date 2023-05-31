@@ -3,9 +3,9 @@ import { globbySync } from 'globby';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadJsonFile } from 'load-json-file';
-import { Docs, Models } from '../../../lib';
+import { Docs, Models } from '../../../lib/index.js';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
-import { DefaultInMemoryVectorStore } from '../../../lib/docs';
+import { DefaultInMemoryVectorStore } from '../../../lib/docs.js';
 import { Article } from './load-articles.mjs';
 
 // @ts-expect-error Ignore the TS error because this file will not be built for CommonJS.
