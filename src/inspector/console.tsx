@@ -40,10 +40,14 @@ function Inspector({ componentToInspect }: { componentToInspect: LLMx.Node }) {
 
   useInput((_input, key) => {
     if (key.rightArrow) {
-      setDebugTreeFrameIndex((prevIndex) => prevIndex === null ? debugTreeSteps.length - 1 : Math.min(debugTreeSteps.length - 1, prevIndex + 1));
+      setDebugTreeFrameIndex((prevIndex) =>
+        prevIndex === null ? debugTreeSteps.length - 1 : Math.min(debugTreeSteps.length - 1, prevIndex + 1)
+      );
     }
     if (key.leftArrow) {
-      setDebugTreeFrameIndex((prevIndex) => prevIndex === null ? debugTreeSteps.length - 2 : Math.max(0, prevIndex - 1));
+      setDebugTreeFrameIndex((prevIndex) =>
+        prevIndex === null ? debugTreeSteps.length - 2 : Math.max(0, prevIndex - 1)
+      );
     }
   });
 

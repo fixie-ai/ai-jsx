@@ -10,9 +10,9 @@ export function memo(renderable: LLMx.Renderable): LLMx.Node {
    */
   if (typeof renderable !== 'object' || renderable === null) {
     return renderable;
-  } else if (Array.isArray(renderable)) {
+  } if (Array.isArray(renderable)) {
     return renderable.map(memo);
-  } else if (LLMx.isElement(renderable)) {
+  } if (LLMx.isElement(renderable)) {
     if (isMemoizedSymbol in renderable.props) {
       return renderable;
     }
@@ -39,7 +39,7 @@ export function memo(renderable: LLMx.Renderable): LLMx.Node {
         {newElement}
       </Memoized>
     );
-  } else if (renderable instanceof Promise) {
+  } if (renderable instanceof Promise) {
     const memoizedRenderable = renderable.then(memo);
     const MemoizedPromise = () => memoizedRenderable;
     return <MemoizedPromise id={++memoizedId} {...{ [isMemoizedSymbol]: true }} />;

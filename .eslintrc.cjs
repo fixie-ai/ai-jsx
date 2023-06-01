@@ -27,6 +27,7 @@ module.exports = {
     '@typescript-eslint/no-use-before-define': ['error', { functions: false, variables: true }],
 
     'no-trailing-spaces': 'warn',
+    'no-else-return': ['warn', { allowElseIf: false }],
 
     // Disable style rules to let prettier own it
     'object-curly-spacing': 'off',
