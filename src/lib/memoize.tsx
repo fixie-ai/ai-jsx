@@ -5,6 +5,9 @@ let memoizedId = 0;
 const isMemoizedSymbol = Symbol('isMemoized');
 
 export function memo(renderable: LLMx.Renderable): LLMx.Node {
+  /**
+   * The memoization is fully recursive.
+   */
   if (typeof renderable !== 'object' || renderable === null) {
     return renderable;
   } else if (Array.isArray(renderable)) {
