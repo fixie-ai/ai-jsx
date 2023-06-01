@@ -1,0 +1,9 @@
+{
+  "extends": "../tsconfig-base.json",
+  "include": ["examples/**/*", "lib/**/*", "../.eslintrc.cjs"],
+  "compilerOptions": {
+    "jsx": "react",
+    "jsxFactory": "LLMx.createElement",
+    "jsxFragmentFactory": "LLMx.Fragment"
+  }
+}

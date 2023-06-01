@@ -34,7 +34,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "typecheck": "tsc -p .",
+    "typecheck": "tsc -p src/tsconfig.json && tsc -p src/inspector/tsconfig.json",
     "test": "yarn run format:check && yarn run lint && yarn run typecheck"
   },
   "volta": {
