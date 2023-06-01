@@ -139,34 +139,97 @@ export function debug(value: unknown, indent: string = '', context: 'code' | 'ch
   return '';
 }
 
+type PartiallyRendered = string | Element<any>;
+
+export async function* partialRenderStream(
+  renderable: Renderable,
+  shouldStop: ElementPredicate
+): AsyncGenerator<PartiallyRendered[]> {
+  if (typeof renderable === 'string') {
+    yield [renderable];
+  } else if (typeof renderable === 'number') {
+    yield [renderable.toString()];
+  } else if (typeof renderable === 'undefined' || typeof renderable === 'boolean' || renderable === null) {
+    yield [];
+  } else if (Array.isArray(renderable)) {
+    interface InProgressRender {
+      generator: AsyncGenerator<PartiallyRendered[]>;
+      currentValue: PartiallyRendered[];
+
+      // Resolves to a function that applies the update to the in-progress render.
+      // Will be null when the generator is exhausted.
+      currentPromise: Promise<() => boolean> | null;
+    }
+
+    // Mutates an InProgressRender with an iterator result yielded from its generator.
+    const applyUpdate = (result: IteratorResult<PartiallyRendered[]>, render: InProgressRender): boolean => {
+      if (result.done) {
+        render.currentPromise = null;
+      } else {
+        render.currentValue = result.value;
+        render.currentPromise = render.generator.next().then((nextResult) => () => applyUpdate(nextResult, render));
+      }
+
+      return render.currentPromise !== null;
+    };
+
+    const inProgressRenders = renderable.map((r) => {
+      const generator = partialRenderStream(r, shouldStop);
+      const inProgressRender: InProgressRender = {
+        generator,
+        currentValue: [],
+        currentPromise: generator.next().then((result) => () => applyUpdate(result, inProgressRender)),
+      };
+
+      return inProgressRender;
+    });
+
+    const currentValue = () => inProgressRenders.flatMap((r) => r.currentValue);
+    const remainingPromises = () => inProgressRenders.flatMap((r) => (r.currentPromise ? [r.currentPromise] : []));
+
+    // Wait for each sub-generator to yield once.
+    const pendingUpdates = await Promise.all(remainingPromises());
+    pendingUpdates.forEach((apply) => apply());
+
+    yield currentValue();
+
+    while (true) {
+      const remaining = remainingPromises();
+      if (remaining.length === 0) {
+        break;
+      }
+
+      // Each time a promise resolves with a new value, yield again.
+      const nextApply = await Promise.race(remaining);
+      if (nextApply()) {
+        yield currentValue();
+      }
+    }
+  } else if (isElement(renderable)) {
+    if (shouldStop(renderable)) {
+      yield [renderable];
+    } else {
+      yield* partialRenderStream(renderable.tag(renderable.props), shouldStop);
+    }
+  } else if (renderable instanceof Promise) {
+    yield* await renderable.then((x) => partialRenderStream(x, shouldStop));
+  } else {
+    // Exhaust the iterator.
+    for await (const value of renderable) {
+      yield* partialRenderStream(value, shouldStop);
+    }
+  }
+}
+
 export async function partialRender(
   renderable: Renderable,
   shouldStop: ElementPredicate
-): Promise<(string | Element<any>)[]> {
-  if (typeof renderable === 'string') {
-    return [renderable];
-  } else if (typeof renderable === 'number') {
-    return [renderable.toString()];
-  } else if (typeof renderable === 'undefined' || typeof renderable === 'boolean' || renderable === null) {
-    return [];
-  } else if (Array.isArray(renderable)) {
-    const rendered = await Promise.all(renderable.map((r) => partialRender(r, shouldStop)));
-    return rendered.flat();
-  } else if (isElement(renderable)) {
-    if (shouldStop(renderable)) {
-      return [renderable];
-    }
-    const rendered = renderable.tag(renderable.props);
-    return partialRender(rendered, shouldStop);
-  } else if (renderable instanceof Promise) {
-    return renderable.then((r) => partialRender(r, shouldStop));
-  }
-  // Exhaust the iterator.
-  let lastValue: Renderable = '';
-  for await (const value of renderable as any) {
+): Promise<PartiallyRendered[]> {
+  let lastValue: PartiallyRendered[] = [];
+  for await (const value of partialRenderStream(renderable, shouldStop)) {
     lastValue = value;
   }
-  return partialRender(lastValue, shouldStop);
+  return lastValue;
 }
 
 export async function render(renderable: Renderable): Promise<string> {
@@ -174,45 +237,9 @@ export async function render(renderable: Renderable): Promise<string> {
   return elementsOrStrings.join('');
 }
 
-async function* renderGenerator(renderable: Renderable): AsyncGenerator<string> {
-  // TODO: combine with partialRender
-  if (typeof renderable === 'string') {
-    yield renderable;
-  } else if (typeof renderable === 'number') {
-    yield renderable.toString();
-  } else if (typeof renderable === 'boolean' || typeof renderable === 'undefined' || renderable === null) {
-    yield '';
-  } else if (Array.isArray(renderable)) {
-    const generators = renderable.map(renderGenerator);
-    const currentValues: string[] = generators.map(() => '');
-    const finished = generators.map(() => false);
-    const nextPromise = (g: AsyncGenerator) =>
-      g.next().then((x) => [g, x] as [AsyncGenerator<string>, IteratorResult<string>]);
-    const promises = generators.map(nextPromise);
-
-    while (finished.includes(false)) {
-      yield currentValues.join('');
-      const [generator, value] = await Promise.race(promises);
-      const index = generators.indexOf(generator);
-
-      if (value.done) {
-        finished[index] = true;
-        promises[index] = new Promise(() => false);
-      } else {
-        currentValues[index] = value.value;
-        promises[index] = nextPromise(generator);
-      }
-    }
-
-    yield currentValues.join('');
-  } else if (renderable instanceof Promise) {
-    yield* renderGenerator(await (renderable as any));
-  } else if (isElement(renderable)) {
-    yield* renderGenerator(renderable.tag(renderable.props));
-  } else {
-    for await (const n of renderable) {
-      yield* renderGenerator(n);
-    }
+export async function* renderStream(renderable: Renderable): AsyncGenerator<string> {
+  for await (const value of partialRenderStream(renderable, () => false)) {
+    yield value.join('');
   }
 }
 
@@ -237,7 +264,7 @@ export function show(node: Node, opts: ShowOptions | undefined = { stream: true,
       const rl = readline.createInterface(process.stdin, process.stdout);
       let lastPage = '';
       const cursor = new readline.Readline(process.stdout);
-      for await (const page of renderGenerator(node)) {
+      for await (const page of renderStream(node)) {
         for (const line of lastPage.split('\n').reverse()) {
           cursor.clearLine(0);
           cursor.moveCursor(-line.length, -1);
