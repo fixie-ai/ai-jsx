@@ -4,7 +4,7 @@ module.exports = {
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/strict', 'nth'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: [path.join(__dirname, 'tsconfig.json'), path.join(__dirname, 'src', '__tests__', 'tsconfig.json')],
+    project: [path.join(__dirname, 'tsconfig.json')],
   },
   plugins: ['@typescript-eslint'],
   root: true,
@@ -27,6 +27,7 @@ module.exports = {
     '@typescript-eslint/no-use-before-define': ['error', { functions: false, variables: true }],
 
     'no-trailing-spaces': 'warn',
+    'no-else-return': ['warn', { allowElseIf: false }],
 
     // Disable style rules to let prettier own it
     'object-curly-spacing': 'off',
@@ -38,6 +39,7 @@ module.exports = {
     'arrow-parens': 'off',
     'generator-star-spacing': 'off',
     'space-before-function-paren': 'off',
+    'jsx-quotes': 'off',
 
     // Add additional strictness beyond the recommended set
     '@typescript-eslint/parameter-properties': ['warn', { prefer: 'parameter-properties' }],

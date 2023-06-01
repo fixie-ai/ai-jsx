@@ -1,7 +1,7 @@
-import { LLMx } from '../lib';
-import { Completion } from '../lib/completion-components';
-import { DebugTree } from '../lib/debug';
-import { Inline, Scope } from '../lib/inline';
+import { LLMx } from '../lib/index.ts';
+import { Completion } from '../lib/completion-components.tsx';
+import { DebugTree } from '../lib/debug.tsx';
+import { Inline, Scope } from '../lib/inline.tsx';
 
 function CharacterGenerator() {
   const inlineCompletion = (

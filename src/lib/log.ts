@@ -6,12 +6,12 @@ import { loadJsonFileSync } from 'load-json-file';
 import { pino } from 'pino';
 import pinoPretty from 'pino-pretty';
 import fs from 'node:fs';
-import { ModelResponse, OpenAIChatParams, OpenAICompletionParams } from './models';
-import { WandBObserver } from './wandb';
+import { ModelResponse, OpenAIChatParams, OpenAICompletionParams } from './models.ts';
+import { WandBObserver } from './wandb.ts';
 import { TypedEmitter } from 'tiny-typed-emitter';
-import { DocumentLoader } from 'langchain/dist/document_loaders/base';
-import { LangChainTextSplitter } from './langchain-wrapper';
-import { Document } from './docs';
+import { DocumentLoader } from 'langchain/document_loaders/base';
+import { LangChainTextSplitter } from './langchain-wrapper.ts';
+import { Document } from './docs.ts';
 import { TextSplitterChunkHeaderOptions } from 'langchain/text_splitter';
 
 export const getLogName = _.once(() => {
@@ -106,6 +106,7 @@ export class Log {
       level: 'trace',
       ...pinoOptions,
     };
+    // @ts-expect-error
     const pinoStream = pinoPretty();
     pinoStream.pipe(process.stdout);
     const pinoFile = fs.createWriteStream('llmx.log', { flags: 'w+' });

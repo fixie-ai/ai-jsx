@@ -1,9 +1,9 @@
 import { Jsonifiable } from 'type-fest';
-import { LangChainWrapper, log } from '.';
+import { LangChainWrapper, log } from './index.ts';
 import { TokenTextSplitter } from 'langchain/text_splitter';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
 import { Document as LangChainDocument } from 'langchain/document';
-import { Embeddings } from 'langchain/dist/embeddings/base';
+import { Embeddings } from 'langchain/embeddings/base';
 
 export interface Document<Metadata extends Jsonifiable = Jsonifiable> {
   pageContent: string;
