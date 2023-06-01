@@ -4,6 +4,6 @@
   "compilerOptions": {
     "jsx": "react",
     "jsxFactory": "LLMx.createElement",
-    "jsxFragmentFactory": "LLMx.Fragment"
+    "jsxFragmentFactory": "LLMx.Fragment",
   }
 }
