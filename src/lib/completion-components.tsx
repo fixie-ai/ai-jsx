@@ -1,4 +1,4 @@
-import { openAIChat } from '../lib/models.ts';
+import { logitBiasOfTokens, openAIChat } from '../lib/models.ts';
 import { LLMx, Models } from '../lib/index.ts';
 import { ChatCompletionRequestMessage } from 'openai';
 
@@ -46,6 +46,7 @@ export async function* ChatCompletion(props: {
   maxTokens?: number;
   stop?: string[];
   children: LLMx.Node;
+  logitBias?: Record<string, number>;
 }) {
   yield '▁';
 
@@ -87,6 +88,7 @@ export async function* ChatCompletion(props: {
     temperature: props.temperature,
     messages,
     stop: props.stop,
+    logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
   });
 
   let lastMessage;

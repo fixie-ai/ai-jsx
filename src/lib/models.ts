@@ -9,6 +9,7 @@ import log from './log.ts';
 import { Merge, ValueOf } from 'type-fest';
 import EventEmitter from 'node:events';
 import _ from 'lodash';
+import GPT3Tokenizer from 'gpt3-tokenizer';
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -280,4 +281,19 @@ async function* openAICallToAsyncIterator(
       eventEmitter.once('got-line', resolve);
     });
   }
+}
+
+/**
+ * This only works for OpenAI (?)
+ */
+export function logitBiasOfTokens(tokens: Record<string, number>) {
+  const tokenizer = new GPT3Tokenizer.default({ type: 'gpt3' });
+  return Object.fromEntries(Object.entries(tokens)
+    .map(([token, bias]) => {
+      const encoded = tokenizer.encode(token) as { bpe: number[]; text: string[] };
+      if (encoded.bpe.length > 1) {
+        throw new Error(`You can only set logit_bias for a single token, but "${bias}" is ${encoded.bpe.length} tokens.`);
+      }
+      return [encoded.bpe[0], bias];
+    }));
 }

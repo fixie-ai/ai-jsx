@@ -687,6 +687,7 @@ __metadata:
     find-up: "npm:^6.3.0"
     globby: "npm:^13.1.4"
     got: "npm:^12.6.0"
+    gpt3-tokenizer: "npm:^1.1.5"
     graphql: "npm:^16.6.0"
     ink: "npm:^4.2.0"
     ink-syntax-highlight: "npm:^1.0.1"
@@ -1850,6 +1851,13 @@ __metadata:
     get-intrinsic: "npm:^1.1.3"
     is-string: "npm:^1.0.7"
   checksum: b4eb40ff992138350675662bb5a0351553d63bef17fb64c54e2ee9d6434ff3d8ba71d511af90a8f9400cd411c7311604310bd4ead1c101638c660461ea7916ae
+  languageName: node
+  linkType: hard
+
+"array-keyed-map@npm:^2.1.3":
+  version: 2.1.3
+  resolution: "array-keyed-map@npm:2.1.3"
+  checksum: 734c2eb535c620ec734f5e232c0de1e41a55fce6bea3abae0a1a5941c4b22275b95bdedd04d8791fcb93522efe5578e19c894752a10a9c99712d6c61d9f9f84d
   languageName: node
   linkType: hard
 
@@ -3984,6 +3992,15 @@ __metadata:
     p-cancelable: "npm:^3.0.0"
     responselike: "npm:^3.0.0"
   checksum: be216dd251fa5f097ea4369ca97a99ccb0dad8fd4a4559d6cdef61f98379b7a1fe5fa36ca700830e4e51b429cb638bb6e9874863e275386429fa2d70b4e023be
+  languageName: node
+  linkType: hard
+
+"gpt3-tokenizer@npm:^1.1.5":
+  version: 1.1.5
+  resolution: "gpt3-tokenizer@npm:1.1.5"
+  dependencies:
+    array-keyed-map: "npm:^2.1.3"
+  checksum: 71fd09dc20d51830fb9706edfd2ed915c61cc96c6f61e2334101d0cc4676e524caa29d7ea7c7973cb13e1a998dee8f763bcbb085bceeeaa8f8a6c59d45adfcbd
   languageName: node
   linkType: hard
 
