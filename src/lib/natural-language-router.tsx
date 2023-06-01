@@ -1,16 +1,18 @@
 import { LLMx, log } from './index.ts';
 
-export function NaturalLanguageRouter(props: {children: LLMx.Node}) {
+export async function NaturalLanguageRouter(props: {children: LLMx.Node}) {
   const children = Array.isArray(props.children) ? props.children : [props.children];
-  const whenOptions = children
-    .flat(Infinity as 1)
-    .filter(LLMx.isElement)
-    .filter(({tag}) => tag === Route)
-    .map(({props}: {props: LLMx.PropsOfComponent<typeof Route>}) => props.when)
+  const whenOptions = [];
 
-  // This will only work if the Routes are ~immediate children of the NaturalLanguageRouter.
-  // We may want to validate / warn / be robust to that / etc.
-  
+  for await (const stream of LLMx.partialRenderStream(children, el => el.tag === Route)) {
+    const whenOptionsFromThisPart = stream
+      .filter(LLMx.isElement)
+      .filter(({tag}) => tag === Route)
+      .map(({props}: {props: LLMx.PropsOfComponent<typeof Route>}) => props.when)
+    
+      whenOptions.push(...whenOptionsFromThisPart);
+  }
+
   log.warn({whenOptions});  
 
   return children;
