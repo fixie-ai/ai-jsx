@@ -1,6 +1,7 @@
 import * as readline from 'readline/promises';
 import { log } from './index.ts';
 import { v4 as uuidv4 } from 'uuid';
+import { isMemoizedSymbol } from './memoize.tsx';
 
 export type Component<P> = (props: P) => Renderable;
 export type Literal = string | number | null | undefined | boolean;
@@ -57,6 +58,8 @@ export function Fragment({ children }: { children: Node }): Renderable {
 }
 
 export function debug(value: unknown): string {
+  const previouslyMemoizedIds = new Set();
+
   function debugRec(value: unknown, indent: string, context: 'code' | 'children' | 'props'): string {
     if (typeof value === 'string') {
       if (context === 'props' || context === 'code') {
@@ -69,9 +72,11 @@ export function debug(value: unknown): string {
         return `{${value.toString()}}`;
       }
       return value.toString();
-    } if (typeof value === 'boolean' || typeof value === 'undefined') {
+    }
+    if (typeof value === 'boolean' || typeof value === 'undefined') {
       return '';
-    } if (value === null) {
+    }
+    if (value === null) {
       switch (context) {
         case 'code':
           return 'null';
@@ -83,7 +88,18 @@ export function debug(value: unknown): string {
     } else if (isElement(value)) {
       const tag = value.tag === Fragment ? '' : value.tag.name;
       const childIndent = `${indent}  `;
-      const children = debugRec(value.props.children, childIndent, 'children');
+
+      const isMemoized = isMemoizedSymbol in value.props;
+      const memoizedIsPreviouslyRenderedToDebugOutput = previouslyMemoizedIds.has(value.props.id);
+
+      if (isMemoized && !memoizedIsPreviouslyRenderedToDebugOutput) {
+        previouslyMemoizedIds.add(value.props.id);
+      }
+
+      let children = '';
+      if (!isMemoized || !memoizedIsPreviouslyRenderedToDebugOutput) {
+        children = debugRec(value.props.children, childIndent, 'children');
+      }
 
       const results = [];
       if (value.props) {
