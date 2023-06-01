@@ -28,7 +28,7 @@
   },
   "type": "module",
   "scripts": {
-    "demo:debate-imperative": "tsx src/examples/debate-imperative",
+    "demo:debate-imperative": "tsx src/examples/debate-imperative.tsx",
     "demo:inline-chat": "tsx src/examples/inline-chat.tsx",
     "demo:inline-completion": "tsx src/examples/inline-completion.tsx",
     "demo:inspector": "tsx src/examples/inspector.tsx",
