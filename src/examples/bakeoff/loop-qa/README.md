@@ -20,6 +20,7 @@ $ yarn tsx src/examples/bakeoff/loop-qa/ai-jsx-imperative.ts
 ```
 
 ## Caveats
+
 I implemented the docs part of AI.JSX in [`docs.ts`](../../../lib/docs.ts). It's mostly wrappers around LangChain, with a nicer API. I also created [`docs-components.ts`](../../../lib/docs-components.tsx).
 
 In the steady state, I expect to see a combination of API shims allowing LangChain interop, as well as AI.JSX native implementations.
@@ -29,6 +30,7 @@ This is a toy example, and as such, my `docs.ts` is also fairly toy-like. In som
 ## Analysis
 
 ### Output
+
 The AI.JSX sample streams the three prompt responses in parallel, with no manual effort on the part of the user. I think that's pretty neat.
 
 The AI.JSX imperative sample, and the LangChain sample, do not stream. I don't know how much effort would be involved in getting LangChain to stream.
@@ -61,9 +63,9 @@ LangChain's logs are verbose yet also manage to omit key info like what model is
 
 AI.JSX's logs are saved to `llmx.log`, and are viewable with `yarn view-logs`. (The subcommand there has affordances for filtering logs as well.) It includes info like what models are being called, and allows you to observe the input/output of the docs chunking process.
 
-
 ### Code Readability: AI.JSX vs. LangChain
-I think the AI.JSX is substantially more readable than LC. Abstraction derives power from encapsulation; I think LC chose the wrong things to encapsulate. 
+
+I think the AI.JSX is substantially more readable than LC. Abstraction derives power from encapsulation; I think LC chose the wrong things to encapsulate.
 
 In this example, with AI.JSX, the caller has easy and obvious control over how the docs are formatted, for instance (in the `ShowDoc` component). This is made very straightforward with JSX's component affordances. By contrast, if I wanted to change how LC was formatting my docs, it's not obvious where to look, let alone how to make the change I want.
 
@@ -85,4 +87,3 @@ The AI.JSX implementation is also more type-safe; when you construct a `document
 shape of your metadata, whereas LangChain downscales it to a very vague type.
 
 This comparison increases my conviction that chains are the wrong abstraction; I think they hide more than they help.
-
