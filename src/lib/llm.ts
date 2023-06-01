@@ -7,6 +7,7 @@ export type Literal = string | number | null | undefined | boolean;
 export interface Element<P extends {}> {
   tag: Component<P>;
   props: P;
+  render: () => Renderable;
 }
 export type Node = Element<any> | Literal | Node[];
 
@@ -40,6 +41,7 @@ export function createElement(tag: any, props: any, ...children: any[]): Element
   const result = {
     tag,
     props: propsToPass,
+    render: () => tag(propsToPass),
   };
   Object.freeze(propsToPass);
   Object.freeze(result);
@@ -129,7 +131,13 @@ export function debug(value: unknown, indent: string = '', context: 'code' | 'ch
       return `{${JSON.stringify(value)}}`;
     }
     return JSON.stringify(value);
-  } else if (typeof value === 'function' || typeof value === 'symbol') {
+  } else if (typeof value === 'function') {
+    const toRender = value.name === '' ? value.toString() : value.name;
+    if (context === 'props' || context === 'children') {
+      return `{${toRender}}`;
+    }
+    return toRender;
+  } else if (typeof value === 'symbol') {
     if (context === 'props' || context === 'children') {
       return `{${value.toString()}}`;
     }
@@ -209,7 +217,7 @@ export async function* partialRenderStream(
     if (shouldStop(renderable)) {
       yield [renderable];
     } else {
-      yield* partialRenderStream(renderable.tag(renderable.props), shouldStop);
+      yield* partialRenderStream(renderable.render(), shouldStop);
     }
   } else if (renderable instanceof Promise) {
     yield* await renderable.then((x) => partialRenderStream(x, shouldStop));
