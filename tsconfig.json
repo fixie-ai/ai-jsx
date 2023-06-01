@@ -1,12 +1,12 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
-  "include": ["src/**/*"],
+  "include": ["src/**/*", ".eslintrc.cjs"],
   "compilerOptions": {
     "jsx": "react",
     "jsxFactory": "LLMx.createElement",
     "jsxFragmentFactory": "LLMx.Fragment",
     "moduleResolution": "node16",
     "allowImportingTsExtensions": true,
-    "noEmit": true,
+    "noEmit": true
   }
 }
