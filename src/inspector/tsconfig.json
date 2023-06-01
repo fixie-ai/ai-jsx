@@ -2,6 +2,10 @@
   "extends": "../../tsconfig-base.json",
   "include": ["**/*"],
   "compilerOptions": {
+    "allowImportingTsExtensions": false,
+    "noEmit": false,
+    "declaration": true,
+    "outDir": "../../dist",
     "jsx": "react",
 
     // I'm not sure why, but this is necessary to avoid this error:

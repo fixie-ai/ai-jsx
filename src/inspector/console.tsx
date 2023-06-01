@@ -17,4 +17,7 @@ const Counter = () => {
   return <Text color="green">{counter} tests passed</Text>;
 };
 
-render(<Counter />);
+export function showInspector(content: any) {
+	console.log(content);
+  render(<Counter />);
+}
