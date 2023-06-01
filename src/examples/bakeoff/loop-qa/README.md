@@ -63,7 +63,9 @@ AI.JSX's logs are saved to `llmx.log`, and are viewable with `yarn view-logs`. (
 
 
 ### Code Readability: AI.JSX vs. LangChain
+I think the AI.JSX is substantially more readable than LC. Abstraction derives power from encapsulation; I think LC chose the wrong things to encapsulate. 
 
+In this example, with AI.JSX, the caller has easy and obvious control over how the docs are formatted, for instance (in the `ShowDoc` component). This is made very straightforward with JSX's component affordances. By contrast, if I wanted to change how LC was formatting my docs, it's not obvious where to look, let alone how to make the change I want.
 
 ### Code Readability: Imperative AI.JSX vs. LangChain
 
