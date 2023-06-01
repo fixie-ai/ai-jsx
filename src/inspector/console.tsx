@@ -8,54 +8,31 @@ const { useList } = reactUse;
 
 function Inspector({ componentToInspect }: { componentToInspect: any }) {
   const [steps, { push }] = useList([] as string[]);
-  // const [frameIndex, setFrameIndex] = useState(0);
+  const [frameIndex, setFrameIndex] = useState(0);
 
-  // useEffect(() => {
-  //   async function getAllFrames() {
-  //     // while (true) {
-  //     //   yield debug(<DebugTree {...props}>{current}</DebugTree>);
+  useEffect(() => {
+    async function getAllFrames() {
+      for await (const page of LLMx.renderStream(componentToInspect)) {
+        push(page);
+      }
+      push(LLMx.debug(<DebugTree>{componentToInspect}</DebugTree>));
+    }
+    getAllFrames();
+  }, [componentToInspect]);
 
-  //     //   let elementToRender: LLMx.Element<any> | null = null;
-  //     //   const shouldStop = (element: LLMx.Element<any>): boolean => {
-  //     //     if (elementToRender === null) {
-  //     //       elementToRender = element;
-  //     //     }
-  //     //     return element !== elementToRender;
-  //     //   };
+  useInput((_input, key) => {
+    if (key.return) {
+      setFrameIndex((prevIndex) => Math.min(steps.length - 1, prevIndex + 1));
+    }
+  });
 
-  //     //   // Use a closure to prevent the type from being incorrectly narrowed.
-  //     //   // https://github.com/microsoft/TypeScript/issues/9998#issuecomment-235963457
-  //     //   const didRenderSomething = () => elementToRender !== null;
-
-  //     //   for await (const frame of LLMx.partialRenderStream(current, shouldStop)) {
-  //     //     current = frame;
-  //     //     yield LLMx.debug(<DebugTree {...props}>{current}</DebugTree>);
-  //     //   }
-
-  //     //   if (!didRenderSomething()) {
-  //     //     break;
-  //     //   }
-  //     // }
-
-  //     push(LLMx.debug(<DebugTree>{componentToInspect}</DebugTree>))
-  //   }
-  //   getAllFrames();
-  // }, [componentToInspect]);
-
-  // useInput((_input, key) => {
-  //   if (key.return) {
-  //     setFrameIndex(prevIndex => Math.min(steps.length - 1, prevIndex + 1));
-  //   }
-  // });
-
-  // return <Text react color="green">{steps[frameIndex]} {frameIndex}</Text>;
   return (
     <Text
       // @ts-expect-error
       react
       color="green"
     >
-      {LLMx.debug(<DebugTree>{componentToInspect}</DebugTree>)}
+      {steps[frameIndex]} {frameIndex}
     </Text>
   );
 }

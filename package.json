@@ -31,7 +31,7 @@
     "demo:debate-imperative": "tsx src/examples/debate-imperative",
     "demo:inline-chat": "tsx src/examples/inline-chat.tsx",
     "demo:inline-completion": "tsx src/examples/inline-completion.tsx",
-    "demo:inspector": "rm -rf dist; tsc -p src/inspector/tsconfig.json; tsx src/examples/inspector.tsx",
+    "demo:inspector": "tsx src/examples/inspector.tsx",
     "demo:debug": "tsx src/examples/debug.tsx",
     "view-logs": "cat llmx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
