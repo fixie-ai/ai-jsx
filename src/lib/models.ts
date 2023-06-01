@@ -1,4 +1,10 @@
-import { Configuration, CreateChatCompletionResponse, CreateCompletionResponse, OpenAIApi } from 'openai';
+import {
+  Configuration,
+  CreateChatCompletionResponse,
+  CreateCompletionResponse,
+  CreateEmbeddingRequest,
+  OpenAIApi,
+} from 'openai';
 import log from './log';
 import { Merge, ValueOf } from 'type-fest';
 import EventEmitter from 'node:events';
@@ -46,14 +52,29 @@ export const defaultChatParams = {
   },
 };
 
+export type OpenAIEmbeddingModels = 'text-embedding-ada-002' | 'text-search-ada-doc-001';
+export type EmbeddingParams = Merge<
+  CreateEmbeddingRequest,
+  {
+    model: OpenAIEmbeddingModels;
+  }
+>;
+
 /**
  * Idea: set maxTokens to be whatever the prompt leaves room for.
+ *
+ * If you set maxTokens to be too high, then you'll get a 400 error. The framework should explicitly tell the user
+ * this might be what's happening.
  */
 
 export interface ModelCallOptions {
   callName?: string;
 }
 export type ModelResponse = CreateChatCompletionResponse | CreateCompletionResponse;
+
+export function openAIEmbed(params: EmbeddingParams) {
+  return log.logPhase({ phase: 'embed', params }, () => openai.createEmbedding(params));
+}
 
 // The return type annotation here seems like it should be unnecessary.
 export function openAIChat(

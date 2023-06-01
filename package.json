@@ -11,15 +11,18 @@
     "@types/uuid": "^9",
     "@typescript-eslint/eslint-plugin": "^5.59.6",
     "@typescript-eslint/parser": "^5.59.6",
+    "cheerio": "^1.0.0-rc.12",
     "eslint": "^8.40.0",
     "eslint-config-nth": "^2.0.1",
+    "globby": "^13.1.4",
     "node-fetch": "^3.3.1",
     "pino-pretty": "^10.0.0",
     "prettier": "^2.8.8",
     "ts-node": "^10.9.1",
     "tsx": "^3.12.7",
     "type-fest": "^3.10.0",
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.4",
+    "write-json-file": "^5.0.0"
   },
   "type": "module",
   "scripts": {
@@ -40,7 +43,7 @@
     "singleQuote": true
   },
   "dependencies": {
-    "@nick.heiner/wandb-fork": "0.5.2-0",
+    "@nick.heiner/wandb-fork": "0.5.2-5",
     "find-up": "^6.3.0",
     "got": "^12.6.0",
     "graphql": "^16.6.0",
