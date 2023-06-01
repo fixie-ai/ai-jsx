@@ -1,7 +1,31 @@
 import { showInspector } from '../inspector/console.tsx';
 import { LLMx } from '../lib/index.ts';
-import { SystemMessage } from '../lib/completion-components.tsx';
+import { SystemMessage, Completion } from '../lib/completion-components.tsx';
 import { DebugTree } from '../lib/debug.tsx';
+import { Inline, Scope } from '../lib/inline.tsx';
+
+function CharacterGenerator() {
+  const inlineCompletion = (
+    <Inline>
+      {(prompt) => (
+        <Completion stop={['"']} temperature={1.0}>
+          {prompt}
+        </Completion>
+      )}
+    </Inline>
+  );
+
+  return (
+    <Scope>
+      The following is a character profile for an RPG game in JSON format:{'\n'}
+      {'{'}
+      {'\n  '}"class": "{inlineCompletion}",
+      {'\n  '}"name": "{inlineCompletion}",
+      {'\n  '}"mantra": "{inlineCompletion}"{'\n'}
+      {'}'}
+    </Scope>
+  );
+}
 
 // A component that demonstrates a dynamically expanding tree with different types of props.
 function SystemMessages(props: {
@@ -27,11 +51,12 @@ function SystemMessages(props: {
 
 function App() {
   return (
-    <DebugTree>
+    <>
       <SystemMessages array={[1, 2, ['test'], <>Test</>]} number={1} fn={(x: number) => x + 1} suffix={'\n'}>
         {['You are helpful.', 'You do not use jargon.', 'You are polite.']}
       </SystemMessages>
-    </DebugTree>
+      <CharacterGenerator />
+    </>
   );
 }
 
