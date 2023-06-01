@@ -3,9 +3,8 @@ import { globbySync } from 'globby';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadJsonFile } from 'load-json-file';
-import { Docs, Models } from '../../../lib/index.js';
+import { Docs, Models } from '../../../lib';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
-import { DefaultInMemoryVectorStore } from '../../../lib/docs.js';
 import { Article } from './load-articles.mjs';
 
 // @ts-expect-error Ignore the TS error because this file will not be built for CommonJS.
@@ -23,7 +22,7 @@ const docs = await Promise.all(
 );
 
 const chunkedDocs = await Docs.defaultChunkMany(docs);
-const vectorStore = await DefaultInMemoryVectorStore.fromDocuments(chunkedDocs, new OpenAIEmbeddings());
+const vectorStore = await Docs.DefaultInMemoryVectorStore.fromDocuments(chunkedDocs, new OpenAIEmbeddings());
 
 async function main() {
   async function askAndAnswer(query: string) {

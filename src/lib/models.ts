@@ -62,7 +62,7 @@ export type EmbeddingParams = Merge<
 
 /**
  * Idea: set maxTokens to be whatever the prompt leaves room for.
- * 
+ *
  * If you set maxTokens to be too high, then you'll get a 400 error. The framework should explicitly tell the user
  * this might be what's happening.
  */

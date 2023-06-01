@@ -59,9 +59,9 @@ export interface ModelPhaseStartLog extends BaseAIJSXLog, PhaseStart {
 export type ModelPhaseStartLogInputs = Pick<ModelPhaseStartLog, 'callName' | 'params'>;
 
 export type ModelPhaseEndLog = Omit<ModelPhaseStartLog, 'start'> &
-    PhaseEnd & {
-      modelResponse: ModelResponse;
-    };
+  PhaseEnd & {
+    modelResponse: ModelResponse;
+  };
 
 export type AIJSXLog = ModelPhaseStartLog | ModelPhaseEndLog | BaseAIJSXLog | PinoMessage;
 
@@ -142,11 +142,11 @@ export class Log {
           /**
            * The event emitter is shared between all instances, so if you call the pub/sub methods on a child, you'll
            * see all events globally, not just those pertaining to the child.
-           * 
+           *
            * This might be counter-intuitive in some specific cases, but I think most of the time, it'll do what people
-           * want by default. Also, if we wanted to implement child-specific events, we'd need event-bubbling logic / 
+           * want by default. Also, if we wanted to implement child-specific events, we'd need event-bubbling logic /
            * to think more about what those semantics look like, which I don't want to do.
-           * 
+           *
            * The point of creating a child logger is a curry for metadata. It's not a way to get more focused events.
            */
 
