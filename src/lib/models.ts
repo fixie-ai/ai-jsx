@@ -288,12 +288,15 @@ async function* openAICallToAsyncIterator(
  */
 export function logitBiasOfTokens(tokens: Record<string, number>) {
   const tokenizer = new GPT3Tokenizer.default({ type: 'gpt3' });
-  return Object.fromEntries(Object.entries(tokens)
-    .map(([token, bias]) => {
+  return Object.fromEntries(
+    Object.entries(tokens).map(([token, bias]) => {
       const encoded = tokenizer.encode(token) as { bpe: number[]; text: string[] };
       if (encoded.bpe.length > 1) {
-        throw new Error(`You can only set logit_bias for a single token, but "${bias}" is ${encoded.bpe.length} tokens.`);
+        throw new Error(
+          `You can only set logit_bias for a single token, but "${bias}" is ${encoded.bpe.length} tokens.`
+        );
       }
       return [encoded.bpe[0], bias];
-    }));
+    })
+  );
 }
