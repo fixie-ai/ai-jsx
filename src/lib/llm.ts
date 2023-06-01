@@ -152,38 +152,57 @@ export async function* partialRenderStream(
   } else if (typeof renderable === 'undefined' || typeof renderable === 'boolean' || renderable === null) {
     yield [];
   } else if (Array.isArray(renderable)) {
-    const generators = renderable.map((r) => partialRenderStream(r, shouldStop));
-    const currentValues: PartiallyRendered[][] = generators.map(() => []);
-    const finished = generators.map(() => false);
-    const nextPromise = (g: AsyncGenerator) =>
-      g.next().then((x) => [g, x] as [AsyncGenerator<PartiallyRendered[]>, IteratorResult<PartiallyRendered[]>]);
-    const promises = generators.map(nextPromise);
+    interface InProgressRender {
+      generator: AsyncGenerator<PartiallyRendered[]>;
+      currentValue: PartiallyRendered[];
 
-    const processCompletedPromise = ([generator, value]: [
-      AsyncGenerator<PartiallyRendered[]>,
-      IteratorResult<PartiallyRendered[]>
-    ]) => {
-      const index = generators.indexOf(generator);
-      if (value.done) {
-        finished[index] = true;
-        promises[index] = new Promise(() => false);
-        return false;
+      // Resolves to a function that applies the update to the in-progress render.
+      // Will be null when the generator is exhausted.
+      currentPromise: Promise<() => boolean> | null;
+    }
+
+    // Mutates an InProgressRender with an iterator result yielded from its generator.
+    const applyUpdate = (result: IteratorResult<PartiallyRendered[]>, render: InProgressRender): boolean => {
+      if (result.done) {
+        render.currentPromise = null;
       } else {
-        currentValues[index] = value.value;
-        promises[index] = nextPromise(generator);
-        return true;
+        render.currentValue = result.value;
+        render.currentPromise = render.generator.next().then((nextResult) => () => applyUpdate(nextResult, render));
       }
+
+      return render.currentPromise !== null;
     };
 
-    // Wait for each sub-generator to yield at least once.
-    const firstRound = await Promise.all(promises);
-    firstRound.forEach(processCompletedPromise);
-    yield currentValues.flat();
+    const inProgressRenders = renderable.map((r) => {
+      const generator = partialRenderStream(r, shouldStop);
+      const inProgressRender: InProgressRender = {
+        generator,
+        currentValue: [],
+        currentPromise: generator.next().then((result) => () => applyUpdate(result, inProgressRender)),
+      };
 
-    while (finished.includes(false)) {
-      if (processCompletedPromise(await Promise.race(promises))) {
-        // There's a new value to render.
-        yield currentValues.flat();
+      return inProgressRender;
+    });
+
+    const currentValue = () => inProgressRenders.flatMap((r) => r.currentValue);
+    const remainingPromises = () => inProgressRenders.flatMap((r) => (r.currentPromise ? [r.currentPromise] : []));
+
+    // Wait for each sub-generator to yield once.
+    const pendingUpdates = await Promise.all(remainingPromises());
+    pendingUpdates.forEach((apply) => apply());
+
+    yield currentValue();
+
+    while (true) {
+      const remaining = remainingPromises();
+      if (remaining.length === 0) {
+        break;
+      }
+
+      // Each time a promise resolves with a new value, yield again.
+      const nextApply = await Promise.race(remaining);
+      if (nextApply()) {
+        yield currentValue();
       }
     }
   } else if (isElement(renderable)) {
