@@ -1,9 +1,11 @@
+/** @jsx React.createElement */
+
 /**
  * Adapted from https://github.com/vadimdemedes/ink-spinner
  */
 
-import { LLMx } from '../lib/index.ts';
-import { useState, useEffect } from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import React, { useState, useEffect } from 'react';
 import { Text } from 'ink';
 import spinners, { SpinnerName } from 'cli-spinners';
 
@@ -38,14 +40,7 @@ function Spinner({ type = 'dots' }: Props) {
     };
   }, [spinner]);
 
-  return (
-    <Text
-      // @ts-expect-error
-      react
-    >
-      {spinner.frames[frame]}
-    </Text>
-  );
+  return <Text>{spinner.frames[frame]}</Text>;
 }
 
 export default Spinner;

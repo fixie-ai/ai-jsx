@@ -1,17 +1,20 @@
+/** @jsx React.createElement */
+
 import { LLMx } from '../lib/index.ts';
-import { useState, useEffect } from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import React, { useState, useEffect } from 'react';
 import reactUse from 'react-use';
 import { Box, render, Text, useInput } from 'ink';
-import { DebugTree } from '../lib/debug.tsx';
 import SyntaxHighlight from './syntax-highlight.tsx';
 import { memo } from '../lib/memoize.tsx';
 import Spinner from './spinner.tsx';
+import renderDebugTreeStream from './render-debug-tree-stream.tsx';
 
 const { useList } = reactUse;
 
 function Inspector({ componentToInspect }: { componentToInspect: LLMx.Node }) {
   const [debugTreeSteps, { push: pushDebugTreeStep }] = useList([] as string[]);
-  const [debugTreeFrameIndex, setDebugTreeFrameIndex] = useState(0);
+  const [debugTreeFrameIndex, setDebugTreeFrameIndex] = useState<number | null>(null);
   const [debugTreeStreamIsDone, setDebugTreeStreamIsDone] = useState(false);
 
   const [renderedContent, setRenderedContent] = useState('');
@@ -21,7 +24,7 @@ function Inspector({ componentToInspect }: { componentToInspect: LLMx.Node }) {
   useEffect(() => {
     async function getAllFrames() {
       // This results in some duplicate pages.
-      for await (const page of LLMx.renderStream(<DebugTree>{memoized}</DebugTree>)) {
+      for await (const page of renderDebugTreeStream(memoized)) {
         pushDebugTreeStep(page);
       }
       setDebugTreeStreamIsDone(true);
@@ -37,98 +40,45 @@ function Inspector({ componentToInspect }: { componentToInspect: LLMx.Node }) {
 
   useInput((_input, key) => {
     if (key.rightArrow) {
-      setDebugTreeFrameIndex((prevIndex) => Math.min(debugTreeSteps.length - 1, prevIndex + 1));
+      setDebugTreeFrameIndex((prevIndex) => Math.min(debugTreeSteps.length - 1, (prevIndex ?? 0) + 1));
     }
     if (key.leftArrow) {
-      setDebugTreeFrameIndex((prevIndex) => Math.max(0, prevIndex - 1));
+      setDebugTreeFrameIndex((prevIndex) => Math.max(0, (prevIndex ?? 0) - 1));
     }
   });
 
+  const debugFrameIndexToUse = debugTreeFrameIndex === null ? debugTreeSteps.length - 1 : debugTreeFrameIndex;
+
   return (
-    <LLMx.Fragment
-      // @ts-expect-error
-      react
-    >
-      <Box
-        flexDirection="row"
-        // @ts-expect-error
-        react
-      >
-        <Box
-          flexDirection="column"
-          // @ts-expect-error
-          react
-        >
-          <Text
-            // @ts-expect-error
-            react
-            bold
-            underline
-          >
+    <>
+      <Box flexDirection="row">
+        <Box flexDirection="column">
+          <Text bold underline>
             Live-streaming output
-            {!debugTreeStreamIsDone && (
-              <Spinner
-                // @ts-expect-error
-                react
-              />
-            )}
+            {!debugTreeStreamIsDone && <Spinner />}
           </Text>
-          <Text
-            // @ts-expect-error
-            react
-          >
-            {renderedContent}
-          </Text>
+          <Text>{renderedContent}</Text>
         </Box>
-        <Box
-          flexDirection="column"
-          // @ts-expect-error
-          react
-          paddingRight={2}
-        >
-          <Text
-            // @ts-expect-error
-            react
-            bold
-            underline
-          >
+        <Box flexDirection="column" paddingRight={2}>
+          <Text bold underline>
             Tree Inspector
           </Text>
-          <Text
-            // @ts-expect-error
-            react
-            color="grey"
-          >
-            Viewing frame {debugTreeFrameIndex}/{Math.max(0, debugTreeSteps.length - 1)}
+          <Text color="grey">
+            Viewing frame {debugFrameIndexToUse}/{Math.max(0, debugTreeSteps.length - 1)}
             {debugTreeStreamIsDone ? '' : '+'}
           </Text>
-          <Text
-            // @ts-expect-error
-            react
-            color="green"
-          >
+          <Text color="green">
             {/* This doesn't handle JSX well, but it's better than nothing. */}
-            <SyntaxHighlight
-              // @ts-expect-error
-              react
-              code={debugTreeSteps[debugTreeFrameIndex] ?? ''}
-              language="javascript"
-            ></SyntaxHighlight>
+            <SyntaxHighlight code={debugTreeSteps[debugFrameIndexToUse] ?? ''} language="javascript"></SyntaxHighlight>
           </Text>
         </Box>
       </Box>
-    </LLMx.Fragment>
+    </>
   );
 }
 
 export function showInspector(componentToInspect: LLMx.Node) {
-  render(
-    <Inspector
-      // @ts-expect-error
-      react
-      componentToInspect={componentToInspect}
-    />
-  );
+  render(<Inspector componentToInspect={componentToInspect} />);
 }
 
 /**
