@@ -15,16 +15,12 @@ Then, in each of LangChain and AI.JSX, we use local ETL and an in-memory vector 
 $ yarn tsx src/examples/bakeoff/loop-qa/load-articles.mts
 
 $ yarn tsx src/examples/bakeoff/loop-qa/langchain.mts
-$ yarn tsx src/examples/bakeoff/loop-qa/ai-jsx-imperative.mts
+$ yarn tsx src/examples/bakeoff/loop-qa/ai-jsx.tsx
+$ yarn tsx src/examples/bakeoff/loop-qa/ai-jsx-imperative.ts
 ```
 
 ## Caveats
-
-This example **does not use JSX** due to other work that's in-flight; I'll update this later with the JSX version. However, we still exercise the non-JSX parts of the framework.
-
-(Even once that other work lands, I still think it's valuable to see the JSX vs. imperative side-by-side so we can assess how much value we're getting from the JSX.)
-
-I implemented the docs part of AI.JSX in [`docs.ts`](../../../lib/docs.ts). It's mostly wrappers around LangChain, with a nicer API.
+I implemented the docs part of AI.JSX in [`docs.ts`](../../../lib/docs.ts). It's mostly wrappers around LangChain, with a nicer API. I also created [`docs-components.ts`](../../../lib/docs-components.tsx).
 
 In the steady state, I expect to see a combination of API shims allowing LangChain interop, as well as AI.JSX native implementations.
 
@@ -32,24 +28,10 @@ This is a toy example, and as such, my `docs.ts` is also fairly toy-like. In som
 
 ## Analysis
 
-### Code Readability
+### Output
+The AI.JSX sample streams the three prompt responses in parallel, with no manual effort on the part of the user. I think that's pretty neat.
 
-I believe the AI.JSX is more readable. Looking at the code, it's obvious:
-
-- What model is being called
-- What params/prompts that model is being called with
-
-In the LangChain code, I looked in the following places, but couldn't find the same info:
-
-- The user-land code
-- A few LangChain source files
-- The LangChain logging
-- The wandb logging
-
-The AI.JSX implementation is also more type-safe; when you construct a `document`, AI.JSX correctly carries through the
-shape of your metadata, whereas LangChain downscales it to a very vague type.
-
-This comparison increases my conviction that chains are the wrong abstraction; I think they hide more than they help.
+The AI.JSX imperative sample, and the LangChain sample, do not stream. I don't know how much effort would be involved in getting LangChain to stream.
 
 ### Dev Experience
 
@@ -78,3 +60,27 @@ This increases my conviction that LangChain is trying to reinvent the wrong thin
 LangChain's logs are verbose yet also manage to omit key info like what model is being called. I also don't know how to turn them off.
 
 AI.JSX's logs are saved to `llmx.log`, and are viewable with `yarn view-logs`. (The subcommand there has affordances for filtering logs as well.) It includes info like what models are being called, and allows you to observe the input/output of the docs chunking process.
+
+
+### Code Readability: AI.JSX vs. LangChain
+
+
+### Code Readability: Imperative AI.JSX vs. LangChain
+
+I believe the imperative AI.JSX is more readable than LC. Looking at the code, it's obvious:
+
+- What model is being called
+- What params/prompts that model is being called with
+
+In the LangChain code, I looked in the following places, but couldn't find the same info:
+
+- The user-land code
+- A few LangChain source files
+- The LangChain logging
+- The wandb logging
+
+The AI.JSX implementation is also more type-safe; when you construct a `document`, AI.JSX correctly carries through the
+shape of your metadata, whereas LangChain downscales it to a very vague type.
+
+This comparison increases my conviction that chains are the wrong abstraction; I think they hide more than they help.
+
