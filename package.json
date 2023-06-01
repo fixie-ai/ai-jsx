@@ -28,17 +28,17 @@
   },
   "type": "module",
   "scripts": {
-    "demo:debate-imperative": "tsx --tsconfig src/tsconfig.json  src/examples/debate-imperative",
-    "demo:inline-chat": "tsx --tsconfig src/tsconfig.json  src/examples/inline-chat.tsx",
-    "demo:inline-completion": "tsx --tsconfig src/tsconfig.json  src/examples/inline-completion.tsx",
-    "demo:inspector": "rm -rf dist; tsc -p src/inspector/tsconfig.json; tsx --tsconfig src/tsconfig.json src/examples/inspector.tsx",
-    "demo:debug": "tsx --tsconfig src/tsconfig.json src/examples/debug.tsx",
+    "demo:debate-imperative": "tsx src/examples/debate-imperative",
+    "demo:inline-chat": "tsx src/examples/inline-chat.tsx",
+    "demo:inline-completion": "tsx src/examples/inline-completion.tsx",
+    "demo:inspector": "rm -rf dist; tsc -p src/inspector/tsconfig.json; tsx src/examples/inspector.tsx",
+    "demo:debug": "tsx src/examples/debug.tsx",
     "view-logs": "cat llmx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "typecheck": "tsc -p src/tsconfig.json && tsc -p src/inspector/tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json",
     "test": "yarn run format:check && yarn run lint && yarn run typecheck"
   },
   "volta": {
