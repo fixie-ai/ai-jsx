@@ -1,6 +1,6 @@
-import { LLMx } from '../lib';
-import { Renderable } from './llm';
-import { memo } from './memoize';
+import { LLMx } from '../lib/index.ts';
+import { Renderable } from './llm.ts';
+import { memo } from './memoize.ts';
 
 export function Scope(props: { children: LLMx.Node }) {
   const children = Array.isArray(props.children) ? props.children : [props.children];

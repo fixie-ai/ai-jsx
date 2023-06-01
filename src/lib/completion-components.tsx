@@ -1,5 +1,5 @@
-import { openAIChat } from '../lib/models';
-import { LLMx, Models } from '../lib';
+import { openAIChat } from '../lib/models.ts';
+import { LLMx, Models } from '../lib/index.ts';
 import { ChatCompletionRequestMessage } from 'openai';
 
 export async function* Completion(props: {

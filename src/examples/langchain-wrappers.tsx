@@ -1,5 +1,5 @@
 import { IMSDBLoader } from 'langchain/document_loaders/web/imsdb';
-import { LangChainWrapper, log } from '../lib';
+import { LangChainWrapper, log } from '../lib/index.ts';
 import { CharacterTextSplitter } from 'langchain/text_splitter';
 const loader = new IMSDBLoader('https://imsdb.com/scripts/BlacKkKlansman.html');
 const obserableLoader = new LangChainWrapper.ObservableLangChainDocumentLoader(loader, log);

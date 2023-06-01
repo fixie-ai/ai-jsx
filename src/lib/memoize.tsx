@@ -1,5 +1,5 @@
-import { LLMx } from '../lib';
-import { Renderable } from './llm';
+import { LLMx } from '../lib/index.ts';
+import { Renderable } from './llm.ts';
 
 let memoizedId = 0;
 const isMemoizedSymbol = Symbol('isMemoized');

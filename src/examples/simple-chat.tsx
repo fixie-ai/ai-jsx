@@ -1,5 +1,5 @@
-import { LLMx } from '../lib';
-import { ChatCompletion, SystemMessage, UserMessage } from '../lib/completion-components';
+import { LLMx } from '../lib/index.ts';
+import { ChatCompletion, SystemMessage, UserMessage } from '../lib/completion-components.tsx';
 
 function App() {
   return (

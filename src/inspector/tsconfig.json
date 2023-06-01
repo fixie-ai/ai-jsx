@@ -1,21 +1,21 @@
-{
-  "extends": "../../tsconfig-base.json",
-  "include": ["**/*"],
-  "compilerOptions": {
-    "allowImportingTsExtensions": false,
-    "noEmit": false,
-    "declaration": true,
-    "outDir": "../../dist",
-    "jsx": "react",
+// {
+//   "extends": "../../tsconfig-base.json",
+//   "include": ["**/*"],
+//   "compilerOptions": {
+//     "allowImportingTsExtensions": false,
+//     "noEmit": false,
+//     "declaration": true,
+//     "outDir": "../../dist",
+//     "jsx": "react",
 
-    // I'm not sure why, but this is necessary to avoid this error:
-    //  TS2307: Cannot find module 'ink' or its corresponding type declarations.
-    "moduleResolution": "node16",
+//     // I'm not sure why, but this is necessary to avoid this error:
+//     //  TS2307: Cannot find module 'ink' or its corresponding type declarations.
+//     "moduleResolution": "node16",
 
-    // Will we eventually want this?
-    // "lib": [
-    // 	"DOM",
-    // 	"DOM.Iterable",
-    // ],
-  }
-}
+//     // Will we eventually want this?
+//     // "lib": [
+//     // 	"DOM",
+//     // 	"DOM.Iterable",
+//     // ],
+//   }
+// }

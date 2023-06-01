@@ -1,4 +1,4 @@
-import { LLMx } from '../lib';
+import { LLMx } from '../lib/index.ts';
 
 export async function* DebugTree(props: { children: LLMx.Node }) {
   let current = props.children;

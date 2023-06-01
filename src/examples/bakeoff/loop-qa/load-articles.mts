@@ -31,7 +31,6 @@ async function fetchArticles(url: string): Promise<Article[]> {
 
 async function saveArticles(articles: Article[]): Promise<void> {
   for (const article of articles) {
-    // @ts-expect-error Ignore the TS error because this file will not be built for CommonJS.
     const dirname = path.dirname(fileURLToPath(import.meta.url));
 
     const fileName = `${dirname}/data/${article.id}.json`;

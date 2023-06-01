@@ -1,7 +1,7 @@
-import { showInspector } from '../../dist/console';
-import { LLMx } from '../lib';
-import { SystemMessage } from '../lib/completion-components';
-import { DebugTree } from '../lib/debug';
+import { showInspector } from '../inspector/console.tsx';
+import { LLMx } from '../lib/index.ts';
+import { SystemMessage } from '../lib/completion-components.tsx';
+import { DebugTree } from '../lib/debug.tsx';
 
 // A component that demonstrates a dynamically expanding tree with different types of props.
 function SystemMessages(props: {

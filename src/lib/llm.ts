@@ -1,6 +1,7 @@
 import * as readline from 'readline/promises';
-import { log } from './';
+import { log } from './index.ts';
 import { v4 as uuidv4 } from 'uuid';
+import React from 'react';
 
 export type Component<P> = (props: P) => Renderable;
 export type Literal = string | number | null | undefined | boolean;
@@ -33,6 +34,11 @@ export function createElement<T extends Component<P>, P extends { children: C[] 
   ...children: C[]
 ): Element<P>;
 export function createElement(tag: any, props: any, ...children: any[]): Element<any> {
+  if (props && typeof props === 'object' && 'react' in props && props.react === true) {
+    // @ts-expect-error
+    return React.createElement(tag, props, ...children);
+  }
+
   const propsToPass = {
     ...(props ?? {}),
     children: children.length == 1 ? children[0] : children,

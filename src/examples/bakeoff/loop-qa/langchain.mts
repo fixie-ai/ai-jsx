@@ -14,7 +14,6 @@ import { Article } from './load-articles.mjs';
 
 // Initialize the LLM to use to answer the question.
 const model = new OpenAI();
-// @ts-expect-error Ignore the TS error because this file will not be built for CommonJS.
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // This won't work – for each loaded document, the JSONLoader will randomly (?) pick a field

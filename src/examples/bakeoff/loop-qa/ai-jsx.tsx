@@ -3,12 +3,11 @@ import { globbySync } from 'globby';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadJsonFile } from 'load-json-file';
-import { Docs, DocsComponents, LLMx } from '../../../lib';
+import { Docs, DocsComponents, LLMx } from '../../../lib/index.ts';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { Article } from './load-articles.mjs';
 import _ from 'lodash';
 
-// @ts-expect-error Ignore the TS error because this file will not be built for CommonJS.
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const dataFiles = globbySync(path.join(dirname, 'data', '*.json'));
