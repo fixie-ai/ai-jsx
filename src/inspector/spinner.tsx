@@ -5,9 +5,9 @@
 import { LLMx } from '../lib/index.ts';
 import { useState, useEffect } from 'react';
 import { Text } from 'ink';
-import spinners from 'cli-spinners';
-import type { SpinnerName } from 'cli-spinners';
+import spinners, { SpinnerName } from 'cli-spinners';
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type Props = {
   /**
    * Type of a spinner.
@@ -38,7 +38,14 @@ function Spinner({ type = 'dots' }: Props) {
     };
   }, [spinner]);
 
-  return <Text react>{spinner.frames[frame]}</Text>;
+  return (
+    <Text
+      // @ts-expect-error
+      react
+    >
+      {spinner.frames[frame]}
+    </Text>
+  );
 }
 
 export default Spinner;

@@ -1,7 +1,6 @@
 import { showInspector } from '../inspector/console.tsx';
 import { LLMx } from '../lib/index.ts';
 import { SystemMessage, Completion } from '../lib/completion-components.tsx';
-import { DebugTree } from '../lib/debug.tsx';
 import { Inline, Scope } from '../lib/inline.tsx';
 
 function CharacterGenerator() {

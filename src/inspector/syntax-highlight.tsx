@@ -15,11 +15,16 @@ export interface Props {
  * SyntaxHighlight.
  */
 const SyntaxHighlight: React.FC<Props> = ({ code, language, theme }) => {
-  const highlightedCode = React.useMemo(() => {
-    return highlight(code, { language, theme });
-  }, [code, language, theme]);
+  const highlightedCode = React.useMemo(() => highlight(code, { language, theme }), [code, language, theme]);
 
-  return <Text react>{highlightedCode}</Text>;
+  return (
+    <Text
+      // @ts-expect-error
+      react
+    >
+      {highlightedCode}
+    </Text>
+  );
 };
 
 export default SyntaxHighlight;
