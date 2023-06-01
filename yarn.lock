@@ -681,6 +681,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^5.59.6"
     cheerio: "npm:^1.0.0-rc.12"
     cli-highlight: "npm:^2.1.11"
+    cli-spinners: "npm:^2.9.0"
     eslint: "npm:^8.40.0"
     eslint-config-nth: "npm:^2.0.1"
     find-up: "npm:^6.3.0"
@@ -2356,6 +2357,13 @@ __metadata:
   bin:
     highlight: bin/highlight
   checksum: 35323423cb392969a9645112bfb28ace98a9609e68cb7d4b42a4a5d9a77bf84e04e9e20e043020d463702897463e1fcf21b264380f9177ca28f1beba3209720f
+  languageName: node
+  linkType: hard
+
+"cli-spinners@npm:^2.9.0":
+  version: 2.9.0
+  resolution: "cli-spinners@npm:2.9.0"
+  checksum: 24ec427655f8ed6f97bd348f08e4258de44b13402d669ce5909e11f956da18b8da98c9f36ec1a78a215169915ea131e330480c840f0861283d1aab39a1d83b69
   languageName: node
   linkType: hard
 

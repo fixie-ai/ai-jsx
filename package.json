@@ -51,6 +51,7 @@
   "dependencies": {
     "@nick.heiner/wandb-fork": "0.5.2-5",
     "cli-highlight": "^2.1.11",
+    "cli-spinners": "^2.9.0",
     "find-up": "^6.3.0",
     "got": "^12.6.0",
     "graphql": "^16.6.0",
