@@ -1,4 +1,4 @@
-import { showInspector } from '../../dist/inspector/console';
+import { showInspector } from '../../dist/console';
 import { LLMx } from '../lib';
 import { SystemMessage } from '../lib/completion-components';
 import { DebugTree } from '../lib/debug';
