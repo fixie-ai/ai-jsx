@@ -33,6 +33,8 @@
     "demo:inline-completion": "tsx src/examples/inline-completion.tsx",
     "demo:inspector": "tsx src/examples/inspector.tsx",
     "demo:debug": "tsx src/examples/debug.tsx",
+    "demo:zepp": "tsx src/examples/bakeoff/zepp-health/ai-jsx.tsx",
+    "demo:loop": "tsx src/examples/bakeoff/loop-qa/ai-jsx.tsx",
     "view-logs": "cat llmx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
