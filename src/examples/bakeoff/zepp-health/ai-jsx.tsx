@@ -155,10 +155,10 @@ async function ShowAdvice({ query }: { query: string }) {
 }
 
 function generateChartFromTimeSeries(_args: { xLabels: string[]; yValues: number[] }) {
-  return Promise.resolve();
+  return Promise.resolve('https://my-time-series-chart.com/asdfasdf');
 }
 function generateHistogram(_args: { values: number[] }) {
-  return Promise.resolve();
+  return Promise.resolve('https://my-histogram.com/odp');
 }
 
 function ApologizeForBeingUnableToShowThisSummary({ query }: { query: string }) {
@@ -205,7 +205,12 @@ async function ShowDataSummary({ query }: { query: string }) {
         </ChatCompletion>
       </Route>
       <Route when="the user wants to see a histogram or chart of their sleep data">
-        <UseTools tools={tools} query={query} fallback={<ApologizeForBeingUnableToShowThisSummary query={query} />} />
+        <UseTools
+          tools={tools}
+          query={query}
+          fallback={<ApologizeForBeingUnableToShowThisSummary query={query} />}
+          userData={JSON.stringify(userData)}
+        />
       </Route>
       <Route unmatched>
         <ApologizeForBeingUnableToShowThisSummary query={query} />
