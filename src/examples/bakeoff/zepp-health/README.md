@@ -2,11 +2,50 @@
 
 The LangChain version to compare this to is https://github.com/fixie-ai/Zhealth. To figure out what the expected behavior is, I mostly looked at https://github.com/fixie-ai/Zhealth/blob/main/test_zhealth.ipynb.
 
+## Results Comparison
+
+[Question/Answer Sample Sheet](https://docs.google.com/spreadsheets/d/1-4rF56OMsCnOVat9nTYOLhpaWG_MuAGKJG-sPtg_Z1A/edit#gid=1753098382), using the [questions from the LC version](https://github.com/fixie-ai/Zhealth/blob/main/test_zhealth.ipynb), plus some of my own.
+
+The answers from the AI.JSX solution are on par with the answers from the LC solution; each have some mistakes. I think the LC solution's mistakes are worse; they tend to be actual crashes / returning a JSON blob to the user, whereas AI.JSX's mistakes are getting generally getting confused on the router and taking the wrong action in response to the user. (I think this can be fixed within the current paradigm.)
+
+LangChain's response time is from 2-34 seconds, with the average looking to be around 10-20 seconds.
+
+AI.JSX's response time is much better:
+
+| Statistic | Value |
+| --------- | ----- |
+| Count     | 30    |
+| Average   | 2,253 |
+| Min       | 237   |
+| Max       | 6,062 |
+| Variance  | 1,758 |
+
 ## Comparison
 
 Overall, I think the AI.JSX implementation is much easier to implement and understand than the [LangChain implementation](https://github.com/fixie-ai/Zhealth/blob/main/main.py#L125).
 
-TODO: fill the rest of this in. 😀
+The central LangChain abstraction being used is the `STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION` agent. It doesn't really do the right thing by default, so Larry had to manually alter the prompt:
+
+```py
+# override system prompt to change behavior
+import langchain.agents.structured_chat.prompt as lc_prompt
+import system_prompt as my_prompt
+lc_prompt.PREFIX = my_prompt.PREFIX
+lc_prompt.FORMAT_INSTRUCTIONS = my_prompt.FORMAT_INSTRUCTIONS
+lc_prompt.SUFFIX = my_prompt.SUFFIX
+```
+
+The chain type also feels kinda funny. One could imagine organizing agents along the following dimensions:
+* Structured vs unstructured
+* Chat vs completion
+* Zero shot vs few shot
+* React vs not
+
+The `STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION` agent gives us one of the permutations, and if that doesn't work for us, we're out of luck.
+
+Combined, I think these two things indicate that the chain is the wrong abstraction. It's very high level, and if it works perfectly for your usecase, that's great. But the moment you need to change something slightly, there's not a lot of flexibility/modularity. (This reminds me of GWT.)
+
+Conversely, AI.JSX provides a lower-level set of primitives that are more flexible.
 
 ## Specific Features
 
