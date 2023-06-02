@@ -1,3 +1,7 @@
+/**
+ * Run this with `yarn demo:zepp-health`
+ */
+
 import { LLMx, log } from '../../../lib/index.ts';
 import { showInspector } from '../../../inspector/console.tsx';
 import { NaturalLanguageRouter, Route } from '../../../lib/natural-language-router.tsx';
@@ -240,18 +244,6 @@ function ZeppHealth({ query }: { query: string }) {
       </Route>
       <Route unmatched>I can't help with that.</Route>
     </NaturalLanguageRouter>
-  );
-}
-
-function AskAndAnswer({ query }: { query: string }) {
-  return (
-    <>
-      {query}
-      {'\n'}
-      <ZeppHealth query={query} />
-      {'\n'}
-      {'\n'}
-    </>
   );
 }
 

@@ -8,7 +8,8 @@ function GradeAnswer(props: { answer: LLMx.Node; query: LLMx.Node }) {
         You are an expert evaluator of AI systems. You look at pairs of human questions and AI responses, and respond
         with your analysis on whether the answer is good. Respond in the form: Grade: one of A, B, C, D, F\n Reasoning:
         a short explanation of why you gave that grade. The user's question was: {props.query}. The answer will be sent
-        to you next. Do not respond with your own take on how to answer the question. Just evaluate the answer that was already given.
+        to you next. Do not respond with your own take on how to answer the question. Just evaluate the answer that was
+        already given.
       </SystemMessage>
       <UserMessage>{props.answer}</UserMessage>
     </ChatCompletion>
