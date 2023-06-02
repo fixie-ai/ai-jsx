@@ -23,11 +23,16 @@ async function ChooseRoute(props: { choice: LLMx.Node; whenOptions: string[]; ch
   return selectedChildren;
 }
 
+// This is exclusive, but a "select all that apply" could also be interesting.
+// What about prioritization? "Select top n"
+// This could also be used for dynamic context selection.
+// Need more thought around sub-routes.
 export async function NaturalLanguageRouter(props: { children: LLMx.Node; query: string }) {
   // Is memo righteous?
   const children = memo(Array.isArray(props.children) ? props.children : [props.children]);
   const whenOptions = [noMatch];
 
+  // Switch to partialRender, then _.reject the Routers from the PartialRender results.
   for await (const stream of LLMx.partialRenderStream(children, (el) => el.tag === Route)) {
     const whenOptionsFromThisPart = _.compact(
       stream

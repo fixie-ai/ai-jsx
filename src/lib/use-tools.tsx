@@ -18,57 +18,7 @@ const toolChoiceSchema = z.object({
 });
 export type ToolChoice = z.infer<typeof toolChoiceSchema> | null;
 
-// This doesn't fundementally solve the problem of the model returning non-JSON output along with the JSON.
-// function ChooseTools(props: { tools: Record<string, Tool>; query: string, contextData: string }): LLMx.Node {
-//   const toolChoices = Object.entries(props.tools).map(([toolName, tool]) => (
-//     <Route when={`Use ${toolName} to ${tool.description}`}>
-//       <ChatCompletion>
-//         <SystemMessage>
-//           You are an expert tool-using agent. This is the only tool you can use:
-//           Name: {toolName}.
-//           Description: {tool.description}.
-//           Parameters: {JSON.stringify(zodToJsonSchema(tool.parameters))}.
-//           The user's data is: {props.contextData}.
-//           When the user asks a question, use this tool to answer it, using any parts of their data that are relevant.
-//         </SystemMessage>
-//         <UserMessage>{props.query}</UserMessage>
-//       </ChatCompletion>
-//     </Route>
-//   ));
-
-//   toolChoices.push(<Route unmatched>
-//     I'm sorry, but I'm not able to do that.
-//   </Route>);
-
-//   return <NaturalLanguageRouter query={props.query}>{toolChoices}</NaturalLanguageRouter>;
-// }
-
 function ChooseTools(props: { tools: Record<string, Tool>; query: string; userData: string }): LLMx.Node {
-  // const inlineCompletionForOneField = <Inline>{(prompt) => <Completion stop={['"']}>{prompt}</Completion>}</Inline>;
-  // const inlineCompletionOpenEnded = <Inline>{(prompt) => <Completion>{prompt}</Completion>}</Inline>;
-
-  // return (
-  //   <Scope>
-  //     You are an expert agent who knows how to use tools. You can use the following tools:
-  //     {Object.entries(props.tools).map(([toolName, tool]) => (
-  //       <>
-  //         {toolName}: Description: {tool.description}. Schema: {JSON.stringify(zodToJsonSchema(tool.parameters))}.
-  //       </>
-  //     ))}
-  //     The user asked: {props.query}
-  //     Do you want to use a tool, and if so, which one? Respond with a JSON object.
-  //     {'{'}
-  //     {'\n  '}"isAnyToolApplicable": "{inlineCompletionForOneField}",
-  //     {'\n  '}"toolToUse": {'{'}
-  //     {'\n  '}"name": "{inlineCompletionForOneField}",
-  //     {'\n  '}"parameters": "{inlineCompletionOpenEnded}",
-  //     {'\n  '}"responseToUser": "{inlineCompletionForOneField}",
-  //     {'\n  '}
-  //     {'}'}
-  //     {'\n  '}
-  //     {'}'}
-  //   </Scope>
-  // );
   return (
     <ChatCompletion>
       <SystemMessage>
