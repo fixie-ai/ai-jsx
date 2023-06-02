@@ -45,19 +45,39 @@ export async function NaturalLanguageRouter(props: { children: LLMx.Node; query:
   // This will need to be tweaked when `i` is more than one token.
   const logitBiases = Object.fromEntries(_.range(whenOptions.length + 1).map((i) => [i.toString(), 100]));
 
+  const formattedWhenOptions = (
+    <>
+      {whenOptions.map((when, index) => (
+        <>
+          {index}: {when}{' '}
+        </>
+      ))}
+    </>
+  );
+
   const choice = (
     <ChatCompletion maxTokens={1} logitBias={logitBiases}>
       <SystemMessage>
-        You are an expert routing agent.
-        {whenOptions.map((when, index) => (
-          <>
-            {index}: {when}{' '}
-          </>
-        ))}
-        When the user gives you a query, respond with the number of the route that best fits their query. Do not respond
-        with any other text.
+        You are an expert routing selection agent. The agent before you saw all the options and made a choice. Your task
+        is to interpret their choice and respond only with the numeric id of the option they chose. Here are a list of
+        options you can route to: {formattedWhenOptions}
       </SystemMessage>
-      <UserMessage>{props.query}</UserMessage>
+      <UserMessage>
+        <ChatCompletion>
+          <SystemMessage>
+            You are an expert routing agent. Here are a list of options you can route to:
+            {formattedWhenOptions}
+            
+            The route you choose will be handled by a capable and knowledgeable agent who can handle it.
+            
+            When the user gives you a query, pick the most applicable route. To do this, start by listing back all routes, and explaining why they are or are not a good fit.
+            Then, give your choice at the end.
+            Let's work this out step by step to make sure you have the right answer.
+            Do not attempt to actually answer the user's question, or include any other info.
+          </SystemMessage>
+          <UserMessage>{props.query}</UserMessage>
+        </ChatCompletion>
+      </UserMessage>
     </ChatCompletion>
   );
 

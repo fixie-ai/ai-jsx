@@ -82,7 +82,7 @@ export async function* ChatCompletion(props: {
     })
   );
 
-  const messageStream = openAIChat.simpleStream({
+  const messageStream = await openAIChat({
     model: 'gpt-3.5-turbo',
     max_tokens: props.maxTokens,
     temperature: props.temperature,
@@ -91,11 +91,13 @@ export async function* ChatCompletion(props: {
     logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
   });
 
-  let lastMessage;
-  for await (const partialMessage of messageStream) {
-    lastMessage = partialMessage.content;
-    yield `${partialMessage.content}█`;
-  }
+  yield messageStream.choices[0].message?.content ?? '';
 
-  yield lastMessage;
+  // let lastMessage;
+  // for await (const partialMessage of messageStream) {
+  //   lastMessage = partialMessage.content;
+  //   yield `${partialMessage.content}█`;
+  // }
+
+  // yield lastMessage;
 }
