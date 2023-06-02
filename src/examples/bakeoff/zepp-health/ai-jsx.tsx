@@ -108,6 +108,8 @@ function AskAndAnswer({ query }: { query: string }) {
   );
 }
 
+// It could be interesting to play around with an Eval component to evaluate responses.
+
 showInspector(
   <>
     <AskAndAnswer query="Please give me a recipe for cake" />
