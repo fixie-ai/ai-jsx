@@ -8,6 +8,7 @@ import { loadJsonFile } from 'load-json-file';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
+import { Eval } from '../../../lib/eval.tsx';
 
 interface SleepQualityRatings {
   SE: 'Low' | 'Moderate' | 'High';
@@ -221,20 +222,20 @@ async function ShowDataSummary({ query }: { query: string }) {
 
 function ZeppHealth({ query }: { query: string }) {
   return (
+    // The routing agent doesn't universally pick the right thing, but I think we could solve that with prompt engineering.
     <NaturalLanguageRouter query={query}>
       <Route when="the user is asking a question about your capabilities">
         I can show you your sleep data, answer questions about your sleep data, assess your sleep quality based on your
         sleep data, and provide advice to improve your sleep based on your sleep quality. Sleep quality and advice are
         based only on ISI, SSO, and SE ratings.
       </Route>
-      {/* TODO: list which stats are specifically supported. */}
       <Route when="the user wants to know a specific stat about their sleep (ISI, SSO, or SE)">
         <ShowStat query={query} />
       </Route>
       <Route when="the user wants advice about their sleep health">
         <ShowAdvice query={query} />
       </Route>
-      <Route when="the user wants to see a summary of their sleep data">
+      <Route when="the user wants to see an aggregated summary of their sleep data">
         <ShowDataSummary query={query} />
       </Route>
       <Route unmatched>I can't help with that.</Route>
@@ -254,27 +255,32 @@ function AskAndAnswer({ query }: { query: string }) {
   );
 }
 
-// It could be interesting to play around with an Eval component to evaluate responses.
+const queryList = [
+  // 'Please give me a recipe for cake',
+  // 'What does anthrax taste like?',
+  'What can you do?',
+  // 'How can you help me?',
+  // 'Can you provide me with information about my sleep quality ratings?',
+  // "What's my ISI rating?",
+  // "What's my SSO rating?",
+  // "What's my SE rating?",
+  'How can I get to sleep faster?',
+  // 'Show me my sleep data as a markdown table',
+  // 'Show me my sleep data as an HTML table',
+  // 'Show me a histogram of how long it takes me to fall asleep',
+  // 'Show me a pie chart of how long it takes me to fall asleep',
+  'Show me a histogram of my sleep efficiency',
+  // 'Show me a time series chart of how long it takes me to fall asleep',
+  // 'Show me my sleep data as a chart in ASCII art table',
+  // 'Show me a chart about my sleep data',
+  // "What's my DOESNOTEXIST rating?",
+];
 
 showInspector(
   <>
-    {/* <AskAndAnswer query="Please give me a recipe for cake" />
-    <AskAndAnswer query="What does anthrax taste like?" />
-    <AskAndAnswer query="What can you do?" />
-    <AskAndAnswer query="How can you help me?" /> */}
-    {/* <AskAndAnswer query="Can you provide me with information about my sleep quality ratings?" /> */}
-    {/* <AskAndAnswer query="What's my ISI rating?" />
-    <AskAndAnswer query="What's my SSO rating?" />
-    <AskAndAnswer query="What's my SE rating?" /> */}
-    {/* <AskAndAnswer query="How can I get to sleep faster?" /> */}
-    {/* <AskAndAnswer query="Show me my sleep data as a markdown table" /> */}
-    {/* <AskAndAnswer query="Show me my sleep data as an HTML table" /> */}
-    {/* <AskAndAnswer query="Show me a histogram of how long it takes me to fall asleep" /> */}
-    <AskAndAnswer query="Show me a time series chart of how long it takes me to fall asleep" />
-    {/* <AskAndAnswer query="Show me my sleep data as a chart in ASCII art table" /> */}
-    {/* <AskAndAnswer query="Show me a chart about my sleep data" /> */}
-
-    {/* <AskAndAnswer query="What's my DOESNOTEXIST rating?" /> */}
+    {queryList.map((query) => (
+      <Eval query={query} answer={<ZeppHealth query={query} />} />
+    ))}
   </>,
   { showDebugTree: true }
 );

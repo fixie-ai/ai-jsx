@@ -43,7 +43,7 @@ export type ToolChoice = z.infer<typeof toolChoiceSchema> | null;
 //   return <NaturalLanguageRouter query={props.query}>{toolChoices}</NaturalLanguageRouter>;
 // }
 
-function ChooseTools(props: { tools: Record<string, Tool>; query: string, userData: string }): LLMx.Node {
+function ChooseTools(props: { tools: Record<string, Tool>; query: string; userData: string }): LLMx.Node {
   // const inlineCompletionForOneField = <Inline>{(prompt) => <Completion stop={['"']}>{prompt}</Completion>}</Inline>;
   // const inlineCompletionOpenEnded = <Inline>{(prompt) => <Completion>{prompt}</Completion>}</Inline>;
 
@@ -81,11 +81,11 @@ function ChooseTools(props: { tools: Record<string, Tool>; query: string, userDa
         The user will ask you a question. Pick the tool that best addresses what they're looking for. Which tool do you
         want to use? Name the tool, identify the parameters, and generate a response to the user explaining what you're
         doing. Do not answer the user's question itself. Your answer should be a JSON object matching this schema:{' '}
-        {JSON.stringify(zodToJsonSchema(toolChoiceSchema))}. Make sure to follow the schema strictly and do not include any explanatory prose prefix or suffix.
-
-        When picking parameters, choose values according to this user data: {props.userData}
-
-        If none of the tools seem appropriate, or the user data doesn't have the necessary context to use the tool the user needs, respond with `null`.
+        {JSON.stringify(zodToJsonSchema(toolChoiceSchema))}. Make sure to follow the schema strictly and do not include
+        any explanatory prose prefix or suffix. When picking parameters, choose values according to this user data:{' '}
+        {props.userData}
+        If none of the tools seem appropriate, or the user data doesn't have the necessary context to use the tool the
+        user needs, respond with `null`.
       </SystemMessage>
       <UserMessage>Generate a JSON response for this query: {props.query}</UserMessage>
     </ChatCompletion>

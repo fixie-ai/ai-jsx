@@ -26,16 +26,15 @@ const toolResult = await tool.func(...toolChoiceResult.parameters);
 return (
   <ChatCompletion>
     <SystemMessage>
-      You are a tool-using agent. You previously choose to use a tool, and generated this response to the user:
-      "{toolChoiceResult.responseToUser}"
-      When you ran the tool, you got this result: "{JSON.stringify(toolResult)}"
+      You are a tool-using agent. You previously choose to use a tool, and generated this response to the user: "
+      {toolChoiceResult.responseToUser}" When you ran the tool, you got this result: "{JSON.stringify(toolResult)}"
       Using the above, provide a final response to the user.
     </SystemMessage>
   </ChatCompletion>
 );
 ```
 
-Because of our JSX framework, it was trivial to swap out a synchronous string literal return for another LLM call. 
+Because of our JSX framework, it was trivial to swap out a synchronous string literal return for another LLM call.
 
 ### Prompt Engineering
 
