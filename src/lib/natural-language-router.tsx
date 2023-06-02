@@ -27,6 +27,8 @@ async function ChooseRoute(props: { choice: LLMx.Node; whenOptions: string[]; ch
 // What about prioritization? "Select top n"
 // This could also be used for dynamic context selection.
 // Need more thought around sub-routes.
+// I've observed that this is sensitive to the ordering of the routes – we probably want to either stamp that out or
+// make it explicit.
 export async function NaturalLanguageRouter(props: { children: LLMx.Node; query: string }) {
   const children = memo(Array.isArray(props.children) ? props.children : [props.children]);
 

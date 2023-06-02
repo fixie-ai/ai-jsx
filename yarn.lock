@@ -682,6 +682,7 @@ __metadata:
     cheerio: "npm:^1.0.0-rc.12"
     cli-highlight: "npm:^2.1.11"
     cli-spinners: "npm:^2.9.0"
+    csv-stringify: "npm:^6.4.0"
     eslint: "npm:^8.40.0"
     eslint-config-nth: "npm:^2.0.1"
     find-up: "npm:^6.3.0"
@@ -2609,6 +2610,13 @@ __metadata:
   version: 3.1.2
   resolution: "csstype@npm:3.1.2"
   checksum: 9f4357df50023d227d535beb807ccf8e6d8ad6b639afe375898214ebde729aa275731a19d9bcbf01444a6904008cc0d47fbbefa5fa5fc59d7d40e3595d0d41ae
+  languageName: node
+  linkType: hard
+
+"csv-stringify@npm:^6.4.0":
+  version: 6.4.0
+  resolution: "csv-stringify@npm:6.4.0"
+  checksum: b777023bb7327a1d1d9a656e56873e065eda6c5cdef2f63620f4c87e5b46169a61960eeea0e79a73e8d1e1a1399d81adfeb8d32093f15b7ec0c9d8998c7d38aa
   languageName: node
   linkType: hard
 
