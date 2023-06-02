@@ -123,5 +123,6 @@ showInspector(
     <AskAndAnswer query="Show me a chart about my sleep data" />
 
     {/* <AskAndAnswer query="What's my DOESNOTEXIST rating?" /> */}
-  </>
+  </>,
+  { showDebugTree: false }
 );
