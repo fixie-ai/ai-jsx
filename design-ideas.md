@@ -1,6 +1,7 @@
 # Design Ideas Scratchpad
 
 ## Dynamic Prompt Sizing
+
 Maybe you have a prompt with various subpieces:
 
 ```tsx
