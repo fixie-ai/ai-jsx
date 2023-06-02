@@ -12,13 +12,13 @@ LangChain's response time is from 2-34 seconds, with the average looking to be a
 
 AI.JSX's response time is much better:
 
-| Statistic | Value |
-| --------- | ----- |
-| Count     | 30    |
-| Average   | 2,253 |
-| Min       | 237   |
-| Max       | 6,062 |
-| Variance  | 1,758 |
+| Statistic                   | Value |
+| --------------------------- | ----- |
+| Count                       | 30    |
+| Average duration (seconds)  | 2.253 |
+| Min duration (seconds)      | 0.237 |
+| Max duration (seconds)      | 6.062 |
+| Variance duration (seconds) | 1.758 |
 
 ## Comparison
 
