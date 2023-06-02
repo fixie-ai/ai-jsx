@@ -1,9 +1,7 @@
-import { ChatCompletion, Completion, SystemMessage, UserMessage } from './completion-components.tsx';
+import { ChatCompletion, SystemMessage, UserMessage } from './completion-components.tsx';
 import { LLMx, log } from './index.ts';
 import z, { ZodTypeAny } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { Inline, Scope } from './inline.tsx';
-import { NaturalLanguageRouter, Route } from './natural-language-router.tsx';
 
 export interface Tool {
   description: string;
