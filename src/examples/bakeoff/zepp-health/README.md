@@ -20,6 +20,8 @@ AI.JSX's response time is much better:
 | Max duration (seconds)      | 6.062 |
 | Variance duration (seconds) | 1.758 |
 
+Additionally, AI.JSX streams the results by default, no extra dev work required. LangChain's default is to return a buffered all-at-once result. (I'm not sure what it would take to enable streaming.)
+
 ## Comparison
 
 Overall, I think the AI.JSX implementation is much easier to implement and understand than the [LangChain implementation](https://github.com/fixie-ai/Zhealth/blob/main/main.py#L125).
@@ -48,7 +50,7 @@ Combined, I think these two things indicate that the chain is the wrong abstract
 
 Conversely, AI.JSX provides a lower-level set of primitives that are more flexible.
 
-## Specific Features
+## Specific Features I Implemented For This
 
 ### Natural Language Router
 
