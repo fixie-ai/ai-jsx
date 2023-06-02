@@ -15,7 +15,7 @@ import { Document } from './docs.ts';
 import { TextSplitterChunkHeaderOptions } from 'langchain/text_splitter';
 
 export const getLogName = _.once(() => {
-  const packageJsonPath = findUpSync(process.cwd());
+  const packageJsonPath = findUpSync('package.json');
   if (!packageJsonPath) {
     return 'llmx';
   }
