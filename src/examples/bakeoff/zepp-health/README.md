@@ -36,10 +36,11 @@ lc_prompt.SUFFIX = my_prompt.SUFFIX
 ```
 
 The chain type also feels kinda funny. One could imagine organizing agents along the following dimensions:
-* Structured vs unstructured
-* Chat vs completion
-* Zero shot vs few shot
-* React vs not
+
+- Structured vs unstructured
+- Chat vs completion
+- Zero shot vs few shot
+- React vs not
 
 The `STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION` agent gives us one of the permutations, and if that doesn't work for us, we're out of luck.
 
