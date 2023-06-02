@@ -23,7 +23,7 @@ function ChooseTools(props: { tools: Record<string, Tool>; query: string }): LLM
         You are an expert agent who knows how to use tools. You can use the following tools:
         {Object.entries(props.tools).map(([toolName, tool]) => (
           <>
-            {toolName}: Description: {tool.description}. Schema: {tool.parameters}.
+            {toolName}: Description: {tool.description}. Schema: {JSON.stringify(zodToJsonSchema(tool.parameters))}.
           </>
         ))}
         The user will ask you a question. Pick the tool that best addresses what they're looking for. Which tool do you
@@ -48,7 +48,7 @@ async function InvokeTool(props: { tools: Record<string, Tool>; toolChoice: LLMx
     }
     toolChoiceResult = toolChoiceSchema.parse(parsedJson);
   } catch (e: any) {
-    const error = new Error(`Failed to parse LLM output into a tool choice: ${e.message}.`);
+    const error = new Error(`Failed to parse LLM output into a tool choice: ${e.message}. Output: ${toolChoiceLLMOutput}`);
     throw error;
   }
   if (!(toolChoiceResult.nameOfTool in props.tools)) {

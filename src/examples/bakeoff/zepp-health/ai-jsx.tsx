@@ -1,12 +1,13 @@
-import { LLMx } from '../../../lib/index.ts';
+import { LLMx, log } from '../../../lib/index.ts';
 import { showInspector } from '../../../inspector/console.tsx';
 import { NaturalLanguageRouter, Route } from '../../../lib/natural-language-router.tsx';
-import { UseTools } from '../../../lib/use-tools.tsx';
+import { Tool, UseTools } from '../../../lib/use-tools.tsx';
 import fixtureUserData from './user-data.json';
 import { ChatCompletion, SystemMessage, UserMessage } from '../../../lib/completion-components.tsx';
 import { loadJsonFile } from 'load-json-file';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { z } from 'zod';
 
 interface SleepQualityRatings {
   SE: 'Low' | 'Moderate' | 'High';
@@ -111,9 +112,13 @@ function getAdvisorText(sleepQualityRatings: SleepQualityRatings): string {
   return advice;
 }
 
-async function getUserSleepAnalysis() {
+function loadUserData(): Promise<typeof fixtureUserData> {
   const currentPath = path.dirname(fileURLToPath(import.meta.url));
-  const userData = (await loadJsonFile(path.join(currentPath, 'user-data.json'))) as typeof fixtureUserData;
+  return loadJsonFile(path.join(currentPath, 'user-data.json'));
+}
+
+async function getUserSleepAnalysis() {
+  const userData = await loadUserData();
   return computeSleepQualityRatings(userData);
 }
 
@@ -149,10 +154,70 @@ async function ShowAdvice({ query }: { query: string }) {
   );
 }
 
+function generateChartFromTimeSeries(_args: { xLabels: string[]; yValues: number[] }) {
+  return Promise.resolve();
+}
+function generateHistogram(_args: { values: number[] }) {
+  return Promise.resolve();
+}
+
+function ApologizeForBeingUnableToShowThisSummary({ query }: { query: string }) {
+  return (
+    <ChatCompletion>
+      <SystemMessage>
+        You're a summarizing agent. The user has asked for a summary, but you don't have the capability to produce the
+        format they're looking for. Explain this and apologize.
+      </SystemMessage>
+      <UserMessage>{query}</UserMessage>
+    </ChatCompletion>
+  );
+}
+
+async function ShowDataSummary({ query }: { query: string }) {
+  const tools: Record<string, Tool> = {
+    generateChartFromTimeSeries: {
+      description: 'Generate a bar chart from a time series, given x labels and y values.',
+      parameters: z.object({
+        xLabels: z.array(z.string()),
+        yValues: z.array(z.number()),
+      }),
+      func: generateChartFromTimeSeries,
+    },
+    generateHistogram: {
+      description: 'Generate a histogram from a list of values.',
+      parameters: z.object({
+        values: z.array(z.number()),
+      }),
+      func: generateHistogram,
+    },
+  };
+
+  const userData = await loadUserData();
+  return (
+    <NaturalLanguageRouter query={query}>
+      <Route when="the user wants to see an output format that you're able to generate yourself">
+        <ChatCompletion>
+          <SystemMessage>
+            You're an expert summarizing agent. Here is the data you summarize: {JSON.stringify(userData)}. When the
+            user asks a question, provide a summary in the format they want.
+          </SystemMessage>
+          <UserMessage>{query}</UserMessage>
+        </ChatCompletion>
+      </Route>
+      <Route when="the user wants to see a histogram or chart of their sleep data">
+        <UseTools tools={tools} query={query} fallback={<ApologizeForBeingUnableToShowThisSummary query={query} />} />
+      </Route>
+      <Route unmatched>
+        <ApologizeForBeingUnableToShowThisSummary query={query} />
+      </Route>
+    </NaturalLanguageRouter>
+  );
+}
+
 function ZeppHealth({ query }: { query: string }) {
   return (
     <NaturalLanguageRouter query={query}>
-      <Route when="the user wants to know what you can do">
+      <Route when="the user is asking a question about your capabilities">
         I can show you your sleep data, answer questions about your sleep data, assess your sleep quality based on your
         sleep data, and provide advice to improve your sleep based on your sleep quality. Sleep quality and advice are
         based only on ISI, SSO, and SE ratings.
@@ -164,7 +229,9 @@ function ZeppHealth({ query }: { query: string }) {
       <Route when="the user wants advice about their sleep health">
         <ShowAdvice query={query} />
       </Route>
-      <Route when="the user wants to see a summary of their sleep data">here is your summary</Route>
+      <Route when="the user wants to see a summary of their sleep data">
+        <ShowDataSummary query={query} />
+      </Route>
       <Route unmatched>I can't help with that.</Route>
     </NaturalLanguageRouter>
   );
@@ -190,13 +257,17 @@ showInspector(
     <AskAndAnswer query="What does anthrax taste like?" />
     <AskAndAnswer query="What can you do?" />
     <AskAndAnswer query="How can you help me?" /> */}
-    <AskAndAnswer query="Can you provide me with information about my sleep quality ratings?" />
+    {/* <AskAndAnswer query="Can you provide me with information about my sleep quality ratings?" /> */}
     {/* <AskAndAnswer query="What's my ISI rating?" />
     <AskAndAnswer query="What's my SSO rating?" />
     <AskAndAnswer query="What's my SE rating?" /> */}
     {/* <AskAndAnswer query="How can I get to sleep faster?" /> */}
-    {/* <AskAndAnswer query="Show me my sleep data as a markdown table" />
-    <AskAndAnswer query="Show me a chart about my sleep data" /> */}
+    {/* <AskAndAnswer query="Show me my sleep data as a markdown table" /> */}
+    {/* <AskAndAnswer query="Show me my sleep data as an HTML table" /> */}
+    {/* <AskAndAnswer query="Show me a histogram of how long it takes me to fall asleep" /> */}
+    <AskAndAnswer query="Show me a time series chart of how long it takes me to fall asleep" />
+    {/* <AskAndAnswer query="Show me my sleep data as a chart in ASCII art table" /> */}
+    {/* <AskAndAnswer query="Show me a chart about my sleep data" /> */}
 
     {/* <AskAndAnswer query="What's my DOESNOTEXIST rating?" /> */}
   </>,

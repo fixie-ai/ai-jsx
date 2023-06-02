@@ -241,9 +241,14 @@ export async function* partialRenderStream(
   } else if (renderable instanceof Promise) {
     yield* await renderable.then((x) => partialRenderStream(x, shouldStop));
   } else {
-    // Exhaust the iterator.
-    for await (const value of renderable) {
-      yield* partialRenderStream(value, shouldStop);
+    try {
+      // Exhaust the iterator.
+      for await (const value of renderable) {
+        yield* partialRenderStream(value, shouldStop);
+      }
+    } catch (e) {
+      log.error({ renderable }, 'Error rendering');
+      throw e;
     }
   }
 }

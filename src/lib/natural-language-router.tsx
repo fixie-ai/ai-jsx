@@ -48,7 +48,7 @@ export async function NaturalLanguageRouter(props: { children: LLMx.Node; query:
         You are an expert routing agent.
         {whenOptions.map((when, index) => (
           <>
-            {index}: {when}
+            {index}: {when}{' '}
           </>
         ))}
         When the user gives you a query, respond with the number of the route that best fits their query. Do not respond
