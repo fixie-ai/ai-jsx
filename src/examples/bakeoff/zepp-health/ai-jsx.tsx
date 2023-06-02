@@ -2,7 +2,7 @@
  * Run this with `yarn demo:zepp-health`
  */
 
-import { LLMx, log } from '../../../lib/index.ts';
+import { LLMx } from '../../../lib/index.ts';
 import { showInspector } from '../../../inspector/console.tsx';
 import { NaturalLanguageRouter, Route } from '../../../lib/natural-language-router.tsx';
 import { Tool, UseTools } from '../../../lib/use-tools.tsx';
@@ -12,7 +12,6 @@ import { loadJsonFile } from 'load-json-file';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
-import { Eval } from '../../../lib/eval.tsx';
 
 interface SleepQualityRatings {
   SE: 'Low' | 'Moderate' | 'High';
@@ -248,7 +247,7 @@ function ZeppHealth({ query }: { query: string }) {
 }
 
 const queryList = [
-  // 'Please give me a recipe for cake',
+  'Please give me a recipe for cake',
   // 'What does anthrax taste like?',
   'What can you do?',
   // 'How can you help me?',
@@ -268,10 +267,22 @@ const queryList = [
   // "What's my DOESNOTEXIST rating?",
 ];
 
+function AskAndAnswer({ query }: { query: string }) {
+  return (
+    <>
+      {query}
+      {'\n'}
+      <ZeppHealth query={query} />
+      {'\n'}
+      {'\n'}
+    </>
+  );
+}
+
 showInspector(
   <>
     {queryList.map((query) => (
-      <Eval query={query} answer={<ZeppHealth query={query} />} />
+      <AskAndAnswer query={query} />
     ))}
   </>,
   { showDebugTree: true }

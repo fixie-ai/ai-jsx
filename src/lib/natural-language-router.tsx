@@ -28,21 +28,17 @@ async function ChooseRoute(props: { choice: LLMx.Node; whenOptions: string[]; ch
 // This could also be used for dynamic context selection.
 // Need more thought around sub-routes.
 export async function NaturalLanguageRouter(props: { children: LLMx.Node; query: string }) {
-  // Is memo righteous?
   const children = memo(Array.isArray(props.children) ? props.children : [props.children]);
-  const whenOptions = [noMatch];
 
-  // Switch to partialRender, then _.reject the Routers from the PartialRender results.
-  for await (const stream of LLMx.partialRenderStream(children, (el) => el.tag === Route)) {
-    const whenOptionsFromThisPart = _.compact(
-      stream
-        .filter(LLMx.isElement)
-        .filter(({ tag }) => tag === Route)
-        .map(({ props }: { props: LLMx.PropsOfComponent<typeof Route> }) => props.when)
-    );
+  const renderedChildren = await LLMx.partialRender(children, (el) => el.tag === Route);
+  const whenOptionsFromThisRenderedChildren = _.compact(
+    renderedChildren
+      .filter(LLMx.isElement)
+      .filter(({ tag }) => tag === Route)
+      .map(({ props }: { props: LLMx.PropsOfComponent<typeof Route> }) => props.when)
+  );
 
-    whenOptions.push(...whenOptionsFromThisPart);
-  }
+  const whenOptions = [noMatch, ...whenOptionsFromThisRenderedChildren];
 
   // This will need to be tweaked when `i` is more than one token.
   const logitBiases = Object.fromEntries(_.range(whenOptions.length + 1).map((i) => [i.toString(), 100]));
