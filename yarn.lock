@@ -715,6 +715,7 @@ __metadata:
     uuid: "npm:^9.0.0"
     write-json-file: "npm:^5.0.0"
     zod: "npm:^3.21.4"
+    zod-to-json-schema: "npm:^3.21.1"
   languageName: unknown
   linkType: soft
 
@@ -8235,7 +8236,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod-to-json-schema@npm:^3.20.4":
+"zod-to-json-schema@npm:^3.20.4, zod-to-json-schema@npm:^3.21.1":
   version: 3.21.1
   resolution: "zod-to-json-schema@npm:3.21.1"
   peerDependencies:

@@ -1,5 +1,5 @@
 import { ChatCompletion, SystemMessage, UserMessage } from './completion-components.tsx';
-import { LLMx, log } from './index.ts';
+import { LLMx } from './index.ts';
 import { MergeExclusive } from 'type-fest';
 import { memo } from './memoize.tsx';
 import _ from 'lodash';
@@ -20,8 +20,6 @@ async function ChooseRoute(props: { choice: LLMx.Node; whenOptions: string[]; ch
       selectedWhenOption == noMatch ? props.unmatched : props.when === selectedWhenOption
     );
 
-  log.warn({ selectedChildren, children });
-
   return selectedChildren;
 }
 
@@ -41,6 +39,7 @@ export async function NaturalLanguageRouter(props: { children: LLMx.Node; query:
     whenOptions.push(...whenOptionsFromThisPart);
   }
 
+  // This will need to be tweaked when `i` is more than one token.
   const logitBiases = Object.fromEntries(_.range(whenOptions.length + 1).map((i) => [i.toString(), 100]));
 
   const choice = (
@@ -70,3 +69,15 @@ type RouteProps = { children: LLMx.Node } & MergeExclusive<{ when: string }, { u
 export function Route(props: RouteProps) {
   return props.children;
 }
+
+/**
+ * When we need to steer in an LLM-based app, a common approach is to throw everything at the model: "here's all the
+ * stuff you can do, here's what the user said, here's what you said before, etc, now give me a full plan of action."
+ *
+ * Whereas this approach is just focusing very narrowly on "pick a route", and only asking the model to emit a single
+ * token.
+ *
+ * I suspect the former approach will be more robust and easier to program as models get more accurate, but I think this
+ * approach will lead to more robustness today. I think with the former, it's still too likely that models will go off
+ * the rails.
+ */

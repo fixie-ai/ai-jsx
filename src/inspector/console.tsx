@@ -56,14 +56,14 @@ function Inspector({ componentToInspect }: { componentToInspect: LLMx.Node }) {
   return (
     <>
       <Box flexDirection="row">
-        <Box flexDirection="column">
+        <Box flexDirection="column" width="50%">
           <Text bold underline>
             Live-streaming output
             {!debugTreeStreamIsDone && <Spinner />}
           </Text>
           <Text>{renderedContent}</Text>
         </Box>
-        <Box flexDirection="column" paddingRight={2}>
+        <Box flexDirection="column" paddingLeft={2} width="50%">
           <Text bold underline>
             Tree Inspector
           </Text>
