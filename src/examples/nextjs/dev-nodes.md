@@ -1,3 +1,17 @@
+## JSX Hackery
+
+In order to make this work, I changed `src/examples/nextjs/node_modules/next/dist/build/babel/preset.js` to use `classic` instead of `automatic` here:
+
+```js
+...useJsxRuntime ? {
+    runtime: "classic"
+}
+```
+
+The dev also has to import `src/examples/nextjs/src/app/react.ts` instead of the normal `react` anywhere they want to use both React and AI.JSX in the same tree. And that file needs to keep `knownLLMxTags` updated.
+
+## Misc
+
 When `node_modules/keyv/src/index.js` is imported by the Next build process, it'll create this warning:
 
 ```
