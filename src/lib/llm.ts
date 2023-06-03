@@ -1,4 +1,4 @@
-import * as readline from 'readline/promises';
+// import * as readline from 'readline/promises';
 import { log } from './index.ts';
 import { v4 as uuidv4 } from 'uuid';
 import { isMemoizedSymbol } from './memoize.tsx';
@@ -254,8 +254,13 @@ async function* partialRenderStream(
     yield* await renderable.then((x) => context.partialRenderStream(x, shouldStop));
   } else {
     // Exhaust the iterator.
-    for await (const value of renderable) {
-      yield* context.partialRenderStream(value, shouldStop);
+    try {
+      for await (const value of renderable) {
+        yield* context.partialRenderStream(value, shouldStop);
+      }
+    } catch (e) {
+      // console.error(e, renderable);
+      log.error({ e, renderable }, 'Error while rendering');
     }
   }
 }
