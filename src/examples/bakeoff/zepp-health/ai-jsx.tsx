@@ -264,24 +264,24 @@ const questionsFromLarry: string[] = [
 ];
 
 const queryList = [
-  // ...questionsFromLarry,
-  // 'Please give me a recipe for cake',
-  // 'What does anthrax taste like?',
-  // 'What can you do?',
-  // 'How can you help me?',
-  // 'Can you provide me with information about my sleep quality ratings?',
-  // "What's my ISI rating?",
-  // "What's my SSO rating?",
-  // "What's my SE rating?",
-  // 'How can I get to sleep faster?',
-  // 'Show me my sleep data as a markdown table',
-  // 'Show me my sleep data as an HTML table',
-  // 'Show me a histogram of how long it takes me to fall asleep',
-  // 'Show me a pie chart of how long it takes me to fall asleep',
-  // 'Show me a histogram of my sleep efficiency',
-  // 'Show me a time series chart of how long it takes me to fall asleep',
-  // 'Show me my sleep data as a chart in ASCII art table',
-  // 'Show me a chart about my sleep data',
+  ...questionsFromLarry,
+  'Please give me a recipe for cake',
+  'What does anthrax taste like?',
+  'What can you do?',
+  'How can you help me?',
+  'Can you provide me with information about my sleep quality ratings?',
+  "What's my ISI rating?",
+  "What's my SSO rating?",
+  "What's my SE rating?",
+  'How can I get to sleep faster?',
+  'Show me my sleep data as a markdown table',
+  'Show me my sleep data as an HTML table',
+  'Show me a histogram of how long it takes me to fall asleep',
+  'Show me a pie chart of how long it takes me to fall asleep',
+  'Show me a histogram of my sleep efficiency',
+  'Show me a time series chart of how long it takes me to fall asleep',
+  'Show me my sleep data as a chart in ASCII art table',
+  'Show me a chart about my sleep data',
   "What's my DOESNOTEXIST rating?",
 ];
 
@@ -302,7 +302,7 @@ if (process.env.BULK_EVAL) {
   for (const query of queryList) {
     const startTime = Date.now();
     const answer = await log.logPhase({ query, level: 'warn', phase: 'run query' }, () =>
-      LLMx.render(<ZeppHealth query={query} />)
+      LLMx.createRenderContext().render(<ZeppHealth query={query} />)
     );
     const endTime = Date.now();
     results.push({

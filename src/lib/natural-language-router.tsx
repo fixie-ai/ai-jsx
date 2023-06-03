@@ -6,13 +6,16 @@ import _ from 'lodash';
 
 const noMatch = 'None of the routes match what the user said.';
 
-async function ChooseRoute(props: { choice: LLMx.Node; whenOptions: string[]; children: LLMx.Node }) {
-  const choiceResult = await LLMx.render(props.choice);
+async function ChooseRoute(
+  props: { choice: LLMx.Node; whenOptions: string[]; children: LLMx.Node },
+  { render, partialRender }: LLMx.RenderContext
+) {
+  const choiceResult = await render(props.choice);
   const selectedWhenOption = props.whenOptions[parseInt(choiceResult)];
   // TODO: validation, even though the logit_bias should make this impossible (?).
 
   // TODO: I don't think this suports as much nesting as we want.
-  const children = await LLMx.partialRender(props.children, (el) => el.tag === Route);
+  const children = await partialRender(props.children, (el) => el.tag === Route);
   const selectedChildren = children
     .filter(LLMx.isElement)
     .filter(({ tag }) => tag === Route)
@@ -29,10 +32,13 @@ async function ChooseRoute(props: { choice: LLMx.Node; whenOptions: string[]; ch
 // Need more thought around sub-routes.
 // I've observed that this is sensitive to the ordering of the routes – we probably want to either stamp that out or
 // make it explicit.
-export async function NaturalLanguageRouter(props: { children: LLMx.Node; query: string }) {
+export async function NaturalLanguageRouter(
+  props: { children: LLMx.Node; query: string },
+  { partialRender }: LLMx.RenderContext
+) {
   const children = memo(Array.isArray(props.children) ? props.children : [props.children]);
 
-  const renderedChildren = await LLMx.partialRender(children, (el) => el.tag === Route);
+  const renderedChildren = await partialRender(children, (el) => el.tag === Route);
   const whenOptionsFromThisRenderedChildren = _.compact(
     renderedChildren
       .filter(LLMx.isElement)

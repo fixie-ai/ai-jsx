@@ -8,7 +8,7 @@ import { Box, render, Text, useInput } from 'ink';
 import SyntaxHighlight from './syntax-highlight.tsx';
 import { memo } from '../lib/memoize.tsx';
 import Spinner from './spinner.tsx';
-import renderDebugTreeStream from './render-debug-tree-stream.tsx';
+import { DebugTree } from '../lib/debug.tsx';
 
 const { useList } = reactUse;
 
@@ -19,18 +19,19 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
 
   const [renderedContent, setRenderedContent] = useState('');
 
-  const memoized = memo(componentToInspect);
-
   useEffect(() => {
+    const renderContext = LLMx.createRenderContext();
+    const memoized = memo(componentToInspect);
+
     async function getAllFrames() {
       // This results in some duplicate pages.
-      for await (const page of renderDebugTreeStream(memoized)) {
+      for await (const page of renderContext.renderStream(LLMx.createElement(DebugTree, {}, memoized))) {
         pushDebugTreeStep(page);
       }
       setDebugTreeStreamIsDone(true);
     }
     async function getRenderedContent() {
-      for await (const page of LLMx.renderStream(memoized)) {
+      for await (const page of renderContext.renderStream(memoized)) {
         setRenderedContent(page);
       }
     }

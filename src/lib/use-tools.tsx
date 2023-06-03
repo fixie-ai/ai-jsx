@@ -40,9 +40,12 @@ function ChooseTools(props: { tools: Record<string, Tool>; query: string; userDa
   );
 }
 
-async function InvokeTool(props: { tools: Record<string, Tool>; toolChoice: LLMx.Node; fallback: LLMx.Node }) {
+async function InvokeTool(
+  props: { tools: Record<string, Tool>; toolChoice: LLMx.Node; fallback: LLMx.Node },
+  { render }: LLMx.RenderContext
+) {
   // TODO: better validation around when this produces unexpected output.
-  const toolChoiceLLMOutput = await LLMx.render(props.toolChoice);
+  const toolChoiceLLMOutput = await render(props.toolChoice);
   let toolChoiceResult: ToolChoice;
   try {
     const parsedJson = JSON.parse(toolChoiceLLMOutput);
