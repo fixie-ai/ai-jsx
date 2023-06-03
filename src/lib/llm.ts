@@ -276,6 +276,7 @@ async function partialRender(
 }
 
 async function render(context: RenderContext, renderable: Renderable): Promise<string> {
+  console.log({renderable}, 'got renderable');
   const elementsOrStrings = await context.partialRender(renderable, () => false);
   return elementsOrStrings.join('');
 }

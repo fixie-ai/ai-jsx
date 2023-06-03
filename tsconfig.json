@@ -6,7 +6,11 @@
     "jsx": "react",
     "jsxFactory": "LLMx.createElement",
     "jsxFragmentFactory": "LLMx.Fragment",
+
+    // We need this to be able to use Ink.
+    // Once we turn this on, we need to use .js extensions on everything.
     "moduleResolution": "node16",
+
     "resolveJsonModule": true,
     // "allowImportingTsExtensions": true,
     // "noEmit": true
