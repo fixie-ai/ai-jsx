@@ -150,12 +150,4 @@ export async function AI({
   }
 
   return <AIStream>{children}</AIStream>;
-
-  // const rendered = '<p>fak</p>';
-
-  // return renderDirectlyIntoDOM ? (
-  //
-  // ) : (
-  //   <React.Fragment>{rendered}</React.Fragment>
-  // )
 }
