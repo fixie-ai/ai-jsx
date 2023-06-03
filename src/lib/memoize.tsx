@@ -19,17 +19,18 @@ export function memo(renderable: LLMx.Renderable): LLMx.Node {
       return renderable;
     }
 
-    let memoizedValue: LLMx.Renderable = undefined;
-    let isMemoized: boolean = false;
-
+    // N.B. The memoization applies per-RenderContext -- if the same component is rendered under
+    // two different RenderContexts, it won't be memoized.
+    const memoizedValues = new WeakMap<LLMx.RenderContext, LLMx.Renderable>();
     const newElement = {
       ...renderable,
-      render: () => {
-        if (!isMemoized) {
-          memoizedValue = memo(renderable.render());
-          isMemoized = true;
+      render: (ctx: LLMx.RenderContext) => {
+        if (memoizedValues.has(ctx)) {
+          return memoizedValues.get(ctx);
         }
 
+        const memoizedValue = memo(renderable.render(ctx));
+        memoizedValues.set(ctx, memoizedValue);
         return memoizedValue;
       },
     };
@@ -47,6 +48,7 @@ export function memo(renderable: LLMx.Renderable): LLMx.Node {
     const MemoizedPromise = () => memoizedRenderable;
     return <MemoizedPromise id={++memoizedId} {...{ [isMemoizedSymbol]: true }} />;
   }
+
   // It's an async generator (which is mutable). We set up some machinery to buffer the
   // results so that we can create memoized generators as necessary.
   const generator = renderable;
