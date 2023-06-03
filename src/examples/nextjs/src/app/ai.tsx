@@ -3,6 +3,7 @@ import React from './react';
 import { graphql } from '@octokit/graphql';
 
 import { ChatCompletion, SystemMessage, UserMessage } from '../../../../../dist/lib/completion-components.js';
+import { Suspense } from 'react';
 
 function QueryGitHub({ query }: { query: string }) {
   // The model responds with backticks that I can't seem to get rid of.
@@ -101,5 +102,5 @@ export async function AI({
     <div className="contents-generated-by-ai-buckle-up-buddy" dangerouslySetInnerHTML={{ __html: rendered }} />
   ) : (
     <React.Fragment>{rendered}</React.Fragment>
-  );
+  )
 }
