@@ -1,5 +1,5 @@
-import { logitBiasOfTokens, openAIChat } from '../lib/models.ts';
-import { LLMx, Models } from '../lib/index.ts';
+import { logitBiasOfTokens, openAIChat } from '../lib/models.js';
+import { LLMx, Models } from '../lib/index.js';
 import { ChatCompletionRequestMessage } from 'openai';
 
 export async function* Completion(

@@ -3,7 +3,7 @@ import { globbySync } from 'globby';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadJsonFile } from 'load-json-file';
-import { Docs, Models } from '../../../lib/index.ts';
+import { Docs, Models } from '../../../lib/index.js';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { Article } from './load-articles.mjs';
 

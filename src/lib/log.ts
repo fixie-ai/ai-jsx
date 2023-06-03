@@ -6,12 +6,12 @@ import { loadJsonFileSync } from 'load-json-file';
 import { pino } from 'pino';
 import pinoPretty from 'pino-pretty';
 import fs from 'node:fs';
-import { ModelResponse, OpenAIChatParams, OpenAICompletionParams } from './models.ts';
-import { WandBObserver } from './wandb.ts';
+import { ModelResponse, OpenAIChatParams, OpenAICompletionParams } from './models.js';
+import { WandBObserver } from './wandb.js';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { DocumentLoader } from 'langchain/document_loaders/base';
-import { LangChainTextSplitter } from './langchain-wrapper.ts';
-import { Document } from './docs.ts';
+import { LangChainTextSplitter } from './langchain-wrapper.js';
+import { Document } from './docs.js';
 import { TextSplitterChunkHeaderOptions } from 'langchain/text_splitter';
 
 export const getLogName = _.once(() => {

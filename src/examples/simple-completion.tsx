@@ -1,5 +1,5 @@
-import { LLMx } from '../lib/index.ts';
-import { Completion } from '../lib/completion-components.tsx';
+import { LLMx } from '../lib/index.js';
+import { Completion } from '../lib/completion-components.js';
 
 function App() {
   return (

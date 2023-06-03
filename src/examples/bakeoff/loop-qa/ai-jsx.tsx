@@ -3,10 +3,11 @@ import { globbySync } from 'globby';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadJsonFile } from 'load-json-file';
-import { Docs, DocsComponents, LLMx } from '../../../lib/index.ts';
+import { Docs, DocsComponents, LLMx } from '../../../lib/index.js';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { Article } from './load-articles.mjs';
 import _ from 'lodash';
+import { showInspector } from '../../../inspector/console.js';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -45,7 +46,7 @@ function main() {
     );
   }
 
-  LLMx.show(
+  showInspector(
     <>
       <AskAndAnswer query="What is Loop?" />
       {'\n'}

@@ -1,7 +1,7 @@
-import { showInspector } from '../inspector/console.tsx';
-import { LLMx } from '../lib/index.ts';
-import { SystemMessage, Completion } from '../lib/completion-components.tsx';
-import { Inline, Scope } from '../lib/inline.tsx';
+import { showInspector } from '../inspector/console.js';
+import { LLMx } from '../lib/index.js';
+import { SystemMessage, Completion } from '../lib/completion-components.js';
+import { Inline, Scope } from '../lib/inline.js';
 
 function CharacterGenerator() {
   const inlineCompletion = (

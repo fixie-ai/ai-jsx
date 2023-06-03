@@ -1,5 +1,5 @@
 import { Jsonifiable } from 'type-fest';
-import { LangChainWrapper, log } from './index.ts';
+import { LangChainWrapper, log } from './index.js';
 import { TokenTextSplitter } from 'langchain/text_splitter';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
 import { Document as LangChainDocument } from 'langchain/document';

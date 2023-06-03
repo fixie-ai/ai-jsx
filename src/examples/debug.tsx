@@ -1,6 +1,6 @@
-import { LLMx } from '../lib/index.ts';
-import { SystemMessage } from '../lib/completion-components.tsx';
-import { DebugTree } from '../lib/debug.tsx';
+import { LLMx } from '../lib/index.js';
+import { SystemMessage } from '../lib/completion-components.js';
+import { DebugTree } from '../lib/debug.js';
 
 // A component that demonstrates a dynamically expanding tree with different types of props.
 function SystemMessages(props: {

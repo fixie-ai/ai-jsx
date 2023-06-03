@@ -2,12 +2,12 @@
  * Run this with `yarn demo:zepp-health`
  */
 
-import { LLMx, log } from '../../../lib/index.ts';
-import { showInspector } from '../../../inspector/console.tsx';
-import { NaturalLanguageRouter, Route } from '../../../lib/natural-language-router.tsx';
-import { Tool, UseTools } from '../../../lib/use-tools.tsx';
+import { LLMx, log } from '../../../lib/index.js';
+import { showInspector } from '../../../inspector/console.js';
+import { NaturalLanguageRouter, Route } from '../../../lib/natural-language-router.js';
+import { Tool, UseTools } from '../../../lib/use-tools.js';
 import fixtureUserData from './user-data.json';
-import { ChatCompletion, SystemMessage, UserMessage } from '../../../lib/completion-components.tsx';
+import { ChatCompletion, SystemMessage, UserMessage } from '../../../lib/completion-components.js';
 import { loadJsonFile } from 'load-json-file';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

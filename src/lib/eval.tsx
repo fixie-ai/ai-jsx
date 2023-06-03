@@ -1,5 +1,5 @@
-import { ChatCompletion, SystemMessage, UserMessage } from './completion-components.tsx';
-import { LLMx } from './index.ts';
+import { ChatCompletion, SystemMessage, UserMessage } from './completion-components.js';
+import { LLMx } from './index.js';
 
 function GradeAnswer(props: { answer: LLMx.Node; query: LLMx.Node }) {
   return (

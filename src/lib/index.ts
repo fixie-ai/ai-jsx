@@ -1,9 +1,9 @@
-import _log from './log.ts';
+import _log from './log.js';
 export const log = _log;
 
-export * as LLMx from './llm.ts';
-export * as Models from './models.ts';
-export * as CompletionComponents from './completion-components.tsx';
-export * as LangChainWrapper from './langchain-wrapper.ts';
-export * as Docs from './docs.ts';
-export * as DocsComponents from './docs-components.tsx';
+export * as LLMx from './llm.js';
+export * as Models from './models.js';
+export * as CompletionComponents from './completion-components.js';
+export * as LangChainWrapper from './langchain-wrapper.js';
+export * as Docs from './docs.js';
+export * as DocsComponents from './docs-components.js';

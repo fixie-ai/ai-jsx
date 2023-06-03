@@ -1,4 +1,4 @@
-import { LLMx } from '../lib/index.ts';
+import { LLMx } from '../lib/index.js';
 
 export async function* DebugTree(props: { children: LLMx.Node }, { partialRenderStream }: LLMx.RenderContext) {
   let current = props.children;

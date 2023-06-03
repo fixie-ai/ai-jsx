@@ -1,7 +1,5 @@
-// import * as readline from 'readline/promises';
-import { log } from './index.ts';
-import { v4 as uuidv4 } from 'uuid';
-import { isMemoizedSymbol } from './memoize.tsx';
+import { log } from './index.js';
+import { isMemoizedSymbol } from './memoize.js';
 
 export type Component<P> = (props: P, renderContext: RenderContext) => Renderable;
 export type Literal = string | number | null | undefined | boolean;
@@ -288,11 +286,6 @@ async function* renderStream(context: RenderContext, renderable: Renderable): As
   }
 }
 
-interface ShowOptions {
-  stream: boolean;
-  step: boolean;
-}
-
 export function createRenderContext(): RenderContext {
   const context: RenderContext = {
     partialRenderStream: (renderable, shouldStop) => partialRenderStream(context, renderable, shouldStop),
@@ -304,46 +297,8 @@ export function createRenderContext(): RenderContext {
   return context;
 }
 
-export function show(node: Node, opts: ShowOptions | undefined = { stream: true, step: false }) {
-  const showLifespanId = uuidv4();
-
-  const renderContext = createRenderContext();
-  return log.logPhase({ phase: 'show', level: 'trace', opts, showLifespanId }, async () => {
-    if (opts.stream) {
-      if (process.env.loglevel) {
-        log.warn(
-          {},
-          'show() called with stream=true, but env var `loglevel` is set. Streaming and console logging at the same time will lead to broken output. As a fallback, show() will not stream.'
-        );
-        console.log(await renderContext.render(node));
-        return;
-      }
-
-      const rl = readline.createInterface(process.stdin, process.stdout);
-      let lastPage = '';
-      const cursor = new readline.Readline(process.stdout);
-      for await (const page of renderContext.renderStream(node)) {
-        for (const line of lastPage.split('\n').reverse()) {
-          cursor.clearLine(0);
-          cursor.moveCursor(-line.length, -1);
-        }
-        cursor.moveCursor(0, 1);
-        await cursor.commit();
-
-        rl.write(`${page}\n`);
-        lastPage = `${page}\n`;
-
-        if (opts.step) {
-          await rl.question('Continue?');
-          lastPage += 'Continue?\n';
-        }
-      }
-      rl.close();
-      return;
-    }
-
-    console.log(await renderContext.render(node));
-  });
+export function show(...args: any[]) {
+  throw new Error('show is not implemented. Switch to use Inspector.');
 }
 
 // This may be too invasive for users – we may wish to have more targetted try/catches.

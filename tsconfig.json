@@ -1,13 +1,15 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
   "include": ["src/**/*", ".eslintrc.cjs"],
+  "exclude": ["src/examples/nextjs"],
   "compilerOptions": {
     "jsx": "react",
     "jsxFactory": "LLMx.createElement",
     "jsxFragmentFactory": "LLMx.Fragment",
     "moduleResolution": "node16",
     "resolveJsonModule": true,
-    "allowImportingTsExtensions": true,
-    "noEmit": true
+    // "allowImportingTsExtensions": true,
+    // "noEmit": true
+    "outDir": "dist"
   }
 }

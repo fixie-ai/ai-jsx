@@ -1,7 +1,7 @@
-import { LLMx } from '../lib/index.ts';
-import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from '../lib/completion-components.tsx';
-import { DebugTree } from '../lib/debug.tsx';
-import { Inline, Scope } from '../lib/inline.tsx';
+import { LLMx } from '../lib/index.js';
+import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from '../lib/completion-components.js';
+import { DebugTree } from '../lib/debug.js';
+import { Inline, Scope } from '../lib/inline.js';
 
 function App() {
   return (

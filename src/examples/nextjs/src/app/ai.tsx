@@ -1,8 +1,8 @@
-import {LLMx} from '../../../../lib/index.ts';
+import {LLMx} from '../../../../lib/index.js';
 
 const React = LLMx;
 
-import { ChatCompletion, UserMessage } from '../../../../lib/completion-components.tsx';
+import { ChatCompletion, UserMessage } from '../../../../lib/completion-components.js';
 
 function AI() {
   return <ChatCompletion>

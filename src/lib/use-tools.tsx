@@ -1,5 +1,5 @@
-import { ChatCompletion, SystemMessage, UserMessage } from './completion-components.tsx';
-import { LLMx, log } from './index.ts';
+import { ChatCompletion, SystemMessage, UserMessage } from './completion-components.js';
+import { LLMx, log } from './index.js';
 import z, { ZodTypeAny } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
