@@ -1,5 +1,4 @@
 import React from './react';
-import Image from 'next/image';
 import { AI, NaturalLanguageGitHubSearch } from './ai';
 import { ChatCompletion, SystemMessage, UserMessage } from '../../../../../dist/lib/completion-components.js';
 

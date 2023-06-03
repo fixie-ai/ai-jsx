@@ -7,7 +7,6 @@ import { ChatCompletion, SystemMessage, UserMessage } from '../../../../../dist/
 function QueryGitHub({ query }: { query: string }) {
   // The model responds with backticks that I can't seem to get rid of.
 
-  // @ts-expect-error
   return (
     <ChatCompletion>
       <SystemMessage>
@@ -58,12 +57,16 @@ function FormatAsProse({ children }: { children: LLMx.Node }) {
   return (
     <ChatCompletion>
       <SystemMessage>
-        You are an expert JSON interpreter. You take JSON responses from the GitHUB API and represent their contents as
-        clear, succint English.
+        You are an expert JSON interpreter. You take JSON responses from the GitHUB API and render their contents as
+        clear, succint English. For instance, if you saw, {'{'}"issues": [{'{'}"id": 1234, "title": "test", "description": "my description"{'}'}]{'}'}, you would respond with, "Issue 1234: Test. (my description)".
       </SystemMessage>
       <UserMessage>{children}</UserMessage>
     </ChatCompletion>
   );
+}
+
+export function Trivial() {
+  return <>trivial response</>
 }
 
 export function NaturalLanguageGitHubSearch({
