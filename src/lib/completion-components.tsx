@@ -11,7 +11,7 @@ export async function* Completion(
   },
   { render }: LLMx.RenderContext
 ) {
-  yield '▁';
+  // yield '▁';
   let prompt = await render(props.children);
   while (prompt.length > 0 && prompt.endsWith(' ')) {
     prompt = prompt.slice(0, prompt.length - 1);
@@ -28,7 +28,7 @@ export async function* Completion(
   let accumulatedResponse = '';
   for await (const token of tokenStream) {
     accumulatedResponse += token;
-    yield `${accumulatedResponse}█`;
+    yield `${accumulatedResponse}`;
   }
 
   yield accumulatedResponse;
@@ -54,7 +54,7 @@ export async function* ChatCompletion(
   },
   { render, partialRender }: LLMx.RenderContext
 ) {
-  yield '▁';
+  // yield '▁';
 
   const messageElements = await partialRender(
     props.children,
@@ -100,7 +100,7 @@ export async function* ChatCompletion(
   let lastMessage;
   for await (const partialMessage of messageStream) {
     lastMessage = partialMessage.content;
-    yield `${partialMessage.content}█`;
+    yield `${partialMessage.content}`;
   }
 
   yield lastMessage;

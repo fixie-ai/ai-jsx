@@ -1,8 +1,8 @@
 ## Limitations
 
-* This won't deploy to Vercel because:
-  * We've set this up as a nested project within the overall ai-jsx repo. If we did a proper monorepo setup, we could deploy. (This is easy; I just haven't taken the time to do it.)
-  * I needed to make a small tweak in `node_modules` to make the compiler work. (This can be easily worked around with a forked version of the NextJS SDK, but to find an actual solution, we'd probably want to coordinate with the NextJS team.)
+- This won't deploy to Vercel because:
+  - We've set this up as a nested project within the overall ai-jsx repo. If we did a proper monorepo setup, we could deploy. (This is easy; I just haven't taken the time to do it.)
+  - I needed to make a small tweak in `node_modules` to make the compiler work. (This can be easily worked around with a forked version of the NextJS SDK, but to find an actual solution, we'd probably want to coordinate with the NextJS team.)
 
 ## JSX Hackery
 
