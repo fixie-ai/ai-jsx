@@ -1,6 +1,7 @@
 import { LLMx } from '../lib/index.ts';
 import { SystemMessage } from '../lib/completion-components.tsx';
 import { DebugTree } from '../lib/debug.tsx';
+import { showInspector } from '../inspector/console.tsx';
 
 // A component that demonstrates a dynamically expanding tree with different types of props.
 function SystemMessages(props: {
@@ -34,4 +35,4 @@ function App() {
   );
 }
 
-await LLMx.show(<App />, { stream: true, step: true });
+showInspector(<App />);
