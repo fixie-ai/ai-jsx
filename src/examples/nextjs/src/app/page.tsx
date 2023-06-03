@@ -35,6 +35,13 @@ export default async function Home() {
           </ChatCompletion>
         </AI>
       </ResultContainer>
+      <ResultContainer title="AI comes up with a recipe [beans]">
+        <AI>
+          <ChatCompletion temperature={1}>
+            <UserMessage>Give me a beans recipe</UserMessage>
+          </ChatCompletion>
+        </AI>
+      </ResultContainer>
       <ResultContainer title="Natural Language GitHub Search" description="AI has been asked to output prose">
         <AI>
           <NaturalLanguageGitHubSearch query="top issues from the TypeScript repo" outputFormat="prose" />
