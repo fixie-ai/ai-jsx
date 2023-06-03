@@ -3,3 +3,4 @@
 .vscode*
 *data*
 dist
+src/examples/nextjs/.next

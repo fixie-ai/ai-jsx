@@ -32,21 +32,21 @@ Import trace for requested module:
 because of this:
 
 ```js
-	const adapters = {
-		redis: '@keyv/redis',
-		rediss: '@keyv/redis',
-		mongodb: '@keyv/mongo',
-		mongo: '@keyv/mongo',
-		sqlite: '@keyv/sqlite',
-		postgresql: '@keyv/postgres',
-		postgres: '@keyv/postgres',
-		mysql: '@keyv/mysql',
-		etcd: '@keyv/etcd',
-		offline: '@keyv/offline',
-		tiered: '@keyv/tiered',
-	};
-	if (options.adapter || options.uri) {
-		const adapter = options.adapter || /^[^:+]*/.exec(options.uri)[0];
-		return new (require(adapters[adapter]))(options);
-	}
+const adapters = {
+  redis: '@keyv/redis',
+  rediss: '@keyv/redis',
+  mongodb: '@keyv/mongo',
+  mongo: '@keyv/mongo',
+  sqlite: '@keyv/sqlite',
+  postgresql: '@keyv/postgres',
+  postgres: '@keyv/postgres',
+  mysql: '@keyv/mysql',
+  etcd: '@keyv/etcd',
+  offline: '@keyv/offline',
+  tiered: '@keyv/tiered',
+};
+if (options.adapter || options.uri) {
+  const adapter = options.adapter || /^[^:+]*/.exec(options.uri)[0];
+  return new (require(adapters[adapter]))(options);
+}
 ```
