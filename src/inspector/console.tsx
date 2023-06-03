@@ -8,29 +8,30 @@ import { Box, render, Text, useInput } from 'ink';
 import SyntaxHighlight from './syntax-highlight.tsx';
 import { memo } from '../lib/memoize.tsx';
 import Spinner from './spinner.tsx';
-import renderDebugTreeStream from './render-debug-tree-stream.tsx';
+import { DebugTree } from '../lib/debug.tsx';
 
 const { useList } = reactUse;
 
-function Inspector({ componentToInspect }: { componentToInspect: LLMx.Node }) {
+function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: LLMx.Node; showDebugTree: boolean }) {
   const [debugTreeSteps, { push: pushDebugTreeStep }] = useList([] as string[]);
   const [debugTreeFrameIndex, setDebugTreeFrameIndex] = useState<number | null>(null);
   const [debugTreeStreamIsDone, setDebugTreeStreamIsDone] = useState(false);
 
   const [renderedContent, setRenderedContent] = useState('');
 
-  const memoized = memo(componentToInspect);
-
   useEffect(() => {
+    const renderContext = LLMx.createRenderContext();
+    const memoized = memo(componentToInspect);
+
     async function getAllFrames() {
       // This results in some duplicate pages.
-      for await (const page of renderDebugTreeStream(memoized)) {
+      for await (const page of renderContext.renderStream(LLMx.createElement(DebugTree, {}, memoized))) {
         pushDebugTreeStep(page);
       }
       setDebugTreeStreamIsDone(true);
     }
     async function getRenderedContent() {
-      for await (const page of LLMx.renderStream(memoized)) {
+      for await (const page of renderContext.renderStream(memoized)) {
         setRenderedContent(page);
       }
     }
@@ -56,33 +57,40 @@ function Inspector({ componentToInspect }: { componentToInspect: LLMx.Node }) {
   return (
     <>
       <Box flexDirection="row">
-        <Box flexDirection="column">
+        <Box flexDirection="column" width={showDebugTree ? '50%' : '100%'}>
           <Text bold underline>
             Live-streaming output
             {!debugTreeStreamIsDone && <Spinner />}
           </Text>
           <Text>{renderedContent}</Text>
         </Box>
-        <Box flexDirection="column" paddingRight={2}>
-          <Text bold underline>
-            Tree Inspector
-          </Text>
-          <Text color="grey">
-            Viewing frame {debugFrameIndexToUse}/{Math.max(0, debugTreeSteps.length - 1)}
-            {debugTreeStreamIsDone ? '' : '+'}
-          </Text>
-          <Text color="green">
-            {/* This doesn't handle JSX well, but it's better than nothing. */}
-            <SyntaxHighlight code={debugTreeSteps[debugFrameIndexToUse] ?? ''} language="javascript"></SyntaxHighlight>
-          </Text>
-        </Box>
+        {showDebugTree && (
+          <Box flexDirection="column" paddingLeft={2} width="50%">
+            <Text bold underline>
+              Tree Inspector
+            </Text>
+            <Text color="grey">
+              Viewing frame {debugFrameIndexToUse}/{Math.max(0, debugTreeSteps.length - 1)}
+              {debugTreeStreamIsDone ? '' : '+'}
+            </Text>
+            <Text color="green">
+              {/* This doesn't handle JSX well, but it's better than nothing. */}
+              <SyntaxHighlight
+                code={debugTreeSteps[debugFrameIndexToUse] ?? ''}
+                language="javascript"
+              ></SyntaxHighlight>
+            </Text>
+          </Box>
+        )}
       </Box>
     </>
   );
 }
 
-export function showInspector(componentToInspect: LLMx.Node) {
-  render(<Inspector componentToInspect={componentToInspect} />);
+export function showInspector(componentToInspect: LLMx.Node, opts: { showDebugTree?: boolean } = {}) {
+  const defaultOpts = { showDebugTree: true };
+  const finalOpts = { ...defaultOpts, ...opts };
+  render(<Inspector componentToInspect={componentToInspect} {...finalOpts} />);
 }
 
 /**

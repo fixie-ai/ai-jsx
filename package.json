@@ -13,6 +13,7 @@
     "@typescript-eslint/eslint-plugin": "^5.59.6",
     "@typescript-eslint/parser": "^5.59.6",
     "cheerio": "^1.0.0-rc.12",
+    "csv-stringify": "^6.4.0",
     "eslint": "^8.40.0",
     "eslint-config-nth": "^2.0.1",
     "globby": "^13.1.4",
@@ -33,6 +34,8 @@
     "demo:inline-completion": "tsx src/examples/inline-completion.tsx",
     "demo:inspector": "tsx src/examples/inspector.tsx",
     "demo:debug": "tsx src/examples/debug.tsx",
+    "demo:zepp": "tsx src/examples/bakeoff/zepp-health/ai-jsx.tsx",
+    "demo:loop": "tsx src/examples/bakeoff/loop-qa/ai-jsx.tsx",
     "view-logs": "cat llmx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
@@ -54,6 +57,7 @@
     "cli-spinners": "^2.9.0",
     "find-up": "^6.3.0",
     "got": "^12.6.0",
+    "gpt3-tokenizer": "^1.1.5",
     "graphql": "^16.6.0",
     "ink": "^4.2.0",
     "ink-syntax-highlight": "^1.0.1",
@@ -71,6 +75,7 @@
     "tsconfig-paths": "^4.2.0",
     "utility-types": "^3.10.0",
     "uuid": "^9.0.0",
-    "zod": "^3.21.4"
+    "zod": "^3.21.4",
+    "zod-to-json-schema": "^3.21.1"
   }
 }

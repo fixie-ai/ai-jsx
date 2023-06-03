@@ -15,7 +15,7 @@ import { Document } from './docs.ts';
 import { TextSplitterChunkHeaderOptions } from 'langchain/text_splitter';
 
 export const getLogName = _.once(() => {
-  const packageJsonPath = findUpSync(process.cwd());
+  const packageJsonPath = findUpSync('package.json');
   if (!packageJsonPath) {
     return 'llmx';
   }
@@ -108,7 +108,6 @@ export class Log {
     };
     // @ts-expect-error
     const pinoStream = pinoPretty();
-    pinoStream.pipe(process.stdout);
     const pinoFile = fs.createWriteStream('llmx.log', { flags: 'w+' });
     const fakePino = pino();
     const log = new this(
@@ -132,7 +131,6 @@ export class Log {
            * long as pino doesn't call this method before the constructor returns.
            */
           if (message.level >= fakePino.levels.values[opts.stdoutLevel]) {
-            // For some reason this is double-logging - maybe I put an extra console.log in node_modules?
             pinoStream.write(msgStr);
           }
 
