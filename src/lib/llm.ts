@@ -3,12 +3,12 @@ import { log } from './index.ts';
 import { v4 as uuidv4 } from 'uuid';
 import { isMemoizedSymbol } from './memoize.tsx';
 
-export type Component<P> = (props: P) => Renderable;
+export type Component<P> = (props: P, renderContext: RenderContext) => Renderable;
 export type Literal = string | number | null | undefined | boolean;
 export interface Element<P extends {}> {
   tag: Component<P>;
   props: P;
-  render: () => Renderable;
+  render: (renderContext: RenderContext) => Renderable;
 }
 export type Node = Element<any> | Literal | Node[];
 
@@ -17,32 +17,43 @@ export type Renderable = Node | Promise<Renderable> | AsyncGenerator<Renderable>
 export type ElementPredicate = (e: Element<any>) => boolean;
 export type PropsOfComponent<T extends Component<any>> = T extends Component<infer P> ? P : never;
 
+export interface RenderContext {
+  partialRenderStream(renderable: Renderable, shouldStop: ElementPredicate): AsyncGenerator<PartiallyRendered[]>;
+  partialRender(renderable: Renderable, shouldStop: ElementPredicate): Promise<PartiallyRendered[]>;
+  renderStream(renderable: Renderable): AsyncGenerator<string>;
+  render(renderable: Renderable): Promise<string>;
+}
+
 export declare namespace JSX {
   interface ElementChildrenAttribute {
     children: {};
   }
 }
 
-export function createElement<T extends Component<P>, P extends { children: C }, C>(
-  tag: T,
-  props: Omit<P, 'children'>,
-  child: C
+export function createElement<P extends { children: C }, C>(
+  tag: Component<P>,
+  props: Omit<P, 'children'> | null,
+  ...children: [C]
 ): Element<P>;
-export function createElement<T extends Component<P>, P extends { children: C[] }, C>(
-  tag: T,
-  props: Omit<P, 'children'>,
+export function createElement<P extends { children: C[] }, C>(
+  tag: Component<P>,
+  props: Omit<P, 'children'> | null,
   ...children: C[]
 ): Element<P>;
-export function createElement(tag: any, props: any, ...children: any[]): Element<any> {
+export function createElement<P extends { children: C | C[] }, C>(
+  tag: Component<P>,
+  props: Omit<P, 'children'> | null,
+  ...children: C[]
+): Element<P> {
   const propsToPass = {
     ...(props ?? {}),
     children: children.length == 1 ? children[0] : children,
-  };
+  } as P;
 
   const result = {
     tag,
     props: propsToPass,
-    render: () => tag(propsToPass),
+    render: (ctx: RenderContext) => tag(propsToPass, ctx),
   };
   Object.freeze(propsToPass);
   Object.freeze(result);
@@ -168,7 +179,8 @@ export function debug(value: unknown): string {
 
 type PartiallyRendered = string | Element<any>;
 
-export async function* partialRenderStream(
+async function* partialRenderStream(
+  context: RenderContext,
   renderable: Renderable,
   shouldStop: ElementPredicate
 ): AsyncGenerator<PartiallyRendered[]> {
@@ -201,7 +213,7 @@ export async function* partialRenderStream(
     };
 
     const inProgressRenders = renderable.map((r) => {
-      const generator = partialRenderStream(r, shouldStop);
+      const generator = context.partialRenderStream(r, shouldStop);
       const inProgressRender: InProgressRender = {
         generator,
         currentValue: [],
@@ -236,36 +248,37 @@ export async function* partialRenderStream(
     if (shouldStop(renderable)) {
       yield [renderable];
     } else {
-      yield* partialRenderStream(renderable.render(), shouldStop);
+      yield* context.partialRenderStream(renderable.render(context), shouldStop);
     }
   } else if (renderable instanceof Promise) {
-    yield* await renderable.then((x) => partialRenderStream(x, shouldStop));
+    yield* await renderable.then((x) => context.partialRenderStream(x, shouldStop));
   } else {
     // Exhaust the iterator.
     for await (const value of renderable) {
-      yield* partialRenderStream(value, shouldStop);
+      yield* context.partialRenderStream(value, shouldStop);
     }
   }
 }
 
-export async function partialRender(
+async function partialRender(
+  context: RenderContext,
   renderable: Renderable,
   shouldStop: ElementPredicate
 ): Promise<PartiallyRendered[]> {
   let lastValue: PartiallyRendered[] = [];
-  for await (const value of partialRenderStream(renderable, shouldStop)) {
+  for await (const value of context.partialRenderStream(renderable, shouldStop)) {
     lastValue = value;
   }
   return lastValue;
 }
 
-export async function render(renderable: Renderable): Promise<string> {
-  const elementsOrStrings = await partialRender(renderable, () => false);
+async function render(context: RenderContext, renderable: Renderable): Promise<string> {
+  const elementsOrStrings = await context.partialRender(renderable, () => false);
   return elementsOrStrings.join('');
 }
 
-export async function* renderStream(renderable: Renderable): AsyncGenerator<string> {
-  for await (const value of partialRenderStream(renderable, () => false)) {
+async function* renderStream(context: RenderContext, renderable: Renderable): AsyncGenerator<string> {
+  for await (const value of context.partialRenderStream(renderable, () => false)) {
     yield value.join('');
   }
 }
@@ -275,8 +288,21 @@ interface ShowOptions {
   step: boolean;
 }
 
+export function createRenderContext(): RenderContext {
+  const context: RenderContext = {
+    partialRenderStream: (renderable, shouldStop) => partialRenderStream(context, renderable, shouldStop),
+    partialRender: (renderable, shouldStop) => partialRender(context, renderable, shouldStop),
+    renderStream: (renderable) => renderStream(context, renderable),
+    render: (renderable) => render(context, renderable),
+  };
+
+  return context;
+}
+
 export function show(node: Node, opts: ShowOptions | undefined = { stream: true, step: false }) {
   const showLifespanId = uuidv4();
+
+  const renderContext = createRenderContext();
   return log.logPhase({ phase: 'show', level: 'trace', opts, showLifespanId }, async () => {
     if (opts.stream) {
       if (process.env.loglevel) {
@@ -284,14 +310,14 @@ export function show(node: Node, opts: ShowOptions | undefined = { stream: true,
           {},
           'show() called with stream=true, but env var `loglevel` is set. Streaming and console logging at the same time will lead to broken output. As a fallback, show() will not stream.'
         );
-        console.log(await render(node));
+        console.log(await renderContext.render(node));
         return;
       }
 
       const rl = readline.createInterface(process.stdin, process.stdout);
       let lastPage = '';
       const cursor = new readline.Readline(process.stdout);
-      for await (const page of renderStream(node)) {
+      for await (const page of renderContext.renderStream(node)) {
         for (const line of lastPage.split('\n').reverse()) {
           cursor.clearLine(0);
           cursor.moveCursor(-line.length, -1);
@@ -311,7 +337,7 @@ export function show(node: Node, opts: ShowOptions | undefined = { stream: true,
       return;
     }
 
-    console.log(await render(node));
+    console.log(await renderContext.render(node));
   });
 }
 

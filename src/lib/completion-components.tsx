@@ -2,14 +2,17 @@ import { openAIChat } from '../lib/models.ts';
 import { LLMx, Models } from '../lib/index.ts';
 import { ChatCompletionRequestMessage } from 'openai';
 
-export async function* Completion(props: {
-  temperature?: number;
-  maxTokens?: number;
-  stop?: string[];
-  children: LLMx.Node;
-}) {
+export async function* Completion(
+  props: {
+    temperature?: number;
+    maxTokens?: number;
+    stop?: string[];
+    children: LLMx.Node;
+  },
+  { render }: LLMx.RenderContext
+) {
   yield '▁';
-  let prompt = await LLMx.render(props.children);
+  let prompt = await render(props.children);
   while (prompt.length > 0 && prompt.endsWith(' ')) {
     prompt = prompt.slice(0, prompt.length - 1);
   }
@@ -41,15 +44,18 @@ export function AssistantMessage({ children }: { children: LLMx.Node }) {
   return children;
 }
 
-export async function* ChatCompletion(props: {
-  temperature?: number;
-  maxTokens?: number;
-  stop?: string[];
-  children: LLMx.Node;
-}) {
+export async function* ChatCompletion(
+  props: {
+    temperature?: number;
+    maxTokens?: number;
+    stop?: string[];
+    children: LLMx.Node;
+  },
+  { render, partialRender }: LLMx.RenderContext
+) {
   yield '▁';
 
-  const messageElements = await LLMx.partialRender(
+  const messageElements = await partialRender(
     props.children,
     (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage
   );
@@ -60,18 +66,18 @@ export async function* ChatCompletion(props: {
         case SystemMessage:
           return {
             role: 'system',
-            content: await LLMx.render(message),
+            content: await render(message),
           };
         case UserMessage:
           return {
             role: 'user',
-            content: await LLMx.render(message),
+            content: await render(message),
             name: (message.props as LLMx.PropsOfComponent<typeof UserMessage>).name,
           };
         case AssistantMessage:
           return {
             role: 'assistant',
-            content: await LLMx.render(message),
+            content: await render(message),
           };
         default:
           throw new Error(
