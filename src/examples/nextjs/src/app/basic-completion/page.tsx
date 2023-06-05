@@ -5,7 +5,7 @@ import InputPrompt from '@/components/InputPrompt';
 import ResultContainer from '@/components/ResultContainer';
 
 export default async function BasicCompletion({ searchParams }: { searchParams: any }) {
-  const defaultValue = 'wild weasels'
+  const defaultValue = 'wild weasels';
   const query = searchParams.q ?? defaultValue;
   return (
     <>

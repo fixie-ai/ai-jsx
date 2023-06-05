@@ -86,16 +86,14 @@ export default async function RecipeWrapper({ searchParams }: { searchParams: an
                 <RecipeIngredientListItem>the first ingredient</RecipeIngredientListItem>
               </RecipeIngredientList>
               Every child of a RecipeInstructionList should be a RecipeInstructionListItem. Every child of a
-              RecipeIngredientList should be a RecipeIngredientListItem. Respond with a JSON object that encodes your UI. The JSON object should match this TypeScript
-              interface: interface Element {'{'}
+              RecipeIngredientList should be a RecipeIngredientListItem. Respond with a JSON object that encodes your
+              UI. The JSON object should match this TypeScript interface: interface Element {'{'}
               name: string; children: (string | Element)[]
               {'}'}
               For example:
               {'{'}
               "name": "Recipe", "children": [{'{'}"name": "RecipeTitle", "children": ["My Recipe"]{'}'}
-              "my description" ]{'}'}.
-
-              Respond with only the JSON. Do not include with an explanatory suffix or prefix.
+              "my description" ]{'}'}. Respond with only the JSON. Do not include with an explanatory suffix or prefix.
             </SystemMessage>
             <UserMessage>Give me a recipe for {query}. Respond with only the JSON.</UserMessage>
           </ChatCompletion>
