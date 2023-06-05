@@ -1,5 +1,6 @@
 import { LLMx } from '../lib/index.ts';
 import { ChatCompletion, SystemMessage, UserMessage } from '../lib/completion-components.tsx';
+import { showInspector } from '../inspector/console.tsx';
 
 function App() {
   return (
@@ -10,4 +11,4 @@ function App() {
   );
 }
 
-await LLMx.show(<App />);
+showInspector(<App />);
