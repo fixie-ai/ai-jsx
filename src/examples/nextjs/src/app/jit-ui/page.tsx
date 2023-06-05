@@ -47,13 +47,6 @@ export function RecipeListItem({ children }: { children: React.ReactNode }) {
 export default async function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      {/* <ResultContainer title="AI writes a poem">
-        <AI>
-          <ChatCompletion temperature={1}>
-            <UserMessage>Write me a poem about a bunch of wild weasels.</UserMessage>
-          </ChatCompletion>
-        </AI>
-      </ResultContainer> */}
       <ResultContainer title="AI comes up with a recipe [beans]">
         <AI renderPassedReactComponents>
           <ChatCompletion temperature={1}>

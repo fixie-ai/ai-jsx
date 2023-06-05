@@ -6,7 +6,7 @@ import { Suspense } from 'react';
 import { EventEmitter } from 'stream';
 import _ from 'lodash';
 import Image from 'next/image';
-import { DurationLabel, Recipe, RecipeIngredientList, RecipeInstructionList, RecipeListItem, RecipeTitle,  } from './basic-completion/page.tsx';
+import { Recipe, RecipeIngredientList, RecipeInstructionList, RecipeListItem, RecipeTitle,  } from './jit-ui/page.tsx';
 
 function Loading() {
   return <Image src="/loading.gif" width={100} height={100} alt="loading" />;
@@ -109,9 +109,6 @@ async function AIDirectToDOM({ children }: { children: React.ReactNode }) {
   return <div className="contents-generated-by-ai-buckle-up-buddy" dangerouslySetInnerHTML={{ __html: rendered }} />;
 }
 
-async function ParseReactFromModel({ children }: { children: string }) {
-}
-
 async function AIInterpretedReactComponents({ children }: { children: React.ReactNode }) {
   // TODO: Pull this automatically from the input that was passed.
   const possibleComponents = {
@@ -120,7 +117,6 @@ async function AIInterpretedReactComponents({ children }: { children: React.Reac
     RecipeInstructionList,
     RecipeIngredientList,
     RecipeListItem,
-    DurationLabel,
   }
 
   function parseJsonToReact(json: any) {
