@@ -1,28 +1,24 @@
 import { showInspector } from '../inspector/console.tsx';
 import { LLMx } from '../lib/index.ts';
 import { SystemMessage, Completion } from '../lib/completion-components.tsx';
-import { Inline, Scope } from '../lib/inline.tsx';
+import { Inline } from '../lib/inline.tsx';
 
 function CharacterGenerator() {
-  const inlineCompletion = (
-    <Inline>
-      {(prompt) => (
-        <Completion stop={['"']} temperature={1.0}>
-          {prompt}
-        </Completion>
-      )}
-    </Inline>
+  const inlineCompletion = (prompt: LLMx.Node) => (
+    <Completion stop={['"']} temperature={1.0}>
+      {prompt}
+    </Completion>
   );
 
   return (
-    <Scope>
+    <Inline>
       The following is a character profile for an RPG game in JSON format:{'\n'}
       {'{'}
       {'\n  '}"class": "{inlineCompletion}",
       {'\n  '}"name": "{inlineCompletion}",
       {'\n  '}"mantra": "{inlineCompletion}"{'\n'}
       {'}'}
-    </Scope>
+    </Inline>
   );
 }
 
