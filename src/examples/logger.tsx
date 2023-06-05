@@ -1,4 +1,3 @@
-import { showInspector } from '../inspector/console.tsx';
 import { LLMx } from '../lib/index.ts';
 import { Completion } from '../lib/completion-components.tsx';
 import { Inline, Scope } from '../lib/inline.tsx';

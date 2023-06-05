@@ -7,7 +7,7 @@ export type Component<P> = (props: P, renderContext: RenderContext) => Renderabl
 export type Literal = string | number | null | undefined | boolean;
 
 const attachedContext = Symbol('LLMx.attachedContext');
-export interface Element<P extends {}> {
+export interface Element<P extends object> {
   tag: Component<P>;
   props: P;
   render: (renderContext: RenderContext) => Renderable;
@@ -88,7 +88,7 @@ export function Fragment({ children }: { children: Node }): Renderable {
   return children;
 }
 
-export function debug(value: unknown, expand: boolean = true): string {
+export function debug(value: unknown, expandJSXChildren: boolean = true): string {
   const previouslyMemoizedIds = new Set();
 
   function debugRec(value: unknown, indent: string, context: 'code' | 'children' | 'props'): string {
@@ -128,7 +128,7 @@ export function debug(value: unknown, expand: boolean = true): string {
       }
 
       let children = '';
-      if (expand && (!isMemoized || !memoizedIsPreviouslyRenderedToDebugOutput)) {
+      if (expandJSXChildren && (!isMemoized || !memoizedIsPreviouslyRenderedToDebugOutput)) {
         children = debugRec(value.props.children, childIndent, 'children');
       }
 
@@ -197,7 +197,7 @@ export function debug(value: unknown, expand: boolean = true): string {
   return debugRec(value, '', 'code');
 }
 
-export function withContext<P extends {}>(element: Element<P>, context: RenderContext): Element<P> {
+export function withContext<P extends object>(element: Element<P>, context: RenderContext): Element<P> {
   const withContext = {
     ...element,
     [attachedContext]: context,
@@ -346,7 +346,8 @@ export function createRenderContext(
     },
 
     wrapRender: (getRender) => createRenderContext(getRender(render), userContext),
-    pushContext: (ref, value) => createRenderContext(render, { ...userContext, [ref[contextKey][1]]: value }),
+    pushContext: (contextReference, value) =>
+      createRenderContext(render, { ...userContext, [contextReference[contextKey][1]]: value }),
   };
 
   return context;
