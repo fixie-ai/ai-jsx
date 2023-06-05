@@ -1,7 +1,7 @@
 import { LLMx } from '../lib/index.ts';
 import { Completion } from '../lib/completion-components.tsx';
-import { DebugTree } from '../lib/debug.tsx';
 import { Inline, Scope } from '../lib/inline.tsx';
+import { showInspector } from '../inspector/console.tsx';
 
 function CharacterGenerator() {
   const inlineCompletion = (
@@ -25,13 +25,4 @@ function CharacterGenerator() {
     </Scope>
   );
 }
-if (process.env.DEBUG) {
-  await LLMx.show(
-    <DebugTree>
-      <CharacterGenerator />
-    </DebugTree>,
-    { stream: true, step: true }
-  );
-} else {
-  await LLMx.show(<CharacterGenerator />);
-}
+showInspector(<CharacterGenerator />);
