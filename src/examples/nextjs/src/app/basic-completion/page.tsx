@@ -1,6 +1,6 @@
 import React from '../react';
 import { AI } from '../ai';
-import { ChatCompletion, SystemMessage, UserMessage } from '../../../../../../dist/lib/completion-components.js';
+import { ChatCompletion, UserMessage } from '../../../../../../dist/lib/completion-components.js';
 
 function ResultContainer({
   title,
@@ -25,8 +25,7 @@ function ResultContainer({
 }
 
 export default async function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+  return (<>
       <ResultContainer title="AI writes a poem">
         <AI>
           <ChatCompletion temperature={1}>
@@ -41,6 +40,5 @@ export default async function Home() {
           </ChatCompletion>
         </AI>
       </ResultContainer>
-    </main>
-  );
+  </>);
 }

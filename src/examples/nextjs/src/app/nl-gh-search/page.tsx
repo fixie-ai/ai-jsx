@@ -1,7 +1,6 @@
 import React from '../react';
 import { AI, NaturalLanguageGitHubSearch } from '../ai';
-import { ChatCompletion, SystemMessage, UserMessage } from '../../../../../../dist/lib/completion-components.js';
-import { Suspense } from 'react';
+import { ChatCompletion, UserMessage } from '../../../../../../dist/lib/completion-components.js';
 
 function ResultContainer({
   title,
@@ -28,21 +27,7 @@ function ResultContainer({
 export default async function Home(props) {
   const githubTopic = props.searchParams.q || 'top issues from the TypeScript repo';
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <ResultContainer title="AI writes a poem">
-        <AI>
-          <ChatCompletion temperature={1}>
-            <UserMessage>Write me a poem about a bunch of wild weasels.</UserMessage>
-          </ChatCompletion>
-        </AI>
-      </ResultContainer>
-      <ResultContainer title="AI comes up with a recipe [beans]">
-        <AI>
-          <ChatCompletion temperature={1}>
-            <UserMessage>Give me a beans recipe</UserMessage>
-          </ChatCompletion>
-        </AI>
-      </ResultContainer>
+    <>
       <ResultContainer
         title={`Natural Language GitHub Search for: "${githubTopic}"`}
         description="AI has been asked to output prose"
@@ -59,6 +44,6 @@ export default async function Home(props) {
           <NaturalLanguageGitHubSearch query={githubTopic} outputFormat="html" />
         </AI>
       </ResultContainer>
-    </main>
+    </>
   );
 }

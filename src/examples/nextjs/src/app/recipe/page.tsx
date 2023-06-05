@@ -46,7 +46,7 @@ export function RecipeListItem({ children }: { children: React.ReactNode }) {
 
 export default async function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <>
       <ResultContainer title="AI comes up with a recipe [beans]">
         <AI renderPassedReactComponents>
           <ChatCompletion temperature={1}>
@@ -83,8 +83,7 @@ export default async function Home() {
             <UserMessage>Give me a beans recipe. Respond with only the JSON.</UserMessage>
           </ChatCompletion>
         </AI>
-        {/* Black Bean and Corn Salad Recipe: Ingredients: - 1 can black beans, rinsed and drained - 1 can corn, drained - 2 medium tomatoes, chopped - 1/2 red onion, chopped - 1 jalapeño, seeded and chopped - 1/4 cup cilantro leaves, chopped - 2 tbsp olive oil - 2 limes, juiced - Salt and pepper to taste Instructions: 1. In a large bowl, combine black beans, corn, tomatoes, red onion, jalapeño, and cilantro. 2. In a small bowl, whisk together olive oil, lime juice, salt, and pepper. 3. Pour the dressing over the salad and toss to combine. 4. Chill for at least 1 hour before serving. 5. Enjoy! */}
       </ResultContainer>
-    </main>
+    </>
   );
 }

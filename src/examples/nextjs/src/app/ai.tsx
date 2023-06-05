@@ -6,7 +6,7 @@ import { Suspense } from 'react';
 import { EventEmitter } from 'stream';
 import _ from 'lodash';
 import Image from 'next/image';
-import { Recipe, RecipeIngredientList, RecipeInstructionList, RecipeListItem, RecipeTitle,  } from './jit-ui/page.tsx';
+import { Recipe, RecipeIngredientList, RecipeInstructionList, RecipeListItem, RecipeTitle,  } from './recipe/page.tsx';
 
 function Loading() {
   return <Image src="/loading.gif" width={100} height={100} alt="loading" />;
