@@ -1,7 +1,7 @@
 import { LLMx } from '../lib/index.ts';
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from '../lib/completion-components.tsx';
-import { DebugTree } from '../lib/debug.tsx';
 import { Inline } from '../lib/inline.tsx';
+import { showInspector } from '../inspector/console.tsx';
 
 function App() {
   return (
@@ -34,13 +34,4 @@ function App() {
   );
 }
 
-if (process.env.DEBUG) {
-  await LLMx.show(
-    <DebugTree>
-      <App />
-    </DebugTree>,
-    { stream: true, step: true }
-  );
-} else {
-  await LLMx.show(<App />);
-}
+showInspector(<App />);
