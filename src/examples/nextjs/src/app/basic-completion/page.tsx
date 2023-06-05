@@ -16,9 +16,7 @@ function ResultContainer({
       <h1 className="text-lg font-bold">{title}</h1>
       {description && <p>{description}</p>}
       <div className="border-black border p-4 m-4 bg-white w-full">
-        {/* <Suspense fallback={<Loading />}> */}
         {children}
-        {/* </Suspense> */}
       </div>
     </div>
   );
