@@ -2,24 +2,7 @@ import React from '../react';
 import { AI } from '../ai';
 import { ChatCompletion, UserMessage } from '../../../../../../dist/lib/completion-components.js';
 import InputPrompt from '@/components/InputPrompt';
-
-function ResultContainer({
-  title,
-  children,
-  description,
-}: {
-  title: string;
-  children: React.ReactNode;
-  description?: string;
-}) {
-  return (
-    <div className="p-4 m-4 w-full">
-      <h1 className="text-lg font-bold">{title}</h1>
-      {description && <p>{description}</p>}
-      <div className="border-black border p-4 m-4 bg-white w-full">{children}</div>
-    </div>
-  );
-}
+import ResultContainer from '@/components/ResultContainer';
 
 export default async function Home({ searchParams }: { searchParams: any }) {
   return (

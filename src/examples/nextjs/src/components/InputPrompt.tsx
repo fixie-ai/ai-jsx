@@ -2,7 +2,6 @@
 
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { userAgentFromString } from 'next/server';
 
 export default function InputPrompt({ label }: { label: string }) {
   const searchParams = useSearchParams();
@@ -17,7 +16,7 @@ export default function InputPrompt({ label }: { label: string }) {
 
   return (
     <Suspense>
-      <div>
+      <div className="max-w-7xl min-w-full">
         <form className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2" onSubmit={handleSubmit}>
           <div className="px-4 py-6 sm:p-8">
             <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
