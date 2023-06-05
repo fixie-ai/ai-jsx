@@ -154,14 +154,14 @@ async function AIInterpretedReactComponents({ children }: { children: React.Reac
     return <Component>{children}</Component>;
   }
 
-  // const rendered = await LLMx.createRenderContext().render(children);
-  const rendered = response;
+  const rendered = await LLMx.createRenderContext().render(children);
+  // const rendered = response;
 
   let modelResponseJSON;
   try {
     modelResponseJSON = JSON.parse(rendered);
   } catch (e) {
-    console.error('Failed to parse JSON from model response', e);
+    console.error(`Failed to parse JSON from model response: ${rendered}`, e);
     return response;
   }
   return parseJsonToReact(modelResponseJSON);

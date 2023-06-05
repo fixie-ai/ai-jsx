@@ -1,28 +1,8 @@
 import React from '../react';
 import { AI } from '../ai';
 import { ChatCompletion, SystemMessage, UserMessage } from '../../../../../../dist/lib/completion-components.js';
-
-function ResultContainer({
-  title,
-  children,
-  description,
-}: {
-  title: string;
-  children: React.ReactNode;
-  description?: string;
-}) {
-  return (
-    <div className="p-4 m-4 w-full">
-      <h1 className="text-lg font-bold">{title}</h1>
-      {description && <p>{description}</p>}
-      <div className="border-black border p-4 m-4 bg-white w-full">
-        {/* <Suspense fallback={<Loading />}> */}
-        {children}
-        {/* </Suspense> */}
-      </div>
-    </div>
-  );
-}
+import ResultContainer from '@/components/ResultContainer';
+import InputPrompt from '@/components/InputPrompt';
 
 export function Recipe({ children }: { children: React.ReactNode }) {
   return <div data-test="recipe">{children}</div>;
@@ -50,7 +30,7 @@ export function RecipeInstructionList({ children }: { children: React.ReactNode 
 export function RecipeIngredientList({ children }: { children: React.ReactNode }) {
   return (
     <div>
-      <h2 className-="italics">Ingredients</h2>
+      <h2 className="italics">Ingredients</h2>
       <ul className="list-disc list-inside italic" data-test="recipe-ingredient-list">
         {children}
       </ul>
@@ -82,10 +62,15 @@ export function RecipeInstructionListItem({ children }: { children: React.ReactN
   return <li data-test="recipe-instruction-list-item">{children}</li>;
 }
 
-export default async function Home() {
+export default async function RecipeWrapper({ searchParams }: { searchParams: any }) {
+  const defaultValue = 'beans';
+  const query = searchParams.q ?? defaultValue;
+
   return (
     <>
-      <ResultContainer title="AI comes up with a recipe [beans]">
+      <InputPrompt label="What would you like a recipe for?" defaultValue={defaultValue} />
+
+      <ResultContainer title={`AI comes up with a recipe for ${query}`}>
         <AI renderPassedReactComponents>
           <ChatCompletion temperature={1}>
             <SystemMessage>
@@ -101,17 +86,18 @@ export default async function Home() {
                 <RecipeIngredientListItem>the first ingredient</RecipeIngredientListItem>
               </RecipeIngredientList>
               Every child of a RecipeInstructionList should be a RecipeInstructionListItem. Every child of a
-              RecipeIngredientList should be a RecipeIngredientListItem. Put a SelectIngredientsButton somewhere in the
-              response. Respond with a JSON object that encodes your UI. The JSON object should match this TypeScript
+              RecipeIngredientList should be a RecipeIngredientListItem. Respond with a JSON object that encodes your UI. The JSON object should match this TypeScript
               interface: interface Element {'{'}
               name: string; children: (string | Element)[]
               {'}'}
               For example:
               {'{'}
               "name": "Recipe", "children": [{'{'}"name": "RecipeTitle", "children": ["My Recipe"]{'}'}
-              "my description" ]{'}'}
+              "my description" ]{'}'}.
+
+              Respond with only the JSON. Do not include with an explanatory suffix or prefix.
             </SystemMessage>
-            <UserMessage>Give me a beans recipe. Respond with only the JSON.</UserMessage>
+            <UserMessage>Give me a recipe for {query}. Respond with only the JSON.</UserMessage>
           </ChatCompletion>
         </AI>
       </ResultContainer>
