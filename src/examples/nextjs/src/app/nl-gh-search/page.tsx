@@ -1,33 +1,14 @@
 import React from '../react';
 import { AI, NaturalLanguageGitHubSearch } from '../ai';
-import { ChatCompletion, UserMessage } from '../../../../../../dist/lib/completion-components.js';
-
-function ResultContainer({
-  title,
-  children,
-  description,
-}: {
-  title: string;
-  children: React.ReactNode;
-  description?: string;
-}) {
-  return (
-    <div className="p-4 m-4">
-      <h1 className="text-lg font-bold">{title}</h1>
-      {description && <p>{description}</p>}
-      <div className="border-black border p-4 m-4  bg-white">
-        {/* <Suspense fallback={<Loading />}> */}
-        {children}
-        {/* </Suspense> */}
-      </div>
-    </div>
-  );
-}
+import ResultContainer from '@/components/ResultContainer';
+import InputPrompt from '@/components/InputPrompt';
 
 export default async function Home(props) {
-  const githubTopic = props.searchParams.q || 'top issues from the TypeScript repo';
+  const defaultValue = 'top issues from the TypeScript repo';
+  const githubTopic = props.searchParams.q || defaultValue;
   return (
     <>
+      <InputPrompt label="Search the GitHub API for this topic" defaultValue={defaultValue} />
       <ResultContainer
         title={`Natural Language GitHub Search for: "${githubTopic}"`}
         description="AI has been asked to output prose"
