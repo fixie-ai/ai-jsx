@@ -7,6 +7,7 @@ import { Docs, DocsComponents, LLMx } from '../../../lib/index.ts';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { Article } from './load-articles.mjs';
 import _ from 'lodash';
+import { showInspector } from '../../../inspector/console.tsx';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -33,29 +34,25 @@ function ShowDoc({ doc }: { doc: (typeof docs)[0] }) {
   );
 }
 
-function main() {
-  function AskAndAnswer({ query }: { query: string }) {
-    const loader = async () => _.map(await vectorStore.search(query, { limit: 3 }), 'document');
-    return (
-      <>
-        Q: {query}
-        {'\n'}
-        A: <DocsComponents.DocsQA question={query} loader={loader} docComponent={ShowDoc} />
-      </>
-    );
-  }
-
-  LLMx.show(
+function AskAndAnswer({ query }: { query: string }) {
+  const loader = async () => _.map(await vectorStore.search(query, { limit: 3 }), 'document');
+  return (
     <>
-      <AskAndAnswer query="What is Loop?" />
+      Q: {query}
       {'\n'}
-      {'\n'}
-      <AskAndAnswer query="Does Loop offer roadside assistance?" />
-      {'\n'}
-      {'\n'}
-      <AskAndAnswer query="How do I file a claim?" />
+      A: <DocsComponents.DocsQA question={query} loader={loader} docComponent={ShowDoc} />
     </>
   );
 }
 
-main();
+showInspector(
+  <>
+    <AskAndAnswer query="What is Loop?" />
+    {'\n'}
+    {'\n'}
+    <AskAndAnswer query="Does Loop offer roadside assistance?" />
+    {'\n'}
+    {'\n'}
+    <AskAndAnswer query="How do I file a claim?" />
+  </>
+);

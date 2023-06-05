@@ -29,8 +29,9 @@
   },
   "type": "module",
   "scripts": {
-    "demo:errors": "tsx src/examples/errors.tsx",
+    "demo:debate": "tsx src/examples/debate.tsx",
     "demo:debate-imperative": "tsx src/examples/debate-imperative.tsx",
+    "demo:errors": "tsx src/examples/errors.tsx",
     "demo:logger": "tsx src/examples/logger.tsx",
     "demo:context": "tsx src/examples/context.tsx",
     "demo:inline-chat": "tsx src/examples/inline-chat.tsx",
