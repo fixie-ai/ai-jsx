@@ -188,6 +188,9 @@ async function* partialRenderStream(
     yield [renderable.toString()];
   } else if (typeof renderable === 'undefined' || typeof renderable === 'boolean' || renderable === null) {
     yield [];
+  } else if ('$$typeof' in renderable) {
+    // console.log({ renderable }, 'got renderable react component in parialRenderStream');
+    yield `<${renderable.type.name}>${renderable.props.children}</${renderable.type.name}>}`
   } else if (Array.isArray(renderable)) {
     interface InProgressRender {
       generator: AsyncGenerator<PartiallyRendered[]>;
@@ -257,7 +260,7 @@ async function* partialRenderStream(
         yield* context.partialRenderStream(value, shouldStop);
       }
     } catch (e) {
-      // console.error(e, renderable);
+      console.error(e, renderable);
       log.error({ e, renderable }, 'Error while rendering');
     }
   }
@@ -276,7 +279,6 @@ async function partialRender(
 }
 
 async function render(context: RenderContext, renderable: Renderable): Promise<string> {
-  console.log({ renderable }, 'got renderable');
   const elementsOrStrings = await context.partialRender(renderable, () => false);
   return elementsOrStrings.join('');
 }

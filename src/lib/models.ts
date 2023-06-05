@@ -93,6 +93,7 @@ export function openAIChat(
     callName: 'openai-chat',
     ...opts,
   };
+  console.log('modelCall', paramsToUse.messages)
   return log.modelCall({ params: paramsToUse, ...optsToUse }, async () => {
     const response = await openai.createChatCompletion(paramsToUse);
     // TODO: handle errors

@@ -43,7 +43,10 @@ export default async function Home(props) {
           </ChatCompletion>
         </AI>
       </ResultContainer>
-      <ResultContainer title={`Natural Language GitHub Search for: "${githubTopic}"`}description="AI has been asked to output prose">
+      <ResultContainer
+        title={`Natural Language GitHub Search for: "${githubTopic}"`}
+        description="AI has been asked to output prose"
+      >
         <AI>
           <NaturalLanguageGitHubSearch query={githubTopic} outputFormat="prose" />
         </AI>
