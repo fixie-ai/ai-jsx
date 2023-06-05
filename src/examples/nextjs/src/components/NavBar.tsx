@@ -10,8 +10,8 @@ export default function NavBar() {
 
   const pages = {
     'Basic Completion': '/basic-completion',
-    'JIT UI: Recipe': '/recipe',
-    'JIT UI: GitHub Search': '/nl-gh-search',
+    'JIT UI: React': '/recipe',
+    'JIT UI: Raw HTML': '/nl-gh-search',
   };
 
   return (
