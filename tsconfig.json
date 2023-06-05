@@ -6,6 +6,7 @@
     "jsxFactory": "LLMx.createElement",
     "jsxFragmentFactory": "LLMx.Fragment",
     "moduleResolution": "node16",
+    "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "noEmit": true
   }
