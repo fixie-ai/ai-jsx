@@ -12,9 +12,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <NavBar />
-        <main className="flex min-h-screen flex-col items-start p-24">
-          {children}
-        </main>
+        <main className="flex min-h-screen flex-col items-start p-24">{children}</main>
       </body>
     </html>
   );

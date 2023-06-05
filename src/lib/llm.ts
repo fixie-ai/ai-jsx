@@ -190,7 +190,7 @@ async function* partialRenderStream(
     yield [];
   } else if ('$$typeof' in renderable) {
     // console.log({ renderable }, 'got renderable react component in parialRenderStream');
-    yield `<${renderable.type.name}>${renderable.props.children}</${renderable.type.name}>}`
+    yield `<${renderable.type.name}>${renderable.props.children}</${renderable.type.name}>}`;
   } else if (Array.isArray(renderable)) {
     interface InProgressRender {
       generator: AsyncGenerator<PartiallyRendered[]>;

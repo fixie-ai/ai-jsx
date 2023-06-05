@@ -6,7 +6,15 @@ import { Suspense } from 'react';
 import { EventEmitter } from 'stream';
 import _ from 'lodash';
 import Image from 'next/image';
-import { Recipe, RecipeIngredientList, RecipeInstructionList, RecipeListItem, RecipeTitle,  } from './recipe/page.tsx';
+import {
+  Recipe,
+  RecipeIngredientList,
+  RecipeInstructionList,
+  RecipeIngredientListItem,
+  RecipeInstructionListItem,
+  RecipeTitle,
+  SelectIngredientsButton,
+} from './recipe/page.tsx';
 
 function Loading() {
   return <Image src="/loading.gif" width={100} height={100} alt="loading" />;
@@ -102,7 +110,7 @@ async function Defer(props: { emitter: any; index: number }) {
   });
 }
 
-const response = `{ "name": "Recipe", "children": [ { "name": "RecipeTitle", "children": ["Spicy Beans"] }, { "name": "RecipeIngredientList", "children": [ { "name": "RecipeListItem", "children": ["1 can of black beans"] }, { "name": "RecipeListItem", "children": ["1 diced onion"] }, { "name": "RecipeListItem", "children": ["2 minced garlic cloves"] }, { "name": "RecipeListItem", "children": ["1 diced tomato"] }, { "name": "RecipeListItem", "children": ["1 diced jalapeño"] }, { "name": "RecipeListItem", "children": ["Salt and pepper to taste"] } ] }, { "name": "RecipeInstructionList", "children": [ { "name": "RecipeListItem", "children": ["Heat up a spoonful of oil in a large skillet."] }, { "name": "RecipeListItem", "children": ["Cook onion and garlic until soft."] }, { "name": "RecipeListItem", "children": ["Add tomato and jalapeño and cook for another 2 minutes."] }, { "name": "RecipeListItem", "children": ["Add black beans with their juice."] }, { "name": "RecipeListItem", "children": ["Cook for 5-10 minutes until thick. Season with salt and pepper."] } ] } ] }`
+const response = `{"name": "Recipe", "children": [ {"name": "RecipeTitle", "children": ["Spicy Black Beans"]}, {"name": "RecipeIngredientList", "children": [ {"name": "RecipeIngredientListItem", "children": ["1 lb dry black beans"]}, {"name": "RecipeIngredientListItem", "children": ["1 onion, diced"]}, {"name": "RecipeIngredientListItem", "children": ["1 red bell pepper, diced"]}, {"name": "RecipeIngredientListItem", "children": ["4 garlic cloves, minced"]}, {"name": "RecipeIngredientListItem", "children": ["2 tsp cumin"]}, {"name": "RecipeIngredientListItem", "children": ["1 tsp smoked paprika"]}, {"name": "RecipeIngredientListItem", "children": ["1 tsp chili powder"]}, {"name": "RecipeIngredientListItem", "children": ["1 tsp salt"]}, {"name": "RecipeIngredientListItem", "children": ["4 cups water"]} ]}, {"name": "RecipeInstructionList", "children": [ {"name": "RecipeInstructionListItem", "children": ["Rinse beans and soak overnight."]}, {"name": "RecipeInstructionListItem", "children": ["Drain beans and add to a large pot with diced onion, red bell pepper, minced garlic, cumin, smoked paprika, chili powder, and salt."]}, {"name": "RecipeInstructionListItem", "children": ["Add water and bring to a boil."]}, {"name": "RecipeInstructionListItem", "children": ["Reduce heat and let simmer for 2-3 hours, until beans are tender."]} ]} ]}`;
 
 async function AIDirectToDOM({ children }: { children: React.ReactNode }) {
   const rendered = await LLMx.createRenderContext().render(children);
@@ -116,8 +124,10 @@ async function AIInterpretedReactComponents({ children }: { children: React.Reac
     RecipeTitle,
     RecipeInstructionList,
     RecipeIngredientList,
-    RecipeListItem,
-  }
+    RecipeInstructionListItem,
+    RecipeIngredientListItem,
+    SelectIngredientsButton,
+  };
 
   function parseJsonToReact(json: any) {
     if (!json) return null;
@@ -127,6 +137,10 @@ async function AIInterpretedReactComponents({ children }: { children: React.Reac
     if (!Component) {
       console.warn(`Component not found for ${json.name}`);
       return null;
+    }
+
+    if (!json.children) {
+      throw new Error(`unrecognized JSON: ${JSON.stringify(json)}`);
     }
 
     const children = json.children?.map((child) => {
@@ -139,9 +153,9 @@ async function AIInterpretedReactComponents({ children }: { children: React.Reac
 
     return <Component>{children}</Component>;
   }
-  
+
   // const rendered = await LLMx.createRenderContext().render(children);
-  const rendered = response
+  const rendered = response;
 
   let modelResponseJSON;
   try {
@@ -188,14 +202,14 @@ export async function AI({
 }: {
   children: React.ReactNode;
   renderDirectlyIntoDOM?: boolean;
-  renderPassedReactComponents?: boolean,
+  renderPassedReactComponents?: boolean;
 }) {
   if (renderPassedReactComponents) {
     return (
       <Suspense fallback={<Loading />}>
         <AIInterpretedReactComponents>{children}</AIInterpretedReactComponents>
       </Suspense>
-    );  
+    );
   }
   if (renderDirectlyIntoDOM) {
     return (

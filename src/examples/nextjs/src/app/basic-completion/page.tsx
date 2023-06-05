@@ -15,15 +15,14 @@ function ResultContainer({
     <div className="p-4 m-4 w-full">
       <h1 className="text-lg font-bold">{title}</h1>
       {description && <p>{description}</p>}
-      <div className="border-black border p-4 m-4 bg-white w-full">
-        {children}
-      </div>
+      <div className="border-black border p-4 m-4 bg-white w-full">{children}</div>
     </div>
   );
 }
 
 export default async function Home() {
-  return (<>
+  return (
+    <>
       <ResultContainer title="AI writes a poem">
         <AI>
           <ChatCompletion temperature={1}>
@@ -38,5 +37,6 @@ export default async function Home() {
           </ChatCompletion>
         </AI>
       </ResultContainer>
-  </>);
+    </>
+  );
 }
