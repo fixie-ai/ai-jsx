@@ -6,7 +6,7 @@ import {
   OpenAIApi,
 } from 'openai';
 import log from './log.ts';
-import { Merge, ValueOf } from 'type-fest';
+import { Merge } from 'type-fest';
 import EventEmitter from 'node:events';
 import _ from 'lodash';
 import GPT3Tokenizer from 'gpt3-tokenizer';
@@ -16,42 +16,18 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-export type SupportedCompletionModels = ValueOf<{
-  [K in keyof typeof defaultCompletionParams]: keyof (typeof defaultCompletionParams)[K];
-}>;
 export type OpenAICompletionParams = Merge<
   Parameters<typeof openai.createCompletion>[0],
   {
-    model: SupportedCompletionModels;
+    model: string;
   }
 >;
-
-// See https://platform.openai.com/docs/models/model-endpoint-compatibility for which models support which endpoints.
-export const defaultCompletionParams = {
-  openai: {
-    'text-davinci-003': {
-      temperature: 0,
-    },
-  },
-};
-
-export type SupportedChatModels = ValueOf<{
-  [K in keyof typeof defaultChatParams]: keyof (typeof defaultChatParams)[K];
-}>;
 export type OpenAIChatParams = Merge<
   Parameters<typeof openai.createChatCompletion>[0],
   {
-    model: SupportedChatModels;
+    model: string;
   }
 >;
-
-export const defaultChatParams = {
-  openai: {
-    'gpt-3.5-turbo': {
-      temperature: 0,
-    },
-  },
-};
 
 export type OpenAIEmbeddingModels = 'text-embedding-ada-002' | 'text-search-ada-doc-001';
 export type EmbeddingParams = Merge<
@@ -85,10 +61,7 @@ export function openAIChat(
   if (params.stream) {
     throw new Error('Call openAIChat.stream instead of openAI for streaming mode');
   }
-  const paramsToUse = {
-    ...defaultChatParams.openai[params.model],
-    ...omitKeysWithUndefinedValues(params),
-  };
+  const paramsToUse = omitKeysWithUndefinedValues(params);
   const optsToUse = {
     callName: 'openai-chat',
     ...opts,
@@ -101,7 +74,6 @@ export function openAIChat(
 }
 openAIChat.stream = function (params: OpenAIChatParams, opts: ModelCallOptions = {}) {
   const paramsToUse = {
-    ...defaultChatParams.openai[params.model],
     ...omitKeysWithUndefinedValues(params),
     stream: true,
   };
@@ -116,7 +88,6 @@ openAIChat.stream = function (params: OpenAIChatParams, opts: ModelCallOptions =
 };
 openAIChat.simpleStream = async function* (params: OpenAIChatParams, opts: ModelCallOptions = {}) {
   const paramsToUse = {
-    ...defaultChatParams.openai[params.model],
     ...omitKeysWithUndefinedValues(params),
     stream: true,
   };
@@ -153,10 +124,7 @@ export function openAICompletion(
   }
   // TODO: validate model. Omit chat models.
 
-  const paramsToUse = {
-    ...defaultCompletionParams.openai[params.model],
-    ...omitKeysWithUndefinedValues(params),
-  };
+  const paramsToUse = omitKeysWithUndefinedValues(params);
   const optsToUse = {
     callName: 'openai-completion',
     ...opts,
@@ -180,7 +148,6 @@ openAICompletion.simple = async function* simple(params: OpenAICompletionParams,
 
 openAICompletion.stream = function stream(params: OpenAICompletionParams, opts: ModelCallOptions = {}) {
   const paramsToUse = {
-    ...defaultCompletionParams.openai[params.model],
     ...omitKeysWithUndefinedValues(params),
     stream: true,
   };

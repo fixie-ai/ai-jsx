@@ -1,37 +1,83 @@
-import { logitBiasOfTokens, openAIChat } from '../lib/models.ts';
-import { LLMx, Models } from '../lib/index.ts';
-import { ChatCompletionRequestMessage } from 'openai';
+import { LLMx } from '../lib/index.ts';
+import { OpenAIChatModel, OpenAICompletionModel } from './openai.tsx';
 
-export async function* Completion(
-  props: {
-    temperature?: number;
-    maxTokens?: number;
-    stop?: string[];
-    children: LLMx.Node;
-  },
-  { render }: LLMx.RenderContext
+export interface ModelProps {
+  temperature?: number;
+  maxTokens?: number;
+  stop?: string[];
+}
+
+export type ModelPropsWithChildren = ModelProps & {
+  children: LLMx.Node;
+};
+
+export type ModelComponent<T> = LLMx.Component<ModelPropsWithChildren & T>;
+
+function AutomaticCompletionModel({ children, ...props }: ModelPropsWithChildren) {
+  if (process.env.OPENAI_API_KEY) {
+    return (
+      <OpenAICompletionModel model="text-davinci-003" {...props}>
+        {children}
+      </OpenAICompletionModel>
+    );
+  }
+    // TODO: Change this to throw once we support error boundaries.
+    return 'No completion model was specified. Specify a CompletionProvider or set the OPENAI_API_KEY environment variable.';
+    // throw new Error(
+    //   'No completion model was specified. Specify a CompletionProvider or set the OPENAI_API_KEY environment variable.'
+    // );
+
+}
+
+function AutomaticChatModel({ children, ...props }: ModelPropsWithChildren) {
+  if (process.env.OPENAI_API_KEY) {
+    return (
+      <OpenAIChatModel model="gpt-3.5-turbo" {...props}>
+        {children}
+      </OpenAIChatModel>
+    );
+  }
+    // TODO: Change this to throw once we support error boundaries.
+    return 'No chat model was specified. Specify a ChatProvider or set the OPENAI_API_KEY environment variable.';
+    // throw new Error(
+    //   'No chat model was specified. Specify a ChatProvider or set the OPENAI_API_KEY environment variable.'
+    // );
+
+}
+
+const completionComponentCtx = LLMx.createContext<ModelComponent<any>>(AutomaticCompletionModel);
+const completionDefaultsCtx = LLMx.createContext<ModelProps>({});
+const chatComponentCtx = LLMx.createContext<ModelComponent<any>>(AutomaticChatModel);
+const chatDefaultsCtx = LLMx.createContext<ModelProps>({});
+
+export function CompletionProvider<T>(
+  { component, children, ...defaults }: { component?: ModelComponent<T>; children: LLMx.Node } & ModelProps & T,
+  { getContext }: LLMx.RenderContext
 ) {
-  yield '▁';
-  let prompt = await render(props.children);
-  while (prompt.length > 0 && prompt.endsWith(' ')) {
-    prompt = prompt.slice(0, prompt.length - 1);
-  }
+  const existingComponent = getContext(completionComponentCtx);
+  const existingProps = getContext(completionDefaultsCtx);
 
-  const tokenStream = Models.openAICompletion.simpleStream({
-    model: 'text-davinci-003',
-    max_tokens: props.maxTokens,
-    temperature: props.temperature,
-    prompt,
-    stop: props.stop,
-  });
+  return (
+    <completionComponentCtx.Provider value={component ?? existingComponent}>
+      <completionDefaultsCtx.Provider value={{ ...existingProps, ...defaults }}>
+        {children}
+      </completionDefaultsCtx.Provider>
+    </completionComponentCtx.Provider>
+  );
+}
 
-  let accumulatedResponse = '';
-  for await (const token of tokenStream) {
-    accumulatedResponse += token;
-    yield `${accumulatedResponse}█`;
-  }
+export function ChatProvider<T>(
+  { component, children, ...defaults }: { component?: ModelComponent<T>; children: LLMx.Node } & ModelProps & T,
+  { getContext }: LLMx.RenderContext
+) {
+  const existingComponent = getContext(chatComponentCtx);
+  const existingProps = getContext(chatDefaultsCtx);
 
-  yield accumulatedResponse;
+  return (
+    <chatComponentCtx.Provider value={component ?? existingComponent}>
+      <chatDefaultsCtx.Provider value={{ ...existingProps, ...defaults }}>{children}</chatDefaultsCtx.Provider>
+    </chatComponentCtx.Provider>
+  );
 }
 
 export function SystemMessage({ children }: { children: LLMx.Node }) {
@@ -44,64 +90,30 @@ export function AssistantMessage({ children }: { children: LLMx.Node }) {
   return children;
 }
 
-export async function* ChatCompletion(
-  props: {
-    temperature?: number;
-    maxTokens?: number;
-    stop?: string[];
-    children: LLMx.Node;
-    logitBias?: Record<string, number>;
-  },
-  { render, partialRender }: LLMx.RenderContext
+export function Completion(
+  { children, ...props }: ModelPropsWithChildren & Record<string, unknown>,
+  { getContext }: LLMx.RenderContext
 ) {
-  yield '▁';
+  const CompletionComponent = getContext(completionComponentCtx);
+  const defaultProps = getContext(completionDefaultsCtx);
 
-  const messageElements = await partialRender(
-    props.children,
-    (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage
+  return (
+    <CompletionComponent {...defaultProps} {...props}>
+      {children}
+    </CompletionComponent>
   );
+}
 
-  const messages: ChatCompletionRequestMessage[] = await Promise.all(
-    messageElements.filter(LLMx.isElement).map(async (message) => {
-      switch (message.tag) {
-        case SystemMessage:
-          return {
-            role: 'system',
-            content: await render(message),
-          };
-        case UserMessage:
-          return {
-            role: 'user',
-            content: await render(message),
-            name: (message.props as LLMx.PropsOfComponent<typeof UserMessage>).name,
-          };
-        case AssistantMessage:
-          return {
-            role: 'assistant',
-            content: await render(message),
-          };
-        default:
-          throw new Error(
-            `ChatCompletion's prompts must be SystemMessage, UserMessage, or AssistantMessage, but this child was ${message.tag.name}`
-          );
-      }
-    })
+export function ChatCompletion(
+  { children, ...props }: ModelPropsWithChildren & Record<string, unknown>,
+  { getContext }: LLMx.RenderContext
+) {
+  const ChatComponent = getContext(chatComponentCtx);
+  const defaultProps = getContext(chatDefaultsCtx);
+
+  return (
+    <ChatComponent {...defaultProps} {...props}>
+      {children}
+    </ChatComponent>
   );
-
-  const messageStream = openAIChat.simpleStream({
-    model: 'gpt-3.5-turbo',
-    max_tokens: props.maxTokens,
-    temperature: props.temperature,
-    messages,
-    stop: props.stop,
-    logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
-  });
-
-  let lastMessage;
-  for await (const partialMessage of messageStream) {
-    lastMessage = partialMessage.content;
-    yield `${partialMessage.content}█`;
-  }
-
-  yield lastMessage;
 }
