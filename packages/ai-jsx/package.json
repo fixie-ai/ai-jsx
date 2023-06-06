@@ -36,6 +36,8 @@
     "demo:multi-model": "tsx src/examples/multi-model.tsx",
     "demo:inline-chat": "tsx src/examples/inline-chat.tsx",
     "demo:inline-completion": "tsx src/examples/inline-completion.tsx",
+    "demo:simple-chat": "tsx src/examples/simple-chat.tsx",
+    "demo:getting-started": "tsx src/examples/getting-started/index.tsx",
     "demo:inspector": "tsx src/examples/inspector.tsx",
     "demo:router": "tsx src/examples/router.tsx",
     "demo:debug": "tsx src/examples/debug.tsx",
