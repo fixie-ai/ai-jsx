@@ -31,60 +31,60 @@ function WeightsAndBiasesTracer(props: { children: LLMx.Node }, { wrapRender }: 
   return LLMx.withContext(
     <>{props.children}</>,
     wrapRender((r) => (renderContext, renderable, shouldStop) => {
-        if (!LLMx.isElement(renderable)) {
-          return r(renderContext, renderable, shouldStop);
-        }
+      if (!LLMx.isElement(renderable)) {
+        return r(renderContext, renderable, shouldStop);
+      }
 
-        const newSpan = {
-          name: `<${renderable.tag.name}>`,
-          start_time_ms: baseTime + performance.now(),
-          span_id: uuidv4(),
-          end_time_ms: null,
-          status_code: null,
-          status_message: null,
-          attributes: {
-            'ai.jsx-tag': renderable.tag.name,
-            'ai.jsx-tree': debug(renderable, true),
-          },
-          results: null,
-          child_spans: null,
-          span_kind: null,
-        };
+      const newSpan = {
+        name: `<${renderable.tag.name}>`,
+        start_time_ms: baseTime + performance.now(),
+        span_id: uuidv4(),
+        end_time_ms: null,
+        status_code: null,
+        status_message: null,
+        attributes: {
+          'ai.jsx-tag': renderable.tag.name,
+          'ai.jsx-tree': debug(renderable, true),
+        },
+        results: null,
+        child_spans: null,
+        span_kind: null,
+      };
 
-        const parentSpan = currentSpanStorage.getStore();
-        if (parentSpan) {
-          addChildSpan(parentSpan, newSpan);
-        }
+      const parentSpan = currentSpanStorage.getStore();
+      if (parentSpan) {
+        addChildSpan(parentSpan, newSpan);
+      }
 
-        return currentSpanStorage.run(newSpan, () => {
-          async function* gen() {
-            const currentSpan = currentSpanStorage.getStore();
-            try {
-              yield* r(renderContext, renderable, shouldStop);
-              if (currentSpan) {
-                currentSpan.status_code = StatusCode.SUCCESS;
-              }
-            } catch (ex) {
-              if (currentSpan) {
-                currentSpan.status_code = StatusCode.ERROR;
-                currentSpan.status_message = `${ex}`;
-              }
+      return currentSpanStorage.run(newSpan, () => {
+        async function* gen() {
+          const currentSpan = currentSpanStorage.getStore();
+          try {
+            yield* r(renderContext, renderable, shouldStop);
+            if (currentSpan) {
+              currentSpan.status_code = StatusCode.SUCCESS;
+            }
+          } catch (ex) {
+            if (currentSpan) {
+              currentSpan.status_code = StatusCode.ERROR;
+              currentSpan.status_message = `${ex}`;
+            }
 
-              throw ex;
-            } finally {
-              // End the span.
-              if (currentSpan) {
-                currentSpan.end_time_ms = baseTime + performance.now();
-                if (!parentSpan) {
-                  wandb.log({ langchain_trace: new WBTraceTree(currentSpan).toJSON() });
-                }
+            throw ex;
+          } finally {
+            // End the span.
+            if (currentSpan) {
+              currentSpan.end_time_ms = baseTime + performance.now();
+              if (!parentSpan) {
+                wandb.log({ langchain_trace: new WBTraceTree(currentSpan).toJSON() });
               }
             }
           }
+        }
 
-          return bindAsyncGenerator(gen());
-        });
-      })
+        return bindAsyncGenerator(gen());
+      });
+    })
   );
 }
 
