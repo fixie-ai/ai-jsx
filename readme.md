@@ -1,5 +1,11 @@
 # AI.JSX
 
+Overview video: [![Loom video](./docs/loom.png)](https://www.loom.com/share/79ca3706839049a2beaf70f75950f86f)
+
+Project vision: [Aspirational README](./docs/aspirational-readme.md)
+
+[Strategy Notion doc](https://www.notion.so/fixieai/AI-JSX-Design-159fde6bf8d6466487eac3d4ee1f9a93?pvs=4)
+
 ## Working in this repo
 
 We use [volta](https://volta.sh/) to manage the version of global tools like NodeJS and yarn. Once you install it, your command line should use the proper tools versions automatically.
