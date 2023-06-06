@@ -2,10 +2,6 @@ import { showInspector } from '../inspector/console.tsx';
 import { ErrorBoundary } from '../lib/error-boundary.tsx';
 import { LLMx } from '../lib/index.ts';
 
-function SuccessfulComponent() {
-  return '😀';
-}
-
 function FailingComponent() {
   throw new Error(`Something went wrong! ${Math.random()}`);
 }
