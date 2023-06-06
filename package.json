@@ -1,7 +1,7 @@
 {
   "name": "ai-jsx-monorepo-root",
   "version": "0.0.0",
-  "packageManager": "yarn@4.0.0-rc.42",
+  "packageManager": "yarn@4.0.0-rc.45",
   "devDependencies": {
     "@types/prettier": "^2",
     "prettier": "^2.8.8",
