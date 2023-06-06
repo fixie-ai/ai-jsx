@@ -14,12 +14,12 @@ function MultiModel() {
   return (
     <>
       GPT 3.5 (doesn't adhere to system message):{'\n'}
-      <OpenAI completionModel="text-davinci-003" chatModel="gpt-3.5-turbo" temperature={0.0}>
+      <OpenAI chatModel="gpt-3.5-turbo" temperature={0.0}>
         {challenge}
       </OpenAI>
       {'\n'}
       GPT 4 (adheres to system message):{'\n'}
-      <OpenAI completionModel="text-davinci-003" chatModel="gpt-4" temperature={0.0}>
+      <OpenAI chatModel="gpt-4" temperature={0.0}>
         {challenge}
       </OpenAI>
       {'\n'}

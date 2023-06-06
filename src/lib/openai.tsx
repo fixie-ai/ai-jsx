@@ -22,19 +22,35 @@ type ValidCompletionModel =
 
 type ValidChatModel = 'gpt-4' | 'gpt-4-0314' | 'gpt-4-32k' | 'gpt-4-32k-0314' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-0301';
 
+type ChatOrCompletionModelOrBoth =
+  | { chatModel: ValidChatModel; completionModel?: ValidCompletionModel }
+  | { chatModel?: ValidChatModel; completionModel: ValidCompletionModel };
+
 export function OpenAI({
   children,
   chatModel,
   completionModel,
   ...defaults
-}: { children: LLMx.Node; chatModel: ValidChatModel; completionModel: ValidCompletionModel } & ModelProps) {
-  return (
-    <ChatProvider component={OpenAIChatModel} {...defaults} model={chatModel}>
+}: { children: LLMx.Node } & ChatOrCompletionModelOrBoth & ModelProps) {
+  let result = children;
+
+  if (chatModel) {
+    result = (
+      <ChatProvider component={OpenAIChatModel} {...defaults} model={chatModel}>
+        {result}
+      </ChatProvider>
+    );
+  }
+
+  if (completionModel) {
+    result = (
       <CompletionProvider component={OpenAICompletionModel} {...defaults} model={completionModel}>
-        {children}
+        {result}
       </CompletionProvider>
-    </ChatProvider>
-  );
+    );
+  }
+
+  return result;
 }
 
 export async function* OpenAICompletionModel(

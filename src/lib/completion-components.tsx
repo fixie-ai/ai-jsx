@@ -11,7 +11,7 @@ export type ModelPropsWithChildren = ModelProps & {
   children: LLMx.Node;
 };
 
-export type ModelComponent<T> = LLMx.Component<ModelPropsWithChildren & T>;
+export type ModelComponent<T extends ModelPropsWithChildren> = LLMx.Component<T>;
 
 function AutomaticCompletionModel({ children, ...props }: ModelPropsWithChildren) {
   if (process.env.OPENAI_API_KEY) {
@@ -21,12 +21,11 @@ function AutomaticCompletionModel({ children, ...props }: ModelPropsWithChildren
       </OpenAICompletionModel>
     );
   }
-    // TODO: Change this to throw once we support error boundaries.
-    return 'No completion model was specified. Specify a CompletionProvider or set the OPENAI_API_KEY environment variable.';
-    // throw new Error(
-    //   'No completion model was specified. Specify a CompletionProvider or set the OPENAI_API_KEY environment variable.'
-    // );
-
+  // TODO: Change this to throw once we support error boundaries.
+  return 'No completion model was specified. Specify a CompletionProvider or set the OPENAI_API_KEY environment variable.';
+  // throw new Error(
+  //   'No completion model was specified. Specify a CompletionProvider or set the OPENAI_API_KEY environment variable.'
+  // );
 }
 
 function AutomaticChatModel({ children, ...props }: ModelPropsWithChildren) {
@@ -37,46 +36,50 @@ function AutomaticChatModel({ children, ...props }: ModelPropsWithChildren) {
       </OpenAIChatModel>
     );
   }
-    // TODO: Change this to throw once we support error boundaries.
-    return 'No chat model was specified. Specify a ChatProvider or set the OPENAI_API_KEY environment variable.';
-    // throw new Error(
-    //   'No chat model was specified. Specify a ChatProvider or set the OPENAI_API_KEY environment variable.'
-    // );
-
+  // TODO: Change this to throw once we support error boundaries.
+  return 'No chat model was specified. Specify a ChatProvider or set the OPENAI_API_KEY environment variable.';
+  // throw new Error(
+  //   'No chat model was specified. Specify a ChatProvider or set the OPENAI_API_KEY environment variable.'
+  // );
 }
 
-const completionComponentCtx = LLMx.createContext<ModelComponent<any>>(AutomaticCompletionModel);
-const completionDefaultsCtx = LLMx.createContext<ModelProps>({});
-const chatComponentCtx = LLMx.createContext<ModelComponent<any>>(AutomaticChatModel);
-const chatDefaultsCtx = LLMx.createContext<ModelProps>({});
+const completionContext = LLMx.createContext<[ModelComponent<ModelPropsWithChildren>, ModelProps]>([
+  AutomaticCompletionModel,
+  {},
+]);
+const chatContext = LLMx.createContext<[ModelComponent<ModelPropsWithChildren>, ModelProps]>([AutomaticChatModel, {}]);
 
-export function CompletionProvider<T>(
-  { component, children, ...defaults }: { component?: ModelComponent<T>; children: LLMx.Node } & ModelProps & T,
+export function CompletionProvider<T extends ModelPropsWithChildren>(
+  { component, children, ...newDefaults }: { component?: ModelComponent<T> } & T,
   { getContext }: LLMx.RenderContext
 ) {
-  const existingComponent = getContext(completionComponentCtx);
-  const existingProps = getContext(completionDefaultsCtx);
-
+  const [existingComponent, previousDefaults] = getContext(completionContext);
   return (
-    <completionComponentCtx.Provider value={component ?? existingComponent}>
-      <completionDefaultsCtx.Provider value={{ ...existingProps, ...defaults }}>
-        {children}
-      </completionDefaultsCtx.Provider>
-    </completionComponentCtx.Provider>
+    <completionContext.Provider
+      value={[
+        (component ?? existingComponent) as ModelComponent<ModelPropsWithChildren>,
+        { ...previousDefaults, ...newDefaults },
+      ]}
+    >
+      {children}
+    </completionContext.Provider>
   );
 }
 
-export function ChatProvider<T>(
-  { component, children, ...defaults }: { component?: ModelComponent<T>; children: LLMx.Node } & ModelProps & T,
+export function ChatProvider<T extends ModelPropsWithChildren>(
+  { component, children, ...newDefaults }: { component?: ModelComponent<T> } & T,
   { getContext }: LLMx.RenderContext
 ) {
-  const existingComponent = getContext(chatComponentCtx);
-  const existingProps = getContext(chatDefaultsCtx);
-
+  const [existingComponent, previousDefaults] = getContext(chatContext);
   return (
-    <chatComponentCtx.Provider value={component ?? existingComponent}>
-      <chatDefaultsCtx.Provider value={{ ...existingProps, ...defaults }}>{children}</chatDefaultsCtx.Provider>
-    </chatComponentCtx.Provider>
+    <chatContext.Provider
+      value={[
+        (component ?? existingComponent) as ModelComponent<ModelPropsWithChildren>,
+        { ...previousDefaults, ...newDefaults },
+      ]}
+    >
+      {children}
+    </chatContext.Provider>
   );
 }
 
@@ -94,9 +97,7 @@ export function Completion(
   { children, ...props }: ModelPropsWithChildren & Record<string, unknown>,
   { getContext }: LLMx.RenderContext
 ) {
-  const CompletionComponent = getContext(completionComponentCtx);
-  const defaultProps = getContext(completionDefaultsCtx);
-
+  const [CompletionComponent, defaultProps] = getContext(completionContext);
   return (
     <CompletionComponent {...defaultProps} {...props}>
       {children}
@@ -108,9 +109,7 @@ export function ChatCompletion(
   { children, ...props }: ModelPropsWithChildren & Record<string, unknown>,
   { getContext }: LLMx.RenderContext
 ) {
-  const ChatComponent = getContext(chatComponentCtx);
-  const defaultProps = getContext(chatDefaultsCtx);
-
+  const [ChatComponent, defaultProps] = getContext(chatContext);
   return (
     <ChatComponent {...defaultProps} {...props}>
       {children}
