@@ -43,4 +43,5 @@ Some key demos:
 
 - `demo:zepp`: An implementation of the Zepp requirements
 - `demo:loop`: Basic Docs QA
+- `demo:router`: Natural Language Router
 - `demo:debate`: Chat model used to generate competing sides in a debate

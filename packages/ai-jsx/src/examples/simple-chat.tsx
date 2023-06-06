@@ -11,4 +11,6 @@ function App() {
   );
 }
 
-showInspector(<App />);
+LLMx.createRenderContext().render;
+
+// showInspector(<App />);
