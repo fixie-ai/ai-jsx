@@ -184,7 +184,12 @@ async function* partialRenderStream(
       }
     } else {
       const renderingContext = renderable[attachedContext] ?? context;
-      yield* renderingContext.partialRenderStream(renderable.render(renderingContext), shouldStop);
+      if (renderingContext !== context) {
+        // We need to switch contexts before we can render the element.
+        yield* renderingContext.partialRenderStream(renderable, shouldStop);
+      } else {
+        yield* renderingContext.partialRenderStream(renderable.render(renderingContext), shouldStop);
+      }
     }
   } else if (renderable instanceof Promise) {
     yield* await renderable.then((x) => context.partialRenderStream(x, shouldStop));

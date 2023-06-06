@@ -29,9 +29,16 @@ export function memo(renderable: LLMx.Renderable): LLMx.Node {
           return memoizedValues.get(ctx);
         }
 
-        const memoizedValue = memo(renderable.render(ctx));
-        memoizedValues.set(ctx, memoizedValue);
-        return memoizedValue;
+        let renderResult: LLMx.Renderable;
+        try {
+          renderResult = memo(renderable.render(ctx));
+        } catch (ex) {
+          // Wrap it in a promise so that it throws on await.
+          renderResult = Promise.reject(ex);
+        }
+
+        memoizedValues.set(ctx, renderResult);
+        return renderResult;
       },
     };
     Object.freeze(newElement);
