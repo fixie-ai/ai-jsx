@@ -15,6 +15,7 @@
     "format:check": "prettier . --check",
     "test": "turbo test"
   },
+  "private": true,
   "prettier": {
     "printWidth": 120,
     "singleQuote": true
