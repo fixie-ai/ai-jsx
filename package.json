@@ -1,7 +1,6 @@
 {
   "name": "ai-jsx-monorepo-root",
   "version": "0.0.0",
-  "packageManager": "yarn@4.0.0-rc.45",
   "devDependencies": {
     "@types/prettier": "^2",
     "prettier": "^2.8.8",
@@ -10,7 +9,7 @@
   "type": "module",
   "volta": {
     "node": "18.15.0",
-    "yarn": "4.0.0-rc.45"
+    "yarn": "4"
   },
   "scripts": {
     "format": "prettier --write .",
