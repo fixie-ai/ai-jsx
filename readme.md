@@ -6,6 +6,8 @@ Project vision: [Aspirational README](./docs/internal/aspirational-readme.md)
 
 [Strategy Notion doc](https://www.notion.so/fixieai/AI-JSX-Design-159fde6bf8d6466487eac3d4ee1f9a93?pvs=4)
 
+[Docs for external dev users](./docs/toc.md).
+
 ## Working in this repo
 
 We use [volta](https://volta.sh/) to manage the version of global tools like NodeJS and yarn. Once you install it, your command line should use the proper tools versions automatically.
