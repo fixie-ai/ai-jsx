@@ -2,6 +2,8 @@
 
 AI.JSX is not React, although it [seamlessly integrates with it](https://www.loom.com/share/79ca3706839049a2beaf70f75950f86f). It's more similar to [React Server Components](https://www.patterns.dev/posts/react-server-components) than [React Client Components](https://www.patterns.dev/posts/client-side-rendering).
 
+Instead, AI.JSX is a componentized, type-safe system for composing your prompts and controlling the flow of your LLM-based app.
+
 ## React is stateful; AI.JSX is stateless
 
 In React, your JSX becomes a stateful tree, which is mounted into the DOM. For instance:
