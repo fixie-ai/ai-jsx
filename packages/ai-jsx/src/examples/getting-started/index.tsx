@@ -20,7 +20,7 @@ async function App() {
   );
 }
 
-showInspector(<App />)
+showInspector(<App />);
 // console.log(await LLMx.createRenderContext().render(<App />));
 
 // function MakeCharacter() {

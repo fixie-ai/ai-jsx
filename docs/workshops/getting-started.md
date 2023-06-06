@@ -123,47 +123,50 @@ LLM apps are more powerful when we enrich the prompt with real-time data. Let's 
 When we run this, we'll get:
 
 > This JSON represents an object that has three properties: "name", "age", and "hobbies".
-> 
+>
 > The "name" property has a value of "sam", indicating that this object is associated with someone named Sam.
-> 
+>
 > The "age" property has a value of 42, indicating that Sam is 42 years old.
-> 
+>
 > The "hobbies" property is an array with a single item, "painting", indicating that Sam's hobby is painting.
-> 
+>
 > Overall, this JSON provides information about an individual's identity and interests.
 
 ## Orchestration
+
 More powerful applications benefit from being able to link LLM calls together. Let's modify our example to do multiple LLM generations.
 
 1. Add a new function to generate a short bio of a fantasy character:
-    ```tsx
-    function MakeCharacter() {
-      return (
-        <ChatCompletion temperature={1}>
-          <UserMessage>Write a short bio of a character in a fantasy novel.</UserMessage>
-        </ChatCompletion>
-      )
-    }
-    ```
+   ```tsx
+   function MakeCharacter() {
+     return (
+       <ChatCompletion temperature={1}>
+         <UserMessage>Write a short bio of a character in a fantasy novel.</UserMessage>
+       </ChatCompletion>
+     );
+   }
+   ```
 1. Add a new function that uses the previous function:
-    ```tsx
-    function WriteStory() {
-      return (
-        <ChatCompletion temperature={1}>
-          <UserMessage>Write a story about these three characters:
 
-            <MakeCharacter />
-            <MakeCharacter />
-            <MakeCharacter />
-          </UserMessage>
-        </ChatCompletion>
-      )
-    }
-    ```
+   ```tsx
+   function WriteStory() {
+     return (
+       <ChatCompletion temperature={1}>
+         <UserMessage>
+           Write a story about these three characters:
+           <MakeCharacter />
+           <MakeCharacter />
+           <MakeCharacter />
+         </UserMessage>
+       </ChatCompletion>
+     );
+   }
+   ```
+
 1. Show it on the console:
-    ```tsx
-    showInspector(<WriteStory />)
-    ```
+   ```tsx
+   showInspector(<WriteStory />);
+   ```
 
 Running it, we'll a something like this:
 
