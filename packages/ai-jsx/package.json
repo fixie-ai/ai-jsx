@@ -37,6 +37,7 @@
     "demo:inline-chat": "tsx src/examples/inline-chat.tsx",
     "demo:inline-completion": "tsx src/examples/inline-completion.tsx",
     "demo:inspector": "tsx src/examples/inspector.tsx",
+    "demo:router": "tsx src/examples/router.tsx",
     "demo:debug": "tsx src/examples/debug.tsx",
     "demo:summarizer": "tsx src/examples/summarizer.tsx",
     "demo:zepp": "tsx src/examples/bakeoff/zepp-health/ai-jsx.tsx",
