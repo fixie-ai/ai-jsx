@@ -5,10 +5,11 @@ AI.JSX is complementary to LangChain in some ways, and overlapping with it in ot
 ## AI.JSX interops easily with LangChain's ecosystem
 
 LangChain has some useful integrations with various ecosystem tools, like:
-* [PDF file loader](https://js.langchain.com/docs/modules/indexes/document_loaders/examples/file_loaders/pdf)
-* [Loader](https://js.langchain.com/docs/modules/indexes/document_loaders/examples/file_loaders/unstructured) for [Unstructured](https://www.unstructured.io/) 
-* [Chroma Vector DB](https://js.langchain.com/docs/modules/indexes/vector_stores/integrations/chroma)
-* [Pinecone Vector DB](https://js.langchain.com/docs/modules/indexes/vector_stores/integrations/pinecone)
+
+- [PDF file loader](https://js.langchain.com/docs/modules/indexes/document_loaders/examples/file_loaders/pdf)
+- [Loader](https://js.langchain.com/docs/modules/indexes/document_loaders/examples/file_loaders/unstructured) for [Unstructured](https://www.unstructured.io/)
+- [Chroma Vector DB](https://js.langchain.com/docs/modules/indexes/vector_stores/integrations/chroma)
+- [Pinecone Vector DB](https://js.langchain.com/docs/modules/indexes/vector_stores/integrations/pinecone)
 
 These are easy to use from AI.JSX, because they're just functions:
 
@@ -46,9 +47,11 @@ function MyDocsFunction({query}: {query: string}) {
 You use anything else LangChain offers, like chains and prompt templates, because they're all just functions you can call and then insert the results into your JSX.
 
 ## Where AI.JSX and LangChain Overlap
+
 We think JSX is a superior abstraction for organizing LLM-based applications than [chains](https://js.langchain.com/docs/modules/chains/). We think JSX offers:
-* A better set of primitives 
-* that can be declaratively and explicitly composed
-* leading to an abstraction that's both easier to understand and more flexible
+
+- A better set of primitives
+- that can be declaratively and explicitly composed
+- leading to an abstraction that's both easier to understand and more flexible
 
 We also think that JSX's high quality affordances for composing strings make prompt templates unnecessary.
