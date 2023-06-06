@@ -4,7 +4,7 @@ import NavBar from '@/components/NavBar';
 import InputPrompt from '@/components/InputPrompt';
 
 export const metadata = {
-  title: 'AI.JSX Demo',
+  title: 'AI.JSX + NextJS SSR Demo',
   description: 'A framework for AI-native UIs',
 };
 
