@@ -37,6 +37,7 @@ async function Summarizer({ children }: { children: LLMx.Node }, { render } : LL
     return (
       <Summarizer>
        { text.split("\n\n").map(piece => (<Summarizer>{piece}</Summarizer>)) }
+       { text.split("\n\n").map(piece => <Summarizer>{piece}</Summarizer>) }
       </Summarizer>
     );
   }
