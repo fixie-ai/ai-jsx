@@ -1,85 +1,28 @@
 {
-  "name": "@fixieai/ai-jsx",
-  "packageManager": "yarn@4.0.0-rc.42",
+  "name": "ai-jsx-monorepo-root",
+  "version": "0.0.0",
   "devDependencies": {
-    "@tsconfig/node18": "^2.0.1",
-    "@types/eslint": "^8",
-    "@types/lodash": "^4.14.194",
-    "@types/node": "^20.2.1",
     "@types/prettier": "^2",
-    "@types/react": "^18.2.7",
-    "@types/sinon": "^10.0.15",
-    "@types/uuid": "^9",
-    "@typescript-eslint/eslint-plugin": "^5.59.6",
-    "@typescript-eslint/parser": "^5.59.6",
-    "cheerio": "^1.0.0-rc.12",
-    "csv-stringify": "^6.4.0",
-    "eslint": "^8.40.0",
-    "eslint-config-nth": "^2.0.1",
-    "globby": "^13.1.4",
-    "node-fetch": "^3.3.1",
-    "pino-pretty": "^10.0.0",
     "prettier": "^2.8.8",
-    "react-use": "^17.4.0",
-    "ts-node": "^10.9.1",
-    "tsx": "^3.12.7",
-    "type-fest": "^3.10.0",
-    "typescript": "^5.0.4",
-    "write-json-file": "^5.0.0"
+    "turbo": "^1.10.1"
   },
   "type": "module",
-  "scripts": {
-    "demo:debate": "tsx src/examples/debate.tsx",
-    "demo:debate-imperative": "tsx src/examples/debate-imperative.tsx",
-    "demo:logger": "tsx src/examples/logger.tsx",
-    "demo:context": "tsx src/examples/context.tsx",
-    "demo:inline-chat": "tsx src/examples/inline-chat.tsx",
-    "demo:inline-completion": "tsx src/examples/inline-completion.tsx",
-    "demo:inspector": "tsx src/examples/inspector.tsx",
-    "demo:debug": "tsx src/examples/debug.tsx",
-    "demo:zepp": "tsx src/examples/bakeoff/zepp-health/ai-jsx.tsx",
-    "demo:loop": "tsx src/examples/bakeoff/loop-qa/ai-jsx.tsx",
-    "demo:summarizer": "tsx src/examples/summarizer.tsx",
-    "view-logs": "cat llmx.log | pino-pretty",
-    "lint": "eslint . --max-warnings 0",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier . --write",
-    "format:check": "prettier . --check",
-    "typecheck": "tsc -p tsconfig.json",
-    "test": "yarn run format:check && yarn run lint && yarn run typecheck"
-  },
   "volta": {
-    "node": "18.15.0"
+    "node": "18.15.0",
+    "yarn": "4.0.0-rc.45"
   },
+  "scripts": {
+    "format-for-turbo": "prettier --write .",
+    "format:check": "prettier . --check",
+    "format": "turbo format-for-turbo",
+    "test": "turbo test"
+  },
+  "private": true,
   "prettier": {
     "printWidth": 120,
     "singleQuote": true
   },
-  "dependencies": {
-    "@nick.heiner/wandb-fork": "0.5.2-5",
-    "cli-highlight": "^2.1.11",
-    "cli-spinners": "^2.9.0",
-    "find-up": "^6.3.0",
-    "got": "^12.6.0",
-    "gpt3-tokenizer": "^1.1.5",
-    "graphql": "^16.6.0",
-    "ink": "^4.2.0",
-    "ink-syntax-highlight": "^1.0.1",
-    "jest": "^29.5.0",
-    "langchain": "^0.0.81",
-    "load-json-file": "^7.0.1",
-    "lodash": "^4.17.21",
-    "openai": "^3.2.1",
-    "pino": "^8.14.1",
-    "pretty-ms": "^8.0.0",
-    "react": "^18.2.0",
-    "sinon": "^15.1.0",
-    "terminal-link": "^3.0.0",
-    "tiny-typed-emitter": "^2.1.0",
-    "tsconfig-paths": "^4.2.0",
-    "utility-types": "^3.10.0",
-    "uuid": "^9.0.0",
-    "zod": "^3.21.4",
-    "zod-to-json-schema": "^3.21.1"
-  }
+  "workspaces": [
+    "packages/*"
+  ]
 }

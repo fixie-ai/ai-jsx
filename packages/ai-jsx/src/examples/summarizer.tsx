@@ -25,22 +25,20 @@ const MAX_TOKEN_LEN = 250;
 
 async function Summarizer({ children }: { children: LLMx.Node }, { render } : LLMx.RenderContext) {
   const text = await render(children);
-  text.trim();
-  if (token_len(text) <= MAX_TOKEN_LEN) {
+  if (tokenLen(text) <= MAX_TOKEN_LEN) {
     return (
       <ChatCompletion>
         <SystemMessage>Summarize the supplied text into a sentence:</SystemMessage>
         <UserMessage>{text}</UserMessage>
       </ChatCompletion>
     );
-  } else {    
-    return (
-      <Summarizer>
-       { text.split("\n\n").map(piece => (<Summarizer>{piece}</Summarizer>)) }
-       { text.split("\n\n").map(piece => <Summarizer>{piece}</Summarizer>) }
-      </Summarizer>
-    );
-  }
+  } 
+
+  return (
+    <Summarizer> 
+      { text.split("\n\n").map(piece => <Summarizer>{piece}</Summarizer>) }
+    </Summarizer>
+  );
 }
 
 function App() {
