@@ -20,7 +20,7 @@ that from these honored dead we take increased devotion to that cause for which 
 highly resolve that these dead shall not have died in vain, that this nation, under God, shall have a new birth of freedom, and that
 government of the people, by the people, for the people, shall not perish from the earth.`
 
-const token_len = (text: String) => text.length / 4;
+const tokenLen = (text: String) => text.length / 4;
 const MAX_TOKEN_LEN = 250;
 
 async function Summarizer({ children }: { children: LLMx.Node }, { render } : LLMx.RenderContext) {
