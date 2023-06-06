@@ -1,7 +1,8 @@
 import React from '../react';
-import { AI, NaturalLanguageGitHubSearch } from '../ai';
+import { AI } from '../ai';
 import ResultContainer from '@/components/ResultContainer';
 import InputPrompt from '@/components/InputPrompt';
+import { NaturalLanguageGitHubSearch } from './ai';
 
 export default async function Home(props) {
   const defaultValue = 'top issues from the TypeScript repo';
