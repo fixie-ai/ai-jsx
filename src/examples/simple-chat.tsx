@@ -1,5 +1,6 @@
 import { LLMx } from '../lib/index.js';
-import { ChatCompletion, SystemMessage, UserMessage } from '../lib/completion-components.js';
+import { ChatCompletion, SystemMessage, UserMessage } from '../lib/completion-components.jsx';
+import { showInspector } from '../inspector/console.jsx';
 
 function App() {
   return (
@@ -10,4 +11,4 @@ function App() {
   );
 }
 
-await LLMx.show(<App />);
+showInspector(<App />);

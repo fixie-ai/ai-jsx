@@ -64,7 +64,6 @@ function FormatAsProse({ children }: { children: LLMx.Node }) {
   );
 }
 
-
 export function NaturalLanguageGitHubSearch({
   query,
   outputFormat,

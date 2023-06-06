@@ -1,15 +1,18 @@
 import { LLMx } from '../lib/index.js';
-import { Renderable } from './llm.js';
+import { Renderable, hackyDehydrate } from './llm.js';
 
 let memoizedId = 0;
 export const isMemoizedSymbol = Symbol('isMemoized');
 
+/**
+ * The memoization is fully recursive.
+ */
 export function memo(renderable: LLMx.Renderable): LLMx.Node {
-  /**
-   * The memoization is fully recursive.
-   */
   if (typeof renderable !== 'object' || renderable === null) {
     return renderable;
+  }
+  if ('$$typeof' in renderable) {
+    return hackyDehydrate(renderable);
   }
   if (Array.isArray(renderable)) {
     return renderable.map(memo);

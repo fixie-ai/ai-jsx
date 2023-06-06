@@ -1,25 +1,53 @@
-import { log } from './index.js';
-import { isMemoizedSymbol } from './memoize.js';
+import { log } from '../lib/index.js';
 
 export type Component<P> = (props: P, renderContext: RenderContext) => Renderable;
 export type Literal = string | number | null | undefined | boolean;
-export interface Element<P extends {}> {
+
+const attachedContext = Symbol('LLMx.attachedContext');
+export interface Element<P extends object> {
   tag: Component<P>;
   props: P;
   render: (renderContext: RenderContext) => Renderable;
+  [attachedContext]?: RenderContext;
 }
-export type Node = Element<any> | Literal | Node[];
+
+export interface ReactComponentAsSeenByLLMx {
+  readonly $$typeof: symbol;
+  type: {
+    name: string;
+  };
+  props: Record<string, any>;
+}
+
+export type Node = Element<any> | Literal | Node[] | ReactComponentAsSeenByLLMx;
 
 export type Renderable = Node | Promise<Renderable> | AsyncGenerator<Renderable>;
 
 export type ElementPredicate = (e: Element<any>) => boolean;
 export type PropsOfComponent<T extends Component<any>> = T extends Component<infer P> ? P : never;
 
+export type PartialRenderStream = (
+  renderContext: RenderContext,
+  renderable: Renderable,
+  shouldStop: ElementPredicate
+) => AsyncGenerator<PartiallyRendered[]>;
+
+const contextKey = Symbol('LLMx.contextKey');
+export interface Context<T> {
+  Provider: Component<{ children: Node; value: T }>;
+  [contextKey]: [T, symbol];
+}
+
 export interface RenderContext {
   partialRenderStream(renderable: Renderable, shouldStop: ElementPredicate): AsyncGenerator<PartiallyRendered[]>;
   partialRender(renderable: Renderable, shouldStop: ElementPredicate): Promise<PartiallyRendered[]>;
   renderStream(renderable: Renderable): AsyncGenerator<string>;
   render(renderable: Renderable): Promise<string>;
+
+  getContext<T>(ref: Context<T>): T;
+
+  pushContext<T>(ref: Context<T>, value: T): RenderContext;
+  wrapRender(render: (r: PartialRenderStream) => PartialRenderStream): RenderContext;
 }
 
 export declare namespace JSX {
@@ -66,116 +94,36 @@ export function Fragment({ children }: { children: Node }): Renderable {
   return children;
 }
 
-export function debug(value: unknown): string {
-  const previouslyMemoizedIds = new Set();
+export function withContext<P extends object>(element: Element<P>, context: RenderContext): Element<P> {
+  const withContext = {
+    ...element,
+    [attachedContext]: context,
+  };
 
-  function debugRec(value: unknown, indent: string, context: 'code' | 'children' | 'props'): string {
-    if (typeof value === 'string') {
-      if (context === 'props' || context === 'code') {
-        return JSON.stringify(value);
-      }
-      return `{${JSON.stringify(value)}}`;
-    }
-    if (typeof value === 'number' || typeof value === 'bigint') {
-      if (context === 'props' || context === 'children') {
-        return `{${value.toString()}}`;
-      }
-      return value.toString();
-    }
-    if (typeof value === 'boolean' || typeof value === 'undefined') {
-      return '';
-    }
-    if (value === null) {
-      switch (context) {
-        case 'code':
-          return 'null';
-        case 'children':
-          return '{null}';
-        case 'props':
-          return '{null}';
-      }
-    } else if (isElement(value)) {
-      const tag = value.tag === Fragment ? '' : value.tag.name;
-      const childIndent = `${indent}  `;
+  Object.freeze(withContext);
+  return withContext;
+}
 
-      const isMemoized = isMemoizedSymbol in value.props;
-      const memoizedIsPreviouslyRenderedToDebugOutput = previouslyMemoizedIds.has(value.props.id);
+export function createContext<T>(defaultValue: T): Context<T> {
+  const ctx: Context<T> = {
+    Provider: function ContextProvider(props: { value: T; children: Node }, { pushContext }) {
+      const fragment = createElement(Fragment, null, props.children);
+      return withContext(fragment, pushContext(ctx, props.value));
+    },
+    [contextKey]: [defaultValue, Symbol()],
+  };
 
-      if (isMemoized && !memoizedIsPreviouslyRenderedToDebugOutput) {
-        previouslyMemoizedIds.add(value.props.id);
-      }
-
-      let children = '';
-      if (!isMemoized || !memoizedIsPreviouslyRenderedToDebugOutput) {
-        children = debugRec(value.props.children, childIndent, 'children');
-      }
-
-      const results = [];
-      if (value.props) {
-        for (const key of Object.keys(value.props)) {
-          const propValue = value.props[key];
-          if (key === 'children' || propValue === undefined) {
-            continue;
-          } else {
-            results.push(` ${key}=${debugRec(propValue, indent, 'props')}`);
-          }
-        }
-      }
-
-      const propsString = results.join('');
-
-      const child =
-        children !== ''
-          ? `<${tag}${propsString}>\n${childIndent}${children}\n${indent}</${tag}>`
-          : value.tag !== Fragment
-          ? `<${tag}${propsString} />`
-          : '<></>';
-
-      switch (context) {
-        case 'code':
-        case 'children':
-          return child;
-        case 'props':
-          return `{${child}}`;
-      }
-    } else if (Array.isArray(value)) {
-      const filter =
-        context === 'children'
-          ? (x: unknown) =>
-              x !== undefined && x !== null && typeof x !== 'boolean' && !(Array.isArray(x) && x.length == 0)
-          : () => true;
-      const values = value.filter(filter).map((v) => debugRec(v, indent, context === 'children' ? 'children' : 'code'));
-      switch (context) {
-        case 'children':
-          return values.join(`\n${indent}`);
-        case 'props':
-          return `{[${values.join(', ')}]}`;
-        case 'code':
-          return `[${values.join(', ')}]`;
-      }
-    } else if (typeof value === 'object') {
-      if (context === 'props' || context === 'children') {
-        return `{${JSON.stringify(value)}}`;
-      }
-      return JSON.stringify(value);
-    } else if (typeof value === 'function') {
-      const toRender = value.name === '' ? value.toString() : value.name;
-      if (context === 'props' || context === 'children') {
-        return `{${toRender}}`;
-      }
-      return toRender;
-    } else if (typeof value === 'symbol') {
-      if (context === 'props' || context === 'children') {
-        return `{${value.toString()}}`;
-      }
-      return value.toString();
-    }
-    return '';
-  }
-  return debugRec(value, '', 'code');
+  return ctx;
 }
 
 type PartiallyRendered = string | Element<any>;
+
+/**
+ * This is a very hacky way to "dehydrate" a React component into a prompt.
+ */
+export function hackyDehydrate(renderable: ReactComponentAsSeenByLLMx): string {
+  return `<${renderable.type.name}>${renderable.props.children}</${renderable.type.name}>}`;
+}
 
 async function* partialRenderStream(
   context: RenderContext,
@@ -189,8 +137,7 @@ async function* partialRenderStream(
   } else if (typeof renderable === 'undefined' || typeof renderable === 'boolean' || renderable === null) {
     yield [];
   } else if ('$$typeof' in renderable) {
-    // console.log({ renderable }, 'got renderable react component in parialRenderStream');
-    yield `<${renderable.type.name}>${renderable.props.children}</${renderable.type.name}>}`;
+    yield [hackyDehydrate(renderable)];
   } else if (Array.isArray(renderable)) {
     interface InProgressRender {
       generator: AsyncGenerator<PartiallyRendered[]>;
@@ -247,9 +194,17 @@ async function* partialRenderStream(
     }
   } else if (isElement(renderable)) {
     if (shouldStop(renderable)) {
-      yield [renderable];
+      // If the renderable already has a context bound to it, leave it as-is because that context would've
+      // taken precedence over the current one. But, if it does _not_ have a bound context, we bind
+      // the current context so that if/when it is rendered, rendering will "continue on" as-is.
+      if (!renderable[attachedContext]) {
+        yield [withContext(renderable, context)];
+      } else {
+        yield [renderable];
+      }
     } else {
-      yield* context.partialRenderStream(renderable.render(context), shouldStop);
+      const renderingContext = renderable[attachedContext] ?? context;
+      yield* renderingContext.partialRenderStream(renderable.render(renderingContext), shouldStop);
     }
   } else if (renderable instanceof Promise) {
     yield* await renderable.then((x) => context.partialRenderStream(x, shouldStop));
@@ -266,51 +221,40 @@ async function* partialRenderStream(
   }
 }
 
-async function partialRender(
-  context: RenderContext,
-  renderable: Renderable,
-  shouldStop: ElementPredicate
-): Promise<PartiallyRendered[]> {
-  let lastValue: PartiallyRendered[] = [];
-  for await (const value of context.partialRenderStream(renderable, shouldStop)) {
-    lastValue = value;
-  }
-  return lastValue;
-}
-
-async function render(context: RenderContext, renderable: Renderable): Promise<string> {
-  const elementsOrStrings = await context.partialRender(renderable, () => false);
-  return elementsOrStrings.join('');
-}
-
-async function* renderStream(context: RenderContext, renderable: Renderable): AsyncGenerator<string> {
-  for await (const value of context.partialRenderStream(renderable, () => false)) {
-    yield value.join('');
-  }
-}
-
-export function createRenderContext(): RenderContext {
+export function createRenderContext(
+  render: PartialRenderStream = partialRenderStream,
+  userContext: Record<symbol, any> = {}
+): RenderContext {
   const context: RenderContext = {
-    partialRenderStream: (renderable, shouldStop) => partialRenderStream(context, renderable, shouldStop),
-    partialRender: (renderable, shouldStop) => partialRender(context, renderable, shouldStop),
-    renderStream: (renderable) => renderStream(context, renderable),
-    render: (renderable) => render(context, renderable),
+    partialRenderStream: (renderable, shouldStop) => render(context, renderable, shouldStop),
+    async partialRender(renderable: Renderable, shouldStop: ElementPredicate): Promise<PartiallyRendered[]> {
+      let lastValue: PartiallyRendered[] = [];
+      for await (const value of context.partialRenderStream(renderable, shouldStop)) {
+        lastValue = value;
+      }
+      return lastValue;
+    },
+    async *renderStream(renderable: Renderable): AsyncGenerator<string> {
+      for await (const value of context.partialRenderStream(renderable, () => false)) {
+        yield value.join('');
+      }
+    },
+    async render(renderable: Renderable): Promise<string> {
+      const elementsOrStrings = await context.partialRender(renderable, () => false);
+      return elementsOrStrings.join('');
+    },
+    getContext: (ref) => {
+      const [defaultValue, symbol] = ref[contextKey];
+      if (symbol in userContext) {
+        return userContext[symbol];
+      }
+      return defaultValue;
+    },
+
+    wrapRender: (getRender) => createRenderContext(getRender(render), userContext),
+    pushContext: (contextReference, value) =>
+      createRenderContext(render, { ...userContext, [contextReference[contextKey][1]]: value }),
   };
 
   return context;
 }
-
-export function show(...args: any[]) {
-  throw new Error('show is not implemented. Switch to use Inspector.');
-}
-
-// This may be too invasive for users – we may wish to have more targetted try/catches.
-// Maybe we only apply this handler during a show() / render() call?
-process.on('unhandledRejection', (reason) => {
-  /**
-   * Some errors will just show up as {} in the logs. We need to stringify them manually.
-   * Maybe https://github.com/watson/stackman? For now, we'll rely on a console log.
-   */
-  log.error({ reason }, 'Unhandled Rejection');
-  console.log(reason);
-});
