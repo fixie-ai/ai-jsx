@@ -1,20 +1,16 @@
 {
-  "name": "@fixieai/ai-jsx",
+  "name": "ai-jsx-monorepo-root",
   "packageManager": "yarn@4.0.0-rc.42",
   "devDependencies": {
     "turbo": "^1.10.1"
   },
   "type": "module",
-  "scripts": {
-  },
   "volta": {
     "node": "18.15.0"
   },
   "prettier": {
     "printWidth": 120,
     "singleQuote": true
-  },
-  "dependencies": {
   },
   "workspaces": [
     "packages/*"

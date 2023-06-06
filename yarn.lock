@@ -664,9 +664,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fixieai/ai-jsx@workspace:.":
+"@fixieai/ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
-  resolution: "@fixieai/ai-jsx@workspace:."
+  resolution: "@fixieai/ai-jsx@workspace:packages/ai-jsx"
   dependencies:
     "@nick.heiner/wandb-fork": "npm:0.5.2-5"
     "@tsconfig/node18": "npm:^2.0.1"
@@ -1682,6 +1682,14 @@ __metadata:
   checksum: 676b1da86a0ff06a29d9a318109752990c28aae4600f6d094845a679f388a2a246402d993d223165d208122d81823235969132dc09439de2eee50a9f48fa9db9
   languageName: node
   linkType: hard
+
+"ai-jsx-monorepo-root@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "ai-jsx-monorepo-root@workspace:."
+  dependencies:
+    turbo: "npm:^1.10.1"
+  languageName: unknown
+  linkType: soft
 
 "ajv@npm:^6.10.0, ajv@npm:^6.12.4":
   version: 6.12.6
