@@ -28,7 +28,10 @@ async function Summarizer({ children }: { children: LLMx.Node }, { render } : LL
   if (tokenLen(text) <= MAX_TOKEN_LEN) {
     return (
       <ChatCompletion>
-        <SystemMessage>Summarize the supplied text into a sentence:</SystemMessage>
+        <SystemMessage>
+          Summarize the supplied text into a sentence. Only use the information
+          provided in the text; DO NOT use any information you know about the world.
+        </SystemMessage>
         <UserMessage>{text}</UserMessage>
       </ChatCompletion>
     );
