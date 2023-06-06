@@ -673,7 +673,6 @@ __metadata:
     "@types/eslint": "npm:^8"
     "@types/lodash": "npm:^4.14.194"
     "@types/node": "npm:^20.2.1"
-    "@types/prettier": "npm:^2"
     "@types/react": "npm:^18.2.7"
     "@types/sinon": "npm:^10.0.15"
     "@types/uuid": "npm:^9"
@@ -700,7 +699,6 @@ __metadata:
     openai: "npm:^3.2.1"
     pino: "npm:^8.14.1"
     pino-pretty: "npm:^10.0.0"
-    prettier: "npm:^2.8.8"
     pretty-ms: "npm:^8.0.0"
     react: "npm:^18.2.0"
     react-use: "npm:^17.4.0"
@@ -1687,6 +1685,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "ai-jsx-monorepo-root@workspace:."
   dependencies:
+    "@types/prettier": "npm:^2"
+    prettier: "npm:^2.8.8"
     turbo: "npm:^1.10.1"
   languageName: unknown
   linkType: soft

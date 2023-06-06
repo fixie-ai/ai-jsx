@@ -4,6 +4,11 @@
     "build": {
       "outputs": [".next/**", "!.next/cache/**"]
     },
-    "lint": {}
+    "//#format": {},
+    "//#format:check": {},
+    "lint": {},
+    "test": {
+      "dependsOn": ["//#format:check", "build", "lint"]
+    }
   }
 }

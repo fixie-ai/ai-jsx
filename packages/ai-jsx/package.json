@@ -5,7 +5,6 @@
     "@types/eslint": "^8",
     "@types/lodash": "^4.14.194",
     "@types/node": "^20.2.1",
-    "@types/prettier": "^2",
     "@types/react": "^18.2.7",
     "@types/sinon": "^10.0.15",
     "@types/uuid": "^9",
@@ -18,7 +17,6 @@
     "globby": "^13.1.4",
     "node-fetch": "^3.3.1",
     "pino-pretty": "^10.0.0",
-    "prettier": "^2.8.8",
     "react-use": "^17.4.0",
     "ts-node": "^10.9.1",
     "tsx": "^3.12.7",
@@ -42,10 +40,8 @@
     "view-logs": "cat llmx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
-    "format": "prettier . --write",
-    "format:check": "prettier . --check",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "yarn run format:check && yarn run lint && yarn run typecheck"
+    "build": "yarn run typecheck"
   },
   "dependencies": {
     "@nick.heiner/wandb-fork": "0.5.2-5",

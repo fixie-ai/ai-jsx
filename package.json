@@ -2,11 +2,18 @@
   "name": "ai-jsx-monorepo-root",
   "packageManager": "yarn@4.0.0-rc.42",
   "devDependencies": {
+    "@types/prettier": "^2",
+    "prettier": "^2.8.8",
     "turbo": "^1.10.1"
   },
   "type": "module",
   "volta": {
     "node": "18.15.0"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier . --check",
+    "test": "turbo test"
   },
   "prettier": {
     "printWidth": 120,
