@@ -23,5 +23,5 @@ jobs:
       #   with:
       #     node-version: ${{ matrix.node-version }}
       # - run: yarn set version 4
-      - run: yarn install --frozen-lockfile
-      - run: yarn test
+      - run: ~/.volta/bin/yarn install --frozen-lockfile
+      - run: ~/.volta/bin/yarn test
