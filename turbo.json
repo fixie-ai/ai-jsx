@@ -4,7 +4,7 @@
     "build": {
       "outputs": [".next/**", "!.next/cache/**"]
     },
-    "//#format": {},
+    "//#format-for-turbo": {},
     "//#format:check": {},
     "lint": {},
     "test": {
