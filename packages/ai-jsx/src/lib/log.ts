@@ -20,7 +20,8 @@ export const getLogName = _.once(() => {
     return 'llmx';
   }
   const packageJson = loadJsonFileSync(packageJsonPath) as { name: string };
-  return packageJson.name || 'llmx';
+  // I put this one replace in for wandb, but I'm not sure what the full set of sanitizations they require is.
+  return packageJson.name.replaceAll('/', '-') || 'llmx';
 });
 
 export type LogMetadata = {
