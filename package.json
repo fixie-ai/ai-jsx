@@ -9,7 +9,7 @@
   "type": "module",
   "volta": {
     "node": "18.15.0",
-    "yarn": "4"
+    "yarn": "4.0.0-rc.45"
   },
   "scripts": {
     "format": "prettier --write .",
