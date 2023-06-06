@@ -1,30 +1,9 @@
 import { ChatCompletion, SystemMessage, UserMessage } from './completion-components.tsx';
 import { LLMx } from './index.ts';
 import { MergeExclusive } from 'type-fest';
-import { memo } from './memoize.tsx';
 import _ from 'lodash';
 
 const noMatch = 'None of the routes match what the user said.';
-
-async function ChooseRoute(
-  props: { choice: LLMx.Node; whenOptions: string[]; children: LLMx.Node },
-  { render, partialRender }: LLMx.RenderContext
-) {
-  const choiceResult = await render(props.choice);
-  const selectedWhenOption = props.whenOptions[parseInt(choiceResult)];
-  // TODO: validation, even though the logit_bias should make this impossible (?).
-
-  // TODO: I don't think this suports as much nesting as we want.
-  const children = await partialRender(props.children, (el) => el.tag === Route);
-  const selectedChildren = children
-    .filter(LLMx.isElement)
-    .filter(({ tag }) => tag === Route)
-    .filter(({ props }: { props: LLMx.PropsOfComponent<typeof Route> }) =>
-      selectedWhenOption == noMatch ? props.unmatched : props.when === selectedWhenOption
-    );
-
-  return selectedChildren;
-}
 
 // This is exclusive, but a "select all that apply" could also be interesting.
 // What about prioritization? "Select top n"
@@ -32,13 +11,16 @@ async function ChooseRoute(
 // Need more thought around sub-routes.
 // I've observed that this is sensitive to the ordering of the routes – we probably want to either stamp that out or
 // make it explicit.
-export async function NaturalLanguageRouter(
-  props: { children: LLMx.Node; query: string },
-  { partialRender }: LLMx.RenderContext
+export async function* NaturalLanguageRouter(
+  props: { children: LLMx.Node; query: LLMx.Node },
+  { partialRenderStream, render }: LLMx.RenderContext
 ) {
-  const children = memo(Array.isArray(props.children) ? props.children : [props.children]);
-
-  const renderedChildren = await partialRender(children, (el) => el.tag === Route);
+  let renderedChildren: LLMx.Node[] = [];
+  for await (const frame of partialRenderStream(props.children, (el) => el.tag === Route)) {
+    renderedChildren = frame;
+    // Exclude any routes until we pick one.
+    yield frame.filter((e) => !LLMx.isElement(e));
+  }
   const whenOptionsFromThisRenderedChildren = _.compact(
     renderedChildren
       .filter(LLMx.isElement)
@@ -51,7 +33,7 @@ export async function NaturalLanguageRouter(
   // This will need to be tweaked when `i` is more than one token.
   const logitBiases = Object.fromEntries(_.range(whenOptions.length + 1).map((i) => [i.toString(), 100]));
 
-  const choice = (
+  const choice = await render(
     <ChatCompletion maxTokens={1} logitBias={logitBiases}>
       <SystemMessage>
         You are an expert routing agent.
@@ -67,11 +49,17 @@ export async function NaturalLanguageRouter(
     </ChatCompletion>
   );
 
-  return (
-    <ChooseRoute choice={choice} whenOptions={whenOptions}>
-      {children}
-    </ChooseRoute>
-  );
+  const choiceIndex = parseInt(choice);
+
+  // Keep only the routes that matched.
+  yield renderedChildren.filter((e) => {
+    if (!LLMx.isElement(e)) {
+      return true;
+    }
+
+    const props = e.props as RouteProps;
+    return props.unmatched ? choiceIndex === 0 : props.when === whenOptions[choiceIndex];
+  });
 }
 
 type RouteProps = { children: LLMx.Node } & MergeExclusive<{ when: string }, { unmatched: true }>;
