@@ -1,7 +1,7 @@
-import { LLMx } from '../lib/index.ts';
-import { Completion } from '../lib/completion-components.tsx';
-import { Inline } from '../lib/inline.tsx';
-import { showInspector } from '../inspector/console.tsx';
+import { LLMx } from '../../ai-jsx/src/lib/index.js';
+import { Completion } from '../../ai-jsx/src/lib/completion-components.js';
+import { Inline } from '../../ai-jsx/src/lib/inline.js';
+import { showInspector } from '../../ai-jsx/src/inspector/console.js';
 
 function CharacterGenerator() {
   const inlineCompletion = (prompt: LLMx.Node) => (

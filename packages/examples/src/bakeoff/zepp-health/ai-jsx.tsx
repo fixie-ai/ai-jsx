@@ -2,12 +2,12 @@
  * Run this with `yarn demo:zepp-health`
  */
 
-import { LLMx, log } from '../../../lib/index.ts';
-import { showInspector } from '../../../inspector/console.tsx';
-import { NaturalLanguageRouter, Route } from '../../../lib/natural-language-router.tsx';
-import { Tool, UseTools } from '../../../lib/use-tools.tsx';
+import { LLMx, log } from '../../../../ai-jsx/src/lib/index.js';
+import { showInspector } from '../../../../ai-jsx/src/inspector/console.js';
+import { NaturalLanguageRouter, Route } from '../../../../ai-jsx/src/lib/natural-language-router.js';
+import { Tool, UseTools } from '../../../../ai-jsx/src/lib/use-tools.js';
 import fixtureUserData from './user-data.json';
-import { ChatCompletion, SystemMessage, UserMessage } from '../../../lib/completion-components.tsx';
+import { ChatCompletion, SystemMessage, UserMessage } from '../../../../ai-jsx/src/lib/completion-components.js';
 import { loadJsonFile } from 'load-json-file';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -227,23 +227,23 @@ async function ShowDataSummary({ query }: { query: string }) {
 function ZeppHealth({ query }: { query: string }) {
   return (
     // The routing agent doesn't universally pick the right thing, but I think we could solve that with prompt engineering.
-    <NaturalLanguageRouter query={query}>
-      <Route when="the user is asking a question about your capabilities">
-        I can show you your sleep data, answer questions about your sleep data, assess your sleep quality based on your
-        sleep data, and provide advice to improve your sleep based on your sleep quality. Sleep quality and advice are
-        based only on ISI, SSO, and SE ratings.
-      </Route>
-      <Route when="the user wants advice about their sleep health">
-        <ShowAdvice query={query} />
-      </Route>
-      <Route when="the user wants to see an aggregated summary of their sleep efficiency or sleep onset duration (e.g. a table, image, chart, graph, average, min, mean, max, variance, etc)">
-        <ShowDataSummary query={query} />
-      </Route>
-      <Route when="the user wants to know the value of one of these sleep stats: ISI, SSO, or SE">
-        <ShowStat query={query} />
-      </Route>
-      <Route unmatched>I can't help with that.</Route>
-    </NaturalLanguageRouter>
+<NaturalLanguageRouter query={query}>
+  <Route when="the user is asking a question about your capabilities">
+    I can show you your sleep data, answer questions about your sleep data, assess your sleep quality based on your
+    sleep data, and provide advice to improve your sleep based on your sleep quality. Sleep quality and advice are
+    based only on ISI, SSO, and SE ratings.
+  </Route>
+  <Route when="the user wants advice about their sleep health">
+    <ShowAdvice query={query} />
+  </Route>
+  <Route when="the user wants to see an aggregated summary of their sleep efficiency or sleep onset duration (e.g. a table, image, chart, graph, average, min, mean, max, variance, etc)">
+    <ShowDataSummary query={query} />
+  </Route>
+  <Route when="the user wants to know the value of one of these sleep stats: ISI, SSO, or SE">
+    <ShowStat query={query} />
+  </Route>
+  <Route unmatched>I can't help with that.</Route>
+</NaturalLanguageRouter>
   );
 }
 

@@ -3,11 +3,11 @@ import { globbySync } from 'globby';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadJsonFile } from 'load-json-file';
-import { Docs, DocsComponents, LLMx } from '../../../lib/index.ts';
+import { Docs, DocsComponents, LLMx } from '../../../../ai-jsx/src/lib/index.js';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { Article } from './load-articles.mjs';
 import _ from 'lodash';
-import { showInspector } from '../../../inspector/console.tsx';
+import { showInspector } from '../../../../ai-jsx/src/inspector/console.js';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
