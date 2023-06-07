@@ -1,5 +1,5 @@
 import * as LLMx from '../index.js';
-import {Node, RenderContext, Element} from '../index.js';
+import { Node, RenderContext, Element } from '../index.js';
 import { isMemoizedSymbol } from './memoize.jsx';
 
 export function debug(value: unknown, expandJSXChildren: boolean = true): string {
