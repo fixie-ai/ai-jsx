@@ -4,10 +4,10 @@
 
 import { LLMx, log } from '../../../../ai-jsx/src/lib/index.js';
 import { showInspector } from '../../../../ai-jsx/src/inspector/console.js';
-import { NaturalLanguageRouter, Route } from '../../../../ai-jsx/src/lib/natural-language-router.js';
-import { Tool, UseTools } from '../../../../ai-jsx/src/lib/use-tools.js';
+import { NaturalLanguageRouter, Route } from '../../../../ai-jsx/src/batteries/natural-language-router.tsx';
+import { Tool, UseTools } from '../../../../ai-jsx/src/batteries/use-tools.tsx';
 import fixtureUserData from './user-data.json';
-import { ChatCompletion, SystemMessage, UserMessage } from '../../../../ai-jsx/src/lib/completion-components.js';
+import { ChatCompletion, SystemMessage, UserMessage } from '../../../../ai-jsx/src/core/completion.tsx';
 import { loadJsonFile } from 'load-json-file';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

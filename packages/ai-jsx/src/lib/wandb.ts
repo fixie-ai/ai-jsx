@@ -2,7 +2,7 @@ import { ensureProcessEnvVar } from './util.ts';
 import { InternalApi, SpanKind, StatusCode, WBTraceTree } from '@nick.heiner/wandb-fork';
 // @ts-expect-error
 import { FsFilesData, FsFinishedData } from '@nick.heiner/wandb-fork/dist/internal/filestream';
-import { Log, ModelPhaseEndLog, getLogName } from './log.ts';
+import { Log, ModelPhaseEndLog, getLogName } from '../core/log.ts';
 import got from 'got';
 import { PromiseType } from 'utility-types';
 

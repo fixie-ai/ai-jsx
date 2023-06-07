@@ -1,5 +1,5 @@
 import { LLMx } from '../lib/index.ts';
-import { ChatCompletion, SystemMessage, UserMessage } from './completion-components.tsx';
+import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.tsx';
 import { Document, Loader } from './docs.ts';
 
 export interface DocsQAProps<Doc extends Document> {

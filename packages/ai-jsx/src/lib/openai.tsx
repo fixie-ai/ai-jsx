@@ -7,9 +7,9 @@ import {
   ModelPropsWithChildren,
   SystemMessage,
   UserMessage,
-} from './completion-components.tsx';
+} from '../core/completion.tsx';
 import { LLMx, Models } from './index.ts';
-import { openAIChat } from './models.ts';
+import { openAIChat } from '../core/models.ts';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility

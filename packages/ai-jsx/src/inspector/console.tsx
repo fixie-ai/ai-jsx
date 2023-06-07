@@ -6,9 +6,9 @@ import React, { useState, useEffect } from 'react';
 import reactUse from 'react-use';
 import { Box, render, Text, useInput } from 'ink';
 import SyntaxHighlight from './syntax-highlight.tsx';
-import { memo } from '../lib/memoize.tsx';
+import { memo } from '../core/memoize.tsx';
 import Spinner from './spinner.tsx';
-import { DebugTree } from '../lib/debug.tsx';
+import { DebugTree } from '../core/debug.tsx';
 
 const { useList } = reactUse;
 

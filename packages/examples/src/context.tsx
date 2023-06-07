@@ -1,7 +1,7 @@
 import { showInspector } from '../../ai-jsx/src/inspector/console.js';
 import { LLMx } from '../../ai-jsx/src/lib/index.js';
-import { Completion } from '../../ai-jsx/src/lib/completion-components.js';
-import { Inline } from '../../ai-jsx/src/lib/inline.js';
+import { Completion } from '../../ai-jsx/src/core/completion.tsx';
+import { Inline } from '../../ai-jsx/src/core/inline.tsx';
 
 const Temperature = LLMx.createContext(0.0);
 

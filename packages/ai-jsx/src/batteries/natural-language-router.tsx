@@ -1,4 +1,4 @@
-import { ChatCompletion, SystemMessage, UserMessage } from './completion-components.tsx';
+import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.tsx';
 import { LLMx } from './index.ts';
 import { MergeExclusive } from 'type-fest';
 import _ from 'lodash';

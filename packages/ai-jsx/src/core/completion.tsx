@@ -1,5 +1,5 @@
-import { LLMx } from '../lib/index.ts';
-import { OpenAIChatModel, OpenAICompletionModel } from './openai.tsx';
+import * as LLMx from '../index.ts';
+import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.tsx';
 
 export interface ModelProps {
   temperature?: number;

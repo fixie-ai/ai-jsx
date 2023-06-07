@@ -1,5 +1,5 @@
 import { showInspector } from '../../ai-jsx/src/inspector/console.js';
-import { ErrorBoundary } from '../../ai-jsx/src/lib/error-boundary.js';
+import { ErrorBoundary } from '../../ai-jsx/src/core/error-boundary.tsx';
 import { LLMx } from '../../ai-jsx/src/lib/index.js';
 
 function FailingComponent() {

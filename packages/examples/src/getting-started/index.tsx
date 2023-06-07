@@ -2,7 +2,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { LLMx } from '../../../ai-jsx/src/lib/index.js';
-import { ChatCompletion, SystemMessage, UserMessage } from '../../../ai-jsx/src/lib/completion-components.js';
+import { ChatCompletion, SystemMessage, UserMessage } from '../../../ai-jsx/src/core/completion.tsx';
 import { showInspector } from '../../../ai-jsx/src/inspector/console.js';
 
 function loadData() {

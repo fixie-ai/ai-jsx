@@ -1,4 +1,4 @@
-import { ChatCompletion, SystemMessage, UserMessage } from './completion-components.tsx';
+import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.tsx';
 import { LLMx } from './index.ts';
 
 function GradeAnswer(props: { answer: LLMx.Node; query: LLMx.Node }) {

@@ -7,11 +7,11 @@ import { pino } from 'pino';
 import pinoPretty from 'pino-pretty';
 import fs from 'node:fs';
 import { ModelResponse, OpenAIChatParams, OpenAICompletionParams } from './models.ts';
-import { WandBObserver } from './wandb.ts';
+import { WandBObserver } from '../lib/wandb.ts';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { DocumentLoader } from 'langchain/document_loaders/base';
-import { LangChainTextSplitter } from './langchain-wrapper.ts';
-import { Document } from './docs.ts';
+import { LangChainTextSplitter } from '../batteries/langchain-wrapper.ts';
+import { Document } from '../batteries/docs.ts';
 import { TextSplitterChunkHeaderOptions } from 'langchain/text_splitter';
 
 export const getLogName = _.once(() => {

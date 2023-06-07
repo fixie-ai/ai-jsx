@@ -1,4 +1,4 @@
-import { ChatCompletion, SystemMessage, UserMessage } from './completion-components.tsx';
+import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.tsx';
 import { LLMx, log } from './index.ts';
 import z, { ZodTypeAny } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
