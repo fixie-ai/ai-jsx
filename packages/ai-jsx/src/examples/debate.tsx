@@ -24,7 +24,6 @@ async function ConversationRemapper(
     (node) => node.tag == SystemMessage || node.tag == UserMessage || node.tag == AssistantMessage,
   ];
   const partiallyRendered = await render(props.children, {
-    stream: false,
     stop: (e) => Boolean(allPredicates.find((pred) => pred(e))),
   });
 

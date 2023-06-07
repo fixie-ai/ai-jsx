@@ -302,7 +302,7 @@ if (process.env.BULK_EVAL) {
   for (const query of queryList) {
     const startTime = Date.now();
     const answer = await log.logPhase({ query, level: 'warn', phase: 'run query' }, () =>
-      LLMx.createRenderContext().render(<ZeppHealth query={query} />, { stream: false })
+      LLMx.createRenderContext().render(<ZeppHealth query={query} />)
     );
     const endTime = Date.now();
     results.push({

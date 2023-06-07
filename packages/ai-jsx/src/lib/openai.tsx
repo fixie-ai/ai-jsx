@@ -58,7 +58,7 @@ export async function* OpenAICompletionModel(
   { render }: LLMx.RenderContext
 ) {
   yield '▁';
-  let prompt = await render(props.children, { stream: false });
+  let prompt = await render(props.children);
   while (prompt.length > 0 && prompt.endsWith(' ')) {
     prompt = prompt.slice(0, prompt.length - 1);
   }
@@ -104,28 +104,26 @@ export async function* OpenAIChatModel(
 
   const messageElements = await render(props.children, {
     stop: (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage,
-    stream: false,
   });
 
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
     messageElements.filter(LLMx.isElement).map(async (message) => {
-      const content = await render(message, { stream: false });
       switch (message.tag) {
         case SystemMessage:
           return {
             role: 'system',
-            content,
+            content: await render(message),
           };
         case UserMessage:
           return {
             role: 'user',
-            content,
+            content: await render(message),
             name: (message.props as LLMx.PropsOfComponent<typeof UserMessage>).name,
           };
         case AssistantMessage:
           return {
             role: 'assistant',
-            content,
+            content: await render(message),
           };
         default:
           throw new Error(

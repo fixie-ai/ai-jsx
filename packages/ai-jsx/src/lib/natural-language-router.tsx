@@ -17,7 +17,7 @@ export async function* NaturalLanguageRouter(
 ) {
   const renderedChildren: LLMx.Node[] = yield* render(props.children, {
     stop: (el) => el.tag === Route,
-    stream: (nodes) => _.reject(nodes, LLMx.isElement),
+    mapIntermediate: (nodes) => _.reject(nodes, LLMx.isElement),
   });
   const whenOptionsFromThisRenderedChildren = _.compact(
     renderedChildren
@@ -44,8 +44,7 @@ export async function* NaturalLanguageRouter(
         with any other text.
       </SystemMessage>
       <UserMessage>{props.query}</UserMessage>
-    </ChatCompletion>,
-    { stream: false }
+    </ChatCompletion>
   );
 
   const choiceIndex = parseInt(choice);

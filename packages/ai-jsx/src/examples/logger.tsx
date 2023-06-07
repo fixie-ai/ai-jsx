@@ -44,10 +44,9 @@ function CharacterGenerator() {
 }
 
 console.log(
-  LLMx.createRenderContext().render(
+  await LLMx.createRenderContext().render(
     <Log>
       <CharacterGenerator />
-    </Log>,
-    { stream: false }
+    </Log>
   )
 );

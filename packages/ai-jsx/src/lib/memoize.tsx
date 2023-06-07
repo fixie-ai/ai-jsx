@@ -50,43 +50,43 @@ export function memo(renderable: LLMx.Renderable): LLMx.Node {
       </Memoized>
     );
   }
-  if (renderable instanceof Promise) {
-    const memoizedRenderable = renderable.then(memo);
-    const MemoizedPromise = () => memoizedRenderable;
-    return <MemoizedPromise id={++memoizedId} {...{ [isMemoizedSymbol]: true }} />;
-  }
+  if (Symbol.asyncIterator in renderable) {
+    // It's an async iterable (which might be mutable). We set up some machinery to buffer the
+    // results so that we can create memoized iterators as necessary.
+    const generator = renderable[Symbol.asyncIterator]();
+    const sink: Renderable[] = [];
+    let finalResult: Renderable = null;
+    let completed = false;
+    let nextPromise: Promise<void> | null = null;
 
-  // It's an async generator (which is mutable). We set up some machinery to buffer the
-  // results so that we can create memoized generators as necessary.
-  const generator = renderable;
-  const sink: Renderable[] = [];
-  let finalResult: Renderable = null;
-  let completed = false;
-  let nextPromise: Promise<void> | null = null;
+    const MemoizedGenerator = async function* (): AsyncGenerator<LLMx.Renderable, LLMx.Renderable> {
+      let index = 0;
+      while (true) {
+        if (index < sink.length) {
+          yield sink[index++];
+          continue;
+        } else if (completed) {
+          return finalResult;
+        } else if (nextPromise == null) {
+          nextPromise = generator.next().then((result) => {
+            if (result.done) {
+              completed = true;
+              finalResult = memo(result.value);
+            } else {
+              sink.push(memo(result.value));
+            }
+            nextPromise = null;
+          });
+        }
 
-  async function* MemoizedGenerator(): AsyncGenerator<LLMx.Renderable> {
-    let index = 0;
-    while (true) {
-      if (index < sink.length) {
-        yield sink[index++];
-        continue;
-      } else if (completed) {
-        return finalResult;
-      } else if (nextPromise == null) {
-        nextPromise = generator.next().then((result) => {
-          if (result.done) {
-            completed = true;
-            finalResult = memo(result.value);
-          } else {
-            sink.push(memo(result.value));
-          }
-          nextPromise = null;
-        });
+        await nextPromise;
       }
+    };
 
-      await nextPromise;
-    }
+    return <MemoizedGenerator id={++memoizedId} {...{ [isMemoizedSymbol]: true }} />;
   }
 
-  return <MemoizedGenerator id={++memoizedId} {...{ [isMemoizedSymbol]: true }} />;
+  const memoizedRenderable = renderable.then(memo);
+  const MemoizedPromise = () => memoizedRenderable;
+  return <MemoizedPromise id={++memoizedId} {...{ [isMemoizedSymbol]: true }} />;
 }

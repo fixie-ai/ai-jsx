@@ -115,7 +115,7 @@ export async function* DebugTree(props: { children: LLMx.Node }, { render }: LLM
   while (true) {
     yield debug(<DebugTree {...props}>{current}</DebugTree>);
 
-    let elementToRender: LLMx.Element<any> | null = null;
+    let elementToRender = null as LLMx.Element<any> | null;
     const shouldStop: LLMx.ElementPredicate = (element) => {
       if (elementToRender === null) {
         elementToRender = element;
@@ -123,16 +123,12 @@ export async function* DebugTree(props: { children: LLMx.Node }, { render }: LLM
       return element !== elementToRender;
     };
 
-    // Use a closure to prevent the type from being incorrectly narrowed.
-    // https://github.com/microsoft/TypeScript/issues/9998#issuecomment-235963457
-    const didRenderSomething = () => elementToRender !== null;
-
     current = yield* render(current, {
       stop: shouldStop,
-      stream: (frame) => debug(<DebugTree {...props}>{frame}</DebugTree>),
+      mapIntermediate: (frame) => debug(<DebugTree {...props}>{frame}</DebugTree>),
     });
 
-    if (!didRenderSomething()) {
+    if (elementToRender === null) {
       return current;
     }
   }
