@@ -1,7 +1,7 @@
-import * as LLMx from '../index.ts';
-import {Node} from '../index.ts';
-import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.tsx';
-import { Document, Loader } from './docs.ts';
+import * as LLMx from '../index.js';
+import {Node} from '../index.js';
+import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.jsx';
+import { Document, Loader } from './docs.js';
 
 export interface DocsQAProps<Doc extends Document> {
   loader: Loader;

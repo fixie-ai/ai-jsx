@@ -1,14 +1,14 @@
 /** @jsx React.createElement */
-import * as LLMx from '../index.ts';
-import { Node } from '../index.ts';
+import * as LLMx from '../index.js';
+import { Node } from '../index.js';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useState, useEffect } from 'react';
 import reactUse from 'react-use';
 import { Box, render, Text, useInput } from 'ink';
-import SyntaxHighlight from './syntax-highlight.tsx';
-import { memo } from '../core/memoize.tsx';
-import Spinner from './spinner.tsx';
-import { DebugTree } from '../core/debug.tsx';
+import SyntaxHighlight from './syntax-highlight.jsx';
+import { memo } from '../core/memoize.jsx';
+import Spinner from './spinner.jsx';
+import { DebugTree } from '../core/debug.jsx';
 
 const { useList } = reactUse;
 

@@ -1,6 +1,6 @@
-import * as LLMx from '../index.ts';
-import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.tsx';
-import { Node } from '../index.ts';
+import * as LLMx from '../index.js';
+import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.jsx';
+import { Node } from '../index.js';
 
 function GradeAnswer(props: { answer: Node; query: Node }) {
   return (

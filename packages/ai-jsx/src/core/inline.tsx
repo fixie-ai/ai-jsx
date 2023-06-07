@@ -1,5 +1,5 @@
-import { Node } from '../index.ts';
-import { memo } from './memoize.tsx';
+import { Node } from '../index.js';
+import { memo } from './memoize.jsx';
 
 export function Inline(props: { children: (Node | ((prefix: Node) => Node))[] }) {
   return props.children.flat(Infinity as 1).reduce((prefix: Node[], current) => {

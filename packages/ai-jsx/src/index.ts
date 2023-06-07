@@ -1,1 +1,1 @@
-export * from './lib/llm.ts';
+export * from './lib/llm.js';

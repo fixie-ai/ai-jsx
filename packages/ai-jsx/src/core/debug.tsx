@@ -1,6 +1,6 @@
-import * as LLMx from '../index.ts';
-import {Node, RenderContext, Element} from '../index.ts';
-import { isMemoizedSymbol } from './memoize.tsx';
+import * as LLMx from '../index.js';
+import {Node, RenderContext, Element} from '../index.js';
+import { isMemoizedSymbol } from './memoize.jsx';
 
 export function debug(value: unknown, expandJSXChildren: boolean = true): string {
   const previouslyMemoizedIds = new Set();
