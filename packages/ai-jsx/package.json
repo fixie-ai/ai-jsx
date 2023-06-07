@@ -1,6 +1,9 @@
 {
   "name": "@fixieai/ai-jsx",
   "version": "1.0.0",
+  "volta": {
+    "extends": "../../package.json"
+  },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.1",
     "@types/eslint": "^8",
@@ -35,6 +38,8 @@
     "demo:logger": "tsx src/examples/logger.tsx",
     "demo:context": "tsx src/examples/context.tsx",
     "demo:multi-model": "tsx src/examples/multi-model.tsx",
+    "demo:opentelemetry": "tsx src/examples/opentelemetry.tsx",
+    "demo:wandb": "tsx src/examples/wandb.tsx",
     "demo:inline-chat": "tsx src/examples/inline-chat.tsx",
     "demo:inline-completion": "tsx src/examples/inline-completion.tsx",
     "demo:simple-chat": "tsx src/examples/simple-chat.tsx",
@@ -52,6 +57,10 @@
   },
   "dependencies": {
     "@nick.heiner/wandb-fork": "0.5.2-5",
+    "@opentelemetry/api": "^1.4.1",
+    "@opentelemetry/auto-instrumentations-node": "^0.37.0",
+    "@opentelemetry/sdk-metrics": "^1.13.0",
+    "@opentelemetry/sdk-node": "^0.39.1",
     "cli-highlight": "^2.1.11",
     "cli-spinners": "^2.9.0",
     "find-up": "^6.3.0",
