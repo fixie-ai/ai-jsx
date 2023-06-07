@@ -1,4 +1,5 @@
-import {LLMx, Node, Component, RenderContext} from '../index.ts';
+import * as LLMx from '../index.ts';
+import {Node, Component, RenderContext} from '../index.ts';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.tsx';
 
 export interface ModelProps {

@@ -1,5 +1,6 @@
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.tsx';
-import { LLMx, Node, RenderContext } from '../index.ts';
+import * as LLMx from '../index.ts';
+import { Node, RenderContext } from '../index.ts';
 import z, { ZodTypeAny } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -64,7 +65,9 @@ async function InvokeTool(
   }
   const tool = props.tools[toolChoiceResult.nameOfTool];
   const toolResult = await tool.func(...toolChoiceResult.parameters);
-  log.info({ toolChoice: toolChoiceResult }, 'Invoking tool');
+
+  // TDOO: Restore this once we have the logger attached to the render context.
+  // log.info({ toolChoice: toolChoiceResult }, 'Invoking tool');
 
   return (
     <ChatCompletion>

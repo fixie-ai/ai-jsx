@@ -1,4 +1,5 @@
-import { Node, LLMx } from '../index.ts';
+import * as LLMx from '../index.ts';
+import {Node} from '../index.ts';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.tsx';
 import { Document, Loader } from './docs.ts';
 

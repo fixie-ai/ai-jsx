@@ -1,5 +1,6 @@
 import { Jsonifiable } from 'type-fest';
-import { LangChainWrapper, log } from './index.ts';
+import log from '../core/log.ts';
+import { ObservableLangChainTextSplitter } from './langchain-wrapper.ts';
 import { TokenTextSplitter } from 'langchain/text_splitter';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
 import { Document as LangChainDocument } from 'langchain/document';
@@ -93,7 +94,7 @@ export const defaultChunker = <Metadata extends Jsonifiable = Jsonifiable>(
   opts: ConstructorParameters<typeof TokenTextSplitter>
 ) => {
   const splitterLog = log.child({ chunkOpts: opts });
-  const splitter = new LangChainWrapper.ObservableLangChainTextSplitter(
+  const splitter = new ObservableLangChainTextSplitter(
     new TokenTextSplitter({
       encodingName: 'gpt2',
       chunkSize: 600,

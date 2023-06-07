@@ -1,4 +1,5 @@
-import {LLMx, Node, RenderContext, Element} from '../index.ts';
+import * as LLMx from '../index.ts';
+import {Node, RenderContext, Element} from '../index.ts';
 import { isMemoizedSymbol } from './memoize.tsx';
 
 export function debug(value: unknown, expandJSXChildren: boolean = true): string {

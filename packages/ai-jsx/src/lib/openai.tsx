@@ -8,7 +8,8 @@ import {
   SystemMessage,
   UserMessage,
 } from '../core/completion.tsx';
-import { LLMx, RenderContext, PropsOfComponent } from '../index.ts';
+import * as LLMx from '../index.ts';
+import { RenderContext, PropsOfComponent, Node } from '../index.ts';
 import { openAIChat, openAICompletion } from '../core/models.ts';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 
