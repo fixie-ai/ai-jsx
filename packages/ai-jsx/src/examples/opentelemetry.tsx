@@ -106,7 +106,8 @@ console.log(
   await LLMx.createRenderContext().render(
     <OpenTelemetryTracer>
       <CharacterGenerator />
-    </OpenTelemetryTracer>
+    </OpenTelemetryTracer>,
+    { stream: false }
   )
 );
 

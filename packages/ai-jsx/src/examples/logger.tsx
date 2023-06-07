@@ -47,6 +47,7 @@ console.log(
   LLMx.createRenderContext().render(
     <Log>
       <CharacterGenerator />
-    </Log>
+    </Log>,
+    { stream: false }
   )
 );

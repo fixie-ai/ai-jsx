@@ -13,12 +13,12 @@ const noMatch = 'None of the routes match what the user said.';
 // make it explicit.
 export async function* NaturalLanguageRouter(
   props: { children: LLMx.Node; query: LLMx.Node },
-  { partialRenderStream, render }: LLMx.RenderContext
+  { render }: LLMx.RenderContext
 ) {
-  const renderedChildren: LLMx.Node[] = yield* LLMx.yieldMap(
-    partialRenderStream(props.children, (el) => el.tag === Route),
-    (e) => (LLMx.isElement(e) ? null : e)
-  );
+  const renderedChildren: LLMx.Node[] = yield* render(props.children, {
+    stop: (el) => el.tag === Route,
+    stream: (nodes) => _.reject(nodes, LLMx.isElement),
+  });
   const whenOptionsFromThisRenderedChildren = _.compact(
     renderedChildren
       .filter(LLMx.isElement)
@@ -44,7 +44,8 @@ export async function* NaturalLanguageRouter(
         with any other text.
       </SystemMessage>
       <UserMessage>{props.query}</UserMessage>
-    </ChatCompletion>
+    </ChatCompletion>,
+    { stream: false }
   );
 
   const choiceIndex = parseInt(choice);

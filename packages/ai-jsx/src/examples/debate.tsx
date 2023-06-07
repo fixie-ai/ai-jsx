@@ -11,19 +11,22 @@ async function ConversationRemapper(
     assistant?: LLMx.ElementPredicate;
     children: LLMx.Node;
   },
-  { partialRender }: LLMx.RenderContext
+  { render }: LLMx.RenderContext
 ) {
   const system = props.system ?? (() => false);
   const users = props.users ?? (() => false);
   const assistant = props.assistant ?? (() => false);
 
-  const allSelectors: LLMx.ElementPredicate[] = [
+  const allPredicates: LLMx.ElementPredicate[] = [
     system,
     ...(typeof users === 'function' ? [users] : Object.values(users)),
     assistant,
     (node) => node.tag == SystemMessage || node.tag == UserMessage || node.tag == AssistantMessage,
   ];
-  const partiallyRendered = await partialRender(props.children, (node) => Boolean(allSelectors.find((s) => s(node))));
+  const partiallyRendered = await render(props.children, {
+    stream: false,
+    stop: (e) => Boolean(allPredicates.find((pred) => pred(e))),
+  });
 
   return partiallyRendered
     .filter(LLMx.isElement)

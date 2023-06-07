@@ -114,7 +114,8 @@ console.log(
   await LLMx.createRenderContext().render(
     <WeightsAndBiasesTracer>
       <CharacterGenerator />
-    </WeightsAndBiasesTracer>
+    </WeightsAndBiasesTracer>,
+    { stream: false }
   )
 );
 

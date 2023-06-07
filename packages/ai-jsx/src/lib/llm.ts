@@ -15,7 +15,9 @@ export type Renderable = Node | Promise<Renderable> | AsyncGenerator<Renderable,
 export type ElementPredicate = (e: Element<any>) => boolean;
 export type PropsOfComponent<T extends Component<any>> = T extends Component<infer P> ? P : never;
 
-export type PartialRenderStream = (
+type PartiallyRendered = string | Element<any>;
+
+export type StreamRenderer = (
   renderContext: RenderContext,
   renderable: Renderable,
   shouldStop: ElementPredicate
@@ -34,34 +36,34 @@ interface FlatRenderOpts {
 interface StreamRenderOpts {
   stream?: true;
 }
-interface StreamMapRenderOpts {
-  stream: (item: PartiallyRendered) => PartiallyRendered;
+interface StreamMapRenderOpts<T> {
+  stream: (item: PartiallyRendered[]) => T;
+}
+
+interface FullRenderOpts {
+  stop?: false;
 }
 
 interface PartialRenderOpts {
   stop: ElementPredicate;
 }
 export interface RenderContext {
-  render2(renderable: Renderable, opts: FlatRenderOpts): Promise<string>;
-  render2(renderable: Renderable, opts?: StreamRenderOpts): AsyncGenerator<string, string>;
-  render2(renderable: Renderable, opts: PartialRenderOpts & FlatRenderOpts): Promise<PartiallyRendered[]>;
-  render2(
+  render(renderable: Renderable, opts: FullRenderOpts & FlatRenderOpts): Promise<string>;
+  render(renderable: Renderable, opts?: FullRenderOpts & StreamRenderOpts): AsyncGenerator<string, string>;
+  render(renderable: Renderable, opts: PartialRenderOpts & FlatRenderOpts): Promise<PartiallyRendered[]>;
+  render(
     renderable: Renderable,
-    opts: PartialRenderOpts & (StreamRenderOpts | StreamMapRenderOpts)
+    opts: PartialRenderOpts & StreamRenderOpts
   ): AsyncGenerator<PartiallyRendered[], PartiallyRendered[]>;
-
-  partialRenderStream(
+  render<T>(
     renderable: Renderable,
-    shouldStop: ElementPredicate
-  ): AsyncGenerator<PartiallyRendered[], PartiallyRendered[]>;
-  partialRender(renderable: Renderable, shouldStop: ElementPredicate): Promise<PartiallyRendered[]>;
-  renderStream(renderable: Renderable): AsyncGenerator<string, string>;
-  render(renderable: Renderable): Promise<string>;
+    opts: PartialRenderOpts & StreamMapRenderOpts<T>
+  ): AsyncGenerator<T, PartiallyRendered[]>;
 
   getContext<T>(ref: Context<T>): T;
 
   pushContext<T>(ref: Context<T>, value: T): RenderContext;
-  wrapRender(render: (r: PartialRenderStream) => PartialRenderStream): RenderContext;
+  wrapRender(render: (r: StreamRenderer) => StreamRenderer): RenderContext;
 }
 
 export declare namespace JSX {
@@ -130,20 +132,21 @@ export function createContext<T>(defaultValue: T): Context<T> {
   return ctx;
 }
 
-type PartiallyRendered = string | Element<any>;
-
-async function* partialRenderStream(
+async function* renderStream(
   context: RenderContext,
   renderable: Renderable,
   shouldStop: ElementPredicate
 ): AsyncGenerator<PartiallyRendered[], PartiallyRendered[]> {
   if (typeof renderable === 'string') {
     return [renderable];
-  } else if (typeof renderable === 'number') {
+  }
+  if (typeof renderable === 'number') {
     return [renderable.toString()];
-  } else if (typeof renderable === 'undefined' || typeof renderable === 'boolean' || renderable === null) {
+  }
+  if (typeof renderable === 'undefined' || typeof renderable === 'boolean' || renderable === null) {
     return [];
-  } else if (Array.isArray(renderable)) {
+  }
+  if (Array.isArray(renderable)) {
     interface InProgressRender {
       generator: AsyncGenerator<PartiallyRendered[]>;
       currentValue: PartiallyRendered[];
@@ -167,7 +170,7 @@ async function* partialRenderStream(
     };
 
     const inProgressRenders = renderable.map((r) => {
-      const generator = context.partialRenderStream(r, shouldStop);
+      const generator = context.render(r, { stop: shouldStop });
       const inProgressRender: InProgressRender = {
         generator,
         currentValue: [],
@@ -195,96 +198,72 @@ async function* partialRenderStream(
     }
 
     return currentValue();
-  } else if (isElement(renderable)) {
+  }
+  if (isElement(renderable)) {
     if (shouldStop(renderable)) {
       // If the renderable already has a context bound to it, leave it as-is because that context would've
       // taken precedence over the current one. But, if it does _not_ have a bound context, we bind
       // the current context so that if/when it is rendered, rendering will "continue on" as-is.
       if (!renderable[attachedContext]) {
         return [withContext(renderable, context)];
-      } else {
-        return [renderable];
       }
-    } else {
-      const renderingContext = renderable[attachedContext] ?? context;
-      if (renderingContext !== context) {
-        // We need to switch contexts before we can render the element.
-        return yield* renderingContext.partialRenderStream(renderable, shouldStop);
-      } else {
-        return yield* renderingContext.partialRenderStream(renderable.render(renderingContext), shouldStop);
-      }
+      return [renderable];
     }
-  } else if (renderable instanceof Promise) {
-    return yield* await renderable.then((x) => context.partialRenderStream(x, shouldStop));
-  } else {
-    // Exhaust the iterator.
-    while (true) {
-      const next = await renderable.next();
-      const frameValue = yield* context.partialRenderStream(next.value, shouldStop);
-      if (next.done) {
-        return frameValue;
-      } else {
-        yield frameValue;
-      }
+    const renderingContext = renderable[attachedContext] ?? context;
+    if (renderingContext !== context) {
+      // We need to switch contexts before we can render the element.
+      return yield* renderingContext.render(renderable, { stop: shouldStop });
     }
+    return yield* renderingContext.render(renderable.render(renderingContext), { stop: shouldStop });
   }
-}
-
-export async function* yieldMap<T, R, Y, M>(
-  generator: AsyncGenerator<T, R, Y>,
-  map: (input: T) => M
-): AsyncGenerator<M, R> {
-  while (true) {
-    const next = await generator.next();
-    if (next.done) {
-      return next.value;
-    } else {
-      yield map(next.value);
-    }
+  if (renderable instanceof Promise) {
+    return yield* await renderable.then((x) => context.render(x, { stop: shouldStop }));
   }
-}
-
-export async function flushGenerator<T, R, Y>(generator: AsyncGenerator<T, R, Y>): Promise<R> {
-  while (true) {
-    const next = await generator.next();
+  // Exhaust the iterator.
+  for (;;) {
+    const next = await renderable.next();
+    const frameValue = yield* context.render(next.value, { stop: shouldStop });
     if (next.done) {
-      return next.value;
+      return frameValue;
     }
+    yield frameValue;
   }
 }
 
 export function createRenderContext(
-  render: PartialRenderStream = partialRenderStream,
+  render: StreamRenderer = renderStream,
   userContext: Record<symbol, any> = {}
 ): RenderContext {
   const context: RenderContext = {
-    render2: (
+    render: <T>(
       renderable: Renderable,
-      opts?: (FlatRenderOpts | StreamRenderOpts | StreamMapRenderOpts) & Partial<PartialRenderOpts>
+      opts?: (FlatRenderOpts | StreamRenderOpts | StreamMapRenderOpts<T>) & (FullRenderOpts | PartialRenderOpts)
     ): any => {
       // Construct the generator that handles the provided options
       const generator = (async function* () {
-        const generator = partialRenderStream(context, renderable, opts?.stop ?? (() => false));
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+        const shouldStop = opts?.stop || (() => false);
+        const generator = renderStream(context, renderable, shouldStop);
         while (true) {
           const next = await generator.next();
           if (opts?.stream && opts.stream !== true) {
+            // Streaming with stream map (implies partial rendering).
             if (next.done) {
               return next.value;
-            } else {
-              yield next.value.map(opts.stream);
             }
-          } else if (opts && opts.stop) {
+            yield opts.stream(next.value);
+          } else if (opts?.stop) {
+            // Partial rendering.
             if (next.done) {
               return next.value;
-            } else {
-              yield next.value;
             }
+            yield next.value;
           } else {
+            // Full rendering.
             if (next.done) {
               return next.value.join('');
-            } else {
-              yield next.value.join('');
             }
+            yield next.value.join('');
           }
         }
       })();
@@ -292,7 +271,7 @@ export function createRenderContext(
       if (opts?.stream === false) {
         // Flush the generator.
         const flush = async () => {
-          while (true) {
+          for (;;) {
             const next = await generator.next();
             if (next.done) {
               return next.value;
@@ -305,18 +284,6 @@ export function createRenderContext(
       return generator;
     },
 
-    partialRenderStream: (renderable, shouldStop) => render(context, renderable, shouldStop),
-    partialRender: async (renderable: Renderable, shouldStop: ElementPredicate) =>
-      flushGenerator(context.partialRenderStream(renderable, shouldStop)),
-    renderStream: async function* (renderable: Renderable) {
-      const result = yield* yieldMap(
-        context.partialRenderStream(renderable, () => false),
-        (rendered) => rendered.join('')
-      );
-
-      return result.join('');
-    },
-    render: (renderable: Renderable) => flushGenerator(context.renderStream(renderable)),
     getContext: (ref) => {
       const [defaultValue, symbol] = ref[contextKey];
       if (symbol in userContext) {

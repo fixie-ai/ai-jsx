@@ -58,7 +58,7 @@ export async function* OpenAICompletionModel(
   { render }: LLMx.RenderContext
 ) {
   yield '▁';
-  let prompt = await render(props.children);
+  let prompt = await render(props.children, { stream: false });
   while (prompt.length > 0 && prompt.endsWith(' ')) {
     prompt = prompt.slice(0, prompt.length - 1);
   }
@@ -98,33 +98,34 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
 
 export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & { model: ValidChatModel; logitBias?: Record<string, number> },
-  { render, partialRender }: LLMx.RenderContext
+  { render }: LLMx.RenderContext
 ) {
   yield '▁';
 
-  const messageElements = await partialRender(
-    props.children,
-    (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage
-  );
+  const messageElements = await render(props.children, {
+    stop: (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage,
+    stream: false,
+  });
 
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
     messageElements.filter(LLMx.isElement).map(async (message) => {
+      const content = await render(message, { stream: false });
       switch (message.tag) {
         case SystemMessage:
           return {
             role: 'system',
-            content: await render(message),
+            content,
           };
         case UserMessage:
           return {
             role: 'user',
-            content: await render(message),
+            content,
             name: (message.props as LLMx.PropsOfComponent<typeof UserMessage>).name,
           };
         case AssistantMessage:
           return {
             role: 'assistant',
-            content: await render(message),
+            content,
           };
         default:
           throw new Error(

@@ -45,7 +45,7 @@ async function InvokeTool(
   { render }: LLMx.RenderContext
 ) {
   // TODO: better validation around when this produces unexpected output.
-  const toolChoiceLLMOutput = await render(props.toolChoice);
+  const toolChoiceLLMOutput = await render(props.toolChoice, { stream: false });
   let toolChoiceResult: ToolChoice;
   try {
     const parsedJson = JSON.parse(toolChoiceLLMOutput);

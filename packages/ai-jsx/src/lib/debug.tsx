@@ -110,13 +110,13 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
   return debugRec(value, '', 'code');
 }
 
-export async function* DebugTree(props: { children: LLMx.Node }, { partialRenderStream }: LLMx.RenderContext) {
+export async function* DebugTree(props: { children: LLMx.Node }, { render }: LLMx.RenderContext) {
   let current = props.children;
   while (true) {
     yield debug(<DebugTree {...props}>{current}</DebugTree>);
 
     let elementToRender: LLMx.Element<any> | null = null;
-    const shouldStop = (element: LLMx.Element<any>): boolean => {
+    const shouldStop: LLMx.ElementPredicate = (element) => {
       if (elementToRender === null) {
         elementToRender = element;
       }
@@ -127,9 +127,10 @@ export async function* DebugTree(props: { children: LLMx.Node }, { partialRender
     // https://github.com/microsoft/TypeScript/issues/9998#issuecomment-235963457
     const didRenderSomething = () => elementToRender !== null;
 
-    current = yield* LLMx.yieldMap(partialRenderStream(current, shouldStop), (frame) =>
-      debug(<DebugTree {...props}>{frame}</DebugTree>)
-    );
+    current = yield* render(current, {
+      stop: shouldStop,
+      stream: (frame) => debug(<DebugTree {...props}>{frame}</DebugTree>),
+    });
 
     if (!didRenderSomething()) {
       return current;
