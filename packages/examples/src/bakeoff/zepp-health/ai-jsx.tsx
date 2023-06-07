@@ -227,23 +227,23 @@ async function ShowDataSummary({ query }: { query: string }) {
 function ZeppHealth({ query }: { query: string }) {
   return (
     // The routing agent doesn't universally pick the right thing, but I think we could solve that with prompt engineering.
-<NaturalLanguageRouter query={query}>
-  <Route when="the user is asking a question about your capabilities">
-    I can show you your sleep data, answer questions about your sleep data, assess your sleep quality based on your
-    sleep data, and provide advice to improve your sleep based on your sleep quality. Sleep quality and advice are
-    based only on ISI, SSO, and SE ratings.
-  </Route>
-  <Route when="the user wants advice about their sleep health">
-    <ShowAdvice query={query} />
-  </Route>
-  <Route when="the user wants to see an aggregated summary of their sleep efficiency or sleep onset duration (e.g. a table, image, chart, graph, average, min, mean, max, variance, etc)">
-    <ShowDataSummary query={query} />
-  </Route>
-  <Route when="the user wants to know the value of one of these sleep stats: ISI, SSO, or SE">
-    <ShowStat query={query} />
-  </Route>
-  <Route unmatched>I can't help with that.</Route>
-</NaturalLanguageRouter>
+    <NaturalLanguageRouter query={query}>
+      <Route when="the user is asking a question about your capabilities">
+        I can show you your sleep data, answer questions about your sleep data, assess your sleep quality based on your
+        sleep data, and provide advice to improve your sleep based on your sleep quality. Sleep quality and advice are
+        based only on ISI, SSO, and SE ratings.
+      </Route>
+      <Route when="the user wants advice about their sleep health">
+        <ShowAdvice query={query} />
+      </Route>
+      <Route when="the user wants to see an aggregated summary of their sleep efficiency or sleep onset duration (e.g. a table, image, chart, graph, average, min, mean, max, variance, etc)">
+        <ShowDataSummary query={query} />
+      </Route>
+      <Route when="the user wants to know the value of one of these sleep stats: ISI, SSO, or SE">
+        <ShowStat query={query} />
+      </Route>
+      <Route unmatched>I can't help with that.</Route>
+    </NaturalLanguageRouter>
   );
 }
 

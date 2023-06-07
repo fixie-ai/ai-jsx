@@ -28,23 +28,26 @@ function MakeCharacter() {
     <ChatCompletion temperature={1}>
       <UserMessage>Write a short bio of a character in a fantasy novel.</UserMessage>
     </ChatCompletion>
-  )
+  );
 }
 
-function Constitutional({ children }: {children: string}) {
+function Constitutional({ children }: { children: string }) {
   return (
     <ChatCompletion>
-      <SystemMessage>If the user's message is inappropriate for kids, rewrite it so it is. Otherwise, return the user's message as-is.</SystemMessage>
+      <SystemMessage>
+        If the user's message is inappropriate for kids, rewrite it so it is. Otherwise, return the user's message
+        as-is.
+      </SystemMessage>
       <UserMessage>{children}</UserMessage>
     </ChatCompletion>
-  )
+  );
 }
 
 function WriteStory() {
   return (
     <ChatCompletion temperature={1}>
-      <UserMessage>Write a story about these three characters:
-
+      <UserMessage>
+        Write a story about these three characters:
         <Constitutional>
           <MakeCharacter />
         </Constitutional>
@@ -56,7 +59,7 @@ function WriteStory() {
         </Constitutional>
       </UserMessage>
     </ChatCompletion>
-  )
+  );
 }
 
 // showInspector(<WriteStory />)
