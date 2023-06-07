@@ -664,7 +664,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fixieai/ai-jsx@workspace:packages/ai-jsx":
+"@fixieai/ai-jsx@npm:1.0.0, @fixieai/ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "@fixieai/ai-jsx@workspace:packages/ai-jsx"
   dependencies:
@@ -712,7 +712,6 @@ __metadata:
     ts-node: "npm:^10.9.1"
     tsconfig-paths: "npm:^4.2.0"
     tsx: "npm:^3.12.7"
-    turbo: "npm:^1.10.1"
     type-fest: "npm:^3.10.0"
     typescript: "npm:^5.0.4"
     utility-types: "npm:^3.10.0"
@@ -4946,6 +4945,15 @@ __metadata:
   checksum: ef0af671f7bdc20f14274c77925c3e47a4df7991563ee1827dff577f66a9ed1a5b63d9adab8bc5949a16a1341883abdaf9df7a1841f8d5d2fc65ab4f5570b32b
   languageName: node
   linkType: hard
+
+"examples@workspace:packages/examples":
+  version: 0.0.0-use.local
+  resolution: "examples@workspace:packages/examples"
+  dependencies:
+    "@fixieai/ai-jsx": "npm:1.0.0"
+    "@tsconfig/node18": "npm:^2.0.1"
+  languageName: unknown
+  linkType: soft
 
 "execa@npm:^5.0.0":
   version: 5.1.1

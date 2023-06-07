@@ -5,7 +5,7 @@
     "extends": "../../package.json"
   },
   "devDependencies": {
-    "@tsconfig/node18": "^2.0.1",
+    "@tsconfig/node18": "^2.0.1"
   },
   "type": "module",
   "private": true,
@@ -35,6 +35,6 @@
     "build": "yarn run typecheck"
   },
   "dependencies": {
-    "@fixieai/ai-jsx": "1.0.0",
+    "@fixieai/ai-jsx": "1.0.0"
   }
 }
