@@ -1,5 +1,5 @@
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.tsx';
-import { LLMx } from './index.ts';
+import { LLMx } from '../index.ts';
 import { MergeExclusive } from 'type-fest';
 import _ from 'lodash';
 
@@ -12,10 +12,10 @@ const noMatch = 'None of the routes match what the user said.';
 // I've observed that this is sensitive to the ordering of the routes – we probably want to either stamp that out or
 // make it explicit.
 export async function* NaturalLanguageRouter(
-  props: { children: LLMx.Node; query: LLMx.Node },
-  { partialRenderStream, render }: LLMx.RenderContext
+  props: { children: Node; query: Node },
+  { partialRenderStream, render }: RenderContext
 ) {
-  let renderedChildren: LLMx.Node[] = [];
+  let renderedChildren: Node[] = [];
   for await (const frame of partialRenderStream(props.children, (el) => el.tag === Route)) {
     renderedChildren = frame;
     // Exclude any routes until we pick one.
@@ -62,7 +62,7 @@ export async function* NaturalLanguageRouter(
   });
 }
 
-type RouteProps = { children: LLMx.Node } & MergeExclusive<{ when: string }, { unmatched: true }>;
+type RouteProps = { children: Node } & MergeExclusive<{ when: string }, { unmatched: true }>;
 export function Route(props: RouteProps) {
   return props.children;
 }

@@ -1,6 +1,6 @@
 /** @jsx React.createElement */
 
-import { LLMx } from '../lib/index.ts';
+import { LLMx, Node } from '../index.ts';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useState, useEffect } from 'react';
 import reactUse from 'react-use';
@@ -12,7 +12,7 @@ import { DebugTree } from '../core/debug.tsx';
 
 const { useList } = reactUse;
 
-function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: LLMx.Node; showDebugTree: boolean }) {
+function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: Node; showDebugTree: boolean }) {
   const [debugTreeSteps, { push: pushDebugTreeStep }] = useList([] as string[]);
   const [debugTreeFrameIndex, setDebugTreeFrameIndex] = useState<number | null>(null);
   const [debugTreeStreamIsDone, setDebugTreeStreamIsDone] = useState(false);
@@ -87,7 +87,7 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
   );
 }
 
-export function showInspector(componentToInspect: LLMx.Node, opts: { showDebugTree?: boolean } = {}) {
+export function showInspector(componentToInspect: Node, opts: { showDebugTree?: boolean } = {}) {
   const defaultOpts = { showDebugTree: true };
   const finalOpts = { ...defaultOpts, ...opts };
   render(<Inspector componentToInspect={componentToInspect} {...finalOpts} />);

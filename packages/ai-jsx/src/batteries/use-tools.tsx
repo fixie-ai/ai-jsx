@@ -1,5 +1,5 @@
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.tsx';
-import { LLMx, log } from './index.ts';
+import { LLMx, Node, RenderContext } from '../index.ts';
 import z, { ZodTypeAny } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -16,7 +16,7 @@ const toolChoiceSchema = z.object({
 });
 export type ToolChoice = z.infer<typeof toolChoiceSchema> | null;
 
-function ChooseTools(props: { tools: Record<string, Tool>; query: string; userData: string }): LLMx.Node {
+function ChooseTools(props: { tools: Record<string, Tool>; query: string; userData: string }): Node {
   return (
     <ChatCompletion>
       <SystemMessage>
@@ -41,8 +41,8 @@ function ChooseTools(props: { tools: Record<string, Tool>; query: string; userDa
 }
 
 async function InvokeTool(
-  props: { tools: Record<string, Tool>; toolChoice: LLMx.Node; fallback: LLMx.Node },
-  { render }: LLMx.RenderContext
+  props: { tools: Record<string, Tool>; toolChoice: Node; fallback: Node },
+  { render }: RenderContext
 ) {
   // TODO: better validation around when this produces unexpected output.
   const toolChoiceLLMOutput = await render(props.toolChoice);
@@ -78,6 +78,6 @@ async function InvokeTool(
   );
 }
 
-export function UseTools(props: { tools: Record<string, Tool>; query: string; fallback: LLMx.Node; userData: string }) {
+export function UseTools(props: { tools: Record<string, Tool>; query: string; fallback: Node; userData: string }) {
   return <InvokeTool tools={props.tools} toolChoice={<ChooseTools {...props} />} fallback={props.fallback} />;
 }

@@ -5,8 +5,8 @@ import { Inline } from '../../ai-jsx/src/core/inline.tsx';
 
 const Temperature = LLMx.createContext(0.0);
 
-function CharacterGenerator(props: Record<string, never>, { getContext }: LLMx.RenderContext) {
-  const inlineCompletion = (prompt: LLMx.Node) => (
+function CharacterGenerator(props: Record<string, never>, { getContext }: RenderContext) {
+  const inlineCompletion = (prompt: Node) => (
     <Completion stop={['"']} temperature={getContext(Temperature)}>
       {prompt}
     </Completion>

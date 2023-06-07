@@ -1,7 +1,7 @@
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.tsx';
-import { LLMx } from './index.ts';
+import { LLMx, Node } from '../index.ts';
 
-function GradeAnswer(props: { answer: LLMx.Node; query: LLMx.Node }) {
+function GradeAnswer(props: { answer: Node; query: Node }) {
   return (
     <ChatCompletion>
       <SystemMessage>
@@ -16,7 +16,7 @@ function GradeAnswer(props: { answer: LLMx.Node; query: LLMx.Node }) {
   );
 }
 
-export function Eval(props: { query: LLMx.Node; answer: LLMx.Node }) {
+export function Eval(props: { query: Node; answer: Node }) {
   return (
     <>
       Q: {props.query}

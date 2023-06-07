@@ -1,4 +1,4 @@
-import * as LLMx from '../index.ts';
+import {LLMx, Node, Component, RenderContext} from '../index.ts';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.tsx';
 
 export interface ModelProps {
@@ -8,10 +8,10 @@ export interface ModelProps {
 }
 
 export type ModelPropsWithChildren = ModelProps & {
-  children: LLMx.Node;
+  children: Node;
 };
 
-export type ModelComponent<T extends ModelPropsWithChildren> = LLMx.Component<T>;
+export type ModelComponent<T extends ModelPropsWithChildren> = Component<T>;
 
 function AutomaticCompletionModel({ children, ...props }: ModelPropsWithChildren) {
   if (process.env.OPENAI_API_KEY) {
@@ -51,7 +51,7 @@ const chatContext = LLMx.createContext<[ModelComponent<ModelPropsWithChildren>, 
 
 export function CompletionProvider<T extends ModelPropsWithChildren>(
   { component, children, ...newDefaults }: { component?: ModelComponent<T> } & T,
-  { getContext }: LLMx.RenderContext
+  { getContext }: RenderContext
 ) {
   const [existingComponent, previousDefaults] = getContext(completionContext);
   return (
@@ -68,7 +68,7 @@ export function CompletionProvider<T extends ModelPropsWithChildren>(
 
 export function ChatProvider<T extends ModelPropsWithChildren>(
   { component, children, ...newDefaults }: { component?: ModelComponent<T> } & T,
-  { getContext }: LLMx.RenderContext
+  { getContext }: RenderContext
 ) {
   const [existingComponent, previousDefaults] = getContext(chatContext);
   return (
@@ -83,19 +83,19 @@ export function ChatProvider<T extends ModelPropsWithChildren>(
   );
 }
 
-export function SystemMessage({ children }: { children: LLMx.Node }) {
+export function SystemMessage({ children }: { children: Node }) {
   return children;
 }
-export function UserMessage({ children }: { name?: string; children: LLMx.Node }) {
+export function UserMessage({ children }: { name?: string; children: Node }) {
   return children;
 }
-export function AssistantMessage({ children }: { children: LLMx.Node }) {
+export function AssistantMessage({ children }: { children: Node }) {
   return children;
 }
 
 export function Completion(
   { children, ...props }: ModelPropsWithChildren & Record<string, unknown>,
-  { getContext }: LLMx.RenderContext
+  { getContext }: RenderContext
 ) {
   const [CompletionComponent, defaultProps] = getContext(completionContext);
   return (
@@ -107,7 +107,7 @@ export function Completion(
 
 export function ChatCompletion(
   { children, ...props }: ModelPropsWithChildren & Record<string, unknown>,
-  { getContext }: LLMx.RenderContext
+  { getContext }: RenderContext
 ) {
   const [ChatComponent, defaultProps] = getContext(chatContext);
   return (

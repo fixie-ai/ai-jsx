@@ -1,10 +1,9 @@
-import { LLMx } from '../lib/index.ts';
-import { Renderable } from '../lib/llm.ts';
+import { LLMx, RenderContext, Node, Renderable } from '../index.ts';
 
 let memoizedId = 0;
 export const isMemoizedSymbol = Symbol('isMemoized');
 
-export function memo(renderable: LLMx.Renderable): LLMx.Node {
+export function memo(renderable: Renderable): Node {
   /**
    * The memoization is fully recursive.
    */
@@ -21,15 +20,15 @@ export function memo(renderable: LLMx.Renderable): LLMx.Node {
 
     // N.B. The memoization applies per-RenderContext -- if the same component is rendered under
     // two different RenderContexts, it won't be memoized.
-    const memoizedValues = new WeakMap<LLMx.RenderContext, LLMx.Renderable>();
+    const memoizedValues = new WeakMap<RenderContext, Renderable>();
     const newElement = {
       ...renderable,
-      render: (ctx: LLMx.RenderContext) => {
+      render: (ctx: RenderContext) => {
         if (memoizedValues.has(ctx)) {
           return memoizedValues.get(ctx);
         }
 
-        let renderResult: LLMx.Renderable;
+        let renderResult: Renderable;
         try {
           renderResult = memo(renderable.render(ctx));
         } catch (ex) {
@@ -63,7 +62,7 @@ export function memo(renderable: LLMx.Renderable): LLMx.Node {
   let completed = false;
   let nextPromise: Promise<void> | null = null;
 
-  async function* MemoizedGenerator(): AsyncGenerator<LLMx.Renderable> {
+  async function* MemoizedGenerator(): AsyncGenerator<Renderable> {
     let index = 0;
     while (true) {
       if (index < sink.length) {

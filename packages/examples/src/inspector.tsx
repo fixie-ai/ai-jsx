@@ -4,7 +4,7 @@ import { SystemMessage, Completion } from '../../ai-jsx/src/core/completion.tsx'
 import { Inline } from '../../ai-jsx/src/core/inline.tsx';
 
 function CharacterGenerator() {
-  const inlineCompletion = (prompt: LLMx.Node) => (
+  const inlineCompletion = (prompt: Node) => (
     <Completion stop={['"']} temperature={1.0}>
       {prompt}
     </Completion>

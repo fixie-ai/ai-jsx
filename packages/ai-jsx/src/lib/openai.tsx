@@ -8,8 +8,8 @@ import {
   SystemMessage,
   UserMessage,
 } from '../core/completion.tsx';
-import { LLMx, Models } from './index.ts';
-import { openAIChat } from '../core/models.ts';
+import { LLMx, RenderContext, PropsOfComponent } from '../index.ts';
+import { openAIChat, openAICompletion } from '../core/models.ts';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
@@ -31,7 +31,7 @@ export function OpenAI({
   chatModel,
   completionModel,
   ...defaults
-}: { children: LLMx.Node } & ChatOrCompletionModelOrBoth & ModelProps) {
+}: { children: Node } & ChatOrCompletionModelOrBoth & ModelProps) {
   let result = children;
 
   if (chatModel) {
@@ -55,7 +55,7 @@ export function OpenAI({
 
 export async function* OpenAICompletionModel(
   props: ModelPropsWithChildren & { model: ValidCompletionModel },
-  { render }: LLMx.RenderContext
+  { render }: RenderContext
 ) {
   yield '▁';
   let prompt = await render(props.children);
@@ -63,7 +63,7 @@ export async function* OpenAICompletionModel(
     prompt = prompt.slice(0, prompt.length - 1);
   }
 
-  const tokenStream = Models.openAICompletion.simpleStream({
+  const tokenStream = openAICompletion.simpleStream({
     model: props.model as any,
     max_tokens: props.maxTokens,
     temperature: props.temperature,
@@ -98,7 +98,7 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
 
 export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & { model: ValidChatModel; logitBias?: Record<string, number> },
-  { render, partialRender }: LLMx.RenderContext
+  { render, partialRender }: RenderContext
 ) {
   yield '▁';
 
@@ -119,7 +119,7 @@ export async function* OpenAIChatModel(
           return {
             role: 'user',
             content: await render(message),
-            name: (message.props as LLMx.PropsOfComponent<typeof UserMessage>).name,
+            name: (message.props as PropsOfComponent<typeof UserMessage>).name,
           };
         case AssistantMessage:
           return {

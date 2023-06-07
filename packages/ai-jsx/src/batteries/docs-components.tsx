@@ -1,11 +1,11 @@
-import { LLMx } from '../lib/index.ts';
+import { Node, LLMx } from '../index.ts';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.tsx';
 import { Document, Loader } from './docs.ts';
 
 export interface DocsQAProps<Doc extends Document> {
   loader: Loader;
   question: string;
-  docComponent: (props: { doc: Doc }) => LLMx.Node;
+  docComponent: (props: { doc: Doc }) => Node;
 }
 export async function DocsQA<Doc extends Document>(props: DocsQAProps<Doc>) {
   const docs = await props.loader();

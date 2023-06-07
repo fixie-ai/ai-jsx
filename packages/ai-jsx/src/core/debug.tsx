@@ -1,4 +1,4 @@
-import { LLMx } from '../lib/index.ts';
+import {LLMx, Node, RenderContext, Element} from '../index.ts';
 import { isMemoizedSymbol } from './memoize.tsx';
 
 export function debug(value: unknown, expandJSXChildren: boolean = true): string {
@@ -110,13 +110,13 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
   return debugRec(value, '', 'code');
 }
 
-export async function* DebugTree(props: { children: LLMx.Node }, { partialRenderStream }: LLMx.RenderContext) {
+export async function* DebugTree(props: { children: Node }, { partialRenderStream }: RenderContext) {
   let current = props.children;
   while (true) {
     yield debug(<DebugTree {...props}>{current}</DebugTree>);
 
-    let elementToRender: LLMx.Element<any> | null = null;
-    const shouldStop = (element: LLMx.Element<any>): boolean => {
+    let elementToRender: Element<any> | null = null;
+    const shouldStop = (element: Element<any>): boolean => {
       if (elementToRender === null) {
         elementToRender = element;
       }
