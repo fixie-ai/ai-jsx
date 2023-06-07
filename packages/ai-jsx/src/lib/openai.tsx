@@ -77,7 +77,7 @@ export async function* OpenAICompletionModel(
     yield `${accumulatedResponse}█`;
   }
 
-  yield accumulatedResponse;
+  return accumulatedResponse;
 }
 
 function logitBiasOfTokens(tokens: Record<string, number>) {
@@ -149,5 +149,5 @@ export async function* OpenAIChatModel(
     yield `${partialMessage.content}█`;
   }
 
-  yield lastMessage;
+  return lastMessage;
 }

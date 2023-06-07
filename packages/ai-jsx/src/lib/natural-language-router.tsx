@@ -15,12 +15,10 @@ export async function* NaturalLanguageRouter(
   props: { children: LLMx.Node; query: LLMx.Node },
   { partialRenderStream, render }: LLMx.RenderContext
 ) {
-  let renderedChildren: LLMx.Node[] = [];
-  for await (const frame of partialRenderStream(props.children, (el) => el.tag === Route)) {
-    renderedChildren = frame;
-    // Exclude any routes until we pick one.
-    yield frame.filter((e) => !LLMx.isElement(e));
-  }
+  const renderedChildren: LLMx.Node[] = yield* LLMx.yieldMap(
+    partialRenderStream(props.children, (el) => el.tag === Route),
+    (e) => (LLMx.isElement(e) ? null : e)
+  );
   const whenOptionsFromThisRenderedChildren = _.compact(
     renderedChildren
       .filter(LLMx.isElement)

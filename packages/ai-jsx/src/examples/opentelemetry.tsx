@@ -38,7 +38,7 @@ function OpenTelemetryTracer(props: { children: LLMx.Node }, { wrapRender }: LLM
               (span: opentelemetry.Span) => {
                 async function* gen() {
                   try {
-                    yield* r(renderContext, renderable, shouldStop);
+                    return yield* r(renderContext, renderable, shouldStop);
                   } finally {
                     span.end();
                   }

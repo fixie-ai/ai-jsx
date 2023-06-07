@@ -60,6 +60,7 @@ export function memo(renderable: LLMx.Renderable): LLMx.Node {
   // results so that we can create memoized generators as necessary.
   const generator = renderable;
   const sink: Renderable[] = [];
+  let finalResult: Renderable = null;
   let completed = false;
   let nextPromise: Promise<void> | null = null;
 
@@ -70,11 +71,12 @@ export function memo(renderable: LLMx.Renderable): LLMx.Node {
         yield sink[index++];
         continue;
       } else if (completed) {
-        break;
+        return finalResult;
       } else if (nextPromise == null) {
         nextPromise = generator.next().then((result) => {
           if (result.done) {
             completed = true;
+            finalResult = memo(result.value);
           } else {
             sink.push(memo(result.value));
           }

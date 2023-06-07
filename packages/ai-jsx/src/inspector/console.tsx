@@ -31,8 +31,13 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
       setDebugTreeStreamIsDone(true);
     }
     async function getRenderedContent() {
-      for await (const page of renderContext.renderStream(memoized)) {
-        setRenderedContent(page);
+      const generator = renderContext.renderStream(memoized);
+      for (;;) {
+        const next = await generator.next();
+        setRenderedContent(next.value);
+        if (next.done) {
+          break;
+        }
       }
     }
     getAllFrames();

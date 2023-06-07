@@ -127,15 +127,12 @@ export async function* DebugTree(props: { children: LLMx.Node }, { partialRender
     // https://github.com/microsoft/TypeScript/issues/9998#issuecomment-235963457
     const didRenderSomething = () => elementToRender !== null;
 
-    for await (const frame of partialRenderStream(current, shouldStop)) {
-      current = frame;
-      yield debug(<DebugTree {...props}>{current}</DebugTree>);
-    }
+    current = yield* LLMx.yieldMap(partialRenderStream(current, shouldStop), (frame) =>
+      debug(<DebugTree {...props}>{frame}</DebugTree>)
+    );
 
     if (!didRenderSomething()) {
-      break;
+      return current;
     }
   }
-
-  yield current;
 }

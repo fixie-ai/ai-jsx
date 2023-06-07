@@ -60,10 +60,11 @@ function WeightsAndBiasesTracer(props: { children: LLMx.Node }, { wrapRender }: 
         async function* gen() {
           const currentSpan = currentSpanStorage.getStore();
           try {
-            yield* r(renderContext, renderable, shouldStop);
+            const result = yield* r(renderContext, renderable, shouldStop);
             if (currentSpan) {
               currentSpan.status_code = StatusCode.SUCCESS;
             }
+            return result;
           } catch (ex) {
             if (currentSpan) {
               currentSpan.status_code = StatusCode.ERROR;
