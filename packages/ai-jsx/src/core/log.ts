@@ -11,7 +11,7 @@ import { WandBObserver } from '../lib/wandb.js';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { DocumentLoader } from 'langchain/document_loaders/base';
 import { LangChainTextSplitter } from '../batteries/langchain-wrapper.js';
-import { Document } from '../batteries/docs.js';
+import { Document } from '../batteries/docs.mjs';
 import { TextSplitterChunkHeaderOptions } from 'langchain/text_splitter';
 
 export const getLogName = _.once(() => {

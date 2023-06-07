@@ -1,7 +1,7 @@
 import * as LLMx from '../index.js';
 import { Node } from '../index.js';
-import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.jsx';
-import { Document, Loader } from './docs.js';
+import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
+import { Document, Loader } from './docs.mjs';
 
 export interface DocsQAProps<Doc extends Document> {
   loader: Loader;

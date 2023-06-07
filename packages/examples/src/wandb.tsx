@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { v4 as uuidv4 } from 'uuid';
-import { LLMx } from '@fixieai/ai-jsx';
-import { Completion } from '@fixieai/ai-jsx/core/completion-components';
+import * as LLMx from '@fixieai/ai-jsx';
+import { Completion } from '@fixieai/ai-jsx/core/completion';
 import { Inline } from '@fixieai/ai-jsx/core/inline';
 import { StatusCode, WBTraceTree, addChildSpan, wandb } from '@nick.heiner/wandb-fork';
 import { debug } from '@fixieai/ai-jsx/core/debug.tsx';

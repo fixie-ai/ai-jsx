@@ -1,5 +1,5 @@
 import * as LLMx from '../index.js';
-import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.jsx';
+import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
 import { Node } from '../index.js';
 
 function GradeAnswer(props: { answer: Node; query: Node }) {

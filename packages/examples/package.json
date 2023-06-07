@@ -14,7 +14,6 @@
     "tsx": "^3.12.7",
     "typescript": "^5.0.4"
   },
-  "type": "module",
   "private": true,
   "scripts": {
     "demo:debate": "tsx src/examples/debate.tsx",

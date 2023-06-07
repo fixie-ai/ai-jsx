@@ -7,7 +7,7 @@ import {
   ModelPropsWithChildren,
   SystemMessage,
   UserMessage,
-} from '../core/completion.jsx';
+} from '../core/completion.js';
 import * as LLMx from '../index.js';
 import { RenderContext, PropsOfComponent, Node } from '../index.js';
 import { openAIChat, openAICompletion } from '../core/models.js';
