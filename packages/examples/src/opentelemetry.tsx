@@ -5,7 +5,7 @@ import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentation
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import * as LLMx from '@fixieai/ai-jsx';
 import { Completion } from '@fixieai/ai-jsx/core/completion';
-import { Inline } from '../lib/inline.tsx';
+import { Inline } from '@fixieai/ai-jsx/core/inline';
 import { debug } from '@fixieai/ai-jsx/core/debug';
 import { AsyncLocalStorage } from 'node:async_hooks';
 

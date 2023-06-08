@@ -1,7 +1,7 @@
-import { LLMx } from '../../ai-jsx/src/lib/index.js';
-import { Completion } from '../../ai-jsx/src/core/completion.tsx';
-import { Inline } from '../../ai-jsx/src/core/inline.tsx/index.ts';
-import { showInspector } from '../../ai-jsx/src/inspector/console.js';
+import { showInspector } from '@fixieai/ai-jsx/core/inspector';
+import { Inline } from '@fixieai/ai-jsx/core/inline';
+import * as LLMx  from '@fixieai/ai-jsx';
+import { Completion } from '@fixieai/ai-jsx/core/completion';
 
 function CharacterGenerator() {
   const inlineCompletion = (prompt: Node) => (

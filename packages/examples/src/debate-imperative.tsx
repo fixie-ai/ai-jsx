@@ -1,6 +1,6 @@
 import _ from 'lodash';
-import { log } from '../lib/index.ts';
-import { openAIChat } from '../lib/models.ts';
+import log from '@fixieai/ai-jsx/core/log';
+import { openAIChat } from '@fixieai/ai-jsx/core/models';
 
 /**
  * Here's an example of the debate with no JSX. It's imperative, but I got it to work on the first try.

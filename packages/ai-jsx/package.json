@@ -9,6 +9,22 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     },
+    "./batteries/docs": {
+      "import": "./dist/esm/batteries/docs.js",
+      "require": "./dist/cjs/batteries/docs.js"
+    },
+    "./batteries/natural-language-router": {
+      "import": "./dist/esm/batteries/natural-language-router.js",
+      "require": "./dist/cjs/batteries/natural-language-router.js"
+    },
+    "./batteries/use-tools": {
+      "import": "./dist/esm/batteries/use-tools.js",
+      "require": "./dist/cjs/batteries/use-tools.js"
+    },
+    "./batteries/langchain-wrapper": {
+      "import": "./dist/esm/batteries/langchain-wrapper.js",
+      "require": "./dist/cjs/batteries/langchain-wrapper.js"
+    },
     "./core/completion": {
       "import": "./dist/esm/core/completion.js",
       "require": "./dist/cjs/core/completion.js"
@@ -16,6 +32,10 @@
     "./core/debug": {
       "import": "./dist/esm/core/debug.js",
       "require": "./dist/cjs/core/debug.js"
+    },
+    "./core/error-boundary": {
+      "import": "./dist/esm/core/error-boundary.js",
+      "require": "./dist/cjs/core/error-boundary.js"
     },
     "./core/inline": {
       "import": "./dist/esm/core/inline.js",
@@ -25,9 +45,17 @@
       "import": "./dist/esm/core/log.js",
       "require": "./dist/cjs/core/log.js"
     },
+    "./core/models": {
+      "import": "./dist/esm/core/models.js",
+      "require": "./dist/cjs/core/models.js"
+    },
     "./core/inspector": {
       "import": "./dist/esm/inspector/console.js",
       "require": "./dist/cjs/inspector/console.js"
+    },
+    "./lib/openai": {
+      "import": "./dist/esm/lib/openai.js",
+      "require": "./dist/cjs/lib/openai.js"
     }
   },
   "devDependencies": {

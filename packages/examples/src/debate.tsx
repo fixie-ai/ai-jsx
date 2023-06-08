@@ -2,7 +2,7 @@ import _ from 'lodash';
 import { showInspector } from '@fixieai/ai-jsx/core/inspector';
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
 import * as LLMx from '@fixieai/ai-jsx';
-import { Inline } from '../lib/inline.tsx';
+import { Inline } from '@fixieai/ai-jsx/core/inline';
 
 async function ConversationRemapper(
   props: {

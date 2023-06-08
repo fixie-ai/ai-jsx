@@ -4,11 +4,11 @@
 
 import * as LLMx from '@fixieai/ai-jsx';
 import log from '@fixieai/ai-jsx/core/log';
-import { showInspector } from '../../../../ai-jsx/src/inspector/console.js';
-import { NaturalLanguageRouter, Route } from '../../../../ai-jsx/src/batteries/natural-language-router.tsx';
-import { Tool, UseTools } from '../../../../ai-jsx/src/batteries/use-tools.tsx';
+import { showInspector } from '@fixieai/ai-jsx/core/inspector';
+import { NaturalLanguageRouter, Route } from '@fixieai/ai-jsx/batteries/natural-language-router';
+import { Tool, UseTools } from '@fixieai/ai-jsx/batteries/use-tools';
 import fixtureUserData from './user-data.json';
-import { ChatCompletion, SystemMessage, UserMessage } from '../../../../ai-jsx/src/core/completion.tsx';
+import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
 import { loadJsonFile } from 'load-json-file';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -251,38 +251,38 @@ function ZeppHealth({ query }: { query: string }) {
 // https://github.com/fixie-ai/Zhealth/blob/main/test_zhealth.ipynb
 const questionsFromLarry: string[] = [
   'What can you do?',
-  'What are your abilities?',
-  'What is my average Sleep Onset Duration?',
-  'Can you tell me my average Sleep Onset Duration?',
-  'What are my SSO, SE, and ISI ratings?',
-  'Can you please provide me with my SSO, SE, and ISI ratings?',
-  'tell me about my sleep quality ratings',
-  'Can you provide me with information about my sleep quality ratings?',
-  'Am I sleeping well? And what advice can you give me to improve my sleep?',
-  'Can you give me feedback on my sleeping pattern? What tips would you suggest to enhance my quality of sleep?',
-  'Show me my sleep data as an HTML table',
-  'Display my sleep data in an HTML table format.',
+  // 'What are your abilities?',
+  // 'What is my average Sleep Onset Duration?',
+  // 'Can you tell me my average Sleep Onset Duration?',
+  // 'What are my SSO, SE, and ISI ratings?',
+  // 'Can you please provide me with my SSO, SE, and ISI ratings?',
+  // 'tell me about my sleep quality ratings',
+  // 'Can you provide me with information about my sleep quality ratings?',
+  // 'Am I sleeping well? And what advice can you give me to improve my sleep?',
+  // 'Can you give me feedback on my sleeping pattern? What tips would you suggest to enhance my quality of sleep?',
+  // 'Show me my sleep data as an HTML table',
+  // 'Display my sleep data in an HTML table format.',
 ];
 
 const queryList = [
   ...questionsFromLarry,
-  'Please give me a recipe for cake',
-  'What does anthrax taste like?',
-  'What can you do?',
-  'How can you help me?',
-  'Can you provide me with information about my sleep quality ratings?',
-  "What's my ISI rating?",
-  "What's my SSO rating?",
-  "What's my SE rating?",
-  'How can I get to sleep faster?',
-  'Show me my sleep data as a markdown table',
-  'Show me my sleep data as an HTML table',
-  'Show me a histogram of how long it takes me to fall asleep',
-  'Show me a pie chart of how long it takes me to fall asleep',
-  'Show me a histogram of my sleep efficiency',
-  'Show me a time series chart of how long it takes me to fall asleep',
-  'Show me my sleep data as a chart in ASCII art table',
-  'Show me a chart about my sleep data',
+  // 'Please give me a recipe for cake',
+  // 'What does anthrax taste like?',
+  // 'What can you do?',
+  // 'How can you help me?',
+  // 'Can you provide me with information about my sleep quality ratings?',
+  // "What's my ISI rating?",
+  // "What's my SSO rating?",
+  // "What's my SE rating?",
+  // 'How can I get to sleep faster?',
+  // 'Show me my sleep data as a markdown table',
+  // 'Show me my sleep data as an HTML table',
+  // 'Show me a histogram of how long it takes me to fall asleep',
+  // 'Show me a pie chart of how long it takes me to fall asleep',
+  // 'Show me a histogram of my sleep efficiency',
+  // 'Show me a time series chart of how long it takes me to fall asleep',
+  // 'Show me my sleep data as a chart in ASCII art table',
+  // 'Show me a chart about my sleep data',
   "What's my DOESNOTEXIST rating?",
 ];
 

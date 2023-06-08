@@ -3,11 +3,12 @@ import { globbySync } from 'globby';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadJsonFile } from 'load-json-file';
-import { Docs, DocsComponents, LLMx } from '../../../../ai-jsx/src/lib/index.js';
+import * as LLMx from '@fixieai/ai-jsx';
+import { DocsQA, defaultChunkMany, DefaultInMemoryVectorStore } from '@fixieai/ai-jsx/batteries/docs';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { Article } from './load-articles.mjs';
 import _ from 'lodash';
-import { showInspector } from '../../../../ai-jsx/src/inspector/console.js';
+import { showInspector } from '@fixieai/ai-jsx/core/inspector';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,8 +23,8 @@ const docs = await Promise.all(
   })
 );
 
-const chunkedDocs = await Docs.defaultChunkMany(docs);
-const vectorStore = await Docs.DefaultInMemoryVectorStore.fromDocuments(chunkedDocs, new OpenAIEmbeddings());
+const chunkedDocs = await defaultChunkMany(docs);
+const vectorStore = await DefaultInMemoryVectorStore.fromDocuments(chunkedDocs, new OpenAIEmbeddings());
 
 function ShowDoc({ doc }: { doc: (typeof docs)[0] }) {
   return (
@@ -40,7 +41,7 @@ function AskAndAnswer({ query }: { query: string }) {
     <>
       Q: {query}
       {'\n'}
-      A: <DocsComponents.DocsQA question={query} loader={loader} docComponent={ShowDoc} />
+      A: <DocsQA question={query} loader={loader} docComponent={ShowDoc} />
     </>
   );
 }

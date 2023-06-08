@@ -1,3 +1,6 @@
+import * as LLMx from '../index';
+import { Node } from '../index';
+import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion';
 import { Jsonifiable } from 'type-fest';
 import log from '../core/log';
 import { ObservableLangChainTextSplitter } from './langchain-wrapper';
@@ -123,4 +126,26 @@ export const defaultChunkMany = async <Metadata extends Jsonifiable = Jsonifiabl
 
 export function toLangChainDoc(doc: Document): LangChainDocument {
   return doc as LangChainDocument;
+}
+
+export interface DocsQAProps<Doc extends Document> {
+  loader: Loader;
+  question: string;
+  docComponent: (props: { doc: Doc }) => Node;
+}
+export async function DocsQA<Doc extends Document>(props: DocsQAProps<Doc>) {
+  const docs = await props.loader();
+  return (
+    <ChatCompletion>
+      <SystemMessage>
+        You are a customer service agent. Answer questions truthfully. Here is what you know:
+        {docs.map((doc) => (
+          // TODO improve types
+          // @ts-expect-error
+          <props.docComponent doc={doc} />
+        ))}
+      </SystemMessage>
+      <UserMessage>{props.question}</UserMessage>
+    </ChatCompletion>
+  );
 }

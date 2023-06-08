@@ -2,8 +2,8 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import * as LLMx from '@fixieai/ai-jsx';
-import { ChatCompletion, SystemMessage, UserMessage } from '../../../ai-jsx/src/core/completion.tsx';
-import { showInspector } from '../../../ai-jsx/src/inspector/console.js';
+import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
+import { showInspector } from '@fixieai/ai-jsx/core/inspector';
 
 function loadData() {
   const directoryOfThisFile = path.dirname(fileURLToPath(import.meta.url));
