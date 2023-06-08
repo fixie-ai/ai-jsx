@@ -256,11 +256,16 @@ export function createRenderContext(
             return value;
           }
 
-          if (opts?.map) {
-            yield opts.map(value);
-          } else {
-            yield value;
-          }
+          // If there's a mapper provided, use it.
+          const valueToYield = opts?.map
+            ? opts.map(value)
+            : // If we're doing partial rendering, exclude any elements we stopped on (to avoid accidentally leaking elements up).
+            opts?.stop
+            ? (value as PartiallyRendered[]).filter((e) => !isElement(e))
+            : // Otherwise yield the (string) value as-is.
+              value;
+
+          yield valueToYield;
         }
       })();
 

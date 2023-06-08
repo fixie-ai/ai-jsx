@@ -17,7 +17,6 @@ export async function* NaturalLanguageRouter(
 ) {
   const renderedChildren: LLMx.Node[] = yield* render(props.children, {
     stop: (el) => el.tag === Route,
-    map: (nodes) => _.reject(nodes, LLMx.isElement),
   });
   const whenOptionsFromThisRenderedChildren = _.compact(
     renderedChildren
@@ -50,7 +49,7 @@ export async function* NaturalLanguageRouter(
   const choiceIndex = parseInt(choice);
 
   // Keep only the routes that matched.
-  yield renderedChildren.filter((e) => {
+  return renderedChildren.filter((e) => {
     if (!LLMx.isElement(e)) {
       return true;
     }
