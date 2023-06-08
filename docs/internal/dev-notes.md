@@ -5,6 +5,8 @@ If we set `"moduleResolution": "node16"`, then some dependency modules work well
 
 To resolve this, I removed `"moduleResolution": "node16"` and accepted that we'll have worse types on Ink.
 
+I tried to go full CommonJS, but that makes Ink fail, because it contains a dep with a top-level `await`, which only works from ESM.
+
 ## TypeScript / `tsx`
 
 If you pass the `--tsconfig` flag to `tsx`, it needs to be before the entry point:
