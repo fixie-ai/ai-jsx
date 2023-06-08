@@ -70,7 +70,7 @@ export default async function RecipeWrapper({ searchParams }: { searchParams: an
     <>
       <InputPrompt label="What would you like a recipe for?" defaultValue={defaultValue} />
 
-      <ResultContainer title={`AI comes up with a recipe for ${query}`}>
+      <ResultContainer title={`AI comes up with a recipe for ${query}`} description='If this fails, it may be because the AI generated JSON with an extra comma.'>
         <AI renderPassedReactComponents>
           <ChatCompletion temperature={1}>
             <SystemMessage>
