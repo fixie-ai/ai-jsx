@@ -1,4 +1,4 @@
-import { Node } from '../lib/llm';
+import { Node } from '..';
 import { memo } from './memoize';
 
 export function Inline(props: { children: (Node | ((prefix: Node) => Node))[] }) {

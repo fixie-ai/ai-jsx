@@ -6,8 +6,8 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/esm/lib/llm.ts",
-      "require": "./dist/cjs/lib/llm.ts"
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
     },
     "./batteries/docs": {
       "import": "./dist/esm/batteries/docs.js",
