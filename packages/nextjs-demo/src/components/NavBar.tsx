@@ -4,6 +4,7 @@ import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import classNames from 'classnames';
+import Image from 'next/image';
 
 export default function NavBar() {
   const pathname = usePathname();
@@ -23,12 +24,12 @@ export default function NavBar() {
               <div className="absolute inset-y-0 left-0 flex items-center sm:hidden"></div>
               <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
                 <div className="flex flex-shrink-0 items-center">
-                  <img
+                  <Image
                     className="block h-6 w-auto lg:hidden"
                     src="https://app.fixie.ai/static/logos/charcoal.png"
                     alt="Your Company"
                   />
-                  <img
+                  <Image
                     className="hidden h-6 w-auto lg:block"
                     src="https://app.fixie.ai/static/logos/charcoal.png"
                     alt="Your Company"

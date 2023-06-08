@@ -4,7 +4,7 @@ import ResultContainer from '@/components/ResultContainer';
 import InputPrompt from '@/components/InputPrompt';
 import { NaturalLanguageGitHubSearch } from './ai';
 
-export default async function Home(props) {
+export default function Home(props: { searchParams: any }) {
   const defaultValue = 'top issues from the TypeScript repo';
   const githubTopic = props.searchParams.q || defaultValue;
   return (

@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-env browser */
+
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
@@ -11,7 +13,7 @@ export default function InputPrompt({ label, defaultValue }: { label: string; de
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const q = (formData.get('topic') as string).trim();
-    window.location.href = window.location.pathname + `?q=${encodeURIComponent(q)}`;
+    window.location.href = `${window.location.pathname}?q=${encodeURIComponent(q)}`;
   }
 
   return (

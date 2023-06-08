@@ -1,7 +1,6 @@
 import React from 'react';
 import './globals.css';
 import NavBar from '@/components/NavBar';
-import InputPrompt from '@/components/InputPrompt';
 
 export const metadata = {
   title: 'AI.JSX + NextJS SSR Demo',

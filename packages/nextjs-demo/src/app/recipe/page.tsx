@@ -62,7 +62,7 @@ export function RecipeInstructionListItem({ children }: { children: React.ReactN
   return <li data-test="recipe-instruction-list-item">{children}</li>;
 }
 
-export default async function RecipeWrapper({ searchParams }: { searchParams: any }) {
+export default function RecipeWrapper({ searchParams }: { searchParams: any }) {
   const defaultValue = 'beans';
   const query = searchParams.q ?? defaultValue;
 
@@ -70,7 +70,10 @@ export default async function RecipeWrapper({ searchParams }: { searchParams: an
     <>
       <InputPrompt label="What would you like a recipe for?" defaultValue={defaultValue} />
 
-      <ResultContainer title={`AI comes up with a recipe for ${query}`} description='If this fails, it may be because the AI generated JSON with an extra comma.'>
+      <ResultContainer
+        title={`AI comes up with a recipe for ${query}`}
+        description="If this fails, it may be because the AI generated JSON with an extra comma."
+      >
         <AI renderPassedReactComponents>
           <ChatCompletion temperature={1}>
             <SystemMessage>

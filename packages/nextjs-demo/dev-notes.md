@@ -3,6 +3,7 @@
 This won't deploy to Vercel because we haven't published @fixieai/ai-jsx yet.
 
 ### Interactivity
+
 To make the generated AI components interactive, we need to use client (rather than server) components. When I tried to do this, I ran into issues. I don't think they're worth sorting now, as it would be a rabbit hole. I think we can get the same overall effect with pure client components, which I'll explore in a later PR. I also don't think this indicates a fundamental flaw in the approach.
 
 ## JSX Hackery

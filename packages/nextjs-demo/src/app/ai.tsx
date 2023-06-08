@@ -19,8 +19,8 @@ function Loading() {
   return <Image src="/loading.gif" width={100} height={100} alt="loading" />;
 }
 
-async function Defer(props: { emitter: any; index: number }) {
-  return await new Promise((resolve) => {
+function Defer(props: { emitter: any; index: number }) {
+  return new Promise((resolve) => {
     props.emitter.once(`value-${props.index}`, resolve);
   });
 }
@@ -42,17 +42,25 @@ async function AIInterpretedReactComponents({ children }: { children: React.Reac
     SelectIngredientsButton,
   };
 
-  function parseJsonToReact(json: any) {
-    if (!json) return null;
+  interface ExpectedJsonStructure {
+    name: string;
+    children: ExpectedJsonStructure[];
+  }
+  function parseJsonToReact(json?: ExpectedJsonStructure) {
+    if (!json) {
+      return null;
+    }
 
-    const Component = possibleComponents[json.name];
+    const Component = possibleComponents[json.name as keyof typeof possibleComponents] as
+      | (typeof possibleComponents)[keyof typeof possibleComponents]
+      | undefined;
 
     if (!Component) {
       console.warn(`Component not found for ${json.name}`);
       return null;
     }
 
-    if (!json.children) {
+    if (!('children' in json)) {
       throw new Error(`unrecognized JSON: ${JSON.stringify(json)}`);
     }
 
@@ -61,12 +69,11 @@ async function AIInterpretedReactComponents({ children }: { children: React.Reac
       json.children = [json.children];
     }
 
-    const children = json.children?.map((child) => {
+    const children = json.children.map((child) => {
       if (typeof child === 'string') {
         return child;
-      } else {
-        return parseJsonToReact(child);
       }
+      return parseJsonToReact(child);
     });
 
     return <Component>{children}</Component>;
@@ -119,7 +126,7 @@ function AIStream({ children }: { children: React.ReactNode }) {
   );
 }
 
-export async function AI({
+export function AI({
   children,
   renderDirectlyIntoDOM,
   renderPassedReactComponents,
