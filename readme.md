@@ -26,13 +26,13 @@ $ yarn workspace @fixieai/ai-jsx add my-package-name
 
 ### Demos
 
-Our primary means of manual verification that things are working is the demos. You can see a full list in [ai-jsx/package.json](./packages/ai-jsx/package.json). (It's all the `scripts` that start with `demo:`.)
+Our primary means of manual verification that things are working is the demos. You can see a full list in [examples/package.json](./packages/examples/package.json). (It's all the `scripts` that start with `demo:`.)
 
 Run a demo like this:
 
 ```
 # Replace demo:loop with the name of your demo
-yarn workspace @fixieai/ai-jsx run demo:loop
+yarn workspace examples run demo:loop
 ```
 
 Most demos will produce results using the [inspector](./packages/ai-jsx/src/inspector/console.tsx), a bare-bones [Ink](https://github.com/vadimdemedes/ink) app:
