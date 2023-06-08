@@ -6,11 +6,11 @@ import { loadJsonFileSync } from 'load-json-file';
 import { pino } from 'pino';
 import pinoPretty from 'pino-pretty';
 import fs from 'node:fs';
-import { ModelResponse, OpenAIChatParams, OpenAICompletionParams } from './models.js';
-import { WandBObserver } from '../lib/wandb.js';
+import { ModelResponse, OpenAIChatParams, OpenAICompletionParams } from './models';
+import { WandBObserver } from '../lib/wandb';
 import { TypedEmitter } from 'tiny-typed-emitter';
 import { DocumentLoader } from 'langchain/document_loaders/base';
-import { LangChainTextSplitter } from '../batteries/langchain-wrapper.js';
+import { LangChainTextSplitter } from '../batteries/langchain-wrapper';
 import { Document } from '../batteries/docs.mjs';
 import { TextSplitterChunkHeaderOptions } from 'langchain/text_splitter';
 

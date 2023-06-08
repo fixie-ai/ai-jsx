@@ -1,5 +1,5 @@
-import * as LLMx from '../index.js';
-import { Node, RenderContext } from '../index.js';
+import * as LLMx from '..';
+import { Node, RenderContext } from '..';
 
 export async function* ErrorBoundary(
   props: { children: Node; fallback: Node | ((error: unknown) => Node) },

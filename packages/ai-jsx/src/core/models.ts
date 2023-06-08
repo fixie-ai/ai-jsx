@@ -5,7 +5,7 @@ import {
   CreateEmbeddingRequest,
   OpenAIApi,
 } from 'openai';
-import log from './log.js';
+import log from './log';
 import { Merge } from 'type-fest';
 import EventEmitter from 'node:events';
 import _ from 'lodash';

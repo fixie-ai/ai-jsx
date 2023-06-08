@@ -1,6 +1,6 @@
-import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
-import * as LLMx from '../index.js';
-import { Node, RenderContext } from '../index.js';
+import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion';
+import * as LLMx from '..';
+import { Node, RenderContext } from '..';
 import z, { ZodTypeAny } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 

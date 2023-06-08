@@ -1,5 +1,5 @@
 import { BaseDocumentLoader, DocumentLoader } from 'langchain/document_loaders/base';
-import { Log } from '../core/log.js';
+import { Log } from '../core/log';
 import { Document as LangChainDocument } from 'langchain/document';
 import { TextSplitter, TextSplitterChunkHeaderOptions } from 'langchain/text_splitter';
 

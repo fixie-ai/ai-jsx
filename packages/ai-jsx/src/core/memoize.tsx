@@ -1,5 +1,5 @@
-import * as LLMx from '../index.js';
-import { RenderContext, Node, Renderable } from '../index.js';
+import * as LLMx from '..';
+import { RenderContext, Node, Renderable } from '..';
 
 let memoizedId = 0;
 export const isMemoizedSymbol = Symbol('isMemoized');

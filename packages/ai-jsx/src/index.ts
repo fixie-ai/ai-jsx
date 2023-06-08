@@ -1,1 +1,1 @@
-export * from './lib/llm.js';
+export * from './lib/llm';

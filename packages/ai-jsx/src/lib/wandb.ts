@@ -1,7 +1,7 @@
-import { ensureProcessEnvVar } from './util.js';
+import { ensureProcessEnvVar } from './util';
 import { InternalApi, SpanKind, StatusCode, WBTraceTree } from '@nick.heiner/wandb-fork';
 import { FsFilesData, FsFinishedData } from '@nick.heiner/wandb-fork/dist/internal/filestream';
-import { Log, ModelPhaseEndLog, getLogName } from '../core/log.js';
+import { Log, ModelPhaseEndLog, getLogName } from '../core/log';
 import got from 'got';
 import { PromiseType } from 'utility-types';
 
