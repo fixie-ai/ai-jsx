@@ -1,6 +1,6 @@
 import { showInspector } from '@fixieai/ai-jsx/core/inspector';
 import { Inline } from '@fixieai/ai-jsx/core/inline';
-import * as LLMx  from '@fixieai/ai-jsx';
+import * as LLMx from '@fixieai/ai-jsx';
 import { Completion } from '@fixieai/ai-jsx/core/completion';
 
 function CharacterGenerator() {

@@ -1,6 +1,6 @@
 import { showInspector } from '@fixieai/ai-jsx/core/inspector';
 import { ErrorBoundary } from '@fixieai/ai-jsx/core/error-boundary';
-import * as LLMx  from '@fixieai/ai-jsx';
+import * as LLMx from '@fixieai/ai-jsx';
 
 function FailingComponent() {
   throw new Error(`Something went wrong! ${Math.random()}`);

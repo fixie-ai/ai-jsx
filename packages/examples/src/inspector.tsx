@@ -1,5 +1,5 @@
 import { showInspector } from '@fixieai/ai-jsx/core/inspector';
-import * as LLMx  from '@fixieai/ai-jsx';
+import * as LLMx from '@fixieai/ai-jsx';
 import { SystemMessage, Completion } from '@fixieai/ai-jsx/core/completion';
 import { Inline } from '@fixieai/ai-jsx/core/inline';
 

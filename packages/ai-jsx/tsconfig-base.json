@@ -7,6 +7,6 @@
     "jsxFragmentFactory": "LLMx.Fragment",
     "module": "esnext",
     "resolveJsonModule": true,
-    "declaration": true,
+    "declaration": true
   }
 }

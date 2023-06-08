@@ -1,5 +1,8 @@
 import { IMSDBLoader } from 'langchain/document_loaders/web/imsdb';
-import { ObservableLangChainTextSplitter, ObservableLangChainDocumentLoader } from '@fixieai/ai-jsx/batteries/langchain-wrapper';
+import {
+  ObservableLangChainTextSplitter,
+  ObservableLangChainDocumentLoader,
+} from '@fixieai/ai-jsx/batteries/langchain-wrapper';
 import log from '@fixieai/ai-jsx/core/log';
 import { CharacterTextSplitter } from 'langchain/text_splitter';
 const loader = new IMSDBLoader('https://imsdb.com/scripts/BlacKkKlansman.html');
