@@ -6,7 +6,7 @@ import { Node, RenderContext } from '../index.js';
  * If the fallback itself throws an error, that error will be propagated. (Just like if your `catch` block throws an error.)
  *
  * @example
- *  <ErrorBoundary fallback={User data could not be fetched.}>
+ *  <ErrorBoundary fallback="User data could not be fetched.">
  *    {fetchUserData()}
  *  </ErrorBoundary>
  *
