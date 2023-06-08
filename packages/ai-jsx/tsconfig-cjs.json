@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig-base.json",
-  "include": ["src/**/*", ".eslintrc.cjs", "../examples/examples"],
+  "include": ["src/**/*", ".eslintrc.cjs"],
   "compilerOptions": {
     "outDir": "dist/cjs",
     "module": "commonjs"

@@ -43,6 +43,8 @@ function Constitutional({ children }: { children: string }) {
   );
 }
 
+// Disable the linter because this getting started file has two examples in one, and this one isn't used right now.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function WriteStory() {
   return (
     <ChatCompletion temperature={1}>

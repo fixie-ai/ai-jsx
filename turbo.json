@@ -8,7 +8,7 @@
     "//#format:check": {},
     "lint": {},
     "test": {
-      "dependsOn": ["//#format:check", "build", "lint"]
+      "dependsOn": ["//#format:check", "lint"]
     }
   }
 }

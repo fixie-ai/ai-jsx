@@ -1,4 +1,3 @@
-import * as LLMx from '../index.js';
 import { Node, RenderContext } from '../index.js';
 
 export async function* ErrorBoundary(
