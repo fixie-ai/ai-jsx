@@ -97,7 +97,11 @@ function AIStream({ children }: { children: React.ReactNode }) {
   let highestIndexSeen = -1;
   const emitter = new EventEmitter();
 
-  const stream = LLMx.createRenderContext().renderStream(children as LLMx.Renderable) as AsyncGenerator<string, string, unknown>;
+  const stream = LLMx.createRenderContext().renderStream(children as LLMx.Renderable) as AsyncGenerator<
+    string,
+    string,
+    unknown
+  >;
   function handleFrame({ value: frame, done }: { value: string; done?: boolean }) {
     if (frame) {
       frame.split('').forEach((char, index) => {
