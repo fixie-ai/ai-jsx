@@ -4,7 +4,7 @@
   "devDependencies": {
     "@types/prettier": "^2",
     "prettier": "^2.8.8",
-    "turbo": "^1.10.1"
+    "turbo": "^1.10.2"
   },
   "type": "module",
   "volta": {
@@ -15,7 +15,7 @@
     "format-for-turbo": "prettier --write .",
     "format:check": "prettier . --check",
     "format": "turbo format-for-turbo",
-    "test": "turbo test"
+    "test": "turbo test; yarn workspace @fixieai/ai-jsx build; yarn workspace examples build"
   },
   "private": true,
   "prettier": {

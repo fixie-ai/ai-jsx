@@ -429,15 +429,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cspotcode/source-map-support@npm:^0.8.0":
-  version: 0.8.1
-  resolution: "@cspotcode/source-map-support@npm:0.8.1"
-  dependencies:
-    "@jridgewell/trace-mapping": "npm:0.3.9"
-  checksum: 4327d8e6e4347897f5baf265c43ff094260a3ad7b53920fa07472aa18699ba7d570e5171082e88d19e4b5cce6f35cc1666b1c8ccb8b74d67e4f482395b8c511d
-  languageName: node
-  linkType: hard
-
 "@esbuild-kit/cjs-loader@npm:^2.4.2":
   version: 2.4.2
   resolution: "@esbuild-kit/cjs-loader@npm:2.4.2"
@@ -664,7 +655,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@fixieai/ai-jsx@workspace:packages/ai-jsx":
+"@fixieai/ai-jsx@npm:1.0.0, @fixieai/ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "@fixieai/ai-jsx@workspace:packages/ai-jsx"
   dependencies:
@@ -703,16 +694,13 @@ __metadata:
     openai: "npm:^3.2.1"
     pino: "npm:^8.14.1"
     pino-pretty: "npm:^10.0.0"
-    pretty-ms: "npm:^8.0.0"
     react: "npm:^18.2.0"
     react-use: "npm:^17.4.0"
     sinon: "npm:^15.1.0"
     terminal-link: "npm:^3.0.0"
     tiny-typed-emitter: "npm:^2.1.0"
-    ts-node: "npm:^10.9.1"
     tsconfig-paths: "npm:^4.2.0"
     tsx: "npm:^3.12.7"
-    turbo: "npm:^1.10.1"
     type-fest: "npm:^3.10.0"
     typescript: "npm:^5.0.4"
     utility-types: "npm:^3.10.0"
@@ -1155,13 +1143,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jridgewell/resolve-uri@npm:^3.0.3":
-  version: 3.1.1
-  resolution: "@jridgewell/resolve-uri@npm:3.1.1"
-  checksum: b3229d85678a8546e48580decab7666678ab7e1c470576e72bd07910b862642f700c802ff99c0166982fc7f6ad3571c0ce59901be38297b595c0c813cf79e9ce
-  languageName: node
-  linkType: hard
-
 "@jridgewell/set-array@npm:^1.0.1":
   version: 1.1.2
   resolution: "@jridgewell/set-array@npm:1.1.2"
@@ -1180,16 +1161,6 @@ __metadata:
   version: 1.4.15
   resolution: "@jridgewell/sourcemap-codec@npm:1.4.15"
   checksum: b71b5eeb0af50fb1dbdf18e88aa5cf755baa30723f0d5fd2ac069f861d0c73b12b968321314e4db86d5a4d5d89a292211f68ba94767c620fee35247a94c05890
-  languageName: node
-  linkType: hard
-
-"@jridgewell/trace-mapping@npm:0.3.9":
-  version: 0.3.9
-  resolution: "@jridgewell/trace-mapping@npm:0.3.9"
-  dependencies:
-    "@jridgewell/resolve-uri": "npm:^3.0.3"
-    "@jridgewell/sourcemap-codec": "npm:^1.4.10"
-  checksum: 542c5f0f0ae874121e9de649581f9619cc0c65e33292e1285f1233f5ff3e41e6f4f216d69a4c3f800b4d6db208ff6c710307e19e1ff170ed5304807e346e6cf9
   languageName: node
   linkType: hard
 
@@ -2324,34 +2295,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tsconfig/node10@npm:^1.0.7":
-  version: 1.0.9
-  resolution: "@tsconfig/node10@npm:1.0.9"
-  checksum: 6ec0cadbcd7942f64b5d00c4b19ff783410a5f1511c1feefa8e99b5df1e57776c4f2ce058870c9d982a4ca460051dbd2a5e57d11989aab40f6c68e98c92b6d14
-  languageName: node
-  linkType: hard
-
-"@tsconfig/node12@npm:^1.0.7":
-  version: 1.0.11
-  resolution: "@tsconfig/node12@npm:1.0.11"
-  checksum: 2ba331a89b6778df0fb49ab0ba3e809c0a0d5ca3d9f898ba4a0a276043616b6047aec5dd4a5d1ae9a09ff267bcddbbc96d968857e6690583fd474a58c25c2e1c
-  languageName: node
-  linkType: hard
-
-"@tsconfig/node14@npm:^1.0.0":
-  version: 1.0.3
-  resolution: "@tsconfig/node14@npm:1.0.3"
-  checksum: 8d04150cdfbe5b89be095586bfa35415800b694f9955274df16b1017e1cef9697467185b3f7c64ed588a7e8d48ff6f4cc3125c8265b5e3d4f757884dcc6facbc
-  languageName: node
-  linkType: hard
-
-"@tsconfig/node16@npm:^1.0.2":
-  version: 1.0.4
-  resolution: "@tsconfig/node16@npm:1.0.4"
-  checksum: d75e4f7d3edd74305383430d1fc9fd9bdf9af7fb2387853e6c06660a5325da6bce90846b853f5c69ec70b4e34de9ab05d508c9dc11c95a28ebbb000fc52b963b
-  languageName: node
-  linkType: hard
-
 "@tsconfig/node18@npm:^2.0.1":
   version: 2.0.1
   resolution: "@tsconfig/node18@npm:2.0.1"
@@ -3071,14 +3014,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"acorn-walk@npm:^8.1.1":
-  version: 8.2.0
-  resolution: "acorn-walk@npm:8.2.0"
-  checksum: 389d3f19998ac0924a590485a6502b72059e3ab67cc820477c2c40cca06b6c50bb8d424bfbb8fe97955eb489b88cb5dc7ee6979fcf9321dce7eb451ba3456d3d
-  languageName: node
-  linkType: hard
-
-"acorn@npm:^8.4.1, acorn@npm:^8.8.0":
+"acorn@npm:^8.8.0":
   version: 8.8.2
   resolution: "acorn@npm:8.8.2"
   bin:
@@ -3123,7 +3059,7 @@ __metadata:
   dependencies:
     "@types/prettier": "npm:^2"
     prettier: "npm:^2.8.8"
-    turbo: "npm:^1.10.1"
+    turbo: "npm:^1.10.2"
   languageName: unknown
   linkType: soft
 
@@ -3250,13 +3186,6 @@ __metadata:
     delegates: "npm:^1.0.0"
     readable-stream: "npm:^3.6.0"
   checksum: 7137e25713c611cf38054434ba377e2f7ad3a4bbdb7ac3565ed5caac786080d1c86ed0b280edd917b4c1001ee0d6ed7bdd53effd69b5af4251e5a4fd18d09fbe
-  languageName: node
-  linkType: hard
-
-"arg@npm:^4.1.0":
-  version: 4.1.3
-  resolution: "arg@npm:4.1.3"
-  checksum: a60e3881540ab44af1058bf3c9bdbcdd45a82cb930299ae875e609b60b44435410d152b26d55816e8ef2cf1096cfa39271f5b1bd3dd931355f3f24f043dc7ca5
   languageName: node
   linkType: hard
 
@@ -4011,13 +3940,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"create-require@npm:^1.1.0":
-  version: 1.1.1
-  resolution: "create-require@npm:1.1.1"
-  checksum: 9db2a6d1a6e69929e4b18045910289a17543f9f07ba4d6027e9c3fdc4c985998cd4b6738a45675ab870287483832332d5aa75a1612c87230149d1fba568ae86a
-  languageName: node
-  linkType: hard
-
 "cross-fetch@npm:^3.1.5":
   version: 3.1.6
   resolution: "cross-fetch@npm:3.1.6"
@@ -4245,13 +4167,6 @@ __metadata:
   version: 29.4.3
   resolution: "diff-sequences@npm:29.4.3"
   checksum: 788bca9220b2c7453bed921045660717c0ffb4ba9ca1456417e6e32d67e21fcebc62b37c0291f8e32177aa7b30913dd2fe240dfb4872cfcd7a09b738f8f120d5
-  languageName: node
-  linkType: hard
-
-"diff@npm:^4.0.1":
-  version: 4.0.2
-  resolution: "diff@npm:4.0.2"
-  checksum: 1b445113c0727e15646a058b2794df63366bd1e32abf078990b78c2a355fe72e4e3c8de3399f2c5d67f06cd461acdebd91b5f71cb2cd02f7300bdb926a3cd6e2
   languageName: node
   linkType: hard
 
@@ -4946,6 +4861,22 @@ __metadata:
   checksum: ef0af671f7bdc20f14274c77925c3e47a4df7991563ee1827dff577f66a9ed1a5b63d9adab8bc5949a16a1341883abdaf9df7a1841f8d5d2fc65ab4f5570b32b
   languageName: node
   linkType: hard
+
+"examples@workspace:packages/examples":
+  version: 0.0.0-use.local
+  resolution: "examples@workspace:packages/examples"
+  dependencies:
+    "@fixieai/ai-jsx": "npm:1.0.0"
+    "@tsconfig/node18": "npm:^2.0.1"
+    "@typescript-eslint/eslint-plugin": "npm:^5.59.6"
+    "@typescript-eslint/parser": "npm:^5.59.6"
+    eslint: "npm:^8.40.0"
+    eslint-config-nth: "npm:^2.0.1"
+    pino-pretty: "npm:^10.0.0"
+    tsx: "npm:^3.12.7"
+    typescript: "npm:^5.0.4"
+  languageName: unknown
+  linkType: soft
 
 "execa@npm:^5.0.0":
   version: 5.1.1
@@ -7233,13 +7164,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"make-error@npm:^1.1.1":
-  version: 1.3.6
-  resolution: "make-error@npm:1.3.6"
-  checksum: 4b81ce1392495d554ce5fd28c8de95066642e5e1a5efd395e3b3413bc75068a025d8a567aefb0738ba6da18e73323ffde17794780f632fe4395e009aa9ebcc8a
-  languageName: node
-  linkType: hard
-
 "make-fetch-happen@npm:^10.0.3":
   version: 10.2.1
   resolution: "make-fetch-happen@npm:10.2.1"
@@ -8001,13 +7925,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"parse-ms@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "parse-ms@npm:3.0.0"
-  checksum: 897479c5075013613687435328af0a14a2b8ce60a35c722201da07ac1aea9e1dd17462571b0e3239d29f89b1ed0c377209eca61e6aba548bd9f8e1174cd3c090
-  languageName: node
-  linkType: hard
-
 "parse5-htmlparser2-tree-adapter@npm:^6.0.0":
   version: 6.0.1
   resolution: "parse5-htmlparser2-tree-adapter@npm:6.0.1"
@@ -8340,15 +8257,6 @@ __metadata:
     ansi-styles: "npm:^5.0.0"
     react-is: "npm:^18.0.0"
   checksum: bdacd8f5e21c8fa6b155ed13035494c752106540b7d93d724e2b9d23f27c605f63f3d775b0e78cfa1f6764012817529e73376ea11380a3e4d0931ec119a49842
-  languageName: node
-  linkType: hard
-
-"pretty-ms@npm:^8.0.0":
-  version: 8.0.0
-  resolution: "pretty-ms@npm:8.0.0"
-  dependencies:
-    parse-ms: "npm:^3.0.0"
-  checksum: 35b39c20ee7ca8128f6796741b6ac3fd76fc7e2510d99bebf754b9885a60dc28fcf869205cab81c6e3089606534e0b586340846d830ddad0b076b08714277b9e
   languageName: node
   linkType: hard
 
@@ -9468,44 +9376,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-node@npm:^10.9.1":
-  version: 10.9.1
-  resolution: "ts-node@npm:10.9.1"
-  dependencies:
-    "@cspotcode/source-map-support": "npm:^0.8.0"
-    "@tsconfig/node10": "npm:^1.0.7"
-    "@tsconfig/node12": "npm:^1.0.7"
-    "@tsconfig/node14": "npm:^1.0.0"
-    "@tsconfig/node16": "npm:^1.0.2"
-    acorn: "npm:^8.4.1"
-    acorn-walk: "npm:^8.1.1"
-    arg: "npm:^4.1.0"
-    create-require: "npm:^1.1.0"
-    diff: "npm:^4.0.1"
-    make-error: "npm:^1.1.1"
-    v8-compile-cache-lib: "npm:^3.0.1"
-    yn: "npm:3.1.1"
-  peerDependencies:
-    "@swc/core": ">=1.2.50"
-    "@swc/wasm": ">=1.2.50"
-    "@types/node": "*"
-    typescript: ">=2.7"
-  peerDependenciesMeta:
-    "@swc/core":
-      optional: true
-    "@swc/wasm":
-      optional: true
-  bin:
-    ts-node: dist/bin.js
-    ts-node-cwd: dist/bin-cwd.js
-    ts-node-esm: dist/bin-esm.js
-    ts-node-script: dist/bin-script.js
-    ts-node-transpile-only: dist/bin-transpile.js
-    ts-script: dist/bin-script-deprecated.js
-  checksum: c4caff4b9bb7a3a44adbb64a38786ce4203c2ebceb8b5373b504d0826cf047f9f23105767a3e130e2f4078629f592a8332cfd8ee1061b57b7d159de49c7d8f6f
-  languageName: node
-  linkType: hard
-
 "tsconfig-paths@npm:^3.14.1":
   version: 3.14.2
   resolution: "tsconfig-paths@npm:3.14.2"
@@ -9571,58 +9441,58 @@ __metadata:
   languageName: node
   linkType: hard
 
-"turbo-darwin-64@npm:1.10.1":
-  version: 1.10.1
-  resolution: "turbo-darwin-64@npm:1.10.1"
+"turbo-darwin-64@npm:1.10.2":
+  version: 1.10.2
+  resolution: "turbo-darwin-64@npm:1.10.2"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-darwin-arm64@npm:1.10.1":
-  version: 1.10.1
-  resolution: "turbo-darwin-arm64@npm:1.10.1"
+"turbo-darwin-arm64@npm:1.10.2":
+  version: 1.10.2
+  resolution: "turbo-darwin-arm64@npm:1.10.2"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo-linux-64@npm:1.10.1":
-  version: 1.10.1
-  resolution: "turbo-linux-64@npm:1.10.1"
+"turbo-linux-64@npm:1.10.2":
+  version: 1.10.2
+  resolution: "turbo-linux-64@npm:1.10.2"
   conditions: os=linux & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-linux-arm64@npm:1.10.1":
-  version: 1.10.1
-  resolution: "turbo-linux-arm64@npm:1.10.1"
+"turbo-linux-arm64@npm:1.10.2":
+  version: 1.10.2
+  resolution: "turbo-linux-arm64@npm:1.10.2"
   conditions: os=linux & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo-windows-64@npm:1.10.1":
-  version: 1.10.1
-  resolution: "turbo-windows-64@npm:1.10.1"
+"turbo-windows-64@npm:1.10.2":
+  version: 1.10.2
+  resolution: "turbo-windows-64@npm:1.10.2"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-windows-arm64@npm:1.10.1":
-  version: 1.10.1
-  resolution: "turbo-windows-arm64@npm:1.10.1"
+"turbo-windows-arm64@npm:1.10.2":
+  version: 1.10.2
+  resolution: "turbo-windows-arm64@npm:1.10.2"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo@npm:^1.10.1":
-  version: 1.10.1
-  resolution: "turbo@npm:1.10.1"
+"turbo@npm:^1.10.2":
+  version: 1.10.2
+  resolution: "turbo@npm:1.10.2"
   dependencies:
-    turbo-darwin-64: "npm:1.10.1"
-    turbo-darwin-arm64: "npm:1.10.1"
-    turbo-linux-64: "npm:1.10.1"
-    turbo-linux-arm64: "npm:1.10.1"
-    turbo-windows-64: "npm:1.10.1"
-    turbo-windows-arm64: "npm:1.10.1"
+    turbo-darwin-64: "npm:1.10.2"
+    turbo-darwin-arm64: "npm:1.10.2"
+    turbo-linux-64: "npm:1.10.2"
+    turbo-linux-arm64: "npm:1.10.2"
+    turbo-windows-64: "npm:1.10.2"
+    turbo-windows-arm64: "npm:1.10.2"
   dependenciesMeta:
     turbo-darwin-64:
       optional: true
@@ -9638,7 +9508,7 @@ __metadata:
       optional: true
   bin:
     turbo: bin/turbo
-  checksum: f91c7da092af62f434e92fcafdee766a9645213418f24bf038cdbc82494cdd54fac49b279796dfaa05b8d39f674f4da8dc9be6f08df01d50276369e9f37b98cb
+  checksum: f12e4f1c9355c9ea59c095433a94414dc96efae8407e0369f4736b6e64ae156c7761425caf0c3a0af5a44e44f7cd8103b47d180c609b3804a2691db591590d34
   languageName: node
   linkType: hard
 
@@ -9815,13 +9685,6 @@ __metadata:
   bin:
     uuid: dist/bin/uuid
   checksum: e1f76aff372e430bb129157360fd4cd3b393411b245604ea78e178a822ab7874ec2ebecec03ce94422b0b80bbd24733c6fa1df166c9cbad5086ef4b4843140bb
-  languageName: node
-  linkType: hard
-
-"v8-compile-cache-lib@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "v8-compile-cache-lib@npm:3.0.1"
-  checksum: 0ebe342e7f20816fd5d323affd77f60ea65810ef60beecafbb06397870b18b3d6cb76412721e23603f603fcf5b1f3b37e2844adf15e9b708dbd6404f01884b23
   languageName: node
   linkType: hard
 
@@ -10105,13 +9968,6 @@ __metadata:
     y18n: "npm:^5.0.5"
     yargs-parser: "npm:^21.1.1"
   checksum: 02578d19d9c9a21ed980903995a5a9b7d913e8dccefe182fadae1afee26c6903f912594524d13ea2950dbaad1024e9d255c380a150fbda957bd32e9d0d772eb0
-  languageName: node
-  linkType: hard
-
-"yn@npm:3.1.1":
-  version: 3.1.1
-  resolution: "yn@npm:3.1.1"
-  checksum: 890a9ce10f1f6691316f521444dcdc2d012dbfba423ec2252444dab5888def4ee48751304e51302c6d14197a1e9407256153a357c955bff1d659df592cfda456
   languageName: node
   linkType: hard
 

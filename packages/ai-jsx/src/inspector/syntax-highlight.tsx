@@ -4,7 +4,9 @@
  * Adapted from https://github.com/vsashyn/ink-syntax-highlight
  */
 import * as React from 'react';
+// @ts-expect-error
 import { Text } from 'ink';
+// const { Text } = require('ink');
 import { highlight, Theme } from 'cli-highlight';
 
 export interface Props {
