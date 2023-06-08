@@ -56,6 +56,11 @@ async function AIInterpretedReactComponents({ children }: { children: React.Reac
       throw new Error(`unrecognized JSON: ${JSON.stringify(json)}`);
     }
 
+    // Sometimes the model returns a singleton string instead of an array.
+    if (typeof json.children === 'string') {
+      json.children = [json.children];
+    }
+
     const children = json.children?.map((child) => {
       if (typeof child === 'string') {
         return child;
@@ -75,7 +80,7 @@ async function AIInterpretedReactComponents({ children }: { children: React.Reac
     modelResponseJSON = JSON.parse(rendered);
   } catch (e) {
     console.error(`Failed to parse JSON from model response: ${rendered}`, e);
-    return response;
+    return rendered;
   }
   return parseJsonToReact(modelResponseJSON);
 }
