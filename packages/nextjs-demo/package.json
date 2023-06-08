@@ -1,0 +1,37 @@
+{
+  "name": "nextjs-demo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "test": "tsc -p .",
+    "start": "next start",
+    "lint": "next lint --max-warnings 0",
+    "lint:fix": "yarn lint --fix",
+    "postinstall": "./hack-node-modules.bash"
+  },
+  "dependencies": {
+    "@fixieai/ai-jsx": "1.0.0",
+    "@octokit/graphql": "^5.0.6",
+    "@types/node": "20.2.5",
+    "@types/react": "18.2.8",
+    "@types/react-dom": "18.2.4",
+    "autoprefixer": "10.4.14",
+    "classnames": "^2.3.2",
+    "eslint": "8.42.0",
+    "eslint-config-next": "13.4.4",
+    "examples": "1.0.0",
+    "next": "13.4.4",
+    "postcss": "8.4.24",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "tailwindcss": "3.3.2",
+    "typescript": "^5.0.4"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.59.9",
+    "@typescript-eslint/parser": "^5.59.9",
+    "eslint-config-nth": "^2.0.1"
+  }
+}

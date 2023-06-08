@@ -4,13 +4,19 @@ import { RenderContext, Node, Renderable } from '../index.js';
 let memoizedId = 0;
 export const isMemoizedSymbol = Symbol('isMemoized');
 
+/**
+ * The memoization is fully recursive.
+ */
 export function memo(renderable: Renderable): Node {
-  /**
-   * The memoization is fully recursive.
-   */
   if (typeof renderable !== 'object' || renderable === null) {
     return renderable;
   }
+  if (LLMx.isIndirectNode(renderable)) {
+    const memoized = memo(LLMx.getIndirectNode(renderable));
+    LLMx.setIndirectNode(renderable, memoized);
+    return renderable;
+  }
+
   if (Array.isArray(renderable)) {
     return renderable.map(memo);
   }

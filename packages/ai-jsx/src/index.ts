@@ -8,7 +8,12 @@ export interface Element<P extends object> {
   render: (renderContext: RenderContext) => Renderable;
   [attachedContext]?: RenderContext;
 }
-export type Node = Element<any> | Literal | Node[];
+
+interface IndirectNode {
+  _magic: never;
+}
+
+export type Node = Element<any> | Literal | Node[] | IndirectNode;
 
 interface RenderableStream {
   [Symbol.asyncIterator]: () => AsyncIterator<Renderable, Renderable>;
@@ -161,6 +166,19 @@ export function createContext<T>(defaultValue: T): Context<T> {
   return ctx;
 }
 
+const indirectWeakMap = new WeakMap<IndirectNode, Node>();
+export function isIndirectNode(value: unknown): value is IndirectNode {
+  return indirectWeakMap.has(value as IndirectNode);
+}
+
+export function getIndirectNode(value: IndirectNode): Node {
+  return indirectWeakMap.get(value) as Node;
+}
+
+export function setIndirectNode(value: IndirectNode, node: Node) {
+  indirectWeakMap.set(value, node);
+}
+
 async function* renderStream(
   context: RenderContext,
   renderable: Renderable,
@@ -180,6 +198,9 @@ async function* renderStream(
   }
   if (typeof renderable === 'undefined' || typeof renderable === 'boolean' || renderable === null) {
     return [];
+  }
+  if (isIndirectNode(renderable)) {
+    return yield* context.render(getIndirectNode(renderable), recursiveRenderOpts);
   }
   if (Array.isArray(renderable)) {
     interface InProgressRender {
@@ -268,6 +289,9 @@ async function* renderStream(
     }
   }
 
+  if (!('then' in renderable)) {
+    throw new Error(`AI.JSX bug: unexpected renderable type: ${JSON.stringify(renderable)}`);
+  }
   // N.B. Because RenderResults are both AsyncIterable _and_ PromiseLikes, this means that an async component that returns the result
   // of a render call will not stream; it will effectively be `await`ed by default.
   const nextRenderable = await renderable.then((r) => r as Exclude<Renderable, PromiseLike<Renderable>>);

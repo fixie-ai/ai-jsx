@@ -59,7 +59,7 @@ export async function* OpenAICompletionModel(
   props: ModelPropsWithChildren & { model: ValidCompletionModel },
   { render }: RenderContext
 ) {
-  yield '▁';
+  yield '';
   let prompt = await render(props.children);
   while (prompt.length > 0 && prompt.endsWith(' ')) {
     prompt = prompt.slice(0, prompt.length - 1);
@@ -76,7 +76,7 @@ export async function* OpenAICompletionModel(
   let accumulatedResponse = '';
   for await (const token of tokenStream) {
     accumulatedResponse += token;
-    yield `${accumulatedResponse}█`;
+    yield accumulatedResponse;
   }
 
   return accumulatedResponse;
@@ -103,12 +103,10 @@ export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & { model: ValidChatModel; logitBias?: Record<string, number> },
   { render }: RenderContext
 ) {
-  yield '▁';
-
   const messageElements = await render(props.children, {
     stop: (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage,
   });
-
+  yield '';
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
     messageElements.filter(LLMx.isElement).map(async (message) => {
       switch (message.tag) {
@@ -148,7 +146,7 @@ export async function* OpenAIChatModel(
   let lastMessage;
   for await (const partialMessage of messageStream) {
     lastMessage = partialMessage.content;
-    yield `${partialMessage.content}█`;
+    yield partialMessage.content;
   }
 
   return lastMessage;
