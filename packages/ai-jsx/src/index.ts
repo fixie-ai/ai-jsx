@@ -8,7 +8,16 @@ export interface Element<P extends object> {
   render: (renderContext: RenderContext) => Renderable;
   [attachedContext]?: RenderContext;
 }
-export type Node = Element<any> | Literal | Node[];
+
+export interface ReactComponentAsSeenByLLMx {
+  readonly $$typeof: symbol;
+  type: {
+    name: string;
+  };
+  props: Record<string, any>;
+}
+
+export type Node = Element<any> | Literal | Node[] | ReactComponentAsSeenByLLMx;
 
 export type Renderable = Node | Promise<Renderable> | AsyncGenerator<Renderable>;
 
@@ -105,6 +114,13 @@ export function createContext<T>(defaultValue: T): Context<T> {
   return ctx;
 }
 
+/**
+ * This is a very hacky way to "dehydrate" a React component into a prompt.
+ */
+export function hackyDehydrate(renderable: ReactComponentAsSeenByLLMx): string {
+  return `<${renderable.type.name}>${renderable.props.children}</${renderable.type.name}>}`;
+}
+
 type PartiallyRendered = string | Element<any>;
 
 async function* partialRenderStream(
@@ -118,7 +134,10 @@ async function* partialRenderStream(
     yield [renderable.toString()];
   } else if (typeof renderable === 'undefined' || typeof renderable === 'boolean' || renderable === null) {
     yield [];
-  } else if (Array.isArray(renderable)) {
+  } else if ('$$typeof' in renderable) {
+    yield [hackyDehydrate(renderable)];
+  }
+  else if (Array.isArray(renderable)) {
     interface InProgressRender {
       generator: AsyncGenerator<PartiallyRendered[]>;
       currentValue: PartiallyRendered[];
@@ -195,8 +214,12 @@ async function* partialRenderStream(
     yield* await renderable.then((x) => context.partialRenderStream(x, shouldStop));
   } else {
     // Exhaust the iterator.
-    for await (const value of renderable) {
-      yield* context.partialRenderStream(value, shouldStop);
+    try {
+      for await (const value of renderable) {
+        yield* context.partialRenderStream(value, shouldStop);
+      }
+    } catch (e) {
+      console.error(e, renderable, 'Error while rendering');
     }
   }
 }
