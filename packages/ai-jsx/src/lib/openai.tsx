@@ -8,8 +8,8 @@ import {
   SystemMessage,
   UserMessage,
 } from '../core/completion';
-import * as LLMx from '..';
-import { RenderContext, PropsOfComponent, Node } from '..';
+import * as LLMx from '../lib/llm';
+import { RenderContext, PropsOfComponent, Node } from '../lib/llm';
 import { openAIChat, openAICompletion } from '../core/models';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 // const GPT3Tokenizer = require('gpt3-tokenizer') as typeof import('gpt3-tokenizer');

@@ -1,5 +1,5 @@
-import * as LLMx from '../index';
-import { Node } from '../index';
+import * as LLMx from '../lib/llm';
+import { Node } from '../lib/llm';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion';
 import { Jsonifiable } from 'type-fest';
 import log from '../core/log';
