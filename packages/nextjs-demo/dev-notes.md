@@ -1,8 +1,7 @@
 ## Limitations
 
-- This won't deploy to Vercel because:
-  - We've set this up as a nested project within the overall ai-jsx repo. If we did a proper monorepo setup, we could deploy. (This is easy; I just haven't taken the time to do it.)
-  - I needed to make a small tweak in `node_modules` to make the compiler work. (This can be easily worked around with a forked version of the NextJS SDK, but to find an actual solution, we'd probably want to coordinate with the NextJS team.)
+### Interactivity
+To make the generated AI components interactive, we need to use client (rather than server) components. When I tried to do this, I ran into issues. I don't think they're worth sorting now, as it would be a rabbit hole. I think we can get the same overall effect with pure client components, which I'll explore in a later PR. I also don't think this indicates a fundamental flaw in the approach.
 
 ## JSX Hackery
 
