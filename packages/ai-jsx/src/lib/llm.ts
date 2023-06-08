@@ -68,11 +68,8 @@ export interface RenderContext {
    * @param renderable The value to render.
    * @param opts Additional options.
    */
-  render<TIntermediate = string>(
-    renderable: Renderable,
-    opts?: RenderOpts<TIntermediate, string>
-  ): RenderResult<TIntermediate, string>;
-  render<TIntermediate = string>(
+  render<TIntermediate>(renderable: Renderable, opts?: RenderOpts<TIntermediate>): RenderResult<TIntermediate, string>;
+  render<TIntermediate>(
     renderable: Renderable,
     opts: RenderOpts<TIntermediate, PartiallyRendered[]>
   ): RenderResult<TIntermediate, PartiallyRendered[]>;
@@ -277,17 +274,18 @@ async function* renderStream(
   return yield* context.render(nextRenderable, recursiveRenderOpts);
 }
 
-export function createRenderContext(
-  render: StreamRenderer = renderStream,
-  userContext: Record<symbol, any> = {}
-): RenderContext {
+export function createRenderContext() {
+  return createRenderContextInternal(renderStream);
+}
+
+function createRenderContextInternal(render: StreamRenderer, userContext: Record<symbol, any> = {}): RenderContext {
   const context: RenderContext = {
     render: <TFinal extends string | PartiallyRendered[], TIntermediate>(
       renderable: Renderable,
       opts?: RenderOpts<TIntermediate, TFinal>
-    ): any => {
+    ): RenderResult<TIntermediate, TFinal> => {
       let promiseResult = null as Promise<any> | null;
-      let didReturnGenerator = false;
+      let hasReturnedGenerator = false;
 
       // Construct the generator that handles the provided options
       const generator = (async function* () {
@@ -315,12 +313,12 @@ export function createRenderContext(
             yield value;
           }
         }
-      })();
+      })() as AsyncGenerator<TIntermediate, TFinal>;
 
       return {
-        then: (onFulfilled: any, onRejected: any) => {
+        then: (onFulfilled?, onRejected?) => {
           if (promiseResult === null) {
-            if (didReturnGenerator) {
+            if (hasReturnedGenerator) {
               throw new Error(
                 "The RenderResult's generator must be fully exhausted before you can await the final result."
               );
@@ -342,11 +340,13 @@ export function createRenderContext(
         },
 
         [Symbol.asyncIterator]: () => {
-          if (didReturnGenerator) {
+          if (hasReturnedGenerator) {
             throw new Error("The RenderResult's generator was already returned and cannot be returned again.");
+          } else if (promiseResult !== null) {
+            throw new Error('The RenderResult was already awaited and can no longer be used as an iterable.');
           }
 
-          didReturnGenerator = true;
+          hasReturnedGenerator = true;
           return generator;
         },
       };
@@ -360,10 +360,10 @@ export function createRenderContext(
       return defaultValue;
     },
 
-    wrapRender: (getRender) => createRenderContext(getRender(render), userContext),
+    wrapRender: (getRender) => createRenderContextInternal(getRender(render), userContext),
 
     [pushContextSymbol]: (contextReference, value) =>
-      createRenderContext(render, { ...userContext, [contextReference[contextKey][1]]: value }),
+      createRenderContextInternal(render, { ...userContext, [contextReference[contextKey][1]]: value }),
   };
 
   return context;
