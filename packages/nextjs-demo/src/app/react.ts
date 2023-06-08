@@ -18,7 +18,11 @@ const monkeyPatchedReact = {
   createElement(...args: Parameters<typeof React.createElement>) {
     const tag = args[0];
     return typeof tag !== 'string' && knownLLMxTags.includes(tag.name)
-      ? LLMx.createElement(...args)
+      ? LLMx.createElement(
+        // TS isn't smart enough to narrow the types and realize that `args[0]` is not a string.
+        // @ts-expect-error
+        ...args
+      )
       : React.createElement(...args);
   },
 };

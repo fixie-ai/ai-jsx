@@ -26,7 +26,7 @@ function Defer(props: { emitter: any; index: number }) {
 }
 
 async function AIDirectToDOM({ children }: { children: React.ReactNode }) {
-  const rendered = await LLMx.createRenderContext().render(children);
+  const rendered = await LLMx.createRenderContext().render(children as LLMx.Renderable);
   return <div className="contents-generated-by-ai-buckle-up-buddy" dangerouslySetInnerHTML={{ __html: rendered }} />;
 }
 
@@ -79,7 +79,7 @@ async function AIInterpretedReactComponents({ children }: { children: React.Reac
     return <Component>{children}</Component>;
   }
 
-  const rendered = await LLMx.createRenderContext().render(children);
+  const rendered = await LLMx.createRenderContext().render(children as LLMx.Renderable);
 
   let modelResponseJSON;
   try {
@@ -95,8 +95,8 @@ function AIStream({ children }: { children: React.ReactNode }) {
   let highestIndexSeen = -1;
   const emitter = new EventEmitter();
 
-  const stream = LLMx.createRenderContext().renderStream(children);
-  function handleFrame({ value: frame, done }: { value: string; done: boolean }) {
+  const stream = LLMx.createRenderContext().renderStream(children as LLMx.Renderable) as AsyncGenerator<string, string, unknown>;
+  function handleFrame({ value: frame, done }: { value: string; done?: boolean }) {
     if (frame) {
       frame.split('').forEach((char, index) => {
         highestIndexSeen = Math.max(highestIndexSeen, index);
@@ -118,6 +118,7 @@ function AIStream({ children }: { children: React.ReactNode }) {
     <>
       {_.range(maxIndex).map((i) => (
         <Suspense key={i}>
+          {/* @ts-expect-error */}
           <Defer emitter={emitter} index={i} />
         </Suspense>
       ))}
