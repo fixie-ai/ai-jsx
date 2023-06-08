@@ -93,6 +93,8 @@ function AIStream({ children }: { children: React.ReactNode }) {
     }
     if (!done) {
       stream.next().then(handleFrame);
+
+      // TODO: I think we can fix the perpetual spinner if we resolve the rest of the characters here as well.
     }
   }
   stream.next().then(handleFrame);
@@ -100,7 +102,7 @@ function AIStream({ children }: { children: React.ReactNode }) {
   return (
     <>
       {_.range(maxIndex).map((i) => (
-        <Suspense>
+        <Suspense key={i}>
           <Defer emitter={emitter} index={i} />
         </Suspense>
       ))}

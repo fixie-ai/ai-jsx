@@ -128,6 +128,7 @@ async function* partialRenderStream(
   renderable: Renderable,
   shouldStop: ElementPredicate
 ): AsyncGenerator<PartiallyRendered[]> {
+  // console.log('render stream', renderable, typeof renderable);
   if (typeof renderable === 'string') {
     yield [renderable];
   } else if (typeof renderable === 'number') {
@@ -135,6 +136,7 @@ async function* partialRenderStream(
   } else if (typeof renderable === 'undefined' || typeof renderable === 'boolean' || renderable === null) {
     yield [];
   } else if ('$$typeof' in renderable) {
+    // console.log('dehydrate ===================')
     yield [hackyDehydrate(renderable)];
   }
   else if (Array.isArray(renderable)) {
