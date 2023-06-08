@@ -9,8 +9,18 @@ import { MemoryVectorStore } from 'langchain/vectorstores/memory';
 import { Document as LangChainDocument } from 'langchain/document';
 import { Embeddings } from 'langchain/embeddings/base';
 
+/**
+ * A document that can be queried.
+ */
 export interface Document<Metadata extends Jsonifiable = Jsonifiable> {
+  /**
+   * The content of the document.
+   */
   pageContent: string;
+
+  /**
+   * Metadata about the document, such as the URL at which it's hosted, the title, or when it was created.
+   */
   metadata?: Metadata;
 }
 
@@ -66,6 +76,9 @@ export interface VectorStore {
   search<Filter = unknown>(query: string, opts: { filter?: Filter; limit: number }): Promise<VectorSearchResult[]>;
 }
 
+/**
+ * A vector database that stores vectors in memory. In-memory is nice for rapid prototyping. However, it'll be slower, because every run needs to populate the database. And it's limited by the current process' memory.
+ */
 export class DefaultInMemoryVectorStore<Metadata extends Jsonifiable = Jsonifiable> implements VectorStore {
   private constructor(private readonly langChainVectorStore: MemoryVectorStore) {}
 
@@ -92,6 +105,9 @@ export class DefaultInMemoryVectorStore<Metadata extends Jsonifiable = Jsonifiab
   }
 }
 
+/**
+ * If you need to chunk your documents, start with this chunker. Move to more powerful chunkers only as needed.
+ */
 export const defaultChunker = <Metadata extends Jsonifiable = Jsonifiable>(
   doc: Document<Metadata>,
   opts: ConstructorParameters<typeof TokenTextSplitter>
@@ -119,20 +135,49 @@ export const defaultChunker = <Metadata extends Jsonifiable = Jsonifiable>(
   ]);
 };
 
+/**
+ * If you need to chunk your documents, start with this chunker. Move to more powerful chunkers only as needed.
+ */
 export const defaultChunkMany = async <Metadata extends Jsonifiable = Jsonifiable>(
   docs: Document<Metadata>[],
   opts?: Parameters<ChunkMany>[1]
 ) => (await Promise.all(docs.map((doc) => defaultChunker(doc, opts)))).flat();
 
+/**
+ * A cast wrapper to convert an AI.JSX document to a LangChain document.
+ */
 export function toLangChainDoc(doc: Document): LangChainDocument {
   return doc as LangChainDocument;
 }
 
 export interface DocsQAProps<Doc extends Document> {
+  /**
+   * A loader that returns a list of documents relevant to a query.
+   */
   loader: Loader;
+
+  /**
+   * The query to answer.
+   */
   question: string;
+
+  /**
+   * The component used to format documents when they're presented to the model.
+   *
+   * ```tsx
+   *  function MyDocsComponent({ doc }: { doc: MyDocument }) {
+   *    return <>
+   *      Title: {doc.metadata.title}
+   *      Content: {doc.pageContent}
+   *    </>
+   *  }
+   * ```
+   */
   docComponent: (props: { doc: Doc }) => Node;
 }
+/**
+ * A component that can be used to answer questions about documents. This is a very common usecase for LLMs.
+ */
 export async function DocsQA<Doc extends Document>(props: DocsQAProps<Doc>) {
   const docs = await props.loader();
   return (
