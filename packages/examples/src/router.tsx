@@ -1,6 +1,6 @@
-import { showInspector } from '../inspector/console.tsx';
-import { ChatCompletion, SystemMessage, UserMessage } from '../lib/completion-components.tsx';
-import { LLMx } from '../lib/index.ts';
+import { showInspector } from '@fixieai/ai-jsx/core/inspector';
+import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
+import * as LLMx from '@fixieai/ai-jsx';
 import { Inline } from '../lib/inline.tsx';
 import { NaturalLanguageRouter, Route } from '../lib/natural-language-router.tsx';
 

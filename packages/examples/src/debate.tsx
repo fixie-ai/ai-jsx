@@ -1,7 +1,7 @@
 import _ from 'lodash';
-import { showInspector } from '../inspector/console.tsx';
-import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from '../lib/completion-components.tsx';
-import { LLMx } from '../lib/index.ts';
+import { showInspector } from '@fixieai/ai-jsx/core/inspector';
+import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
+import * as LLMx from '@fixieai/ai-jsx';
 import { Inline } from '../lib/inline.tsx';
 
 async function ConversationRemapper(

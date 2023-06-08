@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { LLMx } from '../../../ai-jsx/src/lib/index.js';
+import * as LLMx from '@fixieai/ai-jsx';
 import { ChatCompletion, SystemMessage, UserMessage } from '../../../ai-jsx/src/core/completion.tsx';
 import { showInspector } from '../../../ai-jsx/src/inspector/console.js';
 

@@ -2,7 +2,8 @@
  * Run this with `yarn demo:zepp-health`
  */
 
-import { LLMx, log } from '../../../../ai-jsx/src/lib/index.js';
+import * as LLMx from '@fixieai/ai-jsx';
+import log from '@fixieai/ai-jsx/core/log';
 import { showInspector } from '../../../../ai-jsx/src/inspector/console.js';
 import { NaturalLanguageRouter, Route } from '../../../../ai-jsx/src/batteries/natural-language-router.tsx';
 import { Tool, UseTools } from '../../../../ai-jsx/src/batteries/use-tools.tsx';

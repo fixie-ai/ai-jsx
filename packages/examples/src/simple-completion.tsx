@@ -1,6 +1,6 @@
-import { LLMx } from '../lib/index.ts';
-import { Completion } from '../lib/completion-components.tsx';
-import { showInspector } from '../inspector/console.tsx';
+import * as LLMx from '@fixieai/ai-jsx';
+import { Completion } from '@fixieai/ai-jsx/core/completion';
+import { showInspector } from '@fixieai/ai-jsx/core/inspector';
 
 function App() {
   return (

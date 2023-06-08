@@ -1,7 +1,7 @@
-import { LLMx } from '../lib/index.ts';
-import { Completion } from '../lib/completion-components.tsx';
+import * as LLMx from '@fixieai/ai-jsx';
+import { Completion } from '@fixieai/ai-jsx/core/completion';
 import { Inline } from '../lib/inline.tsx';
-import { debug } from '../lib/debug.tsx';
+import { debug } from '@fixieai/ai-jsx/core/debug';
 
 function Log(props: { children: LLMx.Node }, ctx: LLMx.RenderContext) {
   // A component that hooks RenderContext to log instrumentation to stderr.

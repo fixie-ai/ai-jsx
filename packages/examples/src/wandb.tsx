@@ -4,7 +4,7 @@ import * as LLMx from '@fixieai/ai-jsx';
 import { Completion } from '@fixieai/ai-jsx/core/completion';
 import { Inline } from '@fixieai/ai-jsx/core/inline';
 import { StatusCode, WBTraceTree, addChildSpan, wandb } from '@nick.heiner/wandb-fork';
-import { debug } from '@fixieai/ai-jsx/core/debug.tsx';
+import { debug } from '@fixieai/ai-jsx/core/debug';
 
 type WBSpan = Parameters<typeof addChildSpan>[0];
 

@@ -3,10 +3,10 @@ import { NodeSDK } from '@opentelemetry/sdk-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
-import { LLMx } from '../lib/index.ts';
-import { Completion } from '../lib/completion-components.tsx';
+import * as LLMx from '@fixieai/ai-jsx';
+import { Completion } from '@fixieai/ai-jsx/core/completion';
 import { Inline } from '../lib/inline.tsx';
-import { debug } from '../lib/debug.tsx';
+import { debug } from '@fixieai/ai-jsx/core/debug';
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 export function bindAsyncGenerator<T = unknown, TReturn = any, TNext = unknown>(

@@ -1,7 +1,7 @@
-import { LLMx } from '../lib/index.ts';
-import { ChatCompletion, SystemMessage, UserMessage } from '../lib/completion-components.tsx';
+import * as LLMx from '@fixieai/ai-jsx';
+import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
 import { OpenAI } from '../lib/openai.tsx';
-import { showInspector } from '../inspector/console.tsx';
+import { showInspector } from '@fixieai/ai-jsx/core/inspector';
 
 function MultiModel() {
   const challenge = (

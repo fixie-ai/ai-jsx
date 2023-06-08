@@ -13,9 +13,21 @@
       "import": "./dist/esm/core/completion.js",
       "require": "./dist/cjs/core/completion.js"
     },
+    "./core/debug": {
+      "import": "./dist/esm/core/debug.js",
+      "require": "./dist/cjs/core/debug.js"
+    },
     "./core/inline": {
       "import": "./dist/esm/core/inline.js",
       "require": "./dist/cjs/core/inline.js"
+    },
+    "./core/log": {
+      "import": "./dist/esm/core/log.js",
+      "require": "./dist/cjs/core/log.js"
+    },
+    "./core/inspector": {
+      "import": "./dist/esm/inspector/console.js",
+      "require": "./dist/cjs/inspector/console.js"
     }
   },
   "devDependencies": {
