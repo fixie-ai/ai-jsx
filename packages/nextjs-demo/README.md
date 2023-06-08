@@ -2,6 +2,8 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
+To run the GitHub example, you need to set env var `GITHUB_TOKEN`.
+
 First, run the development server:
 
 ```bash
