@@ -4,11 +4,12 @@ import { Node } from '../index.js';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useState, useEffect } from 'react';
 import reactUse from 'react-use';
-import { Box, render, Text, useInput } from 'ink';
 import SyntaxHighlight from './syntax-highlight.jsx';
 import { memo } from '../core/memoize.js';
 import Spinner from './spinner.jsx';
 import { DebugTree } from '../core/debug.js';
+
+const { Box, render, Text, useInput } = require('ink');
 
 const { useList } = reactUse;
 
@@ -39,7 +40,7 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
     getRenderedContent();
   }, [componentToInspect]);
 
-  useInput((_input, key) => {
+  useInput((_input: any, key: any) => {
     if (key.rightArrow) {
       setDebugTreeFrameIndex((prevIndex) =>
         prevIndex === null ? debugTreeSteps.length - 1 : Math.min(debugTreeSteps.length - 1, prevIndex + 1)

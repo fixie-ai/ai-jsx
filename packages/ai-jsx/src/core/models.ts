@@ -9,7 +9,8 @@ import log from './log.js';
 import { Merge } from 'type-fest';
 import EventEmitter from 'node:events';
 import _ from 'lodash';
-import GPT3Tokenizer from 'gpt3-tokenizer';
+// import GPT3Tokenizer from 'gpt3-tokenizer';
+const GPT3Tokenizer = require('gpt3-tokenizer') as typeof import('gpt3-tokenizer');
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,

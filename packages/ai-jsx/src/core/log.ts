@@ -107,7 +107,6 @@ export class Log {
       level: 'trace',
       ...pinoOptions,
     };
-    // @ts-expect-error
     const pinoStream = pinoPretty();
     const pinoFile = fs.createWriteStream('llmx.log', { flags: 'w+' });
     const fakePino = pino();

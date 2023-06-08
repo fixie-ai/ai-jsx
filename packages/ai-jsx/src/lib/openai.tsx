@@ -11,7 +11,8 @@ import {
 import * as LLMx from '../index.js';
 import { RenderContext, PropsOfComponent, Node } from '../index.js';
 import { openAIChat, openAICompletion } from '../core/models.js';
-import GPT3Tokenizer from 'gpt3-tokenizer';
+// import GPT3Tokenizer from 'gpt3-tokenizer';
+const GPT3Tokenizer = require('gpt3-tokenizer') as typeof import('gpt3-tokenizer');
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
