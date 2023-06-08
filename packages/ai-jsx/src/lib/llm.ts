@@ -248,7 +248,7 @@ export function createRenderContext(
         const generator = render(context, renderable, shouldStop);
         while (true) {
           const next = await generator.next();
-          const value = opts && opts.stop ? (next.value as TFinal) : (next.value.join('') as TFinal);
+          const value = opts?.stop ? (next.value as TFinal) : (next.value.join('') as TFinal);
           if (next.done) {
             if (promiseResult === null) {
               promiseResult = Promise.resolve(value);
@@ -256,16 +256,16 @@ export function createRenderContext(
             return value;
           }
 
-          // If there's a mapper provided, use it.
-          const valueToYield = opts?.map
-            ? opts.map(value)
-            : // If we're doing partial rendering, exclude any elements we stopped on (to avoid accidentally leaking elements up).
-            opts?.stop
-            ? (value as PartiallyRendered[]).filter((e) => !isElement(e))
-            : // Otherwise yield the (string) value as-is.
-              value;
-
-          yield valueToYield;
+          if (opts?.map) {
+            // If there's a mapper provided, use it.
+            yield opts.map(value);
+          } else if (opts?.stop) {
+            // If we're doing partial rendering, exclude any elements we stopped on (to avoid accidentally leaking elements up).
+            yield (value as PartiallyRendered[]).filter((e) => !isElement(e));
+          } else {
+            // Otherwise yield the (string) value as-is.
+            yield value;
+          }
         }
       })();
 
