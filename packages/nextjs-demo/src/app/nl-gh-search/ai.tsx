@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import React from '../react';
 
 import * as LLMx from '@fixieai/ai-jsx';

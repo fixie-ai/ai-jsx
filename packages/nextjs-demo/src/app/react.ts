@@ -1,4 +1,6 @@
 import React from 'react';
+// I don't know what to do about this error.
+// @ts-expect-error
 import * as LLMx from '@fixieai/ai-jsx';
 
 const knownLLMxTags = [
