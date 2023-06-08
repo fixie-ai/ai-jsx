@@ -258,7 +258,7 @@ async function* renderStream(
   if (Symbol.asyncIterator in renderable) {
     // Exhaust the iterator.
     const iterator = renderable[Symbol.asyncIterator]();
-    for (;;) {
+    while (true) {
       const next = await iterator.next();
       const frameValue = yield* context.render(next.value, recursiveRenderOpts);
       if (next.done) {
@@ -325,7 +325,7 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
             }
 
             const flush = async () => {
-              for (;;) {
+              while (true) {
                 const next = await generator.next();
                 if (next.done) {
                   return next.value;
