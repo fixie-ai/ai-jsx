@@ -111,6 +111,20 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
   return debugRec(value, '', 'code');
 }
 
+/**
+ * Render a tree of JSX elements as a string, yielding each step of the rendering process.
+ *
+ * Most devs will not need to use this directly, and should use `showInspector` instead.
+ *
+ * @example
+ *    <DebugTree>
+ *      <MyComponent />
+ *    </DebugTree>
+ *
+ * ==>
+ *  Frame 0: <DebugTree><MyComponent /></DebugTree>
+ *  Frame 1: <DebugTree>the text my component resolved to</DebugTree>
+ */
 export async function* DebugTree(props: { children: Node }, { render }: RenderContext) {
   let current = props.children;
   while (true) {

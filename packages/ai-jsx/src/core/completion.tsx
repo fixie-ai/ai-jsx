@@ -14,6 +14,11 @@ export type ModelPropsWithChildren = ModelProps & {
 
 export type ModelComponent<T extends ModelPropsWithChildren> = Component<T>;
 
+/**
+ * If env var `OPENAI_API_KEY` is defined, use Open AI as the completion model provider.
+ *
+ * This is internal and users should not need to access this directly.
+ */
 function AutomaticCompletionModel({ children, ...props }: ModelPropsWithChildren) {
   if (process.env.OPENAI_API_KEY) {
     return (
@@ -22,13 +27,17 @@ function AutomaticCompletionModel({ children, ...props }: ModelPropsWithChildren
       </OpenAICompletionModel>
     );
   }
-  // TODO: Change this to throw once we support error boundaries.
-  return 'No completion model was specified. Specify a CompletionProvider or set the OPENAI_API_KEY environment variable.';
-  // throw new Error(
-  //   'No completion model was specified. Specify a CompletionProvider or set the OPENAI_API_KEY environment variable.'
-  // );
+
+  throw new Error(
+    'No completion model was specified. Specify a CompletionProvider or set the OPENAI_API_KEY environment variable.'
+  );
 }
 
+/**
+ * If env var `OPENAI_API_KEY` is defined, use Open AI as the chat model provider.
+ *
+ * This is internal and users should not need to access this directly.
+ */
 function AutomaticChatModel({ children, ...props }: ModelPropsWithChildren) {
   if (process.env.OPENAI_API_KEY) {
     return (
@@ -37,11 +46,9 @@ function AutomaticChatModel({ children, ...props }: ModelPropsWithChildren) {
       </OpenAIChatModel>
     );
   }
-  // TODO: Change this to throw once we support error boundaries.
-  return 'No chat model was specified. Specify a ChatProvider or set the OPENAI_API_KEY environment variable.';
-  // throw new Error(
-  //   'No chat model was specified. Specify a ChatProvider or set the OPENAI_API_KEY environment variable.'
-  // );
+  throw new Error(
+    'No chat model was specified. Specify a ChatProvider or set the OPENAI_API_KEY environment variable.'
+  );
 }
 
 const completionContext = LLMx.createContext<[ModelComponent<ModelPropsWithChildren>, ModelProps]>([
@@ -84,16 +91,69 @@ export function ChatProvider<T extends ModelPropsWithChildren>(
   );
 }
 
+/**
+ * Provide a System Message to the chat model.
+ *
+ * The system message can be used to put the model in character. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
+ *
+ * This component can only be used within a ChatCompletion.
+ *
+ * @example
+ *    <ChatCompletion>
+ *      <SystemMessage>You are a helpful customer service agent.</SystemMessage>
+ */
 export function SystemMessage({ children }: { children: Node }) {
   return children;
 }
+
+/**
+ * Provide a User Message to the chat model.
+ *
+ * The user message tells the model what the user has said. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
+ *
+ * This component can only be used within a ChatCompletion.
+ *
+ * @example
+ *    <ChatCompletion>
+ *      <UserMessage>I'd like to cancel my account.</UserMessage>
+ *
+ *    ==> 'Sorry to hear that. Can you tell me why?
+ */
 export function UserMessage({ children }: { name?: string; children: Node }) {
   return children;
 }
+
+/**
+ * Provide an Assistant Message to the chat model.
+ *
+ * The assistant message tells the model what it has previously said. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
+ *
+ * This component can only be used within a ChatCompletion.
+ *
+ * @example
+ *    <ChatCompletion>
+ *      <UserMessage>I'd like to cancel my account.</UserMessage>
+ *      <AssistantMessage>Sorry to hear that. Can you tell me why?</AssistantMessage>
+ *      <UserMessage>It's too expensive.</UserMessage>
+ *
+ *    ==> "Ok, thanks for that feedback. I'll cancel your account."
+ */
 export function AssistantMessage({ children }: { children: Node }) {
   return children;
 }
 
+/**
+ * Perform a model call to do a [completion](https://platform.openai.com/docs/guides/gpt/completions-api).
+ *
+ * In general, you should prefer to use ChatCompletion instead of Completion, because ChatCompletion uses GPT-4, which is more powerful than any Completion model.
+ *
+ * @example
+ *    <Completion>
+ *      Here's a list of three dog names:
+ *    </Completion>
+ *
+ *    ==> 'Dottie, Murphy, Lucy'
+ */
 export function Completion(
   { children, ...props }: ModelPropsWithChildren & Record<string, unknown>,
   { getContext }: RenderContext
@@ -106,6 +166,9 @@ export function Completion(
   );
 }
 
+/**
+ * Perform a model call to do [chat completion](https://platform.openai.com/docs/guides/gpt/chat-completions-api).
+ */
 export function ChatCompletion(
   { children, ...props }: ModelPropsWithChildren & Record<string, unknown>,
   { getContext }: RenderContext
