@@ -7,10 +7,12 @@ import {
   ModelPropsWithChildren,
   SystemMessage,
   UserMessage,
-} from './completion-components.tsx';
-import { LLMx, Models } from './index.ts';
-import { openAIChat } from './models.ts';
+} from '../core/completion';
+import * as LLMx from '../index.js';
+import { RenderContext, PropsOfComponent, Node } from '../index.js';
+import { openAIChat, openAICompletion } from '../core/models';
 import GPT3Tokenizer from 'gpt3-tokenizer';
+// const GPT3Tokenizer = require('gpt3-tokenizer') as typeof import('gpt3-tokenizer');
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -31,7 +33,7 @@ export function OpenAI({
   chatModel,
   completionModel,
   ...defaults
-}: { children: LLMx.Node } & ChatOrCompletionModelOrBoth & ModelProps) {
+}: { children: Node } & ChatOrCompletionModelOrBoth & ModelProps) {
   let result = children;
 
   if (chatModel) {
@@ -55,7 +57,7 @@ export function OpenAI({
 
 export async function* OpenAICompletionModel(
   props: ModelPropsWithChildren & { model: ValidCompletionModel },
-  { render }: LLMx.RenderContext
+  { render }: RenderContext
 ) {
   yield '▁';
   let prompt = await render(props.children);
@@ -63,7 +65,7 @@ export async function* OpenAICompletionModel(
     prompt = prompt.slice(0, prompt.length - 1);
   }
 
-  const tokenStream = Models.openAICompletion.simpleStream({
+  const tokenStream = openAICompletion.simpleStream({
     model: props.model as any,
     max_tokens: props.maxTokens,
     temperature: props.temperature,
@@ -82,6 +84,7 @@ export async function* OpenAICompletionModel(
 
 function logitBiasOfTokens(tokens: Record<string, number>) {
   // N.B. We're using GPT3Tokenizer which per https://platform.openai.com/tokenizer "works for most GPT-3 models".
+  // @ts-expect-error
   const tokenizer = new GPT3Tokenizer.default({ type: 'gpt3' });
   return Object.fromEntries(
     Object.entries(tokens).map(([token, bias]) => {
@@ -98,7 +101,7 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
 
 export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & { model: ValidChatModel; logitBias?: Record<string, number> },
-  { render }: LLMx.RenderContext
+  { render }: RenderContext
 ) {
   yield '▁';
 
@@ -118,7 +121,7 @@ export async function* OpenAIChatModel(
           return {
             role: 'user',
             content: await render(message),
-            name: (message.props as LLMx.PropsOfComponent<typeof UserMessage>).name,
+            name: (message.props as PropsOfComponent<typeof UserMessage>).name,
           };
         case AssistantMessage:
           return {

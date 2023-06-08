@@ -4,6 +4,60 @@
   "volta": {
     "extends": "../../package.json"
   },
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./batteries/docs": {
+      "import": "./dist/esm/batteries/docs.js",
+      "require": "./dist/cjs/batteries/docs.js"
+    },
+    "./batteries/natural-language-router": {
+      "import": "./dist/esm/batteries/natural-language-router.js",
+      "require": "./dist/cjs/batteries/natural-language-router.js"
+    },
+    "./batteries/use-tools": {
+      "import": "./dist/esm/batteries/use-tools.js",
+      "require": "./dist/cjs/batteries/use-tools.js"
+    },
+    "./batteries/langchain-wrapper": {
+      "import": "./dist/esm/batteries/langchain-wrapper.js",
+      "require": "./dist/cjs/batteries/langchain-wrapper.js"
+    },
+    "./core/completion": {
+      "import": "./dist/esm/core/completion.js",
+      "require": "./dist/cjs/core/completion.js"
+    },
+    "./core/debug": {
+      "import": "./dist/esm/core/debug.js",
+      "require": "./dist/cjs/core/debug.js"
+    },
+    "./core/error-boundary": {
+      "import": "./dist/esm/core/error-boundary.js",
+      "require": "./dist/cjs/core/error-boundary.js"
+    },
+    "./core/inline": {
+      "import": "./dist/esm/core/inline.js",
+      "require": "./dist/cjs/core/inline.js"
+    },
+    "./core/log": {
+      "import": "./dist/esm/core/log.js",
+      "require": "./dist/cjs/core/log.js"
+    },
+    "./core/models": {
+      "import": "./dist/esm/core/models.js",
+      "require": "./dist/cjs/core/models.js"
+    },
+    "./core/inspector": {
+      "import": "./dist/esm/inspector/console.js",
+      "require": "./dist/cjs/inspector/console.js"
+    },
+    "./lib/openai": {
+      "import": "./dist/esm/lib/openai.js",
+      "require": "./dist/cjs/lib/openai.js"
+    }
+  },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.1",
     "@types/eslint": "^8",
@@ -22,9 +76,7 @@
     "node-fetch": "^3.3.1",
     "pino-pretty": "^10.0.0",
     "react-use": "^17.4.0",
-    "ts-node": "^10.9.1",
     "tsx": "^3.12.7",
-    "turbo": "^1.10.1",
     "type-fest": "^3.10.0",
     "typescript": "^5.0.4",
     "write-json-file": "^5.0.0"
@@ -53,8 +105,8 @@
     "view-logs": "cat llmx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc -p tsconfig.json",
-    "build": "yarn run typecheck"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "rm -rf dist; tsc -p tsconfig.json; tsc -p tsconfig-cjs.json"
   },
   "dependencies": {
     "@nick.heiner/wandb-fork": "0.5.2-5",
@@ -76,7 +128,6 @@
     "lodash": "^4.17.21",
     "openai": "^3.2.1",
     "pino": "^8.14.1",
-    "pretty-ms": "^8.0.0",
     "react": "^18.2.0",
     "sinon": "^15.1.0",
     "terminal-link": "^3.0.0",

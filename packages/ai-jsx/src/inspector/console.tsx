@@ -1,18 +1,21 @@
 /** @jsx React.createElement */
-
-import { LLMx } from '../lib/index.ts';
+import * as LLMx from '../index.js';
+import { Node } from '../index.js';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useState, useEffect } from 'react';
 import reactUse from 'react-use';
+import SyntaxHighlight from './syntax-highlight';
+import { memo } from '../core/memoize';
+import Spinner from './spinner';
+import { DebugTree } from '../core/debug';
+
+// @ts-expect-error
 import { Box, render, Text, useInput } from 'ink';
-import SyntaxHighlight from './syntax-highlight.tsx';
-import { memo } from '../lib/memoize.tsx';
-import Spinner from './spinner.tsx';
-import { DebugTree } from '../lib/debug.tsx';
+// const { Box, render, Text, useInput } = require('ink');
 
 const { useList } = reactUse;
 
-function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: LLMx.Node; showDebugTree: boolean }) {
+function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: Node; showDebugTree: boolean }) {
   const [debugTreeSteps, { push: pushDebugTreeStep }] = useList([] as string[]);
   const [debugTreeFrameIndex, setDebugTreeFrameIndex] = useState<number | null>(null);
   const [debugTreeStreamIsDone, setDebugTreeStreamIsDone] = useState(false);
@@ -39,7 +42,7 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
     getRenderedContent();
   }, [componentToInspect]);
 
-  useInput((_input, key) => {
+  useInput((_input: any, key: any) => {
     if (key.rightArrow) {
       setDebugTreeFrameIndex((prevIndex) =>
         prevIndex === null ? debugTreeSteps.length - 1 : Math.min(debugTreeSteps.length - 1, prevIndex + 1)
@@ -87,7 +90,7 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
   );
 }
 
-export function showInspector(componentToInspect: LLMx.Node, opts: { showDebugTree?: boolean } = {}) {
+export function showInspector(componentToInspect: Node, opts: { showDebugTree?: boolean } = {}) {
   const defaultOpts = { showDebugTree: true };
   const finalOpts = { ...defaultOpts, ...opts };
   render(<Inspector componentToInspect={componentToInspect} {...finalOpts} />);
