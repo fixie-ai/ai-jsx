@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "our-build": "next build",
     "test": "tsc -p .",
     "start": "next start",
     "lint": "next lint --max-warnings 0",
