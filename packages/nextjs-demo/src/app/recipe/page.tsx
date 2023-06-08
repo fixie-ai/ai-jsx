@@ -72,7 +72,6 @@ export default function RecipeWrapper({ searchParams }: { searchParams: any }) {
 
       <ResultContainer
         title={`AI comes up with a recipe for ${query}`}
-        description="If this fails, it may be because the AI generated JSON with an extra comma."
       >
         <AI renderPassedReactComponents>
           <ChatCompletion temperature={1}>

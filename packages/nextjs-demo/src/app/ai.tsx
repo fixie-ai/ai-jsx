@@ -85,8 +85,7 @@ async function AIInterpretedReactComponents({ children }: { children: React.Reac
   try {
     modelResponseJSON = JSON.parse(rendered);
   } catch (e) {
-    console.error(`Failed to parse JSON from model response: ${rendered}`, e);
-    return rendered;
+    throw new Error(`Failed to parse JSON from model response: ${rendered}`);
   }
   return parseJsonToReact(modelResponseJSON);
 }
