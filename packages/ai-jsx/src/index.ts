@@ -19,16 +19,22 @@ export interface ReactComponentAsSeenByLLMx {
 
 export type Node = Element<any> | Literal | Node[] | ReactComponentAsSeenByLLMx;
 
-export type Renderable = Node | Promise<Renderable> | AsyncGenerator<Renderable>;
+interface RenderableStream {
+  [Symbol.asyncIterator]: () => AsyncIterator<Renderable, Renderable>;
+}
+
+export type Renderable = Node | PromiseLike<Renderable> | RenderableStream;
 
 export type ElementPredicate = (e: Element<any>) => boolean;
 export type PropsOfComponent<T extends Component<any>> = T extends Component<infer P> ? P : never;
 
-export type PartialRenderStream = (
+type PartiallyRendered = string | Element<any>;
+
+export type StreamRenderer = (
   renderContext: RenderContext,
   renderable: Renderable,
   shouldStop: ElementPredicate
-) => AsyncGenerator<PartiallyRendered[]>;
+) => AsyncGenerator<PartiallyRendered[], PartiallyRendered[]>;
 
 const contextKey = Symbol('LLMx.contextKey');
 export interface Context<T> {
@@ -36,16 +42,66 @@ export interface Context<T> {
   [contextKey]: [T, symbol];
 }
 
+interface RenderOpts<TIntermediate = string, TFinal = string> {
+  /**
+   * Instructs rendering to stop rendering on certain elements. When specified,
+   * rendering will return an array of strings and `Element`s rather than a
+   * string.
+   */
+  stop?: TFinal extends string ? false : ElementPredicate;
+
+  /**
+   * Maps the intermediate (but not final) results produced by rendering. By default
+   * the rendered elements are flattened into a string.
+   * @param frame The intermediate rendering, including any `Element`s selected by `stop`.
+   * @returns The value to yield.
+   */
+  map?: (frame: TFinal) => TIntermediate;
+}
+
+/**
+ * The result of rendering. Can be `await`ed for the final result or used as an async
+ * iterable to access the intermediate and final results.
+ */
+interface RenderResult<TIntermediate, TFinal> {
+  then: InstanceType<typeof Promise<TFinal>>['then'];
+  [Symbol.asyncIterator]: () => AsyncIterator<TIntermediate, TFinal, unknown>;
+}
+
+const pushContextSymbol = Symbol('RenderContext.pushContext');
 export interface RenderContext {
-  partialRenderStream(renderable: Renderable, shouldStop: ElementPredicate): AsyncGenerator<PartiallyRendered[]>;
-  partialRender(renderable: Renderable, shouldStop: ElementPredicate): Promise<PartiallyRendered[]>;
-  renderStream(renderable: Renderable): AsyncGenerator<string>;
-  render(renderable: Renderable): Promise<string>;
+  /**
+   * Renders a value to a string, or if a `stop` function is provided, to an array
+   * of strings or `Element`s. The result can be `await`ed for the final result, or
+   * yielded from for intermediate results.
+   * @param renderable The value to render.
+   * @param opts Additional options.
+   */
+  render<TIntermediate>(renderable: Renderable, opts?: RenderOpts<TIntermediate>): RenderResult<TIntermediate, string>;
+  render<TIntermediate>(
+    renderable: Renderable,
+    opts: RenderOpts<TIntermediate, PartiallyRendered[]>
+  ): RenderResult<TIntermediate, PartiallyRendered[]>;
 
-  getContext<T>(ref: Context<T>): T;
+  /**
+   * Gets the current value associated with a context.
+   * @param context The context holder, as returned from `createContext`.
+   */
+  getContext<T>(context: Context<T>): T;
 
-  pushContext<T>(ref: Context<T>, value: T): RenderContext;
-  wrapRender(render: (r: PartialRenderStream) => PartialRenderStream): RenderContext;
+  /**
+   * Creates a new `RenderContext` by wrapping the existing render function.
+   * @param getRenderer A function that returns the new renderer function.
+   */
+  wrapRender(getRenderer: (r: StreamRenderer) => StreamRenderer): RenderContext;
+
+  /**
+   * An internal function used to set the value associated with a given context.
+   * @param context The context holder, as returned from `createContext`.
+   * @param value The value to set.
+   * @returns The new `RenderContext`.
+   */
+  [pushContextSymbol]: <T>(context: Context<T>, value: T) => RenderContext;
 }
 
 export declare namespace JSX {
@@ -104,7 +160,7 @@ export function withContext<P extends object>(element: Element<P>, context: Rend
 
 export function createContext<T>(defaultValue: T): Context<T> {
   const ctx: Context<T> = {
-    Provider: function ContextProvider(props: { value: T; children: Node }, { pushContext }) {
+    Provider: function ContextProvider(props: { value: T; children: Node }, { [pushContextSymbol]: pushContext }) {
       const fragment = createElement(Fragment, null, props.children);
       return withContext(fragment, pushContext(ctx, props.value));
     },
@@ -120,48 +176,54 @@ export function createContext<T>(defaultValue: T): Context<T> {
 export function hackyDehydrate(renderable: ReactComponentAsSeenByLLMx): string {
   return `<${renderable.type.name}>${renderable.props.children}</${renderable.type.name}>}`;
 }
-
-type PartiallyRendered = string | Element<any>;
-
-async function* partialRenderStream(
+async function* renderStream(
   context: RenderContext,
   renderable: Renderable,
   shouldStop: ElementPredicate
-): AsyncGenerator<PartiallyRendered[]> {
-  // console.log('render stream', renderable, typeof renderable);
+): AsyncGenerator<PartiallyRendered[], PartiallyRendered[]> {
+  // If we recurse, propagate the stop function but ensure that intermediate values are preserved.
+  const recursiveRenderOpts: RenderOpts<PartiallyRendered[], PartiallyRendered[]> = {
+    stop: shouldStop,
+    map: (frame) => frame,
+  };
+
   if (typeof renderable === 'string') {
-    yield [renderable];
-  } else if (typeof renderable === 'number') {
-    yield [renderable.toString()];
-  } else if (typeof renderable === 'undefined' || typeof renderable === 'boolean' || renderable === null) {
-    yield [];
-  } else if ('$$typeof' in renderable) {
-    // console.log('dehydrate ===================')
+    return [renderable];
+  }
+  if (typeof renderable === 'number') {
+    return [renderable.toString()];
+  }
+  if (typeof renderable === 'undefined' || typeof renderable === 'boolean' || renderable === null) {
+    return [];
+  }
+  if ('$$typeof' in renderable) {
     yield [hackyDehydrate(renderable)];
-  } else if (Array.isArray(renderable)) {
+  }
+  if (Array.isArray(renderable)) {
     interface InProgressRender {
-      generator: AsyncGenerator<PartiallyRendered[]>;
+      generator: AsyncIterator<PartiallyRendered[], PartiallyRendered[]>;
       currentValue: PartiallyRendered[];
 
       // Resolves to a function that applies the update to the in-progress render.
       // Will be null when the generator is exhausted.
-      currentPromise: Promise<() => boolean> | null;
+      currentPromise: Promise<() => void> | null;
     }
 
     // Mutates an InProgressRender with an iterator result yielded from its generator.
-    const applyUpdate = (result: IteratorResult<PartiallyRendered[]>, render: InProgressRender): boolean => {
+    const applyUpdate = (
+      result: IteratorResult<PartiallyRendered[], PartiallyRendered[]>,
+      render: InProgressRender
+    ) => {
+      render.currentValue = result.value;
       if (result.done) {
         render.currentPromise = null;
       } else {
-        render.currentValue = result.value;
         render.currentPromise = render.generator.next().then((nextResult) => () => applyUpdate(nextResult, render));
       }
-
-      return render.currentPromise !== null;
     };
 
     const inProgressRenders = renderable.map((r) => {
-      const generator = context.partialRenderStream(r, shouldStop);
+      const generator = context.render(r, recursiveRenderOpts)[Symbol.asyncIterator]();
       const inProgressRender: InProgressRender = {
         generator,
         currentValue: [],
@@ -178,75 +240,136 @@ async function* partialRenderStream(
     const pendingUpdates = await Promise.all(remainingPromises());
     pendingUpdates.forEach((apply) => apply());
 
-    yield currentValue();
-
-    while (true) {
-      const remaining = remainingPromises();
-      if (remaining.length === 0) {
-        break;
-      }
+    let remaining = remainingPromises();
+    while (remaining.length > 0) {
+      yield currentValue();
 
       // Each time a promise resolves with a new value, yield again.
       const nextApply = await Promise.race(remaining);
-      if (nextApply()) {
-        yield currentValue();
-      }
+      nextApply();
+      remaining = remainingPromises();
     }
-  } else if (isElement(renderable)) {
+
+    return currentValue();
+  }
+  if (isElement(renderable)) {
     if (shouldStop(renderable)) {
       // If the renderable already has a context bound to it, leave it as-is because that context would've
       // taken precedence over the current one. But, if it does _not_ have a bound context, we bind
       // the current context so that if/when it is rendered, rendering will "continue on" as-is.
       if (!renderable[attachedContext]) {
-        yield [withContext(renderable, context)];
-      } else {
-        yield [renderable];
+        return [withContext(renderable, context)];
       }
-    } else {
-      const renderingContext = renderable[attachedContext] ?? context;
-      if (renderingContext !== context) {
-        // We need to switch contexts before we can render the element.
-        yield* renderingContext.partialRenderStream(renderable, shouldStop);
-      } else {
-        yield* renderingContext.partialRenderStream(renderable.render(renderingContext), shouldStop);
-      }
+      return [renderable];
     }
-  } else if (renderable instanceof Promise) {
-    yield* await renderable.then((x) => context.partialRenderStream(x, shouldStop));
-  } else {
+    const renderingContext = renderable[attachedContext] ?? context;
+    if (renderingContext !== context) {
+      // We need to switch contexts before we can render the element.
+      return yield* renderingContext.render(renderable, recursiveRenderOpts);
+    }
+    return yield* renderingContext.render(renderable.render(renderingContext), {
+      stop: shouldStop,
+      map: (frame) => frame,
+    });
+  }
+
+  if (Symbol.asyncIterator in renderable) {
     // Exhaust the iterator.
-    try {
-      for await (const value of renderable) {
-        yield* context.partialRenderStream(value, shouldStop);
+    const iterator = renderable[Symbol.asyncIterator]();
+    while (true) {
+      const next = await iterator.next();
+      const frameValue = yield* context.render(next.value, recursiveRenderOpts);
+      if (next.done) {
+        return frameValue;
       }
-    } catch (e) {
-      console.error(e, renderable, 'Error while rendering');
+      yield frameValue;
     }
   }
+
+  // N.B. Because RenderResults are both AsyncIterable _and_ PromiseLikes, this means that an async component that returns the result
+  // of a render call will not stream; it will effectively be `await`ed by default.
+  const nextRenderable = await renderable.then((r) => r as Exclude<Renderable, PromiseLike<Renderable>>);
+  return yield* context.render(nextRenderable, recursiveRenderOpts);
 }
 
-export function createRenderContext(
-  render: PartialRenderStream = partialRenderStream,
-  userContext: Record<symbol, any> = {}
-): RenderContext {
+export function createRenderContext() {
+  return createRenderContextInternal(renderStream);
+}
+
+function createRenderContextInternal(render: StreamRenderer, userContext: Record<symbol, any> = {}): RenderContext {
   const context: RenderContext = {
-    partialRenderStream: (renderable, shouldStop) => render(context, renderable, shouldStop),
-    async partialRender(renderable: Renderable, shouldStop: ElementPredicate): Promise<PartiallyRendered[]> {
-      let lastValue: PartiallyRendered[] = [];
-      for await (const value of context.partialRenderStream(renderable, shouldStop)) {
-        lastValue = value;
-      }
-      return lastValue;
+    render: <TFinal extends string | PartiallyRendered[], TIntermediate>(
+      renderable: Renderable,
+      opts?: RenderOpts<TIntermediate, TFinal>
+    ): RenderResult<TIntermediate, TFinal> => {
+      let promiseResult = null as Promise<any> | null;
+      let hasReturnedGenerator = false;
+
+      // Construct the generator that handles the provided options
+      const generator = (async function* () {
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+        const shouldStop = (opts?.stop || (() => false)) as ElementPredicate;
+        const generatorToWrap = render(context, renderable, shouldStop);
+        while (true) {
+          const next = await generatorToWrap.next();
+          const value = opts?.stop ? (next.value as TFinal) : (next.value.join('') as TFinal);
+          if (next.done) {
+            if (promiseResult === null) {
+              promiseResult = Promise.resolve(value);
+            }
+            return value;
+          }
+
+          if (opts?.map) {
+            // If there's a mapper provided, use it.
+            yield opts.map(value);
+          } else if (opts?.stop) {
+            // If we're doing partial rendering, exclude any elements we stopped on (to avoid accidentally leaking elements up).
+            yield (value as PartiallyRendered[]).filter((e) => !isElement(e)).join('');
+          } else {
+            // Otherwise yield the (string) value as-is.
+            yield value;
+          }
+        }
+      })() as AsyncGenerator<TIntermediate, TFinal>;
+
+      return {
+        then: (onFulfilled?, onRejected?) => {
+          if (promiseResult === null) {
+            if (hasReturnedGenerator) {
+              throw new Error(
+                "The RenderResult's generator must be fully exhausted before you can await the final result."
+              );
+            }
+
+            const flush = async () => {
+              while (true) {
+                const next = await generator.next();
+                if (next.done) {
+                  return next.value;
+                }
+              }
+            };
+
+            promiseResult = flush();
+          }
+
+          return promiseResult.then(onFulfilled, onRejected);
+        },
+
+        [Symbol.asyncIterator]: () => {
+          if (hasReturnedGenerator) {
+            throw new Error("The RenderResult's generator was already returned and cannot be returned again.");
+          } else if (promiseResult !== null) {
+            throw new Error('The RenderResult was already awaited and can no longer be used as an iterable.');
+          }
+
+          hasReturnedGenerator = true;
+          return generator;
+        },
+      };
     },
-    async *renderStream(renderable: Renderable): AsyncGenerator<string> {
-      for await (const value of context.partialRenderStream(renderable, () => false)) {
-        yield value.join('');
-      }
-    },
-    async render(renderable: Renderable): Promise<string> {
-      const elementsOrStrings = await context.partialRender(renderable, () => false);
-      return elementsOrStrings.join('');
-    },
+
     getContext: (ref) => {
       const [defaultValue, symbol] = ref[contextKey];
       if (symbol in userContext) {
@@ -255,9 +378,10 @@ export function createRenderContext(
       return defaultValue;
     },
 
-    wrapRender: (getRender) => createRenderContext(getRender(render), userContext),
-    pushContext: (contextReference, value) =>
-      createRenderContext(render, { ...userContext, [contextReference[contextKey][1]]: value }),
+    wrapRender: (getRender) => createRenderContextInternal(getRender(render), userContext),
+
+    [pushContextSymbol]: (contextReference, value) =>
+      createRenderContextInternal(render, { ...userContext, [contextReference[contextKey][1]]: value }),
   };
 
   return context;

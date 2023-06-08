@@ -11,10 +11,13 @@ function Log(props: { children: LLMx.Node }, ctx: LLMx.RenderContext) {
       (r) =>
         async function* (ctx, renderable, shouldStop) {
           const start = performance.now();
-          yield* r(ctx, renderable, shouldStop);
-          const end = performance.now();
-          if (LLMx.isElement(renderable)) {
-            console.error(`Finished rendering ${debug(renderable, false)} (${end - start}ms @ ${end})`);
+          try {
+            return yield* r(ctx, renderable, shouldStop);
+          } finally {
+            const end = performance.now();
+            if (LLMx.isElement(renderable)) {
+              console.error(`Finished rendering ${debug(renderable, false)} (${end - start}ms @ ${end})`);
+            }
           }
         }
     )
@@ -41,7 +44,7 @@ function CharacterGenerator() {
 }
 
 console.log(
-  LLMx.createRenderContext().render(
+  await LLMx.createRenderContext().render(
     <Log>
       <CharacterGenerator />
     </Log>

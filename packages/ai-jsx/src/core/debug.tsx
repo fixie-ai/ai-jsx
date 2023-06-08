@@ -1,5 +1,5 @@
 import * as LLMx from '../index.js';
-import { Node, RenderContext, Element } from '../index.js';
+import { Node, RenderContext, Element, ElementPredicate } from '../index.js';
 import { isMemoizedSymbol } from './memoize';
 
 export function debug(value: unknown, expandJSXChildren: boolean = true): string {
@@ -111,32 +111,26 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
   return debugRec(value, '', 'code');
 }
 
-export async function* DebugTree(props: { children: Node }, { partialRenderStream }: RenderContext) {
+export async function* DebugTree(props: { children: Node }, { render }: RenderContext) {
   let current = props.children;
   while (true) {
     yield debug(<DebugTree {...props}>{current}</DebugTree>);
 
-    let elementToRender: Element<any> | null = null;
-    const shouldStop = (element: Element<any>): boolean => {
+    let elementToRender = null as Element<any> | null;
+    const shouldStop: ElementPredicate = (element) => {
       if (elementToRender === null) {
         elementToRender = element;
       }
       return element !== elementToRender;
     };
 
-    // Use a closure to prevent the type from being incorrectly narrowed.
-    // https://github.com/microsoft/TypeScript/issues/9998#issuecomment-235963457
-    const didRenderSomething = () => elementToRender !== null;
+    current = yield* render(current, {
+      stop: shouldStop,
+      map: (frame) => debug(<DebugTree {...props}>{frame}</DebugTree>),
+    });
 
-    for await (const frame of partialRenderStream(current, shouldStop)) {
-      current = frame;
-      yield debug(<DebugTree {...props}>{current}</DebugTree>);
-    }
-
-    if (!didRenderSomething()) {
-      break;
+    if (elementToRender === null) {
+      return current;
     }
   }
-
-  yield current;
 }

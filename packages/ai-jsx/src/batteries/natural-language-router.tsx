@@ -12,16 +12,10 @@ const noMatch = 'None of the routes match what the user said.';
 // Need more thought around sub-routes.
 // I've observed that this is sensitive to the ordering of the routes – we probably want to either stamp that out or
 // make it explicit.
-export async function* NaturalLanguageRouter(
-  props: { children: Node; query: Node },
-  { partialRenderStream, render }: RenderContext
-) {
-  let renderedChildren: Node[] = [];
-  for await (const frame of partialRenderStream(props.children, (el) => el.tag === Route)) {
-    renderedChildren = frame;
-    // Exclude any routes until we pick one.
-    yield frame.filter((e) => !LLMx.isElement(e));
-  }
+export async function* NaturalLanguageRouter(props: { children: Node; query: Node }, { render }: RenderContext) {
+  const renderedChildren = yield* render(props.children, {
+    stop: (el) => el.tag === Route,
+  });
   const whenOptionsFromThisRenderedChildren = _.compact(
     renderedChildren
       .filter(LLMx.isElement)
@@ -33,6 +27,9 @@ export async function* NaturalLanguageRouter(
 
   // This will need to be tweaked when `i` is more than one token.
   const logitBiases = Object.fromEntries(_.range(whenOptions.length + 1).map((i) => [i.toString(), 100]));
+
+  // Yield the surrounding content before blocking on the completion.
+  yield renderedChildren.filter((e) => !LLMx.isElement(e));
 
   const choice = await render(
     <ChatCompletion maxTokens={1} logitBias={logitBiases}>
@@ -53,7 +50,7 @@ export async function* NaturalLanguageRouter(
   const choiceIndex = parseInt(choice);
 
   // Keep only the routes that matched.
-  yield renderedChildren.filter((e) => {
+  return renderedChildren.filter((e) => {
     if (!LLMx.isElement(e)) {
       return true;
     }
