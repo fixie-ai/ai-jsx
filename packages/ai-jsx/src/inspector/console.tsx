@@ -25,19 +25,15 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
 
     async function getAllFrames() {
       // This results in some duplicate pages.
-      const renderResult = renderContext.render(LLMx.createElement(DebugTree, {}, memoized));
-      for await (const page of renderResult) {
-        pushDebugTreeStep(page);
-      }
-      pushDebugTreeStep(await renderResult);
+      const finalResult = await renderContext.render(LLMx.createElement(DebugTree, {}, memoized), {
+        mapIntermediate: pushDebugTreeStep,
+      });
+      pushDebugTreeStep(finalResult);
       setDebugTreeStreamIsDone(true);
     }
     async function getRenderedContent() {
-      const renderResult = renderContext.render(memoized);
-      for await (const page of renderResult) {
-        setRenderedContent(page);
-      }
-      setRenderedContent(await renderResult);
+      const finalResult = await renderContext.render(memoized, { mapIntermediate: setRenderedContent });
+      setRenderedContent(finalResult);
     }
     getAllFrames();
     getRenderedContent();

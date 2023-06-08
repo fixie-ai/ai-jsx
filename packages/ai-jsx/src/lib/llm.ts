@@ -33,9 +33,9 @@ export interface Context<T> {
   [contextKey]: [T, symbol];
 }
 
-interface RenderOpts<T> {
-  stop?: false | ElementPredicate;
-  mapIntermediate?: (item: PartiallyRendered[]) => T;
+interface RenderOpts<TIntermediate, TFinal> {
+  stop?: TFinal extends string ? false : ElementPredicate;
+  mapIntermediate?: (item: TFinal) => TIntermediate;
 }
 
 interface RenderResult<TIntermediate, TFinal> {
@@ -44,8 +44,14 @@ interface RenderResult<TIntermediate, TFinal> {
 }
 
 export interface RenderContext {
-  render(renderable: Renderable, opts?: { stop?: false }): RenderResult<string, string>;
-  render<T = PartiallyRendered[]>(renderable: Renderable, opts: RenderOpts<T>): RenderResult<T, PartiallyRendered[]>;
+  render<TIntermediate = string>(
+    renderable: Renderable,
+    opts?: { stop?: false } & RenderOpts<TIntermediate, string>
+  ): RenderResult<TIntermediate, string>;
+  render<TIntermediate = PartiallyRendered[]>(
+    renderable: Renderable,
+    opts: RenderOpts<TIntermediate, PartiallyRendered[]>
+  ): RenderResult<TIntermediate, PartiallyRendered[]>;
 
   getContext<T>(ref: Context<T>): T;
 
@@ -228,45 +234,32 @@ export function createRenderContext(
   userContext: Record<symbol, any> = {}
 ): RenderContext {
   const context: RenderContext = {
-    render: <T>(renderable: Renderable, opts?: RenderOpts<T>): any => {
+    render: <TFinal extends string | PartiallyRendered[], TIntermediate>(
+      renderable: Renderable,
+      opts?: RenderOpts<TIntermediate, TFinal>
+    ): any => {
       let promiseResult = null as Promise<any> | null;
       let didReturnGenerator = false;
 
       // Construct the generator that handles the provided options
       const generator = (async function* () {
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-        const shouldStop = opts?.stop || (() => false);
+        const shouldStop = (opts?.stop || (() => false)) as ElementPredicate;
         const generator = render(context, renderable, shouldStop);
         while (true) {
           const next = await generator.next();
+          const value = opts && opts.stop ? (next.value as TFinal) : (next.value.join('') as TFinal);
+          if (next.done) {
+            if (promiseResult === null) {
+              promiseResult = Promise.resolve(value);
+            }
+            return value;
+          }
+
           if (opts?.mapIntermediate) {
-            // Streaming with stream map (implies partial rendering).
-            if (next.done) {
-              if (promiseResult === null) {
-                promiseResult = Promise.resolve(next.value);
-              }
-              return next.value;
-            }
-            yield opts.mapIntermediate(next.value);
-          } else if (opts?.stop) {
-            // Partial rendering.
-            if (next.done) {
-              if (promiseResult === null) {
-                promiseResult = Promise.resolve(next.value);
-              }
-              return next.value;
-            }
-            yield next.value;
+            yield opts.mapIntermediate(value);
           } else {
-            // Full rendering.
-            if (next.done) {
-              const result = next.value.join('');
-              if (promiseResult === null) {
-                promiseResult = Promise.resolve(result);
-              }
-              return result;
-            }
-            yield next.value.join('');
+            yield value;
           }
         }
       })();
