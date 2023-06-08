@@ -73,7 +73,6 @@ async function AIInterpretedReactComponents({ children }: { children: React.Reac
   }
 
   const rendered = await LLMx.createRenderContext().render(children);
-  // const rendered = response;
 
   let modelResponseJSON;
   try {
@@ -86,20 +85,25 @@ async function AIInterpretedReactComponents({ children }: { children: React.Reac
 }
 
 function AIStream({ children }: { children: React.ReactNode }) {
-  const maxIndex = 10000;
+  const maxIndex = 1000;
+  let highestIndexSeen = -1;
   const emitter = new EventEmitter();
 
   const stream = LLMx.createRenderContext().renderStream(children);
   function handleFrame({ value: frame, done }: { value: string; done: boolean }) {
     if (frame) {
       frame.split('').forEach((char, index) => {
+        highestIndexSeen = Math.max(highestIndexSeen, index);
         emitter.emit(`value-${index}`, char);
       });
     }
-    if (!done) {
+    if (done) {
+      // If we don't do this, we'll have a loading spinner in the browser tab.
+      for (let indexToNotify = highestIndexSeen + 1; indexToNotify < maxIndex; indexToNotify++) {
+        emitter.emit(`value-${indexToNotify}`, '');
+      }
+    } else {
       stream.next().then(handleFrame);
-
-      // TODO: I think we can fix the perpetual spinner if we resolve the rest of the characters here as well.
     }
   }
   stream.next().then(handleFrame);
