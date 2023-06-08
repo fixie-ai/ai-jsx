@@ -1,6 +1,6 @@
 import * as LLMx from '@fixieai/ai-jsx';
-import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/dist/cjs/core/completion';
-import { showInspector } from '@fixieai/ai-jsx/dist/cjs/inspector/console';
+import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
+import { showInspector } from '@fixieai/ai-jsx/core/inspector';
 
 function App() {
   return (
@@ -11,5 +11,4 @@ function App() {
   );
 }
 
-console.log(await LLMx.createRenderContext().render(<App />));
-// showInspector(<App />);
+showInspector(<App />);

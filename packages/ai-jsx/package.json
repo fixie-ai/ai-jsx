@@ -4,7 +4,32 @@
   "volta": {
     "extends": "../../package.json"
   },
-  "main": "dist/cjs/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./core/completion": {
+      "import": "./dist/esm/core/completion.js",
+      "require": "./dist/cjs/core/completion.js"
+    },
+    "./core/debug": {
+      "import": "./dist/esm/core/debug.js",
+      "require": "./dist/cjs/core/debug.js"
+    },
+    "./core/inline": {
+      "import": "./dist/esm/core/inline.js",
+      "require": "./dist/cjs/core/inline.js"
+    },
+    "./core/log": {
+      "import": "./dist/esm/core/log.js",
+      "require": "./dist/cjs/core/log.js"
+    },
+    "./core/inspector": {
+      "import": "./dist/esm/inspector/console.js",
+      "require": "./dist/cjs/inspector/console.js"
+    }
+  },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.1",
     "@types/eslint": "^8",
@@ -28,6 +53,7 @@
     "typescript": "^5.0.4",
     "write-json-file": "^5.0.0"
   },
+  "type": "module",
   "private": true,
   "scripts": {
     "demo:debate": "tsx src/examples/debate.tsx",
