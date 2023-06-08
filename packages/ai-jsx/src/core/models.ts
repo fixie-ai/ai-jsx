@@ -1,4 +1,5 @@
 import {
+  ChatCompletionResponseMessage,
   Configuration,
   CreateChatCompletionResponse,
   CreateCompletionResponse,
@@ -46,6 +47,9 @@ export type EmbeddingParams = Merge<
  */
 
 export interface ModelCallOptions {
+  /**
+   * A label for the call to be used in logging. The label does not have any other semantic meaning.
+   */
   callName?: string;
 }
 export type ModelResponse = CreateChatCompletionResponse | CreateCompletionResponse;
@@ -55,6 +59,12 @@ export function openAIEmbed(params: EmbeddingParams) {
 }
 
 // The return type annotation here seems like it should be unnecessary.
+/**
+ * Call the OpenAI Chat API to generate a response to a user message.
+ * You probably want to use the <ChatCompletion> component instead of using this directly.
+ *
+ * @see https://platform.openai.com/docs/api-reference/completions/create
+ */
 export function openAIChat(
   params: OpenAIChatParams,
   opts: ModelCallOptions = {}
@@ -73,6 +83,12 @@ export function openAIChat(
     return response.data;
   });
 }
+/**
+ * Call the OpenAI Chat API and stream the results via an async iterator.
+ *
+ * @see https://platform.openai.com/docs/api-reference/chat/create#chat/create-stream
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator
+ */
 openAIChat.stream = function (params: OpenAIChatParams, opts: ModelCallOptions = {}) {
   const paramsToUse = {
     ...omitKeysWithUndefinedValues(params),
@@ -87,13 +103,33 @@ openAIChat.stream = function (params: OpenAIChatParams, opts: ModelCallOptions =
     ...optsToUse,
   });
 };
+
+/**
+ * Call the OpenAI Chat API and stream the results via an async iterator.
+ *
+ * The iterator will emit a sequence of `ChatCompletionResponseMessage` objects.
+ * All objects refer to the same message, and will contain the accumulated response.
+ *
+ * ```js
+ *    {role: 'assistant', content: 'He'}
+ *    {role: 'assistant', content: 'Hello'}
+ *    {role: 'assistant', content: 'Hello, '}
+ *    {role: 'assistant', content: 'Hello, wor'}
+ *    {role: 'assistant', content: 'Hello, world'}
+ * ```
+ *
+ * @see https://platform.openai.com/docs/api-reference/chat/create#chat/create-stream
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator
+ */
 openAIChat.simpleStream = async function* (params: OpenAIChatParams, opts: ModelCallOptions = {}) {
   const paramsToUse = {
     ...omitKeysWithUndefinedValues(params),
     stream: true,
   };
   // Is this necessary? Will the currently streaming message ever be anything other than the assistant?
-  const currentlyStreamingMessage = {
+  const currentlyStreamingMessage: Partial<ChatCompletionResponseMessage> = {
+    // This will be set before being returned to the caller.
+    // @ts-expect-error
     role: '',
     content: '',
   };
@@ -116,6 +152,13 @@ openAIChat.simpleStream = async function* (params: OpenAIChatParams, opts: Model
 };
 
 // The return type annotation here seems like it should be unnecessary.
+/**
+ * Call the OpenAI Completion API to generate a response to a prompt.
+ *
+ * You probably want to use the Chat API instead, because the models are more powerful. You also probably want to use the <Completion> component, rather than calling this directly.
+ *
+ * @see openAIChat
+ */
 export function openAICompletion(
   params: OpenAICompletionParams,
   opts: ModelCallOptions
@@ -137,6 +180,25 @@ export function openAICompletion(
   });
 }
 
+/**
+ * Call the OpenAI Completion API and stream the results via an async iterator.
+ *
+ * The iterator will emit the accumulated response as a string.
+ *
+ * ```
+ *  'He'
+ *  'Hello'
+ *  'Hello, '
+ *  'Hello, wor'
+ *  'Hello, world'
+ * ```
+ *
+ * You probably want to use the Chat API instead, because the models are more powerful. You also probably want to use the <Completion> component, rather than calling this directly.
+ *
+ * @see https://platform.openai.com/docs/api-reference/completions/create
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator
+ */
+// Why is this a generator if it only yields once?
 openAICompletion.simple = async function* simple(params: OpenAICompletionParams, opts: ModelCallOptions = {}) {
   if (params.n) {
     throw new Error('simple only returns a single choice. Use stream for multiple choices.');
@@ -147,6 +209,14 @@ openAICompletion.simple = async function* simple(params: OpenAICompletionParams,
 
 // Instead of async iterators, maybe we actually want to use streams.
 
+/**
+ * Call the OpenAI Completion API and stream the results via an async iterator.
+ *
+ * You probably want to use the Chat API instead, because the models are more powerful. You also probably want to use the <Completion> component, rather than calling this directly.
+ *
+ * @see https://platform.openai.com/docs/api-reference/completions/create#completions/create-stream
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator
+ */
 openAICompletion.stream = function stream(params: OpenAICompletionParams, opts: ModelCallOptions = {}) {
   const paramsToUse = {
     ...omitKeysWithUndefinedValues(params),
@@ -165,6 +235,14 @@ openAICompletion.stream = function stream(params: OpenAICompletionParams, opts: 
   );
 };
 
+/**
+ * Call the OpenAI Completion API and stream the results via an async iterator.
+ *
+ * You probably want to use the Chat API instead, because the models are more powerful. You also probably want to use the <Completion> component, rather than calling this directly.
+ *
+ * @see https://platform.openai.com/docs/api-reference/completions/create#completions/create-stream
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/AsyncIterator
+ */
 openAICompletion.simpleStream = async function* simpleStream(
   params: OpenAICompletionParams,
   opts: ModelCallOptions = {}
@@ -252,7 +330,10 @@ async function* openAICallToAsyncIterator(
 }
 
 /**
- * This only works for OpenAI (?)
+ * Given a set of tokens, produce a [logit_bias](https://platform.openai.com/docs/api-reference/completions/create#completions/create-logit_bias) parameter that can be passed to OpenAI's API.
+ * (This may work for other model providers as well.)
+ *
+ * Logit bias is used to constrain the model's output. For instance, you can make the model more or less likely to output a token like "the".
  */
 export function logitBiasOfTokens(tokens: Record<string, number>) {
   // @ts-expect-error
