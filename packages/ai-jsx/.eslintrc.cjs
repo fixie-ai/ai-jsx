@@ -28,6 +28,7 @@ module.exports = {
 
     'no-trailing-spaces': 'warn',
     'no-else-return': ['warn', { allowElseIf: false }],
+    'no-constant-condition': ['error', { checkLoops: false }],
 
     // Disable style rules to let prettier own it
     'object-curly-spacing': 'off',

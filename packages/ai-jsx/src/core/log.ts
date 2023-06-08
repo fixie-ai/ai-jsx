@@ -31,7 +31,7 @@ export type LogPhaseMetadata = { phase: string } & LogMetadata;
 export type PhaseFunction<Result, ExtraData extends Record<string, unknown> = Record<string, unknown>> = (
   logProgress: (metadata: Record<string, unknown>, label?: string) => void,
   setAdditionalLogData: (extraDataToSet: ExtraData) => void
-) => Promise<Result>;
+) => PromiseLike<Result>;
 
 interface PinoMessage {
   level: number;

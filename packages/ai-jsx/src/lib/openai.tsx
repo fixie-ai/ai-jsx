@@ -79,7 +79,7 @@ export async function* OpenAICompletionModel(
     yield `${accumulatedResponse}█`;
   }
 
-  yield accumulatedResponse;
+  return accumulatedResponse;
 }
 
 function logitBiasOfTokens(tokens: Record<string, number>) {
@@ -101,14 +101,13 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
 
 export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & { model: ValidChatModel; logitBias?: Record<string, number> },
-  { render, partialRender }: RenderContext
+  { render }: RenderContext
 ) {
   yield '▁';
 
-  const messageElements = await partialRender(
-    props.children,
-    (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage
-  );
+  const messageElements = await render(props.children, {
+    stop: (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage,
+  });
 
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
     messageElements.filter(LLMx.isElement).map(async (message) => {
@@ -152,5 +151,5 @@ export async function* OpenAIChatModel(
     yield `${partialMessage.content}█`;
   }
 
-  yield lastMessage;
+  return lastMessage;
 }

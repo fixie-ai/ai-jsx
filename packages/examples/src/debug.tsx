@@ -1,7 +1,6 @@
 import * as LLMx from '@fixieai/ai-jsx';
 import { SystemMessage } from '@fixieai/ai-jsx/core/completion';
 import { DebugTree } from '@fixieai/ai-jsx/core/debug';
-import { showInspector } from '@fixieai/ai-jsx/core/inspector';
 
 // A component that demonstrates a dynamically expanding tree with different types of props.
 function SystemMessages(props: {
@@ -35,4 +34,9 @@ function App() {
   );
 }
 
-showInspector(<App />);
+const finalResult = await LLMx.createRenderContext().render(<App />, {
+  map(frame) {
+    console.log(`Frame:\n${frame}\n`);
+  },
+});
+console.log(`Final:\n${finalResult}`);
