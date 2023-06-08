@@ -9,15 +9,11 @@ export interface Element<P extends object> {
   [attachedContext]?: RenderContext;
 }
 
-export interface ReactComponentAsSeenByLLMx {
-  readonly $$typeof: symbol;
-  type: {
-    name: string;
-  };
-  props: Record<string, any>;
+export interface IndirectNode {
+  _magic: never;
 }
 
-export type Node = Element<any> | Literal | Node[] | ReactComponentAsSeenByLLMx;
+export type Node = Element<any> | Literal | Node[] | IndirectNode;
 
 interface RenderableStream {
   [Symbol.asyncIterator]: () => AsyncIterator<Renderable, Renderable>;
@@ -170,12 +166,19 @@ export function createContext<T>(defaultValue: T): Context<T> {
   return ctx;
 }
 
-/**
- * This is a very hacky way to "dehydrate" a React component into a prompt.
- */
-export function hackyDehydrate(renderable: ReactComponentAsSeenByLLMx): string {
-  return `<${renderable.type.name}>${renderable.props.children}</${renderable.type.name}>}`;
+const indirectWeakMap = new WeakMap<IndirectNode, Node>();
+export function isIndirectNode(value: unknown): value is IndirectNode {
+  return indirectWeakMap.has(value as IndirectNode);
 }
+
+export function getIndirectNode(value: IndirectNode): Node {
+  return indirectWeakMap.get(value) as Node;
+}
+
+export function setIndirectNode(value: IndirectNode, node: Node) {
+  indirectWeakMap.set(value, node);
+}
+
 async function* renderStream(
   context: RenderContext,
   renderable: Renderable,
@@ -196,8 +199,8 @@ async function* renderStream(
   if (typeof renderable === 'undefined' || typeof renderable === 'boolean' || renderable === null) {
     return [];
   }
-  if ('$$typeof' in renderable) {
-    yield [hackyDehydrate(renderable)];
+  if (isIndirectNode(renderable)) {
+    return yield* context.render(getIndirectNode(renderable), recursiveRenderOpts);
   }
   if (Array.isArray(renderable)) {
     interface InProgressRender {
@@ -286,9 +289,11 @@ async function* renderStream(
     }
   }
 
+  if (!('then' in renderable)) {
+    throw new Error(`AI.JSX bug: unexpected renderable type: ${JSON.stringify(renderable)}`);
+  }
   // N.B. Because RenderResults are both AsyncIterable _and_ PromiseLikes, this means that an async component that returns the result
   // of a render call will not stream; it will effectively be `await`ed by default.
-  // @ts-expect-error
   const nextRenderable = await renderable.then((r) => r as Exclude<Renderable, PromiseLike<Renderable>>);
   return yield* context.render(nextRenderable, recursiveRenderOpts);
 }

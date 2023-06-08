@@ -11,9 +11,12 @@ export function memo(renderable: Renderable): Node {
   if (typeof renderable !== 'object' || renderable === null) {
     return renderable;
   }
-  if ('$$typeof' in renderable) {
-    return LLMx.hackyDehydrate(renderable);
+  if (LLMx.isIndirectNode(renderable)) {
+    const memoized = memo(LLMx.getIndirectNode(renderable));
+    LLMx.setIndirectNode(renderable, memoized);
+    return renderable;
   }
+
   if (Array.isArray(renderable)) {
     return renderable.map(memo);
   }

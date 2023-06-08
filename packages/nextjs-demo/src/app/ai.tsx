@@ -2,8 +2,7 @@
 // @ts-expect-error
 import * as LLMx from '@fixieai/ai-jsx';
 import React from './react';
-
-import { Suspense } from 'react';
+import { Suspense, ReactNode } from 'react';
 import { EventEmitter } from 'stream';
 import _ from 'lodash';
 import Image from 'next/image';
@@ -27,12 +26,12 @@ function Defer(props: { emitter: any; index: number }) {
   });
 }
 
-async function AIDirectToDOM({ children }: { children: React.ReactNode }) {
+async function AIDirectToDOM({ children }: { children: ReactNode }) {
   const rendered = await LLMx.createRenderContext().render(children as LLMx.Renderable);
   return <div className="contents-generated-by-ai-buckle-up-buddy" dangerouslySetInnerHTML={{ __html: rendered }} />;
 }
 
-async function AIInterpretedReactComponents({ children }: { children: React.ReactNode }) {
+async function AIInterpretedReactComponents({ children }: { children: ReactNode }) {
   // TODO: Pull this automatically from the input that was passed.
   const possibleComponents = {
     Recipe,
@@ -106,7 +105,8 @@ function AIStream({ children }: { children: React.ReactNode }) {
         });
       },
     })
-    .then(() => {
+    .then((finalResult) => {
+      console.log('finalResult', JSON.stringify(finalResult));
       // If we don't do this, we'll have a loading spinner in the browser tab.
       for (let indexToNotify = highestIndexSeen + 1; indexToNotify < maxIndex; indexToNotify++) {
         emitter.emit(`value-${indexToNotify}`, '');

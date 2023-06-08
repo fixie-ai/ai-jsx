@@ -3,6 +3,8 @@ import React from 'react';
 // @ts-expect-error
 import * as LLMx from '@fixieai/ai-jsx';
 
+// We would like to find a way to eliminate the need for this list.
+// This is only needed in the case where you are nesting React components inside your LLMx components.
 const knownLLMxTags = [
   'ChatCompletion',
   'UserMessage',
@@ -16,17 +18,22 @@ const knownLLMxTags = [
   'ZeppHealth',
 ];
 
+function AIDehydrate({ reactElement }: { reactElement: any }) {
+  return `<${reactElement.type.name}>${reactElement.props.children}</${reactElement.type.name}>`;
+}
+
 const monkeyPatchedReact = {
   ...React,
   createElement(...args: Parameters<typeof React.createElement>) {
     const tag = args[0];
-    return typeof tag !== 'string' && knownLLMxTags.includes(tag.name)
-      ? LLMx.createElement(
-          // TS isn't smart enough to narrow the types and realize that `args[0]` is not a string.
-          // @ts-expect-error
-          ...args
-        )
-      : React.createElement(...args);
+    const reactElement = React.createElement(...args);
+    const llmxElement = LLMx.createElement(...args);
+    const isLLmxElement = typeof tag !== 'string' && knownLLMxTags.includes(tag.name);
+    const indirectNode = isLLmxElement
+      ? llmxElement
+      : LLMx.createElement(AIDehydrate, { reactElement, ...args[1] }, ...args.slice(2));
+    LLMx.setIndirectNode(reactElement, indirectNode);
+    return reactElement;
   },
 };
 
