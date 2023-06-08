@@ -51,5 +51,5 @@ Some key demos:
 To run the NextJS demo:
 
 ```
-yarn turbo run dev --scope nextjs-demo
+GITHUB_TOKEN=my_token yarn turbo run dev --scope nextjs-demo
 ```
