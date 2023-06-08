@@ -102,7 +102,6 @@ export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & { model: ValidChatModel; logitBias?: Record<string, number> },
   { render, partialRender }: RenderContext
 ) {
-
   const messageElements = await partialRender(
     props.children,
     (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage

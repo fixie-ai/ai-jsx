@@ -10,7 +10,10 @@ export default async function Home(props) {
   return (
     <>
       <InputPrompt label="Search the GitHub API for this topic" defaultValue={defaultValue} />
-      <p className='mt-4 bg-white p-4 w-full rounded-md'>If this page fails, it's generally because the model produced output in a shape we weren't expecting. (For instance, a malformed GraphQL query.)</p>
+      <p className="mt-4 bg-white p-4 w-full rounded-md">
+        If this page fails, it's generally because the model produced output in a shape we weren't expecting. (For
+        instance, a malformed GraphQL query.)
+      </p>
       <ResultContainer
         title={`Natural Language GitHub Search for: "${githubTopic}"`}
         description="AI has been asked to output prose"

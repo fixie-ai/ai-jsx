@@ -138,8 +138,7 @@ async function* partialRenderStream(
   } else if ('$$typeof' in renderable) {
     // console.log('dehydrate ===================')
     yield [hackyDehydrate(renderable)];
-  }
-  else if (Array.isArray(renderable)) {
+  } else if (Array.isArray(renderable)) {
     interface InProgressRender {
       generator: AsyncGenerator<PartiallyRendered[]>;
       currentValue: PartiallyRendered[];
