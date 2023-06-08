@@ -8,7 +8,8 @@
     "test": "tsc -p .",
     "start": "next start",
     "lint": "next lint --max-warnings 0",
-    "lint:fix": "yarn lint --fix"
+    "lint:fix": "yarn lint --fix",
+    "postinstall": "test \"$CI\" != \"true\" && sed -i '' 's/runtime: \"automatic\"/runtime: \"classic\"/g' node_modules/next/dist/build/babel/preset.js"
   },
   "dependencies": {
     "@fixieai/ai-jsx": "1.0.0",
