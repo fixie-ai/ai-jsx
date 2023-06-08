@@ -288,6 +288,7 @@ async function* renderStream(
 
   // N.B. Because RenderResults are both AsyncIterable _and_ PromiseLikes, this means that an async component that returns the result
   // of a render call will not stream; it will effectively be `await`ed by default.
+  // @ts-expect-error
   const nextRenderable = await renderable.then((r) => r as Exclude<Renderable, PromiseLike<Renderable>>);
   return yield* context.render(nextRenderable, recursiveRenderOpts);
 }

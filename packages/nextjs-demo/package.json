@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint --max-warnings 0",
     "lint:fix": "yarn lint --fix",
-    "postinstall": "test \"$CI\" != \"true\" && sed -i '' 's/runtime: \"automatic\"/runtime: \"classic\"/g' node_modules/next/dist/build/babel/preset.js || true"
+    "postinstall": "./hack-node-modules.bash"
   },
   "dependencies": {
     "@fixieai/ai-jsx": "1.0.0",
@@ -21,6 +21,7 @@
     "classnames": "^2.3.2",
     "eslint": "8.42.0",
     "eslint-config-next": "13.4.4",
+    "examples": "1.0.0",
     "next": "13.4.4",
     "postcss": "8.4.24",
     "react": "18.2.0",

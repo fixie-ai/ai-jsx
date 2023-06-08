@@ -13,6 +13,7 @@ const knownLLMxTags = [
   'DogNames',
   'FormatAsHtml',
   'FormatAsProse',
+  'ZeppHealth',
 ];
 
 const monkeyPatchedReact = {

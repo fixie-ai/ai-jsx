@@ -2,6 +2,8 @@ import * as LLMx from '@fixieai/ai-jsx';
 import { stringify as csvStringify } from 'csv-stringify/sync';
 import log from '@fixieai/ai-jsx/core/log';
 import { showInspector } from '@fixieai/ai-jsx/core/inspector';
+// This errors due to an ESM issue. I don't know what the right way to fix it is.
+// @ts-expect-error
 import ZeppHealth from './zepp';
 
 // https://github.com/fixie-ai/Zhealth/blob/main/test_zhealth.ipynb
