@@ -12,7 +12,7 @@ export default function NavBar() {
     'Basic Completion': '/basic-completion',
     'JIT UI: React': '/recipe',
     'JIT UI: Raw HTML': '/nl-gh-search',
-    'Sleep': '/z',
+    Sleep: '/z',
   };
 
   return (

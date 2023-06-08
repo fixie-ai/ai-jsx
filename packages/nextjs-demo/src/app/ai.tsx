@@ -97,20 +97,22 @@ function AIStream({ children }: { children: React.ReactNode }) {
   let highestIndexSeen = -1;
   const emitter = new EventEmitter();
 
-  LLMx.createRenderContext().render(children as LLMx.Renderable, {
-    map: frame => {
-      frame.split('').forEach((char, index) => {
-        highestIndexSeen = Math.max(highestIndexSeen, index);
-        emitter.emit(`value-${index}`, char);
-      });
-    }
-  }).then(() => {
-    // If we don't do this, we'll have a loading spinner in the browser tab.
-    for (let indexToNotify = highestIndexSeen + 1; indexToNotify < maxIndex; indexToNotify++) {
-      emitter.emit(`value-${indexToNotify}`, '');
-    }
-  });
-  
+  LLMx.createRenderContext()
+    .render(children as LLMx.Renderable, {
+      map: (frame) => {
+        frame.split('').forEach((char, index) => {
+          highestIndexSeen = Math.max(highestIndexSeen, index);
+          emitter.emit(`value-${index}`, char);
+        });
+      },
+    })
+    .then(() => {
+      // If we don't do this, we'll have a loading spinner in the browser tab.
+      for (let indexToNotify = highestIndexSeen + 1; indexToNotify < maxIndex; indexToNotify++) {
+        emitter.emit(`value-${indexToNotify}`, '');
+      }
+    });
+
   return (
     <>
       {_.range(maxIndex).map((i) => (
