@@ -6,15 +6,14 @@
 
 ## JSX Hackery
 
-In order to make this work, I changed `src/examples/nextjs/node_modules/next/dist/build/babel/preset.js` to use `classic` instead of `automatic` here:
+The dev has to import `src/examples/nextjs/src/app/react.ts` instead of the normal `react` anywhere they want to use both React and AI.JSX in the same tree. And that file needs to keep `knownLLMxTags` updated.
 
-```js
-...useJsxRuntime ? {
-    runtime: "classic"
-}
-```
+### Next Fork
+We need to make a small change to the NextJS build system for this to work.
 
-The dev also has to import `src/examples/nextjs/src/app/react.ts` instead of the normal `react` anywhere they want to use both React and AI.JSX in the same tree. And that file needs to keep `knownLLMxTags` updated.
+1. I first tried to add NextJS as a submodule, but that felt like overkill for the one-line change we needed to make. (If we do go down this path, we should use shallow cloning to avoid adding 1.5gb to this repo.)
+1. I then tried to publish my own NextJS fork, but the NextJS build system threw errors that I couldn't resolve after ten minutes of trying.
+1. So I landed on a `postinstall` script that edits `node_modules` manually. 😈
 
 ## Misc
 

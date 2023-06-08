@@ -7,7 +7,8 @@
     "build": "next build",
     "test": "tsc -p .",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "sed -i '' 's/runtime: \"automatic\"/runtime: \"classic\"/g' node_modules/next/dist/build/babel/preset.js"
   },
   "dependencies": {
     "@fixieai/ai-jsx": "1.0.0",
