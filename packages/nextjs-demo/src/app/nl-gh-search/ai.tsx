@@ -18,13 +18,11 @@ function QueryGitHub({ query }: { query: string }) {
   );
 }
 
-const ghToken = process.env.GITHUB_TOKEN;
-if (!ghToken) {
-  throw new Error('Please set the GITHUB_TOKEN environment variable.');
-}
-
 async function FetchGitHubGraphQL({ graphQLQuery }: { graphQLQuery: LLMx.Node }, context: LLMx.RenderContext) {
-  console.log(context);
+  const ghToken = process.env.GITHUB_TOKEN;
+  if (!ghToken) {
+    throw new Error('Please set the GITHUB_TOKEN environment variable.');
+  }
   let cleanedQuery = await context.render(graphQLQuery);
   // We can't get the model to stop giving us backticks, so we'll just strip them out.
   if (cleanedQuery.startsWith('```')) {
