@@ -125,7 +125,7 @@ export async function* DebugTree(props: { children: LLMx.Node }, { render }: LLM
 
     current = yield* render(current, {
       stop: shouldStop,
-      mapIntermediate: (frame) => debug(<DebugTree {...props}>{frame}</DebugTree>),
+      map: (frame) => debug(<DebugTree {...props}>{frame}</DebugTree>),
     });
 
     if (elementToRender === null) {

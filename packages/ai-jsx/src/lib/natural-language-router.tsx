@@ -17,7 +17,7 @@ export async function* NaturalLanguageRouter(
 ) {
   const renderedChildren: LLMx.Node[] = yield* render(props.children, {
     stop: (el) => el.tag === Route,
-    mapIntermediate: (nodes) => _.reject(nodes, LLMx.isElement),
+    map: (nodes) => _.reject(nodes, LLMx.isElement),
   });
   const whenOptionsFromThisRenderedChildren = _.compact(
     renderedChildren

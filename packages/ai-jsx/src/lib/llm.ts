@@ -35,7 +35,7 @@ export interface Context<T> {
 
 interface RenderOpts<TIntermediate, TFinal> {
   stop?: TFinal extends string ? false : ElementPredicate;
-  mapIntermediate?: (item: TFinal) => TIntermediate;
+  map?: (item: TFinal) => TIntermediate;
 }
 
 interface RenderResult<TIntermediate, TFinal> {
@@ -256,8 +256,8 @@ export function createRenderContext(
             return value;
           }
 
-          if (opts?.mapIntermediate) {
-            yield opts.mapIntermediate(value);
+          if (opts?.map) {
+            yield opts.map(value);
           } else {
             yield value;
           }
