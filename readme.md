@@ -31,6 +31,9 @@ Our primary means of manual verification that things are working is the demos. Y
 Run a demo like this:
 
 ```
+# Build the ai-jsx package.
+yarn workspace @fixieai/ai-jsx run build
+
 # Replace demo:loop with the name of your demo
 yarn workspace examples run demo:loop
 ```
