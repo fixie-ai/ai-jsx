@@ -2,6 +2,8 @@
 
 This won't deploy to Vercel because we haven't published @fixieai/ai-jsx yet.
 
+The types are all broken, but we may be able to fix it with https://devblogs.microsoft.com/typescript/announcing-typescript-5-1/#decoupled-type-checking-between-jsx-elements-and-jsx-tag-types and the other new features in TS 5.1.
+
 ### Interactivity
 
 To make the generated AI components interactive, we need to use client (rather than server) components. When I tried to do this, I ran into issues. I don't think they're worth sorting now, as it would be a rabbit hole. I think we can get the same overall effect with pure client components, which I'll explore in a later PR. I also don't think this indicates a fundamental flaw in the approach.
