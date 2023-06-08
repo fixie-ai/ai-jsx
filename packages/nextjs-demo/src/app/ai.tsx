@@ -1,0 +1,136 @@
+import * as LLMx from '@fixieai/ai-jsx';
+import React from './react';
+
+import { Suspense } from 'react';
+import { EventEmitter } from 'stream';
+import _ from 'lodash';
+import Image from 'next/image';
+import {
+  Recipe,
+  RecipeIngredientList,
+  RecipeInstructionList,
+  RecipeIngredientListItem,
+  RecipeInstructionListItem,
+  RecipeTitle,
+  SelectIngredientsButton,
+} from './recipe/page';
+
+function Loading() {
+  return <Image src="/loading.gif" width={100} height={100} alt="loading" />;
+}
+
+async function Defer(props: { emitter: any; index: number }) {
+  return await new Promise((resolve) => {
+    props.emitter.once(`value-${props.index}`, resolve);
+  });
+}
+
+async function AIDirectToDOM({ children }: { children: React.ReactNode }) {
+  const rendered = await LLMx.createRenderContext().render(children);
+  return <div className="contents-generated-by-ai-buckle-up-buddy" dangerouslySetInnerHTML={{ __html: rendered }} />;
+}
+
+async function AIInterpretedReactComponents({ children }: { children: React.ReactNode }) {
+  // TODO: Pull this automatically from the input that was passed.
+  const possibleComponents = {
+    Recipe,
+    RecipeTitle,
+    RecipeInstructionList,
+    RecipeIngredientList,
+    RecipeInstructionListItem,
+    RecipeIngredientListItem,
+    SelectIngredientsButton,
+  };
+
+  function parseJsonToReact(json: any) {
+    if (!json) return null;
+
+    const Component = possibleComponents[json.name];
+
+    if (!Component) {
+      console.warn(`Component not found for ${json.name}`);
+      return null;
+    }
+
+    if (!json.children) {
+      throw new Error(`unrecognized JSON: ${JSON.stringify(json)}`);
+    }
+
+    const children = json.children?.map((child) => {
+      if (typeof child === 'string') {
+        return child;
+      } else {
+        return parseJsonToReact(child);
+      }
+    });
+
+    return <Component>{children}</Component>;
+  }
+
+  const rendered = await LLMx.createRenderContext().render(children);
+  // const rendered = response;
+
+  let modelResponseJSON;
+  try {
+    modelResponseJSON = JSON.parse(rendered);
+  } catch (e) {
+    console.error(`Failed to parse JSON from model response: ${rendered}`, e);
+    return response;
+  }
+  return parseJsonToReact(modelResponseJSON);
+}
+
+function AIStream({ children }: { children: React.ReactNode }) {
+  const maxIndex = 10000;
+  const emitter = new EventEmitter();
+
+  const stream = LLMx.createRenderContext().renderStream(children);
+  function handleFrame({ value: frame, done }: { value: string; done: boolean }) {
+    if (frame) {
+      frame.split('').forEach((char, index) => {
+        emitter.emit(`value-${index}`, char);
+      });
+    }
+    if (!done) {
+      stream.next().then(handleFrame);
+    }
+  }
+  stream.next().then(handleFrame);
+
+  return (
+    <>
+      {_.range(maxIndex).map((i) => (
+        <Suspense>
+          <Defer emitter={emitter} index={i} />
+        </Suspense>
+      ))}
+    </>
+  );
+}
+
+export async function AI({
+  children,
+  renderDirectlyIntoDOM,
+  renderPassedReactComponents,
+}: {
+  children: React.ReactNode;
+  renderDirectlyIntoDOM?: boolean;
+  renderPassedReactComponents?: boolean;
+}) {
+  if (renderPassedReactComponents) {
+    return (
+      <Suspense fallback={<Loading />}>
+        <AIInterpretedReactComponents>{children}</AIInterpretedReactComponents>
+      </Suspense>
+    );
+  }
+  if (renderDirectlyIntoDOM) {
+    return (
+      <Suspense fallback={<Loading />}>
+        <AIDirectToDOM>{children}</AIDirectToDOM>
+      </Suspense>
+    );
+  }
+
+  return <AIStream>{children}</AIStream>;
+}
