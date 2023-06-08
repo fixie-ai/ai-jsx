@@ -53,6 +53,7 @@
     "typescript": "^5.0.4",
     "write-json-file": "^5.0.0"
   },
+  "type": "module",
   "private": true,
   "scripts": {
     "demo:debate": "tsx src/examples/debate.tsx",
