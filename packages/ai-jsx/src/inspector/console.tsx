@@ -90,6 +90,12 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
   );
 }
 
+/**
+ * Take over the command line and render an interactive debug tool. The left side shows the streamed final output, and
+ * the right side shows the debug tree. You can use the arrow keys to step through the debug tree, to see how your program was evaluated step by step.
+ *
+ * @see DebugTree
+ */
 export function showInspector(componentToInspect: Node, opts: { showDebugTree?: boolean } = {}) {
   const defaultOpts = { showDebugTree: true };
   const finalOpts = { ...defaultOpts, ...opts };
