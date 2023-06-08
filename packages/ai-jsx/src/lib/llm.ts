@@ -291,9 +291,9 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
       const generator = (async function* () {
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         const shouldStop = (opts?.stop || (() => false)) as ElementPredicate;
-        const generator = render(context, renderable, shouldStop);
+        const generatorToWrap = render(context, renderable, shouldStop);
         while (true) {
-          const next = await generator.next();
+          const next = await generatorToWrap.next();
           const value = opts?.stop ? (next.value as TFinal) : (next.value.join('') as TFinal);
           if (next.done) {
             if (promiseResult === null) {
