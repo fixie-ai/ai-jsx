@@ -1,6 +1,6 @@
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion';
-import * as LLMx from '..';
-import { Node, RenderContext } from '..';
+import * as LLMx from '../index.js';
+import { Node, RenderContext } from '../index.js';
 import { MergeExclusive } from 'type-fest';
 import _ from 'lodash';
 

@@ -1,6 +1,6 @@
 /** @jsx React.createElement */
-import * as LLMx from '..';
-import { Node } from '..';
+import * as LLMx from '../index.js';
+import { Node } from '../index.js';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useState, useEffect } from 'react';
 import reactUse from 'react-use';

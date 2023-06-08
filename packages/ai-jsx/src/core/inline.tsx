@@ -1,4 +1,4 @@
-import { Node } from '..';
+import { Node } from '../index.js';
 import { memo } from './memoize';
 
 export function Inline(props: { children: (Node | ((prefix: Node) => Node))[] }) {

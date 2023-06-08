@@ -2,6 +2,7 @@ import { showInspector } from '@fixieai/ai-jsx/core/inspector';
 import * as LLMx from '@fixieai/ai-jsx';
 import { Completion } from '@fixieai/ai-jsx/core/completion';
 import { Inline } from '@fixieai/ai-jsx/core/inline';
+import { Node, RenderContext } from '@fixieai/ai-jsx';
 
 const Temperature = LLMx.createContext(0.0);
 

@@ -1,5 +1,5 @@
-import * as LLMx from '..';
-import { Node, Component, RenderContext } from '..';
+import * as LLMx from '../index.js';
+import { Node, Component, RenderContext } from '../index.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai';
 
 export interface ModelProps {
