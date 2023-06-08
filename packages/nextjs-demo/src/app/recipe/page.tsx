@@ -70,9 +70,7 @@ export default function RecipeWrapper({ searchParams }: { searchParams: any }) {
     <>
       <InputPrompt label="What would you like a recipe for?" defaultValue={defaultValue} />
 
-      <ResultContainer
-        title={`AI comes up with a recipe for ${query}`}
-      >
+      <ResultContainer title={`AI comes up with a recipe for ${query}`}>
         <AI renderPassedReactComponents>
           <ChatCompletion temperature={1}>
             <SystemMessage>

@@ -17,7 +17,9 @@ const monkeyPatchedReact = {
   ...React,
   createElement(...args: Parameters<typeof React.createElement>) {
     const tag = args[0];
-    return typeof tag !== 'string' && knownLLMxTags.includes(tag.name) ? LLMx.createElement(...args) : React.createElement(...args);
+    return typeof tag !== 'string' && knownLLMxTags.includes(tag.name)
+      ? LLMx.createElement(...args)
+      : React.createElement(...args);
   },
 };
 
