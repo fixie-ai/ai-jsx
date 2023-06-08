@@ -59,6 +59,7 @@ export async function* OpenAICompletionModel(
   props: ModelPropsWithChildren & { model: ValidCompletionModel },
   { render }: RenderContext
 ) {
+  yield '';
   let prompt = await render(props.children);
   while (prompt.length > 0 && prompt.endsWith(' ')) {
     prompt = prompt.slice(0, prompt.length - 1);
@@ -105,7 +106,7 @@ export async function* OpenAIChatModel(
   const messageElements = await render(props.children, {
     stop: (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage,
   });
-
+  yield '';
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
     messageElements.filter(LLMx.isElement).map(async (message) => {
       switch (message.tag) {

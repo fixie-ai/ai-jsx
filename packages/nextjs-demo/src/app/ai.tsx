@@ -105,7 +105,7 @@ function AIStream({ children }: { children: React.ReactNode }) {
         });
       },
     })
-    .then((finalResult) => {
+    .then(() => {
       // If we don't do this, we'll have a loading spinner in the browser tab.
       for (let indexToNotify = highestIndexSeen + 1; indexToNotify < maxIndex; indexToNotify++) {
         emitter.emit(`value-${indexToNotify}`, '');

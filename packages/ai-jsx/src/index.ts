@@ -9,7 +9,7 @@ export interface Element<P extends object> {
   [attachedContext]?: RenderContext;
 }
 
-export interface IndirectNode {
+interface IndirectNode {
   _magic: never;
 }
 

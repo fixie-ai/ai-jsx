@@ -23,12 +23,21 @@ const monkeyPatchedReact = {
   createElement(...args: Parameters<typeof React.createElement>) {
     const tag = args[0];
     const reactElement = React.createElement(...args);
-    const llmxElement = LLMx.createElement(...args);
+    const llmxElement = LLMx.createElement(...(args as unknown as Parameters<typeof LLMx.createElement>));
     const isEmbeddableReactElement = typeof tag === 'string' || embeddableReactTags.includes(tag.name);
     const indirectNode = isEmbeddableReactElement
-      ? LLMx.createElement(AIDehydrate, { reactElement, ...args[1] }, ...args.slice(2))
+      ? LLMx.createElement(
+          // @ts-expect-error
+          AIDehydrate,
+          { reactElement, ...args[1] },
+          ...args.slice(2)
+        )
       : llmxElement;
-    LLMx.setIndirectNode(reactElement, indirectNode);
+    LLMx.setIndirectNode(
+      // @ts-expect-error
+      reactElement,
+      indirectNode
+    );
     return reactElement;
   },
 };

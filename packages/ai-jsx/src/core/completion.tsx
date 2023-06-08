@@ -145,7 +145,7 @@ export function AssistantMessage({ children }: { children: Node }) {
 /**
  * Perform a model call to do a [completion](https://platform.openai.com/docs/guides/gpt/completions-api).
  *
- * In general, you should prefer to use ChatCompletion instead of Completion, because ChatCompletion uses GPT-4, which is more powerful than any Completion model.
+ * In general, you should prefer to use ChatCompletion instead of Completion, because ChatCompletion uses better models.
  *
  * @example
  *    <Completion>
@@ -168,6 +168,18 @@ export function Completion(
 
 /**
  * Perform a model call to do [chat completion](https://platform.openai.com/docs/guides/gpt/chat-completions-api).
+ *
+ * Every child of ChatCompletion must something that renders to a SystemMessage, UserMessage, or AssistantMessage.
+ *
+ * @example
+ *    function MyUserMessage() {
+ *     return <UserMessage>Hi, I'm a user message.</UserMessage>;
+ *    }
+ *
+ *    <ChatCompletion>
+ *      <SystemMessage>You are a nice person.</SystemMessage>
+ *      {/* This is fine, because MyUserMessage renders to a UserMessage. *}
+ *      <MyUserMessage />
  */
 export function ChatCompletion(
   { children, ...props }: ModelPropsWithChildren & Record<string, unknown>,
