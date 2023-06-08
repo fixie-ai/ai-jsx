@@ -4,12 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "our-build": "next build",
+    "build": "next build",
     "test": "tsc -p .",
     "start": "next start",
     "lint": "next lint --max-warnings 0",
-    "lint:fix": "yarn lint --fix",
-    "postinstall": "sed -i '' 's/runtime: \"automatic\"/runtime: \"classic\"/g' node_modules/next/dist/build/babel/preset.js"
+    "lint:fix": "yarn lint --fix"
   },
   "dependencies": {
     "@fixieai/ai-jsx": "1.0.0",
