@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 import _ from 'lodash';
-import prettyMs from 'pretty-ms';
 import { findUpSync } from 'find-up';
 import { loadJsonFileSync } from 'load-json-file';
 import { pino } from 'pino';
@@ -76,7 +75,6 @@ class LogEventEmitter extends TypedEmitter<LogEventMap> {}
 
 export interface DurationStats {
   durationMs: number;
-  prettyDuration: string;
   startTimeMs: number;
   /* for the end time, just use the `ts` field on the log message */
 }
@@ -207,7 +205,7 @@ export class Log {
       const endTime = new Date(),
         durationMs = endTime.valueOf() - startTime.valueOf();
 
-      return { durationMs, prettyDuration: prettyMs(durationMs), startTimeMs: startTime.valueOf() };
+      return { durationMs, startTimeMs: startTime.valueOf() };
     }
 
     // It might be nice if the setAdditionalLogData function passed to the phase function were resilient to errors.
@@ -301,7 +299,7 @@ export class Log {
       const endTime = new Date(),
         durationMs = endTime.valueOf() - startTime.valueOf();
 
-      return { durationMs, prettyDuration: prettyMs(durationMs) };
+      return { durationMs };
     }
 
     for await (const val of generator) {

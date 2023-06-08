@@ -694,7 +694,6 @@ __metadata:
     openai: "npm:^3.2.1"
     pino: "npm:^8.14.1"
     pino-pretty: "npm:^10.0.0"
-    pretty-ms: "npm:^8.0.0"
     react: "npm:^18.2.0"
     react-use: "npm:^17.4.0"
     sinon: "npm:^15.1.0"
@@ -7926,13 +7925,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"parse-ms@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "parse-ms@npm:3.0.0"
-  checksum: 897479c5075013613687435328af0a14a2b8ce60a35c722201da07ac1aea9e1dd17462571b0e3239d29f89b1ed0c377209eca61e6aba548bd9f8e1174cd3c090
-  languageName: node
-  linkType: hard
-
 "parse5-htmlparser2-tree-adapter@npm:^6.0.0":
   version: 6.0.1
   resolution: "parse5-htmlparser2-tree-adapter@npm:6.0.1"
@@ -8265,15 +8257,6 @@ __metadata:
     ansi-styles: "npm:^5.0.0"
     react-is: "npm:^18.0.0"
   checksum: bdacd8f5e21c8fa6b155ed13035494c752106540b7d93d724e2b9d23f27c605f63f3d775b0e78cfa1f6764012817529e73376ea11380a3e4d0931ec119a49842
-  languageName: node
-  linkType: hard
-
-"pretty-ms@npm:^8.0.0":
-  version: 8.0.0
-  resolution: "pretty-ms@npm:8.0.0"
-  dependencies:
-    parse-ms: "npm:^3.0.0"
-  checksum: 35b39c20ee7ca8128f6796741b6ac3fd76fc7e2510d99bebf754b9885a60dc28fcf869205cab81c6e3089606534e0b586340846d830ddad0b076b08714277b9e
   languageName: node
   linkType: hard
 
