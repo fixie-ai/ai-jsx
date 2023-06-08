@@ -15,7 +15,7 @@
     "format-for-turbo": "prettier --write .",
     "format:check": "prettier . --check",
     "format": "turbo format-for-turbo",
-    "test": "turbo test"
+    "test": "yarn workspace examples build; turbo test"
   },
   "private": true,
   "prettier": {
