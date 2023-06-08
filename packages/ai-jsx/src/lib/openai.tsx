@@ -11,8 +11,8 @@ import {
 import * as LLMx from '..';
 import { RenderContext, PropsOfComponent, Node } from '..';
 import { openAIChat, openAICompletion } from '../core/models';
-// import GPT3Tokenizer from 'gpt3-tokenizer';
-const GPT3Tokenizer = require('gpt3-tokenizer') as typeof import('gpt3-tokenizer');
+import GPT3Tokenizer from 'gpt3-tokenizer';
+// const GPT3Tokenizer = require('gpt3-tokenizer') as typeof import('gpt3-tokenizer');
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -84,6 +84,7 @@ export async function* OpenAICompletionModel(
 
 function logitBiasOfTokens(tokens: Record<string, number>) {
   // N.B. We're using GPT3Tokenizer which per https://platform.openai.com/tokenizer "works for most GPT-3 models".
+  // @ts-expect-error
   const tokenizer = new GPT3Tokenizer.default({ type: 'gpt3' });
   return Object.fromEntries(
     Object.entries(tokens).map(([token, bias]) => {

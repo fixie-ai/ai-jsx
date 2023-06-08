@@ -9,8 +9,8 @@ import log from './log';
 import { Merge } from 'type-fest';
 import EventEmitter from 'node:events';
 import _ from 'lodash';
-// import GPT3Tokenizer from 'gpt3-tokenizer';
-const GPT3Tokenizer = require('gpt3-tokenizer') as typeof import('gpt3-tokenizer');
+import GPT3Tokenizer from 'gpt3-tokenizer';
+// const GPT3Tokenizer = require('gpt3-tokenizer') as typeof import('gpt3-tokenizer');
 
 const configuration = new Configuration({
   apiKey: process.env.OPENAI_API_KEY,
@@ -255,6 +255,7 @@ async function* openAICallToAsyncIterator(
  * This only works for OpenAI (?)
  */
 export function logitBiasOfTokens(tokens: Record<string, number>) {
+  // @ts-expect-error
   const tokenizer = new GPT3Tokenizer.default({ type: 'gpt3' });
   return Object.fromEntries(
     Object.entries(tokens).map(([token, bias]) => {

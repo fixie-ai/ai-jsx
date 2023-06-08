@@ -9,7 +9,9 @@ import { memo } from '../core/memoize';
 import Spinner from './spinner';
 import { DebugTree } from '../core/debug';
 
-const { Box, render, Text, useInput } = require('ink');
+// @ts-expect-error
+import { Box, render, Text, useInput } from 'ink';
+// const { Box, render, Text, useInput } = require('ink');
 
 const { useList } = reactUse;
 

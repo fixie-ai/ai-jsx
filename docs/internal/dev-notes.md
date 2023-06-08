@@ -7,6 +7,12 @@ To resolve this, I removed `"moduleResolution": "node16"` and accepted that we'l
 
 I tried to go full CommonJS, but that makes Ink fail, because it contains a dep with a top-level `await`, which only works from ESM.
 
+If I remove `"module": "esnext",` from the consuming package's `tsconfig.json`, TS throws an error on every import to `@fixieai/ai-jsx`.
+
+If we have any `require`s, then the ESM-only build will fail. 
+
+Is the CJS build completely useless as long as we're using Ink + any other Sindre package?
+
 ## TypeScript / `tsx`
 
 If you pass the `--tsconfig` flag to `tsx`, it needs to be before the entry point:
