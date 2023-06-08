@@ -30,6 +30,9 @@ export async function* NaturalLanguageRouter(
   // This will need to be tweaked when `i` is more than one token.
   const logitBiases = Object.fromEntries(_.range(whenOptions.length + 1).map((i) => [i.toString(), 100]));
 
+  // Yield the surrounding content before blocking on the completion.
+  yield renderedChildren.filter((e) => !LLMx.isElement(e));
+
   const choice = await render(
     <ChatCompletion maxTokens={1} logitBias={logitBiases}>
       <SystemMessage>

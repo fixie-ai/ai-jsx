@@ -17,30 +17,28 @@ function RouterExample() {
           <UserMessage>Hello, please let me know how I may assist you today.</UserMessage>
         </ChatCompletion>
         {(query) => (
-          <>
+          <NaturalLanguageRouter query={query}>
             {'\n'}Response:{' '}
-            <NaturalLanguageRouter query={query}>
-              <Route when="The customer has a question about available plans.">
-                I'd be happy to help you learn more about our plans.
-              </Route>
-              <Route when="The customer thinks our service is too expensive.">
-                May I offer you a 20% discount for the next 12 months?
-              </Route>
-              <Route when="The customer has a question about content.">
-                I'd be happy to help you learn more about our award-winning channel lineup.
-              </Route>
-              <Route when="The customer seems unhappy with our service.">
-                I'm sorry that you're not pleased with our service. What can we do to make it right?
-              </Route>
-              <Route when="The customer wants to cancel their subscription.">
-                I'm going to transfer you to our retention department who can "assist" you further.
-              </Route>
-              <Route when="The customer has technical difficulties.">
-                Thank you for your patience, I'm going to transfer you to our technical support team.
-              </Route>
-              <Route unmatched>I'm sorry, I'm not sure how to help with that.</Route>
-            </NaturalLanguageRouter>
-          </>
+            <Route when="The customer has a question about available plans.">
+              I'd be happy to help you learn more about our plans.
+            </Route>
+            <Route when="The customer thinks our service is too expensive.">
+              May I offer you a 20% discount for the next 12 months?
+            </Route>
+            <Route when="The customer has a question about content.">
+              I'd be happy to help you learn more about our award-winning channel lineup.
+            </Route>
+            <Route when="The customer seems unhappy with our service.">
+              I'm sorry that you're not pleased with our service. What can we do to make it right?
+            </Route>
+            <Route when="The customer wants to cancel their subscription.">
+              I'm going to transfer you to our retention department who can "assist" you further.
+            </Route>
+            <Route when="The customer has technical difficulties.">
+              Thank you for your patience, I'm going to transfer you to our technical support team.
+            </Route>
+            <Route unmatched>I'm sorry, I'm not sure how to help with that.</Route>
+          </NaturalLanguageRouter>
         )}
       </Inline>
     </>
