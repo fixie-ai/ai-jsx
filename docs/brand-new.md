@@ -66,7 +66,7 @@ Intuitively, think about the context window as the model's working memory. When 
 
 When you ask a human a question, you can say, "answer with one word, but think carefully before you answer". Models can't do that. Every token they generate takes the same amount of cognitive time. So, to get models to think harder, you ask them for longer responses. This is the basis behind the [Chain of Thought](https://arxiv.org/abs/2201.11903) family of techniques.
 
-So, as you're setting up your prompts, it's best to get the model to show its work for more complicated problems. This also helps you debug when unexpected things happen, because you get insight into the model's reasoning.
+So, as you're setting up your prompts, it's best to get the model to show its work for more complicated problems.
 
 ### See Also
 
