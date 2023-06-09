@@ -45,10 +45,6 @@
       "import": "./dist/esm/core/log.js",
       "require": "./dist/cjs/core/log.js"
     },
-    "./core/console-logger": {
-      "import": "./dist/esm/core/console-logger.js",
-      "require": "./dist/cjs/core/console-logger.js"
-    },
     "./core/inspector": {
       "import": "./dist/esm/inspector/console.js",
       "require": "./dist/cjs/inspector/console.js"
