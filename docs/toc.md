@@ -5,6 +5,7 @@
 
 # Docs
 
-- [Getting Started](./workshops/getting-started.md)
+- [LLM Overview for AI First-Timers](./guides/brand-new.md)
+- [Getting Started with AI.JSX](./workshops/getting-started.md)
 - [Is this React?](./is-it-react.md)
 - [Is this LangChain?](./is-it-langchain.md)
