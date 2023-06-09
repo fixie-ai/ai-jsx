@@ -33,7 +33,6 @@
     "demo:router": "tsx src/router.tsx",
     "demo:debug": "tsx src/debug.tsx",
     "demo:summarizer": "tsx src/summarizer.tsx",
-    "demo:zepp": "tsx src/bakeoff/zepp-health/ai-jsx.tsx",
     "demo:loop": "tsx src/bakeoff/loop-qa/ai-jsx.tsx",
     "view-logs": "cat llmx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
