@@ -20,7 +20,7 @@ $ yarn test
 $ yarn workspace @fixieai/ai-jsx add my-package-name
 ```
 
-If one monorepo package depends on another, the dependee compiles its TS files to `dist`. If you change a dependee, be sure to run `build` so `dist` is updated. 
+If one monorepo package depends on another, the dependee compiles its TS files to `dist`. If you change a dependee, be sure to run `build` so `dist` is updated.
 
 **Run all commands from the monorepo root, via `yarn workspace ...` or `yarn turbo ...`. Running directly from the monorepo packages is not guaranteed to work.**
 
