@@ -12,6 +12,7 @@
     "eslint-config-nth": "^2.0.1",
     "pino-pretty": "^10.0.0",
     "tsx": "^3.12.7",
+    "node-fetch": "^3.3.1",
     "typescript": "^5.1.3"
   },
   "private": true,
@@ -33,7 +34,7 @@
     "demo:router": "tsx src/router.tsx",
     "demo:debug": "tsx src/debug.tsx",
     "demo:summarizer": "tsx src/summarizer.tsx",
-    "demo:loop": "tsx src/bakeoff/loop-qa/ai-jsx.tsx",
+    "demo:reddit": "tsx src/bakeoff/reddit-qa/ai-jsx.tsx",
     "view-logs": "cat llmx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
