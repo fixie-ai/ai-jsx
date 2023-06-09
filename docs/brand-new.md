@@ -179,7 +179,51 @@ With larger corpora, or with more performance-intensive applications, this won't
 
 If you use [Fixie](https://fixie.ai/), the offline ELT is handled for you.
 
+## Streaming
+
+To improve responsiveness and perceived performance, it's better to stream your results to the user. Each word should be shown to the user as soon as it's available, rather than waiting until your entire response is done. (This also allows the user to cancel the response if it's going in the wrong direction.)
+
+In AI.JSX, this happens for you automatically.
+
+```tsx
+function App() {
+  return (
+    <ChatCompletion>
+      <SystemMessage>You are an assistant who only uses one syllable words.</SystemMessage>
+      <UserMessage>Why is the sky blue?</UserMessage>
+    </ChatCompletion>
+  );
+}
+LLMx.createRenderContext().render(<App />, {
+  map: handlePartialResults,
+});
+```
+
+The pit of success in AI.JSX is your program being automatically parallelized and streamed to the caller.
+
 ## Semantic Similarity ("Embeddings")
+
+LLMs can tell us how related two pieces of text are. An embedding is a very long vector locating a given piece of text in semantic space. We could imagine a model that embeds according to this scheme:
+
+```
+[
+  how_related_is_the_text_to_japan,
+  how_happy_is_the_text,
+  does_the_text_discuss_colors
+]
+```
+
+So the text "I love the bright Japense cherry blossoms" might be encoded as `[1, 1, 1]`. And the text "I'm sad that the sky in New York is orange today" might be encoded as `[0, 0, 1]`.
+
+(Actual embedding vectors are thousands of dimensions long.)
+
+You can use embeddings for any task where you want to know how related things are, what clusters they form, etc. Possible usecases include:
+
+- Find related GitHub issues
+- Take an emotional temperature of how people are talking in Slack today
+- Find all the fight scenes in a book
+
+See also: [OpenAI Embeddings docs](https://platform.openai.com/docs/models/embeddings).
 
 ## Recommended Dev Workflow
 
