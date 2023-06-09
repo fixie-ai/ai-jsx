@@ -4,7 +4,7 @@ Overview video: [![Loom video](./docs/loom.png)](https://www.loom.com/share/79ca
 
 Project vision: [Aspirational README](./docs/internal/aspirational-readme.md)
 
-[Strategy Notion doc](https://www.notion.so/fixieai/AI-JSX-Design-159fde6bf8d6466487eac3d4ee1f9a93?pvs=4)
+[Strategy Notion doc](https://www.notion.so/fixieai/AI-JSX-Design-159fde6bf8d6466487eac3d4ee1f9a93?pvs=4) (Fixie internal only)
 
 [Docs for external dev users](./docs/toc.md).
 
@@ -23,6 +23,10 @@ $ yarn test
 # Run a command for a particular monorepo package
 $ yarn workspace @fixieai/ai-jsx add my-package-name
 ```
+
+If one monorepo package depends on another, the dependee compiles its TS files to `dist`. If you change a dependee, be sure to run `build` so `dist` is updated. 
+
+**Run all commands from the monorepo root, via `yarn workspace ...` or `yarn turbo ...`. Running directly from the monorepo packages is not guaranteed to work.**
 
 ### Demos
 
