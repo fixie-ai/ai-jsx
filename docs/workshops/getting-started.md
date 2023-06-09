@@ -11,7 +11,7 @@ Follow these steps to make a new demo.
 
    ```json
    "scripts": {
-     "demo:your-demo": "tsx src/examples/your-demo.tsx",
+     "demo:your-demo": "tsx src/examples/my-demo-directory/index.tsx",
    }
 
    ```
@@ -19,9 +19,9 @@ Follow these steps to make a new demo.
 1. Add the following contents to that file:
 
    ```tsx
-   import { LLMx } from '../lib/index.ts';
+   import { LLMx } from '../../lib/index.ts';
    import { ChatCompletion, SystemMessage, UserMessage } from '../lib/completion-components.tsx';
-   import { showInspector } from '../inspector/console.tsx';
+   import { showInspector } from '../../inspector/console.tsx';
 
    function App() {
      return (
