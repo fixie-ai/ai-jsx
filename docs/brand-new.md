@@ -227,7 +227,11 @@ See also: [OpenAI Embeddings docs](https://platform.openai.com/docs/models/embed
 
 ## Recommended Dev Workflow
 
-Start with the best model and work your way down.
+When you're considering building an AI app, the most fundamental question is whether the model is capable of doing what you want it to. It's best to test this in a [Playground environment](https://platform.openai.com/playground) before you write code. (You can also use a tool like [Poe](https://poe.com/) to try your query against many models at once.)
+
+For example, if you plan to prompt the model with some docs, then ask the model questions about it, start by manually pasting the relevant docs into the prompt and asking your question. If the model doesn't perform well here, there's no point coding the rest of the [docs process](#accessing-knowledge-docs-qa).
+
+Start with the best model (GPT-4) and work your way down. Other models may be faster or cheaper, but none of that matters if the accuracy isn't there.
 
 ## What about fine tuning?
 
