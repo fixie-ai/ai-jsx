@@ -16,6 +16,7 @@
     "format:check": "prettier . --check",
     "format": "turbo format-for-turbo",
     "test": "turbo test",
+    "build": "turbo build",
     "postinstall": "turbo build"
   },
   "private": true,
