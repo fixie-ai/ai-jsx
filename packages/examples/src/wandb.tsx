@@ -24,7 +24,7 @@ export function bindAsyncGenerator<T = unknown, TReturn = any, TNext = unknown>(
   return result;
 }
 
-function WeightsAndBiasesTracer(props: { children: LLMx.Node }, { wrapRender }: LLMx.RenderContext) {
+function WeightsAndBiasesTracer(props: { children: LLMx.Node }, { wrapRender }: LLMx.ComponentContext) {
   const currentSpanStorage = new AsyncLocalStorage<WBSpan>();
   const baseTime = new Date().valueOf() - performance.now();
 

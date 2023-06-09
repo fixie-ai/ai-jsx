@@ -2,8 +2,6 @@ import * as LLMx from '../index.js';
 import { Node } from '../index.js';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion';
 import { Jsonifiable } from 'type-fest';
-import log from '../core/log';
-import { ObservableLangChainTextSplitter } from './langchain-wrapper';
 import { TokenTextSplitter } from 'langchain/text_splitter';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
 import { Document as LangChainDocument } from 'langchain/document';
@@ -112,16 +110,12 @@ export const defaultChunker = <Metadata extends Jsonifiable = Jsonifiable>(
   doc: Document<Metadata>,
   opts: ConstructorParameters<typeof TokenTextSplitter>
 ) => {
-  const splitterLog = log.child({ chunkOpts: opts });
-  const splitter = new ObservableLangChainTextSplitter(
-    new TokenTextSplitter({
-      encodingName: 'gpt2',
-      chunkSize: 600,
-      chunkOverlap: 100,
-      ...opts,
-    }),
-    splitterLog
-  );
+  const splitter = new TokenTextSplitter({
+    encodingName: 'gpt2',
+    chunkSize: 600,
+    chunkOverlap: 100,
+    ...opts,
+  });
 
   // This is complaining because {} doesn't necessary satisfy Metadata, since Metadata could have required fields.
   // However, I think it's unlikely to cause a problem in practice at this point.

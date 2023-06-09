@@ -11,7 +11,7 @@ async function ConversationRemapper(
     assistant?: LLMx.ElementPredicate;
     children: LLMx.Node;
   },
-  { render }: LLMx.RenderContext
+  { render }: LLMx.ComponentContext
 ) {
   const system = props.system ?? (() => false);
   const users = props.users ?? (() => false);
