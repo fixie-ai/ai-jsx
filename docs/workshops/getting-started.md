@@ -11,7 +11,7 @@ Follow these steps to make a new demo.
 
    ```json
    "scripts": {
-     "demo:your-demo": "tsx src/examples/my-demo-directory/index.tsx",
+     "demo:your-demo": "tsx src/my-demo-directory/index.tsx",
    }
 
    ```
@@ -37,7 +37,7 @@ Follow these steps to make a new demo.
 
 1. Run the demo with:
    ```
-   yarn workspace @fixieai/ai-jsx run demo:your-demo
+   yarn workspace examples run demo:your-demo
    ```
 
 This will launch the Inspector, and show you the following LLM-generated output:

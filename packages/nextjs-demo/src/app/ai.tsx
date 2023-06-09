@@ -124,13 +124,37 @@ function AIStream({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * A conversion layer between React and AI.JSX components.
+ *
+ * ```
+ *    <ReactComponent>
+ *      <AI>
+ *        <ChatCompletion>...</ChatCompletion>
+ * ```
+ *
+ * By default, it'll stream results character-by-character to the frontend.
+ */
 export function AI({
   children,
   renderDirectlyIntoDOM,
   renderPassedReactComponents,
 }: {
   children: React.ReactNode;
+  /**
+   * If true, the AI's response will be interpreted as HTML, and written directly into the DOM, via dangerouslySetInnerHTML.
+   *
+   * This prop and `renderPassedReactComponents` should not be set at the same time.
+   */
   renderDirectlyIntoDOM?: boolean;
+
+  /**
+   * If true, the AI's response will be interpreted as a set of React components, and returned to React for rendering.
+   *
+   * If the AI's response is malformed and can't be interpreted as React components, this will blow up in a potentially surprising way.
+   *
+   * This prop and `renderDirectlyIntoDOM` should not be set at the same time.
+   */
   renderPassedReactComponents?: boolean;
 }) {
   if (renderPassedReactComponents) {
