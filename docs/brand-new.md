@@ -2,6 +2,8 @@
 
 Large Language Models (LLMs) are powerful tools, representing a paradigm shift in how we build and use software. Machines now have the ability to reason and understand natural language and code. We predict over the coming years, incumbents will be either remake themselves, or be disrupted by AI-native products and platforms.
 
+Just like in other types of programming, you can often get by with a simple solution until you need the heavier-duty tools. There are many techniques and concepts in AI programming, but you can make something useful without knowing them all.
+
 ## What are LLMs Good For?
 
 LLMs are magical when you use them for things they're good at and really frustrating when you try to ask them to do something they're not.
@@ -119,8 +121,9 @@ LLMs have "soft knowledge" of the world, but if you just ask a question without 
 To address this, the community has developed a variety of techniques, known collectively as Docs QA. The core elements of the problem:
 
 1. [Find your docs.](#find-your-docs)
-1. [Ingest them into a form the LLM can access (ETL).](#ingest-the-docs)
+1. [Ingest them into a form the LLM can access.](#ingest-the-docs)
 1. [Pick the right docs to show the LLM at query time.](#pick-the-right-docs-to-show)
+1. [Run this ETL offline](#run-the-etl)
 
 (Some of these steps may not be necessary, depending on your use-case.)
 
@@ -150,7 +153,31 @@ If you use [Fixie](https://fixie.ai/), all three of these points are handled for
 
 ### Pick the Right Docs to Show
 
-In the simplest case, your context window is long enough to put every doc in the prompt every time,
+In the simplest case, your context window is long enough to put every doc in the prompt every time, and the model happens to not get confused by this.
+
+In the more complicated case, you need to pick which docs to put in the prompt. Sometimes, this might be deterministic (e.g. a customer service AI always pulling in the most recent prior support interaction with the customer). But most of the time, you'll want to do a semantic search, where you have a topic in the query ("change my billing plan"), and you want to find related docs.
+
+To do this, use a vector database (VDB). A vector database creates a semantic vector (also known as an "embedding") for each doc, then allows you to do a semantic search.
+
+There are many different vector databases; [Pinecone](https://www.pinecone.io/) and [Chroma](https://www.trychroma.com/) are two big ones. AI.JSX ships with an [in memory vector database suitable](../packages/ai-jsx/src/batteries/docs.tsx), which is a good simple solution when you're below a certain scale.
+
+To use a vector db, you have to sign up for one of those providers, load your docs, and keep the DBs up-to-date as your docs change. Or you can use [Fixie](https://fixie.ai/), and it's all handled for you.
+
+### Run the ETL
+
+The steps above form an ETL (extract, transform, load) process.
+
+In the simple case, your corpus is so small that you can do it on the fly, either ask the user is asking a question, or when your app is starting up:
+
+```tsx
+const myDocs = await loadDocs();
+const vdb = createVectorDatabase(myDocs);
+const answer = askLLM('how do I cancel my account', vdb);
+```
+
+With larger corpora, or with more performance-intensive applications, this won't work. Instead, you'll want to keep an external vector db up to date, and have the LLM query it at runtime.
+
+If you use [Fixie](https://fixie.ai/), the offline ELT is handled for you.
 
 ## Semantic Similarity ("Embeddings")
 
