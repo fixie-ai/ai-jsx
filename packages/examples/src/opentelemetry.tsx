@@ -25,7 +25,7 @@ export function bindAsyncGenerator<T = unknown, TReturn = any, TNext = unknown>(
   return result;
 }
 
-function OpenTelemetryTracer(props: { children: LLMx.Node }, { wrapRender }: LLMx.RenderContext) {
+function OpenTelemetryTracer(props: { children: LLMx.Node }, { wrapRender }: LLMx.ComponentContext) {
   return LLMx.withContext(
     <>{props.children}</>,
     wrapRender((r) => {

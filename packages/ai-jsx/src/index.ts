@@ -1,11 +1,16 @@
-export type Component<P> = (props: P, renderContext: RenderContext) => Renderable;
+import { BoundLogger, LogImplementation, Logger, pinoLogger } from './core/log';
+
+export interface ComponentContext extends RenderContext {
+  logger: Logger;
+}
+export type Component<P> = (props: P, context: ComponentContext) => Renderable;
 export type Literal = string | number | null | undefined | boolean;
 
 const attachedContext = Symbol('LLMx.attachedContext');
 export interface Element<P extends object> {
   tag: Component<P>;
   props: P;
-  render: (renderContext: RenderContext) => Renderable;
+  render: (renderContext: RenderContext, logger: Logger) => Renderable;
   [attachedContext]?: RenderContext;
 }
 
@@ -35,7 +40,7 @@ export type StreamRenderer = (
 const contextKey = Symbol('LLMx.contextKey');
 export interface Context<T> {
   Provider: Component<{ children: Node; value: T }>;
-  [contextKey]: [T, symbol];
+  [contextKey]: { defaultValue: T; userContextSymbol: symbol };
 }
 
 interface RenderOpts<TIntermediate = string, TFinal = string> {
@@ -129,8 +134,8 @@ export function createElement<P extends { children: C | C[] }, C>(
   const result = {
     tag,
     props: propsToPass,
-    render: (ctx: RenderContext) => tag(propsToPass, ctx),
-  };
+    render: (ctx, logger) => tag(propsToPass, { ...ctx, logger }),
+  } as Element<P>;
   Object.freeze(propsToPass);
   Object.freeze(result);
   return result;
@@ -160,7 +165,7 @@ export function createContext<T>(defaultValue: T): Context<T> {
       const fragment = createElement(Fragment, null, props.children);
       return withContext(fragment, pushContext(ctx, props.value));
     },
-    [contextKey]: [defaultValue, Symbol()],
+    [contextKey]: { defaultValue, userContextSymbol: Symbol() },
   };
 
   return ctx;
@@ -178,6 +183,9 @@ export function getIndirectNode(value: IndirectNode): Node {
 export function setIndirectNode(value: IndirectNode, node: Node) {
   indirectWeakMap.set(value, node);
 }
+
+// Default is a no-op logger.
+export const LoggerContext = createContext<LogImplementation>(() => {});
 
 async function* renderStream(
   context: RenderContext,
@@ -270,10 +278,13 @@ async function* renderStream(
       // We need to switch contexts before we can render the element.
       return yield* renderingContext.render(renderable, recursiveRenderOpts);
     }
-    return yield* renderingContext.render(renderable.render(renderingContext), {
-      stop: shouldStop,
-      map: (frame) => frame,
-    });
+    return yield* renderingContext.render(
+      renderable.render(renderingContext, new BoundLogger(renderingContext.getContext(LoggerContext), renderable)),
+      {
+        stop: shouldStop,
+        map: (frame) => frame,
+      }
+    );
   }
 
   if (Symbol.asyncIterator in renderable) {
@@ -298,11 +309,14 @@ async function* renderStream(
   return yield* context.render(nextRenderable, recursiveRenderOpts);
 }
 
-export function createRenderContext() {
-  return createRenderContextInternal(renderStream);
+export function createRenderContext(opts?: { logger?: LogImplementation }) {
+  const logger = opts?.logger ?? pinoLogger();
+  return createRenderContextInternal(renderStream, {
+    [LoggerContext[contextKey].userContextSymbol]: logger,
+  });
 }
 
-function createRenderContextInternal(render: StreamRenderer, userContext: Record<symbol, any> = {}): RenderContext {
+function createRenderContextInternal(render: StreamRenderer, userContext: Record<symbol, any>): RenderContext {
   const context: RenderContext = {
     render: <TFinal extends string | PartiallyRendered[], TIntermediate>(
       renderable: Renderable,
@@ -377,9 +391,9 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
     },
 
     getContext: (ref) => {
-      const [defaultValue, symbol] = ref[contextKey];
-      if (symbol in userContext) {
-        return userContext[symbol];
+      const { defaultValue, userContextSymbol } = ref[contextKey];
+      if (userContextSymbol in userContext) {
+        return userContext[userContextSymbol];
       }
       return defaultValue;
     },
@@ -387,7 +401,7 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
     wrapRender: (getRender) => createRenderContextInternal(getRender(render), userContext),
 
     [pushContextSymbol]: (contextReference, value) =>
-      createRenderContextInternal(render, { ...userContext, [contextReference[contextKey][1]]: value }),
+      createRenderContextInternal(render, { ...userContext, [contextReference[contextKey].userContextSymbol]: value }),
   };
 
   return context;

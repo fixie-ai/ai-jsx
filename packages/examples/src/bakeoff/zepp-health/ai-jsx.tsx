@@ -1,6 +1,5 @@
 import * as LLMx from '@fixieai/ai-jsx';
 import { stringify as csvStringify } from 'csv-stringify/sync';
-import log from '@fixieai/ai-jsx/core/log';
 import { showInspector } from '@fixieai/ai-jsx/core/inspector';
 // This errors due to an ESM issue. I don't know what the right way to fix it is.
 // @ts-expect-error
@@ -60,9 +59,7 @@ if (process.env.BULK_EVAL) {
   const results = [];
   for (const query of queryList) {
     const startTime = Date.now();
-    const answer = await log.logPhase({ query, level: 'warn', phase: 'run query' }, () =>
-      LLMx.createRenderContext().render(<ZeppHealth query={query} />)
-    );
+    const answer = await LLMx.createRenderContext().render(<ZeppHealth query={query} />);
     const endTime = Date.now();
     results.push({
       query,

@@ -1,4 +1,3 @@
-import { ChatCompletionRequestMessage } from 'openai';
 import {
   AssistantMessage,
   ChatProvider,
@@ -8,11 +7,18 @@ import {
   SystemMessage,
   UserMessage,
 } from '../core/completion';
+import {
+  ChatCompletionRequestMessage,
+  ChatCompletionResponseMessage,
+  Configuration,
+  CreateChatCompletionResponse,
+  CreateCompletionResponse,
+  OpenAIApi,
+} from 'openai';
 import * as LLMx from '../index.js';
-import { RenderContext, PropsOfComponent, Node } from '../index.js';
-import { openAIChat, openAICompletion } from '../core/models';
+import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
-// const GPT3Tokenizer = require('gpt3-tokenizer') as typeof import('gpt3-tokenizer');
+import { Merge } from 'type-fest';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -28,13 +34,26 @@ type ChatOrCompletionModelOrBoth =
   | { chatModel: ValidChatModel; completionModel?: ValidCompletionModel }
   | { chatModel?: ValidChatModel; completionModel: ValidCompletionModel };
 
+const openAiClientContext = LLMx.createContext<OpenAIApi>(
+  new OpenAIApi(
+    new Configuration({
+      apiKey: process.env.OPENAI_API_KEY,
+    })
+  )
+);
+
 export function OpenAI({
   children,
   chatModel,
   completionModel,
+  client,
   ...defaults
-}: { children: Node } & ChatOrCompletionModelOrBoth & ModelProps) {
+}: { children: Node; client?: OpenAIApi } & ChatOrCompletionModelOrBoth & ModelProps) {
   let result = children;
+
+  if (client) {
+    result = <openAiClientContext.Provider value={client}>{children}</openAiClientContext.Provider>;
+  }
 
   if (chatModel) {
     result = (
@@ -55,31 +74,39 @@ export function OpenAI({
   return result;
 }
 
-export async function* OpenAICompletionModel(
-  props: ModelPropsWithChildren & { model: ValidCompletionModel },
-  { render }: RenderContext
-) {
-  yield '';
-  let prompt = await render(props.children);
-  while (prompt.length > 0 && prompt.endsWith(' ')) {
-    prompt = prompt.slice(0, prompt.length - 1);
+/**
+ * Parses an OpenAI SSE response stream according to:
+ *  - https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events
+ *  - https://github.com/openai/openai-cookbook/blob/970d8261fbf6206718fe205e88e37f4745f9cf76/examples/How_to_stream_completions.ipynb
+ * @param iterable A byte stream from an OpenAI SSE response.
+ */
+async function* openAiEventsToJson<T>(iterable: AsyncIterable<Buffer>): AsyncGenerator<T> {
+  const SSE_PREFIX = 'data: ';
+  const SSE_TERMINATOR = '\n\n';
+  const SSE_FINAL_EVENT = '[DONE]';
+
+  let bufferedContent = '';
+
+  for await (const chunk of iterable) {
+    const textToParse = bufferedContent + chunk.toString('utf8');
+    const eventsWithExtra = textToParse.split(SSE_TERMINATOR);
+
+    // Any content not terminated by a "\n\n" will be buffered for the next chunk.
+    const events = eventsWithExtra.slice(0, -1);
+    bufferedContent = eventsWithExtra[eventsWithExtra.length - 1] ?? '';
+
+    for (const event of events) {
+      if (!event.startsWith(SSE_PREFIX)) {
+        continue;
+      }
+      const text = event.slice(SSE_PREFIX.length);
+      if (text === SSE_FINAL_EVENT) {
+        continue;
+      }
+
+      yield JSON.parse(text) as T;
+    }
   }
-
-  const tokenStream = openAICompletion.simpleStream({
-    model: props.model as any,
-    max_tokens: props.maxTokens,
-    temperature: props.temperature,
-    prompt,
-    stop: props.stop,
-  });
-
-  let accumulatedResponse = '';
-  for await (const token of tokenStream) {
-    accumulatedResponse += token;
-    yield accumulatedResponse;
-  }
-
-  return accumulatedResponse;
 }
 
 function logitBiasOfTokens(tokens: Record<string, number>) {
@@ -99,9 +126,61 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
   );
 }
 
+export async function* OpenAICompletionModel(
+  props: ModelPropsWithChildren & { model: ValidCompletionModel; logitBias?: Record<string, number> },
+  { render, getContext, logger }: LLMx.ComponentContext
+) {
+  yield '';
+
+  const openai = getContext(openAiClientContext);
+  const completionRequest = {
+    model: props.model,
+    max_tokens: props.maxTokens,
+    temperature: props.temperature,
+    prompt: await render(props.children),
+    stop: props.stop,
+    stream: true,
+    logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
+  };
+  logger.debug({ completionRequest }, 'Calling createCompletion');
+
+  const completionResponse = await openai.createCompletion(completionRequest, {
+    responseType: 'stream',
+    validateStatus: () => true,
+  });
+
+  if (completionResponse.status < 200 || completionResponse.status >= 300) {
+    const responseData = [] as string[];
+    for await (const body of completionResponse.data as unknown as AsyncIterable<Buffer>) {
+      responseData.push(body.toString('utf8'));
+    }
+    logger.error(
+      { statusCode: completionResponse.status, responseBody: responseData.join('') },
+      'createCompletion failed'
+    );
+    throw new Error(`OpenAI request failed with status code ${completionResponse.status}`);
+  } else {
+    logger.debug({ statusCode: completionResponse.status }, 'createCompletion succeeded');
+  }
+
+  let resultSoFar = '';
+
+  for await (const event of openAiEventsToJson<CreateCompletionResponse>(
+    completionResponse.data as unknown as AsyncIterable<Buffer>
+  )) {
+    logger.trace({ event }, 'Got createCompletion event');
+    resultSoFar += event.choices[0].text;
+    yield resultSoFar;
+  }
+
+  logger.debug({ completion: resultSoFar }, 'Finished createCompletion');
+
+  return resultSoFar;
+}
+
 export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & { model: ValidChatModel; logitBias?: Record<string, number> },
-  { render }: RenderContext
+  { render, getContext, logger }: LLMx.ComponentContext
 ) {
   const messageElements = await render(props.children, {
     stop: (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage,
@@ -134,20 +213,60 @@ export async function* OpenAIChatModel(
     })
   );
 
-  const messageStream = openAIChat.simpleStream({
+  const openai = getContext(openAiClientContext);
+  const chatCompletionRequest = {
     model: props.model,
     max_tokens: props.maxTokens,
     temperature: props.temperature,
     messages,
     stop: props.stop,
     logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
+    stream: true,
+  };
+
+  logger.debug({ chatCompletionRequest }, 'Calling createChatCompletion');
+  const chatResponse = await openai.createChatCompletion(chatCompletionRequest, {
+    responseType: 'stream',
+    validateStatus: () => true,
   });
 
-  let lastMessage;
-  for await (const partialMessage of messageStream) {
-    lastMessage = partialMessage.content;
-    yield partialMessage.content;
+  if (chatResponse.status < 200 || chatResponse.status >= 300) {
+    const responseData = [] as string[];
+    for await (const body of chatResponse.data as unknown as AsyncIterable<Buffer>) {
+      responseData.push(body.toString('utf8'));
+    }
+    logger.error(
+      { statusCode: chatResponse.status, responseBody: responseData.join('') },
+      'createChatCompletion failed'
+    );
+    throw new Error(`OpenAI request failed with status code ${chatResponse.status}`);
+  } else {
+    logger.debug({ statusCode: chatResponse.status }, 'createChatCompletion succeeded');
   }
 
-  return lastMessage;
+  type ChatCompletionDelta = Merge<
+    CreateChatCompletionResponse,
+    {
+      choices: { delta: Partial<ChatCompletionResponseMessage> }[];
+    }
+  >;
+
+  const currentMessage = { content: '' } as Partial<ChatCompletionResponseMessage>;
+  for await (const deltaMessage of openAiEventsToJson<ChatCompletionDelta>(
+    chatResponse.data as unknown as AsyncIterable<Buffer>
+  )) {
+    logger.trace({ deltaMessage }, 'Got delta message');
+    const delta = deltaMessage.choices[0].delta;
+    if (delta.role) {
+      currentMessage.role = deltaMessage.choices[0].delta.role;
+    }
+    if (delta.content) {
+      currentMessage.content += delta.content;
+      yield currentMessage.content;
+    }
+  }
+
+  logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
+
+  return currentMessage.content;
 }
