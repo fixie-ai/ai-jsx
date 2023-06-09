@@ -12,3 +12,9 @@ For this demo, we've set up a hacked version of NextJS to support server-side re
 - [Sleep](../../packages/nextjs-demo/src/app/z/page.tsx): An AI app with non-trivial business logic, streamed to the client.
 
 As you hack around with
+
+To run the demo, go to the monorepo root, and run:
+
+```
+yarn turbo run dev --scope nextjs-demo
+```

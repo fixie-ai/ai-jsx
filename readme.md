@@ -1,6 +1,15 @@
 # AI.JSX
 
-**Getting started:** We use [volta](https://volta.sh/) to manage the version of global tools like NodeJS and yarn. Once you install it, your command line should use the proper tools versions automatically.
+## Getting Started
+
+1. **Install [Volta](https://volta.sh/).** This manages the version of global tools like NodeJS and yarn.
+1. Set env var `OPENAI_API_KEY`.
+
+Optional:
+
+- To run the GitHub NextJS demo: set env var `GITHUB_TOKEN`.
+
+## Next Steps
 
 People dogfooding AI.JSX (`packages/examples`): see [About](./docs/about.md).
 

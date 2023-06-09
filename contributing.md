@@ -50,9 +50,4 @@ Some key demos:
 - `demo:loop`: Basic Docs QA
 - `demo:router`: Natural Language Router
 - `demo:debate`: Chat model used to generate competing sides in a debate
-
-To run the NextJS demo:
-
-```
-GITHUB_TOKEN=my_token yarn turbo run dev --scope nextjs-demo
-```
+- [AI UI](./docs/guides/ai-ui.md).
