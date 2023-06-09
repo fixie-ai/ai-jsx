@@ -18,7 +18,6 @@
   "type": "module",
   "scripts": {
     "demo:debate": "tsx src/debate.tsx",
-    "demo:debate-imperative": "tsx src/debate-imperative.tsx",
     "demo:errors": "tsx src/errors.tsx",
     "demo:logger": "tsx src/logger.tsx",
     "demo:context": "tsx src/context.tsx",
@@ -28,6 +27,7 @@
     "demo:inline-chat": "tsx src/inline-chat.tsx",
     "demo:inline-completion": "tsx src/inline-completion.tsx",
     "demo:simple-chat": "tsx src/simple-chat.tsx",
+    "demo:simple-completion": "tsx src/simple-completion.tsx",
     "demo:getting-started": "tsx src/getting-started/index.tsx",
     "demo:inspector": "tsx src/inspector.tsx",
     "demo:router": "tsx src/router.tsx",

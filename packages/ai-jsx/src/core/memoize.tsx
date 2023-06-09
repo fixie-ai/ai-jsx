@@ -1,5 +1,6 @@
 import * as LLMx from '../index.js';
 import { RenderContext, Node, Renderable } from '../index.js';
+import { Logger } from './log.js';
 
 let memoizedId = 0;
 export const isMemoizedSymbol = Symbol('isMemoized');
@@ -64,14 +65,14 @@ export function memo(renderable: Renderable): Node {
     const memoizedValues = new WeakMap<RenderContext, Renderable>();
     const newElement = {
       ...renderable,
-      render: (ctx: RenderContext) => {
+      render: (ctx: RenderContext, logger: Logger) => {
         if (memoizedValues.has(ctx)) {
           return memoizedValues.get(ctx);
         }
 
         let renderResult: Renderable;
         try {
-          renderResult = memo(renderable.render(ctx));
+          renderResult = memo(renderable.render(ctx, logger));
         } catch (ex) {
           // Wrap it in a promise so that it throws on await.
           renderResult = Promise.reject(ex);
