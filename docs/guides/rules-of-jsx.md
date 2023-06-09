@@ -90,6 +90,68 @@ function JsonOutput({ children }, { render }) {
 
 In this example, `JsonOutput` takes in a child, and returns a JSON result. To do that, it needs to know what the child renders to, so it uses `render`.
 
+### Intermediate Results
+
+If you'd like to see intermediate results of the render, you can pass a `map` param to the `render` method:
+
+```tsx
+let frameCount = 0;
+await render(<Component />, {
+  map: (frame) => console.log('got frame', frameCount++, frame);
+})
+```
+
+If `Component` ultimately resolved to `hello world`, then the `map` function might be called with:
+
+```
+got frame 0 h
+got frame 1 hell
+got frame 2 hello w
+got frame 3 hello wor
+got frame 4 hello world
+```
+
+(The exact chunking you'll get depends on the chunks emitted by the component you're rendering.)
+
+You can also use the `map` function to map the results as they're streaming.
+
+### Partial Rendering
+
+By default, `render` will render the entire tree down to a string. However, you can use partial rendering if you'd like to only render some of it.
+
+The main reason you'd want to do this is when you're writing a parent component that has knowledge of its children. For example:
+
+- `ChatCompletion` needs all its children to ultimately be a `SystemMessage`, `UserMessage,` or `AssistantMessage`. To find those children, it uses partial rendering.
+- `NaturalLanguageRouter` needs to know what all the `Route`s are, so it uses partial rendering to find them.
+
+To do partial rendering, pass a `stop` argument to `render`:
+
+```tsx
+const messageChildren = await render(children, {
+  stop: (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage,
+});
+```
+
+This approach means we can write the following, and `ChatCompletion` will be able to find all the nested `*Message` children:
+
+```tsx
+function MyUserMessages() {
+  return (
+    <>
+      <UserMessage>first</UserMessage>
+      <UserMessage>second</UserMessage>
+    </>
+  );
+}
+
+<ChatCompletion>
+  <MyUserMessages />
+  <>
+    <UserMessage>third</UserMessage>
+  </>
+</ChatCompletion>;
+```
+
 ## Handling Errors
 
 Use an [Error Boundary](../../packages/ai-jsx/src/core/error-boundary.ts) to provide fallback values when a component throws:
@@ -101,3 +163,5 @@ Use an [Error Boundary](../../packages/ai-jsx/src/core/error-boundary.ts) to pro
 ```
 
 [Error boundary example](../../packages/examples/src/errors.tsx).
+
+## Context
