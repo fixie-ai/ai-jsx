@@ -45,7 +45,18 @@ const noMatch = 'None of the routes match what the user said.';
  * </NaturalLanguageRouter>
  * ```
  *
- * However, you can't use nested Route components. If a <Route> contains another <Route>, the inner <Route>'s `when` will not be considered. The inner Route will always show its children.
+ * However, you can't use nested Route components. If a <Route> contains another <Route>, the inner <Route>'s `when` will not be considered. The inner Route will always show its children. For example:
+ *
+ * ```tsx
+ * <NaturalLanguageRouter>
+ *  <Route when='first option'>...</Route>
+ *  <Route when='second option'>
+ *    <Route when='third option'>This will always be shown</Route>
+ *  </Route>
+ * ```
+ *
+ * The router will find the first two routes, and ask the model to pick between "first option" and "second option".
+ * "third option" will not be presented as a choice, and its children will always be rendered.
  *
  * @see Route
  */
