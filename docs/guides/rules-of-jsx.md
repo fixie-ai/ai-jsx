@@ -152,6 +152,46 @@ function MyUserMessages() {
 </ChatCompletion>;
 ```
 
+### Context
+
+Similar to [React's `context`](https://react.dev/learn/passing-data-deeply-with-context), AI.JSX lets you set context to control values for parts of your tree.
+
+```tsx
+// Create a context with a default value of 0.
+const Temperature = LLMx.createContext(0.0);
+
+// Create a component that reads the context
+function CharacterGenerator(props: Record<string, never>, { getContext }: LLMx.RenderContext) {
+  return (
+    <Completion temperature={getContext(Temperature)}>
+      Create a bio for a character in an RPG game.
+    </Completion>
+  );
+}
+
+showInspector(
+  <>
+    {/* Set the value for temperature */}
+    <Temperature.Provider value={0.0}>
+      🥶🥶🥶:{'\n'}
+      <CharacterGenerator />
+    </Temperature.Provider>
+
+    {/* Set the value for temperature */}
+    <Temperature.Provider value={2.0}>
+      🔥🔥🔥:{'\n'}
+      <CharacterGenerator />
+    </Temperature.Provider>
+  </>
+```
+
+Each instance of `CharacterGenerator` will use the context value set by its nearest `Temperature.Provider` parent.
+
+See also:
+
+- [API](../../packages/ai-jsx/src/index.ts)
+- [Usage example](../../packages/examples/src/context.tsx)
+
 ## Handling Errors
 
 Use an [Error Boundary](../../packages/ai-jsx/src/core/error-boundary.ts) to provide fallback values when a component throws:
@@ -163,5 +203,3 @@ Use an [Error Boundary](../../packages/ai-jsx/src/core/error-boundary.ts) to pro
 ```
 
 [Error boundary example](../../packages/examples/src/errors.tsx).
-
-## Context

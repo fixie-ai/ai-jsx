@@ -51,43 +51,4 @@ function MyAsyncComponent() {
 In React Client Components, you use `useContext` to access context.
 In React Server Components, you can't use context.
 
-In AI.JSX, you take context as a second argument to your component:
-
-```tsx
-function MyComponent(props, context) {}
-```
-
-You can use context to set values for parts of the tree:
-
-```tsx
-// Create a context with a default value of 0.
-const Temperature = LLMx.createContext(0.0);
-
-// Create a component that reads the context
-function CharacterGenerator(props: Record<string, never>, { getContext }: LLMx.RenderContext) {
-  return (
-    <Completion temperature={getContext(Temperature)}>
-      Create a bio for a character in an RPG game.
-    </Completion>
-  );
-}
-
-showInspector(
-  <>
-    {/* Set the value for temperature */}
-    <Temperature.Provider value={0.0}>
-      🥶🥶🥶:{'\n'}
-      <CharacterGenerator />
-    </Temperature.Provider>
-
-    {/* Set the value for temperature */}
-    <Temperature.Provider value={2.0}>
-      🔥🔥🔥:{'\n'}
-      <CharacterGenerator />
-    </Temperature.Provider>
-  </>
-```
-
-Each instance of `CharacterGenerator` will use the context value set by its nearest `Temperature.Provider` parent.
-
-For more detail, see [the context example](../packages/ai-jsx/src/examples/context.tsx).
+In AI.JSX, there's a similar concept of [context](guides/rules-of-jsx.md#context).
