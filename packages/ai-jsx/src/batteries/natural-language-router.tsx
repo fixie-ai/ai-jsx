@@ -45,7 +45,7 @@ const noMatch = 'None of the routes match what the user said.';
  * </NaturalLanguageRouter>
  * ```
  *
- * However, you can't nested Route components. If a <Route> contains another <Route>, the inner <Route>'s `when` will not be considered. The inner Route will always show its children.
+ * However, you can't use nested Route components. If a <Route> contains another <Route>, the inner <Route>'s `when` will not be considered. The inner Route will always show its children.
  *
  * @see Route
  */
