@@ -243,4 +243,4 @@ const catName = memo(
 
 Now, `catName` will result in a single model call, and its value will be reused everywhere that component appears in the tree.
 
-* [API](../../packages/ai-jsx/src/core/memoize.tsx)
+- [API](../../packages/ai-jsx/src/core/memoize.tsx)

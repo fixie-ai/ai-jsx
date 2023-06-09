@@ -1,16 +1,18 @@
 # Getting the AI to say things
 
-* Prereqs:
-  * [Basic AI knowledge](brand-new.md)
-  * [Rules of JSX](rules-of-jsx.md)
+- Prereqs:
+  - [Basic AI knowledge](brand-new.md)
+  - [Rules of JSX](rules-of-jsx.md)
 
 A core part of AI apps is prompting the model and getting a response. To do that in AI.JSX, start with `ChatCompletion`:
 
 ```tsx
 function App() {
-  return <ChatCompletion>
-    <UserMessage>Tell me a story about ducks.</UserMessage>
-  </ChatCompletion>
+  return (
+    <ChatCompletion>
+      <UserMessage>Tell me a story about ducks.</UserMessage>
+    </ChatCompletion>
+  );
 }
 ```
 
