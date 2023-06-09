@@ -1,4 +1,4 @@
-# Rules of JSX
+# Rules of AI.JSX
 
 AI.JSX uses the familiar JSX syntax, but [it's not React](../is-it-react.md).
 
@@ -203,3 +203,44 @@ Use an [Error Boundary](../../packages/ai-jsx/src/core/error-boundary.ts) to pro
 ```
 
 [Error boundary example](../../packages/examples/src/errors.tsx).
+
+## Memoization
+
+Imagine you have the following:
+
+```tsx
+const catName = (
+  <ChatCompletion>
+    <UserMessage>Give me a cat name</UserMessage>
+  </ChatCompletion>
+);
+
+<ChatCompletion>
+  <UserMessage>
+    Give me a story about these two cats:
+    {catName}
+    {catName}
+  </UserMessage>
+</ChatCompletion>;
+```
+
+In this case, `catName` will result in two separate model calls, so you'll get two different cat names.
+
+If this is not desired, you can wrap the component in `memo`:
+
+```tsx
+const catName = memo(
+  <ChatCompletion>
+    <UserMessage>Give me a cat name</UserMessage>
+  </ChatCompletion>
+);
+<ChatCompletion>
+  <UserMessage>
+    I have a cat named {catName}. Tell me a story about {catName}.
+  </UserMessage>
+</ChatCompletion>;
+```
+
+Now, `catName` will result in a single model call, and its value will be reused everywhere that component appears in the tree.
+
+* [API](../../packages/ai-jsx/src/core/memoize.tsx)

@@ -46,6 +46,8 @@ function MyAsyncComponent() {
 }
 ```
 
+For more detail, see [Rules of AI.JSX](guides/rules-of-jsx.md).
+
 ## Context is different
 
 In React Client Components, you use `useContext` to access context.
