@@ -1,13 +1,13 @@
 # Getting Started
 
-See [getting-started](../../packages/ai-jsx/src/examples/getting-started/index.tsx) for the finished version of this workshop.
+See [getting-started](../../packages/examples/src/getting-started/index.tsx) for the finished version of this workshop.
 
 ## Hello World
 
 Follow these steps to make a new demo.
 
-1. Create a new file at `packages/ai-jsx/src/examples/my-demo-directory/index.tsx`.
-1. Add an entry for your demo to [`packages/ai-jsx/package.json`](../../packages/ai-jsx/package.json):
+1. Create a new file at `packages/examples/src/my-demo-directory/index.tsx`.
+1. Add an entry for your demo to [`packages/examples/package.json`](../../packages/examples/package.json):
 
    ```json
    "scripts": {
@@ -19,9 +19,9 @@ Follow these steps to make a new demo.
 1. Add the following contents to that file:
 
    ```tsx
-   import { LLMx } from '../../lib/index.ts';
-   import { ChatCompletion, SystemMessage, UserMessage } from '../lib/completion-components.tsx';
-   import { showInspector } from '../../inspector/console.tsx';
+   import * as LLMx from '@fixieai/ai-jsx';
+   import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
+   import { showInspector } from '@fixieai/ai-jsx/core/inspector';
 
    function App() {
      return (
