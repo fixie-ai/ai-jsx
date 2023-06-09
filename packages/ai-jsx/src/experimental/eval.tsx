@@ -17,6 +17,11 @@ function GradeAnswer(props: { answer: Node; query: Node }) {
   );
 }
 
+/**
+ * Given a query and an answer, evaluate how well the answer addresses the question.
+ *
+ * This doesn't work well because the model has no context on what the answer is supposed to be.
+ */
 export function Eval(props: { query: Node; answer: Node }) {
   return (
     <>

@@ -12,6 +12,54 @@ const noMatch = 'None of the routes match what the user said.';
 // Need more thought around sub-routes.
 // I've observed that this is sensitive to the ordering of the routes – we probably want to either stamp that out or
 // make it explicit.
+
+/**
+ * Ask the model to steer the control flow of your application.
+ *
+ * You give this component two pieces: `children`, which contains `Route`s, and `query`, which is used to steer. The
+ * model will pick the `Route` that's the best match for the `query`.
+ *
+ * ```tsx
+ *    <NaturalLanguageRouter query="I'd like to cancel my account.">
+ *      <Route when='the user would like to cancel'>
+ *        <CancelRoute />
+ *      </Route>
+ *      <Route when='the user would like to upgrade'>
+ *        <Upgrade />
+ *      </Route>
+ *      <Route noMatch>
+ *       I'm sorry, but I can't help with that.
+ *      </Route>
+ *    </NaturalLanguageRouter>
+ * ```
+ *
+ * Typically, instead of hardcoding `query` as in the example above, you'd be receiving it from user input.
+ *
+ * The `Route`s do not need to be the direct descendents of the `NaturalLanguageRouter`:
+ *
+ * ```tsx
+ * <NaturalLanguageRouter query="I'd like to cancel my account.">
+ *    <><Route when='the user would like to cancel'></>
+ *    {() => <Route when='the user would like to upgrade'></>}
+ *    <SomeOtherComponentThatReturnsARoute />
+ * </NaturalLanguageRouter>
+ * ```
+ *
+ * However, you can't use nested Route components. If a <Route> contains another <Route>, the inner <Route>'s `when` will not be considered. The inner Route will always show its children. For example:
+ *
+ * ```tsx
+ * <NaturalLanguageRouter>
+ *  <Route when='first option'>...</Route>
+ *  <Route when='second option'>
+ *    <Route when='third option'>This will always be shown</Route>
+ *  </Route>
+ * ```
+ *
+ * The router will find the first two routes, and ask the model to pick between "first option" and "second option".
+ * "third option" will not be presented as a choice, and its children will always be rendered.
+ *
+ * @see Route
+ */
 export async function* NaturalLanguageRouter(props: { children: Node; query: Node }, { render }: RenderContext) {
   const renderedChildren = yield* render(props.children, {
     stop: (el) => el.tag === Route,
@@ -60,7 +108,26 @@ export async function* NaturalLanguageRouter(props: { children: Node; query: Nod
   });
 }
 
-type RouteProps = { children: Node } & MergeExclusive<{ when: string }, { unmatched: true }>;
+type RouteProps = { children: Node } & MergeExclusive<
+  {
+    /**
+     * The model will match this against the query. (Typically, this query will come from the user.)
+     */
+    when: string;
+  },
+  {
+    /**
+     * If set, this route will be picked when the model doesn't think the query matches any routes.
+     */
+    unmatched: true;
+  }
+>;
+
+/**
+ * Use with `NaturalLanguageRouter` to define a route.
+ *
+ * @see NaturalLanguageRouter
+ */
 export function Route(props: RouteProps) {
   return props.children;
 }

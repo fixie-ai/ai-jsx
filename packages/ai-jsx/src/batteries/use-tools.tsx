@@ -4,12 +4,6 @@ import { Node, RenderContext } from '../index.js';
 import z, { ZodTypeAny } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
-export interface Tool {
-  description: string;
-  parameters: ZodTypeAny;
-  func: (...args: any[]) => unknown;
-}
-
 const toolChoiceSchema = z.object({
   nameOfTool: z.string(),
   parameters: z.array(z.any()),
@@ -17,7 +11,7 @@ const toolChoiceSchema = z.object({
 });
 export type ToolChoice = z.infer<typeof toolChoiceSchema> | null;
 
-function ChooseTools(props: { tools: Record<string, Tool>; query: string; userData: string }): Node {
+function ChooseTools(props: Pick<UseToolsProps, 'tools' | 'userData' | 'query'>): Node {
   return (
     <ChatCompletion>
       <SystemMessage>
@@ -31,8 +25,8 @@ function ChooseTools(props: { tools: Record<string, Tool>; query: string; userDa
         want to use? Name the tool, identify the parameters, and generate a response to the user explaining what you're
         doing. Do not answer the user's question itself. Your answer should be a JSON object matching this schema:{' '}
         {JSON.stringify(zodToJsonSchema(toolChoiceSchema))}. Make sure to follow the schema strictly and do not include
-        any explanatory prose prefix or suffix. When picking parameters, choose values according to this user data:{' '}
-        {props.userData}
+        any explanatory prose prefix or suffix.{' '}
+        {props.userData && <>When picking parameters, choose values according to this user data: {props.userData}</>}
         If none of the tools seem appropriate, or the user data doesn't have the necessary context to use the tool the
         user needs, respond with `null`.
       </SystemMessage>
@@ -81,6 +75,87 @@ async function InvokeTool(
   );
 }
 
-export function UseTools(props: { tools: Record<string, Tool>; query: string; fallback: Node; userData: string }) {
+export interface Tool {
+  /**
+   * A description of what the tool does.
+   */
+  description: string;
+
+  /**
+   * A Zod schema describing the parameters the tool takes.
+   */
+  parameters: ZodTypeAny;
+
+  /**
+   * A function to invoke the tool.
+   */
+  // Can we use Zod to do better than any[]?
+  func: (...args: any[]) => unknown;
+}
+
+export interface UseToolsProps {
+  /**
+   * The tools the AI can use.
+   */
+  tools: Record<string, Tool>;
+
+  /**
+   * A query the AI will use to decide which tool to use, and what parameters to invoke it with.
+   */
+  query: string;
+
+  /**
+   * A fallback response to use if the AI doesn't think any of the tools are relevant.
+   */
+  fallback: Node;
+
+  /**
+   * User data the AI can use to determine what parameters to invoke the tool with.
+   *
+   * For instance, if the user's query can be "what's the weather like at my current location", you might pass `userData` as { "location": "Seattle" }.
+   */
+  userData?: string;
+}
+
+/**
+ * Give a model tools it can use, like a calculator, or ability to call an API.
+ *
+ * This is conceptually similar to [chatGPT plugins](https://openai.com/blog/chatgpt-plugins).
+ *
+ * @see ../../../examples/src/bakeoff/zepp-health/zepp.tsx
+ *
+ * ```tsx
+ *  async function turnLightsOn() {}
+ *  async function turnLightsOff() {}
+ *  // Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".
+ *  async function activeScene(sceneName: string) {}
+ *
+ *  import z from 'zod';
+ *  const tools: Record<string, Tool> = {
+ *    turnLightsOn: {
+ *      description: "Turn the lights on in the user's home",
+ *      parameters: z.tuple([]),
+ *      func: turnLightsOn,
+ *    },
+ *    turnLightsOff: {
+ *      description: "Turn the lights off in the user's home",
+ *      parameters: z.tuple([]),
+ *      func: turnLightsOff,
+ *    },
+ *    activeScene: {
+ *      description: `Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".`,
+ *      parameters: z.tuple([z.string()]),
+ *      func: activeScene,
+ *    },
+ *  };
+ *
+ * <UseTools tools={tools} fallback="Politely explain you aren't able to help with that request.">
+ *    You control a home automation system. The user has requested you take some action in their home: "{userRequest}". Take
+ *    an action, then generate a response telling the user what you're doing.
+ * </UseTools>;
+ * ```
+ *
+ */
+export function UseTools(props: UseToolsProps) {
   return <InvokeTool tools={props.tools} toolChoice={<ChooseTools {...props} />} fallback={props.fallback} />;
 }

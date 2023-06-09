@@ -3,6 +3,9 @@ import { Log } from '../core/log';
 import { Document as LangChainDocument } from 'langchain/document';
 import { TextSplitter, TextSplitterChunkHeaderOptions } from 'langchain/text_splitter';
 
+/**
+ * A wrapper around a LangChain DocumentLoader that adds observability.
+ */
 export class ObservableLangChainDocumentLoader implements DocumentLoader {
   constructor(private readonly loader: BaseDocumentLoader, private readonly log: Log) {}
 
@@ -17,6 +20,9 @@ export class ObservableLangChainDocumentLoader implements DocumentLoader {
 
 export type LangChainTextSplitter = Pick<TextSplitter, 'splitDocuments' | 'createDocuments'>;
 
+/**
+ * A wrapper around a LangChainTextSplitter that adds observability.
+ */
 export class ObservableLangChainTextSplitter implements LangChainTextSplitter {
   constructor(private readonly splitter: LangChainTextSplitter, private readonly log: Log) {}
 
