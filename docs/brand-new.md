@@ -15,7 +15,7 @@ LLMs are great at understanding and generating natural language and code. So the
 
 LLMs, by themselves, aren't great at:
 
-- Deterministic logic (e.g. math)
+- Complex deterministic logic (e.g. math or code execution)
 - Questions requiring outside knowledge (where accuracy really matters)
 - Analysis on structured data.
 - Taking actions in the outside world.
@@ -27,6 +27,8 @@ To build an intuition for what the LLM is good for, think of it kind of like a p
 Models are also limited by the companies that own and operate them, for safety and also to limit liability on behalf of the operating companies. For instance, if you ask OpenAI's models how to make anthrax, it'll refuse to tell you. ([Unless you're clever](https://www.jailbreakchat.com/)).
 
 With today's level of accuracy, LLMs work best for tasks that are fault-tolerant or have a human in the loop. It's no accident that Microsoft is leaning so hard on the Copilot branding across all its AI integrations. If you have a human in the loop, you can provide a ton of value, even if the model output isn't perfect, because editing a pretty-good response is much easier for a human than generating a response wholesale.
+
+Be wary of the "radio shows on TV" effect, where the first work in a new paradigm (TV) is just a port of the old paradigm (radio), rather than truly leveraging the new medium. We may need to rethink fundamental UX assumptions to find the best ways to make AI-native apps.
 
 ## Prompt Engineering
 
@@ -112,12 +114,100 @@ More detail: [UseTools](../packages/ai-jsx/src/batteries/use-tools.tsx).
 
 ## Accessing Knowledge ("Docs QA")
 
+LLMs have "soft knowledge" of the world, but if you just ask a question without providing any context, they're prone to hallucination. And, LLMs were only trained on public data, so they don't have context on the private data you care about.
+
+To address this, the community has developed a variety of techniques, known collectively as Docs QA. The core elements of the problem:
+
+1. Find your docs.
+1. Ingest them into a form the LLM can access.
+1. Pick the right docs to show the LLM at query time.
+
+(Some of these steps may not be necessary, depending on your use-case.)
+
+### Find Your Docs
+
+A collection of docs is called a "corpus".
+
+In the simple case, your docs are easy to find, because you have a hardcoded list of them. (For instance, you're building an AI app to answer questions for your company's customer support, and you have a fixed set of support docs you can download on a cadence.) To do this, you can just write a simple script
+
+In the harder case, you need a crawler. (For instance, you want to traverse numerous websites, follow links, etc.)
+
 ## Semantic Similarity ("Embeddings")
 
 ## Recommended Dev Workflow
+
+## What about fine tuning?
+
+Fine tuning is when you train a model on top of a base model, using your own dataset. This is not recommended until you know you have a strong need for it; prompt composition can get you quite far, and is much more flexible than fine tuning.
+
+When you fine tune, you've baked a set of data into the model. If you realize some of it is bad, you have to revert to an older checkpoint, and rerun the fine tune without that data.
+
+Conversely, with prompt composition, if you realize some data isn't helpful, you simply update your AI.JSX program to no longer include that data.
+
+Fine tuning also makes it harder to take advantage of base model updates. When GPT-4.5 comes out, if you've fine tuned on GPT-4, you'll be behind until you repeat your tuning process. However, if you're doing prompt composition, then you automatically can use GPT-4.5.
 
 ## See Also
 
 - [OpenAI: State of GPT](https://www.youtube.com/watch?v=bZQun8Y4L2A). Microsoft Build presentation from top AI researcher Andrej Karpathy. A great overview of how the models work and tips for how to use them most effectively.
 - [OpenAI: GPT Best Practices](https://platform.openai.com/docs/guides/gpt-best-practices).
 - [Anthropic Guidance](https://console.anthropic.com/docs/prompt-design)
+- [Poe](https://poe.com/) – chat with many different models (OpenAI, Anthropic, etc) at once.
+- [Perplexity](https://www.perplexity.ai/) – AI-powered search
+
+## Case Study: Avoid asking the LLM to do something deterministic
+
+Consider an AI app that can ask a group of people when they're available to hang out, then find the mutual free times.
+
+The AI will be great at asking people what their availability is. But you might be tempted to do the whole thing in AI, and also ask it to compute the mutual free time. That approach might look something like this:
+
+```tsx
+<ChatCompletion>
+  <SystemMessage>You are a planning agent. The user will give you a list of free times. Respond with the time everyone is available</SystemMessage>
+  <UserMessage>
+    {availability.map(({person, times}) => <>{person}'s availability is: "{times}")}
+    {/* this would produce something like:
+          Alice's availability is "afternoons"
+          Bob's availability is "mornings"
+          Carol's availability is "any time between 2 and 9pm"
+    */}
+  </UserMessage>
+</ChatCompletion>
+```
+
+This very well may work in many cases. But computing an intersection of time spans is a deterministic task that traditional computing is very good at. So for a more reliable approach, we recommend:
+
+```tsx
+interface PersonAvailability {
+  name: string;
+
+  /**
+   * A list of hours (0-23) in which the user is available.
+   */
+  hoursAvailable: number[];
+}
+
+// Format the user's availability as a JSON object
+const availability: PersonAvailability = await LLMx.createRenderContext().render(
+  <JsonOutput>
+    <ChatCompletion>
+      <SystemMessage>You are an English-to-JSON translator. The user will give you a list of people's availabilities.
+        Respond with an array of PersonAvailability objects, following this type:
+
+        interface PersonAvailability {'{'}
+          name: string;
+
+          /**
+           * A list of hours (0-23) in which the user is available.
+           */
+          hoursAvailable: number[];
+        {'}'}
+      </SystemMessage>
+      <UserMessage>
+        {availability.map(({person, times}) => <>{person}'s availability is: "{times}")}
+      </UserMessage>
+    </ChatCompletion>
+  </JsonOutput>
+)
+```
+
+Now we have `availability` as a nicely-structured JSON object, and can do deterministic computation on it to find our result. (Of course, this is the type of function that an AI would be very good at generating. But the ideal workflow is for you to generate it manually, inspect it, test it, then deploy it in your app, rather than asking the AI to do it on the spot.)
