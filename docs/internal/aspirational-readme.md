@@ -876,7 +876,7 @@ async function turnLightsOff() {}
 /**
  * Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".
  */
-async function activeScene(sceneName: string) {}
+async function activateScene(sceneName: string) {}
 
 import z from 'zod';
 const tools: Record<string, Tool> = {
@@ -890,10 +890,10 @@ const tools: Record<string, Tool> = {
     parameters: z.tuple([]),
     func: turnLightsOff,
   },
-  activeScene: {
+  activateScene: {
     description: `Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".`,
     parameters: z.tuple([z.string()]),
-    func: activeScene,
+    func: activateScene,
   },
 };
 interface Tool {
