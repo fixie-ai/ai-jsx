@@ -10,3 +10,4 @@ For this demo, we've set up a hacked version of NextJS to support server-side re
 * [JIT UI: Raw HTML](../../packages/nextjs-demo/src/app/nl-gh-search/page.tsx): We teach the AI to query GitHub, and invite it to inject whatever HTML it wants into our UI. 😱
 * [Sleep](../../packages/nextjs-demo/src/app/z/page.tsx): An AI app with non-trivial business logic, streamed to the client.
 
+As you hack around with

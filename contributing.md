@@ -8,8 +8,6 @@ Project vision: [Aspirational README](./docs/internal/aspirational-readme.md)
 
 ## Working in this repo
 
-We use [volta](https://volta.sh/) to manage the version of global tools like NodeJS and yarn. Once you install it, your command line should use the proper tools versions automatically.
-
 ### Monorepo
 
 We use [TurboRepo](https://turbo.build/repo) and [yarn workspaces](https://yarnpkg.com/features/workspaces/#gatsby-focus-wrapper) to manage the [monorepo](https://turbo.build/repo/docs/handbook).
