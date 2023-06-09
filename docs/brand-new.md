@@ -118,9 +118,9 @@ LLMs have "soft knowledge" of the world, but if you just ask a question without 
 
 To address this, the community has developed a variety of techniques, known collectively as Docs QA. The core elements of the problem:
 
-1. Find your docs.
-1. Ingest them into a form the LLM can access.
-1. Pick the right docs to show the LLM at query time.
+1. [Find your docs.](#find-your-docs)
+1. [Ingest them into a form the LLM can access (ETL).](#ingest-the-docs)
+1. [Pick the right docs to show the LLM at query time.](#pick-the-right-docs-to-show)
 
 (Some of these steps may not be necessary, depending on your use-case.)
 
@@ -128,13 +128,35 @@ To address this, the community has developed a variety of techniques, known coll
 
 A collection of docs is called a "corpus".
 
-In the simple case, your docs are easy to find, because you have a hardcoded list of them. (For instance, you're building an AI app to answer questions for your company's customer support, and you have a fixed set of support docs you can download on a cadence.) To do this, you can just write a simple script
+In the simple case, your docs are easy to find, because you have a hardcoded list of them. (For instance, you're building an AI app to answer questions for your company's customer support, and you have a fixed set of support docs you can download on a cadence.) You can fetch your docs with a simple script, and you can probably get GPT-4 to write the script for you.
 
-In the harder case, you need a crawler. (For instance, you want to traverse numerous websites, follow links, etc.)
+In the harder case, you need a crawler. (For instance, you want to traverse numerous websites, follow links, etc.) If you use [Fixie](https://fixie.ai/), this is [handled for you](https://docs.fixie.ai/document-qa/). You can provide a URL pattern like `https://my-site.com/help/*`, and Fixie handles the rest.
+
+### Ingest the Docs
+
+Now that you have the doc contents, you may need to transform them to be useful for the model.
+
+In the simplest case, no transformation is necessary. However, transformation will be helpful if:
+
+1. A single doc is longer than the context window.
+1. A single doc talks about many different topics, and could confuse the model if we give it the whole thing at once.
+1. The docs are some non-text format (PDF, Word doc, CSV, YouTube video that needs to be transcribed, etc).
+
+To address points (1) and (2), we use a process called **chunking**, where you split the document into chunks. The simplest possible chunking is just cutting it into appropriately-sized strings. A more sophisticated chunking will be content aware, and try to produce semantically-related chunks. (So, you'd rather each chunk be a paragraph that talks about a single topic, rather than just cutting your string into 100 pieces and having each piece randomly cut off in the middle of a sentence.)
+
+To address point (3), you want to find a loader that can parse text out of your files.
+
+If you use [Fixie](https://fixie.ai/), all three of these points are handled for you.
+
+### Pick the Right Docs to Show
+
+In the simplest case, your context window is long enough to put every doc in the prompt every time,
 
 ## Semantic Similarity ("Embeddings")
 
 ## Recommended Dev Workflow
+
+Start with the best model and work your way down.
 
 ## What about fine tuning?
 
