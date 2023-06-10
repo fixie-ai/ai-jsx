@@ -116,7 +116,7 @@ const tools: Record<string, Tool> = {
 </UseTools>;
 ```
 
-More detail: UseTools (`../packages/ai-jsx/src/batteries/use-tools.tsx`).
+More detail: `UseTools` (`packages/ai-jsx/src/batteries/use-tools.tsx`).
 
 ## Accessing Knowledge ("Docs QA")
 
@@ -165,7 +165,7 @@ In the more complicated case, you need to pick which docs to put in the prompt. 
 
 To do this, use a vector database (VDB). A vector database creates a semantic vector (also known as an "embedding") for each doc, then allows you to do a semantic search.
 
-There are many different vector databases; [Pinecone](https://www.pinecone.io/) and [Chroma](https://www.trychroma.com/) are two big ones. AI.JSX ships with an [in memory vector database suitable](../packages/ai-jsx/src/batteries/docs.tsx), which is a good simple solution when you're below a certain scale.
+There are many different vector databases; [Pinecone](https://www.pinecone.io/) and [Chroma](https://www.trychroma.com/) are two big ones. AI.JSX ships with an in memory vector database suitable (`packages/ai-jsx/src/batteries/docs.tsx`), which is a good simple solution when you're below a certain scale.
 
 To use a vector db, you have to sign up for one of those providers, load your docs, and keep the DBs up-to-date as your docs change. Or you can use [Fixie](https://fixie.ai/), and it's all handled for you.
 
