@@ -63,7 +63,7 @@ function computeSleepQualityRatings(userData: typeof fixtureUserData) {
   } else {
     DelayedSleepOnset = 'High';
   }
-  
+
   return {
     SleepEfficiency,
     DelayedSleepOnset,
@@ -187,71 +187,6 @@ async function SleepData({ query }: { query: string }) {
   );
 }
 
-function generateChartFromTimeSeries(_args: { xLabels: string[]; yValues: number[] }) {
-  return Promise.resolve('https://my-time-series-chart.com/asdfasdf');
-}
-function generateHistogram(_args: { values: number[] }) {
-  return Promise.resolve('https://my-histogram.com/odp');
-}
-
-function ApologizeForBeingUnableToShowThisSummary({ query }: { query: string }) {
-  return (
-    <ChatCompletion>
-      <SystemMessage>
-        You're a summarizing agent. The user has asked for a summary, but you don't have the capability to produce the
-        format they're looking for. Explain this and apologize.
-      </SystemMessage>
-      <UserMessage>{query}</UserMessage>
-    </ChatCompletion>
-  );
-}
-
-async function ShowDataSummary({ query }: { query: string }) {
-  const tools: Record<string, Tool> = {
-    generateChartFromTimeSeries: {
-      description: 'Generate a bar chart from a time series, given x labels and y values.',
-      parameters: z.object({
-        xLabels: z.array(z.string()),
-        yValues: z.array(z.number()),
-      }),
-      func: generateChartFromTimeSeries,
-    },
-    generateHistogram: {
-      description: 'Generate a histogram from a list of values.',
-      parameters: z.object({
-        values: z.array(z.number()),
-      }),
-      func: generateHistogram,
-    },
-  };
-
-  const userData = await loadUserData();
-  console.log(userData)
-  return (
-    <NaturalLanguageRouter query={query}>
-      <Route when="the user wants to see an output format that you're able to generate yourself">
-        <ChatCompletion>
-          <SystemMessage>
-            You're an expert summarizing agent. Here is the data you summarize: {JSON.stringify(userData)}. When the
-            user asks a question, provide a summary in the format they want.
-          </SystemMessage>
-          <UserMessage>{query}</UserMessage>
-        </ChatCompletion>
-      </Route>
-      <Route when="the user wants to see a histogram or chart of their sleep data">
-        <UseTools
-          tools={tools}
-          query={query}
-          fallback={<ApologizeForBeingUnableToShowThisSummary query={query} />}
-          userData={JSON.stringify(userData)}
-        />
-      </Route>
-      <Route unmatched>
-        <ApologizeForBeingUnableToShowThisSummary query={query} />
-      </Route>
-    </NaturalLanguageRouter>
-  );
-}
 
 export default function ZeppHealth({ query }: { query: string }) {
   return (
