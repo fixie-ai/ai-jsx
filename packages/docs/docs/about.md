@@ -1,3 +1,9 @@
+---
+id: my-home-doc
+sidebar_position: 1
+slug: /
+---
+
 # AI.JSX
 
 AI.JSX is a framework that helps you build [AI-powered apps](./guides/brand-new.md). It aims to solve the following problems for developers:
@@ -26,18 +32,7 @@ showInspector(<App />);
 // ==> "Sky blue due to light."
 ```
 
-# Prereq Knowledge
+# Prerequisite Knowledge
 
 - [JSX](https://www.patterns.dev/posts/reactjs) (that overview is React-specific but almost everything is transferrable to JSX generally).
 - [TypeScript](https://www.typescriptlang.org/)
-
-# More Docs
-
-- [Getting Started with AI.JSX](./workshops/getting-started.md)
-- [Is this React?](./is-it-react.md)
-- [Is this LangChain?](./is-it-langchain.md)
-- Guides
-  1. [LLM Overview for AI First-Timers](./guides/brand-new.md)
-  1. [Getting the model to say something](./guides/prompting.md)
-  1. [Rules of AI.JSX](./guides/rules-of-jsx.md)
-  1. [AI + UI](./guides/ai-ui.md)

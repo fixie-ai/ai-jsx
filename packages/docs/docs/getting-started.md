@@ -1,13 +1,17 @@
+---
+sidebar_position: 2
+---
+
 # Getting Started
 
-See [getting-started](../../packages/examples/src/getting-started/index.tsx) for the finished version of this workshop.
+See getting-started (`packages/examples/src/getting-started/index.tsx`) for the finished version of this workshop.
 
 ## Hello World
 
 Follow these steps to make a new demo.
 
 1. Create a new file at `packages/examples/src/my-demo-directory/index.tsx`.
-1. Add an entry for your demo to [`packages/examples/package.json`](../../packages/examples/package.json):
+1. Add an entry for your demo to `packages/examples/package.json`:
 
    ```json
    "scripts": {

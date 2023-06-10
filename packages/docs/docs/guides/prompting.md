@@ -1,3 +1,7 @@
+---
+sidebar_position: 2
+---
+
 # Getting the AI to say things
 
 - Prereqs:
@@ -18,7 +22,7 @@ function App() {
 
 `ChatCompletion` is preferred because all the most powerful models are chat-based, and [it's best to start with the most powerful models](./brand-new.md#recommended-dev-workflow).
 
-To configure the output of `ChatCompletion`, use [`ModelProps`](../../packages/ai-jsx/src/core/completion.tsx). This allows you to do things like making the model more creative or precise, telling the model how long a response you want back, etc. Combined with the natural language of your [prompt](./brand-new.md#prompt-engineering), this is how you control the model's output.
+To configure the output of `ChatCompletion`, use `ModelProps` (`packages/ai-jsx/src/core/completion.tsx`). This allows you to do things like making the model more creative or precise, telling the model how long a response you want back, etc. Combined with the natural language of your [prompt](./brand-new.md#prompt-engineering), this is how you control the model's output.
 
 ## What about non-chat models?
 

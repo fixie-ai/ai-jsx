@@ -11,6 +11,6 @@ Optional:
 
 ## Next Steps
 
-People dogfooding AI.JSX (`packages/examples`): see [About](./docs/about.md).
+People dogfooding AI.JSX (`packages/examples`): run `yarn workspace docs start`.
 
 People developing core AI.JSX (`packages/ai-jsx`): see [Contributing](./contributing.md).
