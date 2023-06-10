@@ -151,6 +151,8 @@ To address point (3), you want to find a loader that can parse text out of your 
 
 If you use [Fixie](https://fixie.ai/), all three of these points are handled for you.
 
+See also: [Pinecone Guidance on Chunking Strategies](https://www.pinecone.io/learn/chunking-strategies/).
+
 ### Pick the Right Docs to Show
 
 In the simplest case, your context window is long enough to put every doc in the prompt every time, and the model happens to not get confused by this.
