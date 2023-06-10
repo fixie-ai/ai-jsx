@@ -3,6 +3,7 @@ id: my-home-doc
 sidebar_position: 1
 slug: /
 ---
+
 # AI.JSX
 
 AI.JSX is a framework that helps you build [AI-powered apps](./guides/brand-new.md). It aims to solve the following problems for developers:

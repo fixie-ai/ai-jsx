@@ -2,7 +2,6 @@
 sidebar_position: 2
 ---
 
-
 # Getting Started
 
 See [getting-started](../../packages/examples/src/getting-started/index.tsx) for the finished version of this workshop.

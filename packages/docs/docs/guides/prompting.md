@@ -2,7 +2,6 @@
 sidebar_position: 2
 ---
 
-
 # Getting the AI to say things
 
 - Prereqs:
