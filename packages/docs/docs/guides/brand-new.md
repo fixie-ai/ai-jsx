@@ -1,3 +1,8 @@
+---
+sidebar_position: 1
+---
+
+
 # Guide for AI Newcomers
 
 Large Language Models (LLMs) are powerful tools, representing a paradigm shift in how we build and use software. Machines now have the ability to reason and understand natural language and code. We predict over the coming years, incumbents will be either remake themselves, or be disrupted by AI-native products and platforms.

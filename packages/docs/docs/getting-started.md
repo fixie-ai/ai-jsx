@@ -1,3 +1,8 @@
+---
+sidebar_position: 1
+---
+
+
 # Getting Started
 
 See [getting-started](../../packages/examples/src/getting-started/index.tsx) for the finished version of this workshop.

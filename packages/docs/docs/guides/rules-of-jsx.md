@@ -1,3 +1,7 @@
+---
+sidebar_position: 3
+---
+
 # Rules of AI.JSX
 
 AI.JSX uses the familiar JSX syntax, but [it's not React](../is-it-react.md).
