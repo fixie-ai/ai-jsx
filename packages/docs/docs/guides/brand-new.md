@@ -116,7 +116,7 @@ const tools: Record<string, Tool> = {
 </UseTools>;
 ```
 
-More detail: [UseTools](../packages/ai-jsx/src/batteries/use-tools.tsx).
+More detail: UseTools (`../packages/ai-jsx/src/batteries/use-tools.tsx`).
 
 ## Accessing Knowledge ("Docs QA")
 

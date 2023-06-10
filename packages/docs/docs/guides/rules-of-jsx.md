@@ -60,7 +60,7 @@ function* OrgData() {
 
 ## Component API
 
-Components take props as the first argument and [ComponentContext](../../packages/ai-jsx/src/index.ts) as the second:
+Components take props as the first argument and ComponentContext (`packages/ai-jsx/src/index.ts`) as the second:
 
 ```tsx
 function MyComponent(props, componentContext) {}
@@ -193,12 +193,12 @@ Each instance of `CharacterGenerator` will use the context value set by its near
 
 See also:
 
-- [API](../../packages/ai-jsx/src/index.ts)
-- [Usage example](../../packages/examples/src/context.tsx)
+- API (`packages/ai-jsx/src/index.ts`)
+- Usage example (`packages/examples/src/context.tsx`)
 
 ## Handling Errors
 
-Use an [Error Boundary](../../packages/ai-jsx/src/core/error-boundary.ts) to provide fallback values when a component throws:
+Use an Error Boundary (`packages/ai-jsx/src/core/error-boundary.ts`) to provide fallback values when a component throws:
 
 ```tsx
 <ErrorBoundary fallback={'✅ Error was handled'}>
@@ -206,7 +206,7 @@ Use an [Error Boundary](../../packages/ai-jsx/src/core/error-boundary.ts) to pro
 </ErrorBoundary>
 ```
 
-[Error boundary example](../../packages/examples/src/errors.tsx).
+Error boundary example (`packages/examples/src/errors.tsx`).
 
 ## Memoization
 
@@ -247,4 +247,4 @@ const catName = memo(
 
 Now, `catName` will result in a single model call, and its value will be reused everywhere that component appears in the tree.
 
-- [API](../../packages/ai-jsx/src/core/memoize.tsx)
+- API (`packages/ai-jsx/src/core/memoize.tsx`)
