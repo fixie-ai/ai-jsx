@@ -92,7 +92,7 @@ async function AIInterpretedReactComponents({ children }: { children: ReactNode 
 }
 
 function AIStream({ children }: { children: React.ReactNode }) {
-  const maxIndex = 1000;
+  const maxIndex = 20000;
   let highestIndexSeen = -1;
   const emitter = new EventEmitter();
 

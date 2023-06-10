@@ -11,11 +11,12 @@ import { loadJsonFile } from 'load-json-file';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
+import React from 'react';
 
 interface SleepQualityRatings {
-  SE: 'Low' | 'Moderate' | 'High';
-  SSO: 'Low' | 'Moderate' | 'High';
-  ISI: 'Low' | 'Moderate' | 'High';
+  SleepEfficiency: 'Low' | 'Moderate' | 'High';
+  DelayedSleepOnset: 'Low' | 'Moderate' | 'High';
+  InsomniaRisk: 'Low' | 'Moderate' | 'High';
 }
 
 function computeSleepQualityRatings(userData: typeof fixtureUserData) {
@@ -36,37 +37,37 @@ function computeSleepQualityRatings(userData: typeof fixtureUserData) {
     }
   }
 
-  let ISI: 'Low' | 'High' | 'Moderate';
+  let InsomniaRisk: 'Low' | 'High' | 'Moderate';
   if (isi > 6) {
-    ISI = 'Low';
+    InsomniaRisk = 'Low';
   } else if (isi < 3) {
-    ISI = 'High';
+    InsomniaRisk = 'High';
   } else {
-    ISI = 'Moderate';
+    InsomniaRisk = 'Moderate';
   }
 
-  let SE: 'High' | 'Moderate' | 'Low';
+  let SleepEfficiency: 'High' | 'Moderate' | 'Low';
   if (se <= 2) {
-    SE = 'High';
+    SleepEfficiency = 'High';
   } else if (se <= 4) {
-    SE = 'Moderate';
+    SleepEfficiency = 'Moderate';
   } else {
-    SE = 'Low';
+    SleepEfficiency = 'Low';
   }
 
-  let SSO: 'Low' | 'High' | 'Moderate';
+  let DelayedSleepOnset: 'Low' | 'High' | 'Moderate';
   if (sso <= 2) {
-    SSO = 'Low';
+    DelayedSleepOnset = 'Low';
   } else if (sso <= 4) {
-    SSO = 'Moderate';
+    DelayedSleepOnset = 'Moderate';
   } else {
-    SSO = 'High';
+    DelayedSleepOnset = 'High';
   }
-
+  
   return {
-    SE,
-    SSO,
-    ISI,
+    SleepEfficiency,
+    DelayedSleepOnset,
+    InsomniaRisk,
   };
 }
 
@@ -92,23 +93,23 @@ function getAdvisorText(sleepQualityRatings: SleepQualityRatings): string {
     get out of bed shortly after waking in the morning;
   `;
 
-  if (sleepQualityRatings.ISI === 'High') {
+  if (sleepQualityRatings.InsomniaRisk === 'High') {
     return 'Congratulations, you are sleeping well!';
   }
 
   let advice = 'You are at ';
-  advice += sleepQualityRatings.ISI === 'Moderate' ? 'moderate' : 'high';
+  advice += sleepQualityRatings.InsomniaRisk === 'Moderate' ? 'moderate' : 'high';
   advice += ' risk for insomnia. Consider trying the following to improve your sleep:\n';
 
-  if (sleepQualityRatings.ISI === 'Moderate') {
+  if (sleepQualityRatings.InsomniaRisk === 'Moderate') {
     advice += fallingAsleepAdvice;
   }
 
-  if (sleepQualityRatings.SSO === 'Moderate' || sleepQualityRatings.SSO === 'High') {
+  if (sleepQualityRatings.DelayedSleepOnset === 'Moderate' || sleepQualityRatings.DelayedSleepOnset === 'High') {
     advice += adjustingBedTimeAdvice;
   }
 
-  if (sleepQualityRatings.SE === 'Moderate' || sleepQualityRatings.SE === 'High') {
+  if (sleepQualityRatings.SleepEfficiency === 'Moderate' || sleepQualityRatings.SleepEfficiency === 'High') {
     advice += stayingAsleepAdvice;
   }
 
@@ -125,7 +126,7 @@ async function getUserSleepAnalysis() {
   return computeSleepQualityRatings(userData);
 }
 
-async function ShowStat({ query }: { query: string }) {
+async function SleepQuality({ query }: { query: string }) {
   // In the LangChain example, this was a Tool that the LLM decided to invoke. We don't need that here;
   // the decision has already been made by the router.
 
@@ -149,10 +150,39 @@ async function ShowAdvice({ query }: { query: string }) {
       <SystemMessage>
         You are an expert sleep analyst. Here is some data about the user's sleep quality: {JSON.stringify(analysis)}
         Here is some info you know about how to improve this user's sleep quality: {adviceText}
-        Answer the user's question using the information above. If you can't answer it, apologize and say you're not
+        Answer the user's question using the information above. If you can't answer it based only on this provided information, then apologize and say you're not
         able to help.
       </SystemMessage>
       <UserMessage>{query}</UserMessage>
+    </ChatCompletion>
+  );
+}
+
+async function RepeatAfterMe({ query }: { query: string }) {
+  const analysis = await getUserSleepAnalysis();
+  const adviceText = getAdvisorText(analysis);
+
+  return (
+    <ChatCompletion>
+      <SystemMessage>
+        Repeat the user message exactly as provided without quotation marks
+      </SystemMessage>
+      <UserMessage>{query}</UserMessage>
+    </ChatCompletion>
+  );
+}
+
+async function SleepData({ query }: { query: string }) {
+  const analysis = await getUserSleepAnalysis();
+  const adviceText = getAdvisorText(analysis);
+  const user_data = await loadUserData()
+
+  return (
+    <ChatCompletion>
+      <SystemMessage>
+        Display relevant JSON data an table then respond to the user question.
+      </SystemMessage>
+      <UserMessage>Here is the question: {query}\nHere is the JSON data: {JSON.stringify(user_data.nightly_records)}</UserMessage>
     </ChatCompletion>
   );
 }
@@ -196,6 +226,7 @@ async function ShowDataSummary({ query }: { query: string }) {
   };
 
   const userData = await loadUserData();
+  console.log(userData)
   return (
     <NaturalLanguageRouter query={query}>
       <Route when="the user wants to see an output format that you're able to generate yourself">
@@ -227,20 +258,20 @@ export default function ZeppHealth({ query }: { query: string }) {
     // The routing agent doesn't universally pick the right thing, but I think we could solve that with prompt engineering.
     <NaturalLanguageRouter query={query}>
       <Route when="the user is asking a question about your capabilities">
-        I can show you your sleep data, answer questions about your sleep data, assess your sleep quality based on your
-        sleep data, and provide advice to improve your sleep based on your sleep quality. Sleep quality and advice are
-        based only on ISI, SSO, and SE ratings.
+        <RepeatAfterMe query="I can answer questions about your sleep history, I can identify possible sleep issues, and I can give personalized advice on ways to improve your sleep"></RepeatAfterMe>
       </Route>
-      <Route when="the user wants advice about their sleep health">
-        <ShowAdvice query={query} />
+      <Route when="the user wants to know how well they are sleeping and if they have any risks or pathologies">
+        <SleepQuality query={query}></SleepQuality>
       </Route>
-      <Route when="the user wants to see an aggregated summary of their sleep efficiency or sleep onset duration (e.g. a table, image, chart, graph, average, min, mean, max, variance, etc)">
-        <ShowDataSummary query={query} />
+      <Route when="the user wants to summarize or visualize their sleep data">
+        <SleepData query={query}></SleepData>
       </Route>
-      <Route when="the user wants to know the value of one of these sleep stats: ISI, SSO, or SE">
-        <ShowStat query={query} />
+      <Route when="the user wants advice or suggestions to improve their sleep">
+        <ShowAdvice query={query}></ShowAdvice>
       </Route>
-      <Route unmatched>I can't help with that.</Route>
+      <Route unmatched>
+        <RepeatAfterMe query="I am not able to help with this request. Please ask a question about your sleep history, issues, or concerns that you may have"></RepeatAfterMe>
+      </Route>
     </NaturalLanguageRouter>
   );
 }
