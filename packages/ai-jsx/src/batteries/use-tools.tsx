@@ -122,6 +122,8 @@ export interface UseToolsProps {
  *
  * This is conceptually similar to [chatGPT plugins](https://openai.com/blog/chatgpt-plugins).
  *
+ * @see ../../../packages/examples/src/bakeoff/health-agent/ai-jsx.tsx
+ * 
  * ```tsx
  *  async function turnLightsOn() {}
  *  async function turnLightsOff() {}
