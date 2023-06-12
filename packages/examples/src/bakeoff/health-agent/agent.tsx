@@ -4,13 +4,11 @@
 
 import * as LLMx from '@fixieai/ai-jsx';
 import { NaturalLanguageRouter, Route } from '@fixieai/ai-jsx/batteries/natural-language-router';
-import { Tool, UseTools } from '@fixieai/ai-jsx/batteries/use-tools';
 import fixtureUserData from './user-data.json';
 import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
 import { loadJsonFile } from 'load-json-file';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { z } from 'zod';
 
 interface SleepQualityRatings {
   SleepEfficiency: 'Low' | 'Moderate' | 'High';
@@ -161,9 +159,7 @@ async function ShowAdvice({ query }: { query: string }) {
   );
 }
 
-async function RepeatAfterMe({ query }: { query: string }) {
-  const analysis = await getUserSleepAnalysis();
-  const adviceText = getAdvisorText(analysis);
+function RepeatAfterMe({ query }: { query: string }) {
 
   return (
     <ChatCompletion>
@@ -174,8 +170,6 @@ async function RepeatAfterMe({ query }: { query: string }) {
 }
 
 async function SleepData({ query }: { query: string }) {
-  const analysis = await getUserSleepAnalysis();
-  const adviceText = getAdvisorText(analysis);
   const user_data = await loadUserData();
 
   return (
