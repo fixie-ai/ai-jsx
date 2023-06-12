@@ -1,5 +1,5 @@
 /**
- * Run this with `yarn demo:zepp-health`
+ * Run this with `yarn demo:health-agent`
  */
 
 import * as LLMx from '@fixieai/ai-jsx';
@@ -222,7 +222,7 @@ async function ShowDataSummary({ query }: { query: string }) {
   );
 }
 
-export default function ZeppHealth({ query }: { query: string }) {
+export default function HealthAgent({ query }: { query: string }) {
   return (
     // The routing agent doesn't universally pick the right thing, but I think we could solve that with prompt engineering.
     <NaturalLanguageRouter query={query}>

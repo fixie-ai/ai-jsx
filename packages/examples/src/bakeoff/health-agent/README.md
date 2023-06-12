@@ -1,4 +1,4 @@
-# Zepp Health
+# Health Agent
 
 The LangChain version to compare this to is https://github.com/fixie-ai/Zhealth. To figure out what the expected behavior is, I mostly looked at https://github.com/fixie-ai/Zhealth/blob/main/test_zhealth.ipynb.
 
@@ -57,7 +57,7 @@ Conversely, AI.JSX provides a lower-level set of primitives that are more flexib
 I use a router in a few places to steer the model:
 
 ```tsx
-function ZeppHealth({ query }: { query: string }) {
+function HealthAgent({ query }: { query: string }) {
   return (
     // The routing agent doesn't universally pick the right thing, but I think we could solve that with prompt engineering.
     <NaturalLanguageRouter query={query}>
@@ -158,7 +158,7 @@ $ grep 'invoking tool' -i llmx.log | yarn pino-pretty
 I made a simple component to look at a user's question, the AI's answer, and decide if the answer is good:
 
 ```tsx
-<Eval query={query} answer={<ZeppHealth query={query} />} />
+<Eval query={query} answer={<HealthAgent query={query} />} />
 ```
 
 When I run this, the actual evaluations the AI gives are bad, but I think this can be fixed via prompt engineering. The evaluating AI doesn't have any context on what's expected in our product spec, so its judgment is all over the place.

@@ -1,3 +1,7 @@
+---
+sidebar_position: 1
+---
+
 # Guide for AI Newcomers
 
 Large Language Models (LLMs) are powerful tools, representing a paradigm shift in how we build and use software. Machines now have the ability to reason and understand natural language and code. We predict over the coming years, incumbents will be either remake themselves, or be disrupted by AI-native products and platforms.
@@ -112,7 +116,7 @@ const tools: Record<string, Tool> = {
 </UseTools>;
 ```
 
-More detail: [UseTools](../packages/ai-jsx/src/batteries/use-tools.tsx).
+More detail: `UseTools` (`packages/ai-jsx/src/batteries/use-tools.tsx`).
 
 ## Accessing Knowledge ("Docs QA")
 
@@ -151,6 +155,8 @@ To address point (3), you want to find a loader that can parse text out of your 
 
 If you use [Fixie](https://fixie.ai/), all three of these points are handled for you.
 
+See also: [Pinecone Guidance on Chunking Strategies](https://www.pinecone.io/learn/chunking-strategies/).
+
 ### Pick the Right Docs to Show
 
 In the simplest case, your context window is long enough to put every doc in the prompt every time, and the model happens to not get confused by this.
@@ -159,7 +165,7 @@ In the more complicated case, you need to pick which docs to put in the prompt. 
 
 To do this, use a vector database (VDB). A vector database creates a semantic vector (also known as an "embedding") for each doc, then allows you to do a semantic search.
 
-There are many different vector databases; [Pinecone](https://www.pinecone.io/) and [Chroma](https://www.trychroma.com/) are two big ones. AI.JSX ships with an [in memory vector database suitable](../packages/ai-jsx/src/batteries/docs.tsx), which is a good simple solution when you're below a certain scale.
+There are many different vector databases; [Pinecone](https://www.pinecone.io/) and [Chroma](https://www.trychroma.com/) are two big ones. AI.JSX ships with an in memory vector database suitable (`packages/ai-jsx/src/batteries/docs.tsx`), which is a good simple solution when you're below a certain scale.
 
 To use a vector db, you have to sign up for one of those providers, load your docs, and keep the DBs up-to-date as your docs change. Or you can use [Fixie](https://fixie.ai/), and it's all handled for you.
 

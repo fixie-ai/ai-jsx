@@ -48,12 +48,12 @@ function AskAndAnswer({ query }: { query: string }) {
 
 showInspector(
   <>
-    <AskAndAnswer query="What is Loop?" />
+    <AskAndAnswer query="What is Reddit?" />
     {'\n'}
     {'\n'}
-    <AskAndAnswer query="Does Loop offer roadside assistance?" />
+    <AskAndAnswer query="How do I create a subreddit?" />
     {'\n'}
     {'\n'}
-    <AskAndAnswer query="How do I file a claim?" />
+    <AskAndAnswer query="Can I trust everything that I find on Reddit?" />
   </>
 );
