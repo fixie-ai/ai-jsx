@@ -86,6 +86,8 @@ function getClientEnvironment(publicUrl) {
         // Whether or not react-refresh is enabled.
         // It is defined here so it is available in the webpackHotDevClient.
         FAST_REFRESH: process.env.FAST_REFRESH !== 'false',
+
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY,
       }
     );
   // Stringify all values so we can feed into webpack DefinePlugin

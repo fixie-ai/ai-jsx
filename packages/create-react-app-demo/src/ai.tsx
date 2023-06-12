@@ -37,17 +37,67 @@ function ButtonEnabledAI() {
   );
 }
 
-export function AI({ children }: { children: LLMx.Node }) {
-  // debugger;
-  const [frame, setFrame] = useState('');
-  useEffect(() => {
-    LLMx.createRenderContext({
-      logger: console.log,
-    }).render(children, {
-      map: setFrame,
-    }).then(setFrame);
-  }, [children]);
-  return frame;
+function AI({ children }: { children: LLMx.Node }) {
+  const [frame, setFrame] = useState(
+    `TEXT: Great! I'll generate a chess board for you. Please select your preferred piece to play: UI: [ [{"id": "white", "text": "White"}, {"id": "black", "text": "Black"}] ]`
+  );
+  // useEffect(() => {
+  //   LLMx.createRenderContext({
+  //     logger: console.log,
+  //   }).render(children, {
+  //     map: (frame) => {
+  //       setFrame(frame);
+  //     },
+  //   }).then(setFrame);
+  // }, [children]);
+  return frame ? aiResponseToReact(frame) : 'Loading...';
+}
+
+function aiResponseToReact(input: string) {
+  const regex = /(TEXT|UI):\s*([\s\S]*?)(?=(?:\sTEXT:|\sUI:|$))/g;
+  let match;
+  const result = [];
+
+  while ((match = regex.exec(input)) !== null) {
+    result.push({ type: match[1], content: match[2].trim() });
+  }
+
+  console.log(result);
+  return result.map(({ type, content }) => {
+    if (type === 'TEXT') {
+      return React.createElement('p', {}, content);
+    }
+    if (type === 'UI') {
+      let grid;
+      try {
+        grid = JSON.parse(content);
+      } catch {
+        // In this case, the UI part hasn't finished streaming yet, so we ignore it until it's done.
+        return null;
+      }
+      return React.createElement(
+        'div',
+        {},
+        grid.map((row: any[]) => {
+          return React.createElement(
+            'div',
+            {},
+            row.map((button: any) => {
+              return React.createElement(
+                'button',
+                {
+                  onClick: () => {
+                    console.log(button.id);
+                  },
+                },
+                button.text
+              );
+            })
+          );
+        })
+      );
+    }
+  });
 }
 
 export function AIRoot() {
