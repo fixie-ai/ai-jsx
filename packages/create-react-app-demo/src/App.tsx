@@ -1,8 +1,9 @@
 import './App.css';
 import * as LLMx from '@fixieai/ai-jsx';
 import React from 'react';
-import { AIRoot } from './ai.tsx';
+import { AIRoot, conversationAtom } from './ai.tsx';
 import { useState } from 'react';
+import { useAtom } from 'jotai';
 
 // function AIResponseToReact({ children }: { children: string }) {
 //   function extractContents(children: string) {
@@ -23,9 +24,13 @@ import { useState } from 'react';
 // }
 
 function App() {
+  const [userResponses] = useAtom(conversationAtom);
   return (
     <div className="App">
       <AIRoot />
+      {userResponses.map((response, index) => {
+        return <div key={index}>{JSON.stringify(response)}</div>;
+      })}
     </div>
   );
 }

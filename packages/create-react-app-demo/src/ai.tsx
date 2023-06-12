@@ -3,19 +3,22 @@
 import * as LLMx from '@fixieai/ai-jsx';
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
-import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
+import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
 import { OpenAI } from '@fixieai/ai-jsx/lib/openai';
+import { atom, useAtom } from 'jotai';
 
-function ButtonEnabledAI() {
-  const Button = z.object({
-    id: z.string(),
-    text: z.string(),
-  });
+export const conversationAtom = atom([]);
 
-  const Row = z.array(Button);
+const Button = z.object({
+  id: z.string(),
+  text: z.string(),
+});
 
-  const Grid = z.array(Row);
+const Row = z.array(Button);
 
+const Grid = z.array(Row);
+function ButtonEnabledAgent({ conversation }: { conversation: any[] }) {
+  console.log('conversation', conversation);
   return (
     <OpenAI chatModel="gpt-4">
       <ChatCompletion>
@@ -32,26 +35,58 @@ function ButtonEnabledAI() {
           buttons to make those choices.
         </SystemMessage>
         <UserMessage>Let's play a game of chess</UserMessage>
+        {conversation.map(({ type, content, action }) => {
+          if (type === 'assissant') {
+            return <AssistantMessage>{content}</AssistantMessage>;
+          }
+          return (
+            <UserMessage>
+              {action === 'click' ? <>The user clicked button: {content}</> : <>The user said: {content}</>}
+            </UserMessage>
+          );
+        })}
       </ChatCompletion>
     </OpenAI>
   );
 }
 
 function AI({ children }: { children: LLMx.Node }) {
-  const [frame, setFrame] = useState('');
+  const [frame, setFrame] = useState(`TEXT: Sure! I'll set up the board. Please choose the color for your pieces.
+  UI: [{"id":"white_pieces", "text":"White"},{"id":"black_pieces", "text":"Black"}]`);
+  const [conversation, setConversation] = useAtom(conversationAtom);
   useEffect(() => {
+    console.log('fire effect');
+
+    const children = <ButtonEnabledAgent conversation={conversation} />;
+
     LLMx.createRenderContext({
       logger: console.log,
-    }).render(children, {
-      map: (frame) => {
-        setFrame(frame);
-      },
-    }).then(setFrame);
-  }, [children]);
-  return frame ? aiResponseToReact(frame) : 'Loading...';
+    })
+      .render(children, {
+        map: (frame) => {
+          // debugger
+          setFrame(frame);
+        },
+      })
+      .then((finalFrame) => {
+        // debugger;
+        setFrame(finalFrame);
+        setConversation((prev) => [
+          ...prev,
+          {
+            type: 'assissant',
+            content: finalFrame,
+          },
+        ]);
+      });
+  }, [children, conversation]);
+  console.log('rendering', frame);
+  return frame ? React.createElement(AIResponseToReact, { children: frame }, frame) : 'Loading...';
 }
 
-function aiResponseToReact(input: string) {
+function AIResponseToReact({ children: input }: { children: string }) {
+  const [, setUserResponses] = useAtom(conversationAtom);
+
   const regex = /(TEXT|UI):\s*([\s\S]*?)(?=(?:\sTEXT:|\sUI:|$))/g;
   let match;
   const result = [];
@@ -60,9 +95,15 @@ function aiResponseToReact(input: string) {
     result.push({ type: match[1], content: match[2].trim() });
   }
 
-  return result.map(({ type, content }) => {
+  const children = result.map(({ type, content }, index) => {
     if (type === 'TEXT') {
-      return React.createElement('p', {}, content);
+      return React.createElement(
+        'p',
+        {
+          key: index,
+        },
+        content
+      );
     }
     if (type === 'UI') {
       let grid;
@@ -75,22 +116,34 @@ function aiResponseToReact(input: string) {
       if (Array.isArray(grid) && !Array.isArray(grid[0])) {
         grid = [grid];
       }
-      console.log('got UI response', grid);
+      const validatedGrid = grid as z.infer<typeof Grid>;
+      console.log('got UI response', validatedGrid);
       return React.createElement(
         'div',
-        {},
-        grid.map((row: any[]) => {
+        {
+          key: index,
+        },
+        validatedGrid.map((row, index) => {
           return React.createElement(
             'div',
-            {},
-            row.map((button: any) => {
+            {
+              key: index,
+            },
+            row.map((button) => {
               return React.createElement(
                 'button',
                 {
                   onClick: () => {
-                    console.log(button.id);
+                    setUserResponses((prev) => [
+                      ...prev,
+                      {
+                        type: 'user',
+                        action: 'click',
+                        content: button.id,
+                      },
+                    ]);
                   },
-                  key: button.id
+                  key: button.id,
                 },
                 button.text
               );
@@ -100,8 +153,10 @@ function aiResponseToReact(input: string) {
       );
     }
   });
+
+  return React.createElement(React.Fragment, { children });
 }
 
 export function AIRoot() {
-  return React.createElement(AI, {}, <ButtonEnabledAI />);
+  return React.createElement(AI, {});
 }

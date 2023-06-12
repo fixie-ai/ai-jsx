@@ -8793,6 +8793,7 @@ __metadata:
     jest: "npm:^27.4.3"
     jest-resolve: "npm:^27.4.2"
     jest-watch-typeahead: "npm:^1.0.0"
+    jotai: "npm:^2.2.0"
     mini-css-extract-plugin: "npm:^2.4.5"
     postcss: "npm:^8.4.4"
     postcss-flexbugs-fixes: "npm:^5.0.2"
@@ -14219,6 +14220,18 @@ __metadata:
     "@sideway/formula": "npm:^3.0.1"
     "@sideway/pinpoint": "npm:^2.0.0"
   checksum: 5de710ce67151429e9bb72c25506532b61874888e29cea7bfea2365d8555a9fbabc3a868e8ebab2dba6c0aa443e7c99efee89416dcb88e0fdb6e5425b211a742
+  languageName: node
+  linkType: hard
+
+"jotai@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "jotai@npm:2.2.0"
+  peerDependencies:
+    react: ">=17.0.0"
+  peerDependenciesMeta:
+    react:
+      optional: true
+  checksum: 035dcb99d662877b6e20c61d19456afc26dd0247473ca2ce74af447e12a561e2c86a33a9cbaa5e9b72cabfa138167a20a7e7f988d41770b058564810e017fd94
   languageName: node
   linkType: hard
 
