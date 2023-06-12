@@ -7,7 +7,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'AI.JSX',
-  tagline: 'The Toolkit for building Responsive AI Apps',
+  tagline: 'The Toolkit for building JSX AI Apps',
   favicon: 'img/ai-jsx.svg',
 
   // Set the production url of your site here
