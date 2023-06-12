@@ -7,8 +7,8 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'AI.JSX',
-  tagline: 'Dinosaurs are cool',
-  favicon: 'img/favicon.ico',
+  tagline: 'The Toolkit for building Responsive AI Apps',
+  favicon: 'img/ai-jsx.svg',
 
   // Set the production url of your site here
   url: 'https://your-docusaurus-test-site.com',
@@ -59,8 +59,8 @@ const config = {
       navbar: {
         title: 'AI.JSX',
         logo: {
-          alt: 'My Site Logo',
-          src: 'img/logo.svg',
+          alt: 'AI.JSX Logo',
+          src: 'img/ai-jsx.png',
         },
         items: [
           {
