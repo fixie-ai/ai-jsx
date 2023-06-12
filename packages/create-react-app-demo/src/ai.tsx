@@ -6,8 +6,11 @@ import { z } from 'zod';
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
 import { OpenAI } from '@fixieai/ai-jsx/lib/openai';
 import { atom, useAtom } from 'jotai';
+import _ from 'lodash';
 
 export const conversationAtom = atom([]);
+
+// This needs better debouncing + only fire a new request when the user sends a message.
 
 const Button = z.object({
   id: z.string(),
@@ -50,9 +53,11 @@ function ButtonEnabledAgent({ conversation }: { conversation: any[] }) {
   );
 }
 
+const sampleResponse = `TEXT: Sure! I'll set up the board. Please choose the color for your pieces.
+UI: [{"id":"white_pieces", "text":"White"},{"id":"black_pieces", "text":"Black"}]`;
+
 function AI({ children }: { children: LLMx.Node }) {
-  const [frame, setFrame] = useState(`TEXT: Sure! I'll set up the board. Please choose the color for your pieces.
-  UI: [{"id":"white_pieces", "text":"White"},{"id":"black_pieces", "text":"Black"}]`);
+  const [frame, setFrame] = useState('');
   const [conversation, setConversation] = useAtom(conversationAtom);
   useEffect(() => {
     console.log('fire effect');
@@ -71,16 +76,21 @@ function AI({ children }: { children: LLMx.Node }) {
       .then((finalFrame) => {
         // debugger;
         setFrame(finalFrame);
-        setConversation((prev) => [
-          ...prev,
-          {
-            type: 'assissant',
-            content: finalFrame,
-          },
-        ]);
+        if (finalFrame) {
+          setConversation((prev) => [
+            ...prev,
+            {
+              type: 'assissant',
+              content: finalFrame,
+            },
+          ]);
+        }
       });
-  }, [children, conversation]);
+  }, [children, _.last(conversation)?.type]);
   console.log('rendering', frame);
+
+  // We need to show the entire history, not just the most recent AI response.
+  // Also, we need to show selected buttons.
   return frame ? React.createElement(AIResponseToReact, { children: frame }, frame) : 'Loading...';
 }
 
@@ -112,6 +122,9 @@ function AIResponseToReact({ children: input }: { children: string }) {
       } catch {
         // In this case, the UI part hasn't finished streaming yet, so we ignore it until it's done.
         return null;
+      }
+      if (grid.type === 'Grid') {
+        grid = grid.value;
       }
       if (Array.isArray(grid) && !Array.isArray(grid[0])) {
         grid = [grid];

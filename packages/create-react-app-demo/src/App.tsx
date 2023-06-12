@@ -28,9 +28,12 @@ function App() {
   return (
     <div className="App">
       <AIRoot />
-      {userResponses.map((response, index) => {
-        return <div key={index}>{JSON.stringify(response)}</div>;
-      })}
+      <div>
+        <h1>Debug: Conversation as JSON</h1>
+        {userResponses.map((response, index) => {
+          return <div key={index}>{JSON.stringify(response)}</div>;
+        })}
+      </div>
     </div>
   );
 }
