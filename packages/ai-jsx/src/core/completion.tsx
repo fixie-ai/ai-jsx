@@ -1,6 +1,6 @@
 import * as LLMx from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
-import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai';
+import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
 
 export interface ModelProps {
   temperature?: number;

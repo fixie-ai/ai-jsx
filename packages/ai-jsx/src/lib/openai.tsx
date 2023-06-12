@@ -6,7 +6,7 @@ import {
   ModelPropsWithChildren,
   SystemMessage,
   UserMessage,
-} from '../core/completion';
+} from '../core/completion.js';
 import {
   ChatCompletionRequestMessage,
   ChatCompletionResponseMessage,

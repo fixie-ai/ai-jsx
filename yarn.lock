@@ -8764,12 +8764,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "create-react-app-demo@workspace:packages/create-react-app-demo"
   dependencies:
+    "@fixieai/ai-jsx": "npm:1.0.0"
     "@testing-library/jest-dom": "npm:^5.16.5"
     "@testing-library/react": "npm:^13.4.0"
     "@testing-library/user-event": "npm:^13.5.0"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
     react-scripts: "npm:5.0.1"
+    typescript: "npm:5.1.3"
     web-vitals: "npm:^2.1.4"
   languageName: unknown
   linkType: soft
@@ -20696,6 +20698,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:5.1.3, typescript@npm:^5.1.3":
+  version: 5.1.3
+  resolution: "typescript@npm:5.1.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 34f5c10a175ad596eb9ef7b12a0417d830317859754bddde67d6681c8bd7e67a24c88dfab600bf0deeb7355cb0f58faf7ab2a2c34a5d3c96f8420928f0f69b58
+  languageName: node
+  linkType: hard
+
 "typescript@npm:^4.7.4":
   version: 4.9.5
   resolution: "typescript@npm:4.9.5"
@@ -20706,13 +20718,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.1.3":
+"typescript@patch:typescript@npm%3A5.1.3#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^5.1.3#optional!builtin<compat/typescript>":
   version: 5.1.3
-  resolution: "typescript@npm:5.1.3"
+  resolution: "typescript@patch:typescript@npm%3A5.1.3#optional!builtin<compat/typescript>::version=5.1.3&hash=5da071"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 34f5c10a175ad596eb9ef7b12a0417d830317859754bddde67d6681c8bd7e67a24c88dfab600bf0deeb7355cb0f58faf7ab2a2c34a5d3c96f8420928f0f69b58
+  checksum: ef6d5eaa31049b41bf1ddf091806aed923e65ea3de951bb27e05bc65911c3bf373b3c2bcc9204d2d2dbdca7d2e06c6a645824580638a8c2c18e2e5155cfc33b7
   languageName: node
   linkType: hard
 
@@ -20723,16 +20735,6 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 0b1a831cfef3e967a806ff1d4b28cfe4d3b71d06195ae0c8ece14c6353ec20165ae9b79c18be93ecd33529690648189aef56234c88b26aadb500b81ddb902cfc
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@npm%3A^5.1.3#optional!builtin<compat/typescript>":
-  version: 5.1.3
-  resolution: "typescript@patch:typescript@npm%3A5.1.3#optional!builtin<compat/typescript>::version=5.1.3&hash=5da071"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: ef6d5eaa31049b41bf1ddf091806aed923e65ea3de951bb27e05bc65911c3bf373b3c2bcc9204d2d2dbdca7d2e06c6a645824580638a8c2c18e2e5155cfc33b7
   languageName: node
   linkType: hard
 
