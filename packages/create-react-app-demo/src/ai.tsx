@@ -38,18 +38,16 @@ function ButtonEnabledAI() {
 }
 
 function AI({ children }: { children: LLMx.Node }) {
-  const [frame, setFrame] = useState(
-    `TEXT: Great! I'll generate a chess board for you. Please select your preferred piece to play: UI: [ [{"id": "white", "text": "White"}, {"id": "black", "text": "Black"}] ]`
-  );
-  // useEffect(() => {
-  //   LLMx.createRenderContext({
-  //     logger: console.log,
-  //   }).render(children, {
-  //     map: (frame) => {
-  //       setFrame(frame);
-  //     },
-  //   }).then(setFrame);
-  // }, [children]);
+  const [frame, setFrame] = useState('');
+  useEffect(() => {
+    LLMx.createRenderContext({
+      logger: console.log,
+    }).render(children, {
+      map: (frame) => {
+        setFrame(frame);
+      },
+    }).then(setFrame);
+  }, [children]);
   return frame ? aiResponseToReact(frame) : 'Loading...';
 }
 
@@ -62,7 +60,6 @@ function aiResponseToReact(input: string) {
     result.push({ type: match[1], content: match[2].trim() });
   }
 
-  console.log(result);
   return result.map(({ type, content }) => {
     if (type === 'TEXT') {
       return React.createElement('p', {}, content);
@@ -75,6 +72,10 @@ function aiResponseToReact(input: string) {
         // In this case, the UI part hasn't finished streaming yet, so we ignore it until it's done.
         return null;
       }
+      if (Array.isArray(grid) && !Array.isArray(grid[0])) {
+        grid = [grid];
+      }
+      console.log('got UI response', grid);
       return React.createElement(
         'div',
         {},
@@ -89,6 +90,7 @@ function aiResponseToReact(input: string) {
                   onClick: () => {
                     console.log(button.id);
                   },
+                  key: button.id
                 },
                 button.text
               );
