@@ -1,23 +1,25 @@
-import logo from './logo.svg';
 import './App.css';
+import * as LLMx from '@fixieai/ai-jsx';
+import {useState} from 'react';
+
+function AI({children}) {
+  const [frame, setFrame] = useState('');
+  LLMx.createRenderContext({
+    logger: function() {
+      debugger;
+    },
+  }).render(children, {
+    map: setFrame,
+  });
+  return frame;
+}
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <AI>
+        {LLMx.createElement('Completion', {children: 'list of dog names'})}
+      </AI>
     </div>
   );
 }

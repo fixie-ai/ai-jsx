@@ -1,4 +1,4 @@
-import { BoundLogger, LogImplementation, Logger, pinoLogger } from './core/log';
+import { BoundLogger, LogImplementation, Logger, pinoLogger } from './core/log.js';
 
 export interface ComponentContext extends RenderContext {
   logger: Logger;
