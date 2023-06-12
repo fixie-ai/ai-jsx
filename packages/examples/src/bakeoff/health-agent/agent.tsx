@@ -160,7 +160,6 @@ async function ShowAdvice({ query }: { query: string }) {
 }
 
 function RepeatAfterMe({ query }: { query: string }) {
-
   return (
     <ChatCompletion>
       <SystemMessage>Repeat the user message exactly as provided without quotation marks</SystemMessage>
