@@ -1,6 +1,6 @@
 import './App.css';
 import * as LLMx from '@fixieai/ai-jsx';
-import {Completion} from '@fixieai/ai-jsx/core/completion';
+import { AIRoot } from './ai.tsx';
 import {useState} from 'react';
 
 function AI({children}: {children: LLMx.Node}) {
@@ -18,9 +18,7 @@ function AI({children}: {children: LLMx.Node}) {
 function App() {
   return (
     <div className="App">
-      <AI>
-        {LLMx.createElement(Completion, {children: 'list of dog names'})}
-      </AI>
+      <AIRoot />
     </div>
   );
 }
