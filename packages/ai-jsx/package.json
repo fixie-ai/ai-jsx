@@ -49,6 +49,10 @@
       "import": "./dist/esm/inspector/console.js",
       "require": "./dist/cjs/inspector/console.js"
     },
+    "./core/errors": {
+      "import": "./dist/esm/core/errors.js",
+      "require": "./dist/cjs/core/errors.js"
+    },
     "./lib/openai": {
       "import": "./dist/esm/lib/openai.js",
       "require": "./dist/cjs/lib/openai.js"
