@@ -45,6 +45,10 @@
       "import": "./dist/esm/core/log.js",
       "require": "./dist/cjs/core/log.js"
     },
+    "./core/memoize": {
+      "import": "./dist/esm/core/memoize.js",
+      "require": "./dist/cjs/core/memoize.js"
+    },
     "./core/inspector": {
       "import": "./dist/esm/inspector/console.js",
       "require": "./dist/cjs/inspector/console.js"

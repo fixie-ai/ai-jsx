@@ -23,17 +23,26 @@ import { useAtom } from 'jotai';
 //   </>
 // }
 
-function App() {
+function DebugConversation() {
   const [userResponses] = useAtom(conversationAtom);
-  return (
-    <div className="App">
-      <AIRoot />
-      <div>
+  return <div>
         <h1>Debug: Conversation as JSON</h1>
         {userResponses.map((response, index) => {
           return <div key={index}>{JSON.stringify(response)}</div>;
         })}
       </div>
+}
+
+function ConversationHistory() {
+  const [userResponses] = useAtom(conversationAtom);
+
+}
+
+function App() {
+  return (
+    <div className="App">
+      <AIRoot />
+      <DebugConversation />
     </div>
   );
 }

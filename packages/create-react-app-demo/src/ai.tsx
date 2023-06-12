@@ -1,14 +1,35 @@
-// @ts-nocheck
 /** @jsx LLMx.createElement */
+/** @jsxFrag LLMx.Fragment */
 import * as LLMx from '@fixieai/ai-jsx';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { z } from 'zod';
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
+import { memo } from '@fixieai/ai-jsx/core/memoize';
 import { OpenAI } from '@fixieai/ai-jsx/lib/openai';
 import { atom, useAtom } from 'jotai';
 import _ from 'lodash';
 
-export const conversationAtom = atom([]);
+interface BaseChatMessage {
+  type: string;
+}
+interface UserResponse {
+  type: 'user',
+}
+interface UserClick extends UserResponse {
+  action: 'click',
+  id: string;
+}
+interface UserChat extends BaseChatMessage {
+  action: 'chat',
+  content: string;
+}
+interface AssistantChat extends BaseChatMessage {
+  type: 'assistant',
+  parts: Array<{ type: 'text', content: string } | {type: 'ui', content: z.infer<typeof Grid>}>;
+}
+type AllChatMessages = AssistantChat | UserChat | UserClick;
+
+export const conversationAtom = atom<AllChatMessages>([] as AllChatMessages[]);
 
 // This needs better debouncing + only fire a new request when the user sends a message.
 
@@ -21,7 +42,6 @@ const Row = z.array(Button);
 
 const Grid = z.array(Row);
 function ButtonEnabledAgent({ conversation }: { conversation: any[] }) {
-  console.log('conversation', conversation);
   return (
     <OpenAI chatModel="gpt-4">
       <ChatCompletion>
@@ -56,38 +76,44 @@ function ButtonEnabledAgent({ conversation }: { conversation: any[] }) {
 const sampleResponse = `TEXT: Sure! I'll set up the board. Please choose the color for your pieces.
 UI: [{"id":"white_pieces", "text":"White"},{"id":"black_pieces", "text":"Black"}]`;
 
-function AI({ children }: { children: LLMx.Node }) {
+function useAI(children, dependencies, handleFinalResult, when: boolean) {
+  const isInProgressRef = useRef(false);
   const [frame, setFrame] = useState('');
+
+  // useEffect(() => {
+  //   if (isInProgressRef.current || !when) {
+  //     return;
+  //   }
+  //   isInProgressRef.current = true;
+  //   LLMx.createRenderContext({
+  //     logger: console.log,
+  //   })
+  //     .render(children, {
+  //       map: (frame) => {
+  //         // debugger
+  //         setFrame(frame);
+  //       },
+  //     })
+  //     .then((finalFrame) => {
+  //       // debugger;
+  //       if (finalFrame) {
+  //         setFrame(finalFrame);
+  //         handleFinalResult({
+  //           type: 'assissant',
+  //           content: finalFrame,
+  //         });
+  //       }
+  //       isInProgressRef.current = false;
+  //     });
+  // }, [children, ...dependencies]);
+
+  return sampleResponse;
+}
+
+function AI() {
   const [conversation, setConversation] = useAtom(conversationAtom);
-  useEffect(() => {
-    console.log('fire effect');
-
-    const children = <ButtonEnabledAgent conversation={conversation} />;
-
-    LLMx.createRenderContext({
-      logger: console.log,
-    })
-      .render(children, {
-        map: (frame) => {
-          // debugger
-          setFrame(frame);
-        },
-      })
-      .then((finalFrame) => {
-        // debugger;
-        setFrame(finalFrame);
-        if (finalFrame) {
-          setConversation((prev) => [
-            ...prev,
-            {
-              type: 'assissant',
-              content: finalFrame,
-            },
-          ]);
-        }
-      });
-  }, [children, _.last(conversation)?.type]);
-  console.log('rendering', frame);
+  const children = memo(<ButtonEnabledAgent conversation={conversation} />);
+  const frame = useAI(children, [_.last(conversation)?.type], finalResult => setConversation((prev) => [...prev, finalResult]), !conversation.length || _.last(conversation).type === 'user');
 
   // We need to show the entire history, not just the most recent AI response.
   // Also, we need to show selected buttons.
@@ -95,7 +121,7 @@ function AI({ children }: { children: LLMx.Node }) {
 }
 
 function AIResponseToReact({ children: input }: { children: string }) {
-  const [, setUserResponses] = useAtom(conversationAtom);
+  const [conversation, setConversation] = useAtom(conversationAtom);
 
   const regex = /(TEXT|UI):\s*([\s\S]*?)(?=(?:\sTEXT:|\sUI:|$))/g;
   let match;
@@ -124,7 +150,7 @@ function AIResponseToReact({ children: input }: { children: string }) {
         return null;
       }
       if (grid.type === 'Grid') {
-        grid = grid.value;
+        grid = grid.value || grid.content;
       }
       if (Array.isArray(grid) && !Array.isArray(grid[0])) {
         grid = [grid];
@@ -147,7 +173,7 @@ function AIResponseToReact({ children: input }: { children: string }) {
                 'button',
                 {
                   onClick: () => {
-                    setUserResponses((prev) => [
+                    setConversation((prev) => [
                       ...prev,
                       {
                         type: 'user',
