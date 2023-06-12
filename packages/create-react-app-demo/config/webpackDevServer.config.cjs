@@ -5,8 +5,8 @@ const evalSourceMapMiddleware = require('react-dev-utils/evalSourceMapMiddleware
 const noopServiceWorkerMiddleware = require('react-dev-utils/noopServiceWorkerMiddleware');
 const ignoredFiles = require('react-dev-utils/ignoredFiles');
 const redirectServedPath = require('react-dev-utils/redirectServedPathMiddleware');
-const paths = require('./paths');
-const getHttpsConfig = require('./getHttpsConfig');
+const paths = require('./paths.cjs');
+const getHttpsConfig = require('./getHttpsConfig.cjs');
 
 const host = process.env.HOST || '0.0.0.0';
 const sockHost = process.env.WDS_SOCKET_HOST;
@@ -14,8 +14,7 @@ const sockPath = process.env.WDS_SOCKET_PATH; // default: '/ws'
 const sockPort = process.env.WDS_SOCKET_PORT;
 
 module.exports = function (proxy, allowedHost) {
-  const disableFirewall =
-    !proxy || process.env.DANGEROUSLY_DISABLE_HOST_CHECK === 'true';
+  const disableFirewall = !proxy || process.env.DANGEROUSLY_DISABLE_HOST_CHECK === 'true';
   return {
     // WebpackDevServer 2.4.3 introduced a security fix that prevents remote
     // websites from potentially accessing local content through DNS rebinding:
