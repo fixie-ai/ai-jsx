@@ -128,10 +128,10 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
   );
 }
 
-type OpenAIMethods = 'createCompletion' | 'createChatCompletion';
-type AxiosResponse<M> = M extends OpenAIMethods ? Awaited<ReturnType<InstanceType<typeof OpenAIApi>[M]>> : never;
+type OpenAIMethod = 'createCompletion' | 'createChatCompletion';
+type AxiosResponse<M> = M extends OpenAIMethod ? Awaited<ReturnType<InstanceType<typeof OpenAIApi>[M]>> : never;
 
-export class OpenAIError<M extends OpenAIMethods> extends HttpError {
+export class OpenAIError<M extends OpenAIMethod> extends HttpError {
   readonly errorResponse: Record<string, any> | null;
 
   constructor(response: AxiosResponse<M>, method: M, responseText: string) {
@@ -158,7 +158,7 @@ export class OpenAIError<M extends OpenAIMethods> extends HttpError {
   }
 }
 
-async function checkOpenAIResponse<M extends OpenAIMethods>(response: AxiosResponse<M>, logger: Logger, method: M) {
+async function checkOpenAIResponse<M extends OpenAIMethod>(response: AxiosResponse<M>, logger: Logger, method: M) {
   if (response.status < 200 || response.status >= 300) {
     const responseData = [] as string[];
     for await (const body of response.data as unknown as AsyncIterable<Buffer>) {
