@@ -57,7 +57,7 @@ function ButtonEnabledAgent({ conversation }: { conversation: any[] }) {
           click a button instead. For example, if you the user a question with a finite set of choices, give them
           buttons to make those choices.
         </SystemMessage>
-        <UserMessage>Let's play tic tac toe</UserMessage>
+        <UserMessage>Let's a choose your own adventure game</UserMessage>
         {conversation.map((chatMessage) => {
           if (chatMessage.type === 'assistant') {
             return <AssistantMessage>{chatMessage.rawMessage}</AssistantMessage>;
@@ -84,6 +84,7 @@ function AI() {
   const children = memo(<ButtonEnabledAgent conversation={conversation} />);
   const when = !conversation.length || _.last(conversation).type === 'user';
 
+  // This doesn't work consistently because the UI doesn't always respect the output format.
   function parseAIResponse(aiResponse: string) {
     const regex = /(TEXT|UI):\s*([\s\S]*?)(?=(?:\sTEXT:|\sUI:|$))/g;
     let match;
@@ -100,7 +101,7 @@ function AI() {
           grid = JSON.parse(content);
         } catch {
           // In this case, the UI part hasn't finished streaming yet, so we ignore it until it's done.
-          return null;
+          continue;
         }
         if (grid.type === 'Grid') {
           grid = grid.value || grid.content;
@@ -111,6 +112,7 @@ function AI() {
         const validatedGrid = grid as z.infer<typeof Grid>;
         console.log('got UI response', validatedGrid);
 
+        // Setting rawMessage does not appear to be consistently working.
         result.push({ type, content: grid, rawMessage: content });
       }
     }
