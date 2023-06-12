@@ -34,8 +34,8 @@ Run a demo like this:
 # Build the ai-jsx package.
 yarn workspace @fixieai/ai-jsx run build
 
-# Replace demo:loop with the name of your demo
-yarn workspace examples run demo:loop
+# Replace demo:reddit with the name of your demo
+yarn workspace examples run demo:reddit
 ```
 
 Most demos will produce results using the [inspector](./packages/ai-jsx/src/inspector/console.tsx), a bare-bones [Ink](https://github.com/vadimdemedes/ink) app:
@@ -46,8 +46,7 @@ The inspector shows the program output on the left hand side, and the debug tree
 
 Some key demos:
 
-- `demo:zepp`: An implementation of the Zepp requirements
-- `demo:loop`: Basic Docs QA
+- `demo:reddit`: Basic Docs QA
 - `demo:router`: Natural Language Router
 - `demo:debate`: Chat model used to generate competing sides in a debate
 - [AI UI](./docs/guides/ai-ui.md).

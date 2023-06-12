@@ -1,6 +1,6 @@
 /**
  * Run with:
- *    $ yarn tsx src/examples/bakeoff/loop-qa/load-articles.mts
+ *    $ yarn tsx packages/examples/src/bakeoff/reddit-qa/load-articles.mts
  */
 
 import fetch from 'node-fetch';
@@ -40,7 +40,7 @@ async function saveArticles(articles: Article[]): Promise<void> {
 }
 
 async function main() {
-  let url = 'https://ridewithloop.zendesk.com/api/v2/help_center/en-us/articles.json?page=1';
+  let url = 'https://reddit.zendesk.com/api/v2/help_center/en-us/articles.json?page=1';
   let allArticles: Article[] = [];
 
   while (url) {
@@ -51,6 +51,9 @@ async function main() {
     const data = (await response.json()) as ApiResponse;
     url = data.next_page!;
   }
+
+  // Limit articles to 50
+  allArticles = allArticles.slice(0, 50);
 
   await saveArticles(allArticles);
 }

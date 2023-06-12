@@ -3,7 +3,7 @@ import { stringify as csvStringify } from 'csv-stringify/sync';
 import { showInspector } from '@fixieai/ai-jsx/core/inspector';
 // This errors due to an ESM issue. I don't know what the right way to fix it is.
 // @ts-expect-error
-import ZeppHealth from './zepp';
+import HealthAgent from './agent';
 
 // https://github.com/fixie-ai/Zhealth/blob/main/test_zhealth.ipynb
 const questionsFromLarry: string[] = [
@@ -48,7 +48,7 @@ function AskAndAnswer({ query }: { query: string }) {
     <>
       {query}
       {'\n'}
-      <ZeppHealth query={query} />
+      <HealthAgent query={query} />
       {'\n'}
       {'\n'}
     </>
@@ -59,7 +59,7 @@ if (process.env.BULK_EVAL) {
   const results = [];
   for (const query of queryList) {
     const startTime = Date.now();
-    const answer = await LLMx.createRenderContext().render(<ZeppHealth query={query} />);
+    const answer = await LLMx.createRenderContext().render(<HealthAgent query={query} />);
     const endTime = Date.now();
     results.push({
       query,

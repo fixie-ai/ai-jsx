@@ -1,22 +1,22 @@
-# Loop DocsQA
+# Reddit DocsQA
 
 **tl;dr:** I think this bakeoff shows promise that we could develop something in the LangChain style that's ~2x better. Once we add JSX, I'm hoping to get closer to ~10x.
 
 ## Setup
 
-**Goal:** Create an LLM app that answers customer questions, using context from Loop's knowledge base.
+**Goal:** Create an LLM app that answers customer questions, using context from Reddit's knowledge base.
 
-First, we run [`./load-articles`](./load-articles.mts) to fetch data from Loop's Zendesk and save it locally as JSON.
+First, we run [`./load-articles`](./load-articles.mts) to fetch data from Reddit's Zendesk and save it locally as JSON.
 
 Then, in each of LangChain and AI.JSX, we use local ETL and an in-memory vector store to answer questions.
 
 ```
 # From the repo root
-$ yarn tsx src/examples/bakeoff/loop-qa/load-articles.mts
+$ yarn tsx packages/examples/src/bakeoff/reddit-qa/load-articles.mts
 
-$ yarn tsx src/examples/bakeoff/loop-qa/langchain.mts
-$ yarn tsx src/examples/bakeoff/loop-qa/ai-jsx.tsx
-$ yarn tsx src/examples/bakeoff/loop-qa/ai-jsx-imperative.ts
+$ yarn tsx packages/examples/src/bakeoff/reddit-qa/langchain.mts
+$ yarn tsx packages/examples/src/bakeoff/reddit-qa/ai-jsx.tsx
+$ yarn tsx packages/examples/src/bakeoff/reddit-qa/ai-jsx-imperative.ts
 ```
 
 ## Caveats
@@ -41,11 +41,11 @@ Following the LangChain docs, I reached for `JSONLoader`. I wanted to use it to 
 
 ```json
 {
-  "id": 4407718614171,
-  "url": "https://ridewithloop.zendesk.com/api/v2/help_center/en-us/articles/4407718614171.json",
-  "html_url": "https://help.ridewithloop.com/hc/en-us/articles/4407718614171-What-is-the-minimum-required-limit-of-liability-in-TX-",
-  "created_at": "2021-10-01T20:39:54Z",
-  "title": "What is the minimum required limit of liability in TX?",
+  "id": 10516331142932,
+  "url": "https://reddit.zendesk.com/api/v2/help_center/en-us/articles/10516331142932.json",
+  "html_url": "https://support.reddithelp.com/hc/en-us/articles/10516331142932-How-do-I-add-images-in-comments-",
+  "created_at": "2022-11-01T19:02:48Z",
+  "title": "How do I add images in comments?",
   "locale": "en-us",
   "body": "/* ... HTML content */"
 }
