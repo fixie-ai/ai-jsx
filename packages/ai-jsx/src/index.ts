@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { BoundLogger, EmptyLogImplementation, LogImplementation, Logger, PinoLogger } from './core/log.js';
+import { BoundLogger, NoOpLogImplementation, LogImplementation, Logger, PinoLogger } from './core/log.js';
 
 export interface ComponentContext extends RenderContext {
   logger: Logger;
@@ -186,7 +186,7 @@ export function setIndirectNode(value: IndirectNode, node: Node) {
 }
 
 // Default is a no-op logger.
-export const LoggerContext = createContext<LogImplementation>(new EmptyLogImplementation());
+export const LoggerContext = createContext<LogImplementation>(new NoOpLogImplementation());
 
 async function* renderStream(
   context: RenderContext,

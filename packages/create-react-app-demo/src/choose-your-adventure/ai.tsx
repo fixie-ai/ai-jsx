@@ -102,11 +102,9 @@ function AI() {
     }
     setCallInProgress(true);
     isInProgressRef.current = true;
-    LLMx.createRenderContext({
-      logger: console.log,
-      // I couldn't get streaming to work here and I don't know why.
-      // Maybe because we're in the client and however Axios is doing it only works in Node?
-    })
+    // I couldn't get streaming to work here and I don't know why.
+    // Maybe because we're in the client and however Axios is doing it only works in Node?
+    LLMx.createRenderContext()
       .render(children)
       .then((finalFrame) => {
         isInProgressRef.current = false;

@@ -1,19 +1,21 @@
 import * as LLMx from '@fixieai/ai-jsx';
 import { Element } from '@fixieai/ai-jsx';
-import { LogLevel } from '@fixieai/ai-jsx/core/log';
+import { LogImplementation, LogLevel } from '@fixieai/ai-jsx/core/log';
 import { Completion } from '@fixieai/ai-jsx/core/completion';
 import { Inline } from '@fixieai/ai-jsx/core/inline';
 
-function ConsoleLogger(level: LogLevel, element: Element<any>, renderId: string, obj: unknown | string, msg?: string) {
-  const args = [] as unknown[];
-  args.push(`<${element.tag.name}>`, renderId);
-  if (msg) {
-    args.push(msg);
+class ConsoleLogger extends LogImplementation {
+  log(level: LogLevel, element: Element<any>, renderId: string, obj: unknown | string, msg?: string) {
+    const args = [] as unknown[];
+    args.push(`<${element.tag.name}>`, renderId);
+    if (msg) {
+      args.push(msg);
+    }
+    if (obj) {
+      args.push(obj);
+    }
+    console[level === 'fatal' ? 'error' : level](...args);
   }
-  if (obj) {
-    args.push(obj);
-  }
-  console[level === 'fatal' ? 'error' : level](...args);
 }
 
 function CharacterGenerator() {
@@ -35,4 +37,4 @@ function CharacterGenerator() {
   );
 }
 
-console.log(await LLMx.createRenderContext({ logger: ConsoleLogger }).render(<CharacterGenerator />));
+console.log(await LLMx.createRenderContext({ logger: new ConsoleLogger() }).render(<CharacterGenerator />));

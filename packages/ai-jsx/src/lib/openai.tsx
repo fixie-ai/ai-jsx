@@ -19,8 +19,8 @@ import * as LLMx from '../index.js';
 import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import { Merge } from 'type-fest';
-import { Logger } from '../core/log';
-import { HttpError } from '../core/errors';
+import { Logger } from '../core/log.js';
+import { HttpError } from '../core/errors.js';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -149,7 +149,7 @@ export class OpenAIError<M extends OpenAIMethod> extends HttpError {
     }
 
     super(
-      `OpenAI ${method} request failed with status code ${response.status}${responseSuffix}`,
+      `OpenAI ${method} request failed with status code ${response.status}${responseSuffix}\n\nFor more information, see https://platform.openai.com/docs/guides/error-codes/api-errors`,
       response.status,
       responseText,
       response.headers

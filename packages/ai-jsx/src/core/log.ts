@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { pino } from 'pino';
+import pino from 'pino';
 import { Element } from '../index';
 
 export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
@@ -12,7 +12,7 @@ export abstract class LogImplementation {
   /**
    * @param level The logging level.
    * @param element The element from which the log originated.
-   * @param renderId A unique identifier associated with the rendering request.
+   * @param renderId A unique identifier associated with the rendering request for this element.
    * @param metadataOrMessage An object to be included in the log, or a message to log.
    * @param message The message to log, if `metadataOrMessage` is an object.
    */
@@ -27,13 +27,13 @@ export abstract class LogImplementation {
   /**
    * Logs exceptions thrown during an element's render. By default invokes `log` with level `"error"`
    * for the element that threw the exception and level `"trace"` for elements through which the exception
-   * propagated.
+   * propagated. This will not be invoked for `ErrorBoundary` components that handle errors from their children.
    *
    * @param element The element from which the exception originated or through which the exception was propagated.
    * @param renderId A unique identifier associated with the rendering request for this element.
    * @param exception The thrown exception.
    */
-  logException(element: Element<object>, renderId: string, exception: any) {
+  logException(element: Element<object>, renderId: string, exception: unknown) {
     let alreadyLoggedException = false;
     if (typeof exception === 'object' && exception !== null) {
       alreadyLoggedException = this.loggedExceptions.has(exception);
@@ -53,14 +53,16 @@ export abstract class LogImplementation {
   }
 }
 
-export class EmptyLogImplementation extends LogImplementation {
+export class NoOpLogImplementation extends LogImplementation {
   log(): void {}
 }
 
 const defaultPinoLogger = _.once(() =>
   pino(
     { name: 'ai-jsx', level: 'trace' },
-    pino.destination({
+    // N.B. pino.destination is not available in the browser
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    pino.destination?.({
       dest: './ai-jsx.log',
       sync: true, // Synchronous logging
     })
