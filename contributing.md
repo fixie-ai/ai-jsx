@@ -24,6 +24,8 @@ If one monorepo package depends on another, the dependee compiles its TS files t
 
 **Run all commands from the monorepo root, via `yarn workspace ...` or `yarn turbo ...`. Running directly from the monorepo packages is not guaranteed to work.**
 
+Within the monorepo, all references to internal packages must have the same version number. For instance, if `examples` has a dependency on `ai-jsx`, then the version in `example`'s `package.json` must match the version declared in `ai-jsx`'s `package.json`. Otherwise, `yarn` will install from the public registry instead of using the local copy. (I think there's a way we can force yarn to always resolve with the local version.)
+
 ### Known Issues
 
 If you run `yarn build` from the monorepo root, the `examples:build` task will sometimes run before the `ai-jsx:build` task completes. I thought I configured turborepo to mark the latter as a dependency of the former and thus they should run sequentially, but that doesn't seem to be happening.
