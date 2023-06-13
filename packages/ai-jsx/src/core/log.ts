@@ -38,7 +38,6 @@ const defaultPinoLogger = _.once(() =>
  * @returns A `LogImplementation`.
  */
 export function pinoLogger(pinoLogger?: pino.Logger): LogImplementation {
-  debugger;
   const definedPinoLogger = pinoLogger ?? defaultPinoLogger();
 
   return (level, element, renderId, obj, msg?) => {

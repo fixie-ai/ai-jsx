@@ -64,7 +64,7 @@
   "type": "module",
   "scripts": {
     "start": "node scripts/start.cjs",
-    "build": "node scripts/build.js",
+    "build": "node scripts/build.cjs",
     "test": "yarn run lint; yarn run typecheck",
     "dev": "yarn run start",
     "lint": "eslint src --max-warnings 0",
