@@ -35,7 +35,8 @@ export const conversationAtom = atom<ChatMessage[]>([
   {
     type: 'user',
     action: 'chat',
-    content: "Let's play a choose your own adventure game. Give me a few options, but also let me give freeform responses.",
+    content:
+      "Let's play a choose your own adventure game. Give me a few options, but also let me give freeform responses.",
   },
 ]);
 export const modelCallInProgress = atom<boolean>(false);

@@ -1,8 +1,21 @@
 import './App.css';
 import React from 'react';
 import { AIRoot, ChatMessage, conversationAtom, modelCallInProgress } from './ai.tsx';
-import { useState } from 'react';
 import { useAtom } from 'jotai';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import RootLayout from './layout.tsx';
+
+const router = createBrowserRouter([{
+  path: '',
+  element: <RootLayout />,
+  children: [
+    {
+      path: '',
+      element: <ChooseYourOwnAdventure />
+    }
+  ]
+}
+])
 
 function DebugConversation() {
   const [conversation] = useAtom(conversationAtom);
@@ -75,7 +88,7 @@ function ConversationHistory() {
         type: 'user',
         action: 'chat',
         // @ts-expect-error
-        content: event.target.elements.message.value
+        content: event.target.elements.message.value,
       },
     ]);
     // @ts-expect-error
@@ -98,21 +111,25 @@ function ConversationHistory() {
       }
       {callInProgress && <div>Waiting for AI response...</div>}
       <form onSubmit={handleInputSubmit}>
-        <input disabled={callInProgress} type='text' name='message' />
-        <button type='submit'>Send</button>
+        <input disabled={callInProgress} type="text" name="message" />
+        <button type="submit">Send</button>
       </form>
     </div>
   );
 }
 
-function App() {
+function ChooseYourOwnAdventure() {
   return (
-    <div className="App">
+    <>
       <AIRoot />
       <ConversationHistory />
       <DebugConversation />
-    </div>
+    </>
   );
+}
+
+function App() {
+  return <RouterProvider router={router} />
 }
 
 export default App;
