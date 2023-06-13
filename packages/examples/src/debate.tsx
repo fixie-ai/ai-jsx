@@ -1,8 +1,8 @@
 import _ from 'lodash';
-import { showInspector } from '@fixieai/ai-jsx/core/inspector';
-import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
-import * as LLMx from '@fixieai/ai-jsx';
-import { Inline } from '@fixieai/ai-jsx/core/inline';
+import { showInspector } from 'ai-jsx/core/inspector';
+import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import * as LLMx from 'ai-jsx';
+import { Inline } from 'ai-jsx/core/inline';
 
 async function ConversationRemapper(
   props: {

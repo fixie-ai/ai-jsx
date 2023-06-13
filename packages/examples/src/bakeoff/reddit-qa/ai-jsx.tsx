@@ -3,12 +3,12 @@ import { globbySync } from 'globby';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadJsonFile } from 'load-json-file';
-import * as LLMx from '@fixieai/ai-jsx';
-import { DocsQA, defaultChunkMany, DefaultInMemoryVectorStore } from '@fixieai/ai-jsx/batteries/docs';
+import * as LLMx from 'ai-jsx';
+import { DocsQA, defaultChunkMany, DefaultInMemoryVectorStore } from 'ai-jsx/batteries/docs';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { Article } from './load-articles.mjs';
 import _ from 'lodash';
-import { showInspector } from '@fixieai/ai-jsx/core/inspector';
+import { showInspector } from 'ai-jsx/core/inspector';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 

@@ -2,9 +2,9 @@
 
 import React from '../react';
 
-import * as LLMx from '@fixieai/ai-jsx';
+import * as LLMx from 'ai-jsx';
 import { graphql } from '@octokit/graphql';
-import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
+import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 
 function QueryGitHub({ query }: { query: string }) {
   return (

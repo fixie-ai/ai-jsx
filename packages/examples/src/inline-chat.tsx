@@ -1,7 +1,7 @@
-import * as LLMx from '@fixieai/ai-jsx';
-import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
-import { Inline } from '@fixieai/ai-jsx/core/inline';
-import { showInspector } from '@fixieai/ai-jsx/core/inspector';
+import * as LLMx from 'ai-jsx';
+import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { Inline } from 'ai-jsx/core/inline';
+import { showInspector } from 'ai-jsx/core/inspector';
 
 function App() {
   return (
