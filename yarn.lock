@@ -6948,7 +6948,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"ai-jsx@npm:0.1.0, ai-jsx@workspace:packages/ai-jsx":
+"ai-jsx@npm:0.2.0-0, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
@@ -8900,7 +8900,7 @@ __metadata:
     "@testing-library/user-event": "npm:^13.5.0"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.11"
     "@typescript-eslint/parser": "npm:^5.59.11"
-    ai-jsx: "npm:0.1.0"
+    ai-jsx: "npm:0.2.0-0"
     babel-jest: "npm:^27.4.2"
     babel-loader: "npm:^8.2.3"
     babel-plugin-named-asset-import: "npm:^0.3.8"
@@ -10853,7 +10853,7 @@ __metadata:
     "@tsconfig/node18": "npm:^2.0.1"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.6"
     "@typescript-eslint/parser": "npm:^5.59.6"
-    ai-jsx: "npm:0.1.0"
+    ai-jsx: "npm:0.2.0-0"
     eslint: "npm:^8.40.0"
     eslint-config-nth: "npm:^2.0.1"
     pino-pretty: "npm:^10.0.0"
@@ -15725,7 +15725,7 @@ __metadata:
     "@types/react-dom": "npm:18.2.4"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.9"
     "@typescript-eslint/parser": "npm:^5.59.9"
-    ai-jsx: "npm:0.1.0"
+    ai-jsx: "npm:0.2.0-0"
     autoprefixer: "npm:10.4.14"
     classnames: "npm:^2.3.2"
     eslint: "npm:8.42.0"
