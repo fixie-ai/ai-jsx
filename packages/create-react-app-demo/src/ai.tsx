@@ -23,9 +23,7 @@ export function useAI(children: LLMx.Node, when: boolean = true) {
     }
     setResult('');
     setIsDone(false);
-    LLMx.createRenderContext({
-      logger: console.log,
-    })
+    LLMx.createRenderContext()
       .render(children, {
         // Streaming won't work. We see this error in the console:
         // xhr.js:174 The provided value 'stream' is not a valid enum value of type XMLHttpRequestResponseType.
