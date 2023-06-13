@@ -57,6 +57,14 @@
       "import": "./dist/esm/core/errors.js",
       "require": "./dist/cjs/core/errors.cjs"
     },
+    "./core/prompts": {
+      "import": "./dist/esm/core/prompts.js",
+      "require": "./dist/cjs/core/prompts.js"
+    },
+    "./core/constrained-output": {
+      "import": "./dist/esm/core/constrained-output.js",
+      "require": "./dist/cjs/core/constrained-output.js"
+    },
     "./lib/openai": {
       "import": "./dist/esm/lib/openai.js",
       "require": "./dist/cjs/lib/openai.cjs"
@@ -71,6 +79,7 @@
   "devDependencies": {
     "@tsconfig/node18": "^2.0.1",
     "@types/eslint": "^8",
+    "@types/js-yaml": "^4.0.5",
     "@types/lodash": "^4.14.194",
     "@types/node": "^20.2.1",
     "@types/react": "^18.2.7",

@@ -36,6 +36,7 @@
     "demo:summarizer": "yarn build && node dist/summarizer.js",
     "demo:health-agent": "yarn build && node dist/bakeoff/health-agent/ai-jsx.js",
     "demo:reddit": "yarn build && node dist/bakeoff/reddit-qa/ai-jsx.js",
+    "demo:prompts": "arn build && node dis/prompts.tsx",
     "view-logs": "cat llmx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
