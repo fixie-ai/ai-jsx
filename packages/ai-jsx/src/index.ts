@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { BoundLogger, EmptyLogImplementation, LogImplementation, Logger, PinoLogger } from './core/log';
+import { BoundLogger, EmptyLogImplementation, LogImplementation, Logger, PinoLogger } from './core/log.js';
 
 export interface ComponentContext extends RenderContext {
   logger: Logger;
