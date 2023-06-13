@@ -1,19 +1,23 @@
-import * as LLMx from '@fixieai/ai-jsx';
-import { Element } from '@fixieai/ai-jsx';
-import { LogLevel } from '@fixieai/ai-jsx/core/log';
-import { Completion } from '@fixieai/ai-jsx/core/completion';
-import { Inline } from '@fixieai/ai-jsx/core/inline';
+import * as LLMx from 'ai-jsx';
+import { Element } from 'ai-jsx';
+import { LogImplementation, LogLevel, PinoLogger } from 'ai-jsx/core/log';
+import { Completion } from 'ai-jsx/core/completion';
+import { Inline } from 'ai-jsx/core/inline';
+import path from 'node:path';
+import { pino } from 'pino';
 
-function ConsoleLogger(level: LogLevel, element: Element<any>, renderId: string, obj: unknown | string, msg?: string) {
-  const args = [] as unknown[];
-  args.push(`<${element.tag.name}>`, renderId);
-  if (msg) {
-    args.push(msg);
+class ConsoleLogger extends LogImplementation {
+  log(level: LogLevel, element: Element<any>, renderId: string, obj: unknown | string, msg?: string) {
+    const args = [] as unknown[];
+    args.push(`<${element.tag.name}>`, renderId);
+    if (msg) {
+      args.push(msg);
+    }
+    if (obj) {
+      args.push(obj);
+    }
+    console[level === 'fatal' ? 'error' : level](...args);
   }
-  if (obj) {
-    args.push(obj);
-  }
-  console[level === 'fatal' ? 'error' : level](...args);
 }
 
 function CharacterGenerator() {
@@ -35,4 +39,22 @@ function CharacterGenerator() {
   );
 }
 
-console.log(await LLMx.createRenderContext({ logger: ConsoleLogger }).render(<CharacterGenerator />));
+console.log(await LLMx.createRenderContext({ logger: new ConsoleLogger() }).render(<CharacterGenerator />));
+
+console.log('Writing output to ', path.join(process.cwd(), 'ai-jsx.log'));
+console.log(await LLMx.createRenderContext({ logger: new PinoLogger() }).render(<CharacterGenerator />));
+
+console.log('Writing output to stdout via Pino');
+const pinoStdoutLogger = pino({
+  name: 'ai-jsx',
+  level: process.env.loglevel ?? 'trace',
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+    },
+  },
+});
+console.log(
+  await LLMx.createRenderContext({ logger: new PinoLogger(pinoStdoutLogger) }).render(<CharacterGenerator />)
+);

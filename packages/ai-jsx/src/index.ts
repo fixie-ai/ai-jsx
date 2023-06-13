@@ -1,4 +1,5 @@
-import { BoundLogger, LogImplementation, Logger, pinoLogger } from './core/log';
+import { v4 as uuidv4 } from 'uuid';
+import { BoundLogger, NoOpLogImplementation, LogImplementation, Logger, PinoLogger } from './core/log.js';
 
 export interface ComponentContext extends RenderContext {
   logger: Logger;
@@ -193,7 +194,7 @@ export function setIndirectNode(value: IndirectNode, node: Node) {
 }
 
 // Default is a no-op logger.
-export const LoggerContext = createContext<LogImplementation>(() => {});
+export const LoggerContext = createContext<LogImplementation>(new NoOpLogImplementation());
 
 async function* renderStream(
   context: RenderContext,
@@ -286,13 +287,20 @@ async function* renderStream(
       // We need to switch contexts before we can render the element.
       return yield* renderingContext.render(renderable, recursiveRenderOpts);
     }
-    return yield* renderingContext.render(
-      renderable.render(renderingContext, new BoundLogger(renderingContext.getContext(LoggerContext), renderable)),
-      {
-        stop: shouldStop,
-        map: (frame) => frame,
-      }
-    );
+    const logImpl = renderingContext.getContext(LoggerContext);
+    const renderId = uuidv4();
+    try {
+      return yield* renderingContext.render(
+        renderable.render(renderingContext, new BoundLogger(logImpl, renderId, renderable)),
+        {
+          stop: shouldStop,
+          map: (frame) => frame,
+        }
+      );
+    } catch (ex) {
+      logImpl.logException(renderable, renderId, ex);
+      throw ex;
+    }
   }
 
   if (Symbol.asyncIterator in renderable) {
@@ -318,7 +326,7 @@ async function* renderStream(
 }
 
 export function createRenderContext(opts?: { logger?: LogImplementation }) {
-  const logger = opts?.logger ?? pinoLogger();
+  const logger = opts?.logger ?? new PinoLogger();
   return createRenderContextInternal(renderStream, {
     [LoggerContext[contextKey].userContextSymbol]: logger,
   });
