@@ -93,33 +93,7 @@ function AI() {
   const children = memo(<ButtonEnabledAgent conversation={conversation} />);
   const when = !conversation.length || _.last(conversation).type === 'user';
 
-  function parseAIResponse(aiResponse: string) {
-    let parts;
-    try {
-      parts = JSON.parse(aiResponse);
-    } catch (e) {
-      console.log("Couldn't parse line:", line);
-    }
-
-    // Sometimes the model doesn't follow the desired output format exactly.
-    if (typeof parts.type === 'string' && (parts.type as string).toLowerCase() === 'response') {
-      parts = parts.content;
-    }
-    if (!Array.isArray(parts)) {
-      parts = [parts];
-    }
-
-    if (parts) {
-      setConversation((prev) => [
-        ...prev,
-        {
-          type: 'assistant',
-          parts: parts,
-          rawMessage: aiResponse,
-        },
-      ]);
-    }
-  }
+  const lastMessageType = _.last(conversation)?.type;
 
   useEffect(() => {
     if (isInProgressRef.current || !when) {
@@ -130,14 +104,44 @@ function AI() {
     LLMx.createRenderContext({
       logger: console.log,
       // I couldn't get streaming to work here and I don't know why.
+      // Maybe because we're in the client and however Axios is doing it only works in Node?
     })
       .render(children)
       .then((finalFrame) => {
-        parseAIResponse(finalFrame);
         isInProgressRef.current = false;
         setCallInProgress(false);
+
+        let parts;
+        try {
+          parts = JSON.parse(finalFrame);
+        } catch (e) {
+          console.log("Couldn't parse line:", finalFrame);
+          parts = [{ type: 'text', content: 'Error: the model returned invalid JSON.' }];
+        }
+
+        // Sometimes the model doesn't follow the desired output format exactly.
+        if (typeof parts.type === 'string' && (parts.type as string).toLowerCase() === 'response') {
+          parts = parts.content;
+        }
+        if (!Array.isArray(parts)) {
+          parts = [parts];
+        }
+        if (parts.content && !Array.isArray(parts.content) && parts.content.type) {
+          parts.content = [parts.content.content];
+        }
+
+        if (parts) {
+          setConversation((prev) => [
+            ...prev,
+            {
+              type: 'assistant',
+              parts: parts,
+              rawMessage: finalFrame,
+            },
+          ]);
+        }
       });
-  }, [children, _.last(conversation)?.type]);
+  }, [children, lastMessageType, setCallInProgress, when, setConversation]);
 
   return null;
 }

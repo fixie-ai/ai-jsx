@@ -4,7 +4,6 @@ import React from 'react';
 import classNames from 'classnames';
 import { useLocation } from 'react-router-dom';
 
-
 export default function NavBar() {
   const { pathname } = useLocation();
 
@@ -23,12 +22,12 @@ export default function NavBar() {
                 <img
                   className="block h-6 w-auto lg:hidden"
                   src="https://app.fixie.ai/static/logos/charcoal.png"
-                  alt="Your Company"
+                  alt="Fixie Logo"
                 />
                 <img
                   className="hidden h-6 w-auto lg:block"
                   src="https://app.fixie.ai/static/logos/charcoal.png"
-                  alt="Your Company"
+                  alt="Fixie Logo"
                 />
               </div>
               <div className="hidden sm:ml-6 sm:flex justify-center w-full sm:space-x-8">

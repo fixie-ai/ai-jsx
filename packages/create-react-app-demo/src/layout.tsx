@@ -8,8 +8,10 @@ export const metadata = {
 };
 
 export default function RootLayout({ children = <Outlet /> }) {
-  return (<>
-    <NavBar />
-    <main className="flex min-h-screen flex-col items-start p-24">{children}</main>
-  </>);
+  return (
+    <>
+      <NavBar />
+      <main className="flex min-h-screen flex-col items-start p-24">{children}</main>
+    </>
+  );
 }
