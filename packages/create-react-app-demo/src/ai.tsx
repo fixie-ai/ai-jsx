@@ -46,18 +46,19 @@ function ButtonEnabledAgent({ conversation }: { conversation: any[] }) {
     <OpenAI chatModel="gpt-4">
       <ChatCompletion>
         <SystemMessage>
-          You are an assistant who can directly render UI to the user. When you speak to the user, your message must
-          follow this grammar: Split your response into logical chunks. Each chunk must start with either `TEXT:` or
-          `UI:` If the line starts with `TEXT:`, the rest of the line is plain text that will be displayed to the user.
-          If the line starts with `UI:`, the rest of the line is a JSON object representing UI that will be shown to the
-          user. This object should be of type `Grid`: type Button = {'{'} id: string; text: string {'}'}; type Row =
-          Button[]; type Grid = Row[]; . This gives you the ability to display a grid of buttons to the user. When the
-          user clicks a button, you'll receive a message telling you which they clicked. Use your ability to show
-          buttons to help the user accomplish their goal. Don't make the user type out a whole response if they can just
-          click a button instead. For example, if you the user a question with a finite set of choices, give them
-          buttons to make those choices.
+          You are an assistant who can directly render UI to the user. You always follow directions. When you speak to
+          the user, your message must follow these types: type Response = Line[] type Line = TextLine | UILine type
+          TextLine = {'{'} type: 'text'; content: string {'}'}
+          type UILine = {'{'} type: 'ui'; content: Grid {'}'}
+          type Button = {'{'} id: string; text: string {'}'}; type Row = Button[]; type Grid = Row[]; Use TextLine to
+          display text to the user. Use UILine to display UI to the user. When the user clicks a button, you'll receive
+          a message telling you which they clicked. Use your ability to show buttons to help the user accomplish their
+          goal. Don't make the user type out a whole response if they can just click a button instead. For example, if
+          you the user a question with a finite set of choices, give them buttons to make those choices. Respond only
+          with JSON. Your entire response should be of type `Response`. Do not include anything outside of the
+          `Response` object. Include a combination of `TextLine` and `UILine` objects in your response.
         </SystemMessage>
-        <UserMessage>Let's a choose your own adventure game</UserMessage>
+        <UserMessage>Let's play a choose your own adventure game. </UserMessage>
         {conversation.map((chatMessage) => {
           if (chatMessage.type === 'assistant') {
             return <AssistantMessage>{chatMessage.rawMessage}</AssistantMessage>;
@@ -84,46 +85,28 @@ function AI() {
   const children = memo(<ButtonEnabledAgent conversation={conversation} />);
   const when = !conversation.length || _.last(conversation).type === 'user';
 
-  // This doesn't work consistently because the UI doesn't always respect the output format.
   function parseAIResponse(aiResponse: string) {
-    const regex = /(TEXT|UI):\s*([\s\S]*?)(?=(?:\sTEXT:|\sUI:|$))/g;
-    let match;
-    const result: AssistantChat['parts'] = [];
-
-    while ((match = regex.exec(aiResponse)) !== null) {
-      const type = match[1].toLowerCase() as 'text' | 'ui';
-      const content = match[2].trim();
-      if (type === 'text') {
-        result.push({ type, content });
-      } else {
-        let grid;
-        try {
-          grid = JSON.parse(content);
-        } catch {
-          // In this case, the UI part hasn't finished streaming yet, so we ignore it until it's done.
-          continue;
-        }
-        if (grid.type === 'Grid') {
-          grid = grid.value || grid.content;
-        }
-        if (Array.isArray(grid) && !Array.isArray(grid[0])) {
-          grid = [grid];
-        }
-        const validatedGrid = grid as z.infer<typeof Grid>;
-        console.log('got UI response', validatedGrid);
-
-        // Setting rawMessage does not appear to be consistently working.
-        result.push({ type, content: grid, rawMessage: content });
-      }
+    let parts;
+    try {
+      parts = JSON.parse(aiResponse);
+    } catch (e) {
+      console.log("Couldn't parse line:", line);
     }
 
-    setConversation((prev) => [
-      ...prev,
-      {
-        type: 'assistant',
-        parts: result,
-      },
-    ]);
+    if (!Array.isArray(parts)) {
+      parts = [parts];
+    }
+
+    if (parts) {
+      setConversation((prev) => [
+        ...prev,
+        {
+          type: 'assistant',
+          parts: parts,
+          rawMessage: aiResponse,
+        },
+      ]);
+    }
   }
 
   useEffect(() => {
@@ -133,6 +116,7 @@ function AI() {
     isInProgressRef.current = true;
     LLMx.createRenderContext({
       logger: console.log,
+      // I couldn't get streaming to work here and I don't know why.
     })
       .render(children)
       .then((finalFrame) => {

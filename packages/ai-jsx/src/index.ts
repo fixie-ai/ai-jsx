@@ -131,10 +131,6 @@ export function createElement<P extends { children: C | C[] }, C>(
     children: children.length == 1 ? children[0] : children,
   } as P;
 
-  // if (typeof tag !== 'function' || typeof tag !== 'string') {
-  //   throw new Error('tag must be a function, but was:' + JSON.stringify(tag));
-  // }
-
   const result = {
     tag,
     props: propsToPass,
