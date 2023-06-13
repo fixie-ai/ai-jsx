@@ -15,7 +15,7 @@ export default function NavBar() {
           <div className="relative flex h-16 justify-between">
             <div className="absolute inset-y-0 left-0 flex items-center sm:hidden"></div>
             <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-              <div className="flex flex-shrink-0 items-center">
+              <div className="flex shrink-0 items-center">
                 <img
                   className="block h-6 w-auto lg:hidden"
                   src="https://app.fixie.ai/static/logos/charcoal.png"
@@ -27,9 +27,8 @@ export default function NavBar() {
                   alt="Fixie Logo"
                 />
               </div>
-              <div className="hidden sm:ml-6 sm:flex justify-center w-full sm:space-x-8">
-                {Object.entries(pages).map(([name, href]) => {
-                  return (
+              <div className="hidden w-full justify-center sm:ml-6 sm:flex sm:space-x-8">
+                {Object.entries(pages).map(([name, href]) => (
                     <NavLink
                       key={href}
                       to={href}
@@ -45,8 +44,7 @@ export default function NavBar() {
                     >
                       {name}
                     </NavLink>
-                  );
-                })}
+                  ))}
               </div>
             </div>
           </div>

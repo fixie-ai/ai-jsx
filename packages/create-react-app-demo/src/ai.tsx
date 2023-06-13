@@ -1,7 +1,6 @@
 import * as LLMx from '@fixieai/ai-jsx';
 import React from './react.ts';
 import { Suspense, ReactNode, useRef, useEffect } from 'react';
-import _ from 'lodash';
 import {
   Recipe,
   RecipeIngredientList,
@@ -11,7 +10,7 @@ import {
   RecipeTitle,
 } from './recipe/page.tsx';
 
-export function useAI(children: LLMx.Node, dependencies: unknown[], when: boolean = true) {
+export function useAI(children: LLMx.Node, when: boolean = true) {
   const isInProgressRef = useRef(false);
   const mostRecentlyRenderedChildren = useRef(children);
   // If `children` changes, but a previous call is still in progress, will we properly start a new one?
@@ -38,7 +37,7 @@ export function useAI(children: LLMx.Node, dependencies: unknown[], when: boolea
         setResult(frame);
         setIsDone(true);
       });
-  }, [...dependencies, children, when]);
+  }, [children, when]);
 
   // It seems like there should be a better way to do this.
   const isActuallyDone = mostRecentlyRenderedChildren.current === children && isDone;
@@ -50,9 +49,10 @@ function Loading() {
   return <img src="/loading.gif" width={100} height={100} alt="loading" />;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function AIDirectToDOM({ children }: { children: ReactNode }) {
   const rendered = await LLMx.createRenderContext().render(children as LLMx.Renderable);
-  return <div className="contents-generated-by-ai-buckle-up-buddy" dangerouslySetInnerHTML={{ __html: rendered }} />;
+  return <div data-test="contents-generated-by-ai-buckle-up-buddy" dangerouslySetInnerHTML={{ __html: rendered }} />;
 }
 
 function AIInterpretedReactComponents({ children }: { children: LLMx.Node }) {
@@ -103,7 +103,7 @@ function AIInterpretedReactComponents({ children }: { children: LLMx.Node }) {
     return <Component>{children}</Component>;
   }
 
-  const { result: rendered, isDone } = useAI(children, []);
+  const { result: rendered, isDone } = useAI(children);
   if (!isDone) {
     return <Loading />;
   }
@@ -118,7 +118,7 @@ function AIInterpretedReactComponents({ children }: { children: LLMx.Node }) {
 }
 
 function AIStream({ children }: { children: LLMx.Node }) {
-  return useAI(children, []).result;
+  return useAI(children).result;
 }
 
 /**
@@ -134,7 +134,7 @@ function AIStream({ children }: { children: LLMx.Node }) {
  */
 export function AI({
   children,
-  renderDirectlyIntoDOM,
+  // renderDirectlyIntoDOM,
   renderPassedReactComponents,
 }: {
   children: LLMx.Node;

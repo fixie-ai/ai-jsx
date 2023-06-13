@@ -1,8 +1,6 @@
 import React from 'react';
 import { AIRoot, ChatMessage, conversationAtom, modelCallInProgress } from './ai.tsx';
 import { useAtom } from 'jotai';
-import { createBrowserRouter } from 'react-router-dom';
-import RootLayout from '../layout.tsx';
 import ResultContainer from '../ResultContainer.tsx';
 import classnames from 'classnames';
 
@@ -14,9 +12,7 @@ function DebugConversation() {
       description="For debug purposes, this card shows the full JSON record of the conversation."
     >
       <ul>
-        {conversation.map((response, index) => {
-          return <li key={index}>{JSON.stringify(response)}</li>;
-        })}
+        {conversation.map((response, index) => <li key={index}>{JSON.stringify(response)}</li>)}
       </ul>
     </ResultContainer>
   );
@@ -46,48 +42,46 @@ function ConversationItem({ response, isLastResponse }: { response: ChatMessage;
         if (part.type === 'text') {
           return <div key={index}>{part.content}</div>;
         }
-        if (part.type === 'ui') {
-          if (typeof part.content.map !== 'function') {
-            throw new Error(`invalid JSON from model: ${JSON.stringify(part)}`);
-          }
-          return part.content.map((row, index) => (
-            <li key={index} className="isolate inline-flex rounded-md shadow-sm">
-              {row.map((button, buttonIndex) => {
-                function handleClick() {
-                  setConversation((prev) => [
-                    ...prev,
-                    {
-                      type: 'user',
-                      action: 'click',
-                      id: button.id,
-                    },
-                  ]);
-                }
-
-                const isFirstButton = buttonIndex === 0;
-                const isLastButton = buttonIndex === row.length - 1;
-                const disabled = !isLastResponse;
-                return (
-                  <button
-                    disabled={disabled}
-                    onClick={handleClick}
-                    className={classnames(disabled ? 'cursor-not-allowed bg-gray-100' : 'hover:bg-gray-50', {
-                      'relative inline-flex items-center rounded-l-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 focus:z-10':
-                        isFirstButton,
-                      'relative -ml-px inline-flex items-center bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 focus:z-10':
-                        !(isFirstButton || isLastButton),
-                      'relative -ml-px inline-flex items-center rounded-r-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 focus:z-10':
-                        isLastButton,
-                    })}
-                  >
-                    {button.text}
-                  </button>
-                );
-              })}
-            </li>
-          ));
+        if (typeof part.content.map !== 'function') {
+          throw new Error(`invalid JSON from model: ${JSON.stringify(part)}`);
         }
-        return null;
+        return part.content.map((row, index) => (
+          <li key={index} className="isolate inline-flex rounded-md shadow-sm">
+            {row.map((button, buttonIndex) => {
+              function handleClick() {
+                setConversation((prev) => [
+                  ...prev,
+                  {
+                    type: 'user',
+                    action: 'click',
+                    id: button.id,
+                  },
+                ]);
+              }
+
+              const isFirstButton = buttonIndex === 0;
+              const isLastButton = buttonIndex === row.length - 1;
+              const disabled = !isLastResponse;
+              return (
+                <button
+                  key={buttonIndex}
+                  disabled={disabled}
+                  onClick={handleClick}
+                  className={classnames(disabled ? 'cursor-not-allowed bg-gray-100' : 'hover:bg-gray-50', {
+                    'relative inline-flex items-center rounded-l-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 focus:z-10':
+                      isFirstButton,
+                    'relative -ml-px inline-flex items-center bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 focus:z-10':
+                      !(isFirstButton || isLastButton),
+                    'relative -ml-px inline-flex items-center rounded-r-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 focus:z-10':
+                      isLastButton,
+                  })}
+                >
+                  {button.text}
+                </button>
+              );
+            })}
+          </li>
+        ));
       })}
     </div>
   );
@@ -117,17 +111,13 @@ function ConversationHistory() {
       title="Chat"
       description="In this demo, the AI is able to respond by rendering both text and buttons as it sees fit. As the user interacts with the buttons (or types freeform responses), the AI ambiently adapts."
     >
-      {
-        <ul>
-          {conversation.map((response, index) => {
-            return (
+      <ul>
+          {conversation.map((response, index) => (
               <li key={index} className="mt-4">
                 <ConversationItem response={response} isLastResponse={index === conversation.length - 1} />
               </li>
-            );
-          })}
+            ))}
         </ul>
-      }
       {callInProgress && <div>Waiting for AI response...</div>}
       <form onSubmit={handleInputSubmit} className="mt-4">
         <input

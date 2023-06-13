@@ -1,6 +1,7 @@
 // @ts-nocheck
 /** @jsx LLMx.createElement */
 /** @jsxFrag LLMx.Fragment */
+/* eslint-disable react/jsx-key */
 import * as LLMx from '@fixieai/ai-jsx';
 import React, { useEffect, useRef } from 'react';
 import { z } from 'zod';
@@ -27,7 +28,7 @@ interface UserChat extends UserResponse {
 interface AssistantChat extends BaseChatMessage {
   type: 'assistant';
   rawMessage: string;
-  parts: Array<{ type: 'text'; content: string } | { type: 'ui'; content: z.infer<typeof Grid> }>;
+  parts: ({ type: 'text'; content: string } | { type: 'ui'; content: z.infer<typeof Grid> })[];
 }
 export type ChatMessage = AssistantChat | UserChat | UserClick;
 
@@ -137,7 +138,7 @@ function AI() {
               ...prev,
               {
                 type: 'assistant',
-                parts: parts,
+                parts,
                 rawMessage: finalFrame,
               },
             ]);

@@ -65,8 +65,11 @@
   "scripts": {
     "start": "node scripts/start.cjs",
     "build": "node scripts/build.js",
-    "test": "node scripts/test.js",
-    "dev": "yarn run start"
+    "test": "yarn run lint; yarn run typecheck",
+    "dev": "yarn run start",
+    "lint": "eslint src --max-warnings 0",
+    "lint:fix": "yarn run lint --fix",
+    "typecheck": "tsc"
   },
   "eslintConfig": {
     "extends": [
@@ -143,6 +146,13 @@
     ]
   },
   "devDependencies": {
-    "classnames": "^2.3.2"
+    "@typescript-eslint/eslint-plugin": "^5.59.11",
+    "@typescript-eslint/parser": "^5.59.11",
+    "classnames": "^2.3.2",
+    "eslint-config-nth": "^2.0.1",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-tailwindcss": "^3.12.1"
   }
 }

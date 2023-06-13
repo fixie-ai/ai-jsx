@@ -25,7 +25,7 @@ export function RecipeInstructionList({ children }: { children: React.ReactNode 
   return (
     <div className="mt-4">
       <h2>Instructions</h2>
-      <ol className="list-disc list-inside" data-test="recipe-instruction-list">
+      <ol className="list-inside list-disc" data-test="recipe-instruction-list">
         {children}
       </ol>
     </div>
@@ -36,8 +36,8 @@ export function RecipeIngredientList({ children }: { children: React.ReactNode }
   const [selectedIngredients] = useAtom(selectedIngredientsAtom);
   return (
     <div>
-      <h2 className="italics">Ingredients</h2>
-      <ul className="list-disc list-inside italic" data-test="recipe-ingredient-list">
+      <h2 className="font-bold">Ingredients</h2>
+      <ul className="list-inside list-disc italic" data-test="recipe-ingredient-list">
         {children}
       </ul>
       <div>{selectedIngredients.size} items selected.</div>
