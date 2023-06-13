@@ -10856,6 +10856,7 @@ __metadata:
     ai-jsx: "npm:0.2.0-1"
     eslint: "npm:^8.40.0"
     eslint-config-nth: "npm:^2.0.1"
+    pino: "npm:^8.14.1"
     pino-pretty: "npm:^10.0.0"
     tsx: "npm:^3.12.7"
     typescript: "npm:^5.1.3"
