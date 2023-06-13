@@ -3,139 +3,129 @@
  * into specific formats, such as JSON, YAML, or Markdown.
  */
 import * as LLMx from '../index.js';
-import { ChatCompletion, SystemMessage, AssistantMessage, UserMessage } from './completion';
-import { memo } from './memoize';
+import { ChatCompletion, SystemMessage, AssistantMessage, UserMessage } from './completion.js';
 import yaml from 'js-yaml';
 
-function isJsonString(str: string): boolean | string {
-  try {
-    JSON.parse(str);
-  } catch (e: any) {
-    return e.message;
-  }
-  return true;
+interface ValidationResult {
+  success: boolean;
+  error: string;
 }
 
-function isYamlString(str: string): boolean | string {
-  try {
-    // try to parse the string as YAML
-    yaml.load(str);
-  } catch (e: any) {
-    return e.message;
-  }
-  return true;
+// TODO: schema
+/**
+ * A ChatCompletion component that constrains the output to be a valid JSON string.
+ * 
+ * @returns a string that validates as JSON or throws an error after `retries` attempts
+ */
+export function JsonChatCompletion({ children, ...props }: { children: LLMx.Node[] }) {
+  return (
+    <ObjectFormatChatCompletion typeName="JSON" validator={isJsonString} {...{ ...props }}>
+      {children}
+    </ObjectFormatChatCompletion>
+  );
 }
 
 /**
- * ChatCompletion that constrains the output to be a valid object format (e.g. JSON/YAML).
+ * A ChatCompletion component that constrains the output to be a valid YAML string.
+ * 
+ * @returns a string that validates as YAML or throws an error after `retries` attempts
+ */
+export function YamlChatCompletion({ children, ...props }: { children: LLMx.Node[] }) {
+  return (
+    <ObjectFormatChatCompletion typeName="YAML" validator={isYamlString} {...{ ...props }}>
+      {children}
+    </ObjectFormatChatCompletion>
+  );
+}
+
+/**
+ * A ChatCompletion components that constrains the output to be a valid object format (e.g. JSON/YAML).
  *
- *
- * @param type_name name of the type, to be used in the prompt
- * @param validator function that returns true if the output is valid, or a string with an error message if not
- *     // TODO: what should the signature of this function be?
- * @param retries if output fails validation, how many times should we retry?
- * @param verbose returns intermediate output if true
- * @returns a string that validates as the given type (TODO: should I return the parsed object instead?)
+ * @returns a string that validates as the given type or throws an error after `retries` attempts
  */
 async function* ObjectFormatChatCompletion(
   {
-    retries = 2,
-    verbose = false,
+    retries = 3,
     validator,
-    type_name,
+    typeName,
     children,
     ...props
   }: {
-    validator: (output: string) => boolean | string;
-    type_name: string;
+    validator: (str: string) => ValidationResult;
+    /** function that succeeds if output string is of the expected format */
+    typeName: string;
+    /** name of the type, to be used in the prompt */
     retries?: number;
-    verbose?: boolean;
+    /** retries if output fails validation, how many times should we retry.
+     * Note: you can have `1 + retries` LLM calls in total. */
     children: LLMx.Node[];
   },
-  { render }: LLMx.RenderContext
+  { render, logger }: LLMx.ComponentContext
 ) {
-  const childrenWithCompletion = memo(
+  const childrenWithCompletion = (
     <ChatCompletion {...props}>
       {children}
       <SystemMessage>
-        Your response must be a valid {type_name}. Do not include ```{type_name.toLowerCase()} ``` code blocks.
+        Your response must be a valid {typeName}. Do not include ```{typeName.toLowerCase()} ``` code blocks.
       </SystemMessage>
     </ChatCompletion>
   );
 
-  if (verbose) yield childrenWithCompletion;
-
   let output = await render(childrenWithCompletion);
   let valiationResults = validator(output);
-  if (valiationResults === true) {
+  if (valiationResults.success) {
     return output;
   } else {
-    if (verbose) yield `Intermediate output did not validate: '''${output}'''`;
+    logger.debug({ atempt: 1, output: output, expectedFormat: typeName }, `Output did not validate to ${typeName}.`);
 
-    for (let i = 0; i < retries; i++) {
-      const completionRetry = memo(
+    for (let retryIndex = 1; retryIndex < retries; retryIndex++) {
+      const completionRetry = (
         <ChatCompletion {...props}>
           <SystemMessage>
-            You are a {type_name} object generator. Create a {type_name} object (context redacted).
+            You are a {typeName} object generator. Create a {typeName} object (context redacted).
           </SystemMessage>
           <AssistantMessage>{output}</AssistantMessage>
           <UserMessage>
-            Try again. Here's the validation error when trying to parse the output as {type_name}:{'\n'}
-            {valiationResults}
+            Try again. Here's the validation error when trying to parse the output as {typeName}:{'\n'}
+            {valiationResults.error}
             {'\n'}
-            You must reformat the string to be a valid {type_name} object, but you must keep the same data. Do not
-            explain the issue, just return a string that can be parsed as {type_name} as-is. Do not include ```
-            {type_name.toLocaleLowerCase()} ``` code blocks.
+            You must reformat the string to be a valid {typeName} object, but you must keep the same data. Do not
+            explain the issue, just return a string that can be parsed as {typeName} as-is. Do not include ```
+            {typeName.toLocaleLowerCase()} ``` code blocks.
           </UserMessage>
         </ChatCompletion>
       );
 
-      if (verbose) yield completionRetry;
-
       output = await render(completionRetry);
       valiationResults = validator(output);
-      if (valiationResults === true) {
+      if (valiationResults.success) {
         return output;
       }
 
-      if (verbose) yield `Intermediate output did not validate: '''${output}'''`;
+      logger.debug(
+        { atempt: retryIndex + 1, output: output, expectedFormat: typeName },
+        `Output did not validate to ${typeName}.`
+      );
     }
   }
-  // TODO: throw error or fail silently with a message?
-  throw new Error(`Could not create a valid ${type_name} object. Please try again.`);
+
+  throw new Error(`The model did not produce a valid ${typeName} object, even after ${retries} attempts.`);
 }
 
-// TODO: schema
-export function JsonChatCompletion({
-  retries = 2,
-  verbose = false,
-  children,
-  ...props
-}: {
-  retries?: number;
-  verbose?: boolean;
-  children: LLMx.Node[];
-}) {
-  return (
-    <ObjectFormatChatCompletion type_name="JSON" validator={isJsonString} {...{ retries, verbose, ...props }}>
-      {children}
-    </ObjectFormatChatCompletion>
-  );
+function isJsonString(str: string): ValidationResult {
+  try {
+    JSON.parse(str);
+    return { success: true, error: '' };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
 }
 
-export function YamlChatCompletion({
-  retries = 2,
-  verbose = false,
-  children,
-  ...props
-}: {
-  retries?: number;
-  verbose?: boolean;
-  children: LLMx.Node[];
-}) {
-  return (
-    <ObjectFormatChatCompletion type_name="YAML" validator={isYamlString} {...{ retries, verbose, ...props }}>
-      {children}
-    </ObjectFormatChatCompletion>
-  );
+function isYamlString(str: string): ValidationResult {
+  try {
+    yaml.load(str);
+    return { success: true, error: '' } as ValidationResult;
+  } catch (e: any) {
+    return { success: false, error: e.message } as ValidationResult;
+  }
 }

@@ -10,58 +10,57 @@ import * as LLMx from '../index.js';
 import { SystemMessage } from './completion';
 
 /**
- * A (system) prompt collection with some useful defaults to get you started.
- * By default all prompts are disabled to make it easier for combining them.
+ * A prompt collection with some useful defaults to get you started.
+ * By default all prompts are disabled to make it easier to combine them.
+ *
+ * There is no guarantee that the model will follow the prompts, but LLMs have
+ * shown great adaptability to prompts.
  *
  * We intend to improve this collection over time and welcome contributions.
- * Potentially, the prompts can be adjusted based on the model being used.
  *
  * Note: even though a SystemPrompt component is used, this component can be used
  * via a plain Completion model as well.
- *
- * @param hhh refers to the prompt "helpful, harmless, and honest assistant"
- * @param apolitical asks the model to not offer opinions on political topics
- * @param persona asks the model to respond with a certain persona. LLMs are trained to
- *    output the average response even if it's wrong. A simple nudge can sometimes get
- *    the model to output better responses.
- *
- *    Example values:
- *      * an expert in astrophysics
- *      * Albert Einstein
- *      * a 5 year old
- *      * a tactful politician
- *
- *    @see https://arxiv.org/pdf/2305.14930.pdf
- *    @see https://arxiv.org/pdf/2111.02080.pdf
- *
- *  @param beconcise asks the model to be concise
- *  @param no_internal_knowledge asks the model to only use the given context to answer instead of baked-in knowledge.
- *      This is useful for knowledge-grounded question answering (DocsQA).
- *  @param step_by_step asks the model to work out the answer in a step-by-step way.
- *      @see PromptStepByStep for more info
  */
 export function Prompt({
   hhh = false,
   apolitical = false,
   persona = null,
-  beconcise = false,
+  concise = false,
   no_internal_knowledge = false,
   step_by_step = false,
 }: {
   hhh?: boolean;
+  /** refers to the prompt "helpful, harmless, and honest assistant" */
   apolitical?: boolean;
+  /** asks the model to not offer opinions on political topics */
   persona?: string | null;
-  // expert?: string | null;
-  beconcise?: boolean;
+  /** asks the model to respond with a certain persona. LLMs are trained to
+   *    output the average response even if it's wrong. A simple nudge can sometimes get
+   *    the model to output better responses.
+   *
+   *    Example values:
+   *      * an expert in astrophysics
+   *      * Albert Einstein
+   *      * a 5 year old
+   *      * a tactful politician
+   *
+   *    @see https://arxiv.org/pdf/2305.14930.pdf
+   *    @see https://arxiv.org/pdf/2111.02080.pdf */
+  concise?: boolean;
+  /** asks the model to be concise */
   no_internal_knowledge?: boolean;
+  /** asks the model to only use the given context to answer instead of baked-in knowledge.
+   *  This is useful for knowledge-grounded question answering (DocsQA). */
   step_by_step?: boolean;
+  /** asks the model to work out the answer in a step-by-step way.
+   *      @see PromptStepByStep for more info */
 }) {
   return (
     <SystemMessage>
       {hhh ? 'You are a helpful, harmless, and honest assistant.' : ''}
       {persona ? `Respond as if you were ${persona}.` : ''}
       {apolitical ? 'You do not offer opinions on political topics.' : ''}
-      {beconcise ? 'Be concise.' : ''}
+      {concise ? 'Be concise.' : ''}
       {no_internal_knowledge
         ? 'You should strictly only use the given context to answer. Do not use any other knowledge you have about the world.'
         : ''}

@@ -1,13 +1,13 @@
 import * as LLMx from '@fixieai/ai-jsx';
 import { SystemMessage, UserMessage, ChatCompletion } from '@fixieai/ai-jsx/core/completion';
 import { Prompt, PromptStepByStep } from '@fixieai/ai-jsx/core/prompts';
-import { ValidateOutput, JsonChatCompletion, YamlChatCompletion } from '@fixieai/ai-jsx/core/constrained-output';
+import { JsonChatCompletion, YamlChatCompletion } from '@fixieai/ai-jsx/core/constrained-output';
 import { showInspector } from '@fixieai/ai-jsx/core/inspector';
 
 function LogicPuzzle() {
   return (
     <ChatCompletion>
-      <Prompt hhh expert="logicial" />
+      <Prompt hhh persona="an expert logician" />
       <PromptStepByStep />
       <UserMessage>
         Johny and Matt decided to play rock-paper-scissors. They bet $1 on each game they played. Johny won three of the
