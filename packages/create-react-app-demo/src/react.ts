@@ -1,5 +1,5 @@
 import React from 'react';
-import * as LLMx from '@fixieai/ai-jsx';
+import * as LLMx from 'ai-jsx';
 
 // We would like to find a way to eliminate the need for this list.
 // This is only needed in the case where you are nesting React components inside your LLMx components.

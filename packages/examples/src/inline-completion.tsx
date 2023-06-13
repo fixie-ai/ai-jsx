@@ -1,8 +1,8 @@
-import { showInspector } from '@fixieai/ai-jsx/core/inspector';
-import { Inline } from '@fixieai/ai-jsx/core/inline';
-import * as LLMx from '@fixieai/ai-jsx';
-import { Node } from '@fixieai/ai-jsx';
-import { Completion } from '@fixieai/ai-jsx/core/completion';
+import { showInspector } from 'ai-jsx/core/inspector';
+import { Inline } from 'ai-jsx/core/inline';
+import * as LLMx from 'ai-jsx';
+import { Node } from 'ai-jsx';
+import { Completion } from 'ai-jsx/core/completion';
 
 function CharacterGenerator() {
   const inlineCompletion = (prompt: Node) => (

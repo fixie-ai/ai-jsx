@@ -17,12 +17,20 @@ We use [TurboRepo](https://turbo.build/repo) and [yarn workspaces](https://yarnp
 $ yarn test
 
 # Run a command for a particular monorepo package
-$ yarn workspace @fixieai/ai-jsx add my-package-name
+$ yarn workspace ai-jsx add my-package-name
 ```
 
 If one monorepo package depends on another, the dependee compiles its TS files to `dist`. If you change a dependee, be sure to run `build` so `dist` is updated.
 
 **Run all commands from the monorepo root, via `yarn workspace ...` or `yarn turbo ...`. Running directly from the monorepo packages is not guaranteed to work.**
+
+Within the monorepo, all references to internal packages must have the same version number. For instance, if `examples` has a dependency on `ai-jsx`, then the version in `example`'s `package.json` must match the version declared in `ai-jsx`'s `package.json`. Otherwise, `yarn` will install from the public registry instead of using the local copy. (I think there's a way we can force yarn to always resolve with the local version.)
+
+### Known Issues
+
+If you run `yarn build` from the monorepo root, the `examples:build` task will sometimes run before the `ai-jsx:build` task completes. I thought I configured turborepo to mark the latter as a dependency of the former and thus they should run sequentially, but that doesn't seem to be happening.
+
+To resolve this, manually run `yarn workspace ai-jsx build` before running `yarn workspace examples build`.
 
 ### Demos
 
@@ -32,7 +40,7 @@ Run a demo like this:
 
 ```
 # Build the ai-jsx package.
-yarn workspace @fixieai/ai-jsx run build
+yarn workspace ai-jsx run build
 
 # Replace demo:reddit with the name of your demo
 yarn workspace examples run demo:reddit
