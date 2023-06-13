@@ -66,7 +66,6 @@ function AIInterpretedReactComponents({ children }: { children: LLMx.Node }) {
     RecipeIngredientList,
     RecipeInstructionListItem,
     RecipeIngredientListItem,
-    SelectIngredientsButton,
   };
 
   interface ExpectedJsonStructure {

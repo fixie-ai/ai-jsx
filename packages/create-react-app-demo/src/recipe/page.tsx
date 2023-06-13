@@ -5,6 +5,9 @@ import { AI } from '../ai.tsx';
 import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
 import ResultContainer from '../ResultContainer.tsx';
 import InputPrompt from '../InputPrompt.tsx';
+import { atom, useAtom } from 'jotai';
+
+const selectedIngredientsAtom = atom<Set<string>>(new Set());
 
 export function Recipe({ children }: { children: React.ReactNode }) {
   return <div data-test="recipe">{children}</div>;
@@ -30,32 +33,35 @@ export function RecipeInstructionList({ children }: { children: React.ReactNode 
 }
 
 export function RecipeIngredientList({ children }: { children: React.ReactNode }) {
+  const [selectedIngredients] = useAtom(selectedIngredientsAtom);
   return (
     <div>
       <h2 className="italics">Ingredients</h2>
       <ul className="list-disc list-inside italic" data-test="recipe-ingredient-list">
         {children}
       </ul>
-      <SelectIngredientsButton />
+      <div>{selectedIngredients.size} items selected.</div>
     </div>
   );
 }
 
-export function SelectIngredientsButton() {
-  return (
-    <button
-      data-test="select-ingredients-button"
-      className="mt-2 rounded bg-indigo-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-    >
-      Add selected ingredients to shopping list
-    </button>
-  );
-}
-
 export function RecipeIngredientListItem({ children }: { children: React.ReactNode }) {
+  const [, setSelectedIngredients] = useAtom(selectedIngredientsAtom);
+
+  function toggleItemSelected() {
+    setSelectedIngredients((selectedIngredients) => {
+      if (selectedIngredients.has(children)) {
+        const newSelectedIngredients = new Set(selectedIngredients);
+        newSelectedIngredients.delete(children);
+        return newSelectedIngredients;
+      }
+      return new Set([...selectedIngredients, children]);
+    });
+  }
+
   return (
     <li data-test="recipe-ingredient-list-item">
-      <input type="checkbox" className="mr-2" />
+      <input type="checkbox" className="mr-2" onClick={toggleItemSelected} />
       {children}
     </li>
   );
