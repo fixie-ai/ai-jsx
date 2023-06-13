@@ -35,7 +35,7 @@ export const conversationAtom = atom<ChatMessage[]>([
   {
     type: 'user',
     action: 'chat',
-    content: "Let's play a choose your own adventure game.",
+    content: "Let's play a choose your own adventure game. Give me a few options, but also let me give freeform responses.",
   },
 ]);
 export const modelCallInProgress = atom<boolean>(false);
@@ -100,6 +100,10 @@ function AI() {
       console.log("Couldn't parse line:", line);
     }
 
+    // Sometimes the model doesn't follow the desired output format exactly.
+    if (parts.type === 'response') {
+      parts = parts.content;
+    }
     if (!Array.isArray(parts)) {
       parts = [parts];
     }

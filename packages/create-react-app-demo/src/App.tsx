@@ -64,8 +64,24 @@ function ConversationItem({ response, isLastResponse }: { response: ChatMessage;
 }
 
 function ConversationHistory() {
-  const [conversation] = useAtom(conversationAtom);
+  const [conversation, setConversation] = useAtom(conversationAtom);
   const [callInProgress] = useAtom(modelCallInProgress);
+
+  function handleInputSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setConversation((prev) => [
+      ...prev,
+      {
+        type: 'user',
+        action: 'chat',
+        // @ts-expect-error
+        content: event.target.elements.message.value
+      },
+    ]);
+    // @ts-expect-error
+    event.target.elements.message.value = '';
+  }
+
   return (
     <div>
       <h1>Chat</h1>
@@ -81,6 +97,10 @@ function ConversationHistory() {
         </ul>
       }
       {callInProgress && <div>Waiting for AI response...</div>}
+      <form onSubmit={handleInputSubmit}>
+        <input disabled={callInProgress} type='text' name='message' />
+        <button type='submit'>Send</button>
+      </form>
     </div>
   );
 }
