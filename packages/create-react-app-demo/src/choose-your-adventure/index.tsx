@@ -12,7 +12,9 @@ function DebugConversation() {
       description="For debug purposes, this card shows the full JSON record of the conversation."
     >
       <ul>
-        {conversation.map((response, index) => <li key={index}>{JSON.stringify(response)}</li>)}
+        {conversation.map((response, index) => (
+          <li key={index}>{JSON.stringify(response)}</li>
+        ))}
       </ul>
     </ResultContainer>
   );
@@ -112,12 +114,12 @@ function ConversationHistory() {
       description="In this demo, the AI is able to respond by rendering both text and buttons as it sees fit. As the user interacts with the buttons (or types freeform responses), the AI ambiently adapts."
     >
       <ul>
-          {conversation.map((response, index) => (
-              <li key={index} className="mt-4">
-                <ConversationItem response={response} isLastResponse={index === conversation.length - 1} />
-              </li>
-            ))}
-        </ul>
+        {conversation.map((response, index) => (
+          <li key={index} className="mt-4">
+            <ConversationItem response={response} isLastResponse={index === conversation.length - 1} />
+          </li>
+        ))}
+      </ul>
       {callInProgress && <div>Waiting for AI response...</div>}
       <form onSubmit={handleInputSubmit} className="mt-4">
         <input

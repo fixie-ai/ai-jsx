@@ -18,11 +18,7 @@ module.exports = {
     },
     react: {
       version: 'detect',
-      linkComponents: [
-        'Link',
-        'NavLink',
-        'AgentNavLink',
-      ],
+      linkComponents: ['Link', 'NavLink', 'AgentNavLink'],
     },
   },
   parser: '@typescript-eslint/parser',
@@ -52,30 +48,42 @@ module.exports = {
     'import/extensions': ['warn', 'ignorePackages'],
 
     'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': ['warn', {varsIgnorePattern: 'React'}],
+    '@typescript-eslint/no-unused-vars': ['warn', { varsIgnorePattern: 'React' }],
     'dot-notation': 'off',
     'no-magic-numbers': 'off',
-    '@typescript-eslint/no-magic-numbers': ['warn', {
-      ignoreReadonlyClassProperties: true,
-      ignore: [0, 1, 2, 200, 400, 404, 500],
-      ignoreTypeIndexes: true,
-    }],
-    '@typescript-eslint/naming-convention': ['error', {
-      selector: 'interface',
-      format: ['PascalCase'],
-      custom: {
-        regex: '^I[A-Z]',
-        match: false,
+    '@typescript-eslint/no-magic-numbers': [
+      'warn',
+      {
+        ignoreReadonlyClassProperties: true,
+        ignore: [0, 1, 2, 200, 400, 404, 500],
+        ignoreTypeIndexes: true,
       },
-    }],
-    camelcase: ['warn', {
-      allow: ['base_prompt', 'few_shots', 'entry_point'],
-    }],
+    ],
+    '@typescript-eslint/naming-convention': [
+      'error',
+      {
+        selector: 'interface',
+        format: ['PascalCase'],
+        custom: {
+          regex: '^I[A-Z]',
+          match: false,
+        },
+      },
+    ],
+    camelcase: [
+      'warn',
+      {
+        allow: ['base_prompt', 'few_shots', 'entry_point'],
+      },
+    ],
     'no-use-before-define': 'off',
-    '@typescript-eslint/no-use-before-define': ['error', {
-      functions: false,
-      variables: true,
-    }],
+    '@typescript-eslint/no-use-before-define': [
+      'error',
+      {
+        functions: false,
+        variables: true,
+      },
+    ],
     'id-blacklist': 'off',
     'no-trailing-spaces': 'warn',
     // Disable style rules to let dprint own it
@@ -90,17 +98,22 @@ module.exports = {
     'jsx-quotes': 'off',
     'operator-linebreak': 'off',
     // Add additional strictness beyond the recommended set
-    '@typescript-eslint/parameter-properties': ['warn', {
-      prefer: 'parameter-properties',
-    }],
+    '@typescript-eslint/parameter-properties': [
+      'warn',
+      {
+        prefer: 'parameter-properties',
+      },
+    ],
     '@typescript-eslint/prefer-readonly': 'warn',
     '@typescript-eslint/switch-exhaustiveness-check': 'warn',
   },
-  overrides: [{
-    files: ['*.cjs', '*.js'],
-    env: {
-      node: true,
-      browser: false,
+  overrides: [
+    {
+      files: ['*.cjs', '*.js'],
+      env: {
+        node: true,
+        browser: false,
+      },
     },
-  }],
+  ],
 };

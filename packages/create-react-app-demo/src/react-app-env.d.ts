@@ -1,4 +1,4 @@
-/* eslint-disable */ 
+/* eslint-disable */
 
 /// <reference types="node" />
 /// <reference types="react" />
