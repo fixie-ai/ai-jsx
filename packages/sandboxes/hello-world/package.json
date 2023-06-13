@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "typecheck": "tsc",
-    "test": "npm run typecheck && tsx src/hello.tsx"
+    "test": "npm run typecheck && tsx index.tsx"
   },
   "dependencies": {
     "ai-jsx": "^0.2.0-1",
