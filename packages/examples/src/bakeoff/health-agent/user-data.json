@@ -1,0 +1,49 @@
+{
+  "sleep_satisfaction": 2,
+  "daily_function": 3,
+  "nightly_records": 
+      [
+          {
+            "Date (m/d/yyyy)": "5/1/2023",
+            "Total Time in Bed (hrs)": 8,
+            "Sleep Onset Duration (hrs)": 0.5,
+            "Wake Before Rise Time (hrs)": 0.25
+          },
+          {
+            "Date (m/d/yyyy)": "5/2/2023",
+            "Total Time in Bed (hrs)": 7,
+            "Sleep Onset Duration (hrs)": 0.3,
+            "Wake Before Rise Time (hrs)": 0.20
+          },
+          {
+            "Date (m/d/yyyy)": "5/3/2023",
+            "Sleep Onset Duration (hrs)": 0.32,
+            "Total Time in Bed (hrs)": 7.5,
+            "Wake Before Rise Time (hrs)": 0.10
+          },
+          {
+            "Date (m/d/yyyy)": "5/4/2023",
+            "Total Time in Bed (hrs)": 6,
+            "Sleep Onset Duration (hrs)": 0.27,
+            "Wake Before Rise Time (hrs)": 0.30
+          },
+          {
+            "Date (m/d/yyyy)": "5/5/2023",
+            "Sleep Onset Duration (hrs)": 1.5,
+            "Total Time in Bed (hrs)": 7.5,
+            "Wake Before Rise Time (hrs)": 0.10
+          },
+          {
+            "Date (m/d/yyyy)": "5/6/2023",
+            "Total Time in Bed (hrs)": 7.5,
+            "Sleep Onset Duration (hrs)": 0.12,
+            "Wake Before Rise Time (hrs)": 0.25
+          },
+          {
+            "Date (m/d/yyyy)": "5/7/2023",
+            "Total Time in Bed (hrs)": 7.5,
+            "Sleep Onset Duration (hrs)": 0.6,
+            "Wake Before Rise Time (hrs)": 0.25
+          }
+      ]
+  }

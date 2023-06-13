@@ -122,7 +122,7 @@ export interface UseToolsProps {
  *
  * This is conceptually similar to [chatGPT plugins](https://openai.com/blog/chatgpt-plugins).
  *
- * @see ../../../examples/src/bakeoff/zepp-health/zepp.tsx
+ * @see ../../../packages/examples/src/bakeoff/health-agent/ai-jsx.tsx
  *
  * ```tsx
  *  async function turnLightsOn() {}

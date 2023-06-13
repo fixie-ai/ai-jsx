@@ -4,7 +4,7 @@ import React from '../react';
 import { AI } from '../ai';
 import ResultContainer from '@/components/ResultContainer';
 import InputPrompt from '@/components/InputPrompt';
-import ZeppHealth from 'examples/dist/bakeoff/zepp-health/zepp';
+import HealthAgent from 'examples/dist/bakeoff/health-agent/agent';
 
 export default function Sleep({ searchParams }: { searchParams: any }) {
   const defaultValue = 'what can you do';
@@ -16,7 +16,7 @@ export default function Sleep({ searchParams }: { searchParams: any }) {
 
       <ResultContainer title={`AI answers this sleep question: "${query}"`}>
         <AI>
-          <ZeppHealth query={query} />
+          <HealthAgent query={query} />
         </AI>
       </ResultContainer>
     </>

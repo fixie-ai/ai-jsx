@@ -59,9 +59,9 @@ async function main() {
   }
 
   await Promise.all([
-    askAndAnswer('What is Loop?'),
-    askAndAnswer('Does Loop offer roadside assistance?'),
-    askAndAnswer('How do I file a claim?'),
+    askAndAnswer('What is Reddit?'),
+    askAndAnswer('How do I create a subreddit?'),
+    askAndAnswer('Can I trust everything that I find on Reddit?'),
   ]);
 }
 
