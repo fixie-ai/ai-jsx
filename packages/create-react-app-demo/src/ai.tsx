@@ -31,7 +31,14 @@ interface AssistantChat extends BaseChatMessage {
 }
 export type ChatMessage = AssistantChat | UserChat | UserClick;
 
-export const conversationAtom = atom<ChatMessage[]>([]);
+export const conversationAtom = atom<ChatMessage[]>([
+  {
+    type: 'user',
+    action: 'chat',
+    content: "Let's play a choose your own adventure game.",
+  },
+]);
+export const modelCallInProgress = atom<boolean>(false);
 
 const Button = z.object({
   id: z.string(),
@@ -58,7 +65,6 @@ function ButtonEnabledAgent({ conversation }: { conversation: any[] }) {
           with JSON. Your entire response should be of type `Response`. Do not include anything outside of the
           `Response` object. Include a combination of `TextLine` and `UILine` objects in your response.
         </SystemMessage>
-        <UserMessage>Let's play a choose your own adventure game. </UserMessage>
         {conversation.map((chatMessage) => {
           if (chatMessage.type === 'assistant') {
             return <AssistantMessage>{chatMessage.rawMessage}</AssistantMessage>;
@@ -80,6 +86,7 @@ function ButtonEnabledAgent({ conversation }: { conversation: any[] }) {
 
 function AI() {
   const [conversation, setConversation] = useAtom(conversationAtom);
+  const [, setCallInProgress] = useAtom(modelCallInProgress);
   const isInProgressRef = useRef(false);
 
   const children = memo(<ButtonEnabledAgent conversation={conversation} />);
@@ -113,6 +120,7 @@ function AI() {
     if (isInProgressRef.current || !when) {
       return;
     }
+    setCallInProgress(true);
     isInProgressRef.current = true;
     LLMx.createRenderContext({
       logger: console.log,
@@ -122,6 +130,7 @@ function AI() {
       .then((finalFrame) => {
         parseAIResponse(finalFrame);
         isInProgressRef.current = false;
+        setCallInProgress(false);
       });
   }, [children, _.last(conversation)?.type]);
 

@@ -1,27 +1,8 @@
 import './App.css';
-import * as LLMx from '@fixieai/ai-jsx';
 import React from 'react';
-import { AIRoot, ChatMessage, conversationAtom } from './ai.tsx';
+import { AIRoot, ChatMessage, conversationAtom, modelCallInProgress } from './ai.tsx';
 import { useState } from 'react';
 import { useAtom } from 'jotai';
-
-// function AIResponseToReact({ children }: { children: string }) {
-//   function extractContents(children: string) {
-//     const regex = /(TEXT|UI):\s*([\w\d\s]+)/g;
-//     let match;
-//     const result = [];
-
-//     while ((match = regex.exec(children)) !== null) {
-//       result.push({ type: match[1], content: match[2].trim() });
-//     }
-
-//     return result;
-//   }
-
-//   const extractedContents = extractContents(children);
-//   return <>
-//   </>
-// }
 
 function DebugConversation() {
   const [conversation] = useAtom(conversationAtom);
@@ -84,10 +65,11 @@ function ConversationItem({ response, isLastResponse }: { response: ChatMessage;
 
 function ConversationHistory() {
   const [conversation] = useAtom(conversationAtom);
+  const [callInProgress] = useAtom(modelCallInProgress);
   return (
     <div>
       <h1>Chat</h1>
-      {conversation.length ? (
+      {
         <ul>
           {conversation.map((response, index) => {
             return (
@@ -97,9 +79,8 @@ function ConversationHistory() {
             );
           })}
         </ul>
-      ) : (
-        'Loading...'
-      )}
+      }
+      {callInProgress && <div>Waiting for AI response...</div>}
     </div>
   );
 }
