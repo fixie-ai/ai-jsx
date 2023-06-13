@@ -1,6 +1,6 @@
 import * as LLMx from '@fixieai/ai-jsx';
 import React from './react.ts';
-import {useState} from 'react';
+import { useState } from 'react';
 import { Suspense, ReactNode, useRef, useEffect } from 'react';
 import _ from 'lodash';
 import {
@@ -15,28 +15,37 @@ import {
 
 export function useAI(children: LLMx.Node, dependencies: unknown[], when: boolean = true) {
   const isInProgressRef = useRef(false);
+  const mostRecentlyRenderedChildren = useRef(children);
   // If `children` changes, but a previous call is still in progress, will we properly start a new one?
   const [result, setResult] = React.useState('');
+  const [isDone, setIsDone] = React.useState(false);
 
   useEffect(() => {
     if (isInProgressRef.current || !when) {
       return;
     }
+    setResult('');
+    setIsDone(false);
     LLMx.createRenderContext({
       logger: console.log,
-      // I couldn't get streaming to work here and I don't know why.
-      // Maybe because we're in the client and however Axios is doing it only works in Node?
     })
       .render(children, {
+        // Streaming won't work. We see this error in the console:
+        // xhr.js:174 The provided value 'stream' is not a valid enum value of type XMLHttpRequestResponseType.
         map: (frame) => setResult(frame),
       })
       .then((frame) => {
         isInProgressRef.current = false;
-        setResult(frame)
+        mostRecentlyRenderedChildren.current = children;
+        setResult(frame);
+        setIsDone(true);
       });
-  }, [...dependencies, children, when])
+  }, [...dependencies, children, when]);
 
-  return result;
+  // It seems like there should be a better way to do this.
+  const isActuallyDone = mostRecentlyRenderedChildren.current === children && isDone;
+
+  return { result, isDone: isActuallyDone };
 }
 
 function Loading() {
@@ -48,7 +57,7 @@ async function AIDirectToDOM({ children }: { children: ReactNode }) {
   return <div className="contents-generated-by-ai-buckle-up-buddy" dangerouslySetInnerHTML={{ __html: rendered }} />;
 }
 
-async function AIInterpretedReactComponents({ children }: { children: ReactNode }) {
+function AIInterpretedReactComponents({ children }: { children: LLMx.Node }) {
   // TODO: Pull this automatically from the input that was passed.
   const possibleComponents = {
     Recipe,
@@ -97,7 +106,10 @@ async function AIInterpretedReactComponents({ children }: { children: ReactNode 
     return <Component>{children}</Component>;
   }
 
-  const rendered = await LLMx.createRenderContext().render(children as LLMx.Renderable);
+  const { result: rendered, isDone } = useAI(children, []);
+  if (!isDone) {
+    return <Loading />;
+  }
 
   let modelResponseJSON;
   try {
@@ -109,9 +121,8 @@ async function AIInterpretedReactComponents({ children }: { children: ReactNode 
 }
 
 function AIStream({ children }: { children: LLMx.Node }) {
-  return useAI(children, []);
+  return useAI(children, []).result;
 }
-
 
 /**
  * A conversion layer between React and AI.JSX components.
@@ -146,13 +157,13 @@ export function AI({
    */
   renderPassedReactComponents?: boolean;
 }) {
-  // if (renderPassedReactComponents) {
-  //   return (
-  //     <Suspense fallback={<Loading />}>
-  //       <AIInterpretedReactComponents>{children}</AIInterpretedReactComponents>
-  //     </Suspense>
-  //   );
-  // }
+  if (renderPassedReactComponents) {
+    return (
+      <Suspense fallback={<Loading />}>
+        <AIInterpretedReactComponents>{children}</AIInterpretedReactComponents>
+      </Suspense>
+    );
+  }
   // if (renderDirectlyIntoDOM) {
   //   return (
   //     <Suspense fallback={<Loading />}>

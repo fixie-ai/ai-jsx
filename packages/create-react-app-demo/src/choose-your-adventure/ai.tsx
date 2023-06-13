@@ -131,7 +131,7 @@ function AI() {
               parts = [parts];
             }
           }
-  
+
           if (parts) {
             setConversation((prev) => [
               ...prev,
@@ -143,7 +143,7 @@ function AI() {
             ]);
           }
         } catch (e) {
-          console.log('Error normalizing JSON from model:', e, parts)
+          console.log('Error normalizing JSON from model:', e, parts);
         }
       });
   }, [children, lastMessageType, setCallInProgress, when, setConversation]);

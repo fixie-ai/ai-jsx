@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from '../react.ts';
-import {useState} from 'react';
+import { useState } from 'react';
 import { AI } from '../ai.tsx';
 import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
 import ResultContainer from '../ResultContainer.tsx';

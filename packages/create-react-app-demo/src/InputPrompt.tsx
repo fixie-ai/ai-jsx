@@ -4,7 +4,15 @@
 
 import React, { Suspense } from 'react';
 
-export default function InputPrompt({ label, value, setValue }: { label: string; value: string, setValue: (val: string) => void }) {
+export default function InputPrompt({
+  label,
+  value,
+  setValue,
+}: {
+  label: string;
+  value: string;
+  setValue: (val: string) => void;
+}) {
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
