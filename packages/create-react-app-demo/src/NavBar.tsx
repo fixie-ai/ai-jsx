@@ -9,6 +9,7 @@ export default function NavBar() {
 
   const pages = {
     'Choose your own adventure': '/',
+    'JIT UI: React': '/recipe',
   };
 
   return (
