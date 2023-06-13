@@ -1,6 +1,6 @@
 {
   "name": "ai-jsx",
-  "version": "0.1.0",
+  "version": "0.2.0-0",
   "volta": {
     "extends": "../../package.json"
   },
@@ -58,6 +58,12 @@
       "require": "./dist/cjs/lib/openai.js"
     }
   },
+  "files": [
+    "dist",
+    "src",
+    "tsconfig.json",
+    "README.md"
+  ],
   "devDependencies": {
     "@tsconfig/node18": "^2.0.1",
     "@types/eslint": "^8",
@@ -82,7 +88,6 @@
     "write-json-file": "^5.0.0"
   },
   "type": "module",
-  "private": true,
   "scripts": {
     "view-logs": "cat llmx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
