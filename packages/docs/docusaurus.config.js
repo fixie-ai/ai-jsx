@@ -111,7 +111,7 @@ const config = {
 
   scripts: [
     {
-      src: 'js/pendo.js',
+      src: '/js/pendo.js',
       async: false,
     }
   ],
