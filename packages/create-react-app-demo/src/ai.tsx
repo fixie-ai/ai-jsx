@@ -1,7 +1,7 @@
 import * as LLMx from '@fixieai/ai-jsx';
 import React from './react.ts';
 import {useState} from 'react';
-import { Suspense, ReactNode } from 'react';
+import { Suspense, ReactNode, useRef, useEffect } from 'react';
 import _ from 'lodash';
 import {
   Recipe,
@@ -12,6 +12,32 @@ import {
   RecipeTitle,
   SelectIngredientsButton,
 } from './recipe/page.tsx';
+
+export function useAI(children: LLMx.Node, dependencies: unknown[], when: boolean = true) {
+  const isInProgressRef = useRef(false);
+  // If `children` changes, but a previous call is still in progress, will we properly start a new one?
+  const [result, setResult] = React.useState('');
+
+  useEffect(() => {
+    if (isInProgressRef.current || !when) {
+      return;
+    }
+    LLMx.createRenderContext({
+      logger: console.log,
+      // I couldn't get streaming to work here and I don't know why.
+      // Maybe because we're in the client and however Axios is doing it only works in Node?
+    })
+      .render(children, {
+        map: (frame) => setResult(frame),
+      })
+      .then((frame) => {
+        isInProgressRef.current = false;
+        setResult(frame)
+      });
+  }, [...dependencies, children, when])
+
+  return result;
+}
 
 function Loading() {
   return <img src="/loading.gif" width={100} height={100} alt="loading" />;
@@ -82,22 +108,8 @@ async function AIInterpretedReactComponents({ children }: { children: ReactNode 
   return parseJsonToReact(modelResponseJSON);
 }
 
-function AIStream({ children }: { children: React.ReactNode }) {
-  const [result, setResult] = useState('');
-
-  useEffect(() => {
-    LLMx.createRenderContext()
-      .render(children as LLMx.Renderable, {
-        map: (frame) => {
-          setResult(frame);
-        },
-      })
-      .then((finalFrame) => {
-        setResult(finalFrame);
-      });
-  });
-
-  return result;
+function AIStream({ children }: { children: LLMx.Node }) {
+  return useAI(children, []);
 }
 
 
@@ -117,7 +129,7 @@ export function AI({
   renderDirectlyIntoDOM,
   renderPassedReactComponents,
 }: {
-  children: React.ReactNode;
+  children: LLMx.Node;
   /**
    * If true, the AI's response will be interpreted as HTML, and written directly into the DOM, via dangerouslySetInnerHTML.
    *
@@ -134,20 +146,20 @@ export function AI({
    */
   renderPassedReactComponents?: boolean;
 }) {
-  if (renderPassedReactComponents) {
-    return (
-      <Suspense fallback={<Loading />}>
-        <AIInterpretedReactComponents>{children}</AIInterpretedReactComponents>
-      </Suspense>
-    );
-  }
-  if (renderDirectlyIntoDOM) {
-    return (
-      <Suspense fallback={<Loading />}>
-        <AIDirectToDOM>{children}</AIDirectToDOM>
-      </Suspense>
-    );
-  }
+  // if (renderPassedReactComponents) {
+  //   return (
+  //     <Suspense fallback={<Loading />}>
+  //       <AIInterpretedReactComponents>{children}</AIInterpretedReactComponents>
+  //     </Suspense>
+  //   );
+  // }
+  // if (renderDirectlyIntoDOM) {
+  //   return (
+  //     <Suspense fallback={<Loading />}>
+  //       <AIDirectToDOM>{children}</AIDirectToDOM>
+  //     </Suspense>
+  //   );
+  // }
 
   return <AIStream>{children}</AIStream>;
 }

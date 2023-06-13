@@ -1,7 +1,7 @@
 // @ts-nocheck
-
-import React from '../react';
-import { AI } from '../ai';
+import React from '../react.ts';
+import {useState} from 'react';
+import { AI } from '../ai.tsx';
 import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
 import ResultContainer from '../ResultContainer.tsx';
 import InputPrompt from '../InputPrompt.tsx';
@@ -69,7 +69,7 @@ export default function RecipeWrapper() {
 
   return (
     <>
-      <InputPrompt label="What would you like a recipe for?" defaultValue={defaultValue} />
+      <InputPrompt label="What would you like a recipe for?" value={query} setValue={setQuery} />
 
       <ResultContainer title={`AI comes up with a recipe for ${query}`}>
         <AI renderPassedReactComponents>
