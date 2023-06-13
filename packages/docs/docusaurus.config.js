@@ -113,9 +113,8 @@ const config = {
     {
       src: '/js/pendo.js',
       async: false,
-    }
+    },
   ],
-
 };
 
 module.exports = config;
