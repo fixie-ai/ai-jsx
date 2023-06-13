@@ -1,8 +1,8 @@
-import { showInspector } from '@fixieai/ai-jsx/core/inspector';
-import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
-import * as LLMx from '@fixieai/ai-jsx';
-import { Inline } from '@fixieai/ai-jsx/core/inline';
-import { NaturalLanguageRouter, Route } from '@fixieai/ai-jsx/batteries/natural-language-router';
+import { showInspector } from 'ai-jsx/core/inspector';
+import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import * as LLMx from 'ai-jsx';
+import { Inline } from 'ai-jsx/core/inline';
+import { NaturalLanguageRouter, Route } from 'ai-jsx/batteries/natural-language-router';
 
 function RouterExample() {
   return (

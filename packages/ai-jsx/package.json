@@ -1,6 +1,6 @@
 {
-  "name": "@fixieai/ai-jsx",
-  "version": "1.0.0",
+  "name": "ai-jsx",
+  "version": "0.1.0",
   "volta": {
     "extends": "../../package.json"
   },

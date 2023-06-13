@@ -2,12 +2,12 @@
 /** @jsx LLMx.createElement */
 /** @jsxFrag LLMx.Fragment */
 /* eslint-disable react/jsx-key */
-import * as LLMx from '@fixieai/ai-jsx';
+import * as LLMx from 'ai-jsx';
 import React, { useEffect, useRef } from 'react';
 import { z } from 'zod';
-import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
-import { memo } from '@fixieai/ai-jsx/core/memoize';
-import { OpenAI } from '@fixieai/ai-jsx/lib/openai';
+import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { memo } from 'ai-jsx/core/memoize';
+import { OpenAI } from 'ai-jsx/lib/openai';
 import { atom, useAtom } from 'jotai';
 import _ from 'lodash';
 

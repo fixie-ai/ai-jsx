@@ -17,7 +17,7 @@ We use [TurboRepo](https://turbo.build/repo) and [yarn workspaces](https://yarnp
 $ yarn test
 
 # Run a command for a particular monorepo package
-$ yarn workspace @fixieai/ai-jsx add my-package-name
+$ yarn workspace ai-jsx add my-package-name
 ```
 
 If one monorepo package depends on another, the dependee compiles its TS files to `dist`. If you change a dependee, be sure to run `build` so `dist` is updated.
@@ -32,7 +32,7 @@ Run a demo like this:
 
 ```
 # Build the ai-jsx package.
-yarn workspace @fixieai/ai-jsx run build
+yarn workspace ai-jsx run build
 
 # Replace demo:reddit with the name of your demo
 yarn workspace examples run demo:reddit

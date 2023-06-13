@@ -42,6 +42,6 @@
     "build": "yarn run typecheck"
   },
   "dependencies": {
-    "@fixieai/ai-jsx": "1.0.0"
+    "ai-jsx": "0.1.0"
   }
 }

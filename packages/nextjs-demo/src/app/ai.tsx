@@ -1,6 +1,6 @@
 // I don't know what to do about this error.
 // @ts-expect-error
-import * as LLMx from '@fixieai/ai-jsx';
+import * as LLMx from 'ai-jsx';
 import React from './react';
 import { Suspense, ReactNode } from 'react';
 import { EventEmitter } from 'stream';

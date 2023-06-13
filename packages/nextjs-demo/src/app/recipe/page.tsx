@@ -2,7 +2,7 @@
 
 import React from '../react';
 import { AI } from '../ai';
-import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
+import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import ResultContainer from '@/components/ResultContainer';
 import InputPrompt from '@/components/InputPrompt';
 

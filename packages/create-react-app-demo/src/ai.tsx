@@ -1,4 +1,4 @@
-import * as LLMx from '@fixieai/ai-jsx';
+import * as LLMx from 'ai-jsx';
 import React from './react.ts';
 import { Suspense, ReactNode, useRef, useEffect } from 'react';
 import {

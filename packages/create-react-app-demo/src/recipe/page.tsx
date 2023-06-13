@@ -2,7 +2,7 @@
 import React from '../react.ts';
 import { useState } from 'react';
 import { AI } from '../ai.tsx';
-import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
+import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import ResultContainer from '../ResultContainer.tsx';
 import InputPrompt from '../InputPrompt.tsx';
 import { atom, useAtom } from 'jotai';

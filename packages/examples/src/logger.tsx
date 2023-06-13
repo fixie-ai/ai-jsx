@@ -1,8 +1,8 @@
-import * as LLMx from '@fixieai/ai-jsx';
-import { Element } from '@fixieai/ai-jsx';
-import { LogLevel } from '@fixieai/ai-jsx/core/log';
-import { Completion } from '@fixieai/ai-jsx/core/completion';
-import { Inline } from '@fixieai/ai-jsx/core/inline';
+import * as LLMx from 'ai-jsx';
+import { Element } from 'ai-jsx';
+import { LogLevel } from 'ai-jsx/core/log';
+import { Completion } from 'ai-jsx/core/completion';
+import { Inline } from 'ai-jsx/core/inline';
 
 function ConsoleLogger(level: LogLevel, element: Element<any>, renderId: string, obj: unknown | string, msg?: string) {
   const args = [] as unknown[];

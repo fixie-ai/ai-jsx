@@ -1,6 +1,6 @@
-import * as LLMx from '@fixieai/ai-jsx';
+import * as LLMx from 'ai-jsx';
 import { stringify as csvStringify } from 'csv-stringify/sync';
-import { showInspector } from '@fixieai/ai-jsx/core/inspector';
+import { showInspector } from 'ai-jsx/core/inspector';
 // This errors due to an ESM issue. I don't know what the right way to fix it is.
 // @ts-expect-error
 import HealthAgent from './agent';
