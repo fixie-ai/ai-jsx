@@ -4,6 +4,8 @@ import { AIRoot, ChatMessage, conversationAtom, modelCallInProgress } from './ai
 import { useAtom } from 'jotai';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import RootLayout from './layout.tsx';
+import ResultContainer from './ResultContainer.tsx';
+import classnames from 'classnames';
 
 const router = createBrowserRouter([{
   path: '',
@@ -20,14 +22,13 @@ const router = createBrowserRouter([{
 function DebugConversation() {
   const [conversation] = useAtom(conversationAtom);
   return (
-    <div>
-      <h1>Debug: Conversation as JSON</h1>
+    <ResultContainer title='Conversation as JSON' description='For debug purposes, this card shows the full JSON record of the conversation.'>
       <ul>
         {conversation.map((response, index) => {
           return <li key={index}>{JSON.stringify(response)}</li>;
         })}
       </ul>
-    </div>
+    </ResultContainer>
   );
 }
 
@@ -36,21 +37,21 @@ function ConversationItem({ response, isLastResponse }: { response: ChatMessage;
 
   if (response.type === 'user') {
     if (response.action === 'chat') {
-      return <div>User: {response.content}</div>;
+      return <div><span className='font-bold'>User:</span> "{response.content}"</div>;
     }
-    return <div>User clicked: {response.id}</div>;
+    return <div><span className='font-bold'>User clicked:</span> {response.id}</div>;
   }
   return (
     <div>
-      AI:{' '}
+      <span className='font-bold'>AI:</span>{' '}
       {response.parts.flatMap((part, index) => {
         if (part.type === 'text') {
-          return <span key={index}>{part.content}</span>;
+          return <div key={index}>{part.content}</div>;
         }
         if (part.type === 'ui') {
           return part.content.map((row, index) => (
-            <li key={index}>
-              {row.map((button) => {
+            <li key={index} className="isolate inline-flex rounded-md shadow-sm">
+              {row.map((button, buttonIndex) => {
                 function handleClick() {
                   setConversation((prev) => [
                     ...prev,
@@ -61,8 +62,16 @@ function ConversationItem({ response, isLastResponse }: { response: ChatMessage;
                     },
                   ]);
                 }
+
+                const isFirstButton = buttonIndex === 0;
+                const isLastButton = buttonIndex === row.length - 1;
                 return (
-                  <button disabled={!isLastResponse} onClick={handleClick}>
+                  <button disabled={!isLastResponse} onClick={handleClick}
+                  className={classnames({
+                    "relative inline-flex items-center rounded-l-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-10": isFirstButton,
+                    "relative -ml-px inline-flex items-center bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-10": !(isFirstButton || isLastButton),
+                    "relative -ml-px inline-flex items-center rounded-r-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-10": isLastButton
+                  })}>
                     {button.text}
                   </button>
                 );
@@ -96,13 +105,12 @@ function ConversationHistory() {
   }
 
   return (
-    <div>
-      <h1>Chat</h1>
+    <ResultContainer title='Chat' description='In this demo, the AI is able to respond by rendering both text and buttons as it sees fit. As the user interacts with the buttons (or types freeform responses), the AI ambiently adapts.'>
       {
         <ul>
           {conversation.map((response, index) => {
             return (
-              <li key={index}>
+              <li key={index} className='mt-4'>
                 <ConversationItem response={response} isLastResponse={index === conversation.length - 1} />
               </li>
             );
@@ -110,11 +118,15 @@ function ConversationHistory() {
         </ul>
       }
       {callInProgress && <div>Waiting for AI response...</div>}
-      <form onSubmit={handleInputSubmit}>
-        <input disabled={callInProgress} type="text" name="message" />
-        <button type="submit">Send</button>
+      <form onSubmit={handleInputSubmit} className='mt-4'>
+        <input disabled={callInProgress} type="text" name="message" 
+          className="rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+        />
+        <button type="submit"
+        className="ml-4 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+        >Send</button>
       </form>
-    </div>
+    </ResultContainer>
   );
 }
 

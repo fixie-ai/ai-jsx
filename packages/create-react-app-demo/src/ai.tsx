@@ -2,7 +2,7 @@
 /** @jsx LLMx.createElement */
 /** @jsxFrag LLMx.Fragment */
 import * as LLMx from '@fixieai/ai-jsx';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { z } from 'zod';
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
 import { memo } from '@fixieai/ai-jsx/core/memoize';
@@ -102,7 +102,7 @@ function AI() {
     }
 
     // Sometimes the model doesn't follow the desired output format exactly.
-    if (parts.type === 'response') {
+    if (typeof parts.type === 'string' && (parts.type as string).toLowerCase() === 'response') {
       parts = parts.content;
     }
     if (!Array.isArray(parts)) {
