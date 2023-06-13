@@ -13,6 +13,7 @@ export default function NavBar() {
     'JIT UI: React': '/recipe',
     'JIT UI: Raw HTML': '/nl-gh-search',
     Sleep: '/z',
+    "Sleep Advisor": "/z1",
   };
 
   return (

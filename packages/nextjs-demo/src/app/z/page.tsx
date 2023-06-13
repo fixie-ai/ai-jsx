@@ -15,7 +15,7 @@ export default function Sleep({ searchParams }: { searchParams: any }) {
       <InputPrompt label="Ask a question about sleep" defaultValue={defaultValue} />
 
       <ResultContainer title={`AI answers this sleep question: "${query}"`}>
-        <AI>
+        <AI renderDirectlyIntoDOM={false}>
           <HealthAgent query={query} />
         </AI>
       </ResultContainer>

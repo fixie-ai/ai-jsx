@@ -173,7 +173,7 @@ async function SleepData({ query }: { query: string }) {
 
   return (
     <ChatCompletion>
-      <SystemMessage>Display relevant JSON data as a table then respond to the user question.</SystemMessage>
+      <SystemMessage>Display relevant data as a nicely styled HTML table then respond to the user question.</SystemMessage>
       <UserMessage>
         Here is the user question: {query}
         {'\n'} Here is the JSON data: {JSON.stringify(user_data.nightly_records)}
@@ -182,12 +182,17 @@ async function SleepData({ query }: { query: string }) {
   );
 }
 
+async function* Text({ children } : any) {
+  yield children;
+  return children;
+}
+
 export default function HealthAgent({ query }: { query: string }) {
   return (
     // The routing agent doesn't universally pick the right thing, but I think we could solve that with prompt engineering.
     <NaturalLanguageRouter query={query}>
       <Route when="the user is asking a question about your capabilities">
-        <RepeatAfterMe query="I can answer questions about your sleep history, I can identify possible sleep issues, and I can give personalized advice on ways to improve your sleep"></RepeatAfterMe>
+        <Text>I can answer questions about your sleep history, I can identify possible sleep issues, and I can give personalized advice on ways to improve your sleep</Text>
       </Route>
       <Route when="the user wants to know how well they are sleeping and if they have any risks or pathologies">
         Route: Quality{'\n'}
@@ -202,7 +207,7 @@ export default function HealthAgent({ query }: { query: string }) {
         <ShowAdvice query={query}></ShowAdvice>
       </Route>
       <Route unmatched>
-        <RepeatAfterMe query="I am not able to help with this request. Please ask a question about your sleep history, issues, or concerns that you may have"></RepeatAfterMe>
+        <Text>I am not able to help with this request. Please ask a question about your sleep history, issues, or concerns that you may have</Text>
       </Route>
     </NaturalLanguageRouter>
   );

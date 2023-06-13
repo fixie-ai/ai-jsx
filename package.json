@@ -26,5 +26,8 @@
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "recharts": "^2.6.2"
+  }
 }
