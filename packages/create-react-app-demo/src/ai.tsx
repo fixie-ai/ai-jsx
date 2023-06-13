@@ -1,6 +1,5 @@
 import * as LLMx from '@fixieai/ai-jsx';
 import React from './react.ts';
-import { useState } from 'react';
 import { Suspense, ReactNode, useRef, useEffect } from 'react';
 import _ from 'lodash';
 import {
@@ -10,7 +9,6 @@ import {
   RecipeIngredientListItem,
   RecipeInstructionListItem,
   RecipeTitle,
-  SelectIngredientsButton,
 } from './recipe/page.tsx';
 
 export function useAI(children: LLMx.Node, dependencies: unknown[], when: boolean = true) {

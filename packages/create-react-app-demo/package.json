@@ -65,7 +65,8 @@
   "scripts": {
     "start": "node scripts/start.cjs",
     "build": "node scripts/build.js",
-    "test": "node scripts/test.js"
+    "test": "node scripts/test.js",
+    "dev": "yarn run start"
   },
   "eslintConfig": {
     "extends": [

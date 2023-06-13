@@ -1,23 +1,10 @@
 import React from 'react';
 import { AIRoot, ChatMessage, conversationAtom, modelCallInProgress } from './ai.tsx';
 import { useAtom } from 'jotai';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router-dom';
 import RootLayout from '../layout.tsx';
 import ResultContainer from '../ResultContainer.tsx';
 import classnames from 'classnames';
-
-const router = createBrowserRouter([
-  {
-    path: '',
-    element: <RootLayout />,
-    children: [
-      {
-        path: '',
-        element: <ChooseYourOwnAdventure />,
-      },
-    ],
-  },
-]);
 
 function DebugConversation() {
   const [conversation] = useAtom(conversationAtom);
