@@ -1,8 +1,10 @@
 import * as LLMx from 'ai-jsx';
 import { Element } from 'ai-jsx';
-import { LogLevel } from 'ai-jsx/core/log';
+import { LogLevel, pinoLogger } from 'ai-jsx/core/log';
 import { Completion } from 'ai-jsx/core/completion';
 import { Inline } from 'ai-jsx/core/inline';
+import path from 'node:path';
+import { pino } from 'pino';
 
 function ConsoleLogger(level: LogLevel, element: Element<any>, renderId: string, obj: unknown | string, msg?: string) {
   const args = [] as unknown[];
@@ -36,3 +38,19 @@ function CharacterGenerator() {
 }
 
 console.log(await LLMx.createRenderContext({ logger: ConsoleLogger }).render(<CharacterGenerator />));
+
+console.log('Writing output to ', path.join(process.cwd(), 'ai-jsx.log'));
+console.log(await LLMx.createRenderContext({ logger: pinoLogger() }).render(<CharacterGenerator />));
+
+console.log('Writing output to stdout via Pino');
+const pinoStdoutLogger = pino({
+  name: 'ai-jsx',
+  level: process.env.loglevel ?? 'trace',
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+    },
+  },
+});
+console.log(await LLMx.createRenderContext({ logger: pinoLogger(pinoStdoutLogger) }).render(<CharacterGenerator />));
