@@ -18,7 +18,7 @@ export abstract class LogImplementation {
    */
   abstract log(
     level: LogLevel,
-    element: Element<object>,
+    element: Element<any>,
     renderId: string,
     metadataOrMessage: object | string,
     message?: string

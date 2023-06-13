@@ -8,7 +8,7 @@ export type Component<P> = (props: P, context: ComponentContext) => Renderable;
 export type Literal = string | number | null | undefined | boolean;
 
 const attachedContext = Symbol('LLMx.attachedContext');
-export interface Element<P extends object> {
+export interface Element<P> {
   tag: Component<P>;
   props: P;
   render: (renderContext: RenderContext, logger: Logger) => Renderable;
@@ -79,8 +79,11 @@ export interface RenderContext {
    * @param renderable The value to render.
    * @param opts Additional options.
    */
-  render<TIntermediate>(renderable: Renderable, opts?: RenderOpts<TIntermediate>): RenderResult<TIntermediate, string>;
-  render<TIntermediate>(
+  render<TIntermediate = string>(
+    renderable: Renderable,
+    opts?: RenderOpts<TIntermediate>
+  ): RenderResult<TIntermediate, string>;
+  render<TIntermediate = string>(
     renderable: Renderable,
     opts: RenderOpts<TIntermediate, PartiallyRendered[]>
   ): RenderResult<TIntermediate, PartiallyRendered[]>;
@@ -106,7 +109,12 @@ export interface RenderContext {
   [pushContextSymbol]: <T>(context: Context<T>, value: T) => RenderContext;
 }
 
+type AIElement = Element<any>;
+
 export declare namespace JSX {
+  type ElementType = Component<any>;
+  interface Element extends AIElement {}
+  interface IntrinsicElements {}
   interface ElementChildrenAttribute {
     children: {};
   }
