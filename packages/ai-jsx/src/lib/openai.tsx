@@ -6,7 +6,7 @@ import {
   ModelPropsWithChildren,
   SystemMessage,
   UserMessage,
-} from '../core/completion';
+} from '../core/completion.js';
 import {
   ChatCompletionRequestMessage,
   ChatCompletionResponseMessage,
@@ -19,6 +19,8 @@ import * as LLMx from '../index.js';
 import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import { Merge } from 'type-fest';
+import { Logger } from '../core/log.js';
+import { HttpError } from '../core/errors.js';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -111,7 +113,6 @@ async function* openAiEventsToJson<T>(iterable: AsyncIterable<Buffer>): AsyncGen
 
 function logitBiasOfTokens(tokens: Record<string, number>) {
   // N.B. We're using GPT3Tokenizer which per https://platform.openai.com/tokenizer "works for most GPT-3 models".
-  // @ts-expect-error
   const tokenizer = new GPT3Tokenizer.default({ type: 'gpt3' });
   return Object.fromEntries(
     Object.entries(tokens).map(([token, bias]) => {
@@ -124,6 +125,49 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
       return [encoded.bpe[0], bias];
     })
   );
+}
+
+type OpenAIMethod = 'createCompletion' | 'createChatCompletion';
+type AxiosResponse<M> = M extends OpenAIMethod ? Awaited<ReturnType<InstanceType<typeof OpenAIApi>[M]>> : never;
+
+export class OpenAIError<M extends OpenAIMethod> extends HttpError {
+  readonly errorResponse: Record<string, any> | null;
+
+  constructor(response: AxiosResponse<M>, method: M, responseText: string) {
+    let errorResponse = null as Record<string, any> | null;
+    let responseSuffix = '';
+    try {
+      errorResponse = JSON.parse(responseText);
+    } catch {
+      // The response wasn't JSON, ignore it.
+    }
+
+    const parsedMessage = errorResponse?.error?.message;
+    if (typeof parsedMessage === 'string' && parsedMessage.trim().length > 0) {
+      responseSuffix = `: ${parsedMessage}`;
+    }
+
+    super(
+      `OpenAI ${method} request failed with status code ${response.status}${responseSuffix}\n\nFor more information, see https://platform.openai.com/docs/guides/error-codes/api-errors`,
+      response.status,
+      responseText,
+      response.headers
+    );
+    this.errorResponse = errorResponse;
+  }
+}
+
+async function checkOpenAIResponse<M extends OpenAIMethod>(response: AxiosResponse<M>, logger: Logger, method: M) {
+  if (response.status < 200 || response.status >= 300) {
+    const responseData = [] as string[];
+    for await (const body of response.data as unknown as AsyncIterable<Buffer>) {
+      responseData.push(body.toString('utf8'));
+    }
+
+    throw new OpenAIError(response, method, responseData.join(''));
+  } else {
+    logger.debug({ statusCode: response.status, headers: response.headers }, `${method} succeeded`);
+  }
 }
 
 export async function* OpenAICompletionModel(
@@ -149,19 +193,7 @@ export async function* OpenAICompletionModel(
     validateStatus: () => true,
   });
 
-  if (completionResponse.status < 200 || completionResponse.status >= 300) {
-    const responseData = [] as string[];
-    for await (const body of completionResponse.data as unknown as AsyncIterable<Buffer>) {
-      responseData.push(body.toString('utf8'));
-    }
-    logger.error(
-      { statusCode: completionResponse.status, responseBody: responseData.join('') },
-      'createCompletion failed'
-    );
-    throw new Error(`OpenAI request failed with status code ${completionResponse.status}`);
-  } else {
-    logger.debug({ statusCode: completionResponse.status }, 'createCompletion succeeded');
-  }
+  await checkOpenAIResponse(completionResponse, logger, 'createCompletion');
 
   let resultSoFar = '';
 
@@ -230,19 +262,7 @@ export async function* OpenAIChatModel(
     validateStatus: () => true,
   });
 
-  if (chatResponse.status < 200 || chatResponse.status >= 300) {
-    const responseData = [] as string[];
-    for await (const body of chatResponse.data as unknown as AsyncIterable<Buffer>) {
-      responseData.push(body.toString('utf8'));
-    }
-    logger.error(
-      { statusCode: chatResponse.status, responseBody: responseData.join('') },
-      'createChatCompletion failed'
-    );
-    throw new Error(`OpenAI request failed with status code ${chatResponse.status}`);
-  } else {
-    logger.debug({ statusCode: chatResponse.status }, 'createChatCompletion succeeded');
-  }
+  await checkOpenAIResponse(chatResponse, logger, 'createChatCompletion');
 
   type ChatCompletionDelta = Merge<
     CreateChatCompletionResponse,

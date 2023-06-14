@@ -1,6 +1,6 @@
 // I don't know what to do about this error.
 // @ts-expect-error
-import * as LLMx from '@fixieai/ai-jsx';
+import * as LLMx from 'ai-jsx';
 import React from './react';
 import { Suspense, ReactNode } from 'react';
 import { EventEmitter } from 'stream';
@@ -98,7 +98,9 @@ function AIStream({ children }: { children: React.ReactNode }) {
 
   LLMx.createRenderContext()
     .render(children as LLMx.Renderable, {
+      // @ts-expect-error
       map: (frame) => {
+        // @ts-expect-error
         frame.split('').forEach((char, index) => {
           highestIndexSeen = Math.max(highestIndexSeen, index);
           emitter.emit(`value-${index}`, char);

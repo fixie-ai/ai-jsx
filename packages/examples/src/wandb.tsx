@@ -1,10 +1,10 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { v4 as uuidv4 } from 'uuid';
-import * as LLMx from '@fixieai/ai-jsx';
-import { Completion } from '@fixieai/ai-jsx/core/completion';
-import { Inline } from '@fixieai/ai-jsx/core/inline';
+import * as LLMx from 'ai-jsx';
+import { Completion } from 'ai-jsx/core/completion';
+import { Inline } from 'ai-jsx/core/inline';
 import { StatusCode, WBTraceTree, addChildSpan, wandb } from '@nick.heiner/wandb-fork';
-import { debug } from '@fixieai/ai-jsx/core/debug';
+import { debug } from 'ai-jsx/core/debug';
 
 type WBSpan = Parameters<typeof addChildSpan>[0];
 

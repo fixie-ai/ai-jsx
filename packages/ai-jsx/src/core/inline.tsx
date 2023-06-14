@@ -1,5 +1,9 @@
 import { Node } from '../index.js';
-import { memo } from './memoize';
+import { memo } from './memoize.js';
+
+type InlineFn = (prefix: Node) => Node;
+type InlineChild = Node | InlineFn;
+type InlineChildren = InlineChild | InlineChildren[];
 
 /**
  * Use this to do a completion where you have access to the previously-rendered content.
@@ -36,8 +40,9 @@ import { memo } from './memoize';
  * ```
  * In this way, we're able to iteratively build up a response where we control the overall structure but call out to the model at specified points.
  */
-export function Inline(props: { children: (Node | ((prefix: Node) => Node))[] }) {
-  return props.children.flat(Infinity as 1).reduce((prefix: Node[], current) => {
+export function Inline(props: { children: InlineChildren }) {
+  const flattened = [props.children].flat(Infinity as 1) as InlineChild[];
+  return flattened.reduce((prefix: Node[], current) => {
     if (typeof current === 'function') {
       const memoized = memo(prefix);
       return [memoized, current(memoized)];

@@ -28,13 +28,13 @@ export default function NavBar() {
                 <img
                   className="block h-6 w-auto lg:hidden"
                   src="https://app.fixie.ai/static/logos/charcoal.png"
-                  alt="Your Company"
+                  alt="Fixie Logo"
                 />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   className="hidden h-6 w-auto lg:block"
                   src="https://app.fixie.ai/static/logos/charcoal.png"
-                  alt="Your Company"
+                  alt="Fixie Logo"
                 />
               </div>
               <div className="hidden sm:ml-6 sm:flex justify-center w-full sm:space-x-8">

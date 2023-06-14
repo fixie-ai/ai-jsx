@@ -1,6 +1,6 @@
-import * as LLMx from '@fixieai/ai-jsx';
-import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
-import { showInspector } from '@fixieai/ai-jsx/core/inspector';
+import * as LLMx from 'ai-jsx';
+import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { showInspector } from 'ai-jsx/core/inspector';
 
 const BIG_TEXT = `Four score and seven years ago our fathers brought forth on this continent a new nation, conceived in liberty,
 and dedicated to the proposition that all men are created equal.

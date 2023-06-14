@@ -1,59 +1,73 @@
 {
-  "name": "@fixieai/ai-jsx",
-  "version": "1.0.0",
+  "name": "ai-jsx",
+  "version": "0.2.0-4",
   "volta": {
     "extends": "../../package.json"
   },
   "exports": {
     ".": {
       "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
+      "require": "./dist/cjs/index.cjs"
     },
     "./batteries/docs": {
       "import": "./dist/esm/batteries/docs.js",
-      "require": "./dist/cjs/batteries/docs.js"
+      "require": "./dist/cjs/batteries/docs.cjs"
     },
     "./batteries/natural-language-router": {
       "import": "./dist/esm/batteries/natural-language-router.js",
-      "require": "./dist/cjs/batteries/natural-language-router.js"
+      "require": "./dist/cjs/batteries/natural-language-router.cjs"
     },
     "./batteries/use-tools": {
       "import": "./dist/esm/batteries/use-tools.js",
-      "require": "./dist/cjs/batteries/use-tools.js"
+      "require": "./dist/cjs/batteries/use-tools.cjs"
     },
     "./batteries/langchain-wrapper": {
       "import": "./dist/esm/batteries/langchain-wrapper.js",
-      "require": "./dist/cjs/batteries/langchain-wrapper.js"
+      "require": "./dist/cjs/batteries/langchain-wrapper.cjs"
     },
     "./core/completion": {
       "import": "./dist/esm/core/completion.js",
-      "require": "./dist/cjs/core/completion.js"
+      "require": "./dist/cjs/core/completion.cjs"
     },
     "./core/debug": {
       "import": "./dist/esm/core/debug.js",
-      "require": "./dist/cjs/core/debug.js"
+      "require": "./dist/cjs/core/debug.cjs"
     },
     "./core/error-boundary": {
       "import": "./dist/esm/core/error-boundary.js",
-      "require": "./dist/cjs/core/error-boundary.js"
+      "require": "./dist/cjs/core/error-boundary.cjs"
     },
     "./core/inline": {
       "import": "./dist/esm/core/inline.js",
-      "require": "./dist/cjs/core/inline.js"
+      "require": "./dist/cjs/core/inline.cjs"
     },
     "./core/log": {
       "import": "./dist/esm/core/log.js",
-      "require": "./dist/cjs/core/log.js"
+      "require": "./dist/cjs/core/log.cjs"
+    },
+    "./core/memoize": {
+      "import": "./dist/esm/core/memoize.js",
+      "require": "./dist/cjs/core/memoize.cjs"
     },
     "./core/inspector": {
       "import": "./dist/esm/inspector/console.js",
-      "require": "./dist/cjs/inspector/console.js"
+      "require": "./dist/cjs/inspector/console.cjs"
+    },
+    "./core/errors": {
+      "import": "./dist/esm/core/errors.js",
+      "require": "./dist/cjs/core/errors.cjs"
     },
     "./lib/openai": {
       "import": "./dist/esm/lib/openai.js",
-      "require": "./dist/cjs/lib/openai.js"
+      "require": "./dist/cjs/lib/openai.cjs"
     }
   },
+  "files": [
+    "dist",
+    "src",
+    "tsconfig.json",
+    "README.md"
+  ],
   "devDependencies": {
     "@tsconfig/node18": "^2.0.1",
     "@types/eslint": "^8",
@@ -71,20 +85,18 @@
     "globby": "^13.1.4",
     "node-fetch": "^3.3.1",
     "pino-pretty": "^10.0.0",
-    "react-use": "^17.4.0",
     "tsx": "^3.12.7",
     "type-fest": "^3.10.0",
     "typescript": "^5.1.3",
     "write-json-file": "^5.0.0"
   },
   "type": "module",
-  "private": true,
   "scripts": {
     "view-logs": "cat llmx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "build": "rm -rf dist; tsc -p tsconfig.json; tsc -p tsconfig-cjs.json"
+    "build": "rm -rf dist && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json && node scripts/move-cjs-to-dist.js"
   },
   "dependencies": {
     "@nick.heiner/wandb-fork": "0.5.2-5",
@@ -107,6 +119,7 @@
     "openai": "^3.2.1",
     "pino": "^8.14.1",
     "react": "^18.2.0",
+    "react-use": "^17.4.0",
     "sinon": "^15.1.0",
     "terminal-link": "^3.0.0",
     "tiny-typed-emitter": "^2.1.0",

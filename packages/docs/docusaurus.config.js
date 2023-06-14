@@ -11,7 +11,7 @@ const config = {
   favicon: 'img/ai-jsx.svg',
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-test-site.com',
+  url: 'https://ai-jsx-docs.vercel.app/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
@@ -108,6 +108,13 @@ const config = {
         darkTheme: darkCodeTheme,
       },
     }),
+
+  scripts: [
+    {
+      src: '/js/pendo.js',
+      async: false,
+    },
+  ],
 };
 
 module.exports = config;

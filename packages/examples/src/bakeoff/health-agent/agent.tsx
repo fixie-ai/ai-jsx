@@ -2,20 +2,18 @@
  * Run this with `yarn demo:health-agent`
  */
 
-import * as LLMx from '@fixieai/ai-jsx';
-import { NaturalLanguageRouter, Route } from '@fixieai/ai-jsx/batteries/natural-language-router';
-import { Tool, UseTools } from '@fixieai/ai-jsx/batteries/use-tools';
+import * as LLMx from 'ai-jsx';
+import { NaturalLanguageRouter, Route } from 'ai-jsx/batteries/natural-language-router';
 import fixtureUserData from './user-data.json';
-import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
+import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { loadJsonFile } from 'load-json-file';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { z } from 'zod';
 
 interface SleepQualityRatings {
-  SE: 'Low' | 'Moderate' | 'High';
-  SSO: 'Low' | 'Moderate' | 'High';
-  ISI: 'Low' | 'Moderate' | 'High';
+  SleepEfficiency: 'Low' | 'Moderate' | 'High';
+  DelayedSleepOnset: 'Low' | 'Moderate' | 'High';
+  InsomniaRisk: 'Low' | 'Moderate' | 'High';
 }
 
 function computeSleepQualityRatings(userData: typeof fixtureUserData) {
@@ -24,7 +22,11 @@ function computeSleepQualityRatings(userData: typeof fixtureUserData) {
   const isi = userData.sleep_satisfaction + userData.daily_function; // Initialize the sum of sleep_satisfaction and daily_function
 
   for (const sleep_entry of userData.nightly_records) {
-    const sleep_efficiency = sleep_entry['Sleep Efficiency (%)'];
+    const time_asleep = sleep_entry['Sleep Onset Duration (hrs)'] + sleep_entry['Wake Before Rise Time (hrs)'];
+    const sleep_efficiency = Math.round(
+      100 * sleep_entry['Total Time in Bed (hrs)'] - time_asleep / sleep_entry['Total Time in Bed (hrs)']
+    );
+    console.log(sleep_efficiency);
     const sleep_onset_duration = sleep_entry['Sleep Onset Duration (hrs)'];
 
     if (sleep_efficiency < 80) {
@@ -36,37 +38,37 @@ function computeSleepQualityRatings(userData: typeof fixtureUserData) {
     }
   }
 
-  let ISI: 'Low' | 'High' | 'Moderate';
+  let InsomniaRisk: 'Low' | 'High' | 'Moderate';
   if (isi > 6) {
-    ISI = 'Low';
+    InsomniaRisk = 'Low';
   } else if (isi < 3) {
-    ISI = 'High';
+    InsomniaRisk = 'High';
   } else {
-    ISI = 'Moderate';
+    InsomniaRisk = 'Moderate';
   }
 
-  let SE: 'High' | 'Moderate' | 'Low';
+  let SleepEfficiency: 'High' | 'Moderate' | 'Low';
   if (se <= 2) {
-    SE = 'High';
+    SleepEfficiency = 'High';
   } else if (se <= 4) {
-    SE = 'Moderate';
+    SleepEfficiency = 'Moderate';
   } else {
-    SE = 'Low';
+    SleepEfficiency = 'Low';
   }
 
-  let SSO: 'Low' | 'High' | 'Moderate';
+  let DelayedSleepOnset: 'Low' | 'High' | 'Moderate';
   if (sso <= 2) {
-    SSO = 'Low';
+    DelayedSleepOnset = 'Low';
   } else if (sso <= 4) {
-    SSO = 'Moderate';
+    DelayedSleepOnset = 'Moderate';
   } else {
-    SSO = 'High';
+    DelayedSleepOnset = 'High';
   }
 
   return {
-    SE,
-    SSO,
-    ISI,
+    SleepEfficiency,
+    DelayedSleepOnset,
+    InsomniaRisk,
   };
 }
 
@@ -92,23 +94,23 @@ function getAdvisorText(sleepQualityRatings: SleepQualityRatings): string {
     get out of bed shortly after waking in the morning;
   `;
 
-  if (sleepQualityRatings.ISI === 'High') {
+  if (sleepQualityRatings.InsomniaRisk === 'High') {
     return 'Congratulations, you are sleeping well!';
   }
 
   let advice = 'You are at ';
-  advice += sleepQualityRatings.ISI === 'Moderate' ? 'moderate' : 'high';
+  advice += sleepQualityRatings.InsomniaRisk === 'Moderate' ? 'moderate' : 'high';
   advice += ' risk for insomnia. Consider trying the following to improve your sleep:\n';
 
-  if (sleepQualityRatings.ISI === 'Moderate') {
+  if (sleepQualityRatings.InsomniaRisk === 'Moderate') {
     advice += fallingAsleepAdvice;
   }
 
-  if (sleepQualityRatings.SSO === 'Moderate' || sleepQualityRatings.SSO === 'High') {
+  if (sleepQualityRatings.DelayedSleepOnset === 'Moderate' || sleepQualityRatings.DelayedSleepOnset === 'High') {
     advice += adjustingBedTimeAdvice;
   }
 
-  if (sleepQualityRatings.SE === 'Moderate' || sleepQualityRatings.SE === 'High') {
+  if (sleepQualityRatings.SleepEfficiency === 'Moderate' || sleepQualityRatings.SleepEfficiency === 'High') {
     advice += stayingAsleepAdvice;
   }
 
@@ -125,7 +127,7 @@ async function getUserSleepAnalysis() {
   return computeSleepQualityRatings(userData);
 }
 
-async function ShowStat({ query }: { query: string }) {
+async function SleepQuality({ query }: { query: string }) {
   // In the LangChain example, this was a Tool that the LLM decided to invoke. We don't need that here;
   // the decision has already been made by the router.
 
@@ -148,77 +150,35 @@ async function ShowAdvice({ query }: { query: string }) {
     <ChatCompletion>
       <SystemMessage>
         You are an expert sleep analyst. Here is some data about the user's sleep quality: {JSON.stringify(analysis)}
-        Here is some info you know about how to improve this user's sleep quality: {adviceText}
-        Answer the user's question using the information above. If you can't answer it, apologize and say you're not
-        able to help.
+        Here is some info about how to improve this user's sleep quality: {adviceText}
+        Answer the user's question using the information above. If you can't answer it based only on this provided
+        information, then apologize and say you're not able to help.
       </SystemMessage>
       <UserMessage>{query}</UserMessage>
     </ChatCompletion>
   );
 }
 
-function generateChartFromTimeSeries(_args: { xLabels: string[]; yValues: number[] }) {
-  return Promise.resolve('https://my-time-series-chart.com/asdfasdf');
-}
-function generateHistogram(_args: { values: number[] }) {
-  return Promise.resolve('https://my-histogram.com/odp');
-}
-
-function ApologizeForBeingUnableToShowThisSummary({ query }: { query: string }) {
+function RepeatAfterMe({ query }: { query: string }) {
   return (
     <ChatCompletion>
-      <SystemMessage>
-        You're a summarizing agent. The user has asked for a summary, but you don't have the capability to produce the
-        format they're looking for. Explain this and apologize.
-      </SystemMessage>
+      <SystemMessage>Repeat the user message exactly as provided without quotation marks</SystemMessage>
       <UserMessage>{query}</UserMessage>
     </ChatCompletion>
   );
 }
 
-async function ShowDataSummary({ query }: { query: string }) {
-  const tools: Record<string, Tool> = {
-    generateChartFromTimeSeries: {
-      description: 'Generate a bar chart from a time series, given x labels and y values.',
-      parameters: z.object({
-        xLabels: z.array(z.string()),
-        yValues: z.array(z.number()),
-      }),
-      func: generateChartFromTimeSeries,
-    },
-    generateHistogram: {
-      description: 'Generate a histogram from a list of values.',
-      parameters: z.object({
-        values: z.array(z.number()),
-      }),
-      func: generateHistogram,
-    },
-  };
+async function SleepData({ query }: { query: string }) {
+  const user_data = await loadUserData();
 
-  const userData = await loadUserData();
   return (
-    <NaturalLanguageRouter query={query}>
-      <Route when="the user wants to see an output format that you're able to generate yourself">
-        <ChatCompletion>
-          <SystemMessage>
-            You're an expert summarizing agent. Here is the data you summarize: {JSON.stringify(userData)}. When the
-            user asks a question, provide a summary in the format they want.
-          </SystemMessage>
-          <UserMessage>{query}</UserMessage>
-        </ChatCompletion>
-      </Route>
-      <Route when="the user wants to see a histogram or chart of their sleep data">
-        <UseTools
-          tools={tools}
-          query={query}
-          fallback={<ApologizeForBeingUnableToShowThisSummary query={query} />}
-          userData={JSON.stringify(userData)}
-        />
-      </Route>
-      <Route unmatched>
-        <ApologizeForBeingUnableToShowThisSummary query={query} />
-      </Route>
-    </NaturalLanguageRouter>
+    <ChatCompletion>
+      <SystemMessage>Display relevant JSON data as a table then respond to the user question.</SystemMessage>
+      <UserMessage>
+        Here is the user question: {query}
+        {'\n'} Here is the JSON data: {JSON.stringify(user_data.nightly_records)}
+      </UserMessage>
+    </ChatCompletion>
   );
 }
 
@@ -227,20 +187,23 @@ export default function HealthAgent({ query }: { query: string }) {
     // The routing agent doesn't universally pick the right thing, but I think we could solve that with prompt engineering.
     <NaturalLanguageRouter query={query}>
       <Route when="the user is asking a question about your capabilities">
-        I can show you your sleep data, answer questions about your sleep data, assess your sleep quality based on your
-        sleep data, and provide advice to improve your sleep based on your sleep quality. Sleep quality and advice are
-        based only on ISI, SSO, and SE ratings.
+        <RepeatAfterMe query="I can answer questions about your sleep history, I can identify possible sleep issues, and I can give personalized advice on ways to improve your sleep"></RepeatAfterMe>
       </Route>
-      <Route when="the user wants advice about their sleep health">
-        <ShowAdvice query={query} />
+      <Route when="the user wants to know how well they are sleeping and if they have any risks or pathologies">
+        Route: Quality{'\n'}
+        <SleepQuality query={query}></SleepQuality>
       </Route>
-      <Route when="the user wants to see an aggregated summary of their sleep efficiency or sleep onset duration (e.g. a table, image, chart, graph, average, min, mean, max, variance, etc)">
-        <ShowDataSummary query={query} />
+      <Route when="the user wants to analyze, summarize or visualize their sleep data">
+        Route: Analyze{'\n'}
+        <SleepData query={query}></SleepData>
       </Route>
-      <Route when="the user wants to know the value of one of these sleep stats: ISI, SSO, or SE">
-        <ShowStat query={query} />
+      <Route when="the user wants advice or suggestions to improve their sleep">
+        Route: Advice{'\n'}
+        <ShowAdvice query={query}></ShowAdvice>
       </Route>
-      <Route unmatched>I can't help with that.</Route>
+      <Route unmatched>
+        <RepeatAfterMe query="I am not able to help with this request. Please ask a question about your sleep history, issues, or concerns that you may have"></RepeatAfterMe>
+      </Route>
     </NaturalLanguageRouter>
   );
 }
