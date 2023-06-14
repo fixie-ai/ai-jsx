@@ -16,6 +16,10 @@ Using JSX requires a build system. Since most projects use TypeScript, the easie
 
 If you're using `esbuild`, there are [similar settings](https://esbuild.github.io/content-types/#using-jsx-without-react).
 
+If you're using `babel`, you want to configure [`babel-plugin-transform-react-jsx`](https://babeljs.io/docs/babel-plugin-transform-react-jsx) such that it uses `ai-jsx` instead of React.
+
+<!-- TODO: Update the babel notes once we have a more robust UI integration story. -->
+
 We also recommend putting the following in your `tsconfig.json`:
 
 ```json file="tsconfig.json"
