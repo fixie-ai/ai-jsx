@@ -3,9 +3,11 @@
   "version": "0.0.0",
   "type": "module",
   "license": "MIT",
+  "private": true,
   "scripts": {
     "typecheck": "tsc",
-    "test": "npm run typecheck && tsx index.tsx"
+    "test": "npm run typecheck",
+    "start": "npm run test && tsx index.tsx"
   },
   "dependencies": {
     "ai-jsx": "^0.2.0-1",

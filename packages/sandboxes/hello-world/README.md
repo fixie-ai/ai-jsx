@@ -11,15 +11,16 @@ UI -- it just writes its output (in the form of verbose logs) to the console.
 The easiest way to get started is to create a sandbox on CodeSandbox using
 [this template](https://codesandbox.io/p/sandbox/ai-jsx-hello-world-8683jx).
 
-To run the app, you will need to configure your `OPENAI_API_KEY` environment variable in the
-CodeSandbox UI. To do this, navigate to the menu icon in the top left, choose **Project Settings**,
-then **Env Variables**. Add a new variable with the name `OPENAI_API_KEY` and the value of your
+To run the app, configure your  `OPENAI_API_KEY` environment variable in the CodeSandbox UI:
+1. Navigate to the menu icon in the top left, choose **Project Settings**,
+then **Env Variables**.
+1. Add a new variable with the name `OPENAI_API_KEY` and the value of your
 OpenAI API key, which you can obtain from the
 [OpenAI API dashboard](https://platform.openai.com/account/api-keys).
-Save the variable and then click the prompt to restart the Sandbox VM instance, which allows
+1. Save the variable and then click the prompt to restart the Sandbox VM instance, which allows
 the new environment variable to take effect.
 
-CodeSandbox should build the app and run it, and in the `start:logs` tab you should
+CodeSandbox will build the app and run it, and in the `start:logs` tab you will
 see output like:
 ```
 Can one explore the vast history and culture of Ancient Egypt through books,

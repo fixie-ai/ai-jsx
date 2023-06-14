@@ -1,6 +1,6 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
-  "include": ["src/*.tsx"],
+  "include": ["index.tsx"],
   "compilerOptions": {
     "jsx": "react",
     "jsxFactory": "LLMx.createElement",
