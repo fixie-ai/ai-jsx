@@ -4,7 +4,7 @@ sidebar_position: 2
 
 # Getting Started
 
-See getting-started (`packages/examples/src/getting-started/index.tsx`) for the finished version of this workshop.
+See [getting-started](https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/getting-started/index.tsx) for the finished version of this workshop.
 
 ## Hello World
 
