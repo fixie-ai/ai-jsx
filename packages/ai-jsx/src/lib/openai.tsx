@@ -7,6 +7,7 @@ import {
   SystemMessage,
   UserMessage,
 } from '../core/completion.js';
+import { ImageGenPropsWithChildren } from '../core/image-gen.js';
 import {
   ChatCompletionRequestMessage,
   ChatCompletionResponseMessage,
@@ -14,6 +15,8 @@ import {
   CreateChatCompletionResponse,
   CreateCompletionResponse,
   OpenAIApi,
+  CreateImageRequestSizeEnum,
+  CreateImageRequestResponseFormatEnum,
 } from 'openai';
 import * as LLMx from '../index.js';
 import { PropsOfComponent, Node } from '../index.js';
@@ -21,6 +24,7 @@ import GPT3Tokenizer from 'gpt3-tokenizer';
 import { Merge } from 'type-fest';
 import { Logger } from '../core/log.js';
 import { HttpError } from '../core/errors.js';
+import _ from 'lodash';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -289,4 +293,52 @@ export async function* OpenAIChatModel(
   logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
 
   return currentMessage.content;
+}
+
+/**
+ * Generates an image from a prompt using the DALL-E model.
+ *
+ * @returns the URL of the generated image.
+ *          If num_samples is greater than 1, URLs are separated by newlines.
+ */
+export async function DalleImageGen(
+  { num_samples = 1, size = '512x512', children }: ImageGenPropsWithChildren,
+  { render, getContext, logger }: LLMx.ComponentContext
+) {
+  let prompt = await render(children);
+  const openai = getContext(openAiClientContext);
+
+  let sizeEnum;
+  switch (size) {
+    case '256x256':
+      sizeEnum = CreateImageRequestSizeEnum._256x256;
+    case '512x512':
+      sizeEnum = CreateImageRequestSizeEnum._512x512;
+    case '1024x1024':
+      sizeEnum = CreateImageRequestSizeEnum._1024x1024;
+  }
+
+  if (sizeEnum == undefined) {
+    throw new Error(`Invalid size ${size}. Dalle only supports 256x256, 512x512, and 1024x1024`);
+  }
+
+  const imageRequest = {
+    prompt: prompt,
+    n: num_samples,
+    size: sizeEnum,
+    response_format: CreateImageRequestResponseFormatEnum.Url,
+  };
+
+  logger.debug({ imageRequest }, 'Calling createImage');
+
+  const response = await openai.createImage(imageRequest);
+
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(`createImage failed with status ${response.status}`);
+  } else {
+    logger.debug({ statusCode: response.status, headers: response.headers }, 'createImage succeeded');
+  }
+
+  // return all image URLs as a newline-separated string
+  return _.map(response.data.data, (x) => x.url).join('\n');
 }
