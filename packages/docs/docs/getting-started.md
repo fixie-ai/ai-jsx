@@ -24,7 +24,7 @@ The inspector shows the program output on the left hand side, and the debug tree
 
 To use it: 
 
-```tsx
+```tsx title="index.tsx"
 import { showInspector } from 'ai-jsx/core/inspector';
 
 /* Swap this out */
@@ -46,7 +46,7 @@ Use `grep` to find relevant logs from this file, and `pino-pretty` to format the
 
 For instance, to see the model call made in our example above:
 
-```
+``` {}
 grep -i 'starting modelcall' packages/ai-jsx/llmx.log | yarn workspace ai-jsx pino-pretty
 [15:09:13.463] DEBUG (@fixieai-ai-jsx/68581): Starting modelCall
     lifetimeId: "8f7291ee-1564-481d-9ac9-e4fa5ca2ffca"
@@ -56,6 +56,7 @@ grep -i 'starting modelcall' packages/ai-jsx/llmx.log | yarn workspace ai-jsx pi
       "messages": [
         {
           "role": "system",
+          <!-- highlight-next-line -->
           "content": "You are an assistant who only uses one syllable words."
         },
         {
@@ -75,12 +76,12 @@ grep -i 'starting modelcall' packages/ai-jsx/llmx.log | yarn workspace ai-jsx pi
 LLM apps are more powerful when we enrich the prompt with real-time data. Let's augment our example to include that.
 
 1. Create a new file in the your project directory called `data.json`:
-   ```json
+   ```json title="data.json"
    { "name": "sam", "age": 42, "hobbies": ["painting"] }
    ```
 1. Write a function to read this file:
 
-   ```tsx
+   ```tsx title="index.tsx"
    import path from 'node:path';
    import fs from 'node:fs/promises';
 
@@ -91,7 +92,7 @@ LLM apps are more powerful when we enrich the prompt with real-time data. Let's 
    ```
 
 1. Then, call this function from your completion component:
-   ```tsx
+   ```tsx title="index.tsx"
    async function App() {
      const data = await loadData();
      return (
@@ -119,7 +120,7 @@ When we run this, we'll get:
 More powerful applications benefit from being able to link LLM calls together. Let's modify our example to do multiple LLM generations.
 
 1. Add a new function to generate a short bio of a fantasy character:
-   ```tsx
+   ```tsx title="index.tsx"
    function MakeCharacter() {
      return (
        <ChatCompletion temperature={1}>
@@ -130,7 +131,7 @@ More powerful applications benefit from being able to link LLM calls together. L
    ```
 1. Add a new function that uses the previous function:
 
-   ```tsx
+   ```tsx title="index.tsx"
    function WriteStory() {
      return (
        <ChatCompletion temperature={1}>
@@ -146,7 +147,7 @@ More powerful applications benefit from being able to link LLM calls together. L
    ```
 
 1. Show it on the console:
-   ```tsx
+   ```tsx title="index.tsx"
    showInspector(<WriteStory />);
    ```
 
@@ -179,7 +180,30 @@ $ grep -i 'starting modelcall' packages/ai-jsx/llmx.log | yarn workspace ai-jsx 
 "messages": [
   {
     "role": "user",
-    "content": "Write a story about these three characters:Eldra, the elf pugilist, was born into a noble family within the magical forest of Yarthenia. However, unlike her kin, she preferred the thrill of exploring the dangers that lay outside the forest, rather than the safe confines of her home. This impetuous spirit led Eldra down a path of danger and violence, which ultimately honed her skills as a warrior of unmatched prowess. As one of the few elvish pugilists in recent history, her skills with hand-to-hand combat were the envy of all who met her. Now, Eldra spends her days traveling the realm in search of new challenges, her fists always at the ready for the next fight. Despite her rough exterior, Eldra is fiercely loyal to those she considers friends and will stop at nothing to protect them.Jalara, a powerful sorceress, was born in the Kingdom of Arcadia. She was the youngest of three siblings, and from a young age, she displayed an innate ability to harness the powers of magic. Her older brother was sent to train as a knight, and her sister was married off to a foreign prince. Jalara, however, had other plans. She devoted herself entirely to the study of magic, learning from the wisest sorcerers in the land.\n\nAs she grew older, Jalara gained a reputation for being wise, powerful, and fair. She was often called upon to mediate disputes between kingdoms, and her counsel was highly valued. Jalara was always willing to lend her magic to aid those in need, but she was also fiercely independent, and many feared her wrath.\n\nHer greatest triumph came when she defeated the dark wizard, Zoltar, in a fierce magical battle. The victory cemented her place as one of the most powerful sorceresses in the land. Though Jalara no longer seeks out adventure in the way she once did, her wisdom and magic continue to shape the fate of the Kingdom of Arcadia.Born in the Kingdom of Eldor, Aria is a powerful sorceress who possesses an exceptional talent for magic. She discovered her gift at a young age and spent years honing her skills, studying under some of the most renowned wizards in the land. With her mystical powers, she has become a valuable asset to King Eramis, who often seeks her prophetic advice on matters concerning the realm. Despite her great power and wisdom, Aria remains humble and compassionate, always looking out for the welfare of her people. Her most notable achievement to date was orchestrating the warding spell that saved Eldor from the infamous Night Dragon, which had long terrorized the kingdom. Aria is revered by many and feared by her enemies, who know all too well the consequences of crossing her."
+    "content": "Write a story about these three characters:Eldra, the elf pugilist, 
+    was born into a noble family within the magical forest of Yarthenia. 
+    However, unlike her kin, she preferred the thrill of exploring the dangers that lay outside the forest, rather than the safe confines of her home. 
+    This impetuous spirit led Eldra down a path of danger and violence, which ultimately honed her skills as a warrior of unmatched prowess. 
+    As one of the few elvish pugilists in recent history, her skills with hand-to-hand combat were the envy of all who met her.
+    Now, Eldra spends her days traveling the realm in search of new challenges, her fists always at the ready for the next fight.
+    Despite her rough exterior, Eldra is fiercely loyal to those she considers friends and will stop at nothing to protect them.
+    Jalara, a powerful sorceress, was born in the Kingdom of Arcadia.
+    She was the youngest of three siblings, and from a young age, she displayed an innate ability to harness the powers of magic.
+    Her older brother was sent to train as a knight, and her sister was married off to a foreign prince.
+    Jalara, however, had other plans.
+    She devoted herself entirely to the study of magic, learning from the wisest sorcerers in the land.
+    \n\nAs she grew older, Jalara gained a reputation for being wise, powerful, and fair.
+    She was often called upon to mediate disputes between kingdoms, and her counsel was highly valued.
+    Jalara was always willing to lend her magic to aid those in need, but she was also fiercely independent, and many feared her wrath.
+    \n\nHer greatest triumph came when she defeated the dark wizard, Zoltar, in a fierce magical battle.
+    The victory cemented her place as one of the most powerful sorceresses in the land.
+    Though Jalara no longer seeks out adventure in the way she once did, her wisdom and magic continue to shape the fate of the Kingdom of Arcadia.
+    Born in the Kingdom of Eldor, Aria is a powerful sorceress who possesses an exceptional talent for magic.
+    She discovered her gift at a young age and spent years honing her skills, studying under some of the most renowned wizards in the land.
+    With her mystical powers, she has become a valuable asset to King Eramis, who often seeks her prophetic advice on matters concerning the realm.
+    Despite her great power and wisdom, Aria remains humble and compassionate, always looking out for the welfare of her people.
+    Her most notable achievement to date was orchestrating the warding spell that saved Eldor from the infamous Night Dragon, which had long terrorized the kingdom.
+    Aria is revered by many and feared by her enemies, who know all too well the consequences of crossing her."
   }
 ],
 ```
