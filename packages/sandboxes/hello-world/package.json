@@ -1,0 +1,22 @@
+{
+  "name": "ai-jsx-hello-world",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc",
+    "test": "npm run typecheck",
+    "start": "npm run test && tsx index.tsx"
+  },
+  "dependencies": {
+    "ai-jsx": "^0.2.0-1",
+    "pino": "^8.14.1",
+    "pino-pretty": "^10.0.0"
+  },
+  "devDependencies": {
+    "@tsconfig/node18": "^2.0.1",
+    "tsx": "^3.12.7",
+    "typescript": "^5.1.3"
+  }
+}
