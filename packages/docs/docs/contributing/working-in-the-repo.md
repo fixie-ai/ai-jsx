@@ -38,7 +38,7 @@ yarn workspace ai-jsx run build
 yarn workspace examples run demo:reddit
 ```
 
-Most demos will produce results using the [inspector](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/inspector/console.tsx), a bare-bones [Ink](https://github.com/vadimdemedes/ink) app:
+Most demos will produce results using the [Inspector](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/inspector/console.tsx), a bare-bones [Ink](https://github.com/vadimdemedes/ink) app:
 
 ![inspector screenshot](../inspector.png)
 

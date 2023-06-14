@@ -8,56 +8,34 @@ See [getting-started](https://github.com/fixie-ai/ai-jsx/blob/main/packages/exam
 
 ## Hello World
 
-Follow these steps to make a new demo.
+1. Clone the [template repo](https://github.com/fixie-ai/ai-jsx-template).
+1. Run it, and you'll get output like:
+    ```
+    Is there anything more fascinating than the mysteries and wonders of Ancient Egypt?
+    ```
 
-1. Create a new file at `packages/examples/src/my-demo-directory/index.tsx`.
-1. Add an entry for your demo to `packages/examples/package.json`:
+In the rest of this workshop, we'll expand on this demo to make it more interesting.
 
-   ```json
-   "scripts": {
-     "demo:your-demo": "tsx src/my-demo-directory/index.tsx",
-   }
+## Using the Inspector
 
-   ```
+The [Inspector](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/inspector/console.tsx) is a bare-bones [Ink](https://github.com/vadimdemedes/ink) app. 
 
-1. Add the following contents to that file:
+The inspector shows the program output on the left hand side, and the debug tree on the right. The debug tree gives you some (imperfect) visibility into how your program was constructed. Use the left and right arrow keys to step through the debug tree.
 
-   ```tsx
-   import * as LLMx from 'ai-jsx';
-   import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
-   import { showInspector } from 'ai-jsx/core/inspector';
-
-   function App() {
-     return (
-       <ChatCompletion>
-         <SystemMessage>You are an assistant who only uses one syllable words.</SystemMessage>
-         <UserMessage>Why is the sky blue?</UserMessage>
-       </ChatCompletion>
-     );
-   }
-
-   showInspector(<App />);
-   ```
-
-1. Run the demo with:
-   ```
-   yarn workspace examples run demo:your-demo
-   ```
-
-This will launch the Inspector, and show you the following LLM-generated output:
-
-```
-Light bends and scatters. Blue bends best, so it scatters most.
-```
-
-If you don't want the inspector, use the `render` method to get your results:
+To use it: 
 
 ```tsx
-// Swap this out
-// showInspector(<App />);
+import { showInspector } from 'ai-jsx/core/inspector';
 
-// Console log instead.
-console.log(await LLMx.createRenderContext().render(<App />));
+/* Swap this out */
+// console.log(
+//   await LLMx.createRenderContext({
+//     logger: new PinoLogger(pinoStdoutLogger),
+//   }).render(<App />)
+// );
+
+/* Use the inspector instead */
+showInspector(<App />);
 ```
 
 ## Observability
@@ -96,7 +74,7 @@ grep -i 'starting modelcall' packages/ai-jsx/llmx.log | yarn workspace ai-jsx pi
 
 LLM apps are more powerful when we enrich the prompt with real-time data. Let's augment our example to include that.
 
-1. Create a new file in the demo directory called `data.json`:
+1. Create a new file in the your project directory called `data.json`:
    ```json
    { "name": "sam", "age": 42, "hobbies": ["painting"] }
    ```
