@@ -305,25 +305,26 @@ export async function DalleImageGen(
   { num_samples = 1, size = '512x512', children }: ImageGenPropsWithChildren,
   { render, getContext, logger }: LLMx.ComponentContext
 ) {
-  let prompt = await render(children);
+  const prompt = await render(children);
   const openai = getContext(openAiClientContext);
 
   let sizeEnum;
   switch (size) {
     case '256x256':
       sizeEnum = CreateImageRequestSizeEnum._256x256;
+      break;
     case '512x512':
       sizeEnum = CreateImageRequestSizeEnum._512x512;
+      break;
     case '1024x1024':
       sizeEnum = CreateImageRequestSizeEnum._1024x1024;
-  }
-
-  if (sizeEnum == undefined) {
-    throw new Error(`Invalid size ${size}. Dalle only supports 256x256, 512x512, and 1024x1024`);
+      break;
+    default:
+      throw new Error(`Invalid size ${size}. Dalle only supports 256x256, 512x512, and 1024x1024`);
   }
 
   const imageRequest = {
-    prompt: prompt,
+    prompt,
     n: num_samples,
     size: sizeEnum,
     response_format: CreateImageRequestResponseFormatEnum.Url,
