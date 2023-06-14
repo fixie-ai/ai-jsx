@@ -26,18 +26,9 @@ const monkeyPatchedReact = {
     const llmxElement = LLMx.createElement(...(args as unknown as Parameters<typeof LLMx.createElement>));
     const isEmbeddableReactElement = typeof tag === 'string' || embeddableReactTags.includes(tag.name);
     const indirectNode = isEmbeddableReactElement
-      ? LLMx.createElement(
-          // @ts-expect-error
-          AIDehydrate,
-          { reactElement, ...args[1] },
-          ...args.slice(2)
-        )
+      ? LLMx.createElement(AIDehydrate, { reactElement, ...args[1] }, ...args.slice(2))
       : llmxElement;
-    LLMx.setIndirectNode(
-      // @ts-expect-error
-      reactElement,
-      indirectNode
-    );
+    LLMx.setIndirectNode(reactElement, indirectNode);
     return reactElement;
   },
 };

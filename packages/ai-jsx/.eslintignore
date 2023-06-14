@@ -1,2 +1,2 @@
 dist
-./scripts/move-cjs-to-dist.js
+scripts/move-cjs-to-dist.js

@@ -96,7 +96,7 @@
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "build": "rm -rf dist; tsc -p tsconfig.json; tsc -p tsconfig-cjs.json; node scripts/move-cjs-to-dist.js"
+    "build": "rm -rf dist && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json && node scripts/move-cjs-to-dist.js"
   },
   "dependencies": {
     "@nick.heiner/wandb-fork": "0.5.2-5",
