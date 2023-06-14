@@ -2,7 +2,7 @@ import { Embeddings } from 'langchain/embeddings/base';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { TokenTextSplitter } from 'langchain/text_splitter';
 import _ from 'lodash';
-import { similarity } from "ml-distance";
+import { similarity } from 'ml-distance';
 import pino from 'pino';
 import { Jsonifiable } from 'type-fest';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
@@ -31,19 +31,20 @@ export class RawDocument {
     /** The raw bytes content. */
     readonly pageContent: Uint8Array,
     /**
-   * A human-readable name for this document. This identifies the document to users and should
-   * be unique within a corpus. If the document is hosted on the web, its URL is a good choice.
-   */
+     * A human-readable name for this document. This identifies the document to users and should
+     * be unique within a corpus. If the document is hosted on the web, its URL is a good choice.
+     */
     readonly name?: string,
     /** The encoding used for this document. Defaults to utf-8. */
     readonly encoding: string = 'utf-8',
     /** The content type for this document. Defaults to plain text. */
-    readonly mimeType: string = 'text/plain') {
-      this.pageContent = pageContent;
-      this.name = name;
-      this.encoding = encoding;
-      this.mimeType = mimeType;
-    }
+    readonly mimeType: string = 'text/plain'
+  ) {
+    this.pageContent = pageContent;
+    this.name = name;
+    this.encoding = encoding;
+    this.mimeType = mimeType;
+  }
 }
 
 /**
@@ -52,38 +53,42 @@ export class RawDocument {
 export class Document<DocumentMetadata extends Jsonifiable = Jsonifiable> {
   constructor(
     /**
-   * The content of the document. While this may often be a singleton, including separate
-   * meaningful pieces of text can aid in chunking/embedding.
-   */
+     * The content of the document. While this may often be a singleton, including separate
+     * meaningful pieces of text can aid in chunking/embedding.
+     */
     readonly pageContent: string[],
     /**
-   * A human-readable name for this document. This identifies the document to users and should
-   * be unique within a corpus. If the document is hosted on the web, its URL is a good choice.
-   */
+     * A human-readable name for this document. This identifies the document to users and should
+     * be unique within a corpus. If the document is hosted on the web, its URL is a good choice.
+     */
     readonly name?: string,
     /**
-   * Other metadata about the document, such as when it was created.
-   */
-    readonly metadata?: DocumentMetadata) {
-      this.pageContent = pageContent;
-      this.name = name;
-      this.metadata = metadata;
-    }
+     * Other metadata about the document, such as when it was created.
+     */
+    readonly metadata?: DocumentMetadata
+  ) {
+    this.pageContent = pageContent;
+    this.name = name;
+    this.metadata = metadata;
+  }
 }
 
 /**
  * A function that parses raw documents to produce text documents that can be used by an LLM.
  */
-export type Parser<DocumentMetadata extends Jsonifiable = Jsonifiable> = (raw: RawDocument) => Promise<Document<DocumentMetadata>>;
+export type Parser<DocumentMetadata extends Jsonifiable = Jsonifiable> = (
+  raw: RawDocument
+) => Promise<Document<DocumentMetadata>>;
 
-function defaultParser<DocumentMetadata extends Jsonifiable = Jsonifiable>(raw: RawDocument): Promise<Document<DocumentMetadata>> {
+function defaultParser<DocumentMetadata extends Jsonifiable = Jsonifiable>(
+  raw: RawDocument
+): Promise<Document<DocumentMetadata>> {
   if (raw.mimeType.startsWith('text/')) {
-    let content = new TextDecoder(raw.encoding).decode(raw.pageContent);
+    const content = new TextDecoder(raw.encoding).decode(raw.pageContent);
     return Promise.resolve(new Document([content], raw.name));
     // TODO: Add support for other mime types.
-  } else {
-    throw new Error(`Unsupported mime type: ${raw.mimeType}`);
   }
+  throw new Error(`Unsupported mime type: ${raw.mimeType}`);
 }
 
 /**
@@ -199,57 +204,64 @@ export namespace CorpusLoading {
   }
 
   /** A function responsible for loading and parsing a corpus. */
-  export type Loader<DocumentMetadata extends Jsonifiable = Jsonifiable> = (request: Request) => Promise<Response<Document<DocumentMetadata>>>;
+  export type Loader<DocumentMetadata extends Jsonifiable = Jsonifiable> = (
+    request: Request
+  ) => Promise<Response<Document<DocumentMetadata>>>;
 
   /** A function responsible for loading a corpus when parsing is handled separately. */
   export type RawLoader = (request: Request) => Promise<Response<RawDocument>>;
 
-  export function toLoader<DocumentMetadata extends Jsonifiable = Jsonifiable>(rawLoader: RawLoader, parser: Parser<DocumentMetadata> = defaultParser): Loader<DocumentMetadata> {
+  export function toLoader<DocumentMetadata extends Jsonifiable = Jsonifiable>(
+    rawLoader: RawLoader,
+    parser: Parser<DocumentMetadata> = defaultParser
+  ): Loader<DocumentMetadata> {
     return async (request: Request) => {
       const response = await rawLoader(request);
       if (response.page) {
         const documents = await Promise.all(response.page.documents.map(parser));
-        return new Response(new Page(documents, response?.page?.nextPageToken), response.partitions);
+        return new Response(new Page(documents, response.page.nextPageToken), response.partitions);
       }
       return new Response<Document<DocumentMetadata>>(undefined, response.partitions);
     };
   }
 
-  export function staticLoader<DocumentMetadata extends Jsonifiable = Jsonifiable>(documents: Document<DocumentMetadata>[], pageSize?: number): Loader<DocumentMetadata> {
-    const loader = new StaticLoader(documents, pageSize);
-    return (request) => loader.load(request);
-  }
-
   class StaticLoader<DocumentMetadata extends Jsonifiable = Jsonifiable> {
-    constructor(
-      readonly documents: Document<DocumentMetadata>[],
-      readonly pageSize?: number) {}
+    constructor(readonly documents: Document<DocumentMetadata>[], readonly pageSize?: number) {}
 
-    async load(request: Request): Promise<Response<Document<DocumentMetadata>>> {
+    load(request: Request): Promise<Response<Document<DocumentMetadata>>> {
       if (this.pageSize) {
-        const page: number = +(request.pageToken ?? 0);
+        const page: number = Number(request.pageToken ?? 0);
         const start = page * this.pageSize;
         const end = start + this.pageSize;
         if (end > this.documents.length) {
-          return new Response(new Page(this.documents.slice(start)));
-        } else {
-          return new Response(new Page(this.documents.slice(start, end), (page + 1).toString()));
+          return Promise.resolve(new Response(new Page(this.documents.slice(start))));
         }
+        return Promise.resolve(new Response(new Page(this.documents.slice(start, end), (page + 1).toString())));
       }
 
-      return new Response(new Page(this.documents));
+      return Promise.resolve(new Response(new Page(this.documents)));
     }
+  }
+
+  export function staticLoader<DocumentMetadata extends Jsonifiable = Jsonifiable>(
+    documents: Document<DocumentMetadata>[],
+    pageSize?: number
+  ): Loader<DocumentMetadata> {
+    const loader = new StaticLoader(documents, pageSize);
+    return (request) => loader.load(request);
   }
 }
 
 /** A function that splits a document into multiple chunks, for example to ensure it fits in appropriate context windows. */
-export type Chunker<DocumentMetadata extends Jsonifiable = Jsonifiable, ChunkMetadata extends Jsonifiable = Jsonifiable> = (document: Document<DocumentMetadata>) => Promise<Chunk<ChunkMetadata>[]>;
+export type Chunker<
+  DocumentMetadata extends Jsonifiable = Jsonifiable,
+  ChunkMetadata extends Jsonifiable = Jsonifiable
+> = (document: Document<DocumentMetadata>) => Promise<Chunk<ChunkMetadata>[]>;
 
 /**
  * A simple token size based text chunker. This is a good starting point for text documents.
  */
-export const defaultChunker = async <Metadata extends Jsonifiable = Jsonifiable>(
-  doc: Document<Metadata>) => {
+export const defaultChunker = async <Metadata extends Jsonifiable = Jsonifiable>(doc: Document<Metadata>) => {
   const splitter = new TokenTextSplitter({
     encodingName: 'gpt2',
     chunkSize: 600,
@@ -257,11 +269,14 @@ export const defaultChunker = async <Metadata extends Jsonifiable = Jsonifiable>
   });
 
   const lcDocs = await splitter.createDocuments(doc.pageContent);
-  const chunks = lcDocs.map((lcDoc) => ({
-    content: lcDoc.pageContent,
-    documentName: doc.name,
-    metadata: doc.metadata,
-  }) as Chunk<Metadata>);
+  const chunks = lcDocs.map(
+    (lcDoc) =>
+      ({
+        content: lcDoc.pageContent,
+        documentName: doc.name,
+        metadata: doc.metadata,
+      } as Chunk<Metadata>)
+  );
 
   return chunks;
 };
@@ -290,11 +305,11 @@ export interface Embedding {
 export class LangChainEmbeddingWrapper implements Embedding {
   constructor(readonly lcEmbedding: Embeddings) {}
 
-  async embed(text: string): Promise<number[]> {
+  embed(text: string): Promise<number[]> {
     return this.lcEmbedding.embedQuery(text);
   }
 
-  async embedBatch(chunks: string[]): Promise<number[][]> {
+  embedBatch(chunks: string[]): Promise<number[][]> {
     return this.lcEmbedding.embedDocuments(chunks);
   }
 }
@@ -332,7 +347,10 @@ export interface Corpus<ChunkMetadata extends Jsonifiable = Jsonifiable> {
 
   getStats: () => Promise<Corpus.Stats>;
 
-  search: (query: string, params?: {limit?: number, score_threshold?: number}) => Promise<ScoredChunk<ChunkMetadata>[]>;
+  search: (
+    query: string,
+    params?: { limit?: number; score_threshold?: number }
+  ) => Promise<ScoredChunk<ChunkMetadata>[]>;
 }
 
 export namespace Corpus {
@@ -352,15 +370,24 @@ export namespace Corpus {
   }
 }
 
-export class LocalCorpus<DocumentMetadata extends Jsonifiable = Jsonifiable, ChunkMetadata extends Jsonifiable = Jsonifiable> implements Corpus<ChunkMetadata> {
+/* Resolving disagreement between formatter and linter. */
+/* eslint-disable brace-style */
+export class LocalCorpus<
+  DocumentMetadata extends Jsonifiable = Jsonifiable,
+  ChunkMetadata extends Jsonifiable = Jsonifiable
+> implements Corpus<ChunkMetadata>
+{
+  /* eslint-enable */
   private readonly vectors: EmbeddedChunk<ChunkMetadata>[] = [];
   private readonly documents: Document<DocumentMetadata>[] = [];
   private readonly completedPartitions = new Set<string>();
-  private readonly activePartitionsToToken = new Map<string|null, string|null>();
+  private readonly activePartitionsToToken = new Map<string | null, string | null>();
   private loadingState = Corpus.LoadingState.NOT_STARTED;
-  constructor(readonly loader: CorpusLoading.Loader<DocumentMetadata>,
+  constructor(
+    readonly loader: CorpusLoading.Loader<DocumentMetadata>,
     readonly chunker: Chunker<DocumentMetadata, ChunkMetadata>,
-    readonly embedding: Embedding = defaultEmbedding,) {
+    readonly embedding: Embedding = defaultEmbedding
+  ) {
     this.loader = loader;
     this.chunker = chunker;
     this.embedding = embedding;
@@ -382,25 +409,32 @@ export class LocalCorpus<DocumentMetadata extends Jsonifiable = Jsonifiable, Chu
   }
 
   private async doCrawl(): Promise<void> {
-    pinoLogger['info']('Starting crawl');
+    pinoLogger.info('Starting crawl');
     this.activePartitionsToToken.set(null, null);
     while (this.activePartitionsToToken.size > 0) {
       const partition = this.activePartitionsToToken.keys().next().value;
       const token = this.activePartitionsToToken.get(partition);
       this.activePartitionsToToken.delete(partition);
 
-      const response = await this.loader({partition, token} as CorpusLoading.Request);
-      pinoLogger['info']({partitions: response.partitions?.length ?? 0, documents: response.page?.documents?.length ?? 0, nextPage: response.page?.nextPageToken != undefined}, 'Received response');
-      for (let newPartition of response.partitions ?? []) {
+      const response = await this.loader({ partition, token } as CorpusLoading.Request);
+      pinoLogger.info(
+        {
+          partitions: response.partitions?.length ?? 0,
+          documents: response.page?.documents.length ?? 0,
+          nextPage: response.page?.nextPageToken != undefined,
+        },
+        'Received response'
+      );
+      for (const newPartition of response.partitions ?? []) {
         if (!this.completedPartitions.has(newPartition.name) && !this.activePartitionsToToken.has(newPartition.name)) {
           this.activePartitionsToToken.set(newPartition.name, newPartition.firstPageToken ?? null);
         }
       }
       if (response.page) {
         this.documents.push(...response.page.documents);
-        pinoLogger['info']('Starting vectorization');
+        pinoLogger.info('Starting vectorization');
         const vectors = await this.vectorize(response.page.documents);
-        pinoLogger['info']('Completed vectorization');
+        pinoLogger.info('Completed vectorization');
         this.vectors.push(...vectors.flat());
         if (response.page.nextPageToken) {
           this.activePartitionsToToken.set(partition, response.page.nextPageToken);
@@ -408,42 +442,50 @@ export class LocalCorpus<DocumentMetadata extends Jsonifiable = Jsonifiable, Chu
           this.completedPartitions.add(partition);
         }
       }
-      if (!response.page && ! response.partitions) {
+      if (!response.page && !response.partitions) {
         // Corner case - invalid response.
         this.completedPartitions.add(partition);
       }
     }
-    pinoLogger['info']('Crawl complete');
+    pinoLogger.info('Crawl complete');
   }
 
   private async vectorize(docs: Document<DocumentMetadata>[]): Promise<EmbeddedChunk<ChunkMetadata>[]> {
-    pinoLogger['info']({documents: docs.length}, 'Starting chunking for documents');
+    pinoLogger.info({ documents: docs.length }, 'Starting chunking for documents');
     const chunks: Chunk<ChunkMetadata>[] = [];
     await Promise.all(docs.map((doc) => this.chunker(doc).then((docChunks) => chunks.push(...docChunks))));
-    pinoLogger['info']({chunks: chunks.length}, 'Chunking completed. Beginning embed.');
+    pinoLogger.info({ chunks: chunks.length }, 'Chunking completed. Beginning embed.');
     const vectors: number[][] = await this.embedding.embedBatch(chunks.map((chunk) => chunk.content));
-    pinoLogger['info']({vectors: vectors.length}, 'Embedding completed.');
-    return chunks.map((chunk, i) => ({...chunk, vector: vectors[i]} as EmbeddedChunk<ChunkMetadata>));
+    pinoLogger.info({ vectors: vectors.length }, 'Embedding completed.');
+    return chunks.map((chunk, i) => ({ ...chunk, vector: vectors[i] } as EmbeddedChunk<ChunkMetadata>));
   }
 
-  async getStats(): Promise<Corpus.Stats> {
-    return {
+  getStats(): Promise<Corpus.Stats> {
+    return Promise.resolve({
       loadingState: this.loadingState,
       completedPartitions: this.completedPartitions.size,
       activePartitions: this.activePartitionsToToken.size,
       numDocuments: this.vectors.length,
       numChunks: this.vectors.length,
-    } as Corpus.Stats;
+    } as Corpus.Stats);
   }
 
-  async search(query: string, params?: {limit?: number, score_threshold?: number}): Promise<ScoredChunk<ChunkMetadata>[]> {
+  async search(
+    query: string,
+    params?: { limit?: number; score_threshold?: number }
+  ): Promise<ScoredChunk<ChunkMetadata>[]> {
     const queryVector = await this.embedding.embed(query);
-    return this.vectors.map((vector) => ({
-      chunk: vector,
-      score: similarity.cosine(queryVector, vector.vector),
-    } as ScoredChunk<ChunkMetadata>)).sort((a, b) => b.score - a.score).slice(0, params?.limit ?? 10);
+    return this.vectors
+      .map(
+        (vector) =>
+          ({
+            chunk: vector,
+            score: similarity.cosine(queryVector, vector.vector),
+          } as ScoredChunk<ChunkMetadata>)
+      )
+      .sort((a, b) => b.score - a.score)
+      .slice(0, params?.limit ?? 10);
   }
-
 }
 
 export interface DocsQAProps<Doc extends Document> {
@@ -477,22 +519,20 @@ export interface DocsQAProps<Doc extends Document> {
 export async function DocsQA<Doc extends Document>(props: DocsQAProps<Doc>) {
   const status = (await props.corpus.getStats()).loadingState;
   if (status !== Corpus.LoadingState.COMPLETED) {
-    return "Corpus is not loaded. It's in state: " + status;
+    return "Corpus is not loaded. It's in state: {status.toString()}";
   }
   const docs = await props.corpus.search(props.question);
   return (
     <ChatCompletion>
-    <SystemMessage>
-    You are a customer service agent.Answer questions truthfully.Here is what you know:
-  {
-    docs.map((doc) => (
-      // TODO improve types
-      // @ts-expect-error
-      <props.docComponent doc= { doc } />
-        ))
-  }
-  </SystemMessage>
-    <UserMessage> { props.question } </UserMessage>
+      <SystemMessage>
+        You are a customer service agent.Answer questions truthfully.Here is what you know:
+        {docs.map((doc) => (
+          // TODO improve types
+          // @ts-expect-error
+          <props.docComponent doc={doc} />
+        ))}
+      </SystemMessage>
+      <UserMessage> {props.question} </UserMessage>
     </ChatCompletion>
   );
 }

@@ -22,7 +22,7 @@ interface RedditMetadata extends JsonObject {
 const dataFiles = globbySync(path.join(dirname, 'data', '*.json'));
 const docs = await Promise.all(
   dataFiles.map(async (dataFile) => {
-    const { body, ...rest} = (await loadJsonFile(dataFile)) as Article;
+    const { body, ...rest } = (await loadJsonFile(dataFile)) as Article;
     return {
       pageContent: [body as string],
       name: dataFile,
