@@ -7,6 +7,7 @@ Contribution ideas:
 - Build something and let us know what's easy/challenging/surprising.
 - Experiment with ways to embed AI directly in UIs and discover which best practices / patterns emerge.
 - Look at the `batteries` (e.g. `NaturalLanguageRouter`, `UseTools`) and rework them / build alternate versions.
+- Build better dev tools. The Ink app is pretty rough. Maybe we want a web app?
 - Build out other currently-unimplemented ideas from the [aspirational README](https://github.com/fixie-ai/ai-jsx/blob/main/docs/internal/aspirational-readme.md).
 
 ## Example Demos
