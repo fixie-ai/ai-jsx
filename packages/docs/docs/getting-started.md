@@ -35,41 +35,13 @@ import { showInspector } from 'ai-jsx/core/inspector';
 // );
 
 /* Use the inspector instead */
+// highlight-next-line
 showInspector(<App />);
 ```
 
-## Observability
-
-Every time AI.JSX runs, it writes the log results to `llmx.log`.
-
-Use `grep` to find relevant logs from this file, and `pino-pretty` to format them nicely.
-
-For instance, to see the model call made in our example above:
-
-```{}
-grep -i 'starting modelcall' packages/ai-jsx/llmx.log | yarn workspace ai-jsx pino-pretty
-[15:09:13.463] DEBUG (@fixieai-ai-jsx/68581): Starting modelCall
-    lifetimeId: "8f7291ee-1564-481d-9ac9-e4fa5ca2ffca"
-    callId: "4b63469b-32da-4a6e-a364-f4ee4c5887c3"
-    params: {
-      "model": "gpt-3.5-turbo",
-      "messages": [
-        {
-          "role": "system",
-          <!-- highlight-next-line -->
-          "content": "You are an assistant who only uses one syllable words."
-        },
-        {
-          "role": "user",
-          "content": "Why is the sky blue?"
-        }
-      ],
-      "stream": true
-    }
-    callName: "openai-chat"
-    phase: "modelCall"
-    start: true
-```
+:::info
+Want more visibility into how the program is executing? See [Observability](guides/observability.md).
+:::
 
 ## Enrichment
 
