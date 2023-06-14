@@ -6,9 +6,7 @@
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useState, useEffect } from 'react';
-// @ts-expect-error
 import { Text } from 'ink';
-// const { Text } = require('ink');
 import spinners, { SpinnerName } from 'cli-spinners';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions

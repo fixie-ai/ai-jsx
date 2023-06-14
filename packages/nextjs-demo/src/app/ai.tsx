@@ -98,7 +98,9 @@ function AIStream({ children }: { children: React.ReactNode }) {
 
   LLMx.createRenderContext()
     .render(children as LLMx.Renderable, {
+      // @ts-expect-error
       map: (frame) => {
+        // @ts-expect-error
         frame.split('').forEach((char, index) => {
           highestIndexSeen = Math.max(highestIndexSeen, index);
           emitter.emit(`value-${index}`, char);

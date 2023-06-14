@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import pino from 'pino';
-import { Element } from '../index';
+import { Element } from '../index.js';
 
 export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
 
@@ -58,6 +58,7 @@ export class NoOpLogImplementation extends LogImplementation {
 }
 
 const defaultPinoLogger = _.once(() =>
+  // @ts-expect-error
   pino(
     { name: 'ai-jsx', level: 'trace' },
     // N.B. pino.destination is not available in the browser
