@@ -6,6 +6,8 @@
     "jsxFactory": "LLMx.createElement",
     "jsxFragmentFactory": "LLMx.Fragment",
     "module": "esnext",
+    "moduleResolution": "nodenext",
+    "esModuleInterop": true,
     "resolveJsonModule": true,
     "declaration": true
   }

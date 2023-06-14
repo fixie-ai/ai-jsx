@@ -113,7 +113,6 @@ async function* openAiEventsToJson<T>(iterable: AsyncIterable<Buffer>): AsyncGen
 
 function logitBiasOfTokens(tokens: Record<string, number>) {
   // N.B. We're using GPT3Tokenizer which per https://platform.openai.com/tokenizer "works for most GPT-3 models".
-  // @ts-expect-error
   const tokenizer = new GPT3Tokenizer.default({ type: 'gpt3' });
   return Object.fromEntries(
     Object.entries(tokens).map(([token, bias]) => {

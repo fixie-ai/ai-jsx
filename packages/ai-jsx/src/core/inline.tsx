@@ -1,5 +1,5 @@
 import { Node } from '../index.js';
-import { memo } from './memoize';
+import { memo } from './memoize.js';
 
 type InlineFn = (prefix: Node) => Node;
 type InlineChild = Node | InlineFn;
