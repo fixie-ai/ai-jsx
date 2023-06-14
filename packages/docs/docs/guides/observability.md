@@ -160,7 +160,11 @@ log(
 ): void;
 ```
 
-## Logging From Within Components
+## Producing Logs
+
+The content above talks about how you can consume logs. In this section, we'll talk about how they're produced.
+
+### Logging From Within Components
 
 Components take props as the first argument and [ComponentContext](https://github.com/fixie-ai/ai-jsx/blob/79444f809201b1d9dd0525239afcdd83e091818d/packages/ai-jsx/src/index.ts#L4) as the second:
 
@@ -178,7 +182,7 @@ function MyComponent(props, { logger }) {
 
 The logger instance will be automatically bound with an identifier for the currently-rendering element, so you don't need to do that yourself.
 
-## Creating Logger Components
+### Creating Logger Components
 
 :::caution
 This is an advanced usecase.
