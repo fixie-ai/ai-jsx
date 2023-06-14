@@ -1,6 +1,6 @@
 import * as LLMx from '../index.js';
 import { Node } from '../index.js';
-import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion';
+import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
 import { Jsonifiable } from 'type-fest';
 import { TokenTextSplitter } from 'langchain/text_splitter';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';

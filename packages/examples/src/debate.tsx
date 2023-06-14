@@ -27,32 +27,29 @@ async function ConversationRemapper(
     stop: (e) => Boolean(allPredicates.find((pred) => pred(e))),
   });
 
-  return partiallyRendered
-    .filter(LLMx.isElement)
-    .map((node) => {
-      if (system(node)) {
-        return <SystemMessage>{node}</SystemMessage>;
-      }
+  return partiallyRendered.filter(LLMx.isElement).map((node) => {
+    if (system(node)) {
+      return <SystemMessage>{node}</SystemMessage>;
+    }
 
-      if (typeof users === 'function') {
-        if (users(node)) {
-          return <UserMessage>{node}</UserMessage>;
-        }
-      } else {
-        for (const [name, selector] of Object.entries(users)) {
-          if (selector(node)) {
-            return <UserMessage name={name}>{node}</UserMessage>;
-          }
+    if (typeof users === 'function') {
+      if (users(node)) {
+        return <UserMessage>{node}</UserMessage>;
+      }
+    } else {
+      for (const [name, selector] of Object.entries(users)) {
+        if (selector(node)) {
+          return <UserMessage name={name}>{node}</UserMessage>;
         }
       }
+    }
 
-      if (assistant(node)) {
-        return <AssistantMessage>{node}</AssistantMessage>;
-      }
+    if (assistant(node)) {
+      return <AssistantMessage>{node}</AssistantMessage>;
+    }
 
-      return node;
-    })
-    .filter((n) => n !== null);
+    return node;
+  });
 }
 
 function Debater(props: { position: string; name: string; inFavor: boolean; children: LLMx.Node }) {

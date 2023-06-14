@@ -43,6 +43,6 @@
     "build": "yarn run typecheck"
   },
   "dependencies": {
-    "ai-jsx": "0.2.0-1"
+    "ai-jsx": "0.2.0-4"
   }
 }
