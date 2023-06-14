@@ -10,19 +10,19 @@ See [getting-started](https://github.com/fixie-ai/ai-jsx/blob/main/packages/exam
 
 1. Clone the [template repo](https://github.com/fixie-ai/ai-jsx-template).
 1. Run it, and you'll get output like:
-    ```
-    Is there anything more fascinating than the mysteries and wonders of Ancient Egypt?
-    ```
+   ```
+   Is there anything more fascinating than the mysteries and wonders of Ancient Egypt?
+   ```
 
 In the rest of this workshop, we'll expand on this demo to make it more interesting.
 
 ## Using the Inspector
 
-The [Inspector](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/inspector/console.tsx) is a bare-bones [Ink](https://github.com/vadimdemedes/ink) app. 
+The [Inspector](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/inspector/console.tsx) is a bare-bones [Ink](https://github.com/vadimdemedes/ink) app.
 
 The inspector shows the program output on the left hand side, and the debug tree on the right. The debug tree gives you some (imperfect) visibility into how your program was constructed. Use the left and right arrow keys to step through the debug tree.
 
-To use it: 
+To use it:
 
 ```tsx title="index.tsx"
 import { showInspector } from 'ai-jsx/core/inspector';
@@ -46,7 +46,7 @@ Use `grep` to find relevant logs from this file, and `pino-pretty` to format the
 
 For instance, to see the model call made in our example above:
 
-``` {}
+```{}
 grep -i 'starting modelcall' packages/ai-jsx/llmx.log | yarn workspace ai-jsx pino-pretty
 [15:09:13.463] DEBUG (@fixieai-ai-jsx/68581): Starting modelCall
     lifetimeId: "8f7291ee-1564-481d-9ac9-e4fa5ca2ffca"
@@ -180,10 +180,10 @@ $ grep -i 'starting modelcall' packages/ai-jsx/llmx.log | yarn workspace ai-jsx 
 "messages": [
   {
     "role": "user",
-    "content": "Write a story about these three characters:Eldra, the elf pugilist, 
-    was born into a noble family within the magical forest of Yarthenia. 
-    However, unlike her kin, she preferred the thrill of exploring the dangers that lay outside the forest, rather than the safe confines of her home. 
-    This impetuous spirit led Eldra down a path of danger and violence, which ultimately honed her skills as a warrior of unmatched prowess. 
+    "content": "Write a story about these three characters:Eldra, the elf pugilist,
+    was born into a noble family within the magical forest of Yarthenia.
+    However, unlike her kin, she preferred the thrill of exploring the dangers that lay outside the forest, rather than the safe confines of her home.
+    This impetuous spirit led Eldra down a path of danger and violence, which ultimately honed her skills as a warrior of unmatched prowess.
     As one of the few elvish pugilists in recent history, her skills with hand-to-hand combat were the envy of all who met her.
     Now, Eldra spends her days traveling the realm in search of new challenges, her fists always at the ready for the next fight.
     Despite her rough exterior, Eldra is fiercely loyal to those she considers friends and will stop at nothing to protect them.
