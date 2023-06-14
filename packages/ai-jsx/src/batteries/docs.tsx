@@ -1,3 +1,8 @@
+/**
+ * Types and simple implementations for DocsQA. Also see
+ * https://docs.ai-jsx.com/guides/brand-new#accessing-knowledge-docs-qa
+ */
+
 import { Embeddings } from 'langchain/embeddings/base';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { TokenTextSplitter } from 'langchain/text_splitter';
@@ -106,7 +111,7 @@ function defaultParser<DocumentMetadata extends Jsonifiable = Jsonifiable>(
  *          always loaded serially in order. The partition is completed when
  *          a response has a page with no next page token.
  *
- *  Loading will always begin with a  request with the default (unnamed)
+ *  Loading will always begin with a request with the default (unnamed)
  *  partition and no page token. Subsequent requests depend on prior responses
  *  and will always include at least one of those fields.
  *
