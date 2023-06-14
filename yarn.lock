@@ -6938,6 +6938,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ai-jsx-hello-world@workspace:packages/sandboxes/hello-world":
+  version: 0.0.0-use.local
+  resolution: "ai-jsx-hello-world@workspace:packages/sandboxes/hello-world"
+  dependencies:
+    "@tsconfig/node18": "npm:^2.0.1"
+    ai-jsx: "npm:^0.2.0-1"
+    pino: "npm:^8.14.1"
+    pino-pretty: "npm:^10.0.0"
+    tsx: "npm:^3.12.7"
+    typescript: "npm:^5.1.3"
+  languageName: unknown
+  linkType: soft
+
 "ai-jsx-monorepo-root@workspace:.":
   version: 0.0.0-use.local
   resolution: "ai-jsx-monorepo-root@workspace:."
@@ -6948,7 +6961,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"ai-jsx@npm:0.2.0-1, ai-jsx@workspace:packages/ai-jsx":
+"ai-jsx@npm:0.2.0-1, ai-jsx@npm:^0.2.0-1, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
