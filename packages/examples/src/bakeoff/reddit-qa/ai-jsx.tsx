@@ -1,47 +1,54 @@
 // This script assumes that ./load-articles has been run first.
+import * as LLMx from 'ai-jsx';
+import { Corpus, CorpusLoading, DocsQA, Document, LocalCorpus, defaultChunker } from 'ai-jsx/batteries/docs';
+import { showInspector } from 'ai-jsx/core/inspector';
 import { globbySync } from 'globby';
+import { loadJsonFile } from 'load-json-file';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadJsonFile } from 'load-json-file';
-import * as LLMx from 'ai-jsx';
-import { DocsQA, defaultChunkMany, DefaultInMemoryVectorStore } from 'ai-jsx/batteries/docs';
-import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
+import { JsonObject } from 'type-fest';
 import { Article } from './load-articles.mjs';
-import _ from 'lodash';
-import { showInspector } from 'ai-jsx/core/inspector';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+
+interface RedditMetadata extends JsonObject {
+  title: string;
+  id: number;
+  url: string;
+  html_url: string;
+  name: string;
+}
 
 const dataFiles = globbySync(path.join(dirname, 'data', '*.json'));
 const docs = await Promise.all(
   dataFiles.map(async (dataFile) => {
-    const { body, ...rest } = (await loadJsonFile(dataFile)) as Article;
+    const { body, ...rest} = (await loadJsonFile(dataFile)) as Article;
     return {
-      pageContent: body as string,
+      pageContent: [body as string],
+      name: dataFile,
       metadata: rest,
-    };
+    } as Document<RedditMetadata>;
   })
 );
 
-const chunkedDocs = await defaultChunkMany(docs);
-const vectorStore = await DefaultInMemoryVectorStore.fromDocuments(chunkedDocs, new OpenAIEmbeddings());
+const corpus: Corpus = new LocalCorpus(CorpusLoading.staticLoader(docs, 10), defaultChunker);
+await corpus.startCrawl();
 
-function ShowDoc({ doc }: { doc: (typeof docs)[0] }) {
+function ShowDoc({ doc }: { doc: Document<RedditMetadata> }) {
   return (
     <>
-      Title: {doc.metadata.title}
+      Title: {doc?.metadata?.title ?? doc?.name ?? 'Untitled'}
       Content: {doc.pageContent}
     </>
   );
 }
 
 function AskAndAnswer({ query }: { query: string }) {
-  const loader = async () => _.map(await vectorStore.search(query, { limit: 3 }), 'document');
   return (
     <>
       Q: {query}
       {'\n'}
-      A: <DocsQA question={query} loader={loader} docComponent={ShowDoc} />
+      A: <DocsQA question={query} corpus={corpus} docComponent={ShowDoc} />
     </>
   );
 }

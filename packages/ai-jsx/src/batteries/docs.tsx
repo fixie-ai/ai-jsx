@@ -1,8 +1,27 @@
+import { Embeddings } from 'langchain/embeddings/base';
+import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
+import { TokenTextSplitter } from 'langchain/text_splitter';
+import _ from 'lodash';
 import { similarity } from "ml-distance";
+import pino from 'pino';
 import { Jsonifiable } from 'type-fest';
-import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion';
+import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
 import * as LLMx from '../index.js';
 import { Node } from '../index.js';
+
+// DO_NOT_SUBMIT
+const pinoLogger = _.once(() =>
+  // @ts-expect-error
+  pino(
+    { name: 'ai-jsx-docs', level: 'trace' },
+    // N.B. pino.destination is not available in the browser
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    pino.destination?.({
+      dest: './ai-jsx-docs.log',
+      sync: true, // Synchronous logging
+    })
+  )
+)();
 
 /**
  * A raw document loaded from an arbitrary source that has not yet been parsed.
@@ -195,10 +214,57 @@ export namespace CorpusLoading {
       return new Response<Document<DocumentMetadata>>(undefined, response.partitions);
     };
   }
+
+  export function staticLoader<DocumentMetadata extends Jsonifiable = Jsonifiable>(documents: Document<DocumentMetadata>[], pageSize?: number): Loader<DocumentMetadata> {
+    const loader = new StaticLoader(documents, pageSize);
+    return (request) => loader.load(request);
+  }
+
+  class StaticLoader<DocumentMetadata extends Jsonifiable = Jsonifiable> {
+    constructor(
+      readonly documents: Document<DocumentMetadata>[],
+      readonly pageSize?: number) {}
+
+    async load(request: Request): Promise<Response<Document<DocumentMetadata>>> {
+      if (this.pageSize) {
+        const page: number = +(request.pageToken ?? 0);
+        const start = page * this.pageSize;
+        const end = start + this.pageSize;
+        if (end > this.documents.length) {
+          return new Response(new Page(this.documents.slice(start)));
+        } else {
+          return new Response(new Page(this.documents.slice(start, end), (page + 1).toString()));
+        }
+      }
+
+      return new Response(new Page(this.documents));
+    }
+  }
 }
 
 /** A function that splits a document into multiple chunks, for example to ensure it fits in appropriate context windows. */
-export type Chunker<DocumentMetadata extends Jsonifiable = Jsonifiable, ChunkMetadata extends Jsonifiable = Jsonifiable> = (document: Document<DocumentMetadata>) => Promise<Chunk<DocumentMetadata>[]>;
+export type Chunker<DocumentMetadata extends Jsonifiable = Jsonifiable, ChunkMetadata extends Jsonifiable = Jsonifiable> = (document: Document<DocumentMetadata>) => Promise<Chunk<ChunkMetadata>[]>;
+
+/**
+ * A simple token size based text chunker. This is a good starting point for text documents.
+ */
+export const defaultChunker = async <Metadata extends Jsonifiable = Jsonifiable>(
+  doc: Document<Metadata>) => {
+  const splitter = new TokenTextSplitter({
+    encodingName: 'gpt2',
+    chunkSize: 600,
+    chunkOverlap: 100,
+  });
+
+  const lcDocs = await splitter.createDocuments(doc.pageContent);
+  const chunks = lcDocs.map((lcDoc) => ({
+    content: lcDoc.pageContent,
+    documentName: doc.name,
+    metadata: doc.metadata,
+  }) as Chunk<Metadata>);
+
+  return chunks;
+};
 
 /** A chunk is a piece of a document that's appropriately sized for an LLM's context window and for semantic search. */
 export interface Chunk<ChunkMetadata extends Jsonifiable = Jsonifiable> {
@@ -216,7 +282,24 @@ export interface Chunk<ChunkMetadata extends Jsonifiable = Jsonifiable> {
  * An embedding is a function that maps a string to a vector encoding its semantic meaning.
  * Often this is based on the same function used to transform text for an LLM's transformers.
  */
-export type Embedding = (text: string) => Promise<number[]>;
+export interface Embedding {
+  embed(text: string): Promise<number[]>;
+  embedBatch(chunks: string[]): Promise<number[][]>;
+}
+
+export class LangChainEmbeddingWrapper implements Embedding {
+  constructor(readonly lcEmbedding: Embeddings) {}
+
+  async embed(text: string): Promise<number[]> {
+    return this.lcEmbedding.embedQuery(text);
+  }
+
+  async embedBatch(chunks: string[]): Promise<number[][]> {
+    return this.lcEmbedding.embedDocuments(chunks);
+  }
+}
+
+export const defaultEmbedding = new LangChainEmbeddingWrapper(new OpenAIEmbeddings());
 
 /**
  * An embedded chunk is a piece of a document that is ready to be added into a vector space.
@@ -277,7 +360,7 @@ export class LocalCorpus<DocumentMetadata extends Jsonifiable = Jsonifiable, Chu
   private loadingState = Corpus.LoadingState.NOT_STARTED;
   constructor(readonly loader: CorpusLoading.Loader<DocumentMetadata>,
     readonly chunker: Chunker<DocumentMetadata, ChunkMetadata>,
-    readonly embedding: Embedding) {
+    readonly embedding: Embedding = defaultEmbedding,) {
     this.loader = loader;
     this.chunker = chunker;
     this.embedding = embedding;
@@ -299,6 +382,7 @@ export class LocalCorpus<DocumentMetadata extends Jsonifiable = Jsonifiable, Chu
   }
 
   private async doCrawl(): Promise<void> {
+    pinoLogger['info']('Starting crawl');
     this.activePartitionsToToken.set(null, null);
     while (this.activePartitionsToToken.size > 0) {
       const partition = this.activePartitionsToToken.keys().next().value;
@@ -306,6 +390,7 @@ export class LocalCorpus<DocumentMetadata extends Jsonifiable = Jsonifiable, Chu
       this.activePartitionsToToken.delete(partition);
 
       const response = await this.loader({partition, token} as CorpusLoading.Request);
+      pinoLogger['info']({partitions: response.partitions?.length ?? 0, documents: response.page?.documents?.length ?? 0, nextPage: response.page?.nextPageToken != undefined}, 'Received response');
       for (let newPartition of response.partitions ?? []) {
         if (!this.completedPartitions.has(newPartition.name) && !this.activePartitionsToToken.has(newPartition.name)) {
           this.activePartitionsToToken.set(newPartition.name, newPartition.firstPageToken ?? null);
@@ -313,7 +398,9 @@ export class LocalCorpus<DocumentMetadata extends Jsonifiable = Jsonifiable, Chu
       }
       if (response.page) {
         this.documents.push(...response.page.documents);
-        const vectors = await Promise.all(response.page.documents.map(this.vectorize));
+        pinoLogger['info']('Starting vectorization');
+        const vectors = await this.vectorize(response.page.documents);
+        pinoLogger['info']('Completed vectorization');
         this.vectors.push(...vectors.flat());
         if (response.page.nextPageToken) {
           this.activePartitionsToToken.set(partition, response.page.nextPageToken);
@@ -326,14 +413,17 @@ export class LocalCorpus<DocumentMetadata extends Jsonifiable = Jsonifiable, Chu
         this.completedPartitions.add(partition);
       }
     }
+    pinoLogger['info']('Crawl complete');
   }
 
-  private async vectorize(doc: Document<DocumentMetadata>): Promise<EmbeddedChunk<ChunkMetadata>[]> {
-    const chunks = await this.chunker(doc);
-    return Promise.all(chunks.map(async chunk => {
-      const vector = await this.embedding(chunk.content);
-      return {vector, ...chunk} as EmbeddedChunk<ChunkMetadata>;
-    }));
+  private async vectorize(docs: Document<DocumentMetadata>[]): Promise<EmbeddedChunk<ChunkMetadata>[]> {
+    pinoLogger['info']({documents: docs.length}, 'Starting chunking for documents');
+    const chunks: Chunk<ChunkMetadata>[] = [];
+    await Promise.all(docs.map((doc) => this.chunker(doc).then((docChunks) => chunks.push(...docChunks))));
+    pinoLogger['info']({chunks: chunks.length}, 'Chunking completed. Beginning embed.');
+    const vectors: number[][] = await this.embedding.embedBatch(chunks.map((chunk) => chunk.content));
+    pinoLogger['info']({vectors: vectors.length}, 'Embedding completed.');
+    return chunks.map((chunk, i) => ({...chunk, vector: vectors[i]} as EmbeddedChunk<ChunkMetadata>));
   }
 
   async getStats(): Promise<Corpus.Stats> {
@@ -347,7 +437,7 @@ export class LocalCorpus<DocumentMetadata extends Jsonifiable = Jsonifiable, Chu
   }
 
   async search(query: string, params?: {limit?: number, score_threshold?: number}): Promise<ScoredChunk<ChunkMetadata>[]> {
-    const queryVector = await this.embedding(query);
+    const queryVector = await this.embedding.embed(query);
     return this.vectors.map((vector) => ({
       chunk: vector,
       score: similarity.cosine(queryVector, vector.vector),
@@ -385,6 +475,10 @@ export interface DocsQAProps<Doc extends Document> {
  * A component that can be used to answer questions about documents. This is a very common usecase for LLMs.
  */
 export async function DocsQA<Doc extends Document>(props: DocsQAProps<Doc>) {
+  const status = (await props.corpus.getStats()).loadingState;
+  if (status !== Corpus.LoadingState.COMPLETED) {
+    return "Corpus is not loaded. It's in state: " + status;
+  }
   const docs = await props.corpus.search(props.question);
   return (
     <ChatCompletion>
