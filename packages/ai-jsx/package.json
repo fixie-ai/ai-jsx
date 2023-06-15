@@ -62,8 +62,12 @@
       "require": "./dist/cjs/lib/openai.cjs"
     },
     "./react": {
-      "import": "./dist/esm/react.js",
-      "require": "./dist/cjs/react.cjs"
+      "import": "./dist/esm/react/index.js",
+      "require": "./dist/cjs/react/index.cjs"
+    },
+    "./react/serialize": {
+      "import": "./dist/esm/react/serialize.js",
+      "require": "./dist/cjs/react/serialize.cjs"
     }
   },
   "files": [

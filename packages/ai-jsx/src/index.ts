@@ -15,8 +15,9 @@ export interface Element<P> {
   [attachedContext]?: RenderContext;
 }
 
+const indirectNodeSymbol = Symbol('AI.indirectNode');
 export interface IndirectNode {
-  _magic: never;
+  [indirectNodeSymbol]: Node;
 }
 
 export type Node = Element<any> | Literal | Node[] | IndirectNode;
@@ -180,17 +181,23 @@ export function createContext<T>(defaultValue: T): Context<T> {
   return ctx;
 }
 
-const indirectWeakMap = new WeakMap<object, Node>();
 export function isIndirectNode(value: unknown): value is IndirectNode {
-  return indirectWeakMap.has(value as IndirectNode);
+  if (value !== null && typeof value === 'object') {
+    return indirectNodeSymbol in value;
+  } else {
+    return false;
+  }
 }
 
 export function getIndirectNode(value: IndirectNode): Node {
-  return indirectWeakMap.get(value) as Node;
+  return value[indirectNodeSymbol];
 }
 
-export function setIndirectNode(value: object, node: Node) {
-  indirectWeakMap.set(value, node);
+export function makeIndirectNode<T extends object>(value: T, node: Node): T & IndirectNode {
+  return new Proxy(value, {
+    has: (target, p) => p === indirectNodeSymbol || p in target,
+    get: (target, p, receiver) => (p === indirectNodeSymbol ? node : Reflect.get(target, p, receiver)),
+  }) as T & IndirectNode;
 }
 
 // Default is a no-op logger.
@@ -217,10 +224,6 @@ async function* renderStream(
     return [];
   }
   if (isIndirectNode(renderable)) {
-    const indirectNode = getIndirectNode(renderable);
-    if (isElement(indirectNode) && shouldStop(indirectNode) && indirectNode.tag.name.startsWith('Recipe')) {
-      return [renderable];
-    }
     return yield* context.render(getIndirectNode(renderable), recursiveRenderOpts);
   }
   if (Array.isArray(renderable)) {

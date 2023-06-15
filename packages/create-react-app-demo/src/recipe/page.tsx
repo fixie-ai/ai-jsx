@@ -1,6 +1,7 @@
 /** @jsx AI.createElement */
 /** @jsxFrag AI.Fragment */
 import * as AI from 'ai-jsx/react';
+import { Serialize } from 'ai-jsx/react/serialize';
 import React, { useState, ReactNode } from 'react';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import ResultContainer from '../ResultContainer.tsx';
@@ -74,54 +75,6 @@ function reactComponentName(component: React.JSXElementConstructor<any> | string
   return typeof component === 'string' ? component : component.name;
 }
 
-function SerializeReact({
-  components,
-  children,
-}: {
-  components: (React.JSXElementConstructor<any> | string)[];
-  children: AI.Node;
-}) {
-  if (Array.isArray(children)) {
-    // eslint-disable-next-line react/jsx-key
-    return children.map((child) => <SerializeReact components={components}>{child}</SerializeReact>);
-  }
-  const child = children;
-  if (AI.isIndirectNode(child)) {
-    if (React.isValidElement(child) && components.includes(child.type)) {
-      // Serialize the React element and any children.
-      const typeName = reactComponentName(child.type);
-      // XXX/psalas: support props
-      if (typeof child.props === 'object' && child.props && 'children' in child.props) {
-        return [
-          `<${typeName}>`,
-          // eslint-disable-next-line react/jsx-key
-          <SerializeReact components={components}>{child.props.children as AI.Node}</SerializeReact>,
-          `</${typeName}`,
-        ];
-      }
-
-      return `<${typeName}/>`;
-    }
-
-    return <SerializeReact components={components}>{AI.getIndirectNode(child)}</SerializeReact>;
-  }
-
-  if (AI.isElement(child)) {
-    if ('children' in child.props) {
-      const { tag: Component, props } = child;
-      return (
-        <Component {...props}>
-          <SerializeReact components={components}>{props.children}</SerializeReact>
-        </Component>
-      );
-    }
-
-    return child;
-  }
-
-  return child;
-}
-
 async function UICompletion(
   {
     components,
@@ -142,16 +95,16 @@ async function UICompletion(
         respond using a set of React components to create a UI for the content. Here are the only available React
         components and how they should be used:
         {'\n'}
-        <SerializeReact components={components}>{example}</SerializeReact>
+        {example}
         {'\n'}
         Respond with a JSON object that encodes your UI. The JSON object should match this TypeScript interface:
         interface Element {'{'}
         name: string; children: (string | Element)[]
         {'}'}
         For example:{'\n'}
-        <SerializeReact components={components}>
+        <Serialize>
           <FirstComponent />
-        </SerializeReact>
+        </Serialize>
         Becomes: {'{'} "name": "{reactComponentName(FirstComponent)}", "children": []{'}'}. Respond with only the JSON.
         Do not include any explanatory prose. Do not use any elements (including HTML elements) other than the ones
         above.
@@ -186,7 +139,11 @@ async function UICompletion(
     const children =
       typeof serializedComponent.children === 'string' ? [serializedComponent.children] : serializedComponent.children;
 
-    return <Component>{children.map(toComponent)}</Component>;
+    return (
+      <AI.React>
+        <Component>{children.map(toComponent)}</Component>
+      </AI.React>
+    );
   }
 
   return toComponent(JSON.parse(modelResult));
