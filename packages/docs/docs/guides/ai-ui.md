@@ -4,7 +4,7 @@ Demo video: [![Loom video](../../docs/loom.png)](https://www.loom.com/share/79ca
 
 This is experimental but we're excited about it as a first step towards AI-native app development. Try it if you dare! There are two versions: NextJS Server Side Rendering, and create-react-app pure client. The create-react-app version is generally more robust and easier to play around in.
 
-## create-react-app
+## create-react-app demo
 
 To run the demo, go to the monorepo root, and run:
 
@@ -16,6 +16,8 @@ The subdemos are:
 
 - JIT UI: React (`packages/create-react-app-demo/src/recipe/page.tsx`): We provide building block components, and the AI decides how to assemble them into the final output.
 - Choose your own adventure (`packages/create-react-app-demo/src/choose-your-adventure/index.tsx`); We teach the AI how to render text and buttons, and it chooses what to show.
+
+A live, deployed version of this demo is here: https://ai-jsx-create-react-app-demo.vercel.app/
 
 ### How To
 
@@ -81,12 +83,6 @@ For this demo, we've set up a hacked version of NextJS to support server-side re
 1. If you want to embed React components as a (potentially transitive) child of `<AI>`, you need to update the hacky list in our custom react wrapper (`packages/nextjs-demo/src/app/react.ts`).
 
 ### Limitations & Implementation Notes
-
-#### Limitations
-
-This won't deploy to Vercel because we haven't published ai-jsx yet.
-
-The types are all broken, but we may be able to fix it with https://devblogs.microsoft.com/typescript/announcing-typescript-5-1/#decoupled-type-checking-between-jsx-elements-and-jsx-tag-types and the other new features in TS 5.1.
 
 ##### Interactivity
 
