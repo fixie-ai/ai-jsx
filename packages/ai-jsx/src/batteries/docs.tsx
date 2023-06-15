@@ -1,6 +1,6 @@
 /**
  * Types and simple implementations for DocsQA. Also see
- * https://docs.ai-jsx.com/guides/brand-new#accessing-knowledge-docs-qa
+ * {@link https://docs.ai-jsx.com/guides/brand-new#accessing-knowledge-docs-qa}
  */
 
 import { Embeddings } from 'langchain/embeddings/base';
@@ -271,7 +271,8 @@ export const defaultChunker = async <Metadata extends Jsonifiable = Jsonifiable>
 };
 
 /**
- * A piece of a document that's appropriately sized for an LLM's context window and for semantic
+ * A piece of a document that's appropriately sized for an LLM's
+ * [context window]{@link https://docs.ai-jsx.com/guides/brand-new#context-window} and for semantic
  * search.
  */
 export interface Chunk<ChunkMetadata extends Jsonifiable = Jsonifiable> {
@@ -291,6 +292,7 @@ export interface Chunk<ChunkMetadata extends Jsonifiable = Jsonifiable> {
 /**
  * A function that maps strings to vectors encoding their semantic meaning. Often this is based on
  * the same function used to transform text for an LLM's transformers, though this isn't required.
+ * Alse see {@link https://docs.ai-jsx.com/guides/brand-new#semantic-similarity-embeddings}.
  */
 export interface Embedding {
   embed(text: string): Promise<number[]>;
@@ -415,17 +417,13 @@ export class LocalCorpus<
   private readonly vectors: EmbeddedChunk<ChunkMetadata>[] = [];
   private readonly documents: Document<DocumentMetadata>[] = [];
   private readonly completedPartitions = new Set<string>();
-  private readonly activePartitionsToToken = new Map<string | null, string | null>();
+  private readonly activePartitionsToToken = new Map<CorpusPartition['name'] | null, string | null>();
   private loadingState = Corpus.LoadingState.NOT_STARTED;
   constructor(
     readonly loader: Loader<DocumentMetadata>,
     readonly chunker: Chunker<DocumentMetadata, ChunkMetadata>,
     readonly embedding: Embedding = defaultEmbedding
-  ) {
-    this.loader = loader;
-    this.chunker = chunker;
-    this.embedding = embedding;
-  }
+  ) {}
 
   async startLoading(): Promise<Corpus.Stats> {
     if (this.loadingState !== Corpus.LoadingState.NOT_STARTED) {
@@ -445,8 +443,7 @@ export class LocalCorpus<
   private async load(): Promise<void> {
     this.activePartitionsToToken.set(null, null);
     while (this.activePartitionsToToken.size > 0) {
-      const partition = this.activePartitionsToToken.keys().next().value;
-      const pageToken = this.activePartitionsToToken.get(partition);
+      const [partition, pageToken] = this.activePartitionsToToken.entries().next().value;
       this.activePartitionsToToken.delete(partition);
 
       const response = await this.loader({ partition, pageToken } as CorpusLoadRequest);
@@ -466,7 +463,8 @@ export class LocalCorpus<
         }
       }
       if (!response.page && !response.partitions) {
-        // Corner case - invalid response.
+        // Corner case - technically an invalid response, but it's similar enough to a valid empty
+        // response that we'll treat it the same way.
         this.completedPartitions.add(partition);
       }
     }
@@ -474,7 +472,12 @@ export class LocalCorpus<
 
   private async vectorize(docs: Document<DocumentMetadata>[]): Promise<EmbeddedChunk<ChunkMetadata>[]> {
     const chunks: Chunk<ChunkMetadata>[] = [];
-    await Promise.all(docs.map((doc) => this.chunker(doc).then((docChunks) => chunks.push(...docChunks))));
+    await Promise.all(
+      docs.map(async (doc) => {
+        const docChunks = await this.chunker(doc);
+        chunks.push(...docChunks);
+      })
+    );
     const vectors: number[][] = await this.embedding.embedBatch(chunks.map((chunk) => chunk.content));
     return chunks.map((chunk, i) => ({ ...chunk, vector: vectors[i] } as EmbeddedChunk<ChunkMetadata>));
   }

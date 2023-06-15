@@ -1,6 +1,6 @@
 // This script assumes that ./load-articles has been run first.
 import * as LLMx from 'ai-jsx';
-import { Corpus, DocsQA, Document, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
+import { DocsQA, Document, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
 import { showInspector } from 'ai-jsx/core/inspector';
 import { globbySync } from 'globby';
 import { loadJsonFile } from 'load-json-file';
@@ -31,7 +31,7 @@ const docs = await Promise.all(
   })
 );
 
-const corpus: Corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
+const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
 await corpus.startLoading();
 
 function ShowDoc({ doc }: { doc: Document<RedditMetadata> }) {
