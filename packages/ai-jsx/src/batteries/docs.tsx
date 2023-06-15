@@ -6,76 +6,50 @@
 import { Embeddings } from 'langchain/embeddings/base';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { TokenTextSplitter } from 'langchain/text_splitter';
-import _ from 'lodash';
 import { similarity } from 'ml-distance';
-import pino from 'pino';
 import { Jsonifiable } from 'type-fest';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
 import * as LLMx from '../index.js';
 import { Node } from '../index.js';
 
-// DO_NOT_SUBMIT
-const pinoLogger = _.once(() =>
-  // @ts-expect-error
-  pino(
-    { name: 'ai-jsx-docs', level: 'trace' },
-    // N.B. pino.destination is not available in the browser
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    pino.destination?.({
-      dest: './ai-jsx-docs.log',
-      sync: true, // Synchronous logging
-    })
-  )
-)();
-
 /**
  * A raw document loaded from an arbitrary source that has not yet been parsed.
  */
-export class RawDocument {
-  constructor(
-    /** The raw bytes content. */
-    readonly pageContent: Uint8Array,
-    /**
-     * A human-readable name for this document. This identifies the document to users and should
-     * be unique within a corpus. If the document is hosted on the web, its URL is a good choice.
-     */
-    readonly name?: string,
-    /** The encoding used for this document. Defaults to utf-8. */
-    readonly encoding: string = 'utf-8',
-    /** The content type for this document. Defaults to plain text. */
-    readonly mimeType: string = 'text/plain'
-  ) {
-    this.pageContent = pageContent;
-    this.name = name;
-    this.encoding = encoding;
-    this.mimeType = mimeType;
-  }
+export interface RawDocument {
+  /** The raw bytes content. */
+  readonly pageContent: Uint8Array;
+
+  /**
+   * A human-readable name for this document. This identifies the document to users and should
+   * be unique within a corpus. If the document is hosted on the web, its URL is a good choice.
+   */
+  readonly name?: string;
+
+  /** The encoding used for this document, e.g. 'utf-8'. */
+  readonly encoding: string;
+
+  /** The content type for this document, e.g. 'text/plain' */
+  readonly mimeType: string;
 }
 
 /**
  * A text document that can be used to ground responses.
  */
-export class Document<DocumentMetadata extends Jsonifiable = Jsonifiable> {
-  constructor(
-    /**
-     * The content of the document. While this may often be a singleton, including separate
-     * meaningful pieces of text can aid in chunking/embedding.
-     */
-    readonly pageContent: string[],
-    /**
-     * A human-readable name for this document. This identifies the document to users and should
-     * be unique within a corpus. If the document is hosted on the web, its URL is a good choice.
-     */
-    readonly name?: string,
-    /**
-     * Other metadata about the document, such as when it was created.
-     */
-    readonly metadata?: DocumentMetadata
-  ) {
-    this.pageContent = pageContent;
-    this.name = name;
-    this.metadata = metadata;
-  }
+export interface Document<DocumentMetadata extends Jsonifiable = Jsonifiable> {
+  /**
+   * The content of the document. While this may often be a singleton, including separate
+   * meaningful pieces of text can aid in chunking/embedding.
+   */
+  readonly pageContent: string[];
+  /**
+   * A human-readable name for this document. This identifies the document to users and should
+   * be unique within a corpus. If the document is hosted on the web, its URL is a good choice.
+   */
+  readonly name?: string;
+  /**
+   * Other metadata about the document, such as when it was created.
+   */
+  readonly metadata?: DocumentMetadata;
 }
 
 /**
@@ -90,182 +64,192 @@ function defaultParser<DocumentMetadata extends Jsonifiable = Jsonifiable>(
 ): Promise<Document<DocumentMetadata>> {
   if (raw.mimeType.startsWith('text/')) {
     const content = new TextDecoder(raw.encoding).decode(raw.pageContent);
-    return Promise.resolve(new Document([content], raw.name));
+    return Promise.resolve({ pageContent: [content], name: raw.name });
     // TODO: Add support for other mime types.
   }
   throw new Error(`Unsupported mime type: ${raw.mimeType}`);
 }
 
+/** A non-overlapping subdivision of a corpus' documents used for loading. */
+export interface CorpusPartition {
+  /**
+   * The unique name of this partition. Partitions are considered equivalent if their names match.
+   */
+  readonly name: string;
+
+  /** An optional token for requesting the first page. */
+  readonly firstPageToken?: string;
+}
+
+/** A collection of sequential documents within a single CorpusPartition. */
+export interface CorpusPage<DocType extends RawDocument | Document> {
+  /** Documents to load into the corpus. */
+  readonly documents: DocType[];
+
+  /** If there's another page in the requested partition, the token needed for requesting it. */
+  readonly nextPageToken?: string;
+}
+
 /**
- * Objects related to loading a corpus. This is facilitated by a series of
- * requests and corresponding responses.
+ * A request to load documents for a corpus. During loading, the corpus will issue a series of such
+ * requests to the loader in order to populate itself.
  *
- * In addition to returning documents, each response may expand the corpus
- * space in one or both of two dimensions:
- *      Responses may include new partitions to be loaded. Partitions are
- *          non-overlapping subsets of a corpus which may be loaded in parallel.
- *          A response's new partitions will be ignored if previously included
- *          in another response.
- *      When a response includes a page of documents, that page may indicate
- *          that another page is available in the same partition. Pages are
- *          always loaded serially in order. The partition is completed when
- *          a response has a page with no next page token.
+ * In addition to returning documents, each response may expand the corpus space in one or both of
+ * two dimensions:
+ *      Responses may include new partitions to be loaded. Partitions are non-overlapping subsets
+ *          of a corpus which may be loaded in parallel. A response's new partitions will be
+ *          ignored if previously included in another response.
+ *      When a response includes a page of documents, that page may indicate that another page is
+ *          available in the same partition. Pages are always loaded serially in order. The
+ *          partition is completed when a response has a page with no next page token.
  *
- *  Loading will always begin with a request with the default (unnamed)
- *  partition and no page token. Subsequent requests depend on prior responses
- *  and will always include at least one of those fields.
+ * Loading will always begin with a request with the default (unnamed) partition and no page token.
+ * Subsequent requests depend on prior responses and will always include at least one of those
+ * fields.
  *
  *  Examples:
  *      Simple handful of documents:
- *          The response to the initial request contains only a page of
- *          documents. This could include a next_page_token for more
- *          documents in the single default partition if needed.
+ *          The response to the initial request contains only a page of documents. This could
+ *          include a next page token for more documents in the single default partition if needed.
  *      Web crawl:
- *          Each URL corresponds to a partition and the responses never include
- *          tokens. The initial response only includes partitions, one for each
- *          root URL to crawl. Each subsequent request includes the partition
- *          (the URL) and the corresponding response contains a page with a
- *          single document - the resource at that URL. If the document links
- *          to other resources that should be included in the corpus, the
- *          response also contains those URLs as new partitions. The process
- *          repeats for all partitions until there are no known incomplete
- *          partitions or until crawl limits are reached.
+ *          Each URL corresponds to a partition and the responses never include tokens. The initial
+ *          response only includes partitions, one for each root URL to crawl. Each subsequent
+ *          request includes the partition (the URL) and the corresponding response contains a page
+ *          with a single document - the resource at that URL. If the document links to other
+ *          resources that should be included in the corpus, then the response also contains those
+ *          URLs as new partitions. The process repeats for all partitions until there are no known
+ *          incomplete partitions (or until crawl limits are reached).
  *      Database:
- *          Consider a database with a parent table keyed by parent_id and an
- *          interleaved child table keyed by (parent_id, child_id) whose rows
- *          correspond to corpus documents. This loader will use tokens that
- *          encode a read timestamp (for consistency) and an offset to be used
- *          in combination with a static page size.
+ *          Consider a database with a parent table keyed by parent_id and an interleaved child
+ *          table keyed by (parent_id, child_id) whose rows correspond to corpus documents. This
+ *          loader will use tokens that encode a read timestamp (for consistency) and an offset to
+ *          be used in combination with a static page size.
  *
- *          Upon receiving the initial request, the loader chooses a commit
- *          timestamp to use for all reads and returns a partition for each
- *          parent_id along with a first page token indicating the chosen read
- *          timestamp and an offset of 0.
+ *          Upon receiving the initial request, the loader chooses a commit timestamp to use for
+ *          all reads and returns a partition for each parent_id along with a first page token
+ *          indicating the chosen read timestamp and an offset of 0.
  *
- *          For each partition, the loader then receives requests with the
- *          partition (a parent_id) and a page token (the read timestamp and
- *          offest). It responds with documents corresponding to the next page
- *          size child rows within the given parent. If more children exist,
- *          the response includes a next page token with the same read
- *          timestamp and an incremented offset. This repeats until there are
- *          no more children, at which point the response has no
- *          next page token and the partition is complete.
+ *          For each partition, the loader then receives requests with the partition (a parent_id)
+ *          and a page token (the read timestamp and offest). It responds with documents
+ *          corresponding to the next page size child rows within the given parent. If more
+ *          children exist, the response includes a next page token with the same read timestamp
+ *          and an incremented offset. This repeats until there are no more children, at which
+ *          point the response has no next page token and the partition is complete.
  *
- *          Note: Including multiple parent_ids in each partition would also
- *              work and would be an effective way to limit parallelism if
- *              desired.
+ *          Note: Including multiple parent_ids in each partition would also work and would be an
+ *              effective way to limit parallelism if desired.
  */
-export namespace CorpusLoading {
-  export class Request {
-    constructor(readonly partition?: string, readonly pageToken?: string) {
-      /**
-       * The partition of the corpus that should be read. This will
-       * be empty for the initial request, indicating the default partition.
-       * For subsequent requests, it will typically be the name of a partition
-       * returned by a previous request, though it could be empty if the
-       * default partition contains multiple pages.
-       */
-      this.partition = partition;
-      /**
-       * A token for paginating results within a corpus partition.
-       * If present, this will be echoed from a previous response.
-       */
-      this.pageToken = pageToken;
-    }
-  }
+export interface CorpusLoadRequest {
+  /**
+   * The partition of the corpus that should be read. This will be empty for the initial request,
+   * indicating the default partition. For subsequent requests, it will typically be the name of a
+   * partition returned by a previous request, though it could be empty if the default partition
+   * contains multiple pages.
+   */
+  readonly partition?: string;
 
-  export class Response<DocType extends RawDocument | Document> {
-    constructor(readonly page?: Page<DocType>, readonly partitions?: Partition[]) {
-      /** A page of documents from the requested partition. */
-      this.page = page;
-      /**
-       * Additional partitions that should be loaded in subsequent requests.
-       * These will be ignored if they were already included in a previous
-       * response.
-       */
-      this.partitions = partitions;
-    }
-  }
-
-  export class Page<DocType extends RawDocument | Document> {
-    constructor(readonly documents: DocType[], readonly nextPageToken?: string) {
-      /** Documents loaded into the corpus. */
-      this.documents = documents;
-      /**
-       * If there's another page in the requested partition, the token needed
-       * for requesting it.
-       */
-      this.nextPageToken = nextPageToken;
-    }
-  }
-
-  export class Partition {
-    constructor(readonly name: string, readonly firstPageToken?: string) {
-      /** The unique name of this partition. */
-      this.name = name;
-      /** An optional token for requesting the first page. */
-      this.firstPageToken = firstPageToken;
-    }
-  }
-
-  /** A function responsible for loading and parsing a corpus. */
-  export type Loader<DocumentMetadata extends Jsonifiable = Jsonifiable> = (
-    request: Request
-  ) => Promise<Response<Document<DocumentMetadata>>>;
-
-  /** A function responsible for loading a corpus when parsing is handled separately. */
-  export type RawLoader = (request: Request) => Promise<Response<RawDocument>>;
-
-  export function toLoader<DocumentMetadata extends Jsonifiable = Jsonifiable>(
-    rawLoader: RawLoader,
-    parser: Parser<DocumentMetadata> = defaultParser
-  ): Loader<DocumentMetadata> {
-    return async (request: Request) => {
-      const response = await rawLoader(request);
-      if (response.page) {
-        const documents = await Promise.all(response.page.documents.map(parser));
-        return new Response(new Page(documents, response.page.nextPageToken), response.partitions);
-      }
-      return new Response<Document<DocumentMetadata>>(undefined, response.partitions);
-    };
-  }
-
-  class StaticLoader<DocumentMetadata extends Jsonifiable = Jsonifiable> {
-    constructor(readonly documents: Document<DocumentMetadata>[], readonly pageSize?: number) {}
-
-    load(request: Request): Promise<Response<Document<DocumentMetadata>>> {
-      if (this.pageSize) {
-        const page: number = Number(request.pageToken ?? 0);
-        const start = page * this.pageSize;
-        const end = start + this.pageSize;
-        if (end > this.documents.length) {
-          return Promise.resolve(new Response(new Page(this.documents.slice(start))));
-        }
-        return Promise.resolve(new Response(new Page(this.documents.slice(start, end), (page + 1).toString())));
-      }
-
-      return Promise.resolve(new Response(new Page(this.documents)));
-    }
-  }
-
-  export function staticLoader<DocumentMetadata extends Jsonifiable = Jsonifiable>(
-    documents: Document<DocumentMetadata>[],
-    pageSize?: number
-  ): Loader<DocumentMetadata> {
-    const loader = new StaticLoader(documents, pageSize);
-    return (request) => loader.load(request);
-  }
+  /**
+   * A token for paginating results within a corpus partition. If present, this will be echoed from
+   * a previous response.
+   */
+  readonly pageToken?: string;
 }
 
-/** A function that splits a document into multiple chunks, for example to ensure it fits in appropriate context windows. */
+/** The response to a CorpusLoadRequest. */
+export interface CorpusLoadResponse<DocType extends RawDocument | Document> {
+  /** A page of documents from the requested partition. */
+  readonly page?: CorpusPage<DocType>;
+
+  /**
+   * Additional partitions that should be loaded in subsequent requests. These will be ignored if
+   * they were already included in a previous response.
+   */
+  readonly partitions?: CorpusPartition[];
+}
+
+/** A function responsible for loading and parsing a corpus. */
+export type Loader<DocumentMetadata extends Jsonifiable = Jsonifiable> = (
+  request: CorpusLoadRequest
+) => Promise<CorpusLoadResponse<Document<DocumentMetadata>>>;
+
+/** A function responsible for loading a corpus when parsing is handled separately. */
+export type RawLoader = (request: CorpusLoadRequest) => Promise<CorpusLoadResponse<RawDocument>>;
+
+/** Combines a RawLoader with a Parser to produce a Loader. */
+export function toLoader<DocumentMetadata extends Jsonifiable = Jsonifiable>(
+  rawLoader: RawLoader,
+  parser: Parser<DocumentMetadata> = defaultParser
+): Loader<DocumentMetadata> {
+  return async (request: CorpusLoadRequest) => {
+    const response = await rawLoader(request);
+    if (response.page) {
+      const documents = await Promise.all(response.page.documents.map(parser));
+      return {
+        page: {
+          documents,
+          nextPageToken: response.page.nextPageToken,
+        },
+        partitions: response.partitions,
+      } as CorpusLoadResponse<Document<DocumentMetadata>>;
+    }
+    return {
+      partitions: response.partitions,
+    } as CorpusLoadResponse<Document<DocumentMetadata>>;
+  };
+}
+
+class StaticLoader<DocumentMetadata extends Jsonifiable = Jsonifiable> {
+  constructor(readonly documents: Document<DocumentMetadata>[], readonly pageSize?: number) {}
+
+  /* eslint-disable require-await */
+  async load(request: CorpusLoadRequest): Promise<CorpusLoadResponse<Document<DocumentMetadata>>> {
+    if (this.pageSize) {
+      const page: number = Number(request.pageToken ?? 0);
+      const start = page * this.pageSize;
+      const end = start + this.pageSize;
+      if (end > this.documents.length) {
+        return {
+          page: {
+            documents: this.documents.slice(start),
+          },
+        } as CorpusLoadResponse<Document<DocumentMetadata>>;
+      }
+      return {
+        page: {
+          documents: this.documents.slice(start, end),
+          nextPageToken: (page + 1).toString(),
+        },
+      } as CorpusLoadResponse<Document<DocumentMetadata>>;
+    }
+
+    return {
+      page: {
+        documents: this.documents,
+      },
+    } as CorpusLoadResponse<Document<DocumentMetadata>>;
+  }
+  /* eslint-enable */
+}
+
+/** A loader that provides a static set of in-memory documents, optionally with pagination. */
+export function staticLoader<DocumentMetadata extends Jsonifiable = Jsonifiable>(
+  documents: Document<DocumentMetadata>[],
+  pageSize?: number
+): Loader<DocumentMetadata> {
+  const loader = new StaticLoader(documents, pageSize);
+  return (request) => loader.load(request);
+}
+
+/**
+ * A function that splits a document into multiple chunks, for example to ensure it fits in
+ * appropriate context windows.
+ */
 export type Chunker<
   DocumentMetadata extends Jsonifiable = Jsonifiable,
   ChunkMetadata extends Jsonifiable = Jsonifiable
 > = (document: Document<DocumentMetadata>) => Promise<Chunk<ChunkMetadata>[]>;
 
-/**
- * A simple token size based text chunker. This is a good starting point for text documents.
- */
+/** A simple token size based text chunker. This is a good starting point for text documents. */
 export const defaultChunker = async <Metadata extends Jsonifiable = Jsonifiable>(doc: Document<Metadata>) => {
   const splitter = new TokenTextSplitter({
     encodingName: 'gpt2',
@@ -286,27 +270,34 @@ export const defaultChunker = async <Metadata extends Jsonifiable = Jsonifiable>
   return chunks;
 };
 
-/** A chunk is a piece of a document that's appropriately sized for an LLM's context window and for semantic search. */
+/**
+ * A piece of a document that's appropriately sized for an LLM's context window and for semantic
+ * search.
+ */
 export interface Chunk<ChunkMetadata extends Jsonifiable = Jsonifiable> {
-  /** The content of this chunk. This is what is provided as context to an LLM when the chunk is selected. */
-  content: string;
+  /**
+   * The content of this chunk. This is what is provided as context to an LLM when the chunk is
+   * selected.
+   */
+  readonly content: string;
 
   /** The name of the document from which this chunk was extracted. */
-  documentName?: string;
+  readonly documentName?: string;
 
   /** Optional additional metadata associated with this chunk. */
-  metadata?: ChunkMetadata;
+  readonly metadata?: ChunkMetadata;
 }
 
 /**
- * An embedding is a function that maps a string to a vector encoding its semantic meaning.
- * Often this is based on the same function used to transform text for an LLM's transformers.
+ * A function that maps strings to vectors encoding their semantic meaning. Often this is based on
+ * the same function used to transform text for an LLM's transformers, though this isn't required.
  */
 export interface Embedding {
   embed(text: string): Promise<number[]>;
   embedBatch(chunks: string[]): Promise<number[][]>;
 }
 
+/** An Embedding implementation that defers to a LangChain `Embeddings` object. */
 export class LangChainEmbeddingWrapper implements Embedding {
   constructor(readonly lcEmbedding: Embeddings) {}
 
@@ -319,19 +310,24 @@ export class LangChainEmbeddingWrapper implements Embedding {
   }
 }
 
+/** A default embedding useful for DocsQA. Note that this requires an OPENAI_API_KEY. */
 export const defaultEmbedding = new LangChainEmbeddingWrapper(new OpenAIEmbeddings());
 
-/**
- * An embedded chunk is a piece of a document that is ready to be added into a vector space.
- */
+/** A piece of a document that is ready to be added into a vector space. */
 export interface EmbeddedChunk<ChunkMetadata extends Jsonifiable = Jsonifiable> {
-  /** The identifier for this chunk. For insertions, this will be generated if not populated.*/
+  /**
+   * The identifier for this chunk. When adding this object to a vector database, this field will
+   * be generated if not populated.
+   */
   id?: string;
 
   /** The vector representing this chunk for semantic nearest neighbors. */
   vector: number[];
 
-  /** The content of this chunk. This is what is provided as context to an LLM when the chunk is selected. */
+  /**
+   * The content of this chunk. This is what is provided as context to an LLM when the chunk is
+   * selected.
+   */
   content: string;
 
   /** The name of the document from which this chunk was extracted. */
@@ -347,11 +343,30 @@ export interface ScoredChunk<ChunkMetadata extends Jsonifiable = Jsonifiable> {
   score: number;
 }
 
+/**
+ * A corpus is a collection of documents that can be provided to an LLM to provide grounding for
+ * responses, along with the machinery to load and index those documents.
+ */
 export interface Corpus<ChunkMetadata extends Jsonifiable = Jsonifiable> {
-  startCrawl: () => Promise<Corpus.Stats>;
+  /**
+   * Begins loading documents into the corpus using a Loader, Chunker, and Embedding.
+   *
+   * Note: This returns a promise because some implementations may make an external request
+   * to begin loading. However, the promise will typically resolve prior to the corpus being fully
+   * loaded. In such cases, use `getStats` to check progress.
+   */
+  startLoading: () => Promise<Corpus.Stats>;
 
+  /**
+   * Reveals statistics about this corpus, including its LoadingState.
+   *
+   * Note: This returns a promise because some implementations may make an external request.
+   */
   getStats: () => Promise<Corpus.Stats>;
 
+  /**
+   * Finds document chunks that are semantically similar to the provided query.
+   */
   search: (
     query: string,
     params?: { limit?: number; score_threshold?: number }
@@ -359,13 +374,19 @@ export interface Corpus<ChunkMetadata extends Jsonifiable = Jsonifiable> {
 }
 
 export namespace Corpus {
+  /** An indication of what steps are necessary to make this corpus ready for serving. */
   export enum LoadingState {
+    /** Documents have not been loaded. Call `startLoading` to begin loading them. */
     NOT_STARTED = 'NOT_STARTED',
+    /** Documents are currently being loaded. */
     IN_PROGRESS = 'IN_PROGRESS',
+    /** Documents were successfully loaded. The corpus is ready for serving. */
     COMPLETED = 'COMPLETED',
+    /** Documents failed to load. See details for your implementation to try to resolve. */
     FAILED = 'FAILED',
   }
 
+  /** Statistics about a corpus, including its LoadingState. */
   export interface Stats {
     loadingState: LoadingState;
     completedPartitions: number;
@@ -375,21 +396,29 @@ export namespace Corpus {
   }
 }
 
-/* Resolving disagreement between formatter and linter. */
-/* eslint-disable brace-style */
+/*
+ * A Corpus implementation that runs locally and stores chunks in memory.
+ *
+ * This implementation doesn't make external requests except through the provided Loader, Chunker,
+ * and Embedding*. Consequently, getStats always resolves immediately.
+ *
+ * Since the purpose of this implementation is to facilitate simple prototypes, the promise
+ * returned by startLoading resolves only once loading has completed.
+ *
+ * *Note: The default Embedding does make external requests.
+ */
 export class LocalCorpus<
   DocumentMetadata extends Jsonifiable = Jsonifiable,
   ChunkMetadata extends Jsonifiable = Jsonifiable
 > implements Corpus<ChunkMetadata>
 {
-  /* eslint-enable */
   private readonly vectors: EmbeddedChunk<ChunkMetadata>[] = [];
   private readonly documents: Document<DocumentMetadata>[] = [];
   private readonly completedPartitions = new Set<string>();
   private readonly activePartitionsToToken = new Map<string | null, string | null>();
   private loadingState = Corpus.LoadingState.NOT_STARTED;
   constructor(
-    readonly loader: CorpusLoading.Loader<DocumentMetadata>,
+    readonly loader: Loader<DocumentMetadata>,
     readonly chunker: Chunker<DocumentMetadata, ChunkMetadata>,
     readonly embedding: Embedding = defaultEmbedding
   ) {
@@ -398,13 +427,13 @@ export class LocalCorpus<
     this.embedding = embedding;
   }
 
-  async startCrawl(): Promise<Corpus.Stats> {
+  async startLoading(): Promise<Corpus.Stats> {
     if (this.loadingState !== Corpus.LoadingState.NOT_STARTED) {
       return this.getStats();
     }
     this.loadingState = Corpus.LoadingState.IN_PROGRESS;
     try {
-      await this.doCrawl();
+      await this.load();
       this.loadingState = Corpus.LoadingState.COMPLETED;
     } catch (e) {
       this.loadingState = Corpus.LoadingState.FAILED;
@@ -413,23 +442,14 @@ export class LocalCorpus<
     return this.getStats();
   }
 
-  private async doCrawl(): Promise<void> {
-    pinoLogger.info('Starting crawl');
+  private async load(): Promise<void> {
     this.activePartitionsToToken.set(null, null);
     while (this.activePartitionsToToken.size > 0) {
       const partition = this.activePartitionsToToken.keys().next().value;
       const pageToken = this.activePartitionsToToken.get(partition);
       this.activePartitionsToToken.delete(partition);
 
-      const response = await this.loader({ partition, pageToken } as CorpusLoading.Request);
-      pinoLogger.info(
-        {
-          partitions: response.partitions?.length ?? 0,
-          documents: response.page?.documents.length ?? 0,
-          nextPageToken: response.page?.nextPageToken ?? 'None',
-        },
-        'Received response'
-      );
+      const response = await this.loader({ partition, pageToken } as CorpusLoadRequest);
       for (const newPartition of response.partitions ?? []) {
         if (!this.completedPartitions.has(newPartition.name) && !this.activePartitionsToToken.has(newPartition.name)) {
           this.activePartitionsToToken.set(newPartition.name, newPartition.firstPageToken ?? null);
@@ -437,9 +457,7 @@ export class LocalCorpus<
       }
       if (response.page) {
         this.documents.push(...response.page.documents);
-        pinoLogger.info('Starting vectorization');
         const vectors = await this.vectorize(response.page.documents);
-        pinoLogger.info('Completed vectorization');
         this.vectors.push(...vectors.flat());
         if (response.page.nextPageToken) {
           this.activePartitionsToToken.set(partition, response.page.nextPageToken);
@@ -452,16 +470,12 @@ export class LocalCorpus<
         this.completedPartitions.add(partition);
       }
     }
-    pinoLogger.info('Crawl complete');
   }
 
   private async vectorize(docs: Document<DocumentMetadata>[]): Promise<EmbeddedChunk<ChunkMetadata>[]> {
-    pinoLogger.info({ documents: docs.length }, 'Starting chunking for documents');
     const chunks: Chunk<ChunkMetadata>[] = [];
     await Promise.all(docs.map((doc) => this.chunker(doc).then((docChunks) => chunks.push(...docChunks))));
-    pinoLogger.info({ chunks: chunks.length }, 'Chunking completed. Beginning embed.');
     const vectors: number[][] = await this.embedding.embedBatch(chunks.map((chunk) => chunk.content));
-    pinoLogger.info({ vectors: vectors.length }, 'Embedding completed.');
     return chunks.map((chunk, i) => ({ ...chunk, vector: vectors[i] } as EmbeddedChunk<ChunkMetadata>));
   }
 
@@ -488,6 +502,7 @@ export class LocalCorpus<
             score: similarity.cosine(queryVector, vector.vector),
           } as ScoredChunk<ChunkMetadata>)
       )
+      .filter((chunk) => chunk.score >= (params?.score_threshold ?? Number.MIN_VALUE))
       .sort((a, b) => b.score - a.score)
       .slice(0, params?.limit ?? 10);
   }
@@ -524,13 +539,13 @@ export interface DocsQAProps<Doc extends Document> {
 export async function DocsQA<Doc extends Document>(props: DocsQAProps<Doc>) {
   const status = (await props.corpus.getStats()).loadingState;
   if (status !== Corpus.LoadingState.COMPLETED) {
-    return "Corpus is not loaded. It's in state: {status.toString()}";
+    return `Corpus is not loaded. It's in state: ${status.toString()}`;
   }
   const docs = await props.corpus.search(props.question);
   return (
     <ChatCompletion>
       <SystemMessage>
-        You are a customer service agent.Answer questions truthfully.Here is what you know:
+        You are a customer service agent. Answer questions truthfully. Here is what you know:
         {docs.map((doc) => (
           // TODO improve types
           // @ts-expect-error
