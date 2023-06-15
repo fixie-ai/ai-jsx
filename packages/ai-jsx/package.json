@@ -57,13 +57,13 @@
       "import": "./dist/esm/core/errors.js",
       "require": "./dist/cjs/core/errors.cjs"
     },
-    "./core/prompts": {
-      "import": "./dist/esm/core/prompts.js",
-      "require": "./dist/cjs/core/prompts.js"
+    "./batteries/prompts": {
+      "import": "./dist/esm/batteries/prompts.js",
+      "require": "./dist/cjs/batteries/prompts.js"
     },
-    "./core/constrained-output": {
-      "import": "./dist/esm/core/constrained-output.js",
-      "require": "./dist/cjs/core/constrained-output.js"
+    "./batteries/constrained-output": {
+      "import": "./dist/esm/batteries/constrained-output.js",
+      "require": "./dist/cjs/batteries/constrained-output.js"
     },
     "./lib/openai": {
       "import": "./dist/esm/lib/openai.js",

@@ -3,7 +3,7 @@
  * into specific formats, such as JSON, YAML, or Markdown.
  */
 import * as LLMx from '../index.js';
-import { ChatCompletion, SystemMessage, AssistantMessage, UserMessage } from './completion.js';
+import { ChatCompletion, SystemMessage, AssistantMessage, UserMessage } from '../core/completion.js';
 import yaml from 'js-yaml';
 
 interface ValidationResult {
@@ -15,7 +15,7 @@ interface ValidationResult {
 /**
  * A ChatCompletion component that constrains the output to be a valid JSON string.
  *
- * @returns a string that validates as JSON or throws an error after `retries` attempts
+ * @returns a string that is a valid JSON or throws an error after `retries` attempts
  */
 export function JsonChatCompletion({ children, ...props }: { children: LLMx.Node }) {
   return (
@@ -28,7 +28,7 @@ export function JsonChatCompletion({ children, ...props }: { children: LLMx.Node
 /**
  * A ChatCompletion component that constrains the output to be a valid YAML string.
  *
- * @returns a string that validates as YAML or throws an error after `retries` attempts
+ * @returns a string that is a valid YAML or throws an error after `retries` attempts
  */
 export function YamlChatCompletion({ children, ...props }: { children: LLMx.Node }) {
   return (

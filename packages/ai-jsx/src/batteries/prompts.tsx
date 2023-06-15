@@ -7,7 +7,7 @@
  * This file attempts to provide some good defaults as a starting point.
  */
 import * as LLMx from '../index.js';
-import { SystemMessage } from './completion.js';
+import { SystemMessage } from '../core/completion.js';
 
 /**
  * A prompt collection with some useful defaults to get you started.
@@ -18,8 +18,10 @@ import { SystemMessage } from './completion.js';
  *
  * We intend to improve this collection over time and welcome contributions.
  *
- * Note: even though a SystemPrompt component is used, this component can be used
- * via a plain Completion model as well.
+ * Note: even though a SystemPrompt component is used, you can think of this as a default value.
+ * For example:
+ *   * if used in a Completion model, the SystemPrompt will be ignored;
+ *   * if wrapped with a UserMessage, the SystemPrompt will be stripped.
  */
 export function Prompt({
   hhh = false,

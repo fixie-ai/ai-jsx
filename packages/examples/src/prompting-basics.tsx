@@ -1,6 +1,6 @@
 import * as LLMx from 'ai-jsx';
 import { UserMessage, ChatCompletion } from 'ai-jsx/core/completion';
-import { Prompt } from 'ai-jsx/core/prompts';
+import { Prompt } from 'ai-jsx/batteries/prompts';
 import { showInspector } from 'ai-jsx/core/inspector';
 
 function LogicPuzzle() {
