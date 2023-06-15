@@ -7264,7 +7264,7 @@ __metadata:
 
 "ai-jsx@file:../ai-jsx::locator=create-react-app-demo%40workspace%3Apackages%2Fcreate-react-app-demo":
   version: 0.2.0-4
-  resolution: "ai-jsx@file:../ai-jsx#../ai-jsx::hash=d1075e&locator=create-react-app-demo%40workspace%3Apackages%2Fcreate-react-app-demo"
+  resolution: "ai-jsx@file:../ai-jsx#../ai-jsx::hash=4d13ba&locator=create-react-app-demo%40workspace%3Apackages%2Fcreate-react-app-demo"
   dependencies:
     cli-highlight: "npm:^2.1.11"
     cli-spinners: "npm:^2.9.0"
@@ -7292,13 +7292,13 @@ __metadata:
     zod-to-json-schema: "npm:^3.21.1"
   peerDependencies:
     react: ^16.8.0  || ^17.0.0 || ^18.0.0
-  checksum: 36d131fd3010b50b946a8627e830dbb501362dd15a07efb7278e2b76e941995883e809786ad8cac1dad42ae1cd77d08ad3cd13a921d5f60e7f2f430ae6da019d
+  checksum: e51b83d8ba21370bd646ab4f5058ddff862d7278eb4a7e2ff729a9b69f456fb47fe41e4350459b0c77603b4b9ed8adf6b4f34a4cffb1c0812c8a9b2da78ef4ac
   languageName: node
   linkType: hard
 
 "ai-jsx@file:../ai-jsx::locator=examples%40workspace%3Apackages%2Fexamples":
   version: 0.2.0-4
-  resolution: "ai-jsx@file:../ai-jsx#../ai-jsx::hash=d1075e&locator=examples%40workspace%3Apackages%2Fexamples"
+  resolution: "ai-jsx@file:../ai-jsx#../ai-jsx::hash=4d13ba&locator=examples%40workspace%3Apackages%2Fexamples"
   dependencies:
     cli-highlight: "npm:^2.1.11"
     cli-spinners: "npm:^2.9.0"
@@ -7326,13 +7326,13 @@ __metadata:
     zod-to-json-schema: "npm:^3.21.1"
   peerDependencies:
     react: ^16.8.0  || ^17.0.0 || ^18.0.0
-  checksum: 36d131fd3010b50b946a8627e830dbb501362dd15a07efb7278e2b76e941995883e809786ad8cac1dad42ae1cd77d08ad3cd13a921d5f60e7f2f430ae6da019d
+  checksum: e51b83d8ba21370bd646ab4f5058ddff862d7278eb4a7e2ff729a9b69f456fb47fe41e4350459b0c77603b4b9ed8adf6b4f34a4cffb1c0812c8a9b2da78ef4ac
   languageName: node
   linkType: hard
 
 "ai-jsx@file:../ai-jsx::locator=nextjs-demo%40workspace%3Apackages%2Fnextjs-demo":
   version: 0.2.0-4
-  resolution: "ai-jsx@file:../ai-jsx#../ai-jsx::hash=d1075e&locator=nextjs-demo%40workspace%3Apackages%2Fnextjs-demo"
+  resolution: "ai-jsx@file:../ai-jsx#../ai-jsx::hash=4d13ba&locator=nextjs-demo%40workspace%3Apackages%2Fnextjs-demo"
   dependencies:
     cli-highlight: "npm:^2.1.11"
     cli-spinners: "npm:^2.9.0"
@@ -7360,7 +7360,7 @@ __metadata:
     zod-to-json-schema: "npm:^3.21.1"
   peerDependencies:
     react: ^16.8.0  || ^17.0.0 || ^18.0.0
-  checksum: 36d131fd3010b50b946a8627e830dbb501362dd15a07efb7278e2b76e941995883e809786ad8cac1dad42ae1cd77d08ad3cd13a921d5f60e7f2f430ae6da019d
+  checksum: e51b83d8ba21370bd646ab4f5058ddff862d7278eb4a7e2ff729a9b69f456fb47fe41e4350459b0c77603b4b9ed8adf6b4f34a4cffb1c0812c8a9b2da78ef4ac
   languageName: node
   linkType: hard
 
@@ -9337,7 +9337,7 @@ __metadata:
     "@types/react-dom": "npm:^18.2.5"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.11"
     "@typescript-eslint/parser": "npm:^5.59.11"
-    ai-jsx: ../ai-jsx
+    ai-jsx: "file:../ai-jsx"
     babel-jest: "npm:^27.4.2"
     babel-loader: "npm:^8.2.3"
     babel-plugin-named-asset-import: "npm:^0.3.8"
@@ -11273,7 +11273,7 @@ __metadata:
     "@types/uuid": "npm:^9.0.2"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.6"
     "@typescript-eslint/parser": "npm:^5.59.6"
-    ai-jsx: ../ai-jsx
+    ai-jsx: "file:../ai-jsx"
     axios: "npm:^1.4.0"
     csv-stringify: "npm:^6.4.0"
     eslint: "npm:^8.40.0"
@@ -16382,7 +16382,7 @@ __metadata:
     "@types/react-dom": "npm:18.2.4"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.9"
     "@typescript-eslint/parser": "npm:^5.59.9"
-    ai-jsx: ../ai-jsx
+    ai-jsx: "file:../ai-jsx"
     autoprefixer: "npm:10.4.14"
     classnames: "npm:^2.3.2"
     eslint: "npm:8.42.0"
