@@ -16,6 +16,10 @@ See [getting-started](https://github.com/fixie-ai/ai-jsx/blob/main/packages/exam
 
 In the rest of this workshop, we'll expand on this demo to make it more interesting.
 
+:::note
+If you'd like to deploy the Vercel Serverless Functions, check out the [AI JSX Vercel Serverless Functions template repo](https://github.com/fixie-ai/ai-jsx-template-vercel-function).
+:::
+
 ## Using the Inspector
 
 The [Inspector](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/inspector/console.tsx) is a bare-bones [Ink](https://github.com/vadimdemedes/ink) app.
