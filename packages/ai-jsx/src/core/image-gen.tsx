@@ -3,8 +3,12 @@ import { Node, Component, RenderContext } from '../index.js';
 import { DalleImageGen } from '../lib/openai.js';
 
 export interface ImageGenProps {
-  num_samples?: number;
+  /** defines how many image samples should be produced */
+  numSamples?: number;
+  /** defines the image resolution */
   size?: '256x256' | '512x512' | '1024x1024';
+  /** if true, will clip prompts that are too long */
+  clipLongPrompt?: boolean;
 }
 
 export type ImageGenPropsWithChildren = ImageGenProps & {
@@ -52,6 +56,8 @@ export function ImageGenProvider<T extends ImageGenPropsWithChildren>(
 
 /**
  * Perform a model call to do a [image generation](https://platform.openai.com/docs/guides/images/introduction).
+ *
+ * @returns a URL to the generated image
  */
 export function ImageGen(
   { children, ...props }: ImageGenPropsWithChildren & Record<string, unknown>,

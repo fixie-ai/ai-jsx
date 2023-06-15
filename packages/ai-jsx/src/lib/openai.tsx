@@ -131,7 +131,7 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
   );
 }
 
-type OpenAIMethod = 'createCompletion' | 'createChatCompletion';
+type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
 type AxiosResponse<M> = M extends OpenAIMethod ? Awaited<ReturnType<InstanceType<typeof OpenAIApi>[M]>> : never;
 
 export class OpenAIError<M extends OpenAIMethod> extends HttpError {
@@ -297,15 +297,23 @@ export async function* OpenAIChatModel(
 
 /**
  * Generates an image from a prompt using the DALL-E model.
+ * @see https://platform.openai.com/docs/guides/images/introduction
  *
  * @returns the URL of the generated image.
- *          If num_samples is greater than 1, URLs are separated by newlines.
+ *          If numSamples is greater than 1, URLs are separated by newlines.
  */
 export async function DalleImageGen(
-  { num_samples = 1, size = '512x512', children }: ImageGenPropsWithChildren,
+  { numSamples = 1, size = '512x512', clipLongPrompt = true, children }: ImageGenPropsWithChildren,
   { render, getContext, logger }: LLMx.ComponentContext
 ) {
-  const prompt = await render(children);
+  let prompt = await render(children);
+
+  // TODO: I only found the maximum length in their docs, not in the API itself.
+  const maxPromptLength = 1000;
+  if (clipLongPrompt && prompt.length > maxPromptLength) {
+    prompt = `${prompt.substring(0, maxPromptLength - 4)} ...`;
+  }
+
   const openai = getContext(openAiClientContext);
 
   let sizeEnum;
@@ -325,7 +333,7 @@ export async function DalleImageGen(
 
   const imageRequest = {
     prompt,
-    n: num_samples,
+    n: numSamples,
     size: sizeEnum,
     response_format: CreateImageRequestResponseFormatEnum.Url,
   };
@@ -335,11 +343,11 @@ export async function DalleImageGen(
   const response = await openai.createImage(imageRequest);
 
   if (response.status < 200 || response.status >= 300) {
-    throw new Error(`createImage failed with status ${response.status}`);
+    throw new OpenAIError(response, 'createImage', JSON.stringify(response.data));
   } else {
     logger.debug({ statusCode: response.status, headers: response.headers }, 'createImage succeeded');
   }
 
   // return all image URLs as a newline-separated string
-  return _.map(response.data.data, (x) => x.url).join('\n');
+  return _.map(response.data.data, 'url').join('\n');
 }

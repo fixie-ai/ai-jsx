@@ -183,3 +183,33 @@ $ grep -i 'starting modelcall' packages/ai-jsx/llmx.log | yarn workspace ai-jsx 
   }
 ],
 ```
+
+## Beyond Text
+
+You are not restricted by text models. Let's create an image for the story as well:
+
+```tsx title="index.tsx"
+function StoryWithImage() {
+  const story = memo(<WriteStory />);
+  return (
+    <>
+      Banner URL: <ImageGen clipLongPrompt>Generate an image for this story: {story}</ImageGen>
+      {'\n\n'}
+      {story}
+    </>
+  );
+}
+```
+
+The `<ImageGen>` by default uses [Dalle](https://platform.openai.com/docs/guides/images/introduction).
+Since the story will likely be longer than the model's prompt length, we allow the model to clip it using the `clipLongPrompt` parameter.
+
+Running it will give us something like this:
+
+> Banner URL: https://oaidalleapiprodscus.blob.core.windows.net/private/org-om1NsPYwZBBiNRoN36vWDTrC/user-hhDguoYwTmJRmy96tUPki4kb/img-UKtmgvjloihiKTkzd9u0p18Q.png?st=2023-06-15T20%3A46%3A33Z&se=2023-06-15T22%3A46%3A33Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-06-15T21%3A06%3A56Z&ske=2023-06-16T21%3A06%3A56Z&sks=b&skv=2021-08-06&sig=IjGKs8NmmJ/TXFNJ68cGzR8QWeDM7QORXRV57T3gghA%3D
+>
+> One day, Kaida received a message from a distant land, Eldrid. The message was from Nara, who had heard about Kaida's reputation as a Protector and reached out for assistance.
+>
+> As Kaida read the message, she felt a sense of kinship with Nara. She recognized the young warrior's drive and determination from her own youth. Kaida knew that she needed to help Nara, and she set out to Eldrid immediately.
+>
+> (Clipped for brevity)

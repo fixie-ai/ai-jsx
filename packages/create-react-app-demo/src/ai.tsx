@@ -1,6 +1,8 @@
 import * as LLMx from 'ai-jsx';
 import React from './react.ts';
 import { Suspense, ReactNode, useRef, useEffect } from 'react';
+// import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+// import { DalleImageGen } from 'ai-jsx/lib/openai';
 import {
   Recipe,
   RecipeIngredientList,
@@ -8,6 +10,7 @@ import {
   RecipeIngredientListItem,
   RecipeInstructionListItem,
   RecipeTitle,
+  Image,
 } from './recipe/page.tsx';
 
 export function useAI(children: LLMx.Node, when: boolean = true) {
@@ -62,6 +65,7 @@ function AIInterpretedReactComponents({ children }: { children: LLMx.Node }) {
     RecipeIngredientList,
     RecipeInstructionListItem,
     RecipeIngredientListItem,
+    Image,
   };
 
   interface ExpectedJsonStructure {
@@ -107,11 +111,16 @@ function AIInterpretedReactComponents({ children }: { children: LLMx.Node }) {
   }
 
   let modelResponseJSON;
+  // let dalle_start = rendered.indexOf('###');
+  console.log('rendered', rendered);
   try {
+    // modelResponseJSON = JSON.parse(rendered.slice(0, dalle_start));
     modelResponseJSON = JSON.parse(rendered);
   } catch (e) {
     throw new Error(`Failed to parse JSON from model response: ${rendered}`);
   }
+  // modelResponseJSON.children.push({ name: 'Image', children: rendered.slice(dalle_start + 3) });
+  // console.log('modelResponseJSON', modelResponseJSON);
   return parseJsonToReact(modelResponseJSON);
 }
 
@@ -169,3 +178,19 @@ export function AI({
 
   return <AIStream>{children}</AIStream>;
 }
+
+// export async function RecipeCreator({ children }: { children: LLMx.Node }, {render}: LLMx.RenderContext) {
+//   const recipeNode = (
+//     <ChatCompletion temperature={1}>
+//       {children}
+//     </ChatCompletion>
+//   );
+
+//   const recipe = await render(recipeNode);
+
+//   return (
+
+//   )
+//   {'\n'}
+//   Here's a link to an image for the recipe: <Dalle>Create an image for a dish called `{query}`.</Dalle>
+// }

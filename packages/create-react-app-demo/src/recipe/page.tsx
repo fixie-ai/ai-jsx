@@ -3,6 +3,7 @@ import React from '../react.ts';
 import { useState } from 'react';
 import { AI } from '../ai.tsx';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { DalleImageGen } from 'ai-jsx/lib/openai';
 import ResultContainer from '../ResultContainer.tsx';
 import InputPrompt from '../InputPrompt.tsx';
 import { atom, useAtom } from 'jotai';
@@ -30,6 +31,10 @@ export function RecipeInstructionList({ children }: { children: React.ReactNode 
       </ol>
     </div>
   );
+}
+
+export function Image({ children }: { children: React.ReactNode }) {
+  return <img src={children} />;
 }
 
 export function RecipeIngredientList({ children }: { children: React.ReactNode }) {
@@ -79,13 +84,14 @@ export default function RecipeWrapper() {
 
       <ResultContainer title={`AI comes up with a recipe for ${query}`}>
         <AI renderPassedReactComponents>
-          <ChatCompletion temperature={1}>
+          <ChatCompletion temperature={0}>
             <SystemMessage>
-              You are an AI who is an expert chef and also an expert UI designer. The user will ask you for a recipe.
-              Your response must be structured using a set of React components. Here are the React components, and an
-              example of how they should be used:
+              You are an AI who is an expert UI designer. You are given a recipe with an image URL and asked to design a
+              UI for it. Your response must be structured using a set of React components. Here are the React
+              components, and an example of how they should be used:
               <Recipe>the entire recipe contents</Recipe>
               <RecipeTitle>the title of your recipe</RecipeTitle>
+              <Image>the url of an image</Image>
               <RecipeInstructionList>
                 <RecipeInstructionListItem>the first instruction</RecipeInstructionListItem>
               </RecipeInstructionList>
@@ -102,7 +108,17 @@ export default function RecipeWrapper() {
               "name": "Recipe", "children": [{'{'}"name": "RecipeTitle", "children": ["My Recipe"]{'}'}
               "my description" ]{'}'}. Respond with only the JSON. Do not include with an explanatory suffix or prefix.
             </SystemMessage>
-            <UserMessage>Give me a recipe for {query}. Respond with only the JSON.</UserMessage>
+            <UserMessage>
+              Recipe Image Link: <DalleImageGen>Create an image for a dish called `{query}`.</DalleImageGen>
+              {'\n'}
+              <ChatCompletion temperature={1}>
+                <SystemMessage>
+                  You are an AI who is an expert chef. The user will ask you for a recipe. Your response must be
+                  structured and include a title, a list of ingredients, and how to prepare the dish.
+                </SystemMessage>
+                <UserMessage>Give me a recipe for {query}.</UserMessage>
+              </ChatCompletion>
+            </UserMessage>
           </ChatCompletion>
         </AI>
       </ResultContainer>
