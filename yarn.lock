@@ -3668,6 +3668,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@next/eslint-plugin-next@npm:^13.4.5":
+  version: 13.4.5
+  resolution: "@next/eslint-plugin-next@npm:13.4.5"
+  dependencies:
+    glob: "npm:7.1.7"
+  checksum: 1a2bd59a03cbb95bb71ffc6736a1dc7d259abd528b6b9bb8acfca012fbf009be7d84abe354e0ce2c7804e602663962d5394c2353272a9a69a8e2d697081417d6
+  languageName: node
+  linkType: hard
+
 "@next/swc-darwin-arm64@npm:13.4.4":
   version: 13.4.4
   resolution: "@next/swc-darwin-arm64@npm:13.4.4"
@@ -7090,6 +7099,7 @@ __metadata:
   resolution: "ai-jsx-hello-world@workspace:packages/sandboxes/hello-world"
   dependencies:
     "@tsconfig/node18": "npm:^2.0.1"
+    "@types/node": "npm:^20.3.1"
     ai-jsx: "npm:^0.2.0-1"
     pino: "npm:^8.14.1"
     pino-pretty: "npm:^10.0.0"
@@ -16113,6 +16123,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "nextjs-demo@workspace:packages/nextjs-demo"
   dependencies:
+    "@next/eslint-plugin-next": "npm:^13.4.5"
     "@octokit/graphql": "npm:^5.0.6"
     "@types/lodash": "npm:^4.14.195"
     "@types/node": "npm:20.2.5"
