@@ -38,7 +38,7 @@
     "demo:reddit": "yarn build && node dist/bakeoff/reddit-qa/ai-jsx.js",
     "demo:prompting-basics": "yarn build && node dist/prompting-basics.tsx",
     "demo:validated-generation": "yarn build && node dist/validated-generation.tsx",
-    "view-logs": "cat llmx.log | pino-pretty",
+    "view-logs": "cat ai-jsx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.json",
