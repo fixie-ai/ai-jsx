@@ -15,7 +15,7 @@ export interface Element<P> {
   [attachedContext]?: RenderContext;
 }
 
-interface IndirectNode {
+export interface IndirectNode {
   _magic: never;
 }
 
@@ -30,7 +30,7 @@ export type Renderable = Node | PromiseLike<Renderable> | RenderableStream;
 export type ElementPredicate = (e: Element<any>) => boolean;
 export type PropsOfComponent<T extends Component<any>> = T extends Component<infer P> ? P : never;
 
-type PartiallyRendered = string | Element<any>;
+export type PartiallyRendered = string | Element<any> | IndirectNode;
 
 export type StreamRenderer = (
   renderContext: RenderContext,
@@ -180,7 +180,7 @@ export function createContext<T>(defaultValue: T): Context<T> {
   return ctx;
 }
 
-const indirectWeakMap = new WeakMap<IndirectNode, Node>();
+const indirectWeakMap = new WeakMap<object, Node>();
 export function isIndirectNode(value: unknown): value is IndirectNode {
   return indirectWeakMap.has(value as IndirectNode);
 }
@@ -189,7 +189,7 @@ export function getIndirectNode(value: IndirectNode): Node {
   return indirectWeakMap.get(value) as Node;
 }
 
-export function setIndirectNode(value: IndirectNode, node: Node) {
+export function setIndirectNode(value: object, node: Node) {
   indirectWeakMap.set(value, node);
 }
 
@@ -217,6 +217,10 @@ async function* renderStream(
     return [];
   }
   if (isIndirectNode(renderable)) {
+    const indirectNode = getIndirectNode(renderable);
+    if (isElement(indirectNode) && shouldStop(indirectNode) && indirectNode.tag.name.startsWith('Recipe')) {
+      return [renderable];
+    }
     return yield* context.render(getIndirectNode(renderable), recursiveRenderOpts);
   }
   if (Array.isArray(renderable)) {

@@ -1,19 +1,19 @@
-// @ts-nocheck
-import React from '../react.ts';
-import { useState } from 'react';
-import { AI } from '../ai.tsx';
+/** @jsx AI.createElement */
+/** @jsxFrag AI.Fragment */
+import * as AI from 'ai-jsx/react';
+import React, { useState, ReactNode } from 'react';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import ResultContainer from '../ResultContainer.tsx';
 import InputPrompt from '../InputPrompt.tsx';
 import { atom, useAtom } from 'jotai';
 
-const selectedIngredientsAtom = atom<Set<string>>(new Set());
+const selectedIngredientsAtom = atom(new Set<any>());
 
-export function Recipe({ children }: { children: React.ReactNode }) {
+export function Recipe({ children }: { children: ReactNode }) {
   return <div data-test="recipe">{children}</div>;
 }
 
-export function RecipeTitle({ children }: { children: React.ReactNode }) {
+export function RecipeTitle({ children }: { children: ReactNode }) {
   return (
     <h2 className="text-xl font-bold" data-test="recipe-title">
       {children}
@@ -21,10 +21,10 @@ export function RecipeTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function RecipeInstructionList({ children }: { children: React.ReactNode }) {
+export function RecipeInstructionList({ children }: { children: ReactNode }) {
   return (
     <div className="mt-4">
-      <h2>Instructions</h2>
+      <h2 className="font-bold">Instructions</h2>
       <ol className="list-inside list-disc" data-test="recipe-instruction-list">
         {children}
       </ol>
@@ -32,7 +32,7 @@ export function RecipeInstructionList({ children }: { children: React.ReactNode 
   );
 }
 
-export function RecipeIngredientList({ children }: { children: React.ReactNode }) {
+export function RecipeIngredientList({ children }: { children: ReactNode }) {
   const [selectedIngredients] = useAtom(selectedIngredientsAtom);
   return (
     <div>
@@ -45,7 +45,7 @@ export function RecipeIngredientList({ children }: { children: React.ReactNode }
   );
 }
 
-export function RecipeIngredientListItem({ children }: { children: React.ReactNode }) {
+export function RecipeIngredientListItem({ children }: { children: ReactNode }) {
   const [, setSelectedIngredients] = useAtom(selectedIngredientsAtom);
 
   function toggleItemSelected() {
@@ -55,7 +55,7 @@ export function RecipeIngredientListItem({ children }: { children: React.ReactNo
         newSelectedIngredients.delete(children);
         return newSelectedIngredients;
       }
-      return new Set([...selectedIngredients, children]);
+      return new Set([...Array.from(selectedIngredients), children]);
     });
   }
 
@@ -66,8 +66,130 @@ export function RecipeIngredientListItem({ children }: { children: React.ReactNo
     </li>
   );
 }
-export function RecipeInstructionListItem({ children }: { children: React.ReactNode }) {
+export function RecipeInstructionListItem({ children }: { children: ReactNode }) {
   return <li data-test="recipe-instruction-list-item">{children}</li>;
+}
+
+function reactComponentName(component: React.JSXElementConstructor<any> | string) {
+  return typeof component === 'string' ? component : component.name;
+}
+
+function SerializeReact({
+  components,
+  children,
+}: {
+  components: (React.JSXElementConstructor<any> | string)[];
+  children: AI.Node;
+}) {
+  if (Array.isArray(children)) {
+    // eslint-disable-next-line react/jsx-key
+    return children.map((child) => <SerializeReact components={components}>{child}</SerializeReact>);
+  }
+  const child = children;
+  if (AI.isIndirectNode(child)) {
+    if (React.isValidElement(child) && components.includes(child.type)) {
+      // Serialize the React element and any children.
+      const typeName = reactComponentName(child.type);
+      // XXX/psalas: support props
+      if (typeof child.props === 'object' && child.props && 'children' in child.props) {
+        return [
+          `<${typeName}>`,
+          // eslint-disable-next-line react/jsx-key
+          <SerializeReact components={components}>{child.props.children as AI.Node}</SerializeReact>,
+          `</${typeName}`,
+        ];
+      }
+
+      return `<${typeName}/>`;
+    }
+
+    return <SerializeReact components={components}>{AI.getIndirectNode(child)}</SerializeReact>;
+  }
+
+  if (AI.isElement(child)) {
+    if ('children' in child.props) {
+      const { tag: Component, props } = child;
+      return (
+        <Component {...props}>
+          <SerializeReact components={components}>{props.children}</SerializeReact>
+        </Component>
+      );
+    }
+
+    return child;
+  }
+
+  return child;
+}
+
+async function UICompletion(
+  {
+    components,
+    example,
+    children,
+  }: { components: (React.JSXElementConstructor<any> | string)[]; example: AI.Node; children: AI.Node },
+  { render, logger }: AI.ComponentContext
+) {
+  if (components.length == 0) {
+    throw new Error('UICompletion elements require at least one React component.');
+  }
+  const FirstComponent = components[0];
+
+  const modelResult = await render(
+    <ChatCompletion>
+      <SystemMessage>
+        You are an AI who is an expert UI designer. The user will provide content in the form of text and you will
+        respond using a set of React components to create a UI for the content. Here are the only available React
+        components and how they should be used:
+        {'\n'}
+        <SerializeReact components={components}>{example}</SerializeReact>
+        {'\n'}
+        Respond with a JSON object that encodes your UI. The JSON object should match this TypeScript interface:
+        interface Element {'{'}
+        name: string; children: (string | Element)[]
+        {'}'}
+        For example:{'\n'}
+        <SerializeReact components={components}>
+          <FirstComponent />
+        </SerializeReact>
+        Becomes: {'{'} "name": "{reactComponentName(FirstComponent)}", "children": []{'}'}. Respond with only the JSON.
+        Do not include any explanatory prose. Do not use any elements (including HTML elements) other than the ones
+        above.
+      </SystemMessage>
+      <UserMessage>{children}</UserMessage>
+    </ChatCompletion>
+  );
+
+  const validComponents = Object.fromEntries(components.map((c) => [reactComponentName(c), c]));
+
+  interface SerializedComponent {
+    name: string;
+    children: (string | SerializedComponent)[];
+  }
+
+  function toComponent(serializedComponent: SerializedComponent | string) {
+    if (!serializedComponent || typeof serializedComponent === 'string') {
+      return serializedComponent;
+    }
+
+    const Component = validComponents[serializedComponent.name];
+    if (!Component) {
+      logger.warn({ serializedComponent }, `Component not found for ${serializedComponent.name}`);
+      return null;
+    }
+
+    if (!('children' in serializedComponent)) {
+      throw new Error(`Unrecognized JSON: ${JSON.stringify(serializedComponent)}`);
+    }
+
+    // Sometimes the model returns a singleton string instead of an array.
+    const children =
+      typeof serializedComponent.children === 'string' ? [serializedComponent.children] : serializedComponent.children;
+
+    return <Component>{children.map(toComponent)}</Component>;
+  }
+
+  return toComponent(JSON.parse(modelResult));
 }
 
 export default function RecipeWrapper() {
@@ -78,33 +200,43 @@ export default function RecipeWrapper() {
       <InputPrompt label="What would you like a recipe for?" value={query} setValue={setQuery} />
 
       <ResultContainer title={`AI comes up with a recipe for ${query}`}>
-        <AI renderPassedReactComponents>
-          <ChatCompletion temperature={1}>
-            <SystemMessage>
-              You are an AI who is an expert chef and also an expert UI designer. The user will ask you for a recipe.
-              Your response must be structured using a set of React components. Here are the React components, and an
-              example of how they should be used:
-              <Recipe>the entire recipe contents</Recipe>
-              <RecipeTitle>the title of your recipe</RecipeTitle>
-              <RecipeInstructionList>
-                <RecipeInstructionListItem>the first instruction</RecipeInstructionListItem>
-              </RecipeInstructionList>
-              <RecipeIngredientList>
-                <RecipeIngredientListItem>the first ingredient</RecipeIngredientListItem>
-              </RecipeIngredientList>
-              Every child of a RecipeInstructionList should be a RecipeInstructionListItem. Every child of a
-              RecipeIngredientList should be a RecipeIngredientListItem. Respond with a JSON object that encodes your
-              UI. The JSON object should match this TypeScript interface: interface Element {'{'}
-              name: string; children: (string | Element)[]
-              {'}'}
-              For example:
-              {'{'}
-              "name": "Recipe", "children": [{'{'}"name": "RecipeTitle", "children": ["My Recipe"]{'}'}
-              "my description" ]{'}'}. Respond with only the JSON. Do not include with an explanatory suffix or prefix.
-            </SystemMessage>
-            <UserMessage>Give me a recipe for {query}. Respond with only the JSON.</UserMessage>
-          </ChatCompletion>
-        </AI>
+        <AI.jsx>
+          <UICompletion
+            components={[
+              Recipe,
+              RecipeTitle,
+              RecipeInstructionList,
+              RecipeInstructionListItem,
+              RecipeIngredientList,
+              RecipeIngredientListItem,
+            ]}
+            example={
+              <AI.React>
+                <Recipe>
+                  <RecipeTitle>Crème Chantilly</RecipeTitle>
+                  <RecipeIngredientList>
+                    <RecipeIngredientListItem>2 cups heavy cream</RecipeIngredientListItem>
+                    <RecipeIngredientListItem>2 tablespoons granulated sugar</RecipeIngredientListItem>
+                    <RecipeIngredientListItem>1 teaspoon vanilla extract</RecipeIngredientListItem>
+                  </RecipeIngredientList>
+                  <RecipeInstructionList>
+                    <RecipeInstructionListItem>
+                      Combine the ingredients in a large mixing bowl.
+                    </RecipeInstructionListItem>
+                    <RecipeInstructionListItem>
+                      Beat the contents on high speed until soft peaks form.
+                    </RecipeInstructionListItem>
+                    <RecipeIngredientListItem>Keep chilled until serving.</RecipeIngredientListItem>
+                  </RecipeInstructionList>
+                </Recipe>
+              </AI.React>
+            }
+          >
+            <ChatCompletion>
+              <UserMessage>Give me a recipe for {query}.</UserMessage>
+            </ChatCompletion>
+          </UICompletion>
+        </AI.jsx>
       </ResultContainer>
     </>
   );

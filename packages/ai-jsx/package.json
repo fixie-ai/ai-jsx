@@ -60,6 +60,10 @@
     "./lib/openai": {
       "import": "./dist/esm/lib/openai.js",
       "require": "./dist/cjs/lib/openai.cjs"
+    },
+    "./react": {
+      "import": "./dist/esm/react.js",
+      "require": "./dist/cjs/react.cjs"
     }
   },
   "files": [

@@ -1,9 +1,8 @@
-// @ts-nocheck
-/** @jsx LLMx.createElement */
-/** @jsxFrag LLMx.Fragment */
+/** @jsx AI.createElement */
+/** @jsxFrag AI.Fragment */
 /* eslint-disable react/jsx-key */
-import * as LLMx from 'ai-jsx';
-import React, { useEffect, useRef } from 'react';
+import * as AI from 'ai-jsx/react';
+import { useEffect, useRef } from 'react';
 import { z } from 'zod';
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { memo } from 'ai-jsx/core/memoize';
@@ -71,6 +70,7 @@ function ButtonEnabledAgent({ conversation }: { conversation: any[] }) {
           if (chatMessage.type === 'assistant') {
             return <AssistantMessage>{chatMessage.rawMessage}</AssistantMessage>;
           }
+
           return (
             <UserMessage>
               {chatMessage.action === 'click' ? (
@@ -86,13 +86,13 @@ function ButtonEnabledAgent({ conversation }: { conversation: any[] }) {
   );
 }
 
-function AI() {
+function AIComponent() {
   const [conversation, setConversation] = useAtom(conversationAtom);
   const [, setCallInProgress] = useAtom(modelCallInProgress);
   const isInProgressRef = useRef(false);
 
   const children = memo(<ButtonEnabledAgent conversation={conversation} />);
-  const when = !conversation.length || _.last(conversation).type === 'user';
+  const when = !conversation.length || _.last(conversation)?.type === 'user';
 
   const lastMessageType = _.last(conversation)?.type;
 
@@ -104,13 +104,13 @@ function AI() {
     isInProgressRef.current = true;
     // I couldn't get streaming to work here and I don't know why.
     // Maybe because we're in the client and however Axios is doing it only works in Node?
-    LLMx.createRenderContext()
+    AI.createRenderContext()
       .render(children)
       .then((finalFrame) => {
         isInProgressRef.current = false;
         setCallInProgress(false);
 
-        let parts;
+        let parts: any;
         try {
           parts = JSON.parse(finalFrame);
         } catch (e) {
@@ -151,5 +151,5 @@ function AI() {
 }
 
 export function AIRoot() {
-  return React.createElement(AI, {});
+  return <AIComponent />;
 }
