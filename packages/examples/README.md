@@ -2,7 +2,6 @@
 
 This directory contains a bunch of examples of mini-apps built with [AI. JSX](https://ai-jsx.com).
 
-
 To run any of these examples, from the top level of the `ai-jsx` repo, run:
 
 ```
@@ -11,7 +10,7 @@ $ yarn && yarn build
 $ yarn workspace examples run demo:<example-name>
 ```
 
-where `<example-name>` is the name of the example you want to run. For example, 
+where `<example-name>` is the name of the example you want to run. For example,
 
 ```
 $ yarn workspace examples run demo:debate
