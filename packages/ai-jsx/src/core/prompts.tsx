@@ -7,7 +7,7 @@
  * This file attempts to provide some good defaults as a starting point.
  */
 import * as LLMx from '../index.js';
-import { SystemMessage } from './completion';
+import { SystemMessage } from './completion.js';
 
 /**
  * A prompt collection with some useful defaults to get you started.
