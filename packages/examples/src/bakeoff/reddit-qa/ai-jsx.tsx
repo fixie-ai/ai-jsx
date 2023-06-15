@@ -24,7 +24,7 @@ const docs = await Promise.all(
 );
 
 const chunkedDocs = await defaultChunkMany(docs);
-const vectorStore = await DefaultInMemoryVectorStore.fromDocuments(chunkedDocs, new OpenAIEmbeddings());
+const vectorStore = await DefaultInMemoryVectorStore.fromDocuments(chunkedDocs, new OpenAIEmbeddings() as any);
 
 function ShowDoc({ doc }: { doc: (typeof docs)[0] }) {
   return (

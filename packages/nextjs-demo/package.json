@@ -22,6 +22,7 @@
     "eslint": "8.42.0",
     "eslint-config-next": "13.4.4",
     "examples": "1.0.0",
+    "lodash": "^4.17.21",
     "next": "13.4.4",
     "postcss": "8.4.24",
     "react": "18.2.0",
@@ -33,6 +34,8 @@
     "extends": "../../package.json"
   },
   "devDependencies": {
+    "@next/eslint-plugin-next": "^13.4.5",
+    "@types/lodash": "^4.14.195",
     "@typescript-eslint/eslint-plugin": "^5.59.9",
     "@typescript-eslint/parser": "^5.59.9",
     "eslint-config-nth": "^2.0.1"

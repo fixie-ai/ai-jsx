@@ -2,6 +2,9 @@
   "name": "docs",
   "version": "0.0.0",
   "private": true,
+  "volta": {
+    "extends": "../../package.json"
+  },
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
