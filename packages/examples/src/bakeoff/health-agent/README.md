@@ -132,7 +132,7 @@ Note the `fallback` option we pass, and how it can be any arbitrary Component. T
 After you run a command that invokes a tool, you can find the parameters in the logs:
 
 ```
-$ grep 'invoking tool' -i llmx.log | yarn pino-pretty
+$ grep 'invoking tool' -i llmx.log | npx pino-pretty
 [11:37:40.468] INFO: Invoking tool
     toolChoice: {
       "nameOfTool": "generateHistogram",

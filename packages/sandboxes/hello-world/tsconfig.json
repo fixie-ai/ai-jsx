@@ -1,0 +1,13 @@
+{
+  "extends": "@tsconfig/node18/tsconfig.json",
+  "include": ["index.tsx"],
+  "compilerOptions": {
+    "jsx": "react",
+    "jsxFactory": "LLMx.createElement",
+    "jsxFragmentFactory": "LLMx.Fragment",
+    "moduleResolution": "node16",
+    "module": "esnext",
+    "resolveJsonModule": true,
+    "noEmit": true
+  }
+}

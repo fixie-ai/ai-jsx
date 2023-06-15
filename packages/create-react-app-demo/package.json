@@ -36,6 +36,7 @@
     "jest-resolve": "^27.4.2",
     "jest-watch-typeahead": "^1.0.0",
     "jotai": "^2.2.0",
+    "lodash": "^4.17.21",
     "mini-css-extract-plugin": "^2.4.5",
     "postcss": "^8.4.4",
     "postcss-flexbugs-fixes": "^5.0.2",
@@ -62,7 +63,8 @@
     "webpack": "^5.64.4",
     "webpack-dev-server": "^4.6.0",
     "webpack-manifest-plugin": "^4.0.2",
-    "workbox-webpack-plugin": "^6.4.1"
+    "workbox-webpack-plugin": "^6.4.1",
+    "zod": "^3.21.4"
   },
   "type": "module",
   "scripts": {
@@ -149,6 +151,9 @@
     ]
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.195",
+    "@types/react": "^18.2.12",
+    "@types/react-dom": "^18.2.5",
     "@typescript-eslint/eslint-plugin": "^5.59.11",
     "@typescript-eslint/parser": "^5.59.11",
     "classnames": "^2.3.2",

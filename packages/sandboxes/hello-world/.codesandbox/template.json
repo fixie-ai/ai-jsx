@@ -1,0 +1,7 @@
+{
+  "title": "AI.JSX - Hello World",
+  "description": "A simple hello world app for AI.JSX",
+  "iconUrl": "https://docs.ai-jsx.com/img/ai-jsx.png",
+  "tags": ["react", "typescript"],
+  "published": true
+}
