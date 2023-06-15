@@ -4,7 +4,7 @@ import { Serialize } from './serialize.js';
 export * from '../index.js';
 
 export declare namespace JSX {
-  type ElementType = React.JSX.ElementType | LLMx.JSX.ElementType;
+  type ElementType = React.JSX.ElementType | LLMx.JSX.ElementType | typeof React | typeof jsx;
   type Element = React.JSX.Element & LLMx.Node;
   type IntrinsicElements = React.JSX.IntrinsicElements;
   type ElementChildrenAttribute = React.JSX.ElementChildrenAttribute & LLMx.JSX.ElementChildrenAttribute;
@@ -64,7 +64,7 @@ export function useAI(children: LLMx.Node) {
   return { result, isDone };
 }
 
-export function jsx({ children }: { children: JSX.Element }, context?: any | LLMx.ComponentContext): JSX.Element {
+export function jsx({ children }: { children: LLMx.Node }, context?: any | LLMx.ComponentContext) {
   if (typeof context?.render === 'function') {
     // We're in AI.JSX already.
     return children;
@@ -74,7 +74,7 @@ export function jsx({ children }: { children: JSX.Element }, context?: any | LLM
   return ReactModule.createElement(ReactModule.Fragment, null, ai.result) as any;
 }
 
-export function React({ children }: { children: JSX.Element }, context?: any | LLMx.ComponentContext): JSX.Element {
+export function React({ children }: { children: React.ReactNode }, context?: any | LLMx.ComponentContext) {
   if (typeof context?.render === 'function') {
     // We're in AI.JSX; serialize the React.
     return LLMx.createElement(Serialize, null, children) as JSX.Element;

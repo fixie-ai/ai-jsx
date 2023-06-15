@@ -65,9 +65,9 @@
       "import": "./dist/esm/react/index.js",
       "require": "./dist/cjs/react/index.cjs"
     },
-    "./react/serialize": {
-      "import": "./dist/esm/react/serialize.js",
-      "require": "./dist/cjs/react/serialize.cjs"
+    "./react/completion": {
+      "import": "./dist/esm/react/completion.js",
+      "require": "./dist/cjs/react/completion.cjs"
     }
   },
   "files": [

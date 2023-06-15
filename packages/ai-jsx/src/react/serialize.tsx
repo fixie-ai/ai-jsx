@@ -1,16 +1,21 @@
-import * as LLMx from './index.js';
+/** @jsx AI.createElement */
+import * as AI from './index.js';
 import React from 'react';
 
 function reactComponentName(component: React.JSXElementConstructor<any> | string) {
   return typeof component === 'string' ? component : component.name;
 }
 
-export function Serialize({ children }: { children: LLMx.Node }): LLMx.Renderable {
+/**
+ * Serializes React components to a textual representation.
+ */
+export function Serialize({ children }: { children: React.ReactNode }): AI.Renderable {
   if (Array.isArray(children)) {
     return children.map((child) => <Serialize>{child}</Serialize>);
   }
+
   const child = children;
-  if (React.isValidElement(child)) {
+  if (React.isValidElement(child) && child.type !== AI.jsx) {
     // Serialize the React element and any children.
     const typeName = reactComponentName(child.type);
     // TODO: support prop serialization
@@ -21,5 +26,5 @@ export function Serialize({ children }: { children: LLMx.Node }): LLMx.Renderabl
     return `<${typeName}/>`;
   }
 
-  return child;
+  return child as AI.Renderable;
 }
