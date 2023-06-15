@@ -26,8 +26,8 @@ export function Prompt({
   apolitical = false,
   persona = null,
   concise = false,
-  no_internal_knowledge = false,
-  step_by_step = false,
+  noInternalKnowledge = false,
+  stepByStep = false,
 }: {
   hhh?: boolean;
   /** refers to the prompt "helpful, harmless, and honest assistant" */
@@ -48,10 +48,10 @@ export function Prompt({
    *    @see https://arxiv.org/pdf/2111.02080.pdf */
   concise?: boolean;
   /** asks the model to be concise */
-  no_internal_knowledge?: boolean;
+  noInternalKnowledge?: boolean;
   /** asks the model to only use the given context to answer instead of baked-in knowledge.
    *  This is useful for knowledge-grounded question answering (DocsQA). */
-  step_by_step?: boolean;
+  stepByStep?: boolean;
   /** asks the model to work out the answer in a step-by-step way.
    *      @see PromptStepByStep for more info */
 }) {
@@ -61,10 +61,10 @@ export function Prompt({
       {persona ? `Respond as if you were ${persona}.` : ''}
       {apolitical ? 'You do not offer opinions on political topics.' : ''}
       {concise ? 'Be concise.' : ''}
-      {no_internal_knowledge
+      {noInternalKnowledge
         ? 'You should strictly only use the given context to answer. Do not use any other knowledge you have about the world.'
         : ''}
-      {step_by_step ? <PromptStepByStep /> : ''}
+      {stepByStep ? <PromptStepByStep /> : ''}
     </SystemMessage>
   );
 }
@@ -77,15 +77,9 @@ export function Prompt({
  *
  * @example
  *   <ChatCompletion>
- *    <Prompt expert="logicial" />
+ *    <UserMessage>What is the 4th word in the phrase "I am not what I am"?</UserMessage>
  *    <PromptStepByStep />
- *    <UserMessage>
- *      Johny and Matt decided to play rock-paper-scissors. They bet $1 on each game they played.
- *      Johny won three of the games but Matt walks away $5 richer. How many games did they play?
- *    </UserMessage>
  *   </ChatCompletion>
- *
- * @TODO (Farzad): add another example; this doesn't always work.
  */
 export function PromptStepByStep() {
   return <SystemMessage>Let's work this out in a step by step way to be sure we have the right answer.</SystemMessage>;

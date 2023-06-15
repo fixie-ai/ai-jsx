@@ -41,3 +41,50 @@ Output:
 ```
 
 The problem is that the model is predicting that a question about one state is often followed by questions about other states.
+
+## Primitives to get you prompting faster
+
+We have included a small set of prompts that we found useful in (`packages/ai-jsx/src/core/prompts.tsx`).
+You can use them either as shortcuts, or as a starting point if you are new to prompting:
+
+```tsx
+function App() {
+  // Asking the model to respond as if they were a React developer
+  return (
+    <ChatCompletion>
+      <Prompt persona="a React developer" />
+      <UserMessage>What is JSX?</UserMessage>
+    </ChatCompletion>
+  );
+}
+```
+
+## Getting the AI to say the right thing: constrained output
+
+Sometimes you just want the model to respond in a certain format (e.g. JSON or YAML), but doing so reliably can be hard.
+We provide some primitives to help with that:
+
+```tsx
+function App() {
+  return (
+    <>
+      JSON generation example:{'\n'}
+      <JsonChatCompletion>
+        <UserMessage>
+          Create a random object describing an imaginary person that has a "name", "gender", and "age".
+        </UserMessage>
+      </JsonChatCompletion>
+      {'\n\n'}
+      YAML generation example:{'\n'}
+      <YamlChatCompletion>
+        <UserMessage>
+          Create a random object describing an imaginary person that has a "name", "gender", and "age".
+        </UserMessage>
+      </YamlChatCompletion>
+    </>
+  );
+}
+```
+
+Under the hood, this model will use a combination of prompting, validating the output, and asking them the model to retry
+if the validation fails (refer to `packages/ai-jsx/src/core/constrained-output.tsx`).

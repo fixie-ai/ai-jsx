@@ -14,10 +14,10 @@ interface ValidationResult {
 // TODO: schema
 /**
  * A ChatCompletion component that constrains the output to be a valid JSON string.
- * 
+ *
  * @returns a string that validates as JSON or throws an error after `retries` attempts
  */
-export function JsonChatCompletion({ children, ...props }: { children: LLMx.Node[] }) {
+export function JsonChatCompletion({ children, ...props }: { children: LLMx.Node }) {
   return (
     <ObjectFormatChatCompletion typeName="JSON" validator={isJsonString} {...{ ...props }}>
       {children}
@@ -27,10 +27,10 @@ export function JsonChatCompletion({ children, ...props }: { children: LLMx.Node
 
 /**
  * A ChatCompletion component that constrains the output to be a valid YAML string.
- * 
+ *
  * @returns a string that validates as YAML or throws an error after `retries` attempts
  */
-export function YamlChatCompletion({ children, ...props }: { children: LLMx.Node[] }) {
+export function YamlChatCompletion({ children, ...props }: { children: LLMx.Node }) {
   return (
     <ObjectFormatChatCompletion typeName="YAML" validator={isYamlString} {...{ ...props }}>
       {children}
@@ -43,7 +43,7 @@ export function YamlChatCompletion({ children, ...props }: { children: LLMx.Node
  *
  * @returns a string that validates as the given type or throws an error after `retries` attempts
  */
-async function* ObjectFormatChatCompletion(
+async function ObjectFormatChatCompletion(
   {
     retries = 3,
     validator,
@@ -58,7 +58,7 @@ async function* ObjectFormatChatCompletion(
     retries?: number;
     /** retries if output fails validation, how many times should we retry.
      * Note: you can have `1 + retries` LLM calls in total. */
-    children: LLMx.Node[];
+    children: LLMx.Node;
   },
   { render, logger }: LLMx.ComponentContext
 ) {
@@ -75,38 +75,38 @@ async function* ObjectFormatChatCompletion(
   let valiationResults = validator(output);
   if (valiationResults.success) {
     return output;
-  } else {
-    logger.debug({ atempt: 1, output: output, expectedFormat: typeName }, `Output did not validate to ${typeName}.`);
+  }
 
-    for (let retryIndex = 1; retryIndex < retries; retryIndex++) {
-      const completionRetry = (
-        <ChatCompletion {...props}>
-          <SystemMessage>
-            You are a {typeName} object generator. Create a {typeName} object (context redacted).
-          </SystemMessage>
-          <AssistantMessage>{output}</AssistantMessage>
-          <UserMessage>
-            Try again. Here's the validation error when trying to parse the output as {typeName}:{'\n'}
-            {valiationResults.error}
-            {'\n'}
-            You must reformat the string to be a valid {typeName} object, but you must keep the same data. Do not
-            explain the issue, just return a string that can be parsed as {typeName} as-is. Do not include ```
-            {typeName.toLocaleLowerCase()} ``` code blocks.
-          </UserMessage>
-        </ChatCompletion>
-      );
+  logger.debug({ atempt: 1, expectedFormat: typeName, output }, `Output did not validate to ${typeName}.`);
 
-      output = await render(completionRetry);
-      valiationResults = validator(output);
-      if (valiationResults.success) {
-        return output;
-      }
+  for (let retryIndex = 1; retryIndex < retries; retryIndex++) {
+    const completionRetry = (
+      <ChatCompletion {...props}>
+        <SystemMessage>
+          You are a {typeName} object generator. Create a {typeName} object (context redacted).
+        </SystemMessage>
+        <AssistantMessage>{output}</AssistantMessage>
+        <UserMessage>
+          Try again. Here's the validation error when trying to parse the output as {typeName}:{'\n'}
+          {valiationResults.error}
+          {'\n'}
+          You must reformat the string to be a valid {typeName} object, but you must keep the same data. Do not explain
+          the issue, just return a string that can be parsed as {typeName} as-is. Do not include ```
+          {typeName.toLocaleLowerCase()} ``` code blocks.
+        </UserMessage>
+      </ChatCompletion>
+    );
 
-      logger.debug(
-        { atempt: retryIndex + 1, output: output, expectedFormat: typeName },
-        `Output did not validate to ${typeName}.`
-      );
+    output = await render(completionRetry);
+    valiationResults = validator(output);
+    if (valiationResults.success) {
+      return output;
     }
+
+    logger.debug(
+      { atempt: retryIndex + 1, expectedFormat: typeName, output },
+      `Output did not validate to ${typeName}.`
+    );
   }
 
   throw new Error(`The model did not produce a valid ${typeName} object, even after ${retries} attempts.`);
