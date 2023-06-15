@@ -184,9 +184,8 @@ export function createContext<T>(defaultValue: T): Context<T> {
 export function isIndirectNode(value: unknown): value is IndirectNode {
   if (value !== null && typeof value === 'object') {
     return indirectNodeSymbol in value;
-  } else {
-    return false;
   }
+  return false;
 }
 
 export function getIndirectNode(value: IndirectNode): Node {

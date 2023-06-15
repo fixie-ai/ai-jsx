@@ -4,15 +4,15 @@ import { Serialize } from './serialize.js';
 export * from '../index.js';
 
 export declare namespace JSX {
-  type ElementType = React.JSX.ElementType | LLMx.JSX.ElementType | typeof React | typeof jsx;
-  type Element = React.JSX.Element & LLMx.Node;
-  type IntrinsicElements = React.JSX.IntrinsicElements;
-  type ElementChildrenAttribute = React.JSX.ElementChildrenAttribute & LLMx.JSX.ElementChildrenAttribute;
+  type ElementType = ReactModule.JSX.ElementType | LLMx.JSX.ElementType | typeof React | typeof jsx;
+  type Element = ReactModule.JSX.Element & LLMx.Node;
+  type IntrinsicElements = ReactModule.JSX.IntrinsicElements;
+  type ElementChildrenAttribute = ReactModule.JSX.ElementChildrenAttribute & LLMx.JSX.ElementChildrenAttribute;
 }
 
 export function createElement(...args: Parameters<typeof ReactModule.createElement>) {
   const tag = args[0];
-  const reactElement = new Proxy(ReactModule.createElement(...args), {});
+  const reactElement = ReactModule.createElement(...args);
   const aiElement = LLMx.createElement(
     tag === ReactModule.Fragment ? LLMx.Fragment : (tag as any),
     args[1] as any,
@@ -74,7 +74,7 @@ export function jsx({ children }: { children: LLMx.Node }, context?: any | LLMx.
   return ReactModule.createElement(ReactModule.Fragment, null, ai.result) as any;
 }
 
-export function React({ children }: { children: React.ReactNode }, context?: any | LLMx.ComponentContext) {
+export function React({ children }: { children: ReactModule.ReactNode }, context?: any | LLMx.ComponentContext) {
   if (typeof context?.render === 'function') {
     // We're in AI.JSX; serialize the React.
     return LLMx.createElement(Serialize, null, children) as JSX.Element;
