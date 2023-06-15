@@ -3951,6 +3951,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@opentelemetry/context-async-hooks@npm:1.14.0, @opentelemetry/context-async-hooks@npm:^1.14.0":
+  version: 1.14.0
+  resolution: "@opentelemetry/context-async-hooks@npm:1.14.0"
+  peerDependencies:
+    "@opentelemetry/api": ">=1.0.0 <1.5.0"
+  checksum: e9553ec2865868a821ee2fbd67af11c2bac760df0048a5ddd8159a6db0c9848255ef2989796cea0ffedbac8f34164ebca955c6634ea787a2662f87d667067b46
+  languageName: node
+  linkType: hard
+
 "@opentelemetry/core@npm:1.13.0":
   version: 1.13.0
   resolution: "@opentelemetry/core@npm:1.13.0"
@@ -4076,6 +4085,22 @@ __metadata:
   peerDependencies:
     "@opentelemetry/api": ^1.0.0
   checksum: a957784b6178bd45b3a935a0ec9d65ce78e4242dd4464fb6b912ebed0abd0bff34615b10728ae51670aa1c8a5681d84ee56fbb91c65be56f6ed51a4cc3d12d8f
+  languageName: node
+  linkType: hard
+
+"@opentelemetry/exporter-trace-otlp-proto@npm:0.40.0, @opentelemetry/exporter-trace-otlp-proto@npm:^0.40.0":
+  version: 0.40.0
+  resolution: "@opentelemetry/exporter-trace-otlp-proto@npm:0.40.0"
+  dependencies:
+    "@opentelemetry/core": "npm:1.14.0"
+    "@opentelemetry/otlp-exporter-base": "npm:0.40.0"
+    "@opentelemetry/otlp-proto-exporter-base": "npm:0.40.0"
+    "@opentelemetry/otlp-transformer": "npm:0.40.0"
+    "@opentelemetry/resources": "npm:1.14.0"
+    "@opentelemetry/sdk-trace-base": "npm:1.14.0"
+  peerDependencies:
+    "@opentelemetry/api": ^1.0.0
+  checksum: b30c3358fde0d07fe575f2ac026c3b72631569db8520ac7f896e563ea9b513bdf3ada2bf2f1b1e9a74e3b1db6e1b47e28ec5693e2d50e2fe19ed962f869f3f03
   languageName: node
   linkType: hard
 
@@ -6421,7 +6446,7 @@ __metadata:
     "@types/prop-types": "npm:*"
     "@types/scheduler": "npm:*"
     csstype: "npm:^3.0.2"
-  checksum: 870d0ada47889869660333555d45e8d19befb267c2c0de95995df428a714e5ab71b8cda4b59b01ed0f586da8b9eb7e93cd2baa6212a6563ebc0f664e9160e297
+  checksum: 7104fb2fe3948dcbac866b45873c403f809556b3788a677074210a95e656fe6ace30af92a08e6723bd44bb0f82d7fbeb810234863a412c908b1f3801894b028b
   languageName: node
   linkType: hard
 
@@ -6433,6 +6458,17 @@ __metadata:
     "@types/scheduler": "npm:*"
     csstype: "npm:^3.0.2"
   checksum: 4c340c7d84821a1af27016500e59ecda39274afbb8ab61cfddca0d75423bdb9e56de69fa8b52042b0ab3f90724a6576bed308a2358569af3858a4fc2c5a2d717
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:^18.2.12":
+  version: 18.2.12
+  resolution: "@types/react@npm:18.2.12"
+  dependencies:
+    "@types/prop-types": "npm:*"
+    "@types/scheduler": "npm:*"
+    csstype: "npm:^3.0.2"
+  checksum: 870d0ada47889869660333555d45e8d19befb267c2c0de95995df428a714e5ab71b8cda4b59b01ed0f586da8b9eb7e93cd2baa6212a6563ebc0f664e9160e297
   languageName: node
   linkType: hard
 
@@ -6728,6 +6764,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@typescript-eslint/scope-manager@npm:5.59.9":
+  version: 5.59.9
+  resolution: "@typescript-eslint/scope-manager@npm:5.59.9"
+  dependencies:
+    "@typescript-eslint/types": "npm:5.59.9"
+    "@typescript-eslint/visitor-keys": "npm:5.59.9"
+  checksum: 40da13801f324066d7247ccfa4cad2ac1464cf4756498180a05e96e774ba7bcdb4757cbd89333b6f34b34e816d34dac17a54846d47aac29748bfb7bd18c0912c
+  languageName: node
+  linkType: hard
+
 "@typescript-eslint/type-utils@npm:5.59.11":
   version: 5.59.11
   resolution: "@typescript-eslint/type-utils@npm:5.59.11"
@@ -6745,10 +6791,34 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@typescript-eslint/type-utils@npm:5.59.9":
+  version: 5.59.9
+  resolution: "@typescript-eslint/type-utils@npm:5.59.9"
+  dependencies:
+    "@typescript-eslint/typescript-estree": "npm:5.59.9"
+    "@typescript-eslint/utils": "npm:5.59.9"
+    debug: "npm:^4.3.4"
+    tsutils: "npm:^3.21.0"
+  peerDependencies:
+    eslint: "*"
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 42772f00921d2ce502613912b3d69a7a993e6a36ddca46b9b17e26c970d68152175309462359e1add0dd67eaf285794300affad624639a2dec2fd9b86d745078
+  languageName: node
+  linkType: hard
+
 "@typescript-eslint/types@npm:5.59.11":
   version: 5.59.11
   resolution: "@typescript-eslint/types@npm:5.59.11"
   checksum: 93b43e9c690b67bb5bb072efa0cffae723c01359233b1fffafc09a34d40be6214a374621555296561c24be10154278588f2febabf31d100e9b08dcdb1d7f37e6
+  languageName: node
+  linkType: hard
+
+"@typescript-eslint/types@npm:5.59.9":
+  version: 5.59.9
+  resolution: "@typescript-eslint/types@npm:5.59.9"
+  checksum: 9909d87be503649e6418062ab516f9af13298c29e0add6e150edb87c61fa0ee3cb9cc41550a163ce91f9743815396598811f738f205af9e564278e17b5d86597
   languageName: node
   linkType: hard
 
@@ -6831,6 +6901,16 @@ __metadata:
     "@typescript-eslint/types": "npm:5.59.11"
     eslint-visitor-keys: "npm:^3.3.0"
   checksum: 733ba3db77b0425cea1285d399eea68b25f2c546497baf0a2636fe243828bb9f9b96f404fe304700cd9bf1e7a4253549614209f1e03ad821627e476be2602a21
+  languageName: node
+  linkType: hard
+
+"@typescript-eslint/visitor-keys@npm:5.59.9":
+  version: 5.59.9
+  resolution: "@typescript-eslint/visitor-keys@npm:5.59.9"
+  dependencies:
+    "@typescript-eslint/types": "npm:5.59.9"
+    eslint-visitor-keys: "npm:^3.3.0"
+  checksum: 09df68f48d30dbd62bf648d51fe6a24e0dbaa7ab1d894abe3e9fe7f048b691e0467907e2dbfe3d9bf8eff2e556953ef83fd450cceb2c7efaef166f633f2d0aaf
   languageName: node
   linkType: hard
 
@@ -7205,6 +7285,7 @@ __metadata:
     langchain: "npm:^0.0.81"
     load-json-file: "npm:^7.0.1"
     lodash: "npm:^4.17.21"
+    ml-distance: "npm:^4.0.1"
     node-fetch: "npm:^3.3.1"
     openai: "npm:^3.2.1"
     pino: "npm:^8.14.1"
@@ -8379,7 +8460,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30001406, caniuse-lite@npm:^1.0.30001464, caniuse-lite@npm:^1.0.30001489":
+"caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30001406, caniuse-lite@npm:^1.0.30001464":
   version: 1.0.30001502
   resolution: "caniuse-lite@npm:1.0.30001502"
   checksum: 3dc7ce2d32dc43a90f1f76e4966017f573e374211d8962fd062b5bf994ada8c155ad9fe3b7b33f69dff46446acc71e207b47b7474fa5694f802f4301aba3f07e
@@ -11094,6 +11175,7 @@ __metadata:
     node-fetch: "npm:^3.3.1"
     pino: "npm:^8.14.1"
     pino-pretty: "npm:^10.0.0"
+    type-fest: "npm:^3.12.0"
     typescript: "npm:^5.1.3"
     uuid: "npm:^9.0.0"
     write-json-file: "npm:^5.0.0"
@@ -15985,7 +16067,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ml-distance@npm:^4.0.0":
+"ml-distance@npm:^4.0.0, ml-distance@npm:^4.0.1":
   version: 4.0.1
   resolution: "ml-distance@npm:4.0.1"
   dependencies:
@@ -21291,7 +21373,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:^3.0.0, type-fest@npm:^3.10.0":
+"type-fest@npm:^3.0.0, type-fest@npm:^3.10.0, type-fest@npm:^3.12.0":
   version: 3.12.0
   resolution: "type-fest@npm:3.12.0"
   checksum: 4272f157b6dcc98151e2a0bcb97f5b271115515528aa92046d1cd91699830b54f5e86f4bf55ff4505471c1434630b71f4fd1ecab0b8b2b8dfb3a05869bdf4272

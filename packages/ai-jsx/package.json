@@ -115,6 +115,7 @@
     "langchain": "^0.0.81",
     "load-json-file": "^7.0.1",
     "lodash": "^4.17.21",
+    "ml-distance": "^4.0.1",
     "openai": "^3.2.1",
     "pino": "^8.14.1",
     "react-use": "^17.4.0",

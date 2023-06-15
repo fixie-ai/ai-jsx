@@ -11,13 +11,14 @@ import { Article } from './load-articles.mjs';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
-interface RedditMetadata extends JsonObject {
+type MustBeJsonObject<T> = T extends JsonObject ? T : never;
+type RedditMetadata = MustBeJsonObject<{
   title: string;
   id: number;
   url: string;
   html_url: string;
   name: string;
-}
+}>;
 
 const dataFiles = globbySync(path.join(dirname, 'data', '*.json'));
 const docs = await Promise.all(
