@@ -6162,6 +6162,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/js-yaml@npm:^4.0.5":
+  version: 4.0.5
+  resolution: "@types/js-yaml@npm:4.0.5"
+  checksum: 586a99838928dc20d7e8826b3d8cab16ae131e36c00e7be4c519c51d30e90d0cbdfa92b4b5564bb1f3168c830e9750816c5e004577da0d207496da16bb0d0487
+  languageName: node
+  linkType: hard
+
 "@types/json-schema@npm:*, @types/json-schema@npm:^7.0.4, @types/json-schema@npm:^7.0.5, @types/json-schema@npm:^7.0.8, @types/json-schema@npm:^7.0.9":
   version: 7.0.12
   resolution: "@types/json-schema@npm:7.0.12"
@@ -7129,6 +7136,7 @@ __metadata:
   dependencies:
     "@tsconfig/node18": "npm:^2.0.1"
     "@types/eslint": "npm:^8"
+    "@types/js-yaml": "npm:^4.0.5"
     "@types/lodash": "npm:^4.14.194"
     "@types/node": "npm:^20.2.1"
     "@types/react": "npm:^18.2.7"
