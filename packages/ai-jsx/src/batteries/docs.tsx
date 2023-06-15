@@ -418,15 +418,15 @@ export class LocalCorpus<
     this.activePartitionsToToken.set(null, null);
     while (this.activePartitionsToToken.size > 0) {
       const partition = this.activePartitionsToToken.keys().next().value;
-      const token = this.activePartitionsToToken.get(partition);
+      const pageToken = this.activePartitionsToToken.get(partition);
       this.activePartitionsToToken.delete(partition);
 
-      const response = await this.loader({ partition, token } as CorpusLoading.Request);
+      const response = await this.loader({ partition, pageToken } as CorpusLoading.Request);
       pinoLogger.info(
         {
           partitions: response.partitions?.length ?? 0,
           documents: response.page?.documents.length ?? 0,
-          nextPage: response.page?.nextPageToken != undefined,
+          nextPageToken: response.page?.nextPageToken ?? 'None',
         },
         'Received response'
       );
