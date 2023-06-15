@@ -447,6 +447,9 @@ export class LocalCorpus<
       this.activePartitionsToToken.delete(partition);
 
       const response = await this.loader({ partition, pageToken } as CorpusLoadRequest);
+      if (!response.page && !response.partitions) {
+        throw Error('Loader responses must include a page, new partitions, or both.');
+      }
       for (const newPartition of response.partitions ?? []) {
         if (!this.completedPartitions.has(newPartition.name) && !this.activePartitionsToToken.has(newPartition.name)) {
           this.activePartitionsToToken.set(newPartition.name, newPartition.firstPageToken ?? null);
@@ -461,11 +464,6 @@ export class LocalCorpus<
         } else {
           this.completedPartitions.add(partition);
         }
-      }
-      if (!response.page && !response.partitions) {
-        // Corner case - technically an invalid response, but it's similar enough to a valid empty
-        // response that we'll treat it the same way.
-        this.completedPartitions.add(partition);
       }
     }
   }
