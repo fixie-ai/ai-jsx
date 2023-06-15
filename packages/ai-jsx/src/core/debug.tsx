@@ -1,16 +1,22 @@
 import * as LLMx from '../index.js';
-import { Node, RenderContext, Element, ElementPredicate } from '../index.js';
+import { Element, ElementPredicate, Node, RenderContext } from '../index.js';
 import { isMemoizedSymbol } from './memoize.js';
+
+const maxStringLength = 1000;
 
 export function debug(value: unknown, expandJSXChildren: boolean = true): string {
   const previouslyMemoizedIds = new Set();
 
   function debugRec(value: unknown, indent: string, context: 'code' | 'children' | 'props'): string {
     if (typeof value === 'string') {
-      if (context === 'props' || context === 'code') {
-        return JSON.stringify(value);
+      let jsonified = JSON.stringify(value);
+      if (jsonified.length > maxStringLength) {
+        jsonified = `${jsonified.slice(0, maxStringLength)}...`;
       }
-      return `{${JSON.stringify(value)}}`;
+      if (context === 'props' || context === 'code') {
+        return jsonified;
+      }
+      return `{${jsonified}}`;
     }
     if (typeof value === 'number' || typeof value === 'bigint') {
       if (context === 'props' || context === 'children') {
@@ -53,7 +59,12 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
           if (key === 'children' || propValue === undefined) {
             continue;
           } else {
-            results.push(` ${key}=${debugRec(propValue, indent, 'props')}`);
+            const valueStr = debugRec(propValue, indent, 'props');
+            if (valueStr.length > maxStringLength) {
+              results.push(` ${key}=<omitted large object>`);
+            } else {
+              results.push(` ${key}=${valueStr}`);
+            }
           }
         }
       }
