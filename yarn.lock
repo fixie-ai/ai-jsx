@@ -3942,7 +3942,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/context-async-hooks@npm:1.14.0":
+"@opentelemetry/context-async-hooks@npm:1.14.0, @opentelemetry/context-async-hooks@npm:^1.14.0":
   version: 1.14.0
   resolution: "@opentelemetry/context-async-hooks@npm:1.14.0"
   peerDependencies:
@@ -4079,7 +4079,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/exporter-trace-otlp-proto@npm:0.40.0":
+"@opentelemetry/exporter-trace-otlp-proto@npm:0.40.0, @opentelemetry/exporter-trace-otlp-proto@npm:^0.40.0":
   version: 0.40.0
   resolution: "@opentelemetry/exporter-trace-otlp-proto@npm:0.40.0"
   dependencies:
@@ -6217,7 +6217,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:^4.14.194":
+"@types/lodash@npm:^4.14.194, @types/lodash@npm:^4.14.195":
   version: 4.14.195
   resolution: "@types/lodash@npm:4.14.195"
   checksum: a503fc2cef87abc17ec6f388009a787e609b799b8fcb69c47f9b91d5a47e564b5c00fd121f691acf2b2bb43b788e28ca22781de1ac561b2c35bea380c6446f79
@@ -6279,7 +6279,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:>=12.12.47, @types/node@npm:>=13.7.0, @types/node@npm:^20.2.1":
+"@types/node@npm:*, @types/node@npm:>=12.12.47, @types/node@npm:>=13.7.0, @types/node@npm:^20.2.1, @types/node@npm:^20.3.1":
   version: 20.3.1
   resolution: "@types/node@npm:20.3.1"
   checksum: 262e63e934b31335efdd0cb9c6b46e20c0bfa826952f670596ca8621d21d29382ff701e1afdd83f43eff06b42f43a054617ed835b074fb56f61bf1150e9711d5
@@ -6389,7 +6389,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:^18.0.0":
+"@types/react-dom@npm:^18.0.0, @types/react-dom@npm:^18.2.5":
   version: 18.2.5
   resolution: "@types/react-dom@npm:18.2.5"
   dependencies:
@@ -6430,7 +6430,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*, @types/react@npm:^18.2.7":
+"@types/react@npm:*, @types/react@npm:^18.2.12, @types/react@npm:^18.2.7":
   version: 18.2.12
   resolution: "@types/react@npm:18.2.12"
   dependencies:
@@ -6600,7 +6600,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/uuid@npm:^9":
+"@types/uuid@npm:^9, @types/uuid@npm:^9.0.1, @types/uuid@npm:^9.0.2":
   version: 9.0.2
   resolution: "@types/uuid@npm:9.0.2"
   checksum: dfb80ebf6fadb343b05f12e7f162bad47b19d290194b0a074a4b16c115272345b27501a3abce3f9fd2cb392a645b171f7cf7008cf25029c1a270fae050450d71
@@ -7103,8 +7103,13 @@ __metadata:
   resolution: "ai-jsx-monorepo-root@workspace:."
   dependencies:
     "@types/prettier": "npm:^2"
+    eslint: "npm:^8.42.0"
+    eslint-import-resolver-node: "npm:^0.3.7"
+    eslint-import-resolver-typescript: "npm:^3.5.5"
+    eslint-plugin-import: "npm:^2.27.5"
     prettier: "npm:^2.8.8"
     turbo: "npm:^1.10.2"
+    typescript: "npm:^5.1.3"
   languageName: unknown
   linkType: soft
 
@@ -7112,11 +7117,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
-    "@nick.heiner/wandb-fork": "npm:0.5.2-5"
-    "@opentelemetry/api": "npm:^1.4.1"
-    "@opentelemetry/auto-instrumentations-node": "npm:^0.37.0"
-    "@opentelemetry/sdk-metrics": "npm:^1.13.0"
-    "@opentelemetry/sdk-node": "npm:^0.39.1"
     "@tsconfig/node18": "npm:^2.0.1"
     "@types/eslint": "npm:^8"
     "@types/lodash": "npm:^4.14.194"
@@ -7161,6 +7161,8 @@ __metadata:
     write-json-file: "npm:^5.0.0"
     zod: "npm:^3.21.4"
     zod-to-json-schema: "npm:^3.21.1"
+  peerDependencies:
+    react: ^16.8.0  || ^17.0.0 || ^18.0.0
   languageName: unknown
   linkType: soft
 
@@ -7616,6 +7618,17 @@ __metadata:
   dependencies:
     follow-redirects: "npm:^1.14.8"
   checksum: ac969975b2e196b6e6075353688eeeb540c5cf8447c2914f90323165dfc43cd26cc31e601ed36f5711f5cd7dc76654a7c1b0db142c669152d5d600c9d3516307
+  languageName: node
+  linkType: hard
+
+"axios@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "axios@npm:1.4.0"
+  dependencies:
+    follow-redirects: "npm:^1.15.0"
+    form-data: "npm:^4.0.0"
+    proxy-from-env: "npm:^1.1.0"
+  checksum: 391f7fdb89b0c09d72b825eccf396b3b501c569e8dab759155c4f84b47bb4004432b99d8686758493a3b1d1673c5efd0e4b948108bb0d3de74ca1a8d30877aa6
   languageName: node
   linkType: hard
 
@@ -8278,17 +8291,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"camelcase@npm:6, camelcase@npm:^6.2.0, camelcase@npm:^6.2.1":
+  version: 6.3.0
+  resolution: "camelcase@npm:6.3.0"
+  checksum: 3c802157fc61af58194ed056d1830444ec1268a556bb90c7a3a729db481a897cbfdf86fb9db91b45b5e3b891183024e13bf26c866e8e5a37853ace6fa01b7be1
+  languageName: node
+  linkType: hard
+
 "camelcase@npm:^5.3.1":
   version: 5.3.1
   resolution: "camelcase@npm:5.3.1"
   checksum: 3875260be8f9761ab3870045b7c5c826f584070fe92f5c13a2800a84572d6edf16e6da01db01e135c6d080569fcd690bd2376bdabc3bc80a91da81d1b1c5e773
-  languageName: node
-  linkType: hard
-
-"camelcase@npm:^6.2.0, camelcase@npm:^6.2.1":
-  version: 6.3.0
-  resolution: "camelcase@npm:6.3.0"
-  checksum: 3c802157fc61af58194ed056d1830444ec1268a556bb90c7a3a729db481a897cbfdf86fb9db91b45b5e3b891183024e13bf26c866e8e5a37853ace6fa01b7be1
   languageName: node
   linkType: hard
 
@@ -8755,6 +8768,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"commander@npm:^10.0.1":
+  version: 10.0.1
+  resolution: "commander@npm:10.0.1"
+  checksum: b2a03d799104eac407ca031b94126c98198594fcff41554eb253cef748de57fb1a4cdd591baa075de589f2fddf1f968d1ecd1b79e8b47570ee441ab4f3363776
+  languageName: node
+  linkType: hard
+
 "commander@npm:^2.20.0":
   version: 2.20.3
   resolution: "commander@npm:2.20.3"
@@ -9052,6 +9072,9 @@ __metadata:
     "@testing-library/jest-dom": "npm:^5.16.5"
     "@testing-library/react": "npm:^13.4.0"
     "@testing-library/user-event": "npm:^13.5.0"
+    "@types/lodash": "npm:^4.14.195"
+    "@types/react": "npm:^18.2.12"
+    "@types/react-dom": "npm:^18.2.5"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.11"
     "@typescript-eslint/parser": "npm:^5.59.11"
     ai-jsx: "npm:0.2.0-4"
@@ -9084,6 +9107,7 @@ __metadata:
     jest-resolve: "npm:^27.4.2"
     jest-watch-typeahead: "npm:^1.0.0"
     jotai: "npm:^2.2.0"
+    lodash: "npm:^4.17.21"
     mini-css-extract-plugin: "npm:^2.4.5"
     postcss: "npm:^8.4.4"
     postcss-flexbugs-fixes: "npm:^5.0.2"
@@ -9111,6 +9135,7 @@ __metadata:
     webpack-dev-server: "npm:^4.6.0"
     webpack-manifest-plugin: "npm:^4.0.2"
     workbox-webpack-plugin: "npm:^6.4.1"
+    zod: "npm:^3.21.4"
   languageName: unknown
   linkType: soft
 
@@ -9552,6 +9577,13 @@ __metadata:
   dependencies:
     ms: "npm:^2.1.1"
   checksum: b98f479c1004d349128ba45f38fb1af53fa3ab1a3614f27c56e2cfbee34b58cbf7dc060fead0882a5b64924e49d1dd59fb796a5d90ba7b1987d72d426e199253
+  languageName: node
+  linkType: hard
+
+"decamelize@npm:5":
+  version: 5.0.1
+  resolution: "decamelize@npm:5.0.1"
+  checksum: 3ab0a369bdbfa50fb6706c266eb602fc5521c710b3aee658bed52d39c9963ebdad049302d6222ae53a28e25715cc389dc858223243f815d7d25aed4b23cae3bd
   languageName: node
   linkType: hard
 
@@ -10555,7 +10587,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-import-resolver-typescript@npm:^3.5.2":
+"eslint-import-resolver-typescript@npm:^3.5.2, eslint-import-resolver-typescript@npm:^3.5.5":
   version: 3.5.5
   resolution: "eslint-import-resolver-typescript@npm:3.5.5"
   dependencies:
@@ -10803,7 +10835,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:8.42.0, eslint@npm:^8.3.0, eslint@npm:^8.40.0":
+"eslint@npm:8.42.0, eslint@npm:^8.3.0, eslint@npm:^8.40.0, eslint@npm:^8.42.0":
   version: 8.42.0
   resolution: "eslint@npm:8.42.0"
   dependencies:
@@ -10968,16 +11000,34 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "examples@workspace:packages/examples"
   dependencies:
+    "@nick.heiner/wandb-fork": "npm:0.5.2-5"
+    "@opentelemetry/api": "npm:^1.4.1"
+    "@opentelemetry/auto-instrumentations-node": "npm:^0.37.0"
+    "@opentelemetry/context-async-hooks": "npm:^1.14.0"
+    "@opentelemetry/exporter-trace-otlp-proto": "npm:^0.40.0"
+    "@opentelemetry/sdk-metrics": "npm:^1.13.0"
+    "@opentelemetry/sdk-node": "npm:^0.39.1"
     "@tsconfig/node18": "npm:^2.0.1"
+    "@types/lodash": "npm:^4.14.195"
+    "@types/node": "npm:^20.3.1"
+    "@types/uuid": "npm:^9.0.2"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.6"
     "@typescript-eslint/parser": "npm:^5.59.6"
     ai-jsx: "npm:0.2.0-4"
+    axios: "npm:^1.4.0"
+    csv-stringify: "npm:^6.4.0"
     eslint: "npm:^8.40.0"
     eslint-config-nth: "npm:^2.0.1"
+    globby: "npm:^13.1.4"
+    langchain: "npm:^0.0.95"
+    load-json-file: "npm:^7.0.1"
+    lodash: "npm:^4.17.21"
+    node-fetch: "npm:^3.3.1"
     pino: "npm:^8.14.1"
     pino-pretty: "npm:^10.0.0"
-    tsx: "npm:^3.12.7"
     typescript: "npm:^5.1.3"
+    uuid: "npm:^9.0.0"
+    write-json-file: "npm:^5.0.0"
   languageName: unknown
   linkType: soft
 
@@ -11434,7 +11484,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.0.0, follow-redirects@npm:^1.14.7, follow-redirects@npm:^1.14.8":
+"follow-redirects@npm:^1.0.0, follow-redirects@npm:^1.14.7, follow-redirects@npm:^1.14.8, follow-redirects@npm:^1.15.0":
   version: 1.15.2
   resolution: "follow-redirects@npm:1.15.2"
   peerDependenciesMeta:
@@ -14923,6 +14973,194 @@ __metadata:
   languageName: node
   linkType: hard
 
+"langchain@npm:^0.0.95":
+  version: 0.0.95
+  resolution: "langchain@npm:0.0.95"
+  dependencies:
+    "@anthropic-ai/sdk": "npm:^0.4.3"
+    ansi-styles: "npm:^5.0.0"
+    binary-extensions: "npm:^2.2.0"
+    camelcase: "npm:6"
+    decamelize: "npm:5"
+    expr-eval: "npm:^2.0.2"
+    flat: "npm:^5.0.2"
+    js-tiktoken: "npm:^1.0.6"
+    jsonpointer: "npm:^5.0.1"
+    langchainplus-sdk: "npm:^0.0.11"
+    ml-distance: "npm:^4.0.0"
+    object-hash: "npm:^3.0.0"
+    openai: "npm:^3.3.0"
+    p-queue: "npm:^6.6.2"
+    p-retry: "npm:4"
+    uuid: "npm:^9.0.0"
+    yaml: "npm:^2.2.1"
+    zod: "npm:^3.21.4"
+    zod-to-json-schema: "npm:^3.20.4"
+  peerDependencies:
+    "@aws-sdk/client-dynamodb": ^3.310.0
+    "@aws-sdk/client-lambda": ^3.310.0
+    "@aws-sdk/client-s3": ^3.310.0
+    "@aws-sdk/client-sagemaker-runtime": ^3.310.0
+    "@clickhouse/client": ^0.0.14
+    "@getmetal/metal-sdk": "*"
+    "@getzep/zep-js": ^0.3.1
+    "@gomomento/sdk": ^1.23.0
+    "@google-cloud/storage": ^6.10.1
+    "@huggingface/inference": ^1.5.1
+    "@opensearch-project/opensearch": "*"
+    "@pinecone-database/pinecone": "*"
+    "@qdrant/js-client-rest": ^1.2.0
+    "@supabase/postgrest-js": ^1.1.1
+    "@supabase/supabase-js": ^2.10.0
+    "@tensorflow-models/universal-sentence-encoder": "*"
+    "@tensorflow/tfjs-converter": "*"
+    "@tensorflow/tfjs-core": "*"
+    "@tigrisdata/vector": ^1.1.0
+    "@upstash/redis": ^1.20.6
+    "@zilliz/milvus2-sdk-node": ">=2.2.7"
+    apify-client: ^2.7.1
+    axios: "*"
+    cheerio: ^1.0.0-rc.12
+    chromadb: ^1.5.2
+    cohere-ai: ^5.0.2
+    d3-dsv: ^2.0.0
+    epub2: ^3.0.1
+    faiss-node: ^0.2.1
+    google-auth-library: ^8.8.0
+    hnswlib-node: ^1.4.2
+    html-to-text: ^9.0.5
+    ignore: ^5.2.0
+    mammoth: "*"
+    mongodb: ^5.2.0
+    mysql2: ^3.3.3
+    pdf-parse: 1.1.1
+    peggy: ^3.0.2
+    pg: ^8.11.0
+    pickleparser: ^0.1.0
+    playwright: ^1.32.1
+    puppeteer: ^19.7.2
+    redis: ^4.6.4
+    replicate: ^0.9.0
+    srt-parser-2: ^1.2.2
+    typeorm: ^0.3.12
+    typesense: ^1.5.3
+    weaviate-ts-client: ^1.0.0
+  peerDependenciesMeta:
+    "@aws-sdk/client-dynamodb":
+      optional: true
+    "@aws-sdk/client-lambda":
+      optional: true
+    "@aws-sdk/client-s3":
+      optional: true
+    "@aws-sdk/client-sagemaker-runtime":
+      optional: true
+    "@clickhouse/client":
+      optional: true
+    "@getmetal/metal-sdk":
+      optional: true
+    "@getzep/zep-js":
+      optional: true
+    "@gomomento/sdk":
+      optional: true
+    "@google-cloud/storage":
+      optional: true
+    "@huggingface/inference":
+      optional: true
+    "@opensearch-project/opensearch":
+      optional: true
+    "@pinecone-database/pinecone":
+      optional: true
+    "@qdrant/js-client-rest":
+      optional: true
+    "@supabase/postgrest-js":
+      optional: true
+    "@supabase/supabase-js":
+      optional: true
+    "@tensorflow-models/universal-sentence-encoder":
+      optional: true
+    "@tensorflow/tfjs-converter":
+      optional: true
+    "@tensorflow/tfjs-core":
+      optional: true
+    "@tigrisdata/vector":
+      optional: true
+    "@upstash/redis":
+      optional: true
+    "@zilliz/milvus2-sdk-node":
+      optional: true
+    apify-client:
+      optional: true
+    axios:
+      optional: true
+    cheerio:
+      optional: true
+    chromadb:
+      optional: true
+    cohere-ai:
+      optional: true
+    d3-dsv:
+      optional: true
+    epub2:
+      optional: true
+    faiss-node:
+      optional: true
+    google-auth-library:
+      optional: true
+    hnswlib-node:
+      optional: true
+    html-to-text:
+      optional: true
+    ignore:
+      optional: true
+    mammoth:
+      optional: true
+    mongodb:
+      optional: true
+    mysql2:
+      optional: true
+    pdf-parse:
+      optional: true
+    peggy:
+      optional: true
+    pg:
+      optional: true
+    pickleparser:
+      optional: true
+    playwright:
+      optional: true
+    puppeteer:
+      optional: true
+    redis:
+      optional: true
+    replicate:
+      optional: true
+    srt-parser-2:
+      optional: true
+    typeorm:
+      optional: true
+    typesense:
+      optional: true
+    weaviate-ts-client:
+      optional: true
+  checksum: d3d2d17bc82dc70345e739ffde1f0e1bf2d4fc1787ff96f1da5cd3aa83bbac444f899f9bc9b6dc8ddf65f0be019453a21ef0a7f2ed4785e4e2a9912ba64b42ad
+  languageName: node
+  linkType: hard
+
+"langchainplus-sdk@npm:^0.0.11":
+  version: 0.0.11
+  resolution: "langchainplus-sdk@npm:0.0.11"
+  dependencies:
+    "@types/uuid": "npm:^9.0.1"
+    commander: "npm:^10.0.1"
+    p-queue: "npm:^6.6.2"
+    p-retry: "npm:4"
+    uuid: "npm:^9.0.0"
+  bin:
+    langchain: dist/cli/main.cjs
+  checksum: 9f9d4e75e2a4056073df23dd1ac9a47d58d8034b46b76217d5859cbb39519c7fe3d952f7b2b89d2c058855cf99e0413f7c0f480fd1039057b013b0c0389e769e
+  languageName: node
+  linkType: hard
+
 "language-subtag-registry@npm:~0.3.2":
   version: 0.3.22
   resolution: "language-subtag-registry@npm:0.3.22"
@@ -15876,6 +16114,7 @@ __metadata:
   resolution: "nextjs-demo@workspace:packages/nextjs-demo"
   dependencies:
     "@octokit/graphql": "npm:^5.0.6"
+    "@types/lodash": "npm:^4.14.195"
     "@types/node": "npm:20.2.5"
     "@types/react": "npm:18.2.8"
     "@types/react-dom": "npm:18.2.4"
@@ -15888,6 +16127,7 @@ __metadata:
     eslint-config-next: "npm:13.4.4"
     eslint-config-nth: "npm:^2.0.1"
     examples: "npm:1.0.0"
+    lodash: "npm:^4.17.21"
     next: "npm:13.4.4"
     postcss: "npm:8.4.24"
     react: "npm:18.2.0"
@@ -16294,7 +16534,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:^3.2.0, openai@npm:^3.2.1":
+"openai@npm:^3.2.0, openai@npm:^3.2.1, openai@npm:^3.3.0":
   version: 3.3.0
   resolution: "openai@npm:3.3.0"
   dependencies:
@@ -18078,6 +18318,13 @@ __metadata:
     forwarded: "npm:0.2.0"
     ipaddr.js: "npm:1.9.1"
   checksum: c03f00d8f882b97636262d0ae7da0c502325474ea215f21b4f0664ad8f40f49d2071b52c18257d011338be3db21ca65a6e8cbc0d95fb23efc00516ce9ee37c27
+  languageName: node
+  linkType: hard
+
+"proxy-from-env@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "proxy-from-env@npm:1.1.0"
+  checksum: 0bba2ef7c8374b384e94e4477764e53df66fcdfa7d19e2c4a063cb39eea979c139ce13981970223665422e72b7d149609a927046e2e40ab340b84d91af082591
   languageName: node
   linkType: hard
 
