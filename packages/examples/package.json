@@ -52,7 +52,7 @@
     "@opentelemetry/exporter-trace-otlp-proto": "^0.40.0",
     "@opentelemetry/sdk-metrics": "^1.13.0",
     "@opentelemetry/sdk-node": "^0.39.1",
-    "ai-jsx": "0.2.0-4",
+    "ai-jsx": "../ai-jsx",
     "axios": "^1.4.0",
     "csv-stringify": "^6.4.0",
     "globby": "^13.1.4",
