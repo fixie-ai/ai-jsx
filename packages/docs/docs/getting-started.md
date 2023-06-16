@@ -209,7 +209,7 @@ function WriteStoryWithImage() {
 }
 ```
 
-We use a second LLM pass to create a description for the image. We then feed this description to an `<ImageGen>` compoent.
+We use a second LLM pass to create a description for the image. We then feed this description to an `<ImageGen>` component.
 `<ImageGen>` by default uses [Dalle](https://platform.openai.com/docs/guides/images/introduction).
 
 Note that we also used a new component, `memo`. If we simply use `<WriteStory />` twice (even if you assign it to a variable), you will have two separate LLM calls and possibly two different stories as a result.
