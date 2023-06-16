@@ -106,7 +106,7 @@
   },
   "type": "module",
   "scripts": {
-    "view-logs": "cat llmx.log | pino-pretty",
+    "view-logs": "cat ai-jsx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.json --noEmit",

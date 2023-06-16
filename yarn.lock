@@ -7257,12 +7257,12 @@ __metadata:
     eslint-import-resolver-typescript: "npm:^3.5.5"
     eslint-plugin-import: "npm:^2.27.5"
     prettier: "npm:^2.8.8"
-    turbo: "npm:^1.10.2"
+    turbo: "npm:^1.10.3"
     typescript: "npm:^5.1.3"
   languageName: unknown
   linkType: soft
 
-"ai-jsx@npm:0.2.0-4, ai-jsx@npm:^0.2.0-1, ai-jsx@workspace:packages/ai-jsx":
+"ai-jsx@npm:^0.2.0-1, ai-jsx@npm:^0.2.0-4, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
@@ -9235,7 +9235,7 @@ __metadata:
     "@types/react-dom": "npm:^18.2.5"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.11"
     "@typescript-eslint/parser": "npm:^5.59.11"
-    ai-jsx: "npm:0.2.0-4"
+    ai-jsx: "npm:^0.2.0-4"
     babel-jest: "npm:^27.4.2"
     babel-loader: "npm:^8.2.3"
     babel-plugin-named-asset-import: "npm:^0.3.8"
@@ -11171,7 +11171,7 @@ __metadata:
     "@types/uuid": "npm:^9.0.2"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.6"
     "@typescript-eslint/parser": "npm:^5.59.6"
-    ai-jsx: "npm:0.2.0-4"
+    ai-jsx: "npm:^0.2.0-4"
     axios: "npm:^1.4.0"
     csv-stringify: "npm:^6.4.0"
     eslint: "npm:^8.40.0"
@@ -16280,7 +16280,7 @@ __metadata:
     "@types/react-dom": "npm:18.2.4"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.9"
     "@typescript-eslint/parser": "npm:^5.59.9"
-    ai-jsx: "npm:0.2.0-4"
+    ai-jsx: "npm:^0.2.0-4"
     autoprefixer: "npm:10.4.14"
     classnames: "npm:^2.3.2"
     eslint: "npm:8.42.0"
@@ -21285,7 +21285,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"turbo@npm:^1.10.2":
+"turbo@npm:^1.10.3":
   version: 1.10.3
   resolution: "turbo@npm:1.10.3"
   dependencies:

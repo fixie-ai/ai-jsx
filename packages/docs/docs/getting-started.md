@@ -140,7 +140,7 @@ Running it, we'll a something like this:
 To see the previous characters that were generated, we can look in the logs:
 
 ```
-$ grep -i 'starting modelcall' packages/ai-jsx/llmx.log | yarn workspace ai-jsx pino-pretty
+$ grep -i 'starting modelcall' packages/ai-jsx/ai-jsx.log | yarn workspace ai-jsx pino-pretty
 
 # Actual results snipped for brevity.
 
