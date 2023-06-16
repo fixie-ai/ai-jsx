@@ -9,16 +9,19 @@ One of the common ways to handle both of these issues is to provide the LLM with
 A collection of docs is called a "corpus" (plural "corpora"). Often corpora are backed by a "vector database" that allows for searching over knowledge in a semantically grounded vector space. To use a corpus with an LLM, you'll have a process like the one below. (Don't worry if this doesn't all make sense yet - we'll explain it!)
 
 ```mermaid
-flowchart TD
-  subgraph load[Preparing a Corpus]
-    direction LR
-    Load -->|bytes| Parse -->|Document| Chunk -->|Text chunks| Embed -->|vectors| vdb[(Vector DB)]
-    end
-  subgraph query[Query]
-    direction LR
-    que[Query] -->|string| embed2[Embed] -->|vector| vdb2[(Vector DB)] -->|similar chunks| LLM
-    end
-load ~~~ query
+---
+title: Preparing a Corpus
+---
+flowchart LR
+  Load -->|bytes| Parse -->|Document| Chunk -->|Text chunks| Embed -->|vectors| vdb[(Vector DB)]
+```
+
+```mermaid
+---
+title: Handling a Query
+---
+flowchart LR
+  que[Query] -->|string| embed2[Embed] -->|vector| vdb2[(Vector DB)] -->|similar chunks| LLM
 ```
 
 ## Preparing a Corpus
@@ -51,7 +54,7 @@ Typically you'll want to make sure a corpus has completed loading before exposin
 
 ## Responding to Queries
 
-Once your corpus is ready to serve, it's function will be to identify text chunks that are semantically similar to a user query.  If you use the built-in DocsQA tag from ai-jsx, then you just need to decide how to present the chunk to your LLM:
+Once your corpus is ready to serve, it's function will be to identify text chunks that are semantically similar to a user query. If you use the built-in DocsQA tag from ai-jsx, then you just need to decide how to present the chunk to your LLM:
 
 ```typescript
 function ShowDoc({ doc }: { doc: Document<MyDocMetadata> }) {
@@ -76,4 +79,4 @@ function AskAndAnswer({ query }: { query: string }) {
 
 ## Picking a Corpus Implementation
 
-To get you started, ai.jsx includes an in-memory Corpus that can be used effectively for demos. When you've outgrown that, you could consider implementing your own Corpus backed by [Pinecone](https://www.pinecone.io/) or [Chroma](https://www.trychroma.com/). Alternatively, Fixie provides a fully-managed Corpus solution you could drop in instead.
+To get you started, ai.jsx includes an in-memory Corpus that can be used effectively for demos. When you've outgrown that, you could consider implementing your own Corpus backed by [Pinecone](https://www.pinecone.io/) or [Chroma](https://www.trychroma.com/). Alternatively, [Fixie](https://www.fixie.ai) provides a fully-managed Corpus solution you could drop in instead.
