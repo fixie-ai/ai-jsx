@@ -17,13 +17,53 @@ export function createElement(...args: Parameters<typeof ReactModule.createEleme
 
 export const Fragment = ReactModule.Fragment;
 
+function unwrapReact(partiallyRendered: LLMx.PartiallyRendered): ReactModule.ReactNode {
+  if (LLMx.isElement(partiallyRendered)) {
+    // This should be an AI.React element.
+    if (partiallyRendered.tag !== React) {
+      throw new Error('unwrapReact only expects to see AI.React elements or strings.');
+    }
+
+    return partiallyRendered.props.children;
+  }
+
+  return partiallyRendered;
+}
+
+function computeSuffix(prefix: ReactModule.ReactNode[], frame: ReactModule.ReactNode[]) {
+  const computedSuffix = [] as ReactModule.ReactNode[];
+  for (let i = 0; i < frame.length; ++i) {
+    if (i >= prefix.length) {
+      computedSuffix.push(frame[i]);
+    } else if (computedSuffix.length > 0) {
+      return null;
+    } else if (prefix[i] === frame[i]) {
+      continue;
+    } else {
+      const fromPrefix = prefix[i];
+      const fromFrame = frame[i];
+
+      if (typeof fromPrefix === 'string' && typeof fromFrame === 'string' && fromFrame.startsWith(fromPrefix)) {
+        computedSuffix.push(fromFrame.slice(fromPrefix.length));
+      } else {
+        return null;
+      }
+    }
+  }
+
+  return computedSuffix;
+}
+
 export function jsx({ children }: { children: LLMx.Node }, context?: any | LLMx.ComponentContext) {
   if (typeof context?.render === 'function') {
     // We're in AI.JSX already.
     return children;
   }
 
-  const renderResult = LLMx.createRenderContext().render(children);
+  const renderResult = LLMx.createRenderContext().render(children, {
+    stop: (e) => e.tag === React,
+    map: (frame) => frame.map(unwrapReact),
+  });
   const asyncIterator = renderResult[Symbol.asyncIterator]();
 
   /**
@@ -34,20 +74,20 @@ export function jsx({ children }: { children: LLMx.Node }, context?: any | LLMx.
     prefix,
     replace,
   }: {
-    prefix?: string;
+    prefix?: ReactModule.ReactNode[];
     replace: (value: ReactModule.ReactNode) => ReactModule.ReactNode;
   }): Promise<ReactModule.ReactNode> {
     const nextResult = await asyncIterator.next();
 
     if (nextResult.done) {
-      return replace(nextResult.value);
+      return replace(nextResult.value.map(unwrapReact));
     }
 
     // If we can append the stream, do so.
-    if (prefix && nextResult.value.startsWith(prefix)) {
-      const delta = nextResult.value.slice(prefix.length);
+    const suffix = prefix && computeSuffix(prefix, nextResult.value);
+    if (suffix) {
       return [
-        delta,
+        suffix,
         ReactModule.createElement(
           ReactModule.Suspense,
           { fallback: '' },
@@ -81,4 +121,17 @@ export function jsx({ children }: { children: LLMx.Node }, context?: any | LLMx.
   return ReactModule.createElement(Stream as any, { replace: (node: ReactModule.ReactNode) => node });
 }
 
-// TODO: Support AI.React pattern
+/**
+ * A JSX component that allows React elements to be used in an AI.jsx component tree. If
+ * the React components are forced to be rendered to a string within AI.jsx, they will be
+ * serialized into a JSX string.
+ */
+export function React({ children }: { children: ReactModule.ReactNode }, context?: any | LLMx.ComponentContext) {
+  if (typeof context?.render === 'function') {
+    // We're in AI.JSX; serialize the React.
+    // XXX/psalas: fix me
+    return '<react components here>';
+  }
+
+  return children;
+}
