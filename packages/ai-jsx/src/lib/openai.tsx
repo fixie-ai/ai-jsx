@@ -7,7 +7,6 @@ import {
   SystemMessage,
   UserMessage,
   FunctionDefinition,
-  FunctionParameter,
   FunctionCall,
   FunctionResponse,
 } from '../core/completion.js';

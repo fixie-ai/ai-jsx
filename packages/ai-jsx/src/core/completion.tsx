@@ -6,7 +6,7 @@ export interface ModelProps {
   temperature?: number;
   maxTokens?: number;
   stop?: string[];
-  functionCall?: string | { [name: string]: string };
+  functionCall?: string | Record<string, string>;
 }
 
 export type ModelPropsWithChildren = ModelProps & {
@@ -15,17 +15,17 @@ export type ModelPropsWithChildren = ModelProps & {
 
 export type ModelComponent<T extends ModelPropsWithChildren> = Component<T>;
 
-export type FunctionDefinition = {
+export interface FunctionDefinition {
   name: string;
   description?: string;
   parameters: Record<string, FunctionParameter>;
-};
+}
 
-export type FunctionParameter = {
+export interface FunctionParameter {
   description?: string;
   type?: string;
   required: boolean;
-};
+}
 
 /**
  * If env var `OPENAI_API_KEY` is defined, use Open AI as the completion model provider.
