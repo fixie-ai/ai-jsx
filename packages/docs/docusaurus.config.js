@@ -36,7 +36,7 @@ const config = {
     [
       "docusaurus-plugin-typedoc",
       {
-        entryPoints: ['../ai-jsx/src/batteries/docs.tsx'],
+        entryPoints: ['../ai-jsx/src/index.ts'],
         tsconfig: "../ai-jsx/tsconfig.json",
       },
     ],
