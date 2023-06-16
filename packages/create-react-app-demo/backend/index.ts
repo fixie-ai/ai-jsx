@@ -1,40 +1,32 @@
 import express from 'express';
-import { Readable } from 'node:stream';
+import { Configuration, OpenAIApi } from 'openai-edge';
+import { OpenAIStream, streamToResponse } from 'ai';
 
 const app = express();
 
-app.get('/api/chat', (req, res) => {
+// Create an OpenAI API client
+const config = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(config);
+
+app.get('/api/chat', async (req, res) => {
   res.setHeader('Content-Type', 'text/plain');
   res.setHeader('Transfer-Encoding', 'chunked');
 
-  
-  // Create a readable stream with your data
-  const data = 'Hello from the backend!';
-  const buffer = [data] as (string | null)[];
-
-  setTimeout(() => {
-    console.log('push chunk 2')
-    buffer.push('chunk 2');
-  }, 1000);
-  
-  setTimeout(() => {
-    console.log('push null')
-    buffer.push(null);
-  }, 2000);
-
-  const stream = new Readable({
-    read() {
-      console.log('read')
-      let chunk;
-      while (chunk = buffer.shift()) {
-        console.log('got chunk', chunk)
-        this.push(chunk);
-      }
-    },
+  const response = await openai.createCompletion({
+    model: 'text-davinci-003',
+    stream: true,
+    max_tokens: 1000,
+    prompt: 'List 20 dog names',
   });
 
-  // Pipe the stream to the response
-  stream.pipe(res);
+  // Convert the response into a friendly text-stream
+  const stream = OpenAIStream(response);
+
+  // Respond with the stream
+  // const str = new StreamingTextResponse(stream);
+  streamToResponse(stream, res);
 });
 
 app.listen(4000, () => {

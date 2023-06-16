@@ -7262,7 +7262,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"ai-jsx@npm:^0.2.0-1, ai-jsx@npm:^0.2.0-4, ai-jsx@workspace:packages/ai-jsx":
+"ai-jsx@npm:0.2.0-4, ai-jsx@npm:^0.2.0-1, ai-jsx@npm:^0.2.0-4, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
@@ -7317,6 +7317,30 @@ __metadata:
     react: ^16.8.0  || ^17.0.0 || ^18.0.0
   languageName: unknown
   linkType: soft
+
+"ai@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "ai@npm:2.1.0"
+  dependencies:
+    eventsource-parser: "npm:1.0.0"
+    nanoid: "npm:^3.3.6"
+    sswr: "npm:^1.10.0"
+    swr: "npm:2.1.5"
+    swrv: "npm:1.0.3"
+  peerDependencies:
+    react: ^18.0.0
+    svelte: ^3.29.0
+    vue: ^3.3.4
+  peerDependenciesMeta:
+    react:
+      optional: true
+    svelte:
+      optional: true
+    vue:
+      optional: true
+  checksum: e764d541944e03c1136907fc4bf80667b9c5d725a3ac3a78f24fc4a1a5ab142166b443dc0251d4fa120b64c3413aabe27ab2cc7fe9c2fb380b963b4ed30b3e7e
+  languageName: node
+  linkType: hard
 
 "ajv-formats@npm:^2.1.1":
   version: 2.1.1
@@ -8469,14 +8493,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30001406, caniuse-lite@npm:^1.0.30001464":
-  version: 1.0.30001502
-  resolution: "caniuse-lite@npm:1.0.30001502"
-  checksum: 3dc7ce2d32dc43a90f1f76e4966017f573e374211d8962fd062b5bf994ada8c155ad9fe3b7b33f69dff46446acc71e207b47b7474fa5694f802f4301aba3f07e
-  languageName: node
-  linkType: hard
-
-"caniuse-lite@npm:^1.0.30001502":
+"caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30001406, caniuse-lite@npm:^1.0.30001464, caniuse-lite@npm:^1.0.30001502":
   version: 1.0.30001503
   resolution: "caniuse-lite@npm:1.0.30001503"
   checksum: 9db53cb56a20a5c34685199e1df1c265d0a5f977d481f0c61c347e1758c1cc685002c22c0a0bf472e5449def46145402f5365ba98c29eef9cc118b884beab5cb
@@ -9258,7 +9275,8 @@ __metadata:
     "@types/react-dom": "npm:^18.2.5"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.11"
     "@typescript-eslint/parser": "npm:^5.59.11"
-    ai-jsx: "npm:^0.2.0-4"
+    ai: "npm:^2.1.0"
+    ai-jsx: "npm:0.2.0-4"
     babel-jest: "npm:^27.4.2"
     babel-loader: "npm:^8.2.3"
     babel-plugin-named-asset-import: "npm:^0.3.8"
@@ -9292,6 +9310,8 @@ __metadata:
     jotai: "npm:^2.2.0"
     lodash: "npm:^4.17.21"
     mini-css-extract-plugin: "npm:^2.4.5"
+    openai: "npm:^3.3.0"
+    openai-edge: "npm:^1.0.0"
     postcss: "npm:^8.4.4"
     postcss-flexbugs-fixes: "npm:^5.0.2"
     postcss-loader: "npm:^6.2.1"
@@ -11185,6 +11205,13 @@ __metadata:
   version: 3.3.0
   resolution: "events@npm:3.3.0"
   checksum: ef0af671f7bdc20f14274c77925c3e47a4df7991563ee1827dff577f66a9ed1a5b63d9adab8bc5949a16a1341883abdaf9df7a1841f8d5d2fc65ab4f5570b32b
+  languageName: node
+  linkType: hard
+
+"eventsource-parser@npm:1.0.0":
+  version: 1.0.0
+  resolution: "eventsource-parser@npm:1.0.0"
+  checksum: 6dcb5caf332a4a99db36ae1a8fd21224e6ffee935412d6ef4f2e352afb7fe23f85acbb19cee5e1584cac7564037a787486edd54c997e36de5563fa5f4007d399
   languageName: node
   linkType: hard
 
@@ -16728,6 +16755,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"openai-edge@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "openai-edge@npm:1.0.0"
+  checksum: 9207925c0f0d1d6f69906d764ead7b6e0d94567241c0d92f7a2ae3245aa5737d1b7b8d0a1f616428a0bc45be689276e2646b8758dd5299a949020ba58e694eb2
+  languageName: node
+  linkType: hard
+
 "openai@npm:^3.2.0, openai@npm:^3.2.1, openai@npm:^3.3.0":
   version: 3.3.0
   resolution: "openai@npm:3.3.0"
@@ -20361,6 +20395,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sswr@npm:^1.10.0":
+  version: 1.10.0
+  resolution: "sswr@npm:1.10.0"
+  dependencies:
+    swrev: "npm:^3.0.0"
+  peerDependencies:
+    svelte: ^3.29.0
+  checksum: f6d77ec7b65973c01fdd3566b8a00b26aa6c74605e9622ce09b7ed0d61e36cae6dc899947039794d04aef9d5b6e240196614c0972e3fb7988614cad048e33c7d
+  languageName: node
+  linkType: hard
+
 "stable@npm:^0.1.8":
   version: 0.1.8
   resolution: "stable@npm:0.1.8"
@@ -20825,6 +20870,33 @@ __metadata:
   bin:
     svgo: bin/svgo
   checksum: f475df0d8cf24ad6c8498049abd1bc07753f77aa96ae0ca28f323b7e236fc2d94e680a694e8783a95db9e50d4275b76aa993653c45ed60dc985d8dd8609e2650
+  languageName: node
+  linkType: hard
+
+"swr@npm:2.1.5":
+  version: 2.1.5
+  resolution: "swr@npm:2.1.5"
+  dependencies:
+    use-sync-external-store: "npm:^1.2.0"
+  peerDependencies:
+    react: ^16.11.0 || ^17.0.0 || ^18.0.0
+  checksum: 79211e3969136741dd5f1d2ca0a880b47a2e2b507dbace5db94f530e942a94b6df1bdfb888df649097ebb52ebbaa3fba4b4066fa9592f577be31c70f213d5f01
+  languageName: node
+  linkType: hard
+
+"swrev@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "swrev@npm:3.0.0"
+  checksum: 0f7c4acdfca798692fdb3e5b57c5d9e0a64c336839e15e2c4029b24ea2788f760f75da181326f7f2121351c55132e170015821b73cb61ddd95b7f3627dbd8f2e
+  languageName: node
+  linkType: hard
+
+"swrv@npm:1.0.3":
+  version: 1.0.3
+  resolution: "swrv@npm:1.0.3"
+  peerDependencies:
+    vue: ">=3.2.26 < 4"
+  checksum: ad5a2c22726e6f7b23a460f83f65a9fb707bb9d0988ea312f4032f0d01c933d99101341fdce5e84332934018b67abebb9dab56497923b542cd8bc8e59f47ca2b
   languageName: node
   linkType: hard
 
