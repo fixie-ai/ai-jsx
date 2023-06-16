@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import RootLayout from './layout.tsx';
 import { ChooseYourOwnAdventure } from './choose-your-adventure/index.tsx';
 import RecipeWrapper from './recipe/page.tsx';
+import { DocsChat } from './docs-chat/index.tsx';
 
 const router = createBrowserRouter([
   {
@@ -17,6 +18,10 @@ const router = createBrowserRouter([
       {
         path: '/recipe',
         element: <RecipeWrapper />,
+      },
+      {
+        path: '/docs-chat',
+        element: <DocsChat />,
       },
     ],
   },
