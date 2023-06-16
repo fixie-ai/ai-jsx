@@ -7257,44 +7257,10 @@ __metadata:
     eslint-import-resolver-typescript: "npm:^3.5.5"
     eslint-plugin-import: "npm:^2.27.5"
     prettier: "npm:^2.8.8"
-    turbo: "npm:^1.10.2"
+    turbo: "npm:^1.10.3"
     typescript: "npm:^5.1.3"
   languageName: unknown
   linkType: soft
-
-"ai-jsx@file:../ai-jsx::locator=create-react-app-demo%40workspace%3Apackages%2Fcreate-react-app-demo":
-  version: 0.2.0-4
-  resolution: "ai-jsx@file:../ai-jsx#../ai-jsx::hash=4d13ba&locator=create-react-app-demo%40workspace%3Apackages%2Fcreate-react-app-demo"
-  dependencies:
-    cli-highlight: "npm:^2.1.11"
-    cli-spinners: "npm:^2.9.0"
-    find-up: "npm:^6.3.0"
-    got: "npm:^12.6.0"
-    gpt3-tokenizer: "npm:^1.1.5"
-    graphql: "npm:^16.6.0"
-    ink: "npm:^4.2.0"
-    ink-syntax-highlight: "npm:^1.0.1"
-    jest: "npm:^29.5.0"
-    langchain: "npm:^0.0.81"
-    load-json-file: "npm:^7.0.1"
-    lodash: "npm:^4.17.21"
-    ml-distance: "npm:^4.0.1"
-    openai: "npm:^3.2.1"
-    pino: "npm:^8.14.1"
-    react-use: "npm:^17.4.0"
-    sinon: "npm:^15.1.0"
-    terminal-link: "npm:^3.0.0"
-    tiny-typed-emitter: "npm:^2.1.0"
-    tsconfig-paths: "npm:^4.2.0"
-    utility-types: "npm:^3.10.0"
-    uuid: "npm:^9.0.0"
-    zod: "npm:^3.21.4"
-    zod-to-json-schema: "npm:^3.21.1"
-  peerDependencies:
-    react: ^16.8.0  || ^17.0.0 || ^18.0.0
-  checksum: e51b83d8ba21370bd646ab4f5058ddff862d7278eb4a7e2ff729a9b69f456fb47fe41e4350459b0c77603b4b9ed8adf6b4f34a4cffb1c0812c8a9b2da78ef4ac
-  languageName: node
-  linkType: hard
 
 "ai-jsx@file:../ai-jsx::locator=examples%40workspace%3Apackages%2Fexamples":
   version: 0.2.0-4
@@ -7330,41 +7296,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ai-jsx@file:../ai-jsx::locator=nextjs-demo%40workspace%3Apackages%2Fnextjs-demo":
-  version: 0.2.0-4
-  resolution: "ai-jsx@file:../ai-jsx#../ai-jsx::hash=4d13ba&locator=nextjs-demo%40workspace%3Apackages%2Fnextjs-demo"
-  dependencies:
-    cli-highlight: "npm:^2.1.11"
-    cli-spinners: "npm:^2.9.0"
-    find-up: "npm:^6.3.0"
-    got: "npm:^12.6.0"
-    gpt3-tokenizer: "npm:^1.1.5"
-    graphql: "npm:^16.6.0"
-    ink: "npm:^4.2.0"
-    ink-syntax-highlight: "npm:^1.0.1"
-    jest: "npm:^29.5.0"
-    langchain: "npm:^0.0.81"
-    load-json-file: "npm:^7.0.1"
-    lodash: "npm:^4.17.21"
-    ml-distance: "npm:^4.0.1"
-    openai: "npm:^3.2.1"
-    pino: "npm:^8.14.1"
-    react-use: "npm:^17.4.0"
-    sinon: "npm:^15.1.0"
-    terminal-link: "npm:^3.0.0"
-    tiny-typed-emitter: "npm:^2.1.0"
-    tsconfig-paths: "npm:^4.2.0"
-    utility-types: "npm:^3.10.0"
-    uuid: "npm:^9.0.0"
-    zod: "npm:^3.21.4"
-    zod-to-json-schema: "npm:^3.21.1"
-  peerDependencies:
-    react: ^16.8.0  || ^17.0.0 || ^18.0.0
-  checksum: e51b83d8ba21370bd646ab4f5058ddff862d7278eb4a7e2ff729a9b69f456fb47fe41e4350459b0c77603b4b9ed8adf6b4f34a4cffb1c0812c8a9b2da78ef4ac
-  languageName: node
-  linkType: hard
-
-"ai-jsx@npm:^0.2.0-1, ai-jsx@workspace:packages/ai-jsx":
+"ai-jsx@npm:^0.2.0-1, ai-jsx@npm:^0.2.0-4, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
@@ -9337,7 +9269,7 @@ __metadata:
     "@types/react-dom": "npm:^18.2.5"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.11"
     "@typescript-eslint/parser": "npm:^5.59.11"
-    ai-jsx: "file:../ai-jsx"
+    ai-jsx: "npm:^0.2.0-4"
     babel-jest: "npm:^27.4.2"
     babel-loader: "npm:^8.2.3"
     babel-plugin-named-asset-import: "npm:^0.3.8"
@@ -16382,7 +16314,7 @@ __metadata:
     "@types/react-dom": "npm:18.2.4"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.9"
     "@typescript-eslint/parser": "npm:^5.59.9"
-    ai-jsx: "file:../ai-jsx"
+    ai-jsx: "npm:^0.2.0-4"
     autoprefixer: "npm:10.4.14"
     classnames: "npm:^2.3.2"
     eslint: "npm:8.42.0"
@@ -21387,7 +21319,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"turbo@npm:^1.10.2":
+"turbo@npm:^1.10.3":
   version: 1.10.3
   resolution: "turbo@npm:1.10.3"
   dependencies:
