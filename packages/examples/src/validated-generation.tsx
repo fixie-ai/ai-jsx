@@ -4,7 +4,7 @@ import { JsonChatCompletion, YamlChatCompletion } from 'ai-jsx/batteries/constra
 import { showInspector } from 'ai-jsx/core/inspector';
 
 function App() {
-  const query = 'Create a random object describing an imaginary person that has a "name", "gender", and "age".';
+  const query = 'Create a nested family tree with names and ages. It should include a total of 5 people.';
   return (
     <>
       JSON generation example:{'\n'}

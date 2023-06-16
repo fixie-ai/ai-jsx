@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 import React from '../react';
-import { AI } from '../ai';
+import { AIComponent } from '../ai';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 import InputPrompt from '@/components/InputPrompt';
 import ResultContainer from '@/components/ResultContainer';
@@ -13,18 +13,18 @@ export default function BasicCompletion({ searchParams }: { searchParams: any })
     <>
       <InputPrompt label="Give the AI a topic" defaultValue={defaultValue} />
       <ResultContainer title={`AI writes a poem about ${query}`}>
-        <AI>
+        <AIComponent>
           <ChatCompletion temperature={1}>
             <UserMessage>Write me a poem about {query}</UserMessage>
           </ChatCompletion>
-        </AI>
+        </AIComponent>
       </ResultContainer>
       <ResultContainer title={`AI lists ten facts about ${query}`}>
-        <AI>
+        <AIComponent>
           <ChatCompletion temperature={1}>
             <UserMessage>Give me ten facts about {query}</UserMessage>
           </ChatCompletion>
-        </AI>
+        </AIComponent>
       </ResultContainer>
     </>
   );
