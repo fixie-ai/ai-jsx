@@ -1,7 +1,8 @@
 /** @jsx AI.createElement */
 import * as AI from './index.js';
 import React from 'react';
-import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
+import { SystemMessage, UserMessage } from '../core/completion.js';
+import { JsonChatCompletion } from '../batteries/constrained-output.js';
 
 function reactComponentName(component: React.JSXElementConstructor<any> | string) {
   return typeof component === 'string' ? component : component.name;
@@ -39,7 +40,7 @@ export async function UICompletion(
   collectComponents(example, true);
 
   const modelResult = await render(
-    <ChatCompletion>
+    <JsonChatCompletion>
       <SystemMessage>
         You are an AI who is an expert UI designer. The user will provide content in the form of text and you will
         respond using a set of React components to create a UI for the content. Here are the only available React
@@ -57,7 +58,7 @@ export async function UICompletion(
         explanatory prose. Do not use any elements (including HTML elements) other than the ones above.
       </SystemMessage>
       <UserMessage>{children}</UserMessage>
-    </ChatCompletion>
+    </JsonChatCompletion>
   );
 
   const validComponents = Object.fromEntries(Array.from(reactComponents).map((c) => [reactComponentName(c), c]));
