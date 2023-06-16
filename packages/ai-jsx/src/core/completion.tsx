@@ -178,7 +178,7 @@ export function FunctionCall({ name, args }: { name: string; args: Record<string
 /**
  * Provide a Function Response to the chat model.
  *
- * The function response tells the output of a previous <FunctionCall /> request. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
+ * The FunctionResponse provides the output of a previous <FunctionCall /> request. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
  *
  * This component can only be used within a ChatCompletion.
  *
