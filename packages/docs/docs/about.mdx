@@ -4,7 +4,11 @@ sidebar_position: 1
 slug: /
 ---
 
-# AI.JSX
+# About AI.JSX
+
+<p align="center">
+  <img src="img/ai-jsx.svg" alt="AI.JSX logo" width="300" />
+</p>
 
 AI.JSX is a framework that helps you build [AI-powered apps](./guides/brand-new.md). It aims to solve the following problems for developers:
 
@@ -31,6 +35,29 @@ function App() {
 showInspector(<App />);
 // ==> "Sky blue due to light."
 ```
+
+# Live Example
+
+The following is a CodeSandbox sandbox that shows a simple Hello World AI.JSX app.
+You can edit the code and see the results live in the browser.
+
+1. Add your `OPENAI_API_KEY` to the environment variables in the CodeSandbox UI.
+1. In the `Run Hello World` tab, click the "Reload" icon to re-run the app with your changes.
+
+export const SandboxExample = () => (
+  <iframe
+    style={{
+      border: '1px solid rgba(0, 0, 0, 0.1)',
+      borderRadius: '2px',
+    }}
+    width="100%"
+    height="700"
+    src="https://codesandbox.io/p/sandbox/late-pond-rnf95v?embed=1"
+    allowfullscreen
+  ></iframe>
+);
+
+<SandboxExample />;
 
 # Prerequisite Knowledge
 

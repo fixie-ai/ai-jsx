@@ -46,6 +46,11 @@ Follow these steps to make a new demo.
    ```
 
 1. Run the demo with:
+
    ```
+   # Make sure you've run this at least once since cloning the repo,
+   # or making any changes in packages/ai-jsx
+   yarn build
+
    yarn workspace examples run demo:your-demo
    ```

@@ -13,7 +13,7 @@ function App() {
 }
 const pinoStdoutLogger = pino({
   name: 'ai-jsx',
-  level: process.env.loglevel ?? 'debug',
+  level: process.env.loglevel ?? 'warn',
   transport: {
     target: 'pino-pretty',
     options: {

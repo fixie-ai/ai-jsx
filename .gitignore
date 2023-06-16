@@ -18,3 +18,4 @@ data
 *.log
 dist
 .turbo
+.vscode/settings.json

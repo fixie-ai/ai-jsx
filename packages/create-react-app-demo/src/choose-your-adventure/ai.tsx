@@ -62,9 +62,10 @@ function ButtonEnabledAgent({ conversation }: { conversation: any[] }) {
           display text to the user. Use UILine to display UI to the user. When the user clicks a button, you'll receive
           a message telling you which they clicked. Use your ability to show buttons to help the user accomplish their
           goal. Don't make the user type out a whole response if they can just click a button instead. For example, if
-          you the user a question with a finite set of choices, give them buttons to make those choices. Respond only
-          with JSON. Your entire response should be of type `Response`. Do not include anything outside of the
-          `Response` object. Include a combination of `TextLine` and `UILine` objects in your response.
+          you the user a question with a finite set of choices, give them buttons to make those choices. Try to make the
+          buttons include emoji, when possible. Respond only with JSON. Your entire response should be of type
+          `Response`. Do not include anything outside of the `Response` object. Include a combination of `TextLine` and
+          `UILine` objects in your response.
         </SystemMessage>
         {conversation.map((chatMessage) => {
           if (chatMessage.type === 'assistant') {

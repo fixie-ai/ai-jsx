@@ -7,6 +7,7 @@ import {
   SystemMessage,
   UserMessage,
 } from '../core/completion.js';
+import { ImageGenPropsWithChildren } from '../core/image-gen.js';
 import {
   ChatCompletionRequestMessage,
   ChatCompletionResponseMessage,
@@ -14,6 +15,8 @@ import {
   CreateChatCompletionResponse,
   CreateCompletionResponse,
   OpenAIApi,
+  CreateImageRequestSizeEnum,
+  CreateImageRequestResponseFormatEnum,
 } from 'openai';
 import * as LLMx from '../index.js';
 import { PropsOfComponent, Node } from '../index.js';
@@ -21,6 +24,7 @@ import GPT3Tokenizer from 'gpt3-tokenizer';
 import { Merge } from 'type-fest';
 import { Logger } from '../core/log.js';
 import { HttpError } from '../core/errors.js';
+import _ from 'lodash';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -127,7 +131,7 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
   );
 }
 
-type OpenAIMethod = 'createCompletion' | 'createChatCompletion';
+type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
 type AxiosResponse<M> = M extends OpenAIMethod ? Awaited<ReturnType<InstanceType<typeof OpenAIApi>[M]>> : never;
 
 export class OpenAIError<M extends OpenAIMethod> extends HttpError {
@@ -289,4 +293,61 @@ export async function* OpenAIChatModel(
   logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
 
   return currentMessage.content;
+}
+
+/**
+ * Generates an image from a prompt using the DALL-E model.
+ * @see https://platform.openai.com/docs/guides/images/introduction
+ *
+ * @returns the URL of the generated image.
+ *          If numSamples is greater than 1, URLs are separated by newlines.
+ */
+export async function DalleImageGen(
+  { numSamples = 1, size = '512x512', clipLongPrompt = true, children }: ImageGenPropsWithChildren,
+  { render, getContext, logger }: LLMx.ComponentContext
+) {
+  let prompt = await render(children);
+
+  // TODO: I only found the maximum length in their docs, not in the API itself.
+  const maxPromptLength = 1000;
+  if (clipLongPrompt && prompt.length > maxPromptLength) {
+    prompt = `${prompt.substring(0, maxPromptLength - 4)} ...`;
+  }
+
+  const openai = getContext(openAiClientContext);
+
+  let sizeEnum;
+  switch (size) {
+    case '256x256':
+      sizeEnum = CreateImageRequestSizeEnum._256x256;
+      break;
+    case '512x512':
+      sizeEnum = CreateImageRequestSizeEnum._512x512;
+      break;
+    case '1024x1024':
+      sizeEnum = CreateImageRequestSizeEnum._1024x1024;
+      break;
+    default:
+      throw new Error(`Invalid size ${size}. Dalle only supports 256x256, 512x512, and 1024x1024`);
+  }
+
+  const imageRequest = {
+    prompt,
+    n: numSamples,
+    size: sizeEnum,
+    response_format: CreateImageRequestResponseFormatEnum.Url,
+  };
+
+  logger.debug({ imageRequest }, 'Calling createImage');
+
+  const response = await openai.createImage(imageRequest);
+
+  if (response.status < 200 || response.status >= 300) {
+    throw new OpenAIError(response, 'createImage', JSON.stringify(response.data));
+  } else {
+    logger.debug({ statusCode: response.status, headers: response.headers }, 'createImage succeeded');
+  }
+
+  // return all image URLs as a newline-separated string
+  return _.map(response.data.data, 'url').join('\n');
 }

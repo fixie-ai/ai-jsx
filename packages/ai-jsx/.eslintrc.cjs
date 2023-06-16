@@ -42,6 +42,7 @@ module.exports = {
     'generator-star-spacing': 'off',
     'space-before-function-paren': 'off',
     'jsx-quotes': 'off',
+    'brace-style': 'off',
 
     // Add additional strictness beyond the recommended set
     '@typescript-eslint/parameter-properties': ['warn', { prefer: 'parameter-properties' }],
