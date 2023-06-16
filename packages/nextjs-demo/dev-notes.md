@@ -1,6 +1,6 @@
 ## Limitations
 
-This won't deploy to Vercel because we haven't published @fixieai/ai-jsx yet.
+This won't deploy to Vercel because we haven't published ai-jsx yet.
 
 The types are all broken, but we may be able to fix it with https://devblogs.microsoft.com/typescript/announcing-typescript-5-1/#decoupled-type-checking-between-jsx-elements-and-jsx-tag-types and the other new features in TS 5.1.
 

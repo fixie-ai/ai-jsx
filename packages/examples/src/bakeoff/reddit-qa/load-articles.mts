@@ -1,6 +1,6 @@
 /**
  * Run with:
- *    $ yarn tsx packages/examples/src/bakeoff/reddit-qa/load-articles.mts
+ *    $ yarn workspace examples tsx src/bakeoff/reddit-qa/load-articles.mts
  */
 
 import fetch from 'node-fetch';

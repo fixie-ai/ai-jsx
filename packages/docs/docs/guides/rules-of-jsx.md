@@ -66,7 +66,7 @@ Components take props as the first argument and ComponentContext (`packages/ai-j
 function MyComponent(props, componentContext) {}
 ```
 
-`componentContext` contains a `render` method, which you can use to render other JSX components:
+`componentContext` contains a `render` method, which you can use to render other JSX components. One reason you would want to do this is to take action based on what a component renders to, like validating that it's well-formed JSON:
 
 ```tsx
 function App() {
@@ -80,12 +80,14 @@ function App() {
 }
 
 /**
- * Interpret the model's response as JSON.
+ * Ensure the model's response is JSON.
  */
-function JsonOutput({ children }, { render }) {
+function ValidateJsonOutput({ children }, { render }): string {
+  // highlight-next-line
   const rendered = await render(children);
   try {
-    return JSON.parse(rendered);
+    JSON.parse(rendered);
+    return rendered;
   } catch (e) {
     throw new Error(`Could not parse model response as JSON: ${rendered}`);
   }
@@ -248,3 +250,7 @@ const catName = memo(
 Now, `catName` will result in a single model call, and its value will be reused everywhere that component appears in the tree.
 
 - API (`packages/ai-jsx/src/core/memoize.tsx`)
+
+# See Also
+
+- [JSX Build System Considerations](./jsx.md)

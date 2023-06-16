@@ -1,0 +1,16 @@
+{
+  "$schema": "https://codesandbox.io/schemas/tasks.json",
+  "setupTasks": [
+    {
+      "name": "Install Dependencies",
+      "command": "yarn install"
+    }
+  ],
+  "tasks": {
+    "start": {
+      "name": "Run Hello World Example",
+      "command": "yarn start",
+      "runAtStart": true
+    }
+  }
+}

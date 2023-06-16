@@ -2,12 +2,12 @@
 /** @jsx LLMx.createElement */
 /** @jsxFrag LLMx.Fragment */
 /* eslint-disable react/jsx-key */
-import * as LLMx from '@fixieai/ai-jsx';
+import * as LLMx from 'ai-jsx';
 import React, { useEffect, useRef } from 'react';
 import { z } from 'zod';
-import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
-import { memo } from '@fixieai/ai-jsx/core/memoize';
-import { OpenAI } from '@fixieai/ai-jsx/lib/openai';
+import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { memo } from 'ai-jsx/core/memoize';
+import { OpenAI } from 'ai-jsx/lib/openai';
 import { atom, useAtom } from 'jotai';
 import _ from 'lodash';
 
@@ -63,9 +63,10 @@ function ButtonEnabledAgent({ conversation }: { conversation: any[] }) {
           display text to the user. Use UILine to display UI to the user. When the user clicks a button, you'll receive
           a message telling you which they clicked. Use your ability to show buttons to help the user accomplish their
           goal. Don't make the user type out a whole response if they can just click a button instead. For example, if
-          you the user a question with a finite set of choices, give them buttons to make those choices. Respond only
-          with JSON. Your entire response should be of type `Response`. Do not include anything outside of the
-          `Response` object. Include a combination of `TextLine` and `UILine` objects in your response.
+          you the user a question with a finite set of choices, give them buttons to make those choices. Try to make the
+          buttons include emoji, when possible. Respond only with JSON. Your entire response should be of type
+          `Response`. Do not include anything outside of the `Response` object. Include a combination of `TextLine` and
+          `UILine` objects in your response.
         </SystemMessage>
         {conversation.map((chatMessage) => {
           if (chatMessage.type === 'assistant') {
@@ -102,11 +103,9 @@ function AI() {
     }
     setCallInProgress(true);
     isInProgressRef.current = true;
-    LLMx.createRenderContext({
-      logger: console.log,
-      // I couldn't get streaming to work here and I don't know why.
-      // Maybe because we're in the client and however Axios is doing it only works in Node?
-    })
+    // I couldn't get streaming to work here and I don't know why.
+    // Maybe because we're in the client and however Axios is doing it only works in Node?
+    LLMx.createRenderContext()
       .render(children)
       .then((finalFrame) => {
         isInProgressRef.current = false;

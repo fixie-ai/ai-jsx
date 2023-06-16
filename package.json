@@ -3,8 +3,13 @@
   "version": "0.0.0",
   "devDependencies": {
     "@types/prettier": "^2",
+    "eslint": "^8.42.0",
+    "eslint-import-resolver-node": "^0.3.7",
+    "eslint-import-resolver-typescript": "^3.5.5",
+    "eslint-plugin-import": "^2.27.5",
     "prettier": "^2.8.8",
-    "turbo": "^1.10.2"
+    "turbo": "^1.10.2",
+    "typescript": "^5.1.3"
   },
   "type": "module",
   "volta": {
@@ -17,7 +22,8 @@
     "format": "turbo format-for-turbo",
     "test": "turbo test",
     "build": "turbo build",
-    "postinstall": "turbo build"
+    "postinstall": "turbo build",
+    "publish-ai-jsx": "turbo test && turbo build && cd packages/ai-jsx && npm publish"
   },
   "private": true,
   "prettier": {
@@ -25,6 +31,7 @@
     "singleQuote": true
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "packages/sandboxes/*"
   ]
 }

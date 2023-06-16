@@ -1,9 +1,12 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import * as LLMx from '@fixieai/ai-jsx';
-import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
-import { showInspector } from '@fixieai/ai-jsx/core/inspector';
+import * as LLMx from 'ai-jsx';
+import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { ImageGen } from 'ai-jsx/core/image-gen';
+import { showInspector } from 'ai-jsx/core/inspector';
+import { memo } from 'ai-jsx/core/memoize';
+import { Node } from 'ai-jsx';
 
 function loadData() {
   const directoryOfThisFile = path.dirname(fileURLToPath(import.meta.url));
@@ -31,7 +34,7 @@ function MakeCharacter() {
   );
 }
 
-function Constitutional({ children }: { children: string }) {
+function Constitutional({ children }: { children: Node }) {
   return (
     <ChatCompletion>
       <SystemMessage>
@@ -43,8 +46,6 @@ function Constitutional({ children }: { children: string }) {
   );
 }
 
-// Disable the linter because this getting started file has two examples in one, and this one isn't used right now.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function WriteStory() {
   return (
     <ChatCompletion temperature={1}>
@@ -64,5 +65,18 @@ function WriteStory() {
   );
 }
 
-// showInspector(<WriteStory />)
-// console.log(await LLMx.createRenderContext().render(<WriteStory />));
+// Disable the linter because this getting started file has two examples in one, and this one isn't used right now.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function WriteStoryWithImage() {
+  const story = memo(<WriteStory />);
+  return (
+    <>
+      Banner URL: <ImageGen clipLongPrompt>Generate an image for this story: {story}</ImageGen>
+      {'\n\n'}
+      {story}
+    </>
+  );
+}
+
+// showInspector(<WriteStoryWithImage />)
+// console.log(await LLMx.createRenderContext().render(<WriteStoryWithImage />));

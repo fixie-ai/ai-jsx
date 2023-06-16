@@ -41,7 +41,7 @@ function AutomaticCompletionModel({ children, ...props }: ModelPropsWithChildren
   }
 
   throw new Error(
-    'No completion model was specified. Specify a CompletionProvider or set the OPENAI_API_KEY environment variable.'
+    'No completion model was specified. Set the OPENAI_API_KEY environment variable to use OpenAI or use an explicit CompletionProvider.'
   );
 }
 
@@ -59,7 +59,7 @@ function AutomaticChatModel({ children, ...props }: ModelPropsWithChildren) {
     );
   }
   throw new Error(
-    'No chat model was specified. Specify a ChatProvider or set the OPENAI_API_KEY environment variable.'
+    'No chat model was specified. Set the OPENAI_API_KEY environment variable to use OpenAI or use an explicit ChatProvider.'
   );
 }
 

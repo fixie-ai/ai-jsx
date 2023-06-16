@@ -2,10 +2,10 @@
  * Run this with `yarn demo:health-agent`
  */
 
-import * as LLMx from '@fixieai/ai-jsx';
-import { NaturalLanguageRouter, Route } from '@fixieai/ai-jsx/batteries/natural-language-router';
+import * as LLMx from 'ai-jsx';
+import { NaturalLanguageRouter, Route } from 'ai-jsx/batteries/natural-language-router';
 import fixtureUserData from './user-data.json';
-import { ChatCompletion, SystemMessage, UserMessage } from '@fixieai/ai-jsx/core/completion';
+import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { loadJsonFile } from 'load-json-file';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
