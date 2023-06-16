@@ -116,6 +116,7 @@ const config = {
       ({
         hashed: true,
         indexBlog: false,
+        highlightSearchTermsOnTargetPage: true,
         docsRouteBasePath: '/',
       }),
     ],
