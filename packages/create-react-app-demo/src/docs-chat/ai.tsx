@@ -4,9 +4,10 @@
 /* eslint-disable react/jsx-key */
 import * as LLMx from 'ai-jsx';
 import React, { useEffect, useRef } from 'react';
-import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { DocsQA, Document, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
 import { memo } from 'ai-jsx/core/memoize';
 import { atom, useAtom } from 'jotai';
+
 import _ from 'lodash';
 
 export class ChatMessage {
@@ -17,19 +18,33 @@ export class ChatMessage {
 export const conversationAtom = atom<ChatMessage[]>([]);
 export const modelCallInProgress = atom<boolean>(false);
 
-function DocsAgent({ conversation }: { conversation: any[] }) {
+const docText = await fetch('https://en.wikipedia.org/wiki/Portal:Current_events').then((r) => r.text());
+const doc = {
+  pageContent: [docText],
+  name: 'Current events',
+  metadata: {},
+};
+const docs = [doc];
+const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
+await corpus.startLoading();
+
+function ShowDoc({ doc }: { doc: Document<any> }) {
   return (
-      <ChatCompletion>
-        <SystemMessage>
-          You are an assistant who always responds to the user message with an annoying response.
-        </SystemMessage>
-        {conversation.map((chatMessage) => {
-          return (chatMessage.type === 'assistant') ?
-            <AssistantMessage>{chatMessage.content}</AssistantMessage> :
-            <UserMessage>{chatMessage.content}</UserMessage>;
-          })
-        }
-      </ChatCompletion>
+    <>
+      Title: {doc.metadata?.title ?? doc.name ?? 'Untitled'}
+      Content: {doc.pageContent}
+    </>
+  );
+}
+
+function DocsAgent({ conversation }: { conversation: any[] }) {
+  const query = _.last(conversation).content;
+  return (
+    <>
+      Q: {query}
+      {'\n'}
+      A: <DocsQA question={query} corpus={corpus} docComponent={ShowDoc} />
+    </>
   );
 }
 
@@ -57,7 +72,7 @@ function AI() {
           ...prev,
           {
             type: 'assistant',
-            content: finalFrame                
+            content: finalFrame,
           },
         ]);
       });

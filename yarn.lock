@@ -9237,6 +9237,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^5.59.11"
     "@typescript-eslint/parser": "npm:^5.59.11"
     ai-jsx: "npm:^0.2.0-4"
+    axios: "npm:^1.4.0"
     babel-jest: "npm:^27.4.2"
     babel-loader: "npm:^8.2.3"
     babel-plugin-named-asset-import: "npm:^0.3.8"

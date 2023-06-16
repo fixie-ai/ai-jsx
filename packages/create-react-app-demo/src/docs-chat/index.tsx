@@ -3,14 +3,13 @@ import { AIRoot, ChatMessage, conversationAtom, modelCallInProgress } from './ai
 import { useAtom } from 'jotai';
 import ResultContainer from '../ResultContainer.tsx';
 
-function ConversationItem({ response, }: { response: ChatMessage;}) {
-  const [, setConversation] = useAtom(conversationAtom);
-    const emoji = (response.type === 'user') ? '👤' : '🤖'
-    return (
-      <div>
-        <span className="font-bold">{emoji}:</span> "{response.content}"
-      </div>
-    );
+function ConversationItem({ response }: { response: ChatMessage }) {
+  const emoji = response.type === 'user' ? '👤' : '🤖';
+  return (
+    <div>
+      <span className="font-bold">{emoji}:</span> "{response.content}"
+    </div>
+  );
 }
 
 function ConversationHistory() {
@@ -39,7 +38,7 @@ function ConversationHistory() {
       <ul>
         {conversation.map((response, index) => (
           <li key={index} className="mt-4">
-            <ConversationItem response={response}/>
+            <ConversationItem response={response} />
           </li>
         ))}
       </ul>
