@@ -7252,7 +7252,6 @@ __metadata:
   resolution: "ai-jsx-monorepo-root@workspace:."
   dependencies:
     "@types/prettier": "npm:^2"
-    axios: "npm:^1.4.0"
     eslint: "npm:^8.42.0"
     eslint-import-resolver-node: "npm:^0.3.7"
     eslint-import-resolver-typescript: "npm:^3.5.5"
@@ -7277,6 +7276,7 @@ __metadata:
     "@types/uuid": "npm:^9"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.6"
     "@typescript-eslint/parser": "npm:^5.59.6"
+    axios: "npm:^1.4.0"
     cheerio: "npm:^1.0.0-rc.12"
     cli-highlight: "npm:^2.1.11"
     cli-spinners: "npm:^2.9.0"

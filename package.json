@@ -33,8 +33,5 @@
   "workspaces": [
     "packages/*",
     "packages/sandboxes/*"
-  ],
-  "dependencies": {
-    "axios": "^1.4.0"
-  }
+  ]
 }
