@@ -8,6 +8,7 @@ import {
   UserMessage,
   FunctionDefinition,
   FunctionParameter,
+  FunctionCall,
 } from '../core/completion.js';
 import { ImageGenPropsWithChildren } from '../core/image-gen.js';
 import {
@@ -256,11 +257,11 @@ export async function* OpenAIChatModel(
     name: functionDefinition.name,
     description: functionDefinition.description,
     parameters: {
-      type: "object",
+      type: 'object',
       required: Object.keys(functionDefinition.parameters).filter((name) => functionDefinition.parameters[name].required),
       properties: Object.keys(functionDefinition.parameters).reduce((map: Record<string, any>, paramName) => {
         map[paramName] = {
-          "type": functionDefinition.parameters[paramName].type,
+          type: functionDefinition.parameters[paramName].type,
         };
         return map;
       }, {})
@@ -290,28 +291,43 @@ export async function* OpenAIChatModel(
   type ChatCompletionDelta = Merge<
     CreateChatCompletionResponse,
     {
-      choices: { delta: Partial<ChatCompletionResponseMessage> }[];
+      choices: { delta: Partial<ChatCompletionResponseMessage>, finish_reason: string | undefined }[];
     }
   >;
 
-  const currentMessage = { content: '' } as Partial<ChatCompletionResponseMessage>;
+  const currentMessage = { content: undefined, function_call: undefined } as Partial<ChatCompletionResponseMessage>;
+  let finishReason: string | undefined = undefined;
   for await (const deltaMessage of openAiEventsToJson<ChatCompletionDelta>(
     chatResponse.data as unknown as AsyncIterable<Buffer>
   )) {
     logger.trace({ deltaMessage }, 'Got delta message');
+    finishReason = finishReason ?? deltaMessage.choices[0].finish_reason;
     const delta = deltaMessage.choices[0].delta;
     if (delta.role) {
       currentMessage.role = deltaMessage.choices[0].delta.role;
     }
     if (delta.content) {
+      currentMessage.content = currentMessage.content ?? '';
       currentMessage.content += delta.content;
       yield currentMessage.content;
+    }
+    if (delta.function_call) {
+      currentMessage.function_call = currentMessage.function_call ?? {name: '', arguments: ''};
+      if (delta.function_call.name) {
+        currentMessage.function_call.name += delta.function_call.name;
+      }
+      if (delta.function_call.arguments) {
+        currentMessage.function_call.arguments += delta.function_call.arguments;
+      }
     }
   }
 
   logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
 
-  return currentMessage.content;
+  if (currentMessage.function_call) {
+    return <FunctionCall name={currentMessage.function_call.name ?? ''} args={JSON.parse(currentMessage.function_call.arguments ?? '{}')} />;
+  }
+  return currentMessage.content ?? '';
 }
 
 /**

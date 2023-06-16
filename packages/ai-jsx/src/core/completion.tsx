@@ -1,3 +1,4 @@
+import { Integer } from 'type-fest';
 import * as LLMx from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
@@ -152,6 +153,46 @@ export function UserMessage({ children }: { name?: string; children: Node }) {
  */
 export function AssistantMessage({ children }: { children: Node }) {
   return children;
+}
+
+/**
+ * Provide a Function Call to the chat model.
+ *
+ * The function call tells the model a previous function that was invoked by the model. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
+ * In case of model returning a function call, ChatCompletion would return a <FunctionCall> component as well.
+ *
+ * This component can only be used within a ChatCompletion.
+ *
+ * @example
+ *    <ChatCompletion>
+ *      <UserMessage>What is 258 * 322?</UserMessage>
+ *      <FunctionCall name="evaluate_math" args={expression: "258 * 322"} />
+ *      <FunctionResponse name="evaluate_math">83076</FunctionResponse>
+ *
+ *    ==> "That would be 83,076."
+ */
+export function FunctionCall({ name, args }: { name: string, args: Record<string, string | number | boolean | null> }) {
+  return `Call function ${name} with ${JSON.stringify(args)}`;
+}
+
+/**
+ * Provide a Function Response to the chat model.
+ *
+ * The function response tells the output of a previous <FunctionCall /> request. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
+ *
+ * This component can only be used within a ChatCompletion.
+ *
+ * @example
+ *    <ChatCompletion>
+ *      <UserMessage>What is 258 * 322?</UserMessage>
+ *      <FunctionCall name="evaluate_math" args={expression: "258 * 322"} />
+ *      <FunctionResponse name="evaluate_math">83076</FunctionResponse>
+ *
+ *    ==> "That would be 83,076."
+ */
+export async function FunctionResponse({ name, children }: { name: string, children: Node }, {render}: LLMx.ComponentContext) {
+  let output = await render(children);
+  return `function ${name} returns ${output}`;
 }
 
 /**
