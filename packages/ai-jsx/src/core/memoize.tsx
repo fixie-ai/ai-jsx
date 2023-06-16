@@ -47,7 +47,7 @@ export function memo(renderable: Renderable): Node {
     return renderable;
   }
   if (LLMx.isIndirectNode(renderable)) {
-    const memoized = memo(LLMx.getIndirectNode(renderable));
+    const memoized = memo(LLMx.getReferencedNode(renderable));
     return LLMx.makeIndirectNode(renderable, memoized);
   }
 

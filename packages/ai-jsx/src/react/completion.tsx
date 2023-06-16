@@ -74,12 +74,18 @@ export async function UICompletion(
 
     const Component = validComponents[serializedComponent.name];
     if (!Component) {
-      logger.warn({ serializedComponent }, `Component not found for ${serializedComponent.name}`);
+      logger.warn(
+        { serializedComponent },
+        `Ignoring component "${serializedComponent.name}" that wasn't present in the example. ` +
+          'You may need to adjust the prompt or include an example of this component.'
+      );
       return null;
     }
 
     if (!('children' in serializedComponent)) {
-      throw new Error(`Unrecognized JSON: ${JSON.stringify(serializedComponent)}`);
+      throw new Error(
+        `JSON produced by the model did not fit the required schema: ${JSON.stringify(serializedComponent)}`
+      );
     }
 
     // Sometimes the model returns a singleton string instead of an array.

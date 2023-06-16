@@ -16,6 +16,9 @@ export interface Element<P> {
 }
 
 const indirectNodeSymbol = Symbol('AI.indirectNode');
+/**
+ * An opaque type with a reference to an LLMx.Node that represents it.
+ */
 export interface IndirectNode {
   [indirectNodeSymbol]: Node;
 }
@@ -31,7 +34,7 @@ export type Renderable = Node | PromiseLike<Renderable> | RenderableStream;
 export type ElementPredicate = (e: Element<any>) => boolean;
 export type PropsOfComponent<T extends Component<any>> = T extends Component<infer P> ? P : never;
 
-export type PartiallyRendered = string | Element<any> | IndirectNode;
+export type PartiallyRendered = string | Element<any>;
 
 export type StreamRenderer = (
   renderContext: RenderContext,
@@ -182,13 +185,10 @@ export function createContext<T>(defaultValue: T): Context<T> {
 }
 
 export function isIndirectNode(value: unknown): value is IndirectNode {
-  if (value !== null && typeof value === 'object') {
-    return indirectNodeSymbol in value;
-  }
-  return false;
+  return value !== null && typeof value === 'object' && indirectNodeSymbol in value;
 }
 
-export function getIndirectNode(value: IndirectNode): Node {
+export function getReferencedNode(value: IndirectNode): Node {
   return value[indirectNodeSymbol];
 }
 
@@ -223,7 +223,7 @@ async function* renderStream(
     return [];
   }
   if (isIndirectNode(renderable)) {
-    return yield* context.render(getIndirectNode(renderable), recursiveRenderOpts);
+    return yield* context.render(getReferencedNode(renderable), recursiveRenderOpts);
   }
   if (Array.isArray(renderable)) {
     interface InProgressRender {
