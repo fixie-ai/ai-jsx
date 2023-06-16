@@ -72,6 +72,14 @@
     "./lib/openai": {
       "import": "./dist/esm/lib/openai.js",
       "require": "./dist/cjs/lib/openai.cjs"
+    },
+    "./react": {
+      "import": "./dist/esm/react/index.js",
+      "require": "./dist/cjs/react/index.cjs"
+    },
+    "./react/completion": {
+      "import": "./dist/esm/react/completion.js",
+      "require": "./dist/cjs/react/completion.cjs"
     }
   },
   "files": [

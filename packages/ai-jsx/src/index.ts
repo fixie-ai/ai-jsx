@@ -15,8 +15,12 @@ export interface Element<P> {
   [attachedContext]?: RenderContext;
 }
 
-interface IndirectNode {
-  _magic: never;
+const indirectNodeSymbol = Symbol('AI.indirectNode');
+/**
+ * An opaque type with a reference to an LLMx.Node that represents it.
+ */
+export interface IndirectNode {
+  [indirectNodeSymbol]: Node;
 }
 
 export type Node = Element<any> | Literal | Node[] | IndirectNode;
@@ -30,7 +34,7 @@ export type Renderable = Node | PromiseLike<Renderable> | RenderableStream;
 export type ElementPredicate = (e: Element<any>) => boolean;
 export type PropsOfComponent<T extends Component<any>> = T extends Component<infer P> ? P : never;
 
-type PartiallyRendered = string | Element<any>;
+export type PartiallyRendered = string | Element<any>;
 
 export type StreamRenderer = (
   renderContext: RenderContext,
@@ -180,17 +184,19 @@ export function createContext<T>(defaultValue: T): Context<T> {
   return ctx;
 }
 
-const indirectWeakMap = new WeakMap<IndirectNode, Node>();
 export function isIndirectNode(value: unknown): value is IndirectNode {
-  return indirectWeakMap.has(value as IndirectNode);
+  return value !== null && typeof value === 'object' && indirectNodeSymbol in value;
 }
 
-export function getIndirectNode(value: IndirectNode): Node {
-  return indirectWeakMap.get(value) as Node;
+export function getReferencedNode(value: IndirectNode): Node {
+  return value[indirectNodeSymbol];
 }
 
-export function setIndirectNode(value: IndirectNode, node: Node) {
-  indirectWeakMap.set(value, node);
+export function makeIndirectNode<T extends object>(value: T, node: Node): T & IndirectNode {
+  return new Proxy(value, {
+    has: (target, p) => p === indirectNodeSymbol || p in target,
+    get: (target, p, receiver) => (p === indirectNodeSymbol ? node : Reflect.get(target, p, receiver)),
+  }) as T & IndirectNode;
 }
 
 // Default is a no-op logger.
@@ -217,7 +223,7 @@ async function* renderStream(
     return [];
   }
   if (isIndirectNode(renderable)) {
-    return yield* context.render(getIndirectNode(renderable), recursiveRenderOpts);
+    return yield* context.render(getReferencedNode(renderable), recursiveRenderOpts);
   }
   if (Array.isArray(renderable)) {
     interface InProgressRender {
