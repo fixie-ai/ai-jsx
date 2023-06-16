@@ -5,7 +5,11 @@ import ResultContainer from '../ResultContainer.tsx';
 
 function ConversationItem({ response }: { response: ChatMessage }) {
   const emoji = response.type === 'user' ? '👤' : '🤖';
-  return <div>{emoji}: {response.content}</div>;
+  return (
+    <div>
+      {emoji}: {response.content}
+    </div>
+  );
 }
 
 function ConversationHistory() {
@@ -13,7 +17,7 @@ function ConversationHistory() {
   const [callInProgress] = useAtom(modelCallInProgress);
 
   function handleInputSubmit(event: React.FormEvent<HTMLFormElement>) {
-    // @ts-expect-error 
+    // @ts-expect-error
     const element = event.target.elements.message;
     event.preventDefault();
     setConversation((prev) => [
@@ -23,15 +27,12 @@ function ConversationHistory() {
         content: element.value,
       },
     ]);
-        
-    element.value = '';    
+
+    element.value = '';
   }
 
   return (
-    <ResultContainer
-      title="Basic Chat"
-      description="In this demo, you can chat with a quirky assistant."
-    >
+    <ResultContainer title="Basic Chat" description="In this demo, you can chat with a quirky assistant.">
       <ul>
         {conversation.map((response, index) => (
           <li key={index} className="mt-4">

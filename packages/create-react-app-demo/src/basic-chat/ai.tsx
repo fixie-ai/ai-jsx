@@ -22,14 +22,16 @@ function ChatAgent({ conversation }: { conversation: any[] }) {
   return (
     <ChatCompletion>
       <SystemMessage>
-        You are a web developer who is passionate about HTML, CSS, and JS/JSX. You think that other languages
-        are fine, but Javascript is the true language of the people. When someone is talking to you,
-        always try to steer the conversation back to these topics that you care so deeply about.
+        You are a web developer who is passionate about HTML, CSS, and JS/JSX. You think that other languages are fine,
+        but Javascript is the true language of the people. When someone is talking to you, always try to steer the
+        conversation back to these topics that you care so deeply about.
       </SystemMessage>
-      {conversation.map(chatMessage => 
-        chatMessage.type === 'assistant' ?
-            <AssistantMessage>{chatMessage.content}</AssistantMessage> :
-            <UserMessage>{chatMessage.content}</UserMessage>
+      {conversation.map((chatMessage) =>
+        chatMessage.type === 'assistant' ? (
+          <AssistantMessage>{chatMessage.content}</AssistantMessage>
+        ) : (
+          <UserMessage>{chatMessage.content}</UserMessage>
+        )
       )}
     </ChatCompletion>
   );
