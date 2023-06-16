@@ -3,8 +3,9 @@ import classNames from 'classnames';
 import { NavLink } from 'react-router-dom';
 
 export default function NavBar() {
-  const pages = {
+  const pages = { 
     'Choose your own adventure': '/',
+    'Basic Chat': '/basic-chat',
     'JIT UI: React': '/recipe',
   };
 

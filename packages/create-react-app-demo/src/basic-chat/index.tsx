@@ -5,11 +5,7 @@ import ResultContainer from '../ResultContainer.tsx';
 
 function ConversationItem({ response }: { response: ChatMessage }) {
   const emoji = response.type === 'user' ? '👤' : '🤖';
-  return (
-    <div>
-      <span className="font-bold">{emoji}:</span> "{response.content}"
-    </div>
-  );
+  return <div>{emoji}: {response.content}</div>;
 }
 
 function ConversationHistory() {
@@ -17,23 +13,24 @@ function ConversationHistory() {
   const [callInProgress] = useAtom(modelCallInProgress);
 
   function handleInputSubmit(event: React.FormEvent<HTMLFormElement>) {
+    // @ts-expect-error 
+    const element = event.target.elements.message;
     event.preventDefault();
     setConversation((prev) => [
       ...prev,
       {
         type: 'user',
-        // @ts-expect-error
-        content: event.target.elements.message.value,
+        content: element.value,
       },
     ]);
-    // @ts-expect-error
-    event.target.elements.message.value = '';
+        
+    element.value = '';    
   }
 
   return (
     <ResultContainer
-      title="Document Chat"
-      description="In this demo, you can ask questions about the show 'Silicon Valley'."
+      title="Basic Chat"
+      description="In this demo, you can chat with a quirky assistant."
     >
       <ul>
         {conversation.map((response, index) => (
@@ -61,7 +58,7 @@ function ConversationHistory() {
   );
 }
 
-export function DocsChat() {
+export function BasicChat() {
   return (
     <>
       <AIRoot />
