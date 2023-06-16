@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/fixie-ai/ai-jsx/blob/master/packages/docs/static/img/ai-jsx.png?raw=true" alt="AI.JSX logo" width="300" />
+  <img src="https://docs.ai-jsx.com/img/ai-jsx.png" alt="AI.JSX logo" width="300" />
 </p>
 
 # AI.JSX
