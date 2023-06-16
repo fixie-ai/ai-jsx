@@ -34,10 +34,10 @@ const config = {
 
   plugins: [
     [
-      "docusaurus-plugin-typedoc",
+      'docusaurus-plugin-typedoc',
       {
         entryPoints: ['../ai-jsx/src/index.ts'],
-        tsconfig: "../ai-jsx/tsconfig.json",
+        tsconfig: '../ai-jsx/tsconfig.json',
       },
     ],
   ],
@@ -138,10 +138,6 @@ const config = {
       async: false,
     },
   ],
-
-  
-
-
 };
 
 module.exports = config;
