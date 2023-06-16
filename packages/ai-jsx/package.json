@@ -139,6 +139,7 @@
     "lodash": "^4.17.21",
     "ml-distance": "^4.0.1",
     "openai": "^3.2.1",
+    "openai-edge": "^1.0.0",
     "pino": "^8.14.1",
     "react-use": "^17.4.0",
     "sinon": "^15.1.0",

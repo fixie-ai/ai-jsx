@@ -75,7 +75,7 @@
   "proxy": "http://localhost:4000",
   "scripts": {
     "start:backend": "rm -rf backend/dist && tsc -p backend/tsconfig.json && node backend/dist/index.js",
-    "start": "concurrently \"scripts/start.cjs\" \"\"",
+    "start": "concurrently \"node scripts/start.cjs\" \"yarn run start:backend\"",
     "build": "node scripts/build.cjs",
     "test": "yarn run lint; yarn run typecheck",
     "dev": "yarn run start",

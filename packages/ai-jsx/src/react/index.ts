@@ -2,6 +2,9 @@ import * as ReactModule from 'react';
 import * as LLMx from '../index.js';
 import { Serialize } from './serialize.js';
 export * from '../index.js';
+import { openAiClientContext } from '../lib/openai.js';
+// @ts-expect-error
+import {OpenAIApi, Configuration } from 'openai-edge';
 
 export declare namespace JSX {
   // N.B. With this, all JSX elements will be assumed to be _both_ React and AI.jsx elements,
@@ -89,6 +92,20 @@ export function useAI(children: LLMx.Node) {
   return { result, isDone };
 }
 
+function UseOpenAIProxy({ children }: { children: LLMx.Node }) {
+  const openAIClient = new OpenAIApi(
+    new Configuration({
+      apiKey: process.env.OPENAI_API_KEY,
+    }),
+    // (...args: any[]) => {
+    //   console.log('fetch', ...args);
+    //   // @ts-expect-error
+    //   return window.fetch(...args);
+    // }
+  );
+  return LLMx.createElement(openAiClientContext.Provider, {value: openAIClient}, children);
+}
+
 /**
  * A JSX component that allows AI.jsx elements to be used in a React component tree.
  */
@@ -99,6 +116,7 @@ export function jsx({ children }: { children: LLMx.Node }, context?: any | LLMx.
   }
 
   const ai = useAI(children);
+  // const ai = useAI(LLMx.createElement(UseOpenAIProxy, {}, children));
   return ReactModule.createElement(ReactModule.Fragment, null, ai.result) as any;
 }
 

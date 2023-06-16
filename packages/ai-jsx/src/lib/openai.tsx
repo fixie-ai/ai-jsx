@@ -18,6 +18,8 @@ import {
   CreateImageRequestSizeEnum,
   CreateImageRequestResponseFormatEnum,
 } from 'openai';
+// @ts-expect-error
+import {OpenAIApi as OpenAIApiEdge, Configuration as ConfigurationEdge } from 'openai-edge';
 import * as LLMx from '../index.js';
 import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
@@ -40,12 +42,66 @@ type ChatOrCompletionModelOrBoth =
   | { chatModel: ValidChatModel; completionModel?: ValidCompletionModel }
   | { chatModel?: ValidChatModel; completionModel: ValidCompletionModel };
 
-const openAiClientContext = LLMx.createContext<OpenAIApi>(
-  new OpenAIApi(
-    new Configuration({
+const decoder = new TextDecoder()
+
+class OpenAIApiEdgeShim extends OpenAIApiEdge {
+  async createCompletion(
+    completionRequest: Parameters<OpenAIApiEdge['createCompletion']>[0],
+    config?: Parameters<OpenAIApi['createCompletion']>[1]
+  ) {
+    
+    const completionResponse = await super.createCompletion(completionRequest, config);
+    debugger;
+    if (!completionResponse.ok) {
+      throw new Error('fak');
+    }
+    if (!completionResponse.body) {
+      throw new Error('fak');
+    }
+    const reader = completionResponse.body.getReader();
+  }
+
+  async createChatCompletion(
+    completionRequest: Parameters<OpenAIApiEdge['createChatCompletion']>[0],
+    config?: Parameters<OpenAIApiEdge['createChatCompletion']>[1]
+  ) {
+
+    const chatResponse = await super.createChatCompletion(completionRequest, config);
+    if (!chatResponse.ok) {
+      throw new Error('fak');
+    }
+    if (!chatResponse.body) {
+      throw new Error('fak');
+    }
+    const reader = chatResponse.body.getReader();
+    async function* shimmedData() {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) {
+          return
+        }
+        yield decoder.decode(value);
+      }
+    }
+    return {
+      ...chatResponse,
+      data: shimmedData()
+    }
+  }
+}
+
+export const openAiClientContext = LLMx.createContext<OpenAIApi>(
+  new OpenAIApiEdgeShim(
+    // @ts-expect-error
+    new ConfigurationEdge({
       apiKey: process.env.OPENAI_API_KEY,
     })
-  )
+  ) as unknown as OpenAIApi
+  // new OpenAIApi(
+  //   new Configuration({
+  //     apiKey: process.env.OPENAI_API_KEY,
+  //   })
+  // )
 );
 
 export function OpenAI({
