@@ -7252,6 +7252,7 @@ __metadata:
   resolution: "ai-jsx-monorepo-root@workspace:."
   dependencies:
     "@types/prettier": "npm:^2"
+    axios: "npm:^1.4.0"
     eslint: "npm:^8.42.0"
     eslint-import-resolver-node: "npm:^0.3.7"
     eslint-import-resolver-typescript: "npm:^3.5.5"
@@ -9237,7 +9238,6 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^5.59.11"
     "@typescript-eslint/parser": "npm:^5.59.11"
     ai-jsx: "npm:^0.2.0-4"
-    axios: "npm:^1.4.0"
     babel-jest: "npm:^27.4.2"
     babel-loader: "npm:^8.2.3"
     babel-plugin-named-asset-import: "npm:^0.3.8"
