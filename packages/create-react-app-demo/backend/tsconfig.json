@@ -3,6 +3,6 @@
   "include": ["*.ts"],
   "compilerOptions": {
     "outDir": "dist",
-    "module": "esnext",
+    "module": "esnext"
   }
 }

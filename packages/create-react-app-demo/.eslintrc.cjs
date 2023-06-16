@@ -23,10 +23,7 @@ module.exports = {
   },
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: [
-      path.join(__dirname, 'tsconfig.json'),
-      path.join(__dirname, 'backend', 'tsconfig.json')
-    ],
+    project: [path.join(__dirname, 'tsconfig.json'), path.join(__dirname, 'backend', 'tsconfig.json')],
   },
   root: true,
   env: {
