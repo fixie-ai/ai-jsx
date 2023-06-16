@@ -7290,6 +7290,7 @@ __metadata:
     ink: "npm:^4.2.0"
     ink-syntax-highlight: "npm:^1.0.1"
     jest: "npm:^29.5.0"
+    js-yaml: "npm:^4.1.0"
     langchain: "npm:^0.0.81"
     load-json-file: "npm:^7.0.1"
     lodash: "npm:^4.17.21"
