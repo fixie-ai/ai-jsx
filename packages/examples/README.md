@@ -21,5 +21,5 @@ to run the `debate` example.
 You will need to get an API key for OpenAI from the [OpenAI API dashboard](https://platform.openai.com/account/api-keys) and set the `OPENAI_API_KEY` environment variable, in order for the
 examples to invoke the OpenAI language models.
 
-These apps are currently run directly with Node and do not have a web UI of their own.
+These apps run directly with Node and do not have a web UI of their own.
 For examples of apps with a web UI, see the [create-react-act-demo](../create-react-app-demo) and [nextjs-demo](../nextjs-demo) directories.
