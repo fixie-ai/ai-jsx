@@ -28,6 +28,36 @@ import { Logger } from '../core/log.js';
 import { HttpError } from '../core/errors.js';
 import _ from 'lodash';
 
+type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
+type AxiosResponse<M> = M extends OpenAIMethod ? Awaited<ReturnType<InstanceType<typeof OpenAIApi>[M]>> : never;
+
+export class OpenAIError<M extends OpenAIMethod> extends HttpError {
+  readonly errorResponse: Record<string, any> | null;
+
+  constructor(response: AxiosResponse<M>, method: M, responseText: string) {
+    let errorResponse = null as Record<string, any> | null;
+    let responseSuffix = '';
+    try {
+      errorResponse = JSON.parse(responseText);
+    } catch {
+      // The response wasn't JSON, ignore it.
+    }
+
+    const parsedMessage = errorResponse?.error?.message;
+    if (typeof parsedMessage === 'string' && parsedMessage.trim().length > 0) {
+      responseSuffix = `: ${parsedMessage}`;
+    }
+
+    super(
+      `OpenAI ${method} request failed with status code ${response.status}${responseSuffix}\n\nFor more information, see https://platform.openai.com/docs/guides/error-codes/api-errors`,
+      response.status,
+      responseText,
+      response.headers
+    );
+    this.errorResponse = errorResponse;
+  }
+}
+
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
   | 'text-davinci-003'
@@ -44,7 +74,7 @@ type ChatOrCompletionModelOrBoth =
 
 const decoder = new TextDecoder()
 
-class OpenAIApiEdgeShim extends OpenAIApiEdge {
+export class OpenAIApiEdgeShim extends OpenAIApiEdge {
   async createCompletion(
     completionRequest: Parameters<OpenAIApiEdge['createCompletion']>[0],
     config?: Parameters<OpenAIApi['createCompletion']>[1]
@@ -68,10 +98,10 @@ class OpenAIApiEdgeShim extends OpenAIApiEdge {
 
     const chatResponse = await super.createChatCompletion(completionRequest, config);
     if (!chatResponse.ok) {
-      throw new Error('fak');
+      throw new OpenAIError(chatResponse, 'createChatCompletion', await chatResponse.text())
     }
     if (!chatResponse.body) {
-      throw new Error('fak');
+      throw new OpenAIError(chatResponse, 'createChatCompletion', '')
     }
     const reader = chatResponse.body.getReader();
     async function* shimmedData() {
@@ -95,7 +125,10 @@ export const openAiClientContext = LLMx.createContext<OpenAIApi>(
     // @ts-expect-error
     new ConfigurationEdge({
       apiKey: process.env.OPENAI_API_KEY,
-    })
+    }),
+    (...fetchArgs) => {
+      window.fetch(...fetchArgs)
+    }
   ) as unknown as OpenAIApi
   // new OpenAIApi(
   //   new Configuration({
@@ -185,36 +218,6 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
       return [encoded.bpe[0], bias];
     })
   );
-}
-
-type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
-type AxiosResponse<M> = M extends OpenAIMethod ? Awaited<ReturnType<InstanceType<typeof OpenAIApi>[M]>> : never;
-
-export class OpenAIError<M extends OpenAIMethod> extends HttpError {
-  readonly errorResponse: Record<string, any> | null;
-
-  constructor(response: AxiosResponse<M>, method: M, responseText: string) {
-    let errorResponse = null as Record<string, any> | null;
-    let responseSuffix = '';
-    try {
-      errorResponse = JSON.parse(responseText);
-    } catch {
-      // The response wasn't JSON, ignore it.
-    }
-
-    const parsedMessage = errorResponse?.error?.message;
-    if (typeof parsedMessage === 'string' && parsedMessage.trim().length > 0) {
-      responseSuffix = `: ${parsedMessage}`;
-    }
-
-    super(
-      `OpenAI ${method} request failed with status code ${response.status}${responseSuffix}\n\nFor more information, see https://platform.openai.com/docs/guides/error-codes/api-errors`,
-      response.status,
-      responseText,
-      response.headers
-    );
-    this.errorResponse = errorResponse;
-  }
 }
 
 async function checkOpenAIResponse<M extends OpenAIMethod>(response: AxiosResponse<M>, logger: Logger, method: M) {

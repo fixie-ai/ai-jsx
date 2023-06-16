@@ -115,8 +115,8 @@ export function jsx({ children }: { children: LLMx.Node }, context?: any | LLMx.
     return children;
   }
 
-  const ai = useAI(children);
-  // const ai = useAI(LLMx.createElement(UseOpenAIProxy, {}, children));
+  // const ai = useAI(children);
+  const ai = useAI(LLMx.createElement(UseOpenAIProxy, {}, children));
   return ReactModule.createElement(ReactModule.Fragment, null, ai.result) as any;
 }
 
