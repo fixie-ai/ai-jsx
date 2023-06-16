@@ -7262,40 +7262,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"ai-jsx@file:../ai-jsx::locator=examples%40workspace%3Apackages%2Fexamples":
-  version: 0.2.0-4
-  resolution: "ai-jsx@file:../ai-jsx#../ai-jsx::hash=4d13ba&locator=examples%40workspace%3Apackages%2Fexamples"
-  dependencies:
-    cli-highlight: "npm:^2.1.11"
-    cli-spinners: "npm:^2.9.0"
-    find-up: "npm:^6.3.0"
-    got: "npm:^12.6.0"
-    gpt3-tokenizer: "npm:^1.1.5"
-    graphql: "npm:^16.6.0"
-    ink: "npm:^4.2.0"
-    ink-syntax-highlight: "npm:^1.0.1"
-    jest: "npm:^29.5.0"
-    langchain: "npm:^0.0.81"
-    load-json-file: "npm:^7.0.1"
-    lodash: "npm:^4.17.21"
-    ml-distance: "npm:^4.0.1"
-    openai: "npm:^3.2.1"
-    pino: "npm:^8.14.1"
-    react-use: "npm:^17.4.0"
-    sinon: "npm:^15.1.0"
-    terminal-link: "npm:^3.0.0"
-    tiny-typed-emitter: "npm:^2.1.0"
-    tsconfig-paths: "npm:^4.2.0"
-    utility-types: "npm:^3.10.0"
-    uuid: "npm:^9.0.0"
-    zod: "npm:^3.21.4"
-    zod-to-json-schema: "npm:^3.21.1"
-  peerDependencies:
-    react: ^16.8.0  || ^17.0.0 || ^18.0.0
-  checksum: e51b83d8ba21370bd646ab4f5058ddff862d7278eb4a7e2ff729a9b69f456fb47fe41e4350459b0c77603b4b9ed8adf6b4f34a4cffb1c0812c8a9b2da78ef4ac
-  languageName: node
-  linkType: hard
-
 "ai-jsx@npm:^0.2.0-1, ai-jsx@npm:^0.2.0-4, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
@@ -11205,7 +11171,7 @@ __metadata:
     "@types/uuid": "npm:^9.0.2"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.6"
     "@typescript-eslint/parser": "npm:^5.59.6"
-    ai-jsx: "file:../ai-jsx"
+    ai-jsx: "npm:^0.2.0-4"
     axios: "npm:^1.4.0"
     csv-stringify: "npm:^6.4.0"
     eslint: "npm:^8.40.0"
