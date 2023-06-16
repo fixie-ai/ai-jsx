@@ -11,7 +11,7 @@ const config = {
   favicon: 'img/ai-jsx.svg',
 
   // Set the production url of your site here
-  url: 'https://ai-jsx-docs.vercel.app/',
+  url: 'https://docs.ai-jsx.com/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
@@ -60,7 +60,9 @@ const config = {
         title: 'AI.JSX',
         logo: {
           alt: 'AI.JSX Logo',
-          src: 'img/ai-jsx.png',
+          src: 'img/ai-jsx-icon.png',
+          srcDark: 'img/ai-jsx-icon-dark.png',
+          href: 'https://docs.ai-jsx.com/',
         },
         items: [
           {
@@ -101,7 +103,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © 2023 Fixie AI`,
+        copyright: `Copyright © 2023 Fixie.ai`,
       },
       prism: {
         theme: lightCodeTheme,
