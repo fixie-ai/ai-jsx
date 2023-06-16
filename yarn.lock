@@ -2385,7 +2385,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@docusaurus/plugin-google-gtag@npm:2.4.1":
+"@docusaurus/plugin-google-gtag@npm:2.4.1, @docusaurus/plugin-google-gtag@npm:^2.4.1":
   version: 2.4.1
   resolution: "@docusaurus/plugin-google-gtag@npm:2.4.1"
   dependencies:
@@ -10054,6 +10054,7 @@ __metadata:
   dependencies:
     "@docusaurus/core": "npm:2.4.1"
     "@docusaurus/module-type-aliases": "npm:2.4.1"
+    "@docusaurus/plugin-google-gtag": "npm:^2.4.1"
     "@docusaurus/preset-classic": "npm:2.4.1"
     "@mdx-js/react": "npm:^1.6.22"
     "@tsconfig/docusaurus": "npm:^1.0.5"
