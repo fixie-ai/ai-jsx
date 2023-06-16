@@ -9,6 +9,7 @@ import {
   FunctionDefinition,
   FunctionParameter,
   FunctionCall,
+  FunctionResponse,
 } from '../core/completion.js';
 import { ImageGenPropsWithChildren } from '../core/image-gen.js';
 import {
@@ -223,7 +224,7 @@ export async function* OpenAIChatModel(
   { render, getContext, logger }: LLMx.ComponentContext
 ) {
   const messageElements = await render(props.children, {
-    stop: (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage,
+    stop: (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage || e.tag == FunctionCall || e.tag == FunctionResponse,
   });
   yield '';
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
@@ -244,6 +245,21 @@ export async function* OpenAIChatModel(
           return {
             role: 'assistant',
             content: await render(message),
+          };
+        case FunctionCall:
+          return {
+            role: 'assistant',
+            content: '',
+            function_call: {
+              name: message.props.name,
+              arguments: JSON.stringify(message.props.args),
+            }
+          };
+        case FunctionResponse:
+          return {
+            role: 'function',
+            name: message.props.name,
+            content: await render(message.props.children),
           };
         default:
           throw new Error(

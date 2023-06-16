@@ -7,6 +7,7 @@ export interface ModelProps {
   temperature?: number;
   maxTokens?: number;
   stop?: string[];
+  functionCall?: string | {[name: string]: string};
 }
 
 export type ModelPropsWithChildren = ModelProps & {
@@ -191,7 +192,7 @@ export function FunctionCall({ name, args }: { name: string, args: Record<string
  *    ==> "That would be 83,076."
  */
 export async function FunctionResponse({ name, children }: { name: string, children: Node }, {render}: LLMx.ComponentContext) {
-  let output = await render(children);
+  const output = await render(children);
   return `function ${name} returns ${output}`;
 }
 

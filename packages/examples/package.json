@@ -35,6 +35,7 @@
     "demo:debug": "yarn build && node dist/debug.js",
     "demo:summarizer": "yarn build && node dist/summarizer.js",
     "demo:use-tools": "yarn build && node dist/use-tools.js",
+    "demo:chat-function-call": "yarn build && node dist/chat-function-call.js",
     "demo:health-agent": "yarn build && node dist/bakeoff/health-agent/ai-jsx.js",
     "demo:reddit": "yarn build && node dist/bakeoff/reddit-qa/ai-jsx.js",
     "demo:prompting-basics": "yarn build && node dist/prompting-basics.js",
