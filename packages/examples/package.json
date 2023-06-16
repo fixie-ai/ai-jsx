@@ -10,6 +10,7 @@
     "@typescript-eslint/parser": "^5.59.6",
     "eslint": "^8.40.0",
     "eslint-config-nth": "^2.0.1",
+    "mathjs": "^11.8.1",
     "pino-pretty": "^10.0.0",
     "tsx": "^3.12.7",
     "typescript": "^5.1.3"
@@ -32,6 +33,7 @@
     "demo:inspector": "tsx src/inspector.tsx",
     "demo:router": "tsx src/router.tsx",
     "demo:debug": "tsx src/debug.tsx",
+    "demo:use-tools": "tsx src/use-tools.tsx",
     "demo:summarizer": "tsx src/summarizer.tsx",
     "demo:health-agent": "tsx src/bakeoff/health-agent/ai-jsx.tsx",
     "demo:reddit": "tsx src/bakeoff/reddit-qa/ai-jsx.tsx",

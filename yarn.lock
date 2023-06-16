@@ -1854,7 +1854,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.3, @babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.18.6, @babel/runtime@npm:^7.20.13, @babel/runtime@npm:^7.20.7, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.9.2":
+"@babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.3, @babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.18.6, @babel/runtime@npm:^7.20.13, @babel/runtime@npm:^7.20.7, @babel/runtime@npm:^7.22.5, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.9.2":
   version: 7.22.5
   resolution: "@babel/runtime@npm:7.22.5"
   dependencies:
@@ -2908,7 +2908,7 @@ __metadata:
     load-json-file: "npm:^7.0.1"
     lodash: "npm:^4.17.21"
     node-fetch: "npm:^3.3.1"
-    openai: "npm:^3.2.1"
+    openai: "npm:^3.3.0"
     pino: "npm:^8.14.1"
     pino-pretty: "npm:^10.0.0"
     react: "npm:^18.2.0"
@@ -8657,6 +8657,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"complex.js@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "complex.js@npm:2.1.1"
+  checksum: d9f2acf570c29df4c8b2a9f2cc3992c6f783e5c534be9606f8c61115714e0eea6f05469e120417328153cb4296633f09b353cc2da65ace806e26f7aef73f0c62
+  languageName: node
+  linkType: hard
+
 "compressible@npm:~2.0.16":
   version: 2.0.18
   resolution: "compressible@npm:2.0.18"
@@ -9401,7 +9408,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"decimal.js@npm:^10.2.1":
+"decimal.js@npm:^10.2.1, decimal.js@npm:^10.4.3":
   version: 10.4.3
   resolution: "decimal.js@npm:10.4.3"
   checksum: 0fbf4c97adc9826a2f1cf2ae8be8cc00cca3f2b61643ee19f0dd8ee55f11385ed0111d77c8cd234e151c80da1454b20c8e61f0354e3b90b5bec3a72379359049
@@ -10309,6 +10316,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"escape-latex@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "escape-latex@npm:1.2.0"
+  checksum: c49d653bc06d9b21a87a8308fa016383044b23a2e399fcc3db6b133d1106db041b8ec9b80f9d0f6514f0c0a14990d944a81c04408d80ec0fae997477333b32b4
+  languageName: node
+  linkType: hard
+
 "escape-string-regexp@npm:^1.0.5":
   version: 1.0.5
   resolution: "escape-string-regexp@npm:1.0.5"
@@ -10856,6 +10870,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^5.59.6"
     eslint: "npm:^8.40.0"
     eslint-config-nth: "npm:^2.0.1"
+    mathjs: "npm:^11.8.1"
     pino-pretty: "npm:^10.0.0"
     tsx: "npm:^3.12.7"
     typescript: "npm:^5.1.3"
@@ -13338,6 +13353,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"javascript-natural-sort@npm:^0.7.1":
+  version: 0.7.1
+  resolution: "javascript-natural-sort@npm:0.7.1"
+  checksum: 1eef5ae7f34691e9febdcfe1fa44c1a9436631fb7b93a48ab614ce460e3ab344abf6a341bd6d1a82f0df7ac7e8040df360d9a643d7651978c92e7fa9b9f01d23
+  languageName: node
+  linkType: hard
+
 "jest-changed-files@npm:^27.5.1":
   version: 27.5.1
   resolution: "jest-changed-files@npm:27.5.1"
@@ -15158,6 +15180,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mathjs@npm:^11.8.1":
+  version: 11.8.1
+  resolution: "mathjs@npm:11.8.1"
+  dependencies:
+    "@babel/runtime": "npm:^7.22.5"
+    complex.js: "npm:^2.1.1"
+    decimal.js: "npm:^10.4.3"
+    escape-latex: "npm:^1.2.0"
+    fraction.js: "npm:^4.2.0"
+    javascript-natural-sort: "npm:^0.7.1"
+    seedrandom: "npm:^3.0.5"
+    tiny-emitter: "npm:^2.1.0"
+    typed-function: "npm:^4.1.0"
+  bin:
+    mathjs: bin/cli.js
+  checksum: ae47a811d56daf6ac9881db8069893292bf7895675cb6261ac9e623ebb4d4b10f387594cc87b6a73f278563b3a6326abda1248fa59e6aeb33009d783493a6384
+  languageName: node
+  linkType: hard
+
 "mdast-squeeze-paragraphs@npm:^4.0.0":
   version: 4.0.0
   resolution: "mdast-squeeze-paragraphs@npm:4.0.0"
@@ -16147,13 +16188,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:^3.2.0, openai@npm:^3.2.1":
+"openai@npm:^3.2.0":
   version: 3.2.1
   resolution: "openai@npm:3.2.1"
   dependencies:
     axios: "npm:^0.26.0"
     form-data: "npm:^4.0.0"
   checksum: 5c6e735c4b58f742753cab14e84b89e702024ef88528b56594287c8632c420e052c8732616d5a167cebb3052a372b65a929aaa6fe2b16a3c91373efa9e21d717
+  languageName: node
+  linkType: hard
+
+"openai@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "openai@npm:3.3.0"
+  dependencies:
+    axios: "npm:^0.26.0"
+    form-data: "npm:^4.0.0"
+  checksum: bd57092163aab68b7e6b84c44eee2b7c5f301e616f0e0c226cf9aaae317d40c1f5d869866ae1ad414bb8457e71edc146dd88c55620c9029f68e7b4eeed584968
   languageName: node
   linkType: hard
 
@@ -19216,6 +19267,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"seedrandom@npm:^3.0.5":
+  version: 3.0.5
+  resolution: "seedrandom@npm:3.0.5"
+  checksum: c04d9a1c1c28bc1d5737f5fb02291ad56c34d57599034ce4a0e65578a84c3128d81d20d70729e0e32ef57e3c6b914b3751cbba95e9dddbd0212a405b2f921119
+  languageName: node
+  linkType: hard
+
 "select-hose@npm:^2.0.0":
   version: 2.0.0
   resolution: "select-hose@npm:2.0.0"
@@ -20465,6 +20523,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tiny-emitter@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "tiny-emitter@npm:2.1.0"
+  checksum: 3b905925cfa3f75302be0f324d2d7c1cf563c09304bbd40bf38c3abf3b8a93f2f2aa3a2e4b099400a9a1f44bc087fab42800314e8a5ea71cb81bc91ea2d8f1bc
+  languageName: node
+  linkType: hard
+
 "tiny-invariant@npm:^1.0.2":
   version: 1.3.1
   resolution: "tiny-invariant@npm:1.3.1"
@@ -20851,6 +20916,13 @@ __metadata:
     for-each: "npm:^0.3.3"
     is-typed-array: "npm:^1.1.9"
   checksum: bd196be0cb6c267e1fc8c3d54f19c1059d1082e0baf0f6735b39ed2a01e9dd2fef0593b1b03e0bdb9c29d1e6e34bbb1498f951a19b4c78bc5c7af6786fc3c6b6
+  languageName: node
+  linkType: hard
+
+"typed-function@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "typed-function@npm:4.1.0"
+  checksum: 987d8007aeb2809a27347b91e1dd317c32e33b2083468caba863109d72be424bbe10378ab376457da65ddd9567b1fd3c2a1b26780ebcbcbffe56eb04d971f7f4
   languageName: node
   linkType: hard
 

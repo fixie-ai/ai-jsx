@@ -6,8 +6,11 @@ import {
   ModelPropsWithChildren,
   SystemMessage,
   UserMessage,
+  FunctionDefinition,
+  FunctionParameter,
 } from '../core/completion.js';
 import {
+  ChatCompletionFunctions,
   ChatCompletionRequestMessage,
   ChatCompletionResponseMessage,
   Configuration,
@@ -19,6 +22,7 @@ import * as LLMx from '../index.js';
 import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import { Merge } from 'type-fest';
+import { functions } from 'lodash';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -179,7 +183,7 @@ export async function* OpenAICompletionModel(
 }
 
 export async function* OpenAIChatModel(
-  props: ModelPropsWithChildren & { model: ValidChatModel; logitBias?: Record<string, number> },
+  props: ModelPropsWithChildren & { model: ValidChatModel; logitBias?: Record<string, number>; functionDefinitions?: FunctionDefinition[] },
   { render, getContext, logger }: LLMx.ComponentContext
 ) {
   const messageElements = await render(props.children, {
@@ -213,12 +217,28 @@ export async function* OpenAIChatModel(
     })
   );
 
+  const openaiFunctions: ChatCompletionFunctions[] | undefined = props.functionDefinitions?.map((functionDefinition) => ({
+    name: functionDefinition.name,
+    description: functionDefinition.description,
+    parameters: {
+      type: "object",
+      required: Object.keys(functionDefinition.parameters).filter((name) => functionDefinition.parameters[name].required),
+      properties: Object.keys(functionDefinition.parameters).reduce((map: Record<string, any>, paramName) => {
+        map[paramName] = {
+          "type": functionDefinition.parameters[paramName].type,
+        };
+        return map;
+      }, {})
+    }
+  }));
+
   const openai = getContext(openAiClientContext);
   const chatCompletionRequest = {
     model: props.model,
     max_tokens: props.maxTokens,
     temperature: props.temperature,
     messages,
+    functions: openaiFunctions,
     stop: props.stop,
     logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
     stream: true,

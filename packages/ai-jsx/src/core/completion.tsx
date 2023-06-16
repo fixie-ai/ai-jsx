@@ -14,6 +14,18 @@ export type ModelPropsWithChildren = ModelProps & {
 
 export type ModelComponent<T extends ModelPropsWithChildren> = Component<T>;
 
+export type FunctionDefinition = {
+  name: string;
+  description?: string;
+  parameters: Record<string, FunctionParameter>;
+}
+
+export type FunctionParameter = {
+  description?: string;
+  type?: string;
+  required: boolean;
+}
+
 /**
  * If env var `OPENAI_API_KEY` is defined, use Open AI as the completion model provider.
  *
