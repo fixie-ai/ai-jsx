@@ -1,4 +1,3 @@
-import { Integer } from 'type-fest';
 import * as LLMx from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
