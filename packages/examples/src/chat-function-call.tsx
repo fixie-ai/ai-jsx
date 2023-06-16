@@ -80,8 +80,8 @@ const pinoStdoutLogger = pino({
   },
 });
 
-// showInspector(<ModelProducesFunctionCall query="What is 2523231 * 2382382?" />)
-showInspector(<ModelProducesFinalResponse query="What is 2523231 * 2382382?" />);
+showInspector(<ModelProducesFunctionCall query="What is 2523231 * 2382382?" />)
+// showInspector(<ModelProducesFinalResponse query="What is 2523231 * 2382382?" />);
 // console.log(
 //   await LLMx.createRenderContext({logger: new PinoLogger(pinoStdoutLogger)}).render(
 //     <App query="What is 2523231 * 2382382?" />
