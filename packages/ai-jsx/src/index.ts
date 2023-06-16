@@ -141,7 +141,7 @@ export function createElement<P extends { children: C | C[] }, C>(
 ): Element<P> {
   const propsToPass = {
     ...(props ?? {}),
-    children: children.length == 1 ? children[0] : children,
+    ...(children.length === 0 ? {} : { children: children.length === 1 ? children[0] : children }),
   } as P;
 
   const result = {
