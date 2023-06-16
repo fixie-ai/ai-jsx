@@ -66,7 +66,7 @@ Components take props as the first argument and ComponentContext (`packages/ai-j
 function MyComponent(props, componentContext) {}
 ```
 
-`componentContext` contains a `render` method, which you can use to render other JSX components:
+`componentContext` contains a `render` method, which you can use to render other JSX components. One reason you would want to do this is to take action based on what a component renders to, like validating that it's well-formed JSON:
 
 ```tsx
 function App() {

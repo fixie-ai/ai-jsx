@@ -183,3 +183,34 @@ $ grep -i 'starting modelcall' packages/ai-jsx/ai-jsx.log | yarn workspace ai-js
   }
 ],
 ```
+
+## Beyond Text: Image Generation
+
+You are not restricted by text models. Let's create an image for the story as well:
+
+```tsx title="index.tsx"
+function StoryWithImage() {
+  const story = memo(<WriteStory />);
+  return (
+    <>
+      Banner URL: <ImageGen clipLongPrompt>Generate an image for this story: {story}</ImageGen>
+      {'\n\n'}
+      {story}
+    </>
+  );
+}
+```
+
+The `<ImageGen>` by default uses [Dalle](https://platform.openai.com/docs/guides/images/introduction).
+Since the story will likely be longer than the model's prompt length, we allow the model to clip it using the `clipLongPrompt` parameter.
+
+Note that we also used a new component, `memo`. If we simply use `<WriteStory />` twice (even if you assign it to a variable), you will have two separate LLM calls and possibly two different stories as a result.
+For reference see [Memoization](guides/rules-of-jsx.md#Memoization).
+
+Running the above will give us something like this:
+
+> Banner URL: https://... (redacted)
+>
+> One day, Kaida received a message from a distant land, Eldrid. The message was from Nara, who had heard about Kaida's reputation as a Protector and reached out for assistance.
+>
+> (Clipped for brevity)

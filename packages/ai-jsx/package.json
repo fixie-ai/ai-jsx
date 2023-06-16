@@ -29,6 +29,10 @@
       "import": "./dist/esm/core/completion.js",
       "require": "./dist/cjs/core/completion.cjs"
     },
+    "./core/image-gen": {
+      "import": "./dist/esm/core/image-gen.js",
+      "require": "./dist/cjs/core/image-gen.js"
+    },
     "./core/debug": {
       "import": "./dist/esm/core/debug.js",
       "require": "./dist/cjs/core/debug.cjs"
