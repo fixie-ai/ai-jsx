@@ -107,6 +107,12 @@ const config = {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
       },
+      mermaid: {
+        theme: {
+          light: 'neutral',
+          dark: 'dark',
+        },
+      },
     }),
 
   scripts: [
@@ -115,6 +121,11 @@ const config = {
       async: false,
     },
   ],
+
+  markdown: {
+    mermaid: true,
+  },
+  themes: ['@docusaurus/theme-mermaid'],
 };
 
 module.exports = config;
