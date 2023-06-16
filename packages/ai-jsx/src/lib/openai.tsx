@@ -303,16 +303,10 @@ export async function* OpenAIChatModel(
  *          If numSamples is greater than 1, URLs are separated by newlines.
  */
 export async function DalleImageGen(
-  { numSamples = 1, size = '512x512', clipLongPrompt = true, children }: ImageGenPropsWithChildren,
+  { numSamples = 1, size = '512x512', children }: ImageGenPropsWithChildren,
   { render, getContext, logger }: LLMx.ComponentContext
 ) {
-  let prompt = await render(children);
-
-  // TODO: I only found the maximum length in their docs, not in the API itself.
-  const maxPromptLength = 1000;
-  if (clipLongPrompt && prompt.length > maxPromptLength) {
-    prompt = `${prompt.substring(0, maxPromptLength - 4)} ...`;
-  }
+  const prompt = await render(children);
 
   const openai = getContext(openAiClientContext);
 
