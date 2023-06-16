@@ -220,11 +220,20 @@ export async function* OpenAICompletionModel(
 }
 
 export async function* OpenAIChatModel(
-  props: ModelPropsWithChildren & { model: ValidChatModel; logitBias?: Record<string, number>; functionDefinitions?: FunctionDefinition[] },
+  props: ModelPropsWithChildren & {
+    model: ValidChatModel;
+    logitBias?: Record<string, number>;
+    functionDefinitions?: FunctionDefinition[];
+  },
   { render, getContext, logger }: LLMx.ComponentContext
 ) {
   const messageElements = await render(props.children, {
-    stop: (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage || e.tag == FunctionCall || e.tag == FunctionResponse,
+    stop: (e) =>
+      e.tag == SystemMessage ||
+      e.tag == UserMessage ||
+      e.tag == AssistantMessage ||
+      e.tag == FunctionCall ||
+      e.tag == FunctionResponse,
   });
   yield '';
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
@@ -253,7 +262,7 @@ export async function* OpenAIChatModel(
             function_call: {
               name: message.props.name,
               arguments: JSON.stringify(message.props.args),
-            }
+            },
           };
         case FunctionResponse:
           return {
@@ -269,20 +278,24 @@ export async function* OpenAIChatModel(
     })
   );
 
-  const openaiFunctions: ChatCompletionFunctions[] | undefined = props.functionDefinitions?.map((functionDefinition) => ({
-    name: functionDefinition.name,
-    description: functionDefinition.description,
-    parameters: {
-      type: 'object',
-      required: Object.keys(functionDefinition.parameters).filter((name) => functionDefinition.parameters[name].required),
-      properties: Object.keys(functionDefinition.parameters).reduce((map: Record<string, any>, paramName) => {
-        map[paramName] = {
-          type: functionDefinition.parameters[paramName].type,
-        };
-        return map;
-      }, {})
-    }
-  }));
+  const openaiFunctions: ChatCompletionFunctions[] | undefined = props.functionDefinitions?.map(
+    (functionDefinition) => ({
+      name: functionDefinition.name,
+      description: functionDefinition.description,
+      parameters: {
+        type: 'object',
+        required: Object.keys(functionDefinition.parameters).filter(
+          (name) => functionDefinition.parameters[name].required
+        ),
+        properties: Object.keys(functionDefinition.parameters).reduce((map: Record<string, any>, paramName) => {
+          map[paramName] = {
+            type: functionDefinition.parameters[paramName].type,
+          };
+          return map;
+        }, {}),
+      },
+    })
+  );
 
   const openai = getContext(openAiClientContext);
   const chatCompletionRequest = {
@@ -307,7 +320,7 @@ export async function* OpenAIChatModel(
   type ChatCompletionDelta = Merge<
     CreateChatCompletionResponse,
     {
-      choices: { delta: Partial<ChatCompletionResponseMessage>, finish_reason: string | undefined }[];
+      choices: { delta: Partial<ChatCompletionResponseMessage>; finish_reason: string | undefined }[];
     }
   >;
 
@@ -328,7 +341,7 @@ export async function* OpenAIChatModel(
       yield currentMessage.content;
     }
     if (delta.function_call) {
-      currentMessage.function_call = currentMessage.function_call ?? {name: '', arguments: ''};
+      currentMessage.function_call = currentMessage.function_call ?? { name: '', arguments: '' };
       if (delta.function_call.name) {
         currentMessage.function_call.name += delta.function_call.name;
       }
@@ -341,7 +354,12 @@ export async function* OpenAIChatModel(
   logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
 
   if (currentMessage.function_call) {
-    return <FunctionCall name={currentMessage.function_call.name ?? ''} args={JSON.parse(currentMessage.function_call.arguments ?? '{}')} />;
+    return (
+      <FunctionCall
+        name={currentMessage.function_call.name ?? ''}
+        args={JSON.parse(currentMessage.function_call.arguments ?? '{}')}
+      />
+    );
   }
   return currentMessage.content ?? '';
 }

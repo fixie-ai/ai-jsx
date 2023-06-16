@@ -7,7 +7,7 @@ export interface ModelProps {
   temperature?: number;
   maxTokens?: number;
   stop?: string[];
-  functionCall?: string | {[name: string]: string};
+  functionCall?: string | { [name: string]: string };
 }
 
 export type ModelPropsWithChildren = ModelProps & {
@@ -20,13 +20,13 @@ export type FunctionDefinition = {
   name: string;
   description?: string;
   parameters: Record<string, FunctionParameter>;
-}
+};
 
 export type FunctionParameter = {
   description?: string;
   type?: string;
   required: boolean;
-}
+};
 
 /**
  * If env var `OPENAI_API_KEY` is defined, use Open AI as the completion model provider.
@@ -172,7 +172,7 @@ export function AssistantMessage({ children }: { children: Node }) {
  *
  *    ==> "That would be 83,076."
  */
-export function FunctionCall({ name, args }: { name: string, args: Record<string, string | number | boolean | null> }) {
+export function FunctionCall({ name, args }: { name: string; args: Record<string, string | number | boolean | null> }) {
   return `Call function ${name} with ${JSON.stringify(args)}`;
 }
 
@@ -191,7 +191,10 @@ export function FunctionCall({ name, args }: { name: string, args: Record<string
  *
  *    ==> "That would be 83,076."
  */
-export async function FunctionResponse({ name, children }: { name: string, children: Node }, {render}: LLMx.ComponentContext) {
+export async function FunctionResponse(
+  { name, children }: { name: string; children: Node },
+  { render }: LLMx.ComponentContext
+) {
   const output = await render(children);
   return `function ${name} returns ${output}`;
 }
