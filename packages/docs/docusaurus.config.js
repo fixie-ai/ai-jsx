@@ -114,13 +114,6 @@ const config = {
         darkTheme: darkCodeTheme,
       },
     }),
-
-  scripts: [
-    {
-      src: '/js/pendo.js',
-      async: false,
-    },
-  ],
 };
 
 module.exports = config;
