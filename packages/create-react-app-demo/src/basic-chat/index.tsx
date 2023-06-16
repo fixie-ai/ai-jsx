@@ -41,12 +41,12 @@ function ConversationHistory() {
         ))}
       </ul>
       {callInProgress && <div>Waiting for AI response...</div>}
-      <form onSubmit={handleInputSubmit} className="mt-4 w-full flex">
+      <form onSubmit={handleInputSubmit} className="mt-4 flex w-full">
         <input
           disabled={callInProgress}
           type="text"
           name="message"
-          className="rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 w-full"
+          className="w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
         />
         <button
           type="submit"
