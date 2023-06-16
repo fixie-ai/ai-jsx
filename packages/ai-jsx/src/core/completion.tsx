@@ -158,7 +158,7 @@ export function AssistantMessage({ children }: { children: Node }) {
 /**
  * Provide a Function Call to the chat model.
  *
- * The function call tells the model a previous function that was invoked by the model. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
+ * The function call tells the model that a function was previously invoked by the model. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
  * In case of model returning a function call, ChatCompletion would return a <FunctionCall> component as well.
  *
  * This component can only be used within a ChatCompletion.
