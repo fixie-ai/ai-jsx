@@ -312,9 +312,9 @@ export class LangChainEmbeddingWrapper implements Embedding {
   }
 }
 
-/** A default embedding useful for DocsQA. Note that this requires an OPENAI_API_KEY. */
-const openAIEmbeddings = new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY });
-export const defaultEmbedding = new LangChainEmbeddingWrapper(openAIEmbeddings);
+/** A default embedding useful for DocsQA. Note that this requires OPENAI_API_KEY to be set. */
+if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not set');
+export const defaultEmbedding = new LangChainEmbeddingWrapper(new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY });
 
 /** A piece of a document that is ready to be added into a vector space. */
 export interface EmbeddedChunk<ChunkMetadata extends Jsonifiable = Jsonifiable> {

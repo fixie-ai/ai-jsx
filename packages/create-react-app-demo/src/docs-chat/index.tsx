@@ -31,8 +31,9 @@ function ConversationHistory() {
     element.value = '';
   }
 
+  const description = '<a href="https://docs.ai-jsx.com">AI.JSX documentation">';
   return (
-    <ResultContainer title="Docs Chat" description="In this demo, you can ask questions based on a document.">
+    <ResultContainer title="Docs Chat" description="In this demo, you can ask questions based on the {description}.">
       <ul>
         {conversation.map((response, index) => (
           <li key={index} className="mt-4">
