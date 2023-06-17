@@ -11,10 +11,10 @@ import {
   FunctionResponse,
 } from '../core/completion.js';
 import { ImageGenPropsWithChildren } from '../core/image-gen.js';
+// openai-edge hasn't updated its types to support the new function types yet,
+// so we'll import the types from openai until it does.
+import { ChatCompletionFunctions, ChatCompletionResponseMessage, ChatCompletionRequestMessage } from 'openai';
 import {
-  ChatCompletionFunctions,
-  ChatCompletionRequestMessage,
-  ChatCompletionResponseMessage,
   Configuration,
   CreateChatCompletionResponse,
   CreateCompletionResponse,
@@ -319,7 +319,11 @@ export async function* OpenAIChatModel(
   };
 
   logger.debug({ chatCompletionRequest }, 'Calling createChatCompletion');
-  const chatResponse = await openai.createChatCompletion(chatCompletionRequest);
+  const chatResponse = await openai.createChatCompletion(
+    // We can remove this once openai-edge updates to reflect the new chat function types.
+    // @ts-expect-error
+    chatCompletionRequest
+  );
 
   await checkOpenAIResponse(chatResponse, logger, 'createChatCompletion');
 

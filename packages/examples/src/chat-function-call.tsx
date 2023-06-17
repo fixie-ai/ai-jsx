@@ -63,5 +63,5 @@ function ModelProducesFinalResponse({ query }: { query: string }) {
   );
 }
 
-showInspector(<ModelProducesFunctionCall query="What is 2523231 * 2382382?" />);
-// showInspector(<ModelProducesFinalResponse query="What is 2523231 * 2382382?" />);
+// showInspector(<ModelProducesFunctionCall query="What is 2523231 * 2382382?" />);
+showInspector(<ModelProducesFinalResponse query="What is 2523231 * 2382382?" />);
