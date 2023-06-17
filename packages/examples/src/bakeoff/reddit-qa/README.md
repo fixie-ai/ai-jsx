@@ -61,7 +61,7 @@ This increases my conviction that LangChain is trying to reinvent the wrong thin
 
 LangChain's logs are verbose yet also manage to omit key info like what model is being called. I also don't know how to turn them off.
 
-AI.JSX's logs are saved to `llmx.log`, and are viewable with `yarn view-logs`. (The subcommand there has affordances for filtering logs as well.) It includes info like what models are being called, and allows you to observe the input/output of the docs chunking process.
+AI.JSX's logs are saved to `ai-jsx.log`, and are viewable with `yarn view-logs`. (The subcommand there has affordances for filtering logs as well.) It includes info like what models are being called, and allows you to observe the input/output of the docs chunking process.
 
 ### Code Readability: AI.JSX vs. LangChain
 

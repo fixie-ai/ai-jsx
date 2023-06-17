@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://docs.ai-jsx.com/img/ai-jsx.png" alt="AI.JSX logo" width="300" />
+</p>
+
 # AI.JSX
 
 ## Getting Started

@@ -140,7 +140,7 @@ Running it, we'll a something like this:
 To see the previous characters that were generated, we can look in the logs:
 
 ```
-$ grep -i 'starting modelcall' packages/ai-jsx/llmx.log | yarn workspace ai-jsx pino-pretty
+$ grep -i 'starting modelcall' packages/ai-jsx/ai-jsx.log | yarn workspace ai-jsx pino-pretty
 
 # Actual results snipped for brevity.
 
@@ -186,14 +186,22 @@ $ grep -i 'starting modelcall' packages/ai-jsx/llmx.log | yarn workspace ai-jsx 
 
 ## Beyond Text: Image Generation
 
-You are not restricted by text models. Let's create an image for the story as well:
+You are not restricted to text models. Let's create an image for the story as well:
 
 ```tsx title="index.tsx"
-function StoryWithImage() {
+function WriteStoryWithImage() {
   const story = memo(<WriteStory />);
   return (
     <>
-      Banner URL: <ImageGen clipLongPrompt>Generate an image for this story: {story}</ImageGen>
+      Banner URL:{' '}
+      <ImageGen>
+        <ChatCompletion>
+          <UserMessage>
+            You are an artist. You are creating a sketch for a new book. Concisely describe a sketch for scene from the
+            following story: {story}
+          </UserMessage>
+        </ChatCompletion>
+      </ImageGen>
       {'\n\n'}
       {story}
     </>
@@ -201,8 +209,8 @@ function StoryWithImage() {
 }
 ```
 
-The `<ImageGen>` by default uses [Dalle](https://platform.openai.com/docs/guides/images/introduction).
-Since the story will likely be longer than the model's prompt length, we allow the model to clip it using the `clipLongPrompt` parameter.
+We use a second LLM pass to create a description for the image. We then feed this description to an `<ImageGen>` component.
+`<ImageGen>` by default uses [Dalle](https://platform.openai.com/docs/guides/images/introduction).
 
 Note that we also used a new component, `memo`. If we simply use `<WriteStory />` twice (even if you assign it to a variable), you will have two separate LLM calls and possibly two different stories as a result.
 For reference see [Memoization](guides/rules-of-jsx.md#Memoization).

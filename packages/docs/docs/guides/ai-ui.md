@@ -22,24 +22,26 @@ The subdemos are:
 If you're nesting AI and UI components, you need to import our custom React wrapper:
 
 ```tsx
-import React from '../react.ts';
+/** @jsx AI.createElement */
+/** @jsxFrag AI.Fragment */
+import * as AI from 'ai-jsx/react';
 
 function MyComponent() {
   return (
     <>
       <ReactComponent>
-        <AI>
+        <AI.jsx>
           <AIComponent>
-            <ReactComponent />
+            <AI.React>
+              <ReactComponent />
+            </AI.React>
           </AIComponent>
-        </AI>
+        </AI.jsx>
       </ReactComponent>
     </>
   );
 }
 ```
-
-Additionally, any React component that lives within a UI component needs to be added to the list in `packages/create-react-app-demo/src/react.ts`.
 
 ## NextJS
 

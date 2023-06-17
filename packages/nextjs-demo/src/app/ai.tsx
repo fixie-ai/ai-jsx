@@ -137,7 +137,7 @@ function AIStream({ children }: { children: React.ReactNode }) {
  *
  * By default, it'll stream results character-by-character to the frontend.
  */
-export function AI({
+export function AIComponent({
   children,
   renderDirectlyIntoDOM,
   renderPassedReactComponents,

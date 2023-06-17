@@ -11,7 +11,7 @@ const config = {
   favicon: 'img/ai-jsx.svg',
 
   // Set the production url of your site here
-  url: 'https://ai-jsx-docs.vercel.app/',
+  url: 'https://docs.ai-jsx.com/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
@@ -32,6 +32,16 @@ const config = {
     locales: ['en'],
   },
 
+  plugins: [
+    [
+      'docusaurus-plugin-typedoc',
+      {
+        entryPoints: ['../ai-jsx/src/index.ts'],
+        tsconfig: '../ai-jsx/tsconfig.json',
+      },
+    ],
+  ],
+
   presets: [
     [
       'classic',
@@ -40,12 +50,14 @@ const config = {
         docs: {
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl: 'https://github.com/fixie-ai/ai-jsx/tree/main/packages/docs/templates/shared/',
+          editUrl: 'https://github.com/fixie-ai/ai-jsx/tree/main/packages/docs/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
+        },
+        gtag: {
+          trackingID: 'G-6EQLTL2L31',
+          anonymizeIP: true,
         },
       }),
     ],
@@ -60,7 +72,9 @@ const config = {
         title: 'AI.JSX',
         logo: {
           alt: 'AI.JSX Logo',
-          src: 'img/ai-jsx.png',
+          src: 'img/ai-jsx-icon.png',
+          srcDark: 'img/ai-jsx-icon-dark.png',
+          href: 'https://docs.ai-jsx.com/',
         },
         items: [
           {
@@ -101,7 +115,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © 2023 Fixie AI`,
+        copyright: `Copyright © 2023 Fixie.ai`,
       },
       prism: {
         theme: lightCodeTheme,
@@ -109,11 +123,17 @@ const config = {
       },
     }),
 
-  scripts: [
-    {
-      src: '/js/pendo.js',
-      async: false,
-    },
+  themes: [
+    [
+      require.resolve('@easyops-cn/docusaurus-search-local'),
+      /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */
+      ({
+        hashed: true,
+        indexBlog: false,
+        highlightSearchTermsOnTargetPage: true,
+        docsRouteBasePath: '/',
+      }),
+    ],
   ],
 };
 
