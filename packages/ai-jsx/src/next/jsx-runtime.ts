@@ -1,21 +1,20 @@
-import * as ReactModule from 'react';
+import * as React from 'react';
 import * as LLMx from '../index.js';
 export * from '../index.js';
 
 export declare namespace JSX {
-  type ElementType = ReactModule.JSX.ElementType | LLMx.JSX.ElementType;
-  type Element = ReactModule.JSX.Element & LLMx.Node;
-  type IntrinsicElements = ReactModule.JSX.IntrinsicElements;
-  type ElementChildrenAttribute = ReactModule.JSX.ElementChildrenAttribute & LLMx.JSX.ElementChildrenAttribute;
+  type ElementType = React.JSX.ElementType | LLMx.JSX.ElementType;
+  type Element = React.JSX.Element & LLMx.Node;
+  type IntrinsicElements = React.JSX.IntrinsicElements;
+  type ElementChildrenAttribute = React.JSX.ElementChildrenAttribute & LLMx.JSX.ElementChildrenAttribute;
 }
 
-export function jsx(...args: Parameters<typeof ReactModule.createElement>) {
-  const tag = args[0];
-  const reactElement = ReactModule.createElement(...args);
-  const aiElement = LLMx.createElement(tag === ReactModule.Fragment ? LLMx.Fragment : (tag as any), args[1] as any);
+export function jsx(type: any, config: any, maybeKey?: any) {
+  const reactElement = React.createElement(type, { ...config, ...(maybeKey === undefined ? {} : { key: maybeKey }) });
+  const aiElement = LLMx.createElement(type === React.Fragment ? LLMx.Fragment : type, config);
   return LLMx.makeIndirectNode(reactElement, aiElement);
 }
 
 export const jsxs = jsx;
 
-export const Fragment = ReactModule.Fragment;
+export const Fragment = React.Fragment;

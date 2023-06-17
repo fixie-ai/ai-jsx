@@ -1,7 +1,8 @@
 // @ts-nocheck
 
 import * as AI from 'ai-jsx/next';
-import React from 'react';
+import React, { Suspense } from 'react';
+import { UICompletion } from 'ai-jsx/react/completion';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import ResultContainer from '@/components/ResultContainer';
 import InputPrompt from '@/components/InputPrompt';
@@ -73,12 +74,36 @@ export default function RecipeWrapper({ searchParams }: { searchParams: any }) {
       <InputPrompt label="What would you like a recipe for?" defaultValue={defaultValue} />
 
       <ResultContainer title={`AI comes up with a recipe for ${query}`}>
-        <AI.jsx>
-          <ChatCompletion temperature={1}>
-            <SystemMessage>You are an expert chef.</SystemMessage>
-            <UserMessage>Give me a recipe for {query}.</UserMessage>
-          </ChatCompletion>
-        </AI.jsx>
+        <Suspense fallback={'Loading...'}>
+          <AI.jsx>
+            <UICompletion
+              example={
+                <Recipe>
+                  <RecipeTitle>Crème Chantilly</RecipeTitle>
+                  <RecipeIngredientList>
+                    <RecipeIngredientListItem>2 cups heavy cream</RecipeIngredientListItem>
+                    <RecipeIngredientListItem>2 tablespoons granulated sugar</RecipeIngredientListItem>
+                    <RecipeIngredientListItem>1 teaspoon vanilla extract</RecipeIngredientListItem>
+                  </RecipeIngredientList>
+                  <RecipeInstructionList>
+                    <RecipeInstructionListItem>
+                      Combine the ingredients in a large mixing bowl.
+                    </RecipeInstructionListItem>
+                    <RecipeInstructionListItem>
+                      Beat the contents on high speed until soft peaks form.
+                    </RecipeInstructionListItem>
+                    <RecipeIngredientListItem>Keep chilled until serving.</RecipeIngredientListItem>
+                  </RecipeInstructionList>
+                </Recipe>
+              }
+            >
+              <ChatCompletion temperature={1}>
+                <SystemMessage>You are an expert chef.</SystemMessage>
+                <UserMessage>Give me a recipe for {query}.</UserMessage>
+              </ChatCompletion>
+            </UICompletion>
+          </AI.jsx>
+        </Suspense>
       </ResultContainer>
     </>
   );
