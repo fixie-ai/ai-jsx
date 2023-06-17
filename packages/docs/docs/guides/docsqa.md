@@ -107,4 +107,4 @@ function AskAndAnswer({ query }: { query: string }) {
 
 ## Picking a Corpus Implementation
 
-To get you started, ai.jsx includes an in-memory Corpus that can be used effectively for demos. When you've outgrown that, you could consider implementing your own Corpus backed by [Pinecone](https://www.pinecone.io/) or [Chroma](https://www.trychroma.com/). Alternatively, [Fixie](https://www.fixie.ai) provides a fully-managed Corpus solution you could drop in instead.
+To get you started, ai.jsx includes an in-memory Corpus that can be used effectively for demos. When you've outgrown that, you could use a Langchain VectorStore like [Pinecone](https://www.pinecone.io/) or [Chroma](https://www.trychroma.com/). Alternatively, [Fixie](https://www.fixie.ai) provides a fully-managed Corpus solution you could drop in instead.
