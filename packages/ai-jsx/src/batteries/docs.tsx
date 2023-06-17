@@ -313,7 +313,9 @@ export class LangChainEmbeddingWrapper implements Embedding {
 }
 
 /** A default embedding useful for DocsQA. Note that this requires OPENAI_API_KEY to be set. */
-if (!process.env.OPENAI_API_KEY) throw new Error('OPENAI_API_KEY not set');
+if (!process.env.OPENAI_API_KEY) {
+  throw new Error('OPENAI_API_KEY not set');
+}
 export const defaultEmbedding = new LangChainEmbeddingWrapper(
   new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY })
 );
@@ -512,7 +514,7 @@ export class LocalCorpus<
   }
 }
 
-export interface DocsQAProps<Doc extends Document> {
+export interface DocsQAProps {
   /**
    * The corpus of documents that may be relevant to a query.
    */
@@ -530,13 +532,13 @@ export interface DocsQAProps<Doc extends Document> {
   limit?: number;
 
   /**
-   * The component used to format documents when they're presented to the model.
+   * The component used to format document chunks when they're presented to the model.
    *
    * ```tsx
-   *  function MyDocsComponent({ doc }: { doc: MyDocument }) {
+   *  function MyDocsComponent({ doc }: { doc: ScoredChunk }) {
    *    return <>
-   *      Title: {doc.metadata.title}
-   *      Content: {doc.pageContent}
+   *      Title: {doc.chunk.documentName}
+   *      Content: {doc.content}
    *    </>
    *  }
    * ```
@@ -546,7 +548,7 @@ export interface DocsQAProps<Doc extends Document> {
 /**
  * A component that can be used to answer questions about documents. This is a very common usecase for LLMs.
  */
-export async function DocsQA<Doc extends Document>(props: DocsQAProps<Doc>) {
+export async function DocsQA(props: DocsQAProps) {
   const status = (await props.corpus.getStats()).loadingState;
   if (status !== Corpus.LoadingState.COMPLETED) {
     return `Corpus is not loaded. It's in state: ${status.toString()}`;
