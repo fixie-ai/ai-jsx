@@ -122,7 +122,7 @@ More detail: `UseTools` (`packages/ai-jsx/src/batteries/use-tools.tsx`).
 
 LLMs have "soft knowledge" of the world, but if you just ask a question without providing any context, they're prone to hallucination. And, LLMs were only trained on public data, so they don't have context on the private data you care about.
 
-To address this, the community has developed a variety of techniques, known collectively as "DocsQA". For more details on using DocsQA in ai-jsx, see [here](./docsqa.md).
+To address this, the community has developed a variety of techniques, known collectively as "DocsQA". For more details, see [DocsQA in ai-jsx](./docsqa.md).
 
 ## Streaming
 

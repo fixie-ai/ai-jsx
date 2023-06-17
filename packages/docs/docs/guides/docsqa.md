@@ -1,4 +1,4 @@
-# Grounding Answers with a Source of Truth - DocsQA
+# DocsQA: Grounding Answers with a Source of Truth
 
 Large Language Models (LLMs) are powerful tools for answering open domain questsions, but they're prone to making things up ("hallucination") when their responses are unrestricted. In addition, publicly available LLMs are trained on public data and consequently won't have knowledge of your internal documentation.
 
@@ -26,17 +26,21 @@ flowchart LR
 
 ## Preparing a Corpus
 
-In order for a corpus to find text relevant to a given query, it first needs to be prepared with the text it may return. There are a few steps involved:
+We need to populate a corpus before we can search it. We do that via the following steps:
 
 ### Step 1: Loading (and Parsing)
 
 Step 1 is identifying the documents you care about. In the simplest case, this may be a static list of text files you've already downloaded that you can simply read into memory. In more complex cases, this could involve crawling the web or reading from a database.
 
-Regardless of where your documents reside, you'll need to implement a "Loader" to bring them into your program. The "Loader" interface provided by ai.jsx allows for loading documents from any source with appropriate parallelization and pagination.
+Regardless of where your documents reside, you'll need to implement a "Loader" to bring them into your program. The "Loader" interface provided by ai.jsx allows for loading documents from any source with appropriate parallelization and pagination. In the simple case, the `loader` can be a thin wrapper around `fs.readFile`.
 
 For non-text documents (PDFs, Word docs, podcasts, etc.), you'll need to convert the raw document bytes into a text representation. In this case, you'll use ai.jsx's "RawLoader" along with a "Parser" where the former is responsible for finding the document and getting it into memory and the latter is responsible for turning it into text.
 
-Note: When using a Fixie corpus, Fixie can handle parsing for most common documents types for you.
+:::tip Tip: Fixie
+
+When using a Fixie corpus, Fixie can handle parsing for most common documents types for you.
+
+:::
 
 ### Step 2: Vectorizing
 
@@ -50,7 +54,31 @@ With vectors in hand, your text chunks can be added to a vector database. When r
 
 The ai.jsx "Corpus" interface provides a "startLoading" method that will begin loading and vectorizing documents so they're available for querying later. It also provides a "getStats" method so you can inspect a corpus's progress.
 
-Typically you'll want to make sure a corpus has completed loading before exposing it to your users, but for small corpora loading just in time can work as well.
+```typescript
+// Have the corpus begin loading.
+let stats = await corpus.startLoading();
+
+// Poll loading state until loading has completed.
+while (stats.loadingState !== Corpus.LoadingState.COMPLETED) {
+  await sleep(5000);
+  stats = await corpus.getStats();
+  if (stats.loadingState === Corpus.LoadingState.FAILED) {
+    throw Error(`Corpus failed to load. Final stats: ${stats}`);
+  }
+}
+
+function sleep(millis: number) {
+  return new Promise((resolve) => setTimeout(resolve, millis));
+}
+```
+
+Typically you'll want to make sure a corpus has completed loading before exposing it to your users, but for small corpora loading just in time can work as well. (If you invoke the DocsQA primitive with a corpus that hasn't completed loading, you'll just get a message about the corpus not being ready instead of a real response from the LLM.)
+
+:::note Note:
+
+`LocalCorpus` simplifies this flow a bit for the simple use cases it supports by having a `COMPLETED` `LoadingState` by the time the promise from `startLoading()` has resolved.
+
+:::
 
 ## Responding to Queries
 
