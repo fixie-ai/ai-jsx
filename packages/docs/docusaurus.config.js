@@ -47,6 +47,10 @@ const config = {
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
+        gtag: {
+          trackingID: 'G-6EQLTL2L31',
+          anonymizeIP: true,
+        },
       }),
     ],
   ],
@@ -122,13 +126,6 @@ const config = {
         docsRouteBasePath: '/',
       }),
     ],
-  ],
-
-  scripts: [
-    {
-      src: '/js/pendo.js',
-      async: false,
-    },
   ],
 };
 
