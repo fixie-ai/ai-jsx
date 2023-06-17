@@ -170,6 +170,7 @@ export class OpenAIError<M extends OpenAIMethod> extends HttpError {
 async function* asyncIteratorOfFetchStream(reader: ReturnType<NonNullable<Response['body']>['getReader']>) {
   while (true) {
     const { done, value } =
+      // I don't know why the types fail here, but the code works.
       // @ts-expect-error
       await reader.read();
     if (done) {
