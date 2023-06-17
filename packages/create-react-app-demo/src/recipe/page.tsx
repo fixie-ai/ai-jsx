@@ -3,7 +3,7 @@
 import * as AI from 'ai-jsx/react';
 import { UICompletion } from 'ai-jsx/react/completion';
 import { useState, ReactNode } from 'react';
-import { ChatCompletion, UserMessage, SystemMessage } from 'ai-jsx/core/completion';
+import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 import ResultContainer from '../ResultContainer.tsx';
 import InputPrompt from '../InputPrompt.tsx';
 import { atom, useAtom } from 'jotai';
@@ -77,15 +77,6 @@ export default function RecipeWrapper() {
   return (
     <>
       <InputPrompt label="What would you like a recipe for?" value={query} setValue={setQuery} />
-
-      <ResultContainer title={`AI comes up with a recipe for ${query}`}>
-        <AI.jsx>
-          <ChatCompletion>
-            <SystemMessage>You are a master, verbose story-teller</SystemMessage>
-            <UserMessage>Tell me a story about someone who eats {query}</UserMessage>
-          </ChatCompletion>
-        </AI.jsx>
-      </ResultContainer>
 
       <ResultContainer title={`AI comes up with a recipe for ${query}`}>
         <AI.jsx>
