@@ -11,7 +11,7 @@ import { atom, useAtom } from 'jotai';
 
 import _ from 'lodash';
 
-export class ChatMessage {
+export interface ChatMessage {
   type?: string;
   content?: string;
 }
