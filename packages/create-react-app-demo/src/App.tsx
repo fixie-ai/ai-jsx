@@ -28,7 +28,6 @@ const router = createBrowserRouter([
         path: '/recipe',
         element: <RecipeWrapper />,
       },
-      
     ],
   },
 ]);

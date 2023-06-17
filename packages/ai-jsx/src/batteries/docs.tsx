@@ -313,7 +313,7 @@ export class LangChainEmbeddingWrapper implements Embedding {
 }
 
 /** A default embedding useful for DocsQA. Note that this requires an OPENAI_API_KEY. */
-const openAIEmbeddings = new OpenAIEmbeddings({openAIApiKey: process.env.OPENAI_API_KEY});
+const openAIEmbeddings = new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY });
 export const defaultEmbedding = new LangChainEmbeddingWrapper(openAIEmbeddings);
 
 /** A piece of a document that is ready to be added into a vector space. */
@@ -522,7 +522,7 @@ export interface DocsQAProps<Doc extends Document> {
   question: string;
 
   /**
-   * 
+   *
    * The maximum number of documents to return.
    */
   limit?: number;
@@ -539,7 +539,7 @@ export interface DocsQAProps<Doc extends Document> {
    *  }
    * ```
    */
-  docComponent: (props: { doc: Doc }) => Node;
+  docComponent: (props: { doc: ScoredChunk }) => Node;
 }
 /**
  * A component that can be used to answer questions about documents. This is a very common usecase for LLMs.
@@ -553,15 +553,12 @@ export async function DocsQA<Doc extends Document>(props: DocsQAProps<Doc>) {
   return (
     <ChatCompletion>
       <SystemMessage>
-        You are a trained question answerer. Answer questions truthfully, using only the document excerpts below. Do not use any other
-        knowledge you have about the world. If you don't know how to answer the question, just say "I don't know."
-        Here are the relevant document excerpts you have been given:
-        {docs.map((doc) => 
-          // TODO improve types                       
-          // @ts-expect-error       
-          <props.docComponent doc={doc} /> 
-        )}
-
+        You are a trained question answerer. Answer questions truthfully, using only the document excerpts below. Do not
+        use any other knowledge you have about the world. If you don't know how to answer the question, just say "I
+        don't know." Here are the relevant document excerpts you have been given:
+        {docs.map((doc) => (
+          <props.docComponent doc={doc} />
+        ))}
         And here is the question you must answer:
       </SystemMessage>
       <UserMessage> {props.question} </UserMessage>

@@ -1,28 +1,26 @@
-Guide for AI Newcomers
-======================
+# Guide for AI Newcomers
 
 Large Language Models (LLMs) are powerful tools, representing a paradigm shift in how we build and use software. Machines now have the ability to reason and understand natural language and code. We predict over the coming years, incumbents will be either remake themselves, or be disrupted by AI-native products and platforms.
 
 Just like in other types of programming, you can often get by with a simple solution until you need the heavier-duty tools. There are many techniques and concepts in AI programming, but you can make something useful without knowing them all.
 
-What are LLMs Good For?[​](#what-are-llms-good-for "Direct link to What are LLMs Good For?")
---------------------------------------------------------------------------------------------
+## What are LLMs Good For?[​](#what-are-llms-good-for 'Direct link to What are LLMs Good For?')
 
 LLMs are magical when you use them for things they're good at and really frustrating when you try to ask them to do something they're not.
 
 LLMs are great at understanding and generating natural language and code. So they're strong at tasks like:
 
-*   Given React components and a data object, arrange the React components in a visually-pleasing way.
-*   Read documents and summarize them.
-*   Read a lot of your writing, then generate more writing in your voice.
-*   Look at API documentation, then write code to use it.
+- Given React components and a data object, arrange the React components in a visually-pleasing way.
+- Read documents and summarize them.
+- Read a lot of your writing, then generate more writing in your voice.
+- Look at API documentation, then write code to use it.
 
 LLMs, by themselves, aren't great at:
 
-*   Complex deterministic logic (e.g. math or code execution)
-*   Questions requiring outside knowledge (where accuracy really matters)
-*   Analysis on structured data.
-*   Taking actions in the outside world.
+- Complex deterministic logic (e.g. math or code execution)
+- Questions requiring outside knowledge (where accuracy really matters)
+- Analysis on structured data.
+- Taking actions in the outside world.
 
 Fortunately, the community has developed many approaches to address the above shortcomings. What that ends up meaning is that the LLM is just one piece of the bigger application.
 
@@ -34,8 +32,7 @@ With today's level of accuracy, LLMs work best for tasks that are fault-tolerant
 
 Be wary of the "radio shows on TV" effect, where the first work in a new paradigm (TV) is just a port of the old paradigm (radio), rather than truly leveraging the new medium. We may need to rethink fundamental UX assumptions to find the best ways to make AI-native apps.
 
-Prompt Engineering[​](#prompt-engineering "Direct link to Prompt Engineering")
-------------------------------------------------------------------------------
+## Prompt Engineering[​](#prompt-engineering 'Direct link to Prompt Engineering')
 
 The interface to the model is the natural language we give it in the prompt. The art of crafting these prompts is called Prompt Engineering. There are many resources about this, including online courses and YouTube videos.
 
@@ -47,7 +44,7 @@ The key intuition is that models are trained to imitate what they've read on the
 
 As models improve, prompt engineering will become less necessary, because they'll be better at figuring out what you want.
 
-### Feedback Loop[​](#feedback-loop "Direct link to Feedback Loop")
+### Feedback Loop[​](#feedback-loop 'Direct link to Feedback Loop')
 
 Imagine you have a workflow of tweaking a prompt, then re-running your program to check the results.
 
@@ -57,7 +54,7 @@ Therefore, to get a stronger signal on whether your changes made a difference, s
 
 Additionally, it's best to make a single change at a time. If you change several things, you won't know what to caused any change in output, robbing you of a chance to build your intuition.
 
-### Context Window[​](#context-window "Direct link to Context Window")
+### Context Window[​](#context-window 'Direct link to Context Window')
 
 The biggest constraint on the prompt is the context window, which is the combined length of the prompt and the model's response. (Because the budget is shared between input and output, the longer your prompt to the model, the shorter the model's response can be.)
 
@@ -65,21 +62,20 @@ Each model API has a context window that it supports. For instance, [GPT-4 Stand
 
 Intuitively, think about the context window as the model's working memory. When you think about a problem, you're able to hold some of the relevant information in your head at one time. When the problem gets too complicated, you rely on external aids (like written notes). The context window is similar – it's what the model has access to at once. (But, unlike humans, the model has perfect recall of everything in its window.)
 
-### Thinking Out Loud[​](#thinking-out-loud "Direct link to Thinking Out Loud")
+### Thinking Out Loud[​](#thinking-out-loud 'Direct link to Thinking Out Loud')
 
 When you ask a human a question, you can say, "answer with one word, but think carefully before you answer". Models can't do that. Every token they generate takes the same amount of cognitive time. So, to get models to think harder, you ask them for longer responses. This is the basis behind the [Chain of Thought](https://arxiv.org/abs/2201.11903) family of techniques.
 
 So, as you're setting up your prompts, it's best to get the model to show its work for more complicated problems.
 
-### See Also[​](#see-also "Direct link to See Also")
+### See Also[​](#see-also 'Direct link to See Also')
 
-*   [OpenAI: GPT Best Practices](https://platform.openai.com/docs/guides/gpt-best-practices).
-*   [Prompt Engineering Guide](https://www.promptingguide.ai/)
+- [OpenAI: GPT Best Practices](https://platform.openai.com/docs/guides/gpt-best-practices).
+- [Prompt Engineering Guide](https://www.promptingguide.ai/)
 
 When you need robust tools, you may wish to use something like [HumanLoop](https://humanloop.com/) to A/B test different prompts in production.
 
-Using Tools[​](#using-tools "Direct link to Using Tools")
----------------------------------------------------------
+## Using Tools[​](#using-tools 'Direct link to Using Tools')
 
 On their own, LLMs can't interact with the outside world. If you want to give them that capability, you can give them tools. ([ChatGPT Plugins](https://openai.com/blog/chatgpt-plugins) are a well-known implementation of this.)
 
@@ -96,8 +92,7 @@ In AI.JSX, this looks like:
 
 More detail: `UseTools` (`packages/ai-jsx/src/batteries/use-tools.tsx`).
 
-Accessing Knowledge ("Docs QA")[​](#accessing-knowledge-docs-qa "Direct link to Accessing Knowledge ("Docs QA")")
------------------------------------------------------------------------------------------------------------------
+## Accessing Knowledge ("Docs QA")[​](#accessing-knowledge-docs-qa "Direct link to Accessing Knowledge ("Docs QA")")
 
 LLMs have "soft knowledge" of the world, but if you just ask a question without providing any context, they're prone to hallucination. And, LLMs were only trained on public data, so they don't have context on the private data you care about.
 
@@ -110,7 +105,7 @@ To address this, the community has developed a variety of techniques, known coll
 
 (Some of these steps may not be necessary, depending on your use-case.)
 
-### Find Your Docs[​](#find-your-docs "Direct link to Find Your Docs")
+### Find Your Docs[​](#find-your-docs 'Direct link to Find Your Docs')
 
 A collection of docs is called a "corpus".
 
@@ -118,7 +113,7 @@ In the simple case, your docs are easy to find, because you have a hardcoded lis
 
 In the harder case, you need a crawler. (For instance, you want to traverse numerous websites, follow links, etc.) If you use [Fixie](https://fixie.ai/), this is [handled for you](https://docs.fixie.ai/document-qa/). You can provide a URL pattern like `https://my-site.com/help/*`, and Fixie handles the rest.
 
-### Ingest the Docs[​](#ingest-the-docs "Direct link to Ingest the Docs")
+### Ingest the Docs[​](#ingest-the-docs 'Direct link to Ingest the Docs')
 
 Now that you have the doc contents, you may need to transform them to be useful for the model.
 
@@ -136,7 +131,7 @@ If you use [Fixie](https://fixie.ai/), all three of these points are handled for
 
 See also: [Pinecone Guidance on Chunking Strategies](https://www.pinecone.io/learn/chunking-strategies/).
 
-### Pick the Right Docs to Show[​](#pick-the-right-docs-to-show "Direct link to Pick the Right Docs to Show")
+### Pick the Right Docs to Show[​](#pick-the-right-docs-to-show 'Direct link to Pick the Right Docs to Show')
 
 In the simplest case, your context window is long enough to put every doc in the prompt every time, and the model happens to not get confused by this.
 
@@ -148,7 +143,7 @@ There are many different vector databases; [Pinecone](https://www.pinecone.io/) 
 
 To use a vector db, you have to sign up for one of those providers, load your docs, and keep the DBs up-to-date as your docs change. Or you can use [Fixie](https://fixie.ai/), and it's all handled for you.
 
-### Run the ETL[​](#run-the-etl "Direct link to Run the ETL")
+### Run the ETL[​](#run-the-etl 'Direct link to Run the ETL')
 
 The steps above form an ETL (extract, transform, load) process.
 
@@ -160,8 +155,7 @@ With larger corpora, or with more performance-intensive applications, this won't
 
 If you use [Fixie](https://fixie.ai/), the offline ELT is handled for you.
 
-Streaming[​](#streaming "Direct link to Streaming")
----------------------------------------------------
+## Streaming[​](#streaming 'Direct link to Streaming')
 
 To improve responsiveness and perceived performance, it's better to stream your results to the user. Each word should be shown to the user as soon as it's available, rather than waiting until your entire response is done. (This also allows the user to cancel the response if it's going in the wrong direction.)
 
@@ -171,8 +165,7 @@ In AI.JSX, this happens for you automatically.
 
 The pit of success in AI.JSX is your program being automatically parallelized and streamed to the caller.
 
-Semantic Similarity ("Embeddings")[​](#semantic-similarity-embeddings "Direct link to Semantic Similarity ("Embeddings")")
---------------------------------------------------------------------------------------------------------------------------
+## Semantic Similarity ("Embeddings")[​](#semantic-similarity-embeddings "Direct link to Semantic Similarity ("Embeddings")")
 
 LLMs can tell us how related two pieces of text are. An embedding is a very long vector locating a given piece of text in semantic space. We could imagine a model that embeds according to this scheme:
 
@@ -184,14 +177,13 @@ So the text "I love the bright Japense cherry blossoms" might be encoded as `[1,
 
 You can use embeddings for any task where you want to know how related things are, what clusters they form, etc. Possible usecases include:
 
-*   Find related GitHub issues
-*   Take an emotional temperature of how people are talking in Slack today
-*   Find all the fight scenes in a book
+- Find related GitHub issues
+- Take an emotional temperature of how people are talking in Slack today
+- Find all the fight scenes in a book
 
 See also: [OpenAI Embeddings docs](https://platform.openai.com/docs/models/embeddings).
 
-Recommended Dev Workflow[​](#recommended-dev-workflow "Direct link to Recommended Dev Workflow")
-------------------------------------------------------------------------------------------------
+## Recommended Dev Workflow[​](#recommended-dev-workflow 'Direct link to Recommended Dev Workflow')
 
 When you're considering building an AI app, the most fundamental question is whether the model is capable of doing what you want it to. It's best to test this in a [Playground environment](https://platform.openai.com/playground) before you write code. (You can also use a tool like [Poe](https://poe.com/) to try your query against many models at once.)
 
@@ -199,8 +191,7 @@ For example, if you plan to prompt the model with some docs, then ask the model 
 
 Start with the best model (GPT-4) and work your way down. Other models may be faster or cheaper, but none of that matters if the accuracy isn't there.
 
-What about fine tuning?[​](#what-about-fine-tuning "Direct link to What about fine tuning?")
---------------------------------------------------------------------------------------------
+## What about fine tuning?[​](#what-about-fine-tuning 'Direct link to What about fine tuning?')
 
 Fine tuning is when you train a model on top of a base model, using your own dataset. This is not recommended until you know you have a strong need for it; prompt composition can get you quite far, and is much more flexible than fine tuning.
 
@@ -210,17 +201,15 @@ Conversely, with prompt composition, if you realize some data isn't helpful, you
 
 Fine tuning also makes it harder to take advantage of base model updates. When GPT-4.5 comes out, if you've fine tuned on GPT-4, you'll be behind until you repeat your tuning process. However, if you're doing prompt composition, then you automatically can use GPT-4.5.
 
-See Also[​](#see-also-1 "Direct link to See Also")
---------------------------------------------------
+## See Also[​](#see-also-1 'Direct link to See Also')
 
-*   [OpenAI: State of GPT](https://www.youtube.com/watch?v=bZQun8Y4L2A). Microsoft Build presentation from top AI researcher Andrej Karpathy. A great overview of how the models work and tips for how to use them most effectively.
-*   [OpenAI: GPT Best Practices](https://platform.openai.com/docs/guides/gpt-best-practices).
-*   [Anthropic Guidance](https://console.anthropic.com/docs/prompt-design)
-*   [Poe](https://poe.com/) – chat with many different models (OpenAI, Anthropic, etc) at once.
-*   [Perplexity](https://www.perplexity.ai/) – AI-powered search
+- [OpenAI: State of GPT](https://www.youtube.com/watch?v=bZQun8Y4L2A). Microsoft Build presentation from top AI researcher Andrej Karpathy. A great overview of how the models work and tips for how to use them most effectively.
+- [OpenAI: GPT Best Practices](https://platform.openai.com/docs/guides/gpt-best-practices).
+- [Anthropic Guidance](https://console.anthropic.com/docs/prompt-design)
+- [Poe](https://poe.com/) – chat with many different models (OpenAI, Anthropic, etc) at once.
+- [Perplexity](https://www.perplexity.ai/) – AI-powered search
 
-Case Study: Avoid asking the LLM to do something deterministic[​](#case-study-avoid-asking-the-llm-to-do-something-deterministic "Direct link to Case Study: Avoid asking the LLM to do something deterministic")
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+## Case Study: Avoid asking the LLM to do something deterministic[​](#case-study-avoid-asking-the-llm-to-do-something-deterministic 'Direct link to Case Study: Avoid asking the LLM to do something deterministic')
 
 Consider an AI app that can ask a group of people when they're available to hang out, then find the mutual free times.
 
