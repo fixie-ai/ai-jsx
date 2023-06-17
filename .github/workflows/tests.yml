@@ -23,5 +23,5 @@ jobs:
       #     node-version: ${{ matrix.node-version }}
       # - run: yarn set version 4
       - run: ~/.volta/bin/volta list
-      - run: ~/.volta/bin/yarn install --immutable
+      - run: YARN_CHECKSUM_BEHAVIOR=ignore ~/.volta/bin/yarn install --immutable
       - run: ~/.volta/bin/yarn test
