@@ -19,7 +19,7 @@ import {
   CreateImageRequestResponseFormatEnum,
 } from 'openai';
 // @ts-expect-error
-import {OpenAIApi as OpenAIApiEdge, Configuration as ConfigurationEdge } from 'openai-edge';
+import { OpenAIApi as OpenAIApiEdge, Configuration as ConfigurationEdge } from 'openai-edge';
 import * as LLMx from '../index.js';
 import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
@@ -72,14 +72,13 @@ type ChatOrCompletionModelOrBoth =
   | { chatModel: ValidChatModel; completionModel?: ValidCompletionModel }
   | { chatModel?: ValidChatModel; completionModel: ValidCompletionModel };
 
-const decoder = new TextDecoder()
+const decoder = new TextDecoder();
 
 export class OpenAIApiEdgeShim extends OpenAIApiEdge {
   async createCompletion(
     completionRequest: Parameters<OpenAIApiEdge['createCompletion']>[0],
     config?: Parameters<OpenAIApi['createCompletion']>[1]
   ) {
-    
     const completionResponse = await super.createCompletion(completionRequest, config);
     debugger;
     if (!completionResponse.ok) {
@@ -95,28 +94,27 @@ export class OpenAIApiEdgeShim extends OpenAIApiEdge {
     completionRequest: Parameters<OpenAIApiEdge['createChatCompletion']>[0],
     config?: Parameters<OpenAIApiEdge['createChatCompletion']>[1]
   ) {
-
     const chatResponse = await super.createChatCompletion(completionRequest, config);
     if (!chatResponse.ok) {
-      throw new OpenAIError(chatResponse, 'createChatCompletion', await chatResponse.text())
+      throw new OpenAIError(chatResponse, 'createChatCompletion', await chatResponse.text());
     }
     if (!chatResponse.body) {
-      throw new OpenAIError(chatResponse, 'createChatCompletion', '')
+      throw new OpenAIError(chatResponse, 'createChatCompletion', '');
     }
     const reader = chatResponse.body.getReader();
     async function* shimmedData() {
       while (true) {
-        const { done, value } = await reader.read()
+        const { done, value } = await reader.read();
         if (done) {
-          return
+          return;
         }
         yield decoder.decode(value);
       }
     }
     return {
       ...chatResponse,
-      data: shimmedData()
-    }
+      data: shimmedData(),
+    };
   }
 }
 
@@ -127,7 +125,7 @@ export const openAiClientContext = LLMx.createContext<OpenAIApi>(
       apiKey: process.env.OPENAI_API_KEY,
     }),
     (...fetchArgs) => {
-      window.fetch(...fetchArgs)
+      window.fetch(...fetchArgs);
     }
   ) as unknown as OpenAIApi
   // new OpenAIApi(
