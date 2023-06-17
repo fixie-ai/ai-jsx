@@ -38,7 +38,7 @@ await corpus.startLoading();
 function ShowDoc({ doc }: { doc: ScoredChunk }) {
   return (
     <>
-      Title: {doc.chunk.metadata.title ??doc.chunk.documentName ?? 'Untitled'}
+      Title: {doc.chunk.documentName ?? 'Untitled'}
       Content: {doc.chunk.content}
     </>
   );
