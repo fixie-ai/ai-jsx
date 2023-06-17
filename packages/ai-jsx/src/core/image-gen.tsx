@@ -7,8 +7,6 @@ export interface ImageGenProps {
   numSamples?: number;
   /** defines the image resolution */
   size?: '256x256' | '512x512' | '1024x1024';
-  /** if true, will clip prompts that are too long */
-  clipLongPrompt?: boolean;
 }
 
 export type ImageGenPropsWithChildren = ImageGenProps & {

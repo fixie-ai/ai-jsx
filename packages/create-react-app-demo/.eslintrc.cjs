@@ -48,7 +48,7 @@ module.exports = {
     'import/extensions': ['warn', 'ignorePackages'],
 
     'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': ['warn', { varsIgnorePattern: 'React' }],
+    '@typescript-eslint/no-unused-vars': ['warn', { varsIgnorePattern: 'React|AI' }],
     'dot-notation': 'off',
     'no-magic-numbers': 'off',
     '@typescript-eslint/no-magic-numbers': [

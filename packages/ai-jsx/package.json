@@ -72,6 +72,14 @@
     "./lib/openai": {
       "import": "./dist/esm/lib/openai.js",
       "require": "./dist/cjs/lib/openai.cjs"
+    },
+    "./react": {
+      "import": "./dist/esm/react/index.js",
+      "require": "./dist/cjs/react/index.cjs"
+    },
+    "./react/completion": {
+      "import": "./dist/esm/react/completion.js",
+      "require": "./dist/cjs/react/completion.cjs"
     }
   },
   "files": [
@@ -81,6 +89,7 @@
     "README.md"
   ],
   "devDependencies": {
+    "@tsconfig/node16": "^1.0.4",
     "@tsconfig/node18": "^2.0.1",
     "@types/eslint": "^8",
     "@types/js-yaml": "^4.0.5",
@@ -131,7 +140,7 @@
     "load-json-file": "^7.0.1",
     "lodash": "^4.17.21",
     "ml-distance": "^4.0.1",
-    "openai": "^3.2.1",
+    "openai": "^3.3.0",
     "pino": "^8.14.1",
     "react-use": "^17.4.0",
     "sinon": "^15.1.0",

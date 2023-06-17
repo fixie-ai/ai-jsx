@@ -1,4 +1,3 @@
-// @ts-nocheck
 /** @jsx LLMx.createElement */
 /** @jsxFrag LLMx.Fragment */
 /* eslint-disable react/jsx-key */
@@ -13,6 +12,10 @@ import _ from 'lodash';
 export class ChatMessage {
   type: string;
   content: string;
+  constructor({ type, content }: { type: string; content: string }) {
+    this.type = type;
+    this.content = content;
+  }
 }
 
 export const conversationAtom = atom<ChatMessage[]>([]);
@@ -42,7 +45,7 @@ function AI() {
   const [, setCallInProgress] = useAtom(modelCallInProgress);
   const isInProgressRef = useRef(false);
   const children = memo(<ChatAgent conversation={conversation} />);
-  const when = conversation.length && _.last(conversation).type === 'user';
+  const when = conversation.length && _.last(conversation)?.type === 'user';
 
   useEffect(() => {
     if (isInProgressRef.current || !when) {
@@ -57,13 +60,7 @@ function AI() {
       .then((finalFrame) => {
         isInProgressRef.current = false;
         setCallInProgress(false);
-        setConversation((prev) => [
-          ...prev,
-          {
-            type: 'assistant',
-            content: finalFrame,
-          },
-        ]);
+        setConversation((prev) => [...prev, new ChatMessage({ type: 'assistant', content: finalFrame })]);
       });
   }, [children, setCallInProgress, when, setConversation]);
 
