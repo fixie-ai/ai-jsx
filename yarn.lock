@@ -15990,7 +15990,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-<<<<<<< HEAD
+"marked@npm:^4.3.0":
+  version: 4.3.0
+  resolution: "marked@npm:4.3.0"
+  bin:
+    marked: bin/marked.js
+  checksum: 89bcab317027e68f7ecf3d19aa8e9933575399250a54e757bd3d922f183d76bb51051dbc7f73317259c99abc91982641ebbe68b731a08744742a807588137223
+  languageName: node
+  linkType: hard
+
 "mathjs@npm:^11.8.1":
   version: 11.8.1
   resolution: "mathjs@npm:11.8.1"
@@ -16007,14 +16015,6 @@ __metadata:
   bin:
     mathjs: bin/cli.js
   checksum: ae47a811d56daf6ac9881db8069893292bf7895675cb6261ac9e623ebb4d4b10f387594cc87b6a73f278563b3a6326abda1248fa59e6aeb33009d783493a6384
-=======
-"marked@npm:^4.3.0":
-  version: 4.3.0
-  resolution: "marked@npm:4.3.0"
-  bin:
-    marked: bin/marked.js
-  checksum: 89bcab317027e68f7ecf3d19aa8e9933575399250a54e757bd3d922f183d76bb51051dbc7f73317259c99abc91982641ebbe68b731a08744742a807588137223
->>>>>>> main
   languageName: node
   linkType: hard
 
