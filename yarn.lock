@@ -3778,6 +3778,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nick.heiner/openai-edge@npm:1.0.1-7":
+  version: 1.0.1-7
+  resolution: "@nick.heiner/openai-edge@npm:1.0.1-7"
+  checksum: 3062303f4cf8cd7da7d79adb4d3981e35ec4f832644f7f8ee611d2ade3e0a0687d4e0e2e9dcc621ee914c849ffdfc88e5dbc595e33b78735a4fbfc3c1171200c
+  languageName: node
+  linkType: hard
+
 "@nick.heiner/wandb-fork@npm:0.5.2-5":
   version: 0.5.2-5
   resolution: "@nick.heiner/wandb-fork@npm:0.5.2-5"
@@ -7450,6 +7457,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
+    "@nick.heiner/openai-edge": "npm:1.0.1-7"
     "@tsconfig/node16": "npm:^1.0.4"
     "@tsconfig/node18": "npm:^2.0.1"
     "@types/eslint": "npm:^8"
@@ -7482,7 +7490,6 @@ __metadata:
     ml-distance: "npm:^4.0.1"
     node-fetch: "npm:^3.3.1"
     openai: "npm:^3.2.1"
-    openai-edge: "npm:^1.0.0"
     pino: "npm:^8.14.1"
     pino-pretty: "npm:^10.0.0"
     react: "npm:^18.2.0"

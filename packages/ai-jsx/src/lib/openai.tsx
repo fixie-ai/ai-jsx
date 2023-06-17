@@ -17,9 +17,8 @@ import {
   OpenAIApi,
   CreateImageRequestSizeEnum,
   CreateImageRequestResponseFormatEnum,
-} from 'openai';
-// @ts-expect-error
-import { OpenAIApi as OpenAIApiEdge, Configuration as ConfigurationEdge } from 'openai-edge';
+  ResponseTypes,
+} from '@nick.heiner/openai-edge';
 import * as LLMx from '../index.js';
 import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
@@ -29,12 +28,11 @@ import { HttpError } from '../core/errors.js';
 import _ from 'lodash';
 
 type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
-type AxiosResponse<M> = M extends OpenAIMethod ? Awaited<ReturnType<InstanceType<typeof OpenAIApi>[M]>> : never;
 
 export class OpenAIError<M extends OpenAIMethod> extends HttpError {
   readonly errorResponse: Record<string, any> | null;
 
-  constructor(response: AxiosResponse<M>, method: M, responseText: string) {
+  constructor(response: Response, method: M, responseText: string) {
     let errorResponse = null as Record<string, any> | null;
     let responseSuffix = '';
     try {
@@ -52,7 +50,7 @@ export class OpenAIError<M extends OpenAIMethod> extends HttpError {
       `OpenAI ${method} request failed with status code ${response.status}${responseSuffix}\n\nFor more information, see https://platform.openai.com/docs/guides/error-codes/api-errors`,
       response.status,
       responseText,
-      response.headers
+      Object.fromEntries(response.headers.entries())
     );
     this.errorResponse = errorResponse;
   }
@@ -74,65 +72,56 @@ type ChatOrCompletionModelOrBoth =
 
 const decoder = new TextDecoder();
 
-export class OpenAIApiEdgeShim extends OpenAIApiEdge {
-  async createCompletion(
-    completionRequest: Parameters<OpenAIApiEdge['createCompletion']>[0],
-    config?: Parameters<OpenAIApi['createCompletion']>[1]
-  ) {
-    const completionResponse = await super.createCompletion(completionRequest, config);
-    debugger;
-    if (!completionResponse.ok) {
-      throw new Error('fak');
-    }
-    if (!completionResponse.body) {
-      throw new Error('fak');
-    }
-    const reader = completionResponse.body.getReader();
-  }
+// export class OpenAIApiEdgeShim extends OpenAIApiEdge {
+//   async createCompletion(
+//     completionRequest: Parameters<OpenAIApiEdge['createCompletion']>[0],
+//     config?: Parameters<OpenAIApi['createCompletion']>[1]
+//   ) {
+//     const completionResponse = await super.createCompletion(completionRequest, config);
+//     debugger;
+//     if (!completionResponse.ok) {
+//       throw new Error('fak');
+//     }
+//     if (!completionResponse.body) {
+//       throw new Error('fak');
+//     }
+//     const reader = completionResponse.body.getReader();
+//   }
 
-  async createChatCompletion(
-    completionRequest: Parameters<OpenAIApiEdge['createChatCompletion']>[0],
-    config?: Parameters<OpenAIApiEdge['createChatCompletion']>[1]
-  ) {
-    const chatResponse = await super.createChatCompletion(completionRequest, config);
-    if (!chatResponse.ok) {
-      throw new OpenAIError(chatResponse, 'createChatCompletion', await chatResponse.text());
-    }
-    if (!chatResponse.body) {
-      throw new OpenAIError(chatResponse, 'createChatCompletion', '');
-    }
-    const reader = chatResponse.body.getReader();
-    async function* shimmedData() {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          return;
-        }
-        yield decoder.decode(value);
-      }
-    }
-    return {
-      ...chatResponse,
-      data: shimmedData(),
-    };
-  }
-}
+//   async createChatCompletion(
+//     completionRequest: Parameters<OpenAIApiEdge['createChatCompletion']>[0],
+//     config?: Parameters<OpenAIApiEdge['createChatCompletion']>[1]
+//   ) {
+//     const chatResponse = await super.createChatCompletion(completionRequest, config);
+//     if (!chatResponse.ok) {
+//       throw new OpenAIError(chatResponse, 'createChatCompletion', await chatResponse.text());
+//     }
+//     if (!chatResponse.body) {
+//       throw new OpenAIError(chatResponse, 'createChatCompletion', '');
+//     }
+//     const reader = chatResponse.body.getReader();
+    // async function* asyncIteratorOfFetchStream() {
+    //   while (true) {
+    //     const { done, value } = await reader.read();
+    //     if (done) {
+    //       return;
+    //     }
+    //     yield decoder.decode(value);
+    //   }
+    // }
+//     return {
+//       ...chatResponse,
+//       data: shimmedData(),
+//     };
+//   }
+// }
 
 export const openAiClientContext = LLMx.createContext<OpenAIApi>(
-  new OpenAIApiEdgeShim(
-    // @ts-expect-error
-    new ConfigurationEdge({
+  new OpenAIApi(
+    new Configuration({
       apiKey: process.env.OPENAI_API_KEY,
-    }),
-    (...fetchArgs) => {
-      window.fetch(...fetchArgs);
-    }
-  ) as unknown as OpenAIApi
-  // new OpenAIApi(
-  //   new Configuration({
-  //     apiKey: process.env.OPENAI_API_KEY,
-  //   })
-  // )
+    })
+  )
 );
 
 export function OpenAI({
@@ -173,7 +162,7 @@ export function OpenAI({
  *  - https://github.com/openai/openai-cookbook/blob/970d8261fbf6206718fe205e88e37f4745f9cf76/examples/How_to_stream_completions.ipynb
  * @param iterable A byte stream from an OpenAI SSE response.
  */
-async function* openAiEventsToJson<T>(iterable: AsyncIterable<Buffer>): AsyncGenerator<T> {
+async function* openAiEventsToJson<T>(iterable: AsyncIterable<String>): AsyncGenerator<T> {
   const SSE_PREFIX = 'data: ';
   const SSE_TERMINATOR = '\n\n';
   const SSE_FINAL_EVENT = '[DONE]';
@@ -181,7 +170,7 @@ async function* openAiEventsToJson<T>(iterable: AsyncIterable<Buffer>): AsyncGen
   let bufferedContent = '';
 
   for await (const chunk of iterable) {
-    const textToParse = bufferedContent + chunk.toString('utf8');
+    const textToParse = bufferedContent + chunk;
     const eventsWithExtra = textToParse.split(SSE_TERMINATOR);
 
     // Any content not terminated by a "\n\n" will be buffered for the next chunk.
@@ -218,14 +207,21 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
   );
 }
 
-async function checkOpenAIResponse<M extends OpenAIMethod>(response: AxiosResponse<M>, logger: Logger, method: M) {
-  if (response.status < 200 || response.status >= 300) {
-    const responseData = [] as string[];
-    for await (const body of response.data as unknown as AsyncIterable<Buffer>) {
-      responseData.push(body.toString('utf8'));
+async function* asyncIteratorOfFetchStream(reader: ReturnType<NonNullable<Response['body']>['getReader']>) {
+  while (true) {
+    const { done, value } = 
+      // @ts-expect-error
+      await reader.read();
+    if (done) {
+      return;
     }
+    yield decoder.decode(value);
+  }
+}
 
-    throw new OpenAIError(response, method, responseData.join(''));
+async function checkOpenAIResponse<M extends OpenAIMethod>(response: Response, logger: Logger, method: M) {
+  if (response.status < 200 || response.status >= 300 || !response.body) {
+    throw new OpenAIError(response, method, await response.text());
   } else {
     logger.debug({ statusCode: response.status, headers: response.headers }, `${method} succeeded`);
   }
@@ -250,17 +246,18 @@ export async function* OpenAICompletionModel(
   logger.debug({ completionRequest }, 'Calling createCompletion');
 
   const completionResponse = await openai.createCompletion(completionRequest, {
-    responseType: 'stream',
-    validateStatus: () => true,
+    // responseType: 'stream',
+    // validateStatus: () => true,
   });
 
   await checkOpenAIResponse(completionResponse, logger, 'createCompletion');
 
   let resultSoFar = '';
 
-  for await (const event of openAiEventsToJson<CreateCompletionResponse>(
-    completionResponse.data as unknown as AsyncIterable<Buffer>
-  )) {
+  // checkOpenAIResponse will throw if completionResponse.body is null, so we know it's not null here.
+  const responseIterator = asyncIteratorOfFetchStream(completionResponse.body!.getReader());
+  
+  for await (const event of openAiEventsToJson<CreateCompletionResponse>(responseIterator)) {
     logger.trace({ event }, 'Got createCompletion event');
     resultSoFar += event.choices[0].text;
     yield resultSoFar;
@@ -319,8 +316,8 @@ export async function* OpenAIChatModel(
 
   logger.debug({ chatCompletionRequest }, 'Calling createChatCompletion');
   const chatResponse = await openai.createChatCompletion(chatCompletionRequest, {
-    responseType: 'stream',
-    validateStatus: () => true,
+    // responseType: 'stream',
+    // validateStatus: () => true,
   });
 
   await checkOpenAIResponse(chatResponse, logger, 'createChatCompletion');
@@ -334,7 +331,7 @@ export async function* OpenAIChatModel(
 
   const currentMessage = { content: '' } as Partial<ChatCompletionResponseMessage>;
   for await (const deltaMessage of openAiEventsToJson<ChatCompletionDelta>(
-    chatResponse.data as unknown as AsyncIterable<Buffer>
+    asyncIteratorOfFetchStream(chatResponse.body!.getReader())
   )) {
     logger.trace({ deltaMessage }, 'Got delta message');
     const delta = deltaMessage.choices[0].delta;
@@ -394,11 +391,12 @@ export async function DalleImageGen(
   const response = await openai.createImage(imageRequest);
 
   if (response.status < 200 || response.status >= 300) {
-    throw new OpenAIError(response, 'createImage', JSON.stringify(response.data));
+    throw new OpenAIError(response, 'createImage', await response.text());
   } else {
     logger.debug({ statusCode: response.status, headers: response.headers }, 'createImage succeeded');
   }
 
   // return all image URLs as a newline-separated string
-  return _.map(response.data.data, 'url').join('\n');
+  const responseJson = await response.json() as ResponseTypes['createImage'];
+  return _.map(responseJson.data, 'url').join('\n');
 }
