@@ -313,7 +313,8 @@ export class LangChainEmbeddingWrapper implements Embedding {
 }
 
 /** A default embedding useful for DocsQA. Note that this requires an OPENAI_API_KEY. */
-export const defaultEmbedding = new LangChainEmbeddingWrapper(new OpenAIEmbeddings());
+const openAIEmbeddings = new OpenAIEmbeddings({openAIApiKey: process.env.OPENAI_API_KEY});
+export const defaultEmbedding = new LangChainEmbeddingWrapper(openAIEmbeddings);
 
 /** A piece of a document that is ready to be added into a vector space. */
 export interface EmbeddedChunk<ChunkMetadata extends Jsonifiable = Jsonifiable> {
@@ -521,6 +522,12 @@ export interface DocsQAProps<Doc extends Document> {
   question: string;
 
   /**
+   * 
+   * The maximum number of documents to return.
+   */
+  limit?: number;
+
+  /**
    * The component used to format documents when they're presented to the model.
    *
    * ```tsx
@@ -542,16 +549,20 @@ export async function DocsQA<Doc extends Document>(props: DocsQAProps<Doc>) {
   if (status !== Corpus.LoadingState.COMPLETED) {
     return `Corpus is not loaded. It's in state: ${status.toString()}`;
   }
-  const docs = await props.corpus.search(props.question);
+  const docs = await props.corpus.search(props.question, { limit: props.limit });
   return (
     <ChatCompletion>
       <SystemMessage>
-        You are a customer service agent. Answer questions truthfully. Here is what you know:
-        {docs.map((doc) => (
-          // TODO improve types
-          // @ts-expect-error
-          <props.docComponent doc={doc} />
-        ))}
+        You are a trained question answerer. Answer questions truthfully, using only the document excerpts below. Do not use any other
+        knowledge you have about the world. If you don't know how to answer the question, just say "I don't know."
+        Here are the relevant document excerpts you have been given:
+        {docs.map((doc) => 
+          // TODO improve types                       
+          // @ts-expect-error       
+          <props.docComponent doc={doc} /> 
+        )}
+
+        And here is the question you must answer:
       </SystemMessage>
       <UserMessage> {props.question} </UserMessage>
     </ChatCompletion>
