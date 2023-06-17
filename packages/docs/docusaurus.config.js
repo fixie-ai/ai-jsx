@@ -32,6 +32,16 @@ const config = {
     locales: ['en'],
   },
 
+  plugins: [
+    [
+      'docusaurus-plugin-typedoc',
+      {
+        entryPoints: ['../ai-jsx/src/index.ts'],
+        tsconfig: '../ai-jsx/tsconfig.json',
+      },
+    ],
+  ],
+
   presets: [
     [
       'classic',
@@ -40,12 +50,14 @@ const config = {
         docs: {
           routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl: 'https://github.com/fixie-ai/ai-jsx/tree/main/packages/docs/templates/shared/',
+          editUrl: 'https://github.com/fixie-ai/ai-jsx/tree/main/packages/docs/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
+        },
+        gtag: {
+          trackingID: 'G-6EQLTL2L31',
+          anonymizeIP: true,
         },
       }),
     ],
@@ -122,13 +134,6 @@ const config = {
         docsRouteBasePath: '/',
       }),
     ],
-  ],
-
-  scripts: [
-    {
-      src: '/js/pendo.js',
-      async: false,
-    },
   ],
 };
 
