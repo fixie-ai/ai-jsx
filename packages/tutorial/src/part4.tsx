@@ -1,18 +1,17 @@
 import fetch from 'node-fetch';
-import { htmlToText } from 'html-to-text';
+import TurndownService from 'turndown';
 import * as LLMx from 'ai-jsx';
-import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { DocsQA, ScoredChunk, LocalCorpus, makeChunker, staticLoader } from 'ai-jsx/batteries/docs';
-import { memo } from 'ai-jsx/core/memoize';
 import { showInspector } from 'ai-jsx/core/inspector';
 
 const URL = 'https://en.wikipedia.org/wiki/2005_Azores_subtropical_storm';
 
 const html = await fetch(URL).then((response) => response.text());
-const plainText = htmlToText(html);
+const turndownService = new TurndownService();
+const markdown = turndownService.turndown(html);
 const docs = [
   {
-    pageContent: [plainText],
+    pageContent: [markdown],
     name: 'Wikipedia Article about 2005 Azores subtropical storm',
   },
 ];
