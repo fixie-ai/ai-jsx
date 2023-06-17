@@ -312,8 +312,13 @@ export class LangChainEmbeddingWrapper implements Embedding {
   }
 }
 
-/** A default embedding useful for DocsQA. Note that this requires an OPENAI_API_KEY. */
-export const defaultEmbedding = new LangChainEmbeddingWrapper(new OpenAIEmbeddings());
+/** A default embedding useful for DocsQA. Note that this requires OPENAI_API_KEY to be set. */
+if (!process.env.OPENAI_API_KEY) {
+  throw new Error('OPENAI_API_KEY not set');
+}
+export const defaultEmbedding = new LangChainEmbeddingWrapper(
+  new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY })
+);
 
 /** A piece of a document that is ready to be added into a vector space. */
 export interface EmbeddedChunk<ChunkMetadata extends Jsonifiable = Jsonifiable> {
@@ -509,7 +514,7 @@ export class LocalCorpus<
   }
 }
 
-export interface DocsQAProps<Doc extends Document> {
+export interface DocsQAProps {
   /**
    * The corpus of documents that may be relevant to a query.
    */
@@ -521,37 +526,44 @@ export interface DocsQAProps<Doc extends Document> {
   question: string;
 
   /**
-   * The component used to format documents when they're presented to the model.
+   *
+   * The maximum number of documents to return.
+   */
+  limit?: number;
+
+  /**
+   * The component used to format document chunks when they're presented to the model.
    *
    * ```tsx
-   *  function MyDocsComponent({ doc }: { doc: MyDocument }) {
+   *  function MyDocsComponent({ doc }: { doc: ScoredChunk }) {
    *    return <>
-   *      Title: {doc.metadata.title}
-   *      Content: {doc.pageContent}
+   *      Title: {doc.chunk.documentName}
+   *      Content: {doc.content}
    *    </>
    *  }
    * ```
    */
-  docComponent: (props: { doc: Doc }) => Node;
+  docComponent: (props: { doc: ScoredChunk }) => Node;
 }
 /**
  * A component that can be used to answer questions about documents. This is a very common usecase for LLMs.
  */
-export async function DocsQA<Doc extends Document>(props: DocsQAProps<Doc>) {
+export async function DocsQA(props: DocsQAProps) {
   const status = (await props.corpus.getStats()).loadingState;
   if (status !== Corpus.LoadingState.COMPLETED) {
     return `Corpus is not loaded. It's in state: ${status.toString()}`;
   }
-  const docs = await props.corpus.search(props.question);
+  const docs = await props.corpus.search(props.question, { limit: props.limit });
   return (
     <ChatCompletion>
       <SystemMessage>
-        You are a customer service agent. Answer questions truthfully. Here is what you know:
+        You are a trained question answerer. Answer questions truthfully, using only the document excerpts below. Do not
+        use any other knowledge you have about the world. If you don't know how to answer the question, just say "I
+        don't know." Here are the relevant document excerpts you have been given:
         {docs.map((doc) => (
-          // TODO improve types
-          // @ts-expect-error
           <props.docComponent doc={doc} />
         ))}
+        And here is the question you must answer:
       </SystemMessage>
       <UserMessage> {props.question} </UserMessage>
     </ChatCompletion>
