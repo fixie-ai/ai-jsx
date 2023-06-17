@@ -11,13 +11,9 @@ import { atom, useAtom } from 'jotai';
 
 import _ from 'lodash';
 
-export class ChatMessage {
+export interface ChatMessage {
   type: string;
   content: string;
-  constructor({ type, content }: { type: string; content: string }) {
-    this.type = type;
-    this.content = content;
-  }
 }
 
 export const conversationAtom = atom<ChatMessage[]>([]);
