@@ -241,8 +241,10 @@ module.exports = function (webpackEnv) {
               // Pending further investigation:
               // https://github.com/terser-js/terser/issues/120
               inline: 2,
+              keep_fnames: true,
             },
             mangle: {
+              keep_fnames: true,
               safari10: true,
             },
             // Added for profiling in devtools
