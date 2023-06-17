@@ -12,6 +12,7 @@ import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.j
 import * as LLMx from '../index.js';
 import { Node } from '../index.js';
 
+
 /**
  * A raw document loaded from an arbitrary source that has not yet been parsed.
  */
@@ -249,26 +250,31 @@ export type Chunker<
   ChunkMetadata extends Jsonifiable = Jsonifiable
 > = (document: Document<DocumentMetadata>) => Promise<Chunk<ChunkMetadata>[]>;
 
+/** Create a chunker with the given parameters. */
+export function makeChunker(chunkSize: number, chunkOverlap: number): Chunker {
+  return async (doc: Document) => {
+    const splitter = new TokenTextSplitter({
+      encodingName: "gpt2",
+      chunkSize,
+      chunkOverlap,
+    });
+
+    const lcDocs = await splitter.createDocuments(doc.pageContent);
+    const chunks = lcDocs.map(
+      (lcDoc) =>
+        ({
+          content: lcDoc.pageContent,
+          documentName: doc.name,
+          metadata: doc.metadata,
+        } as Chunk)
+    );
+
+    return chunks;
+  };
+}
+
 /** A simple token size based text chunker. This is a good starting point for text documents. */
-export const defaultChunker = async <Metadata extends Jsonifiable = Jsonifiable>(doc: Document<Metadata>) => {
-  const splitter = new TokenTextSplitter({
-    encodingName: 'gpt2',
-    chunkSize: 600,
-    chunkOverlap: 100,
-  });
-
-  const lcDocs = await splitter.createDocuments(doc.pageContent);
-  const chunks = lcDocs.map(
-    (lcDoc) =>
-      ({
-        content: lcDoc.pageContent,
-        documentName: doc.name,
-        metadata: doc.metadata,
-      } as Chunk<Metadata>)
-  );
-
-  return chunks;
-};
+export const defaultChunker = makeChunker(600, 100);
 
 /**
  * A piece of a document that's appropriately sized for an LLM's
@@ -532,7 +538,7 @@ export interface DocsQAProps<Doc extends Document> {
    *  }
    * ```
    */
-  docComponent: (props: { doc: Doc }) => Node;
+  docComponent: (props: { doc: ScoredChunk }) => Node;
 }
 /**
  * A component that can be used to answer questions about documents. This is a very common usecase for LLMs.
@@ -546,10 +552,10 @@ export async function DocsQA<Doc extends Document>(props: DocsQAProps<Doc>) {
   return (
     <ChatCompletion>
       <SystemMessage>
-        You are a customer service agent. Answer questions truthfully. Here is what you know:
+        You are a trained question answerer. Answer questions truthfully, using only the document excerpts below. Do not
+        use any other knowledge you have about the world. If you don't know how to answer the question, just say "I
+        don't know." Here are the relevant document excerpts you have been given:
         {docs.map((doc) => (
-          // TODO improve types
-          // @ts-expect-error
           <props.docComponent doc={doc} />
         ))}
       </SystemMessage>

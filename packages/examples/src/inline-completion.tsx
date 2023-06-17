@@ -13,13 +13,16 @@ function CharacterGenerator() {
 
   return (
     <Inline>
-      The following is a character profile for an RPG game in JSON format:{'\n'}
+      Generate a character profile for a fantasy roll-playing game in JSON format.{'\n'}
       {'{'}
-      {'\n  '}"class": "{inlineCompletion}",
       {'\n  '}"name": "{inlineCompletion}",
-      {'\n  '}"mantra": "{inlineCompletion}"{'\n'}
-      {'}'}
+      {'\n  '}"class": "{inlineCompletion}",
+      {'\n  '}"race": "{inlineCompletion}",
+      {'\n  '}"alignment": "{inlineCompletion}",
+      {'\n  '}"weapons": "{inlineCompletion}",
+      {'\n  '}"spells": "{inlineCompletion}",
+      {'\n}'}
     </Inline>
   );
 }
-showInspector(<CharacterGenerator />);
+showInspector(<CharacterGenerator />, {showDebugTree: false});

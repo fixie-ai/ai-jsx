@@ -36,6 +36,35 @@ showInspector(<App />);
 // ==> "Sky blue due to light."
 ```
 
+Here's a more complex example that progressively generates multiple fields in a JSON
+object:
+
+```tsx
+function CharacterGenerator() {
+  const inlineCompletion = (prompt: Node) => (
+    <Completion stop={['"']} temperature={1.0}>
+      {prompt}
+    </Completion>
+  );
+
+  return (
+    <Inline>
+      Generate a character profile for a fantasy roll-playing game in JSON format.{'\n'}
+      {'{'}
+      {'\n  '}"name": "{inlineCompletion}",
+      {'\n  '}"class": "{inlineCompletion}",
+      {'\n  '}"race": "{inlineCompletion}",
+      {'\n  '}"alignment": "{inlineCompletion}",
+      {'\n  '}"weapons": "{inlineCompletion}",
+      {'\n  '}"spells": "{inlineCompletion}",
+      {'\n}'}
+    </Inline>
+  );
+}
+```
+
+[![AI.JSX demo](https://asciinema.org/a/m08ORXH8AdcmV8gA95d6UYJzW.svg)](https://asciinema.org/a/m08ORXH8AdcmV8gA95d6UYJzW)
+
 # Live Example
 
 The following is a CodeSandbox sandbox that shows a simple Hello World AI.JSX app.
@@ -58,8 +87,3 @@ export const SandboxExample = () => (
 );
 
 <SandboxExample />;
-
-# Prerequisite Knowledge
-
-- [JSX](https://www.patterns.dev/posts/reactjs) (that overview is React-specific but almost everything is transferrable to JSX generally).
-- [TypeScript](https://www.typescriptlang.org/)

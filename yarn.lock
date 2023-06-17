@@ -5432,6 +5432,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@selderee/plugin-htmlparser2@npm:^0.11.0":
+  version: 0.11.0
+  resolution: "@selderee/plugin-htmlparser2@npm:0.11.0"
+  dependencies:
+    domhandler: "npm:^5.0.3"
+    selderee: "npm:^0.11.0"
+  checksum: 624729fe22c3648e3a46a2669729c1e7a0b05d895351c35a4a87faf2a84aee064edf66fa16c58c33f3b8963dfef21612d02d635cf2882ef09c9287af1f13f424
+  languageName: node
+  linkType: hard
+
 "@sideway/address@npm:^4.1.3":
   version: 4.1.4
   resolution: "@sideway/address@npm:4.1.4"
@@ -6265,6 +6275,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/html-to-text@npm:^9.0.1":
+  version: 9.0.1
+  resolution: "@types/html-to-text@npm:9.0.1"
+  checksum: 073dd5463d68a1b43b9f050cc7e70e057c6d705b4b7dcc0c60300a6009261f7701d9976552cc7d310247b38e2094e2a9618a398f4b2529ec51e1e5ec491a1b0d
+  languageName: node
+  linkType: hard
+
 "@types/http-assert@npm:*":
   version: 1.5.3
   resolution: "@types/http-assert@npm:1.5.3"
@@ -6549,6 +6566,13 @@ __metadata:
   version: 2.7.3
   resolution: "@types/prettier@npm:2.7.3"
   checksum: 940c06437f23a12b88ae7d36c40a35dd3ee8cc22f8bc1cba972bcc69904162331ef2fdfafc9cc46762475047194321c0c40ee9285e779353116018c1eeae2b4c
+  languageName: node
+  linkType: hard
+
+"@types/prompt-sync@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "@types/prompt-sync@npm:4.2.0"
+  checksum: 975a151c683deff9feda3f7019cdceaf85a73a71e3f4cd98518cfb3ddac88e1167be747fe2e22cb79587118969b52eb1dda1591d43ed2bc40bc8a56c049177ed
   languageName: node
   linkType: hard
 
@@ -7461,6 +7485,7 @@ __metadata:
     "@types/uuid": "npm:^9"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.6"
     "@typescript-eslint/parser": "npm:^5.59.6"
+    axios: "npm:^1.4.0"
     cheerio: "npm:^1.0.0-rc.12"
     cli-highlight: "npm:^2.1.11"
     cli-spinners: "npm:^2.9.0"
@@ -7643,6 +7668,13 @@ __metadata:
   bin:
     ansi-html: bin/ansi-html
   checksum: 56bf91b53357d6fa66973feb7294140fdc9da5a11fa63f354ef05ae3b47db4bb367ca1a6960f09c572d395b05ed16c698ce5f23d172eae9c6e4b50213aff8deb
+  languageName: node
+  linkType: hard
+
+"ansi-regex@npm:^4.1.0":
+  version: 4.1.1
+  resolution: "ansi-regex@npm:4.1.1"
+  checksum: bca5d9b63a576c91e33be9ef62eb72d461d5902389294e692ecbaa5289e5afde9238c7a0ada9f9f60bc245661ed87a3db571beb02867e7067e640193207354b0
   languageName: node
   linkType: hard
 
@@ -9984,7 +10016,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"deepmerge@npm:^4.2.2":
+"deepmerge@npm:^4.2.2, deepmerge@npm:^4.3.1":
   version: 4.3.1
   resolution: "deepmerge@npm:4.3.1"
   checksum: 367ae28f98c94b2807dd6eba48f4c3d051742c2ab431f1037d60f5cb5af989aac2b170b6a891d5617679bcb95881b4e22a0616161a1f2154894b349b13d384e0
@@ -11377,6 +11409,7 @@ __metadata:
     "@tsconfig/node18": "npm:^2.0.1"
     "@types/lodash": "npm:^4.14.195"
     "@types/node": "npm:^20.3.1"
+    "@types/prompt-sync": "npm:^4.2.0"
     "@types/uuid": "npm:^9.0.2"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.6"
     "@typescript-eslint/parser": "npm:^5.59.6"
@@ -11392,6 +11425,7 @@ __metadata:
     node-fetch: "npm:^3.3.1"
     pino: "npm:^8.14.1"
     pino-pretty: "npm:^10.0.0"
+    prompt-sync: "npm:^4.2.0"
     type-fest: "npm:^3.12.0"
     typescript: "npm:^5.1.3"
     uuid: "npm:^9.0.0"
@@ -12812,6 +12846,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"html-to-text@npm:^9.0.5":
+  version: 9.0.5
+  resolution: "html-to-text@npm:9.0.5"
+  dependencies:
+    "@selderee/plugin-htmlparser2": "npm:^0.11.0"
+    deepmerge: "npm:^4.3.1"
+    dom-serializer: "npm:^2.0.0"
+    htmlparser2: "npm:^8.0.2"
+    selderee: "npm:^0.11.0"
+  checksum: 9a60258f91d38a19f1c462b786e1c630da39d19f8bb965d2702914bfcdc00da158d9e1d20fffad918f6678132f58cf6ec4ca8dad6c587adeb52f003b21676045
+  languageName: node
+  linkType: hard
+
 "html-void-elements@npm:^1.0.0":
   version: 1.0.5
   resolution: "html-void-elements@npm:1.0.5"
@@ -12846,7 +12893,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"htmlparser2@npm:^8.0.1":
+"htmlparser2@npm:^8.0.1, htmlparser2@npm:^8.0.2":
   version: 8.0.2
   resolution: "htmlparser2@npm:8.0.2"
   dependencies:
@@ -15605,6 +15652,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"leac@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "leac@npm:0.6.0"
+  checksum: 291f26ad49aa78b4a5599c843ce3f3443324ca9d20ee6d0cc5ebe3a01069cbea18f43e661c80524d573c7ec1cd09567096d2d71697f1c187076ef76240f79ece
+  languageName: node
+  linkType: hard
+
 "leven@npm:^3.1.0":
   version: 3.1.0
   resolution: "leven@npm:3.1.0"
@@ -17263,6 +17317,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"parseley@npm:^0.12.0":
+  version: 0.12.1
+  resolution: "parseley@npm:0.12.1"
+  dependencies:
+    leac: "npm:^0.6.0"
+    peberminta: "npm:^0.9.0"
+  checksum: 2fa93f553d5c058fac8bbefc35214c436ec70930ccdaba914f202b94fa631c9529ccf510fc0947284af72ed5e254d0d13ea738e83dc47754ecf4d97b685ec85a
+  languageName: node
+  linkType: hard
+
 "parseurl@npm:~1.3.2, parseurl@npm:~1.3.3":
   version: 1.3.3
   resolution: "parseurl@npm:1.3.3"
@@ -17380,6 +17444,13 @@ __metadata:
   version: 4.0.0
   resolution: "path-type@npm:4.0.0"
   checksum: 6a9330ad8d96f31e929feb414cde2959078379ba5a48c9e3eab34f280d7850eec6a0fa3ed5be9150e9e4d7df5139c1ae92f891b18167528553a11382d8f54183
+  languageName: node
+  linkType: hard
+
+"peberminta@npm:^0.9.0":
+  version: 0.9.0
+  resolution: "peberminta@npm:0.9.0"
+  checksum: 6a58838a21b05889dea5447a05f3f78f3018bd96391679b793ffe3ac039fe22828ef370bb5e1d8ae8f041e309ce16f2338c66d4af7b19e91fca7598f37a25ffe
   languageName: node
   linkType: hard
 
@@ -18698,6 +18769,15 @@ __metadata:
   dependencies:
     asap: "npm:~2.0.6"
   checksum: e0c47e004d1e1fd4b2957569ed63e1ba279f9b99ac587efc1e95beb07bb1a7ea4d8a08d2c4e55c13215d041dd00b46eaa1952776c14bd4d6010ebb26c6ebeba9
+  languageName: node
+  linkType: hard
+
+"prompt-sync@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "prompt-sync@npm:4.2.0"
+  dependencies:
+    strip-ansi: "npm:^5.0.0"
+  checksum: fbb946e214e5f73e22bb401d99f3403933c54371c4b040c8f61ca8c5cc64ebdd76dd3ba19837c28c5ec4ecc211ee5d4ef03ec0f88be4e7b869dd604502e184af
   languageName: node
   linkType: hard
 
@@ -20053,6 +20133,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"selderee@npm:^0.11.0":
+  version: 0.11.0
+  resolution: "selderee@npm:0.11.0"
+  dependencies:
+    parseley: "npm:^0.12.0"
+  checksum: 82ec892d83ff03949bd020a8158fb7a368776db7bc24a6b4c4b9a825292cc8b23e3a846bc8a2efd8ba4afd494c023e5c6596828cede2b80b5af3a598cc1db68a
+  languageName: node
+  linkType: hard
+
 "select-hose@npm:^2.0.0":
   version: 2.0.0
   resolution: "select-hose@npm:2.0.0"
@@ -20843,6 +20932,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"strip-ansi@npm:^5.0.0":
+  version: 5.2.0
+  resolution: "strip-ansi@npm:5.2.0"
+  dependencies:
+    ansi-regex: "npm:^4.1.0"
+  checksum: c1a35871e148a1c60310d33afbce3bdec6b3f471c4c3aab25b6b2a893aac4b18791a24206bb89a399e8e1a48b09da85e0bd87060c840c6dd0fbd06361b3c8f90
+  languageName: node
+  linkType: hard
+
 "strip-ansi@npm:^7.0.1":
   version: 7.1.0
   resolution: "strip-ansi@npm:7.1.0"
@@ -21605,6 +21703,31 @@ __metadata:
   checksum: e0cc82ece5081c0a5ad1a26e314b56be1ef4f976f8dfea8153a851410c1e4718bf6d4e375243e8c7e4b3e02fe6577c78ba99cbf9feea9c88dbcb68532e67cc55
   languageName: node
   linkType: hard
+
+"tutorial@workspace:packages/tutorial":
+  version: 0.0.0-use.local
+  resolution: "tutorial@workspace:packages/tutorial"
+  dependencies:
+    "@tsconfig/node18": "npm:^2.0.1"
+    "@types/html-to-text": "npm:^9.0.1"
+    "@types/lodash": "npm:^4.14.195"
+    "@types/node": "npm:^20.3.1"
+    "@types/prompt-sync": "npm:^4.2.0"
+    "@types/uuid": "npm:^9.0.2"
+    "@typescript-eslint/eslint-plugin": "npm:^5.59.6"
+    "@typescript-eslint/parser": "npm:^5.59.6"
+    ai-jsx: "npm:^0.2.0-4"
+    axios: "npm:^1.4.0"
+    eslint: "npm:^8.40.0"
+    eslint-config-nth: "npm:^2.0.1"
+    html-to-text: "npm:^9.0.5"
+    node-fetch: "npm:^3.3.1"
+    pino: "npm:^8.14.1"
+    pino-pretty: "npm:^10.0.0"
+    prompt-sync: "npm:^4.2.0"
+    typescript: "npm:^5.1.3"
+  languageName: unknown
+  linkType: soft
 
 "type-check@npm:^0.4.0, type-check@npm:~0.4.0":
   version: 0.4.0
