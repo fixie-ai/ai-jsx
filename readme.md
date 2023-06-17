@@ -8,12 +8,12 @@
 [![Discord Follow](https://dcbadge.vercel.app/api/server/MsKAeKF8kU?style=flat)](https://discord.gg/MsKAeKF8kU)
 [![Twitter Follow](https://img.shields.io/twitter/follow/fixieai?style=social)](https://twitter.com/fixieai)
 
-AI.JSX is a framework for building AI applications using [JSX](https://react.dev/learn/writing-markup-with-jsx). With AI.JSX, you don't just use JSX to describe what your UI should look like, you also use it to describe how **AI (LLMS)** should integrate into the rest of your application. The end result is a powerful combination where _intelligence_ can be deeply embedded into the application stack.
+AI.JSX is a framework for building AI applications using [JSX](https://react.dev/learn/writing-markup-with-jsx). With AI.JSX, you don't just use JSX to describe what your UI should look like, you also use it to describe how **AI (LLMs)** should integrate into the rest of your application. The end result is a powerful combination where _intelligence_ can be deeply embedded into the application stack.
 
 AI.JSX is designed to give you two important capabilities out of the box:
 
 1. An intuitive mechanism for orchestrating multiple LLM calls expressed as modular, re-usable components.
-1. The ability to seamlessly interweave UI components with your AI compoents. This means you can rely on the LLM to construct your UI dynamically from a set of standard React components.
+1. The ability to seamlessly interweave UI components with your AI components. This means you can rely on the LLM to construct your UI dynamically from a set of standard React components.
 
 AI.JSX can be used to create standalone LLM applications that can be deployed anywhere Node.JS is supported, or it can be used as part of a larger React application. We have examples that use [Next.js](https://github.com/fixie-ai/ai-jsx/tree/main/packages/nextjs-demo) and [Create React App](https://github.com/fixie-ai/ai-jsx/tree/main/packages/create-react-app-demo). For more details, see our [AI+UI guide](https://docs.ai-jsx.com/guides/ai-ui).
 
@@ -120,7 +120,7 @@ console.log(await LLMx.createRenderContext().render(<App />));
 
 ## Examples
 
-For a full set of examples, see [here](https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples).
+For a full set of examples, see [the examples package](https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples).
 
 ## Contributing
 
