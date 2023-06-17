@@ -1,4 +1,3 @@
-// @ts-nocheck
 /** @jsx LLMx.createElement */
 /** @jsxFrag LLMx.Fragment */
 /* eslint-disable react/jsx-key */
