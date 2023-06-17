@@ -28,8 +28,7 @@ const monkeyPatchedReact = {
     const indirectNode = isEmbeddableReactElement
       ? LLMx.createElement(AIDehydrate, { reactElement, ...args[1] }, ...args.slice(2))
       : llmxElement;
-    LLMx.setIndirectNode(reactElement, indirectNode);
-    return reactElement;
+    return LLMx.makeIndirectNode(reactElement, indirectNode);
   },
 };
 

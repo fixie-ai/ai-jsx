@@ -29,6 +29,10 @@
       "import": "./dist/esm/core/completion.js",
       "require": "./dist/cjs/core/completion.cjs"
     },
+    "./core/image-gen": {
+      "import": "./dist/esm/core/image-gen.js",
+      "require": "./dist/cjs/core/image-gen.js"
+    },
     "./core/debug": {
       "import": "./dist/esm/core/debug.js",
       "require": "./dist/cjs/core/debug.cjs"
@@ -68,6 +72,14 @@
     "./lib/openai": {
       "import": "./dist/esm/lib/openai.js",
       "require": "./dist/cjs/lib/openai.cjs"
+    },
+    "./react": {
+      "import": "./dist/esm/react/index.js",
+      "require": "./dist/cjs/react/index.cjs"
+    },
+    "./react/completion": {
+      "import": "./dist/esm/react/completion.js",
+      "require": "./dist/cjs/react/completion.cjs"
     }
   },
   "files": [
@@ -77,6 +89,7 @@
     "README.md"
   ],
   "devDependencies": {
+    "@tsconfig/node16": "^1.0.4",
     "@tsconfig/node18": "^2.0.1",
     "@types/eslint": "^8",
     "@types/js-yaml": "^4.0.5",
@@ -102,7 +115,7 @@
   },
   "type": "module",
   "scripts": {
-    "view-logs": "cat llmx.log | pino-pretty",
+    "view-logs": "cat ai-jsx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -112,6 +125,7 @@
     "react": "^16.8.0  || ^17.0.0 || ^18.0.0"
   },
   "dependencies": {
+    "axios": "^1.4.0",
     "cli-highlight": "^2.1.11",
     "cli-spinners": "^2.9.0",
     "find-up": "^6.3.0",
@@ -121,11 +135,12 @@
     "ink": "^4.2.0",
     "ink-syntax-highlight": "^1.0.1",
     "jest": "^29.5.0",
+    "js-yaml": "^4.1.0",
     "langchain": "^0.0.81",
     "load-json-file": "^7.0.1",
     "lodash": "^4.17.21",
     "ml-distance": "^4.0.1",
-    "openai": "^3.2.1",
+    "openai": "^3.3.0",
     "pino": "^8.14.1",
     "react-use": "^17.4.0",
     "sinon": "^15.1.0",

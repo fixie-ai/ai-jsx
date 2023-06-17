@@ -6,14 +6,21 @@ import {
   ModelPropsWithChildren,
   SystemMessage,
   UserMessage,
+  FunctionDefinition,
+  FunctionCall,
+  FunctionResponse,
 } from '../core/completion.js';
+import { ImageGenPropsWithChildren } from '../core/image-gen.js';
 import {
+  ChatCompletionFunctions,
   ChatCompletionRequestMessage,
   ChatCompletionResponseMessage,
   Configuration,
   CreateChatCompletionResponse,
   CreateCompletionResponse,
   OpenAIApi,
+  CreateImageRequestSizeEnum,
+  CreateImageRequestResponseFormatEnum,
 } from 'openai';
 import * as LLMx from '../index.js';
 import { PropsOfComponent, Node } from '../index.js';
@@ -21,6 +28,7 @@ import GPT3Tokenizer from 'gpt3-tokenizer';
 import { Merge } from 'type-fest';
 import { Logger } from '../core/log.js';
 import { HttpError } from '../core/errors.js';
+import _ from 'lodash';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -127,7 +135,7 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
   );
 }
 
-type OpenAIMethod = 'createCompletion' | 'createChatCompletion';
+type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
 type AxiosResponse<M> = M extends OpenAIMethod ? Awaited<ReturnType<InstanceType<typeof OpenAIApi>[M]>> : never;
 
 export class OpenAIError<M extends OpenAIMethod> extends HttpError {
@@ -211,11 +219,20 @@ export async function* OpenAICompletionModel(
 }
 
 export async function* OpenAIChatModel(
-  props: ModelPropsWithChildren & { model: ValidChatModel; logitBias?: Record<string, number> },
+  props: ModelPropsWithChildren & {
+    model: ValidChatModel;
+    logitBias?: Record<string, number>;
+    functionDefinitions?: FunctionDefinition[];
+  },
   { render, getContext, logger }: LLMx.ComponentContext
 ) {
   const messageElements = await render(props.children, {
-    stop: (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage,
+    stop: (e) =>
+      e.tag == SystemMessage ||
+      e.tag == UserMessage ||
+      e.tag == AssistantMessage ||
+      e.tag == FunctionCall ||
+      e.tag == FunctionResponse,
   });
   yield '';
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
@@ -237,11 +254,48 @@ export async function* OpenAIChatModel(
             role: 'assistant',
             content: await render(message),
           };
+        case FunctionCall:
+          return {
+            role: 'assistant',
+            content: '',
+            function_call: {
+              name: message.props.name,
+              arguments: JSON.stringify(message.props.args),
+            },
+          };
+        case FunctionResponse:
+          return {
+            role: 'function',
+            name: message.props.name,
+            content: await render(message.props.children),
+          };
         default:
           throw new Error(
             `ChatCompletion's prompts must be SystemMessage, UserMessage, or AssistantMessage, but this child was ${message.tag.name}`
           );
       }
+    })
+  );
+
+  const openaiFunctions: ChatCompletionFunctions[] | undefined = props.functionDefinitions?.map(
+    (functionDefinition) => ({
+      name: functionDefinition.name,
+      description: functionDefinition.description,
+      parameters: {
+        type: 'object',
+        required: Object.keys(functionDefinition.parameters).filter(
+          (name) => functionDefinition.parameters[name].required
+        ),
+        properties: Object.keys(functionDefinition.parameters).reduce(
+          (map: Record<string, any>, paramName) => ({
+            ...map,
+            [paramName]: {
+              type: functionDefinition.parameters[paramName].type,
+            },
+          }),
+          {}
+        ),
+      },
     })
   );
 
@@ -251,6 +305,7 @@ export async function* OpenAIChatModel(
     max_tokens: props.maxTokens,
     temperature: props.temperature,
     messages,
+    functions: openaiFunctions,
     stop: props.stop,
     logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
     stream: true,
@@ -267,26 +322,97 @@ export async function* OpenAIChatModel(
   type ChatCompletionDelta = Merge<
     CreateChatCompletionResponse,
     {
-      choices: { delta: Partial<ChatCompletionResponseMessage> }[];
+      choices: { delta: Partial<ChatCompletionResponseMessage>; finish_reason: string | undefined }[];
     }
   >;
 
-  const currentMessage = { content: '' } as Partial<ChatCompletionResponseMessage>;
+  const currentMessage = { content: undefined, function_call: undefined } as Partial<ChatCompletionResponseMessage>;
+  let finishReason: string | undefined = undefined;
   for await (const deltaMessage of openAiEventsToJson<ChatCompletionDelta>(
     chatResponse.data as unknown as AsyncIterable<Buffer>
   )) {
     logger.trace({ deltaMessage }, 'Got delta message');
+    finishReason = finishReason ?? deltaMessage.choices[0].finish_reason;
     const delta = deltaMessage.choices[0].delta;
     if (delta.role) {
       currentMessage.role = deltaMessage.choices[0].delta.role;
     }
     if (delta.content) {
+      currentMessage.content = currentMessage.content ?? '';
       currentMessage.content += delta.content;
       yield currentMessage.content;
+    }
+    if (delta.function_call) {
+      currentMessage.function_call = currentMessage.function_call ?? { name: '', arguments: '' };
+      if (delta.function_call.name) {
+        currentMessage.function_call.name += delta.function_call.name;
+      }
+      if (delta.function_call.arguments) {
+        currentMessage.function_call.arguments += delta.function_call.arguments;
+      }
     }
   }
 
   logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
 
-  return currentMessage.content;
+  if (currentMessage.function_call) {
+    return (
+      <FunctionCall
+        name={currentMessage.function_call.name ?? ''}
+        args={JSON.parse(currentMessage.function_call.arguments ?? '{}')}
+      />
+    );
+  }
+  return currentMessage.content ?? '';
+}
+
+/**
+ * Generates an image from a prompt using the DALL-E model.
+ * @see https://platform.openai.com/docs/guides/images/introduction
+ *
+ * @returns the URL of the generated image.
+ *          If numSamples is greater than 1, URLs are separated by newlines.
+ */
+export async function DalleImageGen(
+  { numSamples = 1, size = '512x512', children }: ImageGenPropsWithChildren,
+  { render, getContext, logger }: LLMx.ComponentContext
+) {
+  const prompt = await render(children);
+
+  const openai = getContext(openAiClientContext);
+
+  let sizeEnum;
+  switch (size) {
+    case '256x256':
+      sizeEnum = CreateImageRequestSizeEnum._256x256;
+      break;
+    case '512x512':
+      sizeEnum = CreateImageRequestSizeEnum._512x512;
+      break;
+    case '1024x1024':
+      sizeEnum = CreateImageRequestSizeEnum._1024x1024;
+      break;
+    default:
+      throw new Error(`Invalid size ${size}. Dalle only supports 256x256, 512x512, and 1024x1024`);
+  }
+
+  const imageRequest = {
+    prompt,
+    n: numSamples,
+    size: sizeEnum,
+    response_format: CreateImageRequestResponseFormatEnum.Url,
+  };
+
+  logger.debug({ imageRequest }, 'Calling createImage');
+
+  const response = await openai.createImage(imageRequest);
+
+  if (response.status < 200 || response.status >= 300) {
+    throw new OpenAIError(response, 'createImage', JSON.stringify(response.data));
+  } else {
+    logger.debug({ statusCode: response.status, headers: response.headers }, 'createImage succeeded');
+  }
+
+  // return all image URLs as a newline-separated string
+  return _.map(response.data.data, 'url').join('\n');
 }

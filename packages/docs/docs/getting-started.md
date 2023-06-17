@@ -140,7 +140,7 @@ Running it, we'll a something like this:
 To see the previous characters that were generated, we can look in the logs:
 
 ```
-$ grep -i 'starting modelcall' packages/ai-jsx/llmx.log | yarn workspace ai-jsx pino-pretty
+$ grep -i 'starting modelcall' packages/ai-jsx/ai-jsx.log | yarn workspace ai-jsx pino-pretty
 
 # Actual results snipped for brevity.
 
@@ -183,3 +183,42 @@ $ grep -i 'starting modelcall' packages/ai-jsx/llmx.log | yarn workspace ai-jsx 
   }
 ],
 ```
+
+## Beyond Text: Image Generation
+
+You are not restricted to text models. Let's create an image for the story as well:
+
+```tsx title="index.tsx"
+function WriteStoryWithImage() {
+  const story = memo(<WriteStory />);
+  return (
+    <>
+      Banner URL:{' '}
+      <ImageGen>
+        <ChatCompletion>
+          <UserMessage>
+            You are an artist. You are creating a sketch for a new book. Concisely describe a sketch for scene from the
+            following story: {story}
+          </UserMessage>
+        </ChatCompletion>
+      </ImageGen>
+      {'\n\n'}
+      {story}
+    </>
+  );
+}
+```
+
+We use a second LLM pass to create a description for the image. We then feed this description to an `<ImageGen>` component.
+`<ImageGen>` by default uses [Dalle](https://platform.openai.com/docs/guides/images/introduction).
+
+Note that we also used a new component, `memo`. If we simply use `<WriteStory />` twice (even if you assign it to a variable), you will have two separate LLM calls and possibly two different stories as a result.
+For reference see [Memoization](guides/rules-of-jsx.md#Memoization).
+
+Running the above will give us something like this:
+
+> Banner URL: https://... (redacted)
+>
+> One day, Kaida received a message from a distant land, Eldrid. The message was from Nara, who had heard about Kaida's reputation as a Protector and reached out for assistance.
+>
+> (Clipped for brevity)

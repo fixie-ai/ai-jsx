@@ -6,6 +6,7 @@ export interface ModelProps {
   temperature?: number;
   maxTokens?: number;
   stop?: string[];
+  functionCall?: string | Record<string, string>;
 }
 
 export type ModelPropsWithChildren = ModelProps & {
@@ -13,6 +14,18 @@ export type ModelPropsWithChildren = ModelProps & {
 };
 
 export type ModelComponent<T extends ModelPropsWithChildren> = Component<T>;
+
+export interface FunctionDefinition {
+  name: string;
+  description?: string;
+  parameters: Record<string, FunctionParameter>;
+}
+
+export interface FunctionParameter {
+  description?: string;
+  type?: string;
+  required: boolean;
+}
 
 /**
  * If env var `OPENAI_API_KEY` is defined, use Open AI as the completion model provider.
@@ -140,6 +153,49 @@ export function UserMessage({ children }: { name?: string; children: Node }) {
  */
 export function AssistantMessage({ children }: { children: Node }) {
   return children;
+}
+
+/**
+ * Provide a Function Call to the chat model.
+ *
+ * The function call tells the model that a function was previously invoked by the model. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
+ * When the model returns a function call, <ChatCompletion> returns a <FunctionCall> component.
+ *
+ * This component can only be used within a ChatCompletion.
+ *
+ * @example
+ *    <ChatCompletion>
+ *      <UserMessage>What is 258 * 322?</UserMessage>
+ *      <FunctionCall name="evaluate_math" args={expression: "258 * 322"} />
+ *      <FunctionResponse name="evaluate_math">83076</FunctionResponse>
+ *
+ *    ==> "That would be 83,076."
+ */
+export function FunctionCall({ name, args }: { name: string; args: Record<string, string | number | boolean | null> }) {
+  return `Call function ${name} with ${JSON.stringify(args)}`;
+}
+
+/**
+ * Provide a Function Response to the chat model.
+ *
+ * The FunctionResponse provides the output of a previous <FunctionCall /> request. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
+ *
+ * This component can only be used within a ChatCompletion.
+ *
+ * @example
+ *    <ChatCompletion>
+ *      <UserMessage>What is 258 * 322?</UserMessage>
+ *      <FunctionCall name="evaluate_math" args={expression: "258 * 322"} />
+ *      <FunctionResponse name="evaluate_math">83076</FunctionResponse>
+ *
+ *    ==> "That would be 83,076."
+ */
+export async function FunctionResponse(
+  { name, children }: { name: string; children: Node },
+  { render }: LLMx.ComponentContext
+) {
+  const output = await render(children);
+  return `function ${name} returns ${output}`;
 }
 
 /**
