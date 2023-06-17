@@ -102,7 +102,7 @@ console.log(await LLMx.createRenderContext().render(<App />));
 
 ## Examples
 
-For a full set of examples, see (here)[https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples].
+For a full set of examples, see [the examples package](https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples).
 
 ## Contributing
 
