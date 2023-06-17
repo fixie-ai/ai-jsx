@@ -5,9 +5,8 @@ import * as LLMx from 'ai-jsx';
 import React, { useEffect, useRef } from 'react';
 import { DocsQA, ScoredChunk, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
 import { memo } from 'ai-jsx/core/memoize';
-// @ts-expect-error
-import markdownPath from './brand-new.md';
 import { atom, useAtom } from 'jotai';
+import TurndownService from 'turndown';
 
 import _ from 'lodash';
 
@@ -19,18 +18,27 @@ export interface ChatMessage {
 export const conversationAtom = atom<ChatMessage[]>([]);
 export const modelCallInProgress = atom<boolean>(false);
 
-// For now, we load the ai.jsx docs from a local markdown file. Once we have a HTML->Markdown converter,
-// we can load the docs from the site directly.
-const docResponse = await fetch(markdownPath);
-const docText = await docResponse.text();
-const docs = [
-  {
-    pageContent: [docText],
-    name: 'Guide for AI Newcomers',
-  },
-];
-const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
-await corpus.startLoading();
+/*
+ * This is a very simple example of how to build a document corpus.
+ * We pull the page content from a URL, convert it to Markdown, and then index it.
+ */
+async function indexCorpus() {
+  const url = 'https://docs.ai-jsx.com/guides/brand-new';
+  const title = 'Guide for AI Newcomers';
+  const response = await fetch(url);  
+  const markdown = new TurndownService().turndown(await response.text());
+  console.log(markdown);
+  const docs = [
+    {
+      pageContent: [markdown],
+      name: title,
+    },
+  ];
+  const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
+  await corpus.startLoading();
+  return corpus;
+}
+const corpus = await indexCorpus();
 
 const ShowDoc = ({ doc }: { doc: ScoredChunk }) => (
   <>
