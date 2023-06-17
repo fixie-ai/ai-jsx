@@ -45,7 +45,7 @@ function AI() {
   const [, setCallInProgress] = useAtom(modelCallInProgress);
   const isInProgressRef = useRef(false);
   const children = memo(<ChatAgent conversation={conversation} />);
-  const when = conversation.length && _.last(conversation).type === 'user';
+  const when = conversation.length && _.last(conversation)?.type === 'user';
 
   useEffect(() => {
     if (isInProgressRef.current || !when) {
