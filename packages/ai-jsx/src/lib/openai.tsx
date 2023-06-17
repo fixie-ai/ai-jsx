@@ -286,14 +286,15 @@ export async function* OpenAIChatModel(
         required: Object.keys(functionDefinition.parameters).filter(
           (name) => functionDefinition.parameters[name].required
         ),
-        properties: Object.keys(functionDefinition.parameters).reduce((map: Record<string, any>, paramName) => {
-          return { 
+        properties: Object.keys(functionDefinition.parameters).reduce(
+          (map: Record<string, any>, paramName) => ({
             ...map,
             [paramName]: {
               type: functionDefinition.parameters[paramName].type,
-            }, 
-            };
-        }, {}),
+            },
+          }),
+          {}
+        ),
       },
     })
   );

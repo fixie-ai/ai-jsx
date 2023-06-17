@@ -9,6 +9,7 @@ import {
   FunctionResponse,
 } from 'ai-jsx/core/completion';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ModelProducesFunctionCall({ query }: { query: string }) {
   return (
     <ChatProvider model="gpt-4-0613">
@@ -34,6 +35,7 @@ function ModelProducesFunctionCall({ query }: { query: string }) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ModelProducesFinalResponse({ query }: { query: string }) {
   return (
     <ChatProvider model="gpt-4-0613">
@@ -62,4 +64,4 @@ function ModelProducesFinalResponse({ query }: { query: string }) {
 }
 
 showInspector(<ModelProducesFunctionCall query="What is 2523231 * 2382382?" />);
-showInspector(<ModelProducesFinalResponse query="What is 2523231 * 2382382?" />);
+// showInspector(<ModelProducesFinalResponse query="What is 2523231 * 2382382?" />);
