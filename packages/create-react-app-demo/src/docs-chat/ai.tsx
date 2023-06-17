@@ -21,7 +21,8 @@ export const modelCallInProgress = atom<boolean>(false);
 
 // For now, we load the ai.jsx docs from a local markdown file. Once we have a HTML->Markdown converter,
 // we can load the docs from the site directly.
-const docText = await fetch(markdownPath).then((res) => res.text());
+const docResponse = await fetch(markdownPath)
+const docText = await docResponse.text()
 const docs = [
   {
     pageContent: [docText],
