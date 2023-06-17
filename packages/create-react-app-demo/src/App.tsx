@@ -5,6 +5,7 @@ import RootLayout from './layout.tsx';
 import BasicCompletion from './basic-completion.tsx';
 import { ChooseYourOwnAdventure } from './choose-your-adventure/index.tsx';
 import RecipeWrapper from './recipe/page.tsx';
+import { BasicChat } from './basic-chat/index.tsx';
 
 const router = createBrowserRouter([
   {
@@ -22,6 +23,10 @@ const router = createBrowserRouter([
       {
         path: '/basic-completion',
         element: <BasicCompletion />,
+      },
+      {
+        path: '/basic-chat',
+        element: <BasicChat />,
       },
     ],
   },

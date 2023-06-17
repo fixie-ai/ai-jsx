@@ -5,6 +5,7 @@ import { NavLink } from 'react-router-dom';
 export default function NavBar() {
   const pages = {
     'Choose your own adventure': '/',
+    'Basic Chat': '/basic-chat',
     'JIT UI: React': '/recipe',
     'Basic Completion': '/basic-completion',
   };
