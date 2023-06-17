@@ -14,15 +14,15 @@ export default function BasicCompletion() {
       <InputPrompt label="Give me a topic" value={query} setValue={setQuery} />
       <ResultContainer title={`AI comes up with a recipe for ${query}`}>
         <AI.jsx>
-        <ChatCompletion temperature={1}>
+          <ChatCompletion temperature={1}>
             <UserMessage>Write me a poem about {query}</UserMessage>
           </ChatCompletion>
         </AI.jsx>
       </ResultContainer>
       <ResultContainer title={`AI lists ten facts about ${query}`}>
         <AI.jsx>
-        <ChatCompletion temperature={1}>
-        <UserMessage>Give me ten facts about {query}</UserMessage>
+          <ChatCompletion temperature={1}>
+            <UserMessage>Give me ten facts about {query}</UserMessage>
           </ChatCompletion>
         </AI.jsx>
       </ResultContainer>

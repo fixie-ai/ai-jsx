@@ -27,35 +27,6 @@ import { Logger } from '../core/log.js';
 import { HttpError } from '../core/errors.js';
 import _ from 'lodash';
 
-type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
-
-export class OpenAIError<M extends OpenAIMethod> extends HttpError {
-  readonly errorResponse: Record<string, any> | null;
-
-  constructor(response: Response, method: M, responseText: string) {
-    let errorResponse = null as Record<string, any> | null;
-    let responseSuffix = '';
-    try {
-      errorResponse = JSON.parse(responseText);
-    } catch {
-      // The response wasn't JSON, ignore it.
-    }
-
-    const parsedMessage = errorResponse?.error?.message;
-    if (typeof parsedMessage === 'string' && parsedMessage.trim().length > 0) {
-      responseSuffix = `: ${parsedMessage}`;
-    }
-
-    super(
-      `OpenAI ${method} request failed with status code ${response.status}${responseSuffix}\n\nFor more information, see https://platform.openai.com/docs/guides/error-codes/api-errors`,
-      response.status,
-      responseText,
-      Object.fromEntries(response.headers.entries())
-    );
-    this.errorResponse = errorResponse;
-  }
-}
-
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
   | 'text-davinci-003'
@@ -71,50 +42,6 @@ type ChatOrCompletionModelOrBoth =
   | { chatModel?: ValidChatModel; completionModel: ValidCompletionModel };
 
 const decoder = new TextDecoder();
-
-// export class OpenAIApiEdgeShim extends OpenAIApiEdge {
-//   async createCompletion(
-//     completionRequest: Parameters<OpenAIApiEdge['createCompletion']>[0],
-//     config?: Parameters<OpenAIApi['createCompletion']>[1]
-//   ) {
-//     const completionResponse = await super.createCompletion(completionRequest, config);
-//     debugger;
-//     if (!completionResponse.ok) {
-//       throw new Error('fak');
-//     }
-//     if (!completionResponse.body) {
-//       throw new Error('fak');
-//     }
-//     const reader = completionResponse.body.getReader();
-//   }
-
-//   async createChatCompletion(
-//     completionRequest: Parameters<OpenAIApiEdge['createChatCompletion']>[0],
-//     config?: Parameters<OpenAIApiEdge['createChatCompletion']>[1]
-//   ) {
-//     const chatResponse = await super.createChatCompletion(completionRequest, config);
-//     if (!chatResponse.ok) {
-//       throw new OpenAIError(chatResponse, 'createChatCompletion', await chatResponse.text());
-//     }
-//     if (!chatResponse.body) {
-//       throw new OpenAIError(chatResponse, 'createChatCompletion', '');
-//     }
-//     const reader = chatResponse.body.getReader();
-    // async function* asyncIteratorOfFetchStream() {
-    //   while (true) {
-    //     const { done, value } = await reader.read();
-    //     if (done) {
-    //       return;
-    //     }
-    //     yield decoder.decode(value);
-    //   }
-    // }
-//     return {
-//       ...chatResponse,
-//       data: shimmedData(),
-//     };
-//   }
-// }
 
 export const openAiClientContext = LLMx.createContext<OpenAIApi>(
   new OpenAIApi(
@@ -207,9 +134,38 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
   );
 }
 
+type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
+
+export class OpenAIError<M extends OpenAIMethod> extends HttpError {
+  readonly errorResponse: Record<string, any> | null;
+
+  constructor(response: Response, method: M, responseText: string) {
+    let errorResponse = null as Record<string, any> | null;
+    let responseSuffix = '';
+    try {
+      errorResponse = JSON.parse(responseText);
+    } catch {
+      // The response wasn't JSON, ignore it.
+    }
+
+    const parsedMessage = errorResponse?.error?.message;
+    if (typeof parsedMessage === 'string' && parsedMessage.trim().length > 0) {
+      responseSuffix = `: ${parsedMessage}`;
+    }
+
+    super(
+      `OpenAI ${method} request failed with status code ${response.status}${responseSuffix}\n\nFor more information, see https://platform.openai.com/docs/guides/error-codes/api-errors`,
+      response.status,
+      responseText,
+      Object.fromEntries(response.headers.entries())
+    );
+    this.errorResponse = errorResponse;
+  }
+}
+
 async function* asyncIteratorOfFetchStream(reader: ReturnType<NonNullable<Response['body']>['getReader']>) {
   while (true) {
-    const { done, value } = 
+    const { done, value } =
       // @ts-expect-error
       await reader.read();
     if (done) {
@@ -245,10 +201,7 @@ export async function* OpenAICompletionModel(
   };
   logger.debug({ completionRequest }, 'Calling createCompletion');
 
-  const completionResponse = await openai.createCompletion(completionRequest, {
-    // responseType: 'stream',
-    // validateStatus: () => true,
-  });
+  const completionResponse = await openai.createCompletion(completionRequest);
 
   await checkOpenAIResponse(completionResponse, logger, 'createCompletion');
 
@@ -256,7 +209,7 @@ export async function* OpenAICompletionModel(
 
   // checkOpenAIResponse will throw if completionResponse.body is null, so we know it's not null here.
   const responseIterator = asyncIteratorOfFetchStream(completionResponse.body!.getReader());
-  
+
   for await (const event of openAiEventsToJson<CreateCompletionResponse>(responseIterator)) {
     logger.trace({ event }, 'Got createCompletion event');
     resultSoFar += event.choices[0].text;
@@ -315,10 +268,7 @@ export async function* OpenAIChatModel(
   };
 
   logger.debug({ chatCompletionRequest }, 'Calling createChatCompletion');
-  const chatResponse = await openai.createChatCompletion(chatCompletionRequest, {
-    // responseType: 'stream',
-    // validateStatus: () => true,
-  });
+  const chatResponse = await openai.createChatCompletion(chatCompletionRequest);
 
   await checkOpenAIResponse(chatResponse, logger, 'createChatCompletion');
 
@@ -397,6 +347,6 @@ export async function DalleImageGen(
   }
 
   // return all image URLs as a newline-separated string
-  const responseJson = await response.json() as ResponseTypes['createImage'];
+  const responseJson = (await response.json()) as ResponseTypes['createImage'];
   return _.map(responseJson.data, 'url').join('\n');
 }
