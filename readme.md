@@ -12,18 +12,18 @@ AI.JSX is a framework for building AI applications using [JSX](https://react.dev
 
 AI.JSX is designed to give you two important capabilities out of the box:
 
-1. A powerful mechanism for orchestrating multiple LLM calls expressed as modular, re-usable components.
+1. An intuitive mechanism for orchestrating multiple LLM calls expressed as modular, re-usable components.
 1. The ability to seamlessly interweave UI components with your AI compoents. This means you can rely on the LLM to construct your UI dynamically from a set of standard React components.
 
 AI.JSX can be used to create standalone LLM applications that can be deployed anywhere Node.JS is supported, or it can be used as part of a larger React application. We have examples that use [Next.js](https://github.com/fixie-ai/ai-jsx/tree/main/packages/nextjs-demo) and [Create React App](https://github.com/fixie-ai/ai-jsx/tree/main/packages/create-react-app-demo). For more details, see our [AI+UI guide](https://docs.ai-jsx.com/guides/ai-ui).
 
 To get started, see the quickstart below, read our [Getting Started Guide](https://docs.ai-jsx.com/getting-started), or check out the [examples](https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples).
 
-To learn more about why we built AI.JSX, you can read our [blog post](https://blog.fixie.ai).
+New to the world of AI and LLMs? Read our [Guide for AI Newcomers](https://docs.ai-jsx.com/guides/brand-new).
 
 ## Quickstart
 
-The fastest way to get started is to [clone our template repo](https://github.com/fixie-ai/ai-jsx-template). But here's how to do it manually:
+The fastest way to get started is to [clone our template repo](https://github.com/fixie-ai/ai-jsx-template) or [check out an example on CodeSandbox](https://codesandbox.io/p/sandbox/late-pond-rnf95v). But here's how to do it manually:
 
 Create your folder and `cd` into it:
 
@@ -46,7 +46,7 @@ npx tsc --init
 Install `ai-jsx`:
 
 ```console
-npm i ai-jsx --save-dev
+npm i ai-jsx
 ```
 
 Set up your `package.json`:
@@ -72,7 +72,25 @@ Set up your `package.json`:
 }
 ```
 
-Create a new `index.tsx` file with the following:
+Set up your `tsconfig.json` to use AI.JSX's JSX support:
+
+```json
+{
+  "extends": "@tsconfig/node18/tsconfig.json",
+  "include": ["index.tsx"],
+  "compilerOptions": {
+    "jsx": "react",
+    "jsxFactory": "LLMx.createElement",
+    "jsxFragmentFactory": "LLMx.Fragment",
+    "moduleResolution": "node16",
+    "module": "esnext",
+    "resolveJsonModule": true,
+    "noEmit": true
+  }
+}
+```
+
+Create a new `index.tsx` file with the following simple example:
 
 ```tsx
 import * as LLMx from 'ai-jsx';
@@ -102,7 +120,7 @@ console.log(await LLMx.createRenderContext().render(<App />));
 
 ## Examples
 
-For a full set of examples, see (here)[https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples].
+For a full set of examples, see [here](https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples).
 
 ## Contributing
 
