@@ -13,7 +13,7 @@ AI.JSX is a framework for building AI applications using [JSX](https://react.dev
 AI.JSX is designed to give you two important capabilities out of the box:
 
 1. A powerful mechanism for orchestrating multiple LLM calls expressed as modular, re-usable components.
-1. The ability to seamlessly interweave UI components with your AI compoents. This means you can rely on the LLM to construct your UI dynamically from a set of standard React components.
+1. The ability to seamlessly interweave UI components with your AI compoents. This means you can rely on the LLM to construct your UI dynamically from a set of React components you provide.
 
 AI.JSX can be used to create standalone LLM applications that can be deployed anywhere Node.JS is supported, or it can be used as part of a larger React application. We have examples that use [Next.js](https://github.com/fixie-ai/ai-jsx/tree/main/packages/nextjs-demo) and [Create React App](https://github.com/fixie-ai/ai-jsx/tree/main/packages/create-react-app-demo). For more details, see our [AI+UI guide](https://docs.ai-jsx.com/guides/ai-ui).
 
