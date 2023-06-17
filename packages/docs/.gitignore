@@ -17,7 +17,7 @@ data
 
 # Production
 /build
-/docs
+/docs/api
 
 # Generated files
 .docusaurus
