@@ -6,6 +6,7 @@ export default function NavBar() {
   const pages = {
     'Choose your own adventure': '/',
     'JIT UI: React': '/recipe',
+    'Basic Completion': '/basic-completion',
   };
 
   return (
