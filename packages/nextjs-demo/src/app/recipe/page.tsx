@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 import React from '../react';
-import { AI } from '../ai';
+import { AIComponent } from '../ai';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import ResultContainer from '@/components/ResultContainer';
 import InputPrompt from '@/components/InputPrompt';
@@ -73,7 +73,7 @@ export default function RecipeWrapper({ searchParams }: { searchParams: any }) {
       <InputPrompt label="What would you like a recipe for?" defaultValue={defaultValue} />
 
       <ResultContainer title={`AI comes up with a recipe for ${query}`}>
-        <AI renderPassedReactComponents>
+        <AIComponent renderPassedReactComponents>
           <ChatCompletion temperature={1}>
             <SystemMessage>
               You are an AI who is an expert chef and also an expert UI designer. The user will ask you for a recipe.
@@ -99,7 +99,7 @@ export default function RecipeWrapper({ searchParams }: { searchParams: any }) {
             </SystemMessage>
             <UserMessage>Give me a recipe for {query}. Respond with only the JSON.</UserMessage>
           </ChatCompletion>
-        </AI>
+        </AIComponent>
       </ResultContainer>
     </>
   );
