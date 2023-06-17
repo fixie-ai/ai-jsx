@@ -25,7 +25,7 @@ export const modelCallInProgress = atom<boolean>(false);
 async function indexCorpus() {
   const url = 'https://docs.ai-jsx.com/guides/brand-new';
   const title = 'Guide for AI Newcomers';
-  const response = await fetch(url);  
+  const response = await fetch(url);
   const markdown = new TurndownService().turndown(await response.text());
   console.log(markdown);
   const docs = [
