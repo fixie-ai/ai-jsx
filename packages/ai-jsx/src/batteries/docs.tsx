@@ -12,7 +12,6 @@ import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.j
 import * as LLMx from '../index.js';
 import { Node } from '../index.js';
 
-
 /**
  * A raw document loaded from an arbitrary source that has not yet been parsed.
  */
@@ -254,7 +253,7 @@ export type Chunker<
 export function makeChunker(chunkSize: number, chunkOverlap: number): Chunker {
   return async (doc: Document) => {
     const splitter = new TokenTextSplitter({
-      encodingName: "gpt2",
+      encodingName: 'gpt2',
       chunkSize,
       chunkOverlap,
     });

@@ -6,14 +6,14 @@ import { DocsQA, ScoredChunk, LocalCorpus, makeChunker, staticLoader } from 'ai-
 import { memo } from 'ai-jsx/core/memoize';
 import { showInspector } from 'ai-jsx/core/inspector';
 
-const URL = "https://en.wikipedia.org/wiki/2005_Azores_subtropical_storm";
+const URL = 'https://en.wikipedia.org/wiki/2005_Azores_subtropical_storm';
 
 const html = await fetch(URL).then((response) => response.text());
 const plainText = htmlToText(html);
 const docs = [
   {
     pageContent: [plainText],
-    name: "Wikipedia Article about 2005 Azores subtropical storm",
+    name: 'Wikipedia Article about 2005 Azores subtropical storm',
   },
 ];
 const corpus = new LocalCorpus(staticLoader(docs), makeChunker(300, 100));
