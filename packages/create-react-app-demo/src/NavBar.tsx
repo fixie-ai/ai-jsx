@@ -6,7 +6,9 @@ export default function NavBar() {
   const pages = {
     'Choose your own adventure': '/',
     'Basic Chat': '/basic-chat',
+    'Docs Chat': '/docs-chat',
     'JIT UI: React': '/recipe',
+    'Basic Completion': '/basic-completion',
   };
 
   return (

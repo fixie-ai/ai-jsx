@@ -125,6 +125,7 @@
     "react": "^16.8.0  || ^17.0.0 || ^18.0.0"
   },
   "dependencies": {
+    "@nick.heiner/openai-edge": "1.0.1-7",
     "axios": "^1.4.0",
     "cli-highlight": "^2.1.11",
     "cli-spinners": "^2.9.0",
