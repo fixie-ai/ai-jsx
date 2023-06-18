@@ -12824,15 +12824,15 @@ __metadata:
   linkType: hard
 
 "globby@npm:^13.1.1, globby@npm:^13.1.3, globby@npm:^13.1.4":
-  version: 13.1.4
-  resolution: "globby@npm:13.1.4"
+  version: 13.2.0
+  resolution: "globby@npm:13.2.0"
   dependencies:
     dir-glob: "npm:^3.0.1"
     fast-glob: "npm:^3.2.11"
     ignore: "npm:^5.2.0"
     merge2: "npm:^1.4.1"
     slash: "npm:^4.0.0"
-  checksum: 3e433409da6b65206694b0d3fec692f42b9eb9a1d1406851a1237508e6dd12a4e70c3ba3d7b6b26a8c8e71aab6a84e648fca6b955abc18dd37341a44ac341567
+  checksum: b74c96e1f872fe7ad83b651266e1cef30afb965493e45cdb09cdd0081cf17af81095027e186210494c4fbaab146cc161f1d6d6b2bedefc926c65bdcefd44f963
   languageName: node
   linkType: hard
 
