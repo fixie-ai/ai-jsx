@@ -22,6 +22,7 @@ $ npm start
 ```
 
 You should see output like:
+
 ```
 Oh, wond'rous beast of language, vast and strong,
 Whose depths of knowledge ne'er have been surpassed,
@@ -49,6 +50,7 @@ You will find examples in the directories `packages/examples`, `packages/tutoria
 
 You can then run the various examples from the top level of the `ai-jsx` checkout using
 `yarn workspace`, like so:
+
 ```
 $ yarn workspace tutorial run part1
 $ yarn workspace examples run demo:debate
@@ -58,7 +60,4 @@ $ yarn workspace create-react-app-demo start
 ## Next Steps
 
 Now that you have some basic examples working, learn more about AI.JSX development
-by following the [tutorial](./tutorial).
-
-
-
+by following the [tutorial](./tutorial/part1).

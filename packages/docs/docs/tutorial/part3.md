@@ -58,9 +58,9 @@ function CharacterField(props: { fieldName: string }) {
       {props.fieldName}:{' '}
       <ChatCompletion>
         <SystemMessage>
-          The user is generating a character sheet for a fantasy role-playing game. Your job is to provide a single value
-          for one of the fields of the character sheet. Please only return the chosen value, and no other conversational
-          text.
+          The user is generating a character sheet for a fantasy role-playing game. Your job is to provide a single
+          value for one of the fields of the character sheet. Please only return the chosen value, and no other
+          conversational text.
         </SystemMessage>
         <UserMessage>Please generate the character sheet field: {props.fieldName}</UserMessage>
       </ChatCompletion>

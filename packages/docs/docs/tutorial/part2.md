@@ -46,7 +46,7 @@ the result of the first two invocations.
 The `<Inline>` component renders each of its children in sequence.
 The first child is the first `<ChatCompletion>` with the initial static prompt.
 The second child of `<Inline>` is a string containing two newline characters.
-The third child is a *function* that takes a single argument -- `conversation` -- and returns
+The third child is a _function_ that takes a single argument -- `conversation` -- and returns
 a `<ChatCompletion>` component that invokes the LLM again. The `conversation` argument contains
 the state of the rendered output of the `<Inline>` component up to this point.
 In this way, you can build up a response consisting of multiple LLM invocations.

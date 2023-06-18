@@ -35,7 +35,7 @@ const docs = await Promise.all(
 const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
 await corpus.startLoading();
 
-function ShowDoc({ doc }: { doc: ScoredChunk }) {
+function FormatChunk({ doc }: { doc: ScoredChunk }) {
   return (
     <>
       Title: {doc.chunk.documentName ?? 'Untitled'}
@@ -49,7 +49,7 @@ function AskAndAnswer({ query }: { query: string }) {
     <>
       Q: {query}
       {'\n'}
-      A: <DocsQA question={query} corpus={corpus} docComponent={ShowDoc} />
+      A: <DocsQA question={query} corpus={corpus} chunkFormatter={FormatChunk} />
     </>
   );
 }
