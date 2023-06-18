@@ -1,7 +1,6 @@
-/** @jsx LLMx.createElement */
-/** @jsxFrag LLMx.Fragment */
-/* eslint-disable react/jsx-key */
-import * as LLMx from 'ai-jsx';
+/** @jsx AI.createElement */
+/** @jsxFrag AI.Fragment */
+import * as AI from 'ai-jsx';
 import { DocsQA, ScoredChunk, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
 // @ts-expect-error
 import markdownPath from './brand-new.md';

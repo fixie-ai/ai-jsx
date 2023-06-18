@@ -22,6 +22,11 @@ function ConversationItem({
   );
 }
 
+/**
+ * We need to memoize this function. Otherwise, every time the parent component of AgentResponse re-renders,
+ * AgentReponse will re-render, which will trigger a new LLM call, which will produce a different result than the
+ * prior call.
+ */
 const AgentResponse = React.memo(function AgentResponse({
   question,
   setCallInProgress,
