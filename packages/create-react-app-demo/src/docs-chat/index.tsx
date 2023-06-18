@@ -3,7 +3,7 @@
 import * as AI from 'ai-jsx/react';
 import * as React from 'react';
 import { useState } from 'react';
-import { ChatMessage, DocsAgent } from './ai.tsx';
+import { DocsAgent } from './ai.tsx';
 import { useList } from 'react-use';
 import ResultContainer from '../ResultContainer.tsx';
 
@@ -11,7 +11,7 @@ function ConversationItem({
   responseType,
   children: responseContent,
 }: {
-  responseType: ChatMessage['type'];
+  responseType: 'user' | 'bot';
   children: React.ReactNode;
 }) {
   const emoji = responseType === 'user' ? '👤' : '🤖';
@@ -31,7 +31,7 @@ const AgentResponse = React.memo(function AgentResponse({
   question,
   setCallInProgress,
 }: {
-  question: ChatMessage['content'];
+  question: string;
   setCallInProgress: (x: boolean) => void;
 }) {
   return (

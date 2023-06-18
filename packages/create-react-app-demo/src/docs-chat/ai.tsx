@@ -5,11 +5,6 @@ import { DocsQA, ScoredChunk, LocalCorpus, defaultChunker, staticLoader } from '
 // @ts-expect-error
 import markdownPath from './brand-new.md';
 
-export interface ChatMessage {
-  type?: string;
-  content: string;
-}
-
 // For now, we load the ai.jsx docs from a local markdown file. Once we have a HTML->Markdown converter,
 // we can load the docs from the site directly.
 const docResponse = await fetch(markdownPath);
@@ -31,7 +26,7 @@ const ShowDoc = ({ doc }: { doc: ScoredChunk }) => (
   </>
 );
 
-export async function DocsAgent({ question }: { question: NonNullable<ChatMessage['content']> }) {
+export async function DocsAgent({ question }: { question: string }) {
   await corpusLoadedPromise;
   return <DocsQA question={question} corpus={corpus} limit={5} docComponent={ShowDoc} />;
 }
