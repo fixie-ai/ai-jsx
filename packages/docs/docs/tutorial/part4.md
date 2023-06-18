@@ -82,8 +82,8 @@ can take a while, but for this demo we `await` the result.
 Once we have a corpus, we use the `<DocsQA>` component to query it:
 
 ```tsx filename="packages/tutorial/src/part4.tsx"
-function GetChunk({ doc }: { doc: ScoredChunk }) {
-  return doc.chunk.content;
+function GetChunk({ chunk }: { chunk: ScoredChunk }) {
+  return chunk.chunk.content;
 }
 
 function App() {
@@ -103,3 +103,8 @@ function App() {
   );
 }
 ```
+
+The `<GetChunk>` component is used to format each document chunk as it is presented
+to the LLM. In this case, we just return the raw text of the chunk, but if we wanted
+to include some additional metadata, or transformed the chunks in some way before
+processing them, we could have done so.
