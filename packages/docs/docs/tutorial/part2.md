@@ -1,8 +1,8 @@
 ---
-sidebar_position: 1
+sidebar_position: 2
 ---
 
-# Tutorial Part 2 - Progressive Rendering
+# Tutorial Part 2 - Progressive rendering
 
 Let's look at a slightly more complex example, which uses the `<Inline>` component
 to progressively render the result of the LLM invocation as it is generated. This
@@ -23,6 +23,12 @@ const app = (
     {'\n\n'}
     {(conversation) => (
       <ChatCompletion>
+        <UserMessage>Imagine a mythical forest animal called the "{conversation}". Tell me more about it.</UserMessage>
+      </ChatCompletion>
+    )}
+    {'\n\n'}
+    {(conversation) => (
+      <ChatCompletion>
         <UserMessage>Now write a poem about this animal: {conversation}</UserMessage>
       </ChatCompletion>
     )}
@@ -33,16 +39,21 @@ showInspector(app);
 ```
 
 As before, we are using `<ChatCompletion>` to invoke the LLM, but this time we are
-calling it twice -- the first time with a fixed prompt, and the second time with a
-prompt that includes the result of the first invocation.
+calling it three times -- the first time with a fixed prompt, and the second time with a
+prompt that includes the result of the first invocation, and a third time that includes
+the result of the first two invocations.
 
-The `<Inline>` component renders each of its children in sequence. 
+The `<Inline>` component renders each of its children in sequence.
 The first child is the first `<ChatCompletion>` with the initial static prompt.
 The second child of `<Inline>` is a string containing two newline characters.
 The third child is a *function* that takes a single argument -- `conversation` -- and returns
 a `<ChatCompletion>` component that invokes the LLM again. The `conversation` argument contains
 the state of the rendered output of the `<Inline>` component up to this point.
 In this way, you can build up a response consisting of multiple LLM invocations.
+The fourth child of `<Inline>` is another string containing two newline characters.
+Finally, the fifth child of `<Inline>` is another function that takes in the current state
+of the rendered output, and returns a `<ChatCompletion>` component that invokes the LLM
+a third time.
 
 ## The Inspector
 
@@ -51,6 +62,3 @@ application, rather than just printing a string using `console.log`. `showInspec
 up a live text display (in the terminal window) that shows the current state of the application
 as it is rendered. This can be helpful in debugging AI.JSX applications, rather than relying
 only on the final result of the rendering.
-
-
-
