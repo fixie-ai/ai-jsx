@@ -68,5 +68,9 @@ const corpus = new LocalCorpus(staticLoader(docs), makeChunker(600, 100));
 await corpus.startLoading();
 ```
 
-Here, a `LocalCorpus` holds all of the document contents in memory -- soon we will
-be adding support to AI.JSX for offline data storage, such as vector databases.
+We first fetch the contents of the web page and convert it to Markdown using
+the [Turndown](https://github.com/mixmark-io/turndown) library. We then create
+a `LocalCorpus` from this Markdown content.
+
+
+
