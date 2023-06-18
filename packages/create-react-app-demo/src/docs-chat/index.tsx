@@ -1,18 +1,43 @@
+/** @jsx AI.createElement */
+/** @jsxFrag AI.Fragment */
+import * as AI from 'ai-jsx/react';
 import React from 'react';
-import { AIRoot, ChatMessage, conversationAtom, modelCallInProgress } from './ai.tsx';
-import { useAtom } from 'jotai';
+import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
+import { ChatMessage, DocsAgent, conversationAtom } from './ai.tsx';
+import { atom, useAtom } from 'jotai';
 import ResultContainer from '../ResultContainer.tsx';
 
-function ConversationItem({ response }: { response: ChatMessage }) {
-  const emoji = response.type === 'user' ? '👤' : '🤖';
+const modelCallInProgress = atom<boolean>(false);
+
+function ConversationItem({
+  responseType,
+  children: responseContent,
+}: {
+  responseType: ChatMessage['type'];
+  children: React.ReactNode;
+}) {
+  const emoji = responseType === 'user' ? '👤' : '🤖';
   return (
     <div>
-      {emoji}: {response.content}
+      {emoji}: {responseContent}
     </div>
   );
 }
 
-function ConversationHistory() {
+function AgentResponse({ question }: { question: ChatMessage['content'] }) {
+  // const [, setCallInProgress] = useAtom(modelCallInProgress);
+  const setCallInProgress = (x: any) => {};
+
+  return (
+    <ConversationItem responseType="bot">
+      <AI.jsx onStreamStart={() => setCallInProgress(true)} onStreamEnd={() => setCallInProgress(false)}>
+        <DocsAgent question={question} />
+      </AI.jsx>
+    </ConversationItem>
+  );
+}
+
+export function DocsChat() {
   const [conversation, setConversation] = useAtom(conversationAtom);
   const [callInProgress] = useAtom(modelCallInProgress);
 
@@ -46,12 +71,16 @@ function ConversationHistory() {
     >
       <ul>
         {conversation.map((response, index) => (
-          <li key={index} className="mt-4">
-            <ConversationItem response={response} />
-          </li>
+          <>
+            <li key={`${index}-user`} className="mt-4">
+              <ConversationItem responseType={response.type}>{response.content}</ConversationItem>
+            </li>
+            <li key={`${index}-agent`} className="mt-4">
+              <AgentResponse question={response.content} />
+            </li>
+          </>
         ))}
       </ul>
-      {callInProgress && <div>Waiting for AI response...</div>}
       <form onSubmit={handleInputSubmit} className="mt-4 flex w-full">
         <input
           disabled={callInProgress}
@@ -68,14 +97,5 @@ function ConversationHistory() {
         </button>
       </form>
     </ResultContainer>
-  );
-}
-
-export function DocsChat() {
-  return (
-    <>
-      <AIRoot />
-      <ConversationHistory />
-    </>
   );
 }

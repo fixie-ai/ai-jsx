@@ -13,11 +13,10 @@ import _ from 'lodash';
 
 export interface ChatMessage {
   type?: string;
-  content?: string;
+  content: string;
 }
 
 export const conversationAtom = atom<ChatMessage[]>([]);
-export const modelCallInProgress = atom<boolean>(false);
 
 // For now, we load the ai.jsx docs from a local markdown file. Once we have a HTML->Markdown converter,
 // we can load the docs from the site directly.
@@ -30,7 +29,8 @@ const docs = [
   },
 ];
 const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
-await corpus.startLoading();
+
+const corpusLoadedPromise = corpus.startLoading();
 
 const ShowDoc = ({ doc }: { doc: ScoredChunk }) => (
   <>
@@ -39,38 +39,38 @@ const ShowDoc = ({ doc }: { doc: ScoredChunk }) => (
   </>
 );
 
-function DocsAgent({ conversation }: { conversation: any[] }) {
-  const query = _.last(conversation)?.content;
-  return <DocsQA question={query} corpus={corpus} limit={5} docComponent={ShowDoc} />;
+export async function DocsAgent({ question }: { question: NonNullable<ChatMessage['content']> }) {
+  await corpusLoadedPromise;
+  return <DocsQA question={question} corpus={corpus} limit={5} docComponent={ShowDoc} />;
 }
 
-function AI() {
-  const [conversation, setConversation] = useAtom(conversationAtom);
-  const [, setCallInProgress] = useAtom(modelCallInProgress);
-  const isInProgressRef = useRef(false);
-  const children = memo(<DocsAgent conversation={conversation} />);
-  const when = conversation.length && _.last(conversation)?.type === 'user';
+// function AI() {
+//   const [conversation, setConversation] = useAtom(conversationAtom);
+//   const [, setCallInProgress] = useAtom(modelCallInProgress);
+//   const isInProgressRef = useRef(false);
+//   const children = memo(<DocsAgent conversation={conversation} />);
+//   const when = conversation.length && _.last(conversation)?.type === 'user';
 
-  useEffect(() => {
-    if (isInProgressRef.current || !when) {
-      return;
-    }
-    setCallInProgress(true);
-    isInProgressRef.current = true;
-    // I couldn't get streaming to work here and I don't know why.
-    // Maybe because we're in the client and however Axios is doing it only works in Node?
-    LLMx.createRenderContext()
-      .render(children)
-      .then((finalFrame) => {
-        isInProgressRef.current = false;
-        setCallInProgress(false);
-        setConversation((prev) => [...prev, { type: 'assistant', content: finalFrame }]);
-      });
-  }, [children, setCallInProgress, when, setConversation]);
+//   useEffect(() => {
+//     if (isInProgressRef.current || !when) {
+//       return;
+//     }
+//     setCallInProgress(true);
+//     isInProgressRef.current = true;
+//     // I couldn't get streaming to work here and I don't know why.
+//     // Maybe because we're in the client and however Axios is doing it only works in Node?
+//     LLMx.createRenderContext()
+//       .render(children)
+//       .then((finalFrame) => {
+//         isInProgressRef.current = false;
+//         setCallInProgress(false);
+//         setConversation((prev) => [...prev, { type: 'assistant', content: finalFrame }]);
+//       });
+//   }, [children, setCallInProgress, when, setConversation]);
 
-  return null;
-}
+//   return null;
+// }
 
-export function AIRoot() {
-  return React.createElement(AI, {});
-}
+// export function AIRoot() {
+//   return React.createElement(AI, {});
+// }

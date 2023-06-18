@@ -565,7 +565,7 @@ export async function DocsQA(props: DocsQAProps) {
         ))}
         And here is the question you must answer:
       </SystemMessage>
-      <UserMessage> {props.question} </UserMessage>
+      <UserMessage>{props.question}</UserMessage>
     </ChatCompletion>
   );
 }
