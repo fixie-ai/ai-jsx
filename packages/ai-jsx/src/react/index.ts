@@ -48,7 +48,7 @@ function unwrapReact(partiallyRendered: LLMx.PartiallyRendered): ReactModule.Rea
  * Renders an AI.jsx component into React. Used by the <AI.jsx> element internally but
  * can be used directly an entrypoint into AI.jsx.
  */
-export function useAI(children: LLMx.Node) {
+export function useAI(children: LLMx.Node, onStreamStart?: () => void, onStreamEnd?: () => void) {
   const [result, setResult] = ReactModule.useState([] as ReactModule.ReactNode);
   const [isDone, setIsDone] = ReactModule.useState(false);
 
@@ -56,6 +56,7 @@ export function useAI(children: LLMx.Node) {
     let shouldStop = false;
     async function stream() {
       setResult([]);
+      onStreamStart?.();
       setIsDone(false);
 
       // TODO: add a way for a render context to be aborted
@@ -76,12 +77,14 @@ export function useAI(children: LLMx.Node) {
         return;
       }
       setResult(final.map(unwrapReact));
+      onStreamEnd?.();
       setIsDone(true);
     }
 
     stream();
 
     return () => {
+      onStreamEnd?.();
       shouldStop = true;
     };
   }, [children]);
@@ -92,14 +95,24 @@ export function useAI(children: LLMx.Node) {
 /**
  * A JSX component that allows AI.jsx elements to be used in a React component tree.
  */
-export function jsx({ children }: { children: LLMx.Node }, context?: any | LLMx.ComponentContext) {
+export function jsx(
+  {
+    children,
+    onStreamStart,
+    onStreamEnd,
+    loading = '',
+  }: { children: LLMx.Node; onStreamStart?: () => void; onStreamEnd?: () => void; loading?: React.ReactNode },
+  context?: any | LLMx.ComponentContext
+) {
   if (typeof context?.render === 'function') {
     // We're in AI.JSX already.
     return children;
   }
 
-  const ai = useAI(children);
-  return ReactModule.createElement(ReactModule.Fragment, null, ai.result) as any;
+  const ai = useAI(children, onStreamStart, onStreamEnd);
+  const waitingForFirstAIResponse = !ai.isDone && Array.isArray(ai.result) && ai.result.length === 0;
+
+  return ReactModule.createElement(ReactModule.Fragment, null, waitingForFirstAIResponse ? loading : ai.result) as any;
 }
 
 /**

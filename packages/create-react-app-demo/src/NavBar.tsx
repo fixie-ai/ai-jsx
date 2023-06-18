@@ -8,6 +8,7 @@ export default function NavBar() {
     'Basic Chat': '/basic-chat',
     'Docs Chat': '/docs-chat',
     'JIT UI: React': '/recipe',
+    'Basic Completion': '/basic-completion',
   };
 
   return (

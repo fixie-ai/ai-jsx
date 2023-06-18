@@ -6,6 +6,10 @@
     "jsxFactory": "LLMx.createElement",
     "jsxFragmentFactory": "LLMx.Fragment",
     "module": "esnext",
+    // This is a potential footgun. We want our code to be isomorphic (run in Node and in the browser).
+    // By enabling the "DOM" lib, we are allowing ourselves to use DOM APIs in our code,
+    // which could break in Node if we're not careful.
+    "lib": ["DOM", "DOM.Iterable"],
     "moduleResolution": "nodenext",
     "esModuleInterop": true,
     "resolveJsonModule": true,

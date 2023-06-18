@@ -3804,6 +3804,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nick.heiner/openai-edge@npm:1.0.1-7":
+  version: 1.0.1-7
+  resolution: "@nick.heiner/openai-edge@npm:1.0.1-7"
+  checksum: 3062303f4cf8cd7da7d79adb4d3981e35ec4f832644f7f8ee611d2ade3e0a0687d4e0e2e9dcc621ee914c849ffdfc88e5dbc595e33b78735a4fbfc3c1171200c
+  languageName: node
+  linkType: hard
+
 "@nick.heiner/wandb-fork@npm:0.5.2-5":
   version: 0.5.2-5
   resolution: "@nick.heiner/wandb-fork@npm:0.5.2-5"
@@ -7479,10 +7486,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"ai-jsx@npm:^0.2.0-1, ai-jsx@npm:^0.2.0-4, ai-jsx@workspace:packages/ai-jsx":
+"ai-jsx@npm:0.2.0-4, ai-jsx@npm:^0.2.0-1, ai-jsx@npm:^0.2.0-4, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
+    "@nick.heiner/openai-edge": "npm:1.0.1-7"
     "@tsconfig/node16": "npm:^1.0.4"
     "@tsconfig/node18": "npm:^2.0.1"
     "@types/eslint": "npm:^8"
@@ -8695,14 +8703,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30001406, caniuse-lite@npm:^1.0.30001464":
-  version: 1.0.30001502
-  resolution: "caniuse-lite@npm:1.0.30001502"
-  checksum: 3dc7ce2d32dc43a90f1f76e4966017f573e374211d8962fd062b5bf994ada8c155ad9fe3b7b33f69dff46446acc71e207b47b7474fa5694f802f4301aba3f07e
-  languageName: node
-  linkType: hard
-
-"caniuse-lite@npm:^1.0.30001502":
+"caniuse-lite@npm:^1.0.0, caniuse-lite@npm:^1.0.30001406, caniuse-lite@npm:^1.0.30001464, caniuse-lite@npm:^1.0.30001502":
   version: 1.0.30001503
   resolution: "caniuse-lite@npm:1.0.30001503"
   checksum: 9db53cb56a20a5c34685199e1df1c265d0a5f977d481f0c61c347e1758c1cc685002c22c0a0bf472e5449def46145402f5365ba98c29eef9cc118b884beab5cb
@@ -9488,7 +9489,7 @@ __metadata:
     "@types/turndown": "npm:^5.0.1"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.11"
     "@typescript-eslint/parser": "npm:^5.59.11"
-    ai-jsx: "npm:^0.2.0-4"
+    ai-jsx: "npm:0.2.0-4"
     babel-jest: "npm:^27.4.2"
     babel-loader: "npm:^8.2.3"
     babel-plugin-named-asset-import: "npm:^0.3.8"
@@ -9532,6 +9533,7 @@ __metadata:
     react-dom: "npm:^18.2.0"
     react-refresh: "npm:^0.11.0"
     react-router-dom: "npm:^6.12.1"
+    react-use: "npm:^17.4.0"
     resolve: "npm:^1.20.0"
     resolve-url-loader: "npm:^4.0.0"
     sass-loader: "npm:^12.3.0"
@@ -22371,7 +22373,7 @@ __metadata:
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: ef6d5eaa31049b41bf1ddf091806aed923e65ea3de951bb27e05bc65911c3bf373b3c2bcc9204d2d2dbdca7d2e06c6a645824580638a8c2c18e2e5155cfc33b7
+  checksum: e4412cb44926481c10ef68507740f830237594258d11432b11de90f86d4ecce0a28f46edcc96dda7f70095a2044a967af0eaa33dabdfe056bba125d329ff269d
   languageName: node
   linkType: hard
 

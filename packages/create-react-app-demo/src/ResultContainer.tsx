@@ -17,7 +17,7 @@ export default function ResultContainer({
             <h3 className="text-base font-semibold leading-6 text-gray-900">{title}</h3>
             <p>{description}</p>
           </div>
-          <div className="bg-white px-4 py-5 sm:px-6">{children}</div>
+          <div className="whitespace-pre-wrap bg-white px-4 py-5 sm:px-6">{children}</div>
         </div>
       </div>
     </div>
