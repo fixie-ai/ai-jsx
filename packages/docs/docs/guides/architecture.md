@@ -8,10 +8,11 @@ AI.JSX runs in both NodeJS and the browser, so you can choose an architecture th
 1. [Run entirely on the server](#run-entirely-on-the-server)
 
 The key tradeoffs are:
-* Whether you need to protect API keys
-* Where you want to put serialization boundaries
-* Latency (as a result of roundtrips)
-* How reusable your AI.JSX logic is
+
+- Whether you need to protect API keys
+- Where you want to put serialization boundaries
+- Latency (as a result of roundtrips)
+- How reusable your AI.JSX logic is
 
 :::note What are roundtrips?
 A roundtrip is when your client needs to make a connection to your backend. Depending on the quality of the user's network connection, this can have a big negative impact on performance. As a result, many performance strategies involve minimizing roundtrips.
@@ -23,17 +24,23 @@ The amount of roundtrips in your logic depends on how you structure your AI.JSX 
 For more details, see [Performance](./performance.md).
 :::
 
+:::tip Where can AI.JSX run?
+In addition to the client, AI.JSX can run in serverless/edge functions, traditional standalone servers, or any other NodeJS process.
+:::
+
 ## Run Entirely on the Client
 
 With a pure client-side approach, you run your UI and AI.JSX logic on the client. However, you still need to call out to external APIs for hosted services like model providers (e.g. GPT-4 from OpenAI) or databases (e.g. Pinecone).
 
 Pros:
-* Simple to implement
-* The serialization boundary is at the API layer. The only way to access these APIs is through a serialization boundary, so your architecture isn't adding any new boundaries.
+
+- Simple to implement
+- The serialization boundary is at the API layer. The only way to access these APIs is through a serialization boundary, so your architecture isn't adding any new boundaries.
 
 Cons:
-* Your API keys are exposed to the client.
-* Performance will suffer if you need to do many roundtrips
+
+- Your API keys are exposed to the client.
+- Performance will suffer if you need to do many roundtrips
 
 ```mermaid
 sequenceDiagram
@@ -41,7 +48,7 @@ sequenceDiagram
     participant UI
     participant AI.JSX
     end
-    box rgb(200, 255, 200) Server
+    box rgb(200, 255, 200) Third-Party API
     participant APIs
     end
     AI.JSX->>APIs: Model calls (e.g. to OpenAI)
@@ -50,6 +57,112 @@ sequenceDiagram
 
 ## UI + AI.JSX on the client; API calls on the server
 
+This is just like the [Run Entirely on the Client](#run-entirely-on-the-client) pattern, except you add a proxy for API calls. You'd traditionally set this proxy up as a serverless or edge function. The proxy stores your API keys, keeping them safe from the client.
+
+Pros:
+
+- There's still only one serialization boundary.
+- API keys are protected from the client.
+
+Cons:
+
+- Compared to pure client, it's a little more complicated because you need to set up a proxy.
+
+```mermaid
+sequenceDiagram
+    box rgb(200, 200, 255) Client
+    participant UI
+    participant AI.JSX
+    end
+    box rgb(200, 255, 200) API Proxy
+    participant Your Proxy
+    end
+    AI.JSX->>APIs: Model calls (e.g. to OpenAI)
+    AI.JSX->>APIs: Other API calls (e.g. to Pinecone)
+    box rgb(200, 255, 200) Third-Party API
+    participant APIs
+    end
+```
+
 ## UI on the client; AI.JSX on the server
 
+In this approach, your AI.JSX logic runs entirely in your backend environment.
+
+Pros:
+
+- You can access your AI.JSX logic from multiple clients (web app, native app, etc).
+- API keys are secure.
+- Performance will be less sensitive to roundtrips between AI.JSX and external APIs.
+
+Cons:
+
+- This introduces a new serialization boundary, which sits between the UI and your AI.JSX. This limits how seamless your UI/AI integration can be.
+
+```mermaid
+sequenceDiagram
+    box rgb(200, 200, 255) Client
+    participant UI
+    end
+    box rgb(200, 255, 200) Your Server
+    participant AI.JSX
+    end
+    UI->>AI.JSX: Fetch AI output
+    AI.JSX->>APIs: Model calls (e.g. to OpenAI)
+    AI.JSX->>APIs: Other API calls (e.g. to Pinecone)
+    box rgb(200, 255, 200) Third-Party API
+    participant APIs
+    end
+```
+
 ## Run entirely on the server
+
+In this approach, you generate your HTML on the server and stream it to the client. If your app is full-stack JS, you'd typically do this with the help of a server-side rendering framework like [NextJS](https://nextjs.org/).
+
+Pros:
+
+- [Server-side rendering is often a performance win.](https://nextjs.org/docs/getting-started/react-essentials)
+- API keys are secure.
+
+Cons:
+
+- In JS, requires use of a framework like [NextJS](https://nextjs.org/) to get the full benefits. (NextJS is a great choice for new apps, but exisiting codebases may not be able to adopt it immediately.)
+
+```mermaid
+sequenceDiagram
+    box rgb(200, 200, 255) Client
+    participant Browser
+    end
+    box rgb(200, 255, 200) Your JS Server
+    participant UI
+    participant AI.JSX
+    end
+    UI->>Browser: Streamed HTML output
+    UI->>AI.JSX: Fetch AI output
+    AI.JSX->>APIs: Model calls (e.g. to OpenAI)
+    AI.JSX->>APIs: Other API calls (e.g. to Pinecone)
+    box rgb(200, 255, 200) Third-Party API
+    participant APIs
+    end
+```
+
+Or, if you're generating HTML from a non-JS app (like Django), you'd have a separate NodeJS service that runs your AI.JSX logic:
+
+```mermaid
+sequenceDiagram
+    box rgb(200, 200, 255) Client
+    participant Browser
+    end
+    box rgb(200, 255, 200) Your Non-JS Server
+    participant UI
+    end
+    box rgb(200, 255, 200) Your JS Server
+    participant AI.JSX
+    end
+    UI->>Browser: Streamed HTML output
+    UI->>AI.JSX: Fetch AI output
+    AI.JSX->>APIs: Model calls (e.g. to OpenAI)
+    AI.JSX->>APIs: Other API calls (e.g. to Pinecone)
+    box rgb(200, 255, 200) Third-Party API
+    participant APIs
+    end
+```

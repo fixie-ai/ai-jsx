@@ -125,7 +125,7 @@ const config = {
         theme: {
           light: 'neutral',
           dark: 'dark',
-        }
+        },
       },
     }),
 
