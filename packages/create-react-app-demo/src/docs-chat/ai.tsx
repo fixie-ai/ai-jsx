@@ -1,36 +1,50 @@
 /** @jsx AI.createElement */
 /** @jsxFrag AI.Fragment */
 import * as AI from 'ai-jsx';
-import { DocsQA, ScoredChunk, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
+import { DocsQA, DefaultFormatter, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
 
-/*
+let globalCorpus: LocalCorpus | undefined;
+
+/**
  * This is a very simple example of how to build a document corpus.
- * We pull the page content from a URL, convert it to Markdown, and then index it.
+ * We pull markdown content from a set of URLs and then index it.
  */
-async function indexCorpus() {
-  const url = 'https://raw.githubusercontent.com/fixie-ai/ai-jsx/main/packages/docs/docs/guides/brand-new.md';
-  const title = 'Guide for AI Newcomers';
-  const response = await fetch(url);
-  const markdown = await response.text();
-  const docs = [
-    {
-      pageContent: [markdown],
-      name: title,
-    },
-  ];
-  const corpus = LocalCorpus(staticLoader(docs), defaultChunker);
-  await corpus.startLoading();
+export async function indexCorpus() {
+  const files = {
+    'getting-started.md': 'Getting Started',
+    'guides/ai-ui.md': 'AI + UI',
+    'guides/brand-new.md': 'Guide for AI Newcomers',
+    'guides/docsqa.md': 'Docs QA: Grounding Answers',
+    'guides/esm.md': 'ESM',
+    'guides/jsx.md': 'JSX: Build System Considerations',
+    'guides/observability.md': 'Observability',
+    'guides/prompting.md': 'Getting the AI to say things',
+    'guides/rules-of-jsx.md': 'Rules of AI.JSX',
+  };
+  const docs = await Promise.all(
+    Object.entries(files).map(async ([path, title]) => {
+      const url = `https://raw.githubusercontent.com/fixie-ai/ai-jsx/main/packages/docs/docs/${path}`;
+      const response = await fetch(url);
+      const markdown = await response.text();
+      console.log(`Retrieved document from ${url}`);
+      return {
+        pageContent: [markdown],
+        name: title,
+      };
+    })
+  );
+  const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
+  const stats = await corpus.startLoading();
+  console.log(`Finished indexing documents, chunk count=${stats.numChunks}`);
   return corpus;
 }
 
-const ShowDoc = ({ doc }: { doc: ScoredChunk }) => (
-  <>
-    Title: {doc.chunk.documentName ?? 'Untitled'}
-    Content: {doc.chunk.content}
-  </>
-);
-
+/**
+ * Build the corpus on the first query, then use it for all subsequent queries.
+ */
 export async function DocsAgent({ question }: { question: string }) {
-  const corpus = await indexCorpus();
-  return <DocsQA question={question} corpus={corpus} limit={5} docComponent={ShowDoc} />;
+  if (!globalCorpus) {
+    globalCorpus = await indexCorpus();
+  }
+  return <DocsQA question={question} corpus={globalCorpus} limit={5} docComponent={DefaultFormatter} />;
 }
