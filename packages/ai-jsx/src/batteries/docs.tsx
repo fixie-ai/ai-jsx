@@ -250,14 +250,16 @@ export type Chunker<
 > = (document: Document<DocumentMetadata>) => Promise<Chunk<ChunkMetadata>[]>;
 
 /** Create a chunker with the given parameters. */
-export function makeChunker(chunkSize: number, chunkOverlap: number): Chunker {
-  return async (doc: Document) => {
+export function makeChunker<Metadata extends Jsonifiable = Jsonifiable>(
+  chunkSize: number,
+  chunkOverlap: number
+): Chunker<Metadata, Metadata> {
+  return async (doc: Document<Metadata>) => {
     const splitter = new TokenTextSplitter({
       encodingName: 'gpt2',
       chunkSize,
       chunkOverlap,
     });
-
     const lcDocs = await splitter.createDocuments(doc.pageContent);
     const chunks = lcDocs.map(
       (lcDoc) =>
@@ -265,9 +267,8 @@ export function makeChunker(chunkSize: number, chunkOverlap: number): Chunker {
           content: lcDoc.pageContent,
           documentName: doc.name,
           metadata: doc.metadata,
-        } as Chunk)
+        } as Chunk<Metadata>)
     );
-
     return chunks;
   };
 }

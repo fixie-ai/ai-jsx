@@ -22,7 +22,6 @@ function ShowDoc({ doc }: { doc: ScoredChunk }) {
   return doc.chunk.content;
 }
 
-
 function App() {
   return (
     <>
