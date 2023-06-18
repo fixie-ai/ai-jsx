@@ -249,26 +249,32 @@ export type Chunker<
   ChunkMetadata extends Jsonifiable = Jsonifiable
 > = (document: Document<DocumentMetadata>) => Promise<Chunk<ChunkMetadata>[]>;
 
+/** Create a chunker with the given parameters. */
+export function makeChunker<Metadata extends Jsonifiable = Jsonifiable>(
+  chunkSize: number,
+  chunkOverlap: number
+): Chunker<Metadata, Metadata> {
+  return async (doc: Document<Metadata>) => {
+    const splitter = new TokenTextSplitter({
+      encodingName: 'gpt2',
+      chunkSize,
+      chunkOverlap,
+    });
+    const lcDocs = await splitter.createDocuments(doc.pageContent);
+    const chunks = lcDocs.map(
+      (lcDoc) =>
+        ({
+          content: lcDoc.pageContent,
+          documentName: doc.name,
+          metadata: doc.metadata,
+        } as Chunk<Metadata>)
+    );
+    return chunks;
+  };
+}
+
 /** A simple token size based text chunker. This is a good starting point for text documents. */
-export const defaultChunker = async <Metadata extends Jsonifiable = Jsonifiable>(doc: Document<Metadata>) => {
-  const splitter = new TokenTextSplitter({
-    encodingName: 'gpt2',
-    chunkSize: 600,
-    chunkOverlap: 100,
-  });
-
-  const lcDocs = await splitter.createDocuments(doc.pageContent);
-  const chunks = lcDocs.map(
-    (lcDoc) =>
-      ({
-        content: lcDoc.pageContent,
-        documentName: doc.name,
-        metadata: doc.metadata,
-      } as Chunk<Metadata>)
-  );
-
-  return chunks;
-};
+export const defaultChunker = makeChunker(600, 100);
 
 /**
  * A piece of a document that's appropriately sized for an LLM's

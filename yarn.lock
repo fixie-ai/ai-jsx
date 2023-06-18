@@ -6592,6 +6592,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/prompt-sync@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "@types/prompt-sync@npm:4.2.0"
+  checksum: 975a151c683deff9feda3f7019cdceaf85a73a71e3f4cd98518cfb3ddac88e1167be747fe2e22cb79587118969b52eb1dda1591d43ed2bc40bc8a56c049177ed
+  languageName: node
+  linkType: hard
+
 "@types/prop-types@npm:*":
   version: 15.7.5
   resolution: "@types/prop-types@npm:15.7.5"
@@ -6830,6 +6837,13 @@ __metadata:
   version: 2.0.3
   resolution: "@types/trusted-types@npm:2.0.3"
   checksum: 625c7de5c2dc012f74993d60b68d6408771da39f1f3cf5bc5cb7bf988b259695890e9157895da44f7f79ff26481d9895fb53d5ceb11c6027ccd23294e9f84953
+  languageName: node
+  linkType: hard
+
+"@types/turndown@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "@types/turndown@npm:5.0.1"
+  checksum: c4756231d07aaabbb6d9717a2c8c54565506596dea8971bd2c38033cc1741cb64ab6ce3db918790cfefcdbabb8327f50427deb6c3f7c1ac88ee3c76653ea7cda
   languageName: node
   linkType: hard
 
@@ -7553,6 +7567,13 @@ __metadata:
   bin:
     ansi-html: bin/ansi-html
   checksum: 56bf91b53357d6fa66973feb7294140fdc9da5a11fa63f354ef05ae3b47db4bb367ca1a6960f09c572d395b05ed16c698ce5f23d172eae9c6e4b50213aff8deb
+  languageName: node
+  linkType: hard
+
+"ansi-regex@npm:^4.1.0":
+  version: 4.1.1
+  resolution: "ansi-regex@npm:4.1.1"
+  checksum: bca5d9b63a576c91e33be9ef62eb72d461d5902389294e692ecbaa5289e5afde9238c7a0ada9f9f60bc245661ed87a3db571beb02867e7067e640193207354b0
   languageName: node
   linkType: hard
 
@@ -10722,6 +10743,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"domino@npm:^2.1.6":
+  version: 2.1.6
+  resolution: "domino@npm:2.1.6"
+  checksum: d73be69fb5cdc3d54decd3977a26292b2ab895b3a93f2e27ba63897ecb8cbf23fe4b89213c906fbde567fe13efae68683c99d3ef7ccfa3f786d2b93d1062baee
+  languageName: node
+  linkType: hard
+
 "dompurify@npm:2.4.3":
   version: 2.4.3
   resolution: "dompurify@npm:2.4.3"
@@ -11805,6 +11833,7 @@ __metadata:
     "@tsconfig/node18": "npm:^2.0.1"
     "@types/lodash": "npm:^4.14.195"
     "@types/node": "npm:^20.3.1"
+    "@types/prompt-sync": "npm:^4.2.0"
     "@types/uuid": "npm:^9.0.2"
     "@typescript-eslint/eslint-plugin": "npm:^5.59.6"
     "@typescript-eslint/parser": "npm:^5.59.6"
@@ -11821,6 +11850,7 @@ __metadata:
     node-fetch: "npm:^3.3.1"
     pino: "npm:^8.14.1"
     pino-pretty: "npm:^10.0.0"
+    prompt-sync: "npm:^4.2.0"
     type-fest: "npm:^3.12.0"
     typescript: "npm:^5.1.3"
     uuid: "npm:^9.0.0"
@@ -19281,6 +19311,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"prompt-sync@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "prompt-sync@npm:4.2.0"
+  dependencies:
+    strip-ansi: "npm:^5.0.0"
+  checksum: fbb946e214e5f73e22bb401d99f3403933c54371c4b040c8f61ca8c5cc64ebdd76dd3ba19837c28c5ec4ecc211ee5d4ef03ec0f88be4e7b869dd604502e184af
+  languageName: node
+  linkType: hard
+
 "prompts@npm:^2.0.1, prompts@npm:^2.4.2":
   version: 2.4.2
   resolution: "prompts@npm:2.4.2"
@@ -21453,6 +21492,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"strip-ansi@npm:^5.0.0":
+  version: 5.2.0
+  resolution: "strip-ansi@npm:5.2.0"
+  dependencies:
+    ansi-regex: "npm:^4.1.0"
+  checksum: c1a35871e148a1c60310d33afbce3bdec6b3f471c4c3aab25b6b2a893aac4b18791a24206bb89a399e8e1a48b09da85e0bd87060c840c6dd0fbd06361b3c8f90
+  languageName: node
+  linkType: hard
+
 "strip-ansi@npm:^7.0.1":
   version: 7.1.0
   resolution: "strip-ansi@npm:7.1.0"
@@ -22229,6 +22277,40 @@ __metadata:
   checksum: e0cc82ece5081c0a5ad1a26e314b56be1ef4f976f8dfea8153a851410c1e4718bf6d4e375243e8c7e4b3e02fe6577c78ba99cbf9feea9c88dbcb68532e67cc55
   languageName: node
   linkType: hard
+
+"turndown@npm:^7.1.2":
+  version: 7.1.2
+  resolution: "turndown@npm:7.1.2"
+  dependencies:
+    domino: "npm:^2.1.6"
+  checksum: d8e878fb58a051f65024782d9f08de92d3ba29eb5e584bae295c1ad8fd0dad7f670b74deeccf74b8ae139343b747b33fd1d8498e03329a5da6060fe1fdc7e497
+  languageName: node
+  linkType: hard
+
+"tutorial@workspace:packages/tutorial":
+  version: 0.0.0-use.local
+  resolution: "tutorial@workspace:packages/tutorial"
+  dependencies:
+    "@tsconfig/node18": "npm:^2.0.1"
+    "@types/lodash": "npm:^4.14.195"
+    "@types/node": "npm:^20.3.1"
+    "@types/prompt-sync": "npm:^4.2.0"
+    "@types/turndown": "npm:^5.0.1"
+    "@types/uuid": "npm:^9.0.2"
+    "@typescript-eslint/eslint-plugin": "npm:^5.59.6"
+    "@typescript-eslint/parser": "npm:^5.59.6"
+    ai-jsx: "npm:^0.2.0-4"
+    axios: "npm:^1.4.0"
+    eslint: "npm:^8.40.0"
+    eslint-config-nth: "npm:^2.0.1"
+    node-fetch: "npm:^3.3.1"
+    pino: "npm:^8.14.1"
+    pino-pretty: "npm:^10.0.0"
+    prompt-sync: "npm:^4.2.0"
+    turndown: "npm:^7.1.2"
+    typescript: "npm:^5.1.3"
+  languageName: unknown
+  linkType: soft
 
 "type-check@npm:^0.4.0, type-check@npm:~0.4.0":
   version: 0.4.0
