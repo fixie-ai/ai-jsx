@@ -46,5 +46,5 @@ export async function DocsAgent({ question }: { question: string }) {
   if (!globalCorpus) {
     globalCorpus = await indexCorpus();
   }
-  return <DocsQA question={question} corpus={globalCorpus} limit={5} docComponent={DefaultFormatter} />;
+  return <DocsQA question={question} corpus={globalCorpus} limit={5} />;
 }
