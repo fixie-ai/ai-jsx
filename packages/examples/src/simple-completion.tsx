@@ -12,3 +12,4 @@ function App() {
 }
 
 showInspector(<App />);
+// console.log(await LLMx.createRenderContext().render(<App />));

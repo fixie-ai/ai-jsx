@@ -23,6 +23,8 @@ data
 .docusaurus
 .cache-loader
 
+docs/api/
+
 # Misc
 .DS_Store
 .env.local
