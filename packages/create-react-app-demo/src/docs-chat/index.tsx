@@ -3,10 +3,11 @@
 import * as AI from 'ai-jsx/react';
 import React from 'react';
 import { memo } from 'ai-jsx/core/memoize';
-import { ChatMessage, DocsAgent, conversationAtom } from './ai.tsx';
+import { ChatMessage, DocsAgent } from './ai.tsx';
 import { atom, useAtom } from 'jotai';
 import ResultContainer from '../ResultContainer.tsx';
 
+const userMessagesAtom = atom<string[]>([]);
 const modelCallInProgress = atom<boolean>(false);
 
 function ConversationItem({
@@ -42,20 +43,14 @@ const AgentResponse = React.memo(function AgentResponse({ question }: { question
 });
 
 export function DocsChat() {
-  const [conversation, setConversation] = useAtom(conversationAtom);
+  const [userMessages, setConversation] = useAtom(userMessagesAtom);
   const [callInProgress] = useAtom(modelCallInProgress);
 
   function handleInputSubmit(event: React.FormEvent<HTMLFormElement>) {
     // @ts-expect-error
     const element = event.target.elements.message;
     event.preventDefault();
-    setConversation((prev) => [
-      ...prev,
-      {
-        type: 'user',
-        content: element.value,
-      },
-    ]);
+    setConversation((prev) => [...prev, element.value]);
 
     element.value = '';
   }
@@ -74,12 +69,12 @@ export function DocsChat() {
       }
     >
       <ul>
-        {conversation.map((response, index) => [
+        {userMessages.map((response, index) => [
           <li key={`${index}-user`} className="mt-4">
-            <ConversationItem responseType={response.type}>{response.content}</ConversationItem>
+            <ConversationItem responseType="user">{response}</ConversationItem>
           </li>,
           <li key={`${index}-agent`} className="mt-4">
-            <AgentResponse question={response.content} />
+            <AgentResponse question={response} />
           </li>,
         ])}
       </ul>
