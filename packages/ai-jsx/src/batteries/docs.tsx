@@ -554,7 +554,6 @@ export async function DocsQA(props: DocsQAProps) {
     return `Corpus is not loaded. It's in state: ${status.toString()}`;
   }
   const docs = await props.corpus.search(props.question, { limit: props.limit });
-  const formatComponent = props.docComponent ?? DefaultFormatter;
   return (
     <ChatCompletion>
       <SystemMessage>
@@ -562,7 +561,7 @@ export async function DocsQA(props: DocsQAProps) {
         use any other knowledge you have about the world. If you don't know how to answer the question, just say "I
         don't know." Here are the relevant document excerpts you have been given:
         {docs.map((doc) => (
-          <formatComponent doc={doc} />
+          <props.docComponent doc={doc} />
         ))}
         And here is the question you must answer:
       </SystemMessage>
