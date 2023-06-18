@@ -569,3 +569,13 @@ export async function DocsQA(props: DocsQAProps) {
     </ChatCompletion>
   );
 }
+
+/**
+ * A default component for formatting document chunks.
+ */
+export const DefaultFormatter = ({ doc }: { doc: ScoredChunk }) => (
+  <>
+    Title: {doc.chunk.documentName ?? 'Untitled'}
+    Content: {doc.chunk.content}
+  </>
+);
