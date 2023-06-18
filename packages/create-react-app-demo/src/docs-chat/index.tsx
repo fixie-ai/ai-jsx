@@ -2,13 +2,10 @@
 /** @jsxFrag AI.Fragment */
 import * as AI from 'ai-jsx/react';
 import * as React from 'react';
-import { memo } from 'ai-jsx/core/memoize';
+import { useState } from 'react';
 import { ChatMessage, DocsAgent } from './ai.tsx';
-import { atom, useAtom } from 'jotai';
 import { useList } from 'react-use';
 import ResultContainer from '../ResultContainer.tsx';
-
-const modelCallInProgress = atom<boolean>(false);
 
 function ConversationItem({
   responseType,
@@ -25,10 +22,13 @@ function ConversationItem({
   );
 }
 
-const AgentResponse = React.memo(function AgentResponse({ question }: { question: ChatMessage['content'] }) {
-  // const [, setCallInProgress] = useAtom(modelCallInProgress);
-  const setCallInProgress = (x: any) => {};
-
+const AgentResponse = React.memo(function AgentResponse({
+  question,
+  setCallInProgress,
+}: {
+  question: ChatMessage['content'];
+  setCallInProgress: (x: boolean) => void;
+}) {
   return (
     <ConversationItem responseType="bot">
       <AI.jsx
@@ -44,7 +44,7 @@ const AgentResponse = React.memo(function AgentResponse({ question }: { question
 
 export function DocsChat() {
   const [userMessages, { push: pushUserMessage }] = useList<string>([]);
-  const [callInProgress] = useAtom(modelCallInProgress);
+  const [callInProgress, setCallInProgress] = useState(false);
 
   function handleInputSubmit(event: React.FormEvent<HTMLFormElement>) {
     // @ts-expect-error
@@ -74,7 +74,7 @@ export function DocsChat() {
             <ConversationItem responseType="user">{response}</ConversationItem>
           </li>,
           <li key={`${index}-agent`} className="mt-4">
-            <AgentResponse question={response} />
+            <AgentResponse question={response} setCallInProgress={setCallInProgress} />
           </li>,
         ])}
       </ul>
