@@ -15,7 +15,7 @@ const docs = [
     name: 'Wikipedia Article about 2005 Azores subtropical storm',
   },
 ];
-const corpus = new LocalCorpus(staticLoader(docs), makeChunker(300, 100));
+const corpus = new LocalCorpus(staticLoader(docs), makeChunker(600, 100));
 await corpus.startLoading();
 
 function ShowDoc({ doc }: { doc: ScoredChunk }) {
