@@ -2,7 +2,7 @@
 /** @jsxFrag AI.Fragment */
 import * as AI from 'ai-jsx/react';
 import React from 'react';
-import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
+import { memo } from 'ai-jsx/core/memoize';
 import { ChatMessage, DocsAgent, conversationAtom } from './ai.tsx';
 import { atom, useAtom } from 'jotai';
 import ResultContainer from '../ResultContainer.tsx';
@@ -24,18 +24,22 @@ function ConversationItem({
   );
 }
 
-function AgentResponse({ question }: { question: ChatMessage['content'] }) {
+const AgentResponse = React.memo(function AgentResponse({ question }: { question: ChatMessage['content'] }) {
   // const [, setCallInProgress] = useAtom(modelCallInProgress);
   const setCallInProgress = (x: any) => {};
 
   return (
     <ConversationItem responseType="bot">
-      <AI.jsx onStreamStart={() => setCallInProgress(true)} onStreamEnd={() => setCallInProgress(false)}>
+      <AI.jsx
+        onStreamStart={() => setCallInProgress(true)}
+        onStreamEnd={() => setCallInProgress(false)}
+        loading="Thinking..."
+      >
         <DocsAgent question={question} />
       </AI.jsx>
     </ConversationItem>
   );
-}
+});
 
 export function DocsChat() {
   const [conversation, setConversation] = useAtom(conversationAtom);
@@ -70,16 +74,14 @@ export function DocsChat() {
       }
     >
       <ul>
-        {conversation.map((response, index) => (
-          <>
-            <li key={`${index}-user`} className="mt-4">
-              <ConversationItem responseType={response.type}>{response.content}</ConversationItem>
-            </li>
-            <li key={`${index}-agent`} className="mt-4">
-              <AgentResponse question={response.content} />
-            </li>
-          </>
-        ))}
+        {conversation.map((response, index) => [
+          <li key={`${index}-user`} className="mt-4">
+            <ConversationItem responseType={response.type}>{response.content}</ConversationItem>
+          </li>,
+          <li key={`${index}-agent`} className="mt-4">
+            <AgentResponse question={response.content} />
+          </li>,
+        ])}
       </ul>
       <form onSubmit={handleInputSubmit} className="mt-4 flex w-full">
         <input

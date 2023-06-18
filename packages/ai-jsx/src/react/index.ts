@@ -100,7 +100,8 @@ export function jsx(
     children,
     onStreamStart,
     onStreamEnd,
-  }: { children: LLMx.Node; onStreamStart?: () => void; onStreamEnd?: () => void },
+    loading = '',
+  }: { children: LLMx.Node; onStreamStart?: () => void; onStreamEnd?: () => void; loading?: React.ReactNode },
   context?: any | LLMx.ComponentContext
 ) {
   if (typeof context?.render === 'function') {
@@ -109,7 +110,9 @@ export function jsx(
   }
 
   const ai = useAI(children, onStreamStart, onStreamEnd);
-  return ReactModule.createElement(ReactModule.Fragment, null, ai.result) as any;
+  const waitingForFirstAIResponse = !ai.isDone && Array.isArray(ai.result) && ai.result.length === 0;
+
+  return ReactModule.createElement(ReactModule.Fragment, null, waitingForFirstAIResponse ? loading : ai.result) as any;
 }
 
 /**
