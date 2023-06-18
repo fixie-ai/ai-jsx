@@ -32,7 +32,18 @@ function ConversationHistory() {
   }
 
   return (
-    <ResultContainer title="Basic Chat" description="In this demo, you can chat with a quirky assistant.">
+    <ResultContainer
+      title="Docs Chat"
+      description={
+        <>
+          In this demo, you can ask questions about the{' '}
+          <a href="https://docs.ai-jsx.com" target="_blank" rel="noopener noreferrer">
+            AI.JSX documentation
+          </a>
+          .
+        </>
+      }
+    >
       <ul>
         {conversation.map((response, index) => (
           <li key={index} className="mt-4">
@@ -46,7 +57,7 @@ function ConversationHistory() {
           disabled={callInProgress}
           type="text"
           name="message"
-          placeholder="Say something..."
+          placeholder="Ask a question..."
           className="w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
         />
         <button
@@ -60,7 +71,7 @@ function ConversationHistory() {
   );
 }
 
-export function BasicChat() {
+export function DocsChat() {
   return (
     <>
       <AIRoot />
