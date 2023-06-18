@@ -15,7 +15,7 @@ const docs = [
     name: 'Wikipedia Article about 2005 Azores subtropical storm',
   },
 ];
-const corpus = new LocalCorpus(staticLoader(docs), makeChunker(300, 100));
+const corpus = new LocalCorpus(staticLoader(docs), makeChunker(600, 100));
 await corpus.startLoading();
 
 function ShowDoc({ doc }: { doc: ScoredChunk }) {
@@ -25,11 +25,11 @@ function ShowDoc({ doc }: { doc: ScoredChunk }) {
 function App() {
   return (
     <>
-      <DocsQA question="Summarize this article in a few sentences." corpus={corpus} docComponent={ShowDoc} />
+      <DocsQA question="Summarize this article in a few sentences." corpus={corpus} limit={5} docComponent={ShowDoc} />
       {'\n\n'}
-      <DocsQA question="Which dates did the storm occur?" corpus={corpus} docComponent={ShowDoc} />
+      <DocsQA question="Which dates did the storm occur?" corpus={corpus} limit={5} docComponent={ShowDoc} />
       {'\n\n'}
-      <DocsQA question="Where were the strongest winds reported?" corpus={corpus} docComponent={ShowDoc} />
+      <DocsQA question="Where were the strongest winds reported?" corpus={corpus} limit={5} docComponent={ShowDoc} />
     </>
   );
 }

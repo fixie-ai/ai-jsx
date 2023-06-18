@@ -9,13 +9,9 @@ import { atom, useAtom } from 'jotai';
 
 import _ from 'lodash';
 
-export class ChatMessage {
-  type: string;
-  content: string;
-  constructor({ type, content }: { type: string; content: string }) {
-    this.type = type;
-    this.content = content;
-  }
+export interface ChatMessage {
+  type?: string;
+  content?: string;
 }
 
 export const conversationAtom = atom<ChatMessage[]>([]);
@@ -60,7 +56,7 @@ function AI() {
       .then((finalFrame) => {
         isInProgressRef.current = false;
         setCallInProgress(false);
-        setConversation((prev) => [...prev, new ChatMessage({ type: 'assistant', content: finalFrame })]);
+        setConversation((prev) => [...prev, { type: 'assistant', content: finalFrame }]);
       });
   }, [children, setCallInProgress, when, setConversation]);
 

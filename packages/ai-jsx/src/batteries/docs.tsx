@@ -250,14 +250,16 @@ export type Chunker<
 > = (document: Document<DocumentMetadata>) => Promise<Chunk<ChunkMetadata>[]>;
 
 /** Create a chunker with the given parameters. */
-export function makeChunker(chunkSize: number, chunkOverlap: number): Chunker {
-  return async (doc: Document) => {
+export function makeChunker<Metadata extends Jsonifiable = Jsonifiable>(
+  chunkSize: number,
+  chunkOverlap: number
+): Chunker<Metadata, Metadata> {
+  return async (doc: Document<Metadata>) => {
     const splitter = new TokenTextSplitter({
       encodingName: 'gpt2',
       chunkSize,
       chunkOverlap,
     });
-
     const lcDocs = await splitter.createDocuments(doc.pageContent);
     const chunks = lcDocs.map(
       (lcDoc) =>
@@ -265,9 +267,8 @@ export function makeChunker(chunkSize: number, chunkOverlap: number): Chunker {
           content: lcDoc.pageContent,
           documentName: doc.name,
           metadata: doc.metadata,
-        } as Chunk)
+        } as Chunk<Metadata>)
     );
-
     return chunks;
   };
 }
@@ -317,8 +318,13 @@ export class LangChainEmbeddingWrapper implements Embedding {
   }
 }
 
-/** A default embedding useful for DocsQA. Note that this requires an OPENAI_API_KEY. */
-export const defaultEmbedding = new LangChainEmbeddingWrapper(new OpenAIEmbeddings());
+/** A default embedding useful for DocsQA. Note that this requires OPENAI_API_KEY to be set. */
+if (!process.env.OPENAI_API_KEY) {
+  throw new Error('OPENAI_API_KEY not set');
+}
+export const defaultEmbedding = new LangChainEmbeddingWrapper(
+  new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY })
+);
 
 /** A piece of a document that is ready to be added into a vector space. */
 export interface EmbeddedChunk<ChunkMetadata extends Jsonifiable = Jsonifiable> {
@@ -514,7 +520,7 @@ export class LocalCorpus<
   }
 }
 
-export interface DocsQAProps<Doc extends Document> {
+export interface DocsQAProps {
   /**
    * The corpus of documents that may be relevant to a query.
    */
@@ -526,13 +532,19 @@ export interface DocsQAProps<Doc extends Document> {
   question: string;
 
   /**
-   * The component used to format documents when they're presented to the model.
+   *
+   * The maximum number of documents to return.
+   */
+  limit?: number;
+
+  /**
+   * The component used to format document chunks when they're presented to the model.
    *
    * ```tsx
-   *  function MyDocsComponent({ doc }: { doc: MyDocument }) {
+   *  function MyDocsComponent({ doc }: { doc: ScoredChunk }) {
    *    return <>
-   *      Title: {doc.metadata.title}
-   *      Content: {doc.pageContent}
+   *      Title: {doc.chunk.documentName}
+   *      Content: {doc.content}
    *    </>
    *  }
    * ```
@@ -542,12 +554,12 @@ export interface DocsQAProps<Doc extends Document> {
 /**
  * A component that can be used to answer questions about documents. This is a very common usecase for LLMs.
  */
-export async function DocsQA<Doc extends Document>(props: DocsQAProps<Doc>) {
+export async function DocsQA(props: DocsQAProps) {
   const status = (await props.corpus.getStats()).loadingState;
   if (status !== Corpus.LoadingState.COMPLETED) {
     return `Corpus is not loaded. It's in state: ${status.toString()}`;
   }
-  const docs = await props.corpus.search(props.question);
+  const docs = await props.corpus.search(props.question, { limit: props.limit });
   return (
     <ChatCompletion>
       <SystemMessage>
@@ -557,8 +569,9 @@ export async function DocsQA<Doc extends Document>(props: DocsQAProps<Doc>) {
         {docs.map((doc) => (
           <props.docComponent doc={doc} />
         ))}
+        And here is the question you must answer:
       </SystemMessage>
-      <UserMessage> {props.question} </UserMessage>
+      <UserMessage>{props.question}</UserMessage>
     </ChatCompletion>
   );
 }

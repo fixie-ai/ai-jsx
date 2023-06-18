@@ -11,6 +11,12 @@ const app = (
     {'\n\n'}
     {(conversation) => (
       <ChatCompletion>
+        <UserMessage>Imagine a mythical forest animal called the "{conversation}". Tell me more about it.</UserMessage>
+      </ChatCompletion>
+    )}
+    {'\n\n'}
+    {(conversation) => (
+      <ChatCompletion>
         <UserMessage>Now write a poem about this animal: {conversation}</UserMessage>
       </ChatCompletion>
     )}
