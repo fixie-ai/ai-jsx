@@ -57,23 +57,18 @@ Today, we support AI.JSX integration with NextJS. Soon, we'll add support for ge
 The fastest way to get started is to clone the AI.JSX NextJS template repo. Or, you can follow these steps:
 
 1. Install:
-
-```console
-npm install ai-jsx
-```
-
+   ```console
+   npm install ai-jsx
+   ```
 1. Add these lines to the top of your files that combine React and AI.JSX components:
-
-```tsx
-/** @jsxImportSource ai-jsx/react */
-import * as AI from 'ai-jsx/next';
-```
-
+   ```tsx
+   /** @jsxImportSource ai-jsx/react */
+   import * as AI from 'ai-jsx/next';
+   ```
 1. Ensure that your `tsconfig.json` settings are the same as what `create-next-app` generated for you. In particular, this `compileOption` needs to be set:
-
-```json
-"jsx": "preserve",
-```
+   ```json
+   "jsx": "preserve",
+   ```
 
 Now you're ready to embed intelligence throughout your app.
 
