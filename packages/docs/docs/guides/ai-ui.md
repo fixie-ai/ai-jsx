@@ -55,32 +55,43 @@ For this demo, we've set up a hacked version of NextJS to support server-side re
 
 - Basic completion (`packages/nextjs-demo/src/app/basic-completion/page.tsx`): Streaming the AI's response directly to the browser.
 - JIT UI: React (`packages/nextjs-demo/src/app/recipe/page.tsx`): We provide building block components, and the AI decides how to assemble them into the final output.
-- JIT UI: Raw HTML (`packages/nextjs-demo/src/app/nl-gh-search/page.tsx`): We teach the AI to query GitHub, and invite it to inject whatever HTML it wants into our UI. 😱
 - Sleep (`packages/nextjs-demo/src/app/z/page.tsx`): An AI app with non-trivial business logic, streamed to the client.
 
 ### How To
 
-1. You have to import our custom react wrapper (`packages/nextjs-demo/src/app/react.ts`):
+1.  Import the `ai-jsx/next` module:
 
-   ```tsx
-   // No
-   import React from 'react';
+    ```tsx
+    import * as AI from 'ai-jsx/next';
+    ```
 
-   // Yes
-   import React from './react';
-   ```
+1.  Use the `AI.jsx` component to convert between React and AI.JSX components:
 
-1. Use the `AI` (`packages/nextjs-demo/src/app/ai.tsx`) component to convert between React and AI.JSX components:
-   ```tsx
-   <ResultContainer title={`AI lists ten facts about ${query}`}>
-     <AI>
-       <ChatCompletion temperature={1}>
-         <UserMessage>Give me ten facts about {query}</UserMessage>
-       </ChatCompletion>
-     </AI>
-   </ResultContainer>
-   ```
-1. If you want to embed React components as a (potentially transitive) child of `<AI>`, you need to update the hacky list in our custom react wrapper (`packages/nextjs-demo/src/app/react.ts`).
+    ```tsx
+    <ResultContainer title={`AI lists ten facts about ${query}`}>
+      <AI.jsx>
+        <ChatCompletion temperature={1}>
+          <UserMessage>Give me ten facts about {query}</UserMessage>
+        </ChatCompletion>
+      </AI.jsx>
+    </ResultContainer>
+    ```
+
+1.  Within an `AI.jsx` subtree, you can use `AI.React` to nest React components. If they are internally rendered to
+    a string (e.g. as part of a prompt), they will be serialized to JSX. Otherwise they will be emitted by the top-level
+    `AI.jsx` component.
+
+        ```tsx
+        <ReactComponent>
+          <AI.jsx>
+            <AIComponent>
+              <AI.React>
+                <ReactComponent />
+              </AI.React>
+            </AIComponent>
+          </AI.jsx>
+        </ReactComponent>
+        ```
 
 ### Limitations & Implementation Notes
 

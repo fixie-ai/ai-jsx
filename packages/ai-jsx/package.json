@@ -84,6 +84,14 @@
     "./react/completion": {
       "import": "./dist/esm/react/completion.js",
       "require": "./dist/cjs/react/completion.cjs"
+    },
+    "./next": {
+      "import": "./dist/esm/next/index.js",
+      "require": "./dist/esm/next/index.cjs"
+    },
+    "./next/jsx-runtime": {
+      "import": "./dist/esm/next/jsx-runtime.js",
+      "require": "./dist/esm/next/jsx-runtime.cjs"
     }
   },
   "files": [
@@ -148,6 +156,7 @@
     "openai": "^3.3.0",
     "pino": "^8.14.1",
     "react-use": "^17.4.0",
+    "server-only": "^0.0.1",
     "sinon": "^15.1.0",
     "terminal-link": "^3.0.0",
     "tiny-typed-emitter": "^2.1.0",

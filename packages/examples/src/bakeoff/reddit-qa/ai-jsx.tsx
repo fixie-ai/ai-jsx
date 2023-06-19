@@ -1,6 +1,6 @@
 // This script assumes that ./load-articles has been run first.
 import * as LLMx from 'ai-jsx';
-import { DocsQA, Document, LocalCorpus, ScoredChunk, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
+import { DocsQA, Document, ScoredChunk, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
 import { showInspector } from 'ai-jsx/core/inspector';
 import { globbySync } from 'globby';
 import { loadJsonFile } from 'load-json-file';
@@ -35,7 +35,7 @@ const docs = await Promise.all(
 const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
 await corpus.startLoading();
 
-function ShowDoc({ doc }: { doc: ScoredChunk }) {
+function FormatChunk({ doc }: { doc: ScoredChunk }) {
   return (
     <>
       Title: {doc.chunk.documentName ?? 'Untitled'}
@@ -49,7 +49,7 @@ function AskAndAnswer({ query }: { query: string }) {
     <>
       Q: {query}
       {'\n'}
-      A: <DocsQA question={query} corpus={corpus} docComponent={ShowDoc} />
+      A: <DocsQA question={query} corpus={corpus} chunkFormatter={FormatChunk} />
     </>
   );
 }

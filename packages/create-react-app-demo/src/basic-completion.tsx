@@ -12,7 +12,7 @@ export default function BasicCompletion() {
   return (
     <>
       <InputPrompt label="Give me a topic" value={query} setValue={setQuery} />
-      <ResultContainer title={`AI comes up with a recipe for ${query}`}>
+      <ResultContainer title={`AI writes a poem about ${query}`}>
         <AI.jsx>
           <ChatCompletion temperature={1}>
             <UserMessage>Write me a poem about {query}</UserMessage>
