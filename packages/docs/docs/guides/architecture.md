@@ -39,7 +39,7 @@ Pros:
 
 Cons:
 
-- Your API keys are exposed to the client.
+- Your API keys are exposed to the client. (Not recommended for public apps.)
 - Performance will suffer if you need to do many roundtrips
 
 ```mermaid
@@ -67,6 +67,7 @@ Pros:
 Cons:
 
 - Compared to pure client, it's a little more complicated because you need to set up a proxy.
+- Performance will suffer if you need to do many roundtrips
 
 ```mermaid
 sequenceDiagram
@@ -113,6 +114,29 @@ sequenceDiagram
     participant APIs
     end
 ```
+
+### What's the downside of the new serialization boundary?
+
+When AI.JSX and the UI are both on the client, you can do things like:
+
+```tsx
+const dataPromise = getMyPromise();
+
+<div>
+  <AI.jsx>
+    <ChatCompletion temperature={1}>
+      // highlight-next-line
+      <UserMessage>Write me a poem about {dataPromise}</UserMessage>
+    </ChatCompletion>
+  </AI.jsx>
+</div>;
+```
+
+In this example, we have a value from our UI logic, `dataPromise`, and we embed it seamlessly in our AI logic. This is possible because the UI and AI logic are running together on the client.
+
+If the AI.JSX logic lived entirely serverside, then we'd need to serialize everything that gets sent between the UI and AI layers.
+
+Because of this, JIT UI is not supported with the "UI on the client / AI on the server" pattern. (It's straightforward for us to add support for this, but we haven't done so yet.)
 
 ## Run entirely on the server
 
