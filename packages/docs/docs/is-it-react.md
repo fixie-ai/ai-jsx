@@ -1,3 +1,7 @@
+---
+sidebar_position: 5
+---
+
 # Differences from React
 
 AI.JSX is not [React](https://react.dev/), although it [seamlessly integrates with it](guides/ai-ui.md). It's more similar to [React Server Components](https://www.patterns.dev/posts/react-server-components) than [React Client Components](https://www.patterns.dev/posts/client-side-rendering).
