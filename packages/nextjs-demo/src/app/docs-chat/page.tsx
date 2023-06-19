@@ -1,7 +1,6 @@
 /** @jsxImportSource ai-jsx/react */
 import * as AI from 'ai-jsx/next';
-import * as React from 'react';
-import { Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { DocsAgent } from './ai';
 import ResultContainer from '@/components/ResultContainer';
 
