@@ -1,147 +1,217 @@
 # AI + UI
 
-Demo video: [![Loom video](../../docs/loom.png)](https://www.loom.com/share/79ca3706839049a2beaf70f75950f86f)
+We're very excited about AI.JSX's capability to seamless integrate UI and AI logic:
 
-This is experimental but we're excited about it as a first step towards AI-native app development. Try it if you dare! There are two versions: NextJS Server Side Rendering, and create-react-app pure client. The create-react-app version is generally more robust and easier to play around in.
-
-## create-react-app
-
-To run the demo, go to the monorepo root, and run:
-
+```tsx
+/* react component */
+<div>
+  <AI.jsx>
+    {/* AI.JSX component */}
+    <ChatCompletion>
+      <UserMessage>Write me a poem about {query}</UserMessage>
+    </ChatCompletion>
+  </AI.jsx>
+</div>
 ```
-yarn turbo run dev --scope create-react-app-demo
+
+In this example, we have UI components and AI components living side-by-side. The AI's results will be rendered into the React tree as a string.
+
+We can also embed UI components within AI components:
+
+```tsx
+/* react component */
+<div>
+  <AI.jsx>
+    {/* AI.JSX component */}
+    <UICompletion
+      example={
+        /* react components */
+        // highlight-start
+        <Recipe>
+          <RecipeTitle>Crème Chantilly</RecipeTitle>
+          <RecipeIngredientList>
+            <RecipeIngredientListItem>2 cups heavy cream</RecipeIngredientListItem>
+          </RecipeIngredientList>
+          <RecipeInstructionList>
+            <RecipeInstructionListItem>Combine the ingredients in a large mixing bowl.</RecipeInstructionListItem>
+          </RecipeInstructionList>
+        </Recipe>
+        // highlight-end
+      }
+    >
+      <ChatCompletion>
+        <SystemMessage>You are an expert chef.</SystemMessage>
+        <UserMessage>Give me a recipe for {query}.</UserMessage>
+      </ChatCompletion>
+    </UICompletion>
+  </AI.jsx>
+</div>
 ```
 
-The subdemos are:
+In this example, we create a set of React components, then provide them to the model along with a prompt. The model decides how to use the React components to structure its result, and AI.JSX renders those components into the tree.
 
-- JIT UI: React (`packages/create-react-app-demo/src/recipe/page.tsx`): We provide building block components, and the AI decides how to assemble them into the final output.
-- Choose your own adventure (`packages/create-react-app-demo/src/choose-your-adventure/index.tsx`); We teach the AI how to render text and buttons, and it chooses what to show.
+:::note Support
+Today, we support AI.JSX integration with NextJS. Soon, we'll add support for generic React apps, non-React frameworks, and [other architectures](./architecture.md). ([File an issue](https://github.com/fixie-ai/ai-jsx/issues) if you'd like to vote on what we support. :smile:)
+:::
 
-### How To
+## Getting Started
 
-To use AI.jsx components within a file, you can use the `/** @jsxImportSource ai-jsx/react */` pragma:
+The fastest way to get started is to clone the AI.JSX NextJS template repo. Or, you can follow these steps:
+
+1. Install:
+   ```console
+   npm install ai-jsx
+   ```
+1. Add these lines to the top of your files that combine React and AI.JSX components:
+   ```tsx
+   /** @jsxImportSource ai-jsx/react */
+   import * as AI from 'ai-jsx/next';
+   ```
+1. Ensure that your `tsconfig.json` settings are the same as what `create-next-app` generated for you. In particular, this `compileOption` needs to be set:
+   ```json
+   "jsx": "preserve",
+   ```
+
+Now you're ready to embed intelligence throughout your app.
+
+## How To
+
+Start by writing normal React:
+
+```tsx
+<div>
+  <MyComponent />
+  <MyContainer>
+    <h2>Title</h2>
+  </MyContainer>
+</div>
+```
+
+When you want to add AI.JSX components, use the `AI.jsx` component:
 
 ```tsx
 /** @jsxImportSource ai-jsx/react */
-import * as AI from 'ai-jsx/react';
+import * as AI from 'ai-jsx/next';
 
-function MyComponent() {
+<div>
+  <MyComponent />
+  <MyContainer>
+    <h2>Title</h2>
+    // highlight-start
+    <AI.jsx>
+      <ChatCompletion temperature={1}>
+        <UserMessage>Write me a poem about beans</UserMessage>
+      </ChatCompletion>
+    </AI.jsx>
+    // highlight-end
+  </MyContainer>
+</div>;
+```
+
+:::caution AI.JSX is not React
+AI.JSX is conceptually similar to, but not the same as, React. There are different (simpler) [rules of how it works](./rules-of-jsx.md).
+:::
+
+## Just-in-Time (JIT) UI
+
+In traditional UI development, human engineers write deterministic code to handle every possible UI state. With JIT UI, human engineers produce building block components, then hand those to an AI to use in its response.
+
+For instance, imagine a recipe app. First, we make building-block components to render different parts of the recipe, such as:
+
+```tsx
+export function RecipeInstructionList({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <ReactComponent>
-        <AI.jsx>
-          <AIComponent>
-            <AI.React>
-              <ReactComponent />
-            </AI.React>
-          </AIComponent>
-        </AI.jsx>
-      </ReactComponent>
-    </>
+    <div className="mt-4">
+      <h2>Instructions</h2>
+      <ol className="list-disc list-inside" data-test="recipe-instruction-list">
+        {children}
+      </ol>
+    </div>
   );
 }
 ```
 
-## NextJS
+Then, we provide those components to the AI, along with a prompt of what we want it to generate:
 
-To run the demo, go to the monorepo root, and run:
+```tsx
+/** @jsxImportSource ai-jsx/react */
+import * as AI from 'ai-jsx/next';
+import { UICompletion } from 'ai-jsx/react/completion';
 
+/* react component */
+<div>
+  <AI.jsx>
+    {/* AI.JSX component */}
+    <UICompletion
+      example={
+        /* react components */
+        // highlight-start
+        <Recipe>
+          <RecipeTitle>Crème Chantilly</RecipeTitle>
+          <RecipeIngredientList>
+            <RecipeIngredientListItem>2 cups heavy cream</RecipeIngredientListItem>
+          </RecipeIngredientList>
+          <RecipeInstructionList>
+            <RecipeInstructionListItem>Combine the ingredients in a large mixing bowl.</RecipeInstructionListItem>
+          </RecipeInstructionList>
+        </Recipe>
+        // highlight-end
+      }
+    >
+      <ChatCompletion>
+        <SystemMessage>You are an expert chef.</SystemMessage>
+        <UserMessage>Give me a recipe for {query}.</UserMessage>
+      </ChatCompletion>
+    </UICompletion>
+  </AI.jsx>
+</div>;
 ```
-yarn turbo run dev --scope nextjs-demo
-```
 
-For this demo, we've set up a hacked version of NextJS to support server-side rendering with seamless integration of AI.JSX and React components. The subdemos are:
+### When should I use this?
 
-- Basic completion (`packages/nextjs-demo/src/app/basic-completion/page.tsx`): Streaming the AI's response directly to the browser.
-- JIT UI: React (`packages/nextjs-demo/src/app/recipe/page.tsx`): We provide building block components, and the AI decides how to assemble them into the final output.
-- Sleep (`packages/nextjs-demo/src/app/z/page.tsx`): An AI app with non-trivial business logic, streamed to the client.
+JIT UI has the advantage of being very flexible with a minimum amount of human-maintained code. However, it's also slower and more error prone than fully deterministic code. (We expect both these concerns to recede over time as models continue to improve.)
+
+So, JIT UI excels in applications like business intelligence tools for internal users. Because the users are internal, you can be more tolerant of errors / slower performance. And you benefit greatly from being able to flexibly render whatever BI query the user produces.
 
 ### How To
 
-1.  Import the `ai-jsx/next` module and use the `ai-jsx/react` JSX factory:
+First, follow the [getting started](#getting-started) and [how to](#how-to) steps above.
 
-    ```tsx
-    /** @jsxImportSource ai-jsx/react */
-    import * as AI from 'ai-jsx/next';
-    ```
+Then, use the `UICompletion` component:
 
-1.  Use the `AI.jsx` component to convert between React and AI.JSX components:
+```tsx
+/** @jsxImportSource ai-jsx/react */
+import * as AI from 'ai-jsx/next';
+import { UICompletion } from 'ai-jsx/react/completion';
 
-    ```tsx
-    <ResultContainer title={`AI lists ten facts about ${query}`}>
-      <AI.jsx>
-        <ChatCompletion temperature={1}>
-          <UserMessage>Give me ten facts about {query}</UserMessage>
-        </ChatCompletion>
-      </AI.jsx>
-    </ResultContainer>
-    ```
-
-1.  Within an `AI.jsx` subtree, you can use `AI.React` to nest React components. If they are internally rendered to
-    a string (e.g. as part of a prompt), they will be serialized to JSX. Otherwise they will be emitted by the top-level
-    `AI.jsx` component.
-
-        ```tsx
-        <ReactComponent>
-          <AI.jsx>
-            <AIComponent>
-              <AI.React>
-                <ReactComponent />
-              </AI.React>
-            </AIComponent>
-          </AI.jsx>
-        </ReactComponent>
-        ```
-
-### Limitations & Implementation Notes
-
-#### Limitations
-
-This won't deploy to Vercel because we haven't published ai-jsx yet.
-
-The types are all broken, but we may be able to fix it with https://devblogs.microsoft.com/typescript/announcing-typescript-5-1/#decoupled-type-checking-between-jsx-elements-and-jsx-tag-types and the other new features in TS 5.1.
-
-##### Interactivity
-
-To make the generated AI components interactive, we need to use client (rather than server) components. When I tried to do this, I ran into issues. I don't think they're worth sorting now, as it would be a rabbit hole. I think we can get the same overall effect with pure client components, which I'll explore in a later PR. I also don't think this indicates a fundamental flaw in the approach.
-
-#### Misc
-
-When `node_modules/keyv/src/index.js` is imported by the Next build process, it'll create this warning:
-
-```
-Critical dependency: the request of a dependency is an expression
-
-Import trace for requested module:
-../../../node_modules/keyv/src/index.js
-../../../node_modules/cacheable-request/dist/index.js
-../../../node_modules/got/dist/source/core/index.js
-../../../node_modules/got/dist/source/index.js
-../../lib/wandb.ts
-../../lib/log.ts
-../../lib/index.ts
-./src/app/ai.tsx
-./src/app/page.tsx
-```
-
-because of this:
-
-```js
-const adapters = {
-  redis: '@keyv/redis',
-  rediss: '@keyv/redis',
-  mongodb: '@keyv/mongo',
-  mongo: '@keyv/mongo',
-  sqlite: '@keyv/sqlite',
-  postgresql: '@keyv/postgres',
-  postgres: '@keyv/postgres',
-  mysql: '@keyv/mysql',
-  etcd: '@keyv/etcd',
-  offline: '@keyv/offline',
-  tiered: '@keyv/tiered',
-};
-if (options.adapter || options.uri) {
-  const adapter = options.adapter || /^[^:+]*/.exec(options.uri)[0];
-  return new (require(adapters[adapter]))(options);
+function MakeRecipe() {
+  return (
+    <ChatCompletion>
+      <SystemMessage>You are an expert chef.</SystemMessage>
+      <UserMessage>Give me a recipe for {query}.</UserMessage>
+    </ChatCompletion>
+  );
 }
+
+<div>
+  <AI.jsx>
+    // highlight-next-line
+    <UICompletion
+      example={
+        {
+          /* give React components showing what you'd like your output to look like */
+        }
+      }
+    >
+      {/* Create a prompt to the model,
+          generating the content it'll use the React components to show. */}
+      <MakeRecipe />
+    </UICompletion>
+  </AI.jsx>
+</div>;
 ```
+
+This example has two AI calls:
+
+1. `MakeRecipe` uses AI to generate text of a recipe.
+1. `UICompletion` takes that recipe, and the example layout given in its `example` prop, and returns a React tree that shows the recipe.
