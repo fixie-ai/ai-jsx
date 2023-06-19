@@ -8,7 +8,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 const config = {
   title: 'AI.JSX',
   tagline: 'The Toolkit for building JSX AI Apps',
-  favicon: 'img/ai-jsx.svg',
+  favicon: 'img/foxie.png',
 
   // Set the production url of your site here
   url: 'https://docs.ai-jsx.com/',
@@ -72,8 +72,8 @@ const config = {
         title: 'AI.JSX',
         logo: {
           alt: 'AI.JSX Logo',
-          src: 'img/ai-jsx-icon.png',
-          srcDark: 'img/ai-jsx-icon-dark.png',
+          src: 'img/foxie.png',
+          srcDark: 'img/foxie.png',
           href: 'https://docs.ai-jsx.com/',
         },
         items: [
