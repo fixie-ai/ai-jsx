@@ -22,7 +22,7 @@ function ConversationItem({
 }
 
 export function BasicChat() {
-  const [userMessages, { push: pushUserMessage, updateAt: updateUserMessage }] = useList<string>([]);
+  const [messages, { push: pushMessage, updateAt: updateMessage }] = useList<string>([]);
   const [callInProgress, setCallInProgress] = useState(false);
 
   async function handleInputSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -31,12 +31,14 @@ export function BasicChat() {
     event.preventDefault();
     const message = element.value;
     element.value = '';
-    pushUserMessage(message, '');
-    const index = userMessages.length + 1;
+
+    // Push a placeholder message, and get the index so we can stream in the actual response.
+    const index = messages.length + 1;
+    pushMessage(message, '⎕');
     setCallInProgress(true);
-    await AI.createRenderContext().render(<ChatAgent conversation={[...userMessages, message]} />, {
+    await AI.createRenderContext().render(<ChatAgent conversation={[...messages, message]} />, {
       map: (frame) => {
-        updateUserMessage(index, frame);
+        updateMessage(index, frame);
       },
     });
     setCallInProgress(false);
@@ -45,7 +47,7 @@ export function BasicChat() {
   return (
     <ResultContainer title="Basic Chat" description="In this demo, you can chat with a quirky assistant.">
       <ul>
-        {userMessages.map((response, index) => [
+        {messages.map((response, index) => [
           <li key={index} className="mt-4">
             <ConversationItem responseType={index % 2 ? 'bot' : 'user'}>{response}</ConversationItem>
           </li>,

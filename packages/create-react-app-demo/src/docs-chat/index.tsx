@@ -35,11 +35,7 @@ const AgentResponse = React.memo(function AgentResponse({
 }) {
   return (
     <ConversationItem responseType="bot">
-      <AI.jsx
-        onStreamStart={() => setCallInProgress(true)}
-        onStreamEnd={() => setCallInProgress(false)}
-        loading="Thinking..."
-      >
+      <AI.jsx onStreamStart={() => setCallInProgress(true)} onStreamEnd={() => setCallInProgress(false)} loading="⎕">
         <DocsAgent question={question} />
       </AI.jsx>
     </ConversationItem>

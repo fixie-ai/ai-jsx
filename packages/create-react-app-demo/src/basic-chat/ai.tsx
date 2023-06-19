@@ -3,7 +3,6 @@
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 
 export function ChatAgent({ conversation }: { conversation: string[] }) {
-  console.log('conversation: ' + conversation);
   return (
     <ChatCompletion>
       <SystemMessage>
