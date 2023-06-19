@@ -14,7 +14,7 @@ prints the result to the console. Here is the complete
 application:
 
 ```tsx filename="packages/tutorial/src/part1.tsx"
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 
 const app = (
@@ -23,7 +23,7 @@ const app = (
   </ChatCompletion>
 );
 
-const renderContext = LLMx.createRenderContext();
+const renderContext = AI.createRenderContext();
 const response = await renderContext.render(app);
 console.log(response);
 ```
@@ -58,6 +58,6 @@ of the application as it is rendered. The `render()` method returns a `Promise`
 that evaluates to a string, which is the final result of rendering the JSX
 object tree.
 
-We get a `RenderContext` by calling `LLMx.createRenderContext()`, and then
+We get a `RenderContext` by calling `AI.createRenderContext()`, and then
 call `render()` on it with our `app` object. The result is a string that
 we print to the console.

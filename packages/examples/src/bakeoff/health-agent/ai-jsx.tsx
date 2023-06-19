@@ -1,4 +1,4 @@
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { stringify as csvStringify } from 'csv-stringify/sync';
 import { showInspector } from 'ai-jsx/core/inspector';
 // This errors due to an ESM issue. I don't know what the right way to fix it is.
@@ -35,7 +35,7 @@ if (process.env.BULK_EVAL) {
   const results = [];
   for (const query of queryList) {
     const startTime = Date.now();
-    const answer = await LLMx.createRenderContext().render(<HealthAgent query={query} />);
+    const answer = await AI.createRenderContext().render(<HealthAgent query={query} />);
     const endTime = Date.now();
     results.push({
       query,

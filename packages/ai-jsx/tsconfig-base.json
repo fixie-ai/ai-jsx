@@ -3,8 +3,8 @@
   "include": ["src/**/*", ".eslintrc.cjs"],
   "compilerOptions": {
     "jsx": "react",
-    "jsxFactory": "LLMx.createElement",
-    "jsxFragmentFactory": "LLMx.Fragment",
+    "jsxFactory": "AI.createElement",
+    "jsxFragmentFactory": "AI.Fragment",
     "module": "esnext",
     // This is a potential footgun. We want our code to be isomorphic (run in Node and in the browser).
     // By enabling the "DOM" lib, we are allowing ourselves to use DOM APIs in our code,

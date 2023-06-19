@@ -1,4 +1,4 @@
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 
 const app = (
@@ -7,6 +7,6 @@ const app = (
   </ChatCompletion>
 );
 
-const renderContext = LLMx.createRenderContext();
+const renderContext = AI.createRenderContext();
 const response = await renderContext.render(app);
 console.log(response);

@@ -1,5 +1,5 @@
 /** @jsx React.createElement */
-import * as LLMx from '../index.js';
+import * as AI from '../index.js';
 import { Node } from '../index.js';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useState, useEffect } from 'react';
@@ -22,12 +22,12 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
   const [renderedContent, setRenderedContent] = useState('');
 
   useEffect(() => {
-    const renderContext = LLMx.createRenderContext();
+    const renderContext = AI.createRenderContext();
     const memoized = memo(componentToInspect);
 
     async function getAllFrames() {
       // This results in some duplicate pages.
-      const finalResult = await renderContext.render(LLMx.createElement(DebugTree, {}, memoized), {
+      const finalResult = await renderContext.render(AI.createElement(DebugTree, {}, memoized), {
         map: pushDebugTreeStep,
       });
       pushDebugTreeStep(finalResult);

@@ -1,4 +1,4 @@
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { showInspector } from 'ai-jsx/core/inspector';
 
@@ -20,7 +20,7 @@ government of the people, by the people, for the people, shall not perish from t
 const tokenLen = (text: String) => text.length / 4;
 const MAX_TOKEN_LEN = 250;
 
-async function Summarizer({ children }: { children: LLMx.Node }, { render }: LLMx.ComponentContext) {
+async function Summarizer({ children }: { children: AI.Node }, { render }: AI.ComponentContext) {
   const text = await render(children);
   if (tokenLen(text) <= MAX_TOKEN_LEN) {
     return (

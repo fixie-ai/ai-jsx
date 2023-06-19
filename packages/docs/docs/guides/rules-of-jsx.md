@@ -164,10 +164,10 @@ Similar to [React's `context`](https://react.dev/learn/passing-data-deeply-with-
 
 ```tsx
 // Create a context with a default value of 0.
-const Temperature = LLMx.createContext(0.0);
+const Temperature = AI.createContext(0.0);
 
 // Create a component that reads the context
-function CharacterGenerator(props: Record<string, never>, { getContext }: LLMx.RenderContext) {
+function CharacterGenerator(props: Record<string, never>, { getContext }: AI.RenderContext) {
   return (
     <Completion temperature={getContext(Temperature)}>
       Create a bio for a character in an RPG game.

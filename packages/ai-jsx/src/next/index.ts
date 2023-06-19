@@ -1,13 +1,13 @@
 import 'server-only';
 import * as ReactModule from 'react';
-import * as LLMx from '../react/core.js';
+import * as AI from '../react/core.js';
 export * from '../react/core.js';
 import { asJsxBoundary } from '../react/jsx-boundary.js';
 
-function unwrapReact(partiallyRendered: LLMx.PartiallyRendered): ReactModule.ReactNode {
-  if (LLMx.isElement(partiallyRendered)) {
+function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
+  if (AI.isElement(partiallyRendered)) {
     // This should be an AI.React element.
-    if (partiallyRendered.tag !== LLMx.React) {
+    if (partiallyRendered.tag !== AI.React) {
       throw new Error('AI.jsx internal error: unwrapReact only expects to see AI.React elements or strings.');
     }
 
@@ -56,16 +56,16 @@ function computeSuffix(
  * A JSX component that allows AI.jsx elements to be used in a [NextJS RSC component tree](https://nextjs.org/docs/getting-started/react-essentials#server-components).
  */
 export const jsx = asJsxBoundary(function jsx(
-  { children }: { children: LLMx.Node },
-  context?: any | LLMx.ComponentContext
+  { children }: { children: AI.Node },
+  context?: any | AI.ComponentContext
 ) {
   if (typeof context?.render === 'function') {
     // We're in AI.JSX already.
-    return children as LLMx.JSX.Element;
+    return children as AI.JSX.Element;
   }
 
-  const renderResult = LLMx.createRenderContext().render(children, {
-    stop: (e) => e.tag === LLMx.React,
+  const renderResult = AI.createRenderContext().render(children, {
+    stop: (e) => e.tag === AI.React,
     map: (frame) => frame.map(unwrapReact),
   });
   const asyncIterator = renderResult[Symbol.asyncIterator]();
@@ -136,5 +136,5 @@ export const jsx = asJsxBoundary(function jsx(
   // Since we start without any prefix or <Suspense> boundary, `replace` is simply the identity function.
   return ReactModule.createElement(Stream as any, {
     replace: (node: ReactModule.ReactNode) => node,
-  }) as LLMx.JSX.Element;
+  }) as AI.JSX.Element;
 });

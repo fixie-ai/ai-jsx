@@ -1,4 +1,4 @@
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { Element } from 'ai-jsx';
 import { LogImplementation, LogLevel, PinoLogger } from 'ai-jsx/core/log';
 import { Completion } from 'ai-jsx/core/completion';
@@ -21,7 +21,7 @@ class ConsoleLogger extends LogImplementation {
 }
 
 function CharacterGenerator() {
-  const inlineCompletion = (prompt: LLMx.Node) => (
+  const inlineCompletion = (prompt: AI.Node) => (
     <Completion stop={['"']} temperature={1.0}>
       {prompt}
     </Completion>
@@ -39,10 +39,10 @@ function CharacterGenerator() {
   );
 }
 
-console.log(await LLMx.createRenderContext({ logger: new ConsoleLogger() }).render(<CharacterGenerator />));
+console.log(await AI.createRenderContext({ logger: new ConsoleLogger() }).render(<CharacterGenerator />));
 
 console.log('Writing output to ', path.join(process.cwd(), 'ai-jsx.log'));
-console.log(await LLMx.createRenderContext({ logger: new PinoLogger() }).render(<CharacterGenerator />));
+console.log(await AI.createRenderContext({ logger: new PinoLogger() }).render(<CharacterGenerator />));
 
 console.log('Writing output to stdout via Pino');
 const pinoStdoutLogger = pino({
@@ -55,6 +55,4 @@ const pinoStdoutLogger = pino({
     },
   },
 });
-console.log(
-  await LLMx.createRenderContext({ logger: new PinoLogger(pinoStdoutLogger) }).render(<CharacterGenerator />)
-);
+console.log(await AI.createRenderContext({ logger: new PinoLogger(pinoStdoutLogger) }).render(<CharacterGenerator />));

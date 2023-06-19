@@ -6,7 +6,7 @@
  * Prompting is still a developing field. There are many different ways to prompt an LLM.
  * This file attempts to provide some good defaults as a starting point.
  */
-import * as LLMx from '../index.js';
+import * as AI from '../index.js';
 import { SystemMessage } from '../core/completion.js';
 
 /**

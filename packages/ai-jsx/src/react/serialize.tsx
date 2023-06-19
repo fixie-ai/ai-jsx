@@ -1,4 +1,4 @@
-import * as LLMx from './core.js';
+import * as AI from './core.js';
 import React from 'react';
 import { isJsxBoundary } from './jsx-boundary.js';
 
@@ -9,7 +9,7 @@ function reactComponentName(component: React.JSXElementConstructor<any> | string
 /**
  * Serializes React components to a textual representation.
  */
-export function Serialize({ children }: { children: React.ReactNode }): LLMx.Renderable {
+export function Serialize({ children }: { children: React.ReactNode }): AI.Renderable {
   if (Array.isArray(children)) {
     return children.map((child) => <Serialize>{child}</Serialize>);
   }
@@ -26,5 +26,5 @@ export function Serialize({ children }: { children: React.ReactNode }): LLMx.Ren
     return `<${typeName}/>`;
   }
 
-  return child as LLMx.Renderable;
+  return child as AI.Renderable;
 }

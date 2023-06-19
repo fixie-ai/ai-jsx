@@ -1,6 +1,6 @@
 import { showInspector } from 'ai-jsx/core/inspector';
 import { Inline } from 'ai-jsx/core/inline';
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { Node } from 'ai-jsx';
 import { Completion } from 'ai-jsx/core/completion';
 

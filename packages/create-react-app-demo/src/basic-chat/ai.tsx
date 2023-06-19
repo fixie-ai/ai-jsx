@@ -1,7 +1,7 @@
-/** @jsx LLMx.createElement */
-/** @jsxFrag LLMx.Fragment */
+/** @jsx AI.createElement */
+/** @jsxFrag AI.Fragment */
 /* eslint-disable react/jsx-key */
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import React, { useEffect, useRef } from 'react';
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { memo } from 'ai-jsx/core/memoize';
@@ -36,7 +36,7 @@ function ChatAgent({ conversation }: { conversation: any[] }) {
   );
 }
 
-function AI() {
+export function AIRoot() {
   const [conversation, setConversation] = useAtom(conversationAtom);
   const [, setCallInProgress] = useAtom(modelCallInProgress);
   const isInProgressRef = useRef(false);
@@ -51,7 +51,7 @@ function AI() {
     isInProgressRef.current = true;
     // I couldn't get streaming to work here and I don't know why.
     // Maybe because we're in the client and however Axios is doing it only works in Node?
-    LLMx.createRenderContext()
+    AI.createRenderContext()
       .render(children)
       .then((finalFrame) => {
         isInProgressRef.current = false;
@@ -61,8 +61,4 @@ function AI() {
   }, [children, setCallInProgress, when, setConversation]);
 
   return null;
-}
-
-export function AIRoot() {
-  return React.createElement(AI, {});
 }

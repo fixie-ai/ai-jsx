@@ -1,4 +1,4 @@
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { SystemMessage } from 'ai-jsx/core/completion';
 import { DebugTree } from 'ai-jsx/core/debug';
 
@@ -34,7 +34,7 @@ function App() {
   );
 }
 
-const finalResult = await LLMx.createRenderContext().render(<App />, {
+const finalResult = await AI.createRenderContext().render(<App />, {
   map(frame) {
     console.log(`Frame:\n${frame}\n`);
   },

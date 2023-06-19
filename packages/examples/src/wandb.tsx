@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { v4 as uuidv4 } from 'uuid';
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { Completion } from 'ai-jsx/core/completion';
 import { Inline } from 'ai-jsx/core/inline';
 import { StatusCode, WBTraceTree, addChildSpan, wandb } from '@nick.heiner/wandb-fork';
@@ -24,14 +24,14 @@ export function bindAsyncGenerator<T = unknown, TReturn = any, TNext = unknown>(
   return result;
 }
 
-function WeightsAndBiasesTracer(props: { children: LLMx.Node }, { wrapRender }: LLMx.ComponentContext) {
+function WeightsAndBiasesTracer(props: { children: AI.Node }, { wrapRender }: AI.ComponentContext) {
   const currentSpanStorage = new AsyncLocalStorage<WBSpan>();
   const baseTime = new Date().valueOf() - performance.now();
 
-  return LLMx.withContext(
+  return AI.withContext(
     <>{props.children}</>,
     wrapRender((r) => (renderContext, renderable, shouldStop) => {
-      if (!LLMx.isElement(renderable)) {
+      if (!AI.isElement(renderable)) {
         return r(renderContext, renderable, shouldStop);
       }
 
@@ -90,7 +90,7 @@ function WeightsAndBiasesTracer(props: { children: LLMx.Node }, { wrapRender }: 
 }
 
 function CharacterGenerator() {
-  const inlineCompletion = (prompt: LLMx.Node) => (
+  const inlineCompletion = (prompt: AI.Node) => (
     <Completion stop={['"']} temperature={1.0}>
       {prompt}
     </Completion>
@@ -111,7 +111,7 @@ function CharacterGenerator() {
 await wandb.init();
 
 console.log(
-  await LLMx.createRenderContext().render(
+  await AI.createRenderContext().render(
     <WeightsAndBiasesTracer>
       <CharacterGenerator />
     </WeightsAndBiasesTracer>

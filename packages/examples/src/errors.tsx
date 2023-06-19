@@ -1,8 +1,8 @@
 import { showInspector } from 'ai-jsx/core/inspector';
 import { ErrorBoundary } from 'ai-jsx/core/error-boundary';
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 
-function FailingComponent(): LLMx.Node {
+function FailingComponent(): AI.Node {
   throw new Error(`Something went wrong! ${Math.random()}`);
 }
 
