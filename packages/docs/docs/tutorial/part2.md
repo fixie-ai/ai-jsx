@@ -23,7 +23,7 @@ const app = (
     {'\n\n'}
     {(conversation) => (
       <ChatCompletion>
-        <UserMessage>Imagine a mythical forest animal called the "{conversation}". Tell me more about it.</UserMessage>
+        <UserMessage>Imagine a mythical forest animal called a "{conversation}". Tell me more about it.</UserMessage>
       </ChatCompletion>
     )}
     {'\n\n'}
@@ -61,4 +61,6 @@ The other change we are seeing in this example is the use of `showInspector` to 
 application, rather than just printing a string using `console.log`. `showInspector` starts
 up a live text display (in the terminal window) that shows the current state of the application
 as it is rendered. This can be helpful in debugging AI.JSX applications, rather than relying
-only on the final result of the rendering.
+only on the final result of the rendering. With the inspector running, you can use the
+left and right arrow keys to step back and forth through the rendering history, and see
+the render tree at each step.
