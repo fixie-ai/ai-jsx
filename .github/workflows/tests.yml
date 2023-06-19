@@ -28,4 +28,4 @@ jobs:
       - run: YARN_CHECKSUM_BEHAVIOR=ignore ~/.volta/bin/yarn install --immutable
       - run: ~/.volta/bin/yarn test
         env:
-          OPENAI_API_KEY: "FAKE-OPENAI-API-KEY"
+          OPENAI_API_KEY: 'FAKE-OPENAI-API-KEY'
