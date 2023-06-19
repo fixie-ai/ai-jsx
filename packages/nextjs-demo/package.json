@@ -8,8 +8,7 @@
     "test": "tsc -p .",
     "start": "next start",
     "lint": "next lint --max-warnings 0",
-    "lint:fix": "yarn lint --fix",
-    "postinstall": "./hack-node-modules.bash"
+    "lint:fix": "yarn lint --fix"
   },
   "dependencies": {
     "@octokit/graphql": "^5.0.6",
@@ -20,10 +19,9 @@
     "autoprefixer": "10.4.14",
     "classnames": "^2.3.2",
     "eslint": "8.42.0",
-    "eslint-config-next": "13.4.4",
-    "examples": "1.0.0",
+    "eslint-config-next": "^13.4.6",
     "lodash": "^4.17.21",
-    "next": "13.4.4",
+    "next": "^13.4.6",
     "postcss": "8.4.24",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -34,7 +32,9 @@
     "extends": "../../package.json"
   },
   "devDependencies": {
-    "@next/eslint-plugin-next": "^13.4.5",
+    "@babel/core": "^7.22.5",
+    "@babel/plugin-transform-react-jsx": "^7.22.5",
+    "@next/eslint-plugin-next": "^13.4.6",
     "@types/lodash": "^4.14.195",
     "@typescript-eslint/eslint-plugin": "^5.59.9",
     "@typescript-eslint/parser": "^5.59.9",

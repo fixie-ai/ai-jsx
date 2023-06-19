@@ -1,8 +1,7 @@
-/** @jsx React.createElement */
-import * as LLMx from '../index.js';
+/** @jsxImportSource ai-jsx/react */
+import * as AI from '../index.js';
 import { Node } from '../index.js';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import reactUse from 'react-use';
 import SyntaxHighlight from './syntax-highlight.js';
 import { memo } from '../core/memoize.js';
@@ -10,7 +9,6 @@ import Spinner from './spinner.js';
 import { DebugTree } from '../core/debug.js';
 
 import { Box, render, Text, useInput } from 'ink';
-// const { Box, render, Text, useInput } = require('ink');
 
 const { useList } = reactUse;
 
@@ -22,12 +20,12 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
   const [renderedContent, setRenderedContent] = useState('');
 
   useEffect(() => {
-    const renderContext = LLMx.createRenderContext();
+    const renderContext = AI.createRenderContext();
     const memoized = memo(componentToInspect);
 
     async function getAllFrames() {
       // This results in some duplicate pages.
-      const finalResult = await renderContext.render(LLMx.createElement(DebugTree, {}, memoized), {
+      const finalResult = await renderContext.render(<DebugTree>{memoized}</DebugTree>, {
         map: pushDebugTreeStep,
       });
       pushDebugTreeStep(finalResult);
@@ -91,7 +89,8 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
 
 /**
  * Take over the command line and render an interactive debug tool. The left side shows the streamed final output, and
- * the right side shows the debug tree. You can use the arrow keys to step through the debug tree, to see how your program was evaluated step by step.
+ * the right side shows the debug tree. You can use the left and right arrow keys to step through the debug tree, to see
+ * how your program was evaluated step by step.
  *
  * If you call `showInspector` and also write to stdout or stderr (for instance, with `console.log`), the output may be messed up.
  *

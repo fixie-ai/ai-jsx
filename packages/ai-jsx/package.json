@@ -1,85 +1,249 @@
 {
   "name": "ai-jsx",
-  "version": "0.2.0-4",
+  "version": "0.2.0-6",
   "volta": {
     "extends": "../../package.json"
   },
   "exports": {
     ".": {
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.cjs"
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
+    },
+    "./jsx-runtime": {
+      "import": {
+        "types": "./dist/esm/jsx-runtime.d.ts",
+        "default": "./dist/esm/jsx-runtime.js"
+      },
+      "require": {
+        "types": "./dist/cjs/jsx-runtime.d.cts",
+        "default": "./dist/cjs/jsx-runtime.cjs"
+      }
+    },
+    "./jsx-dev-runtime": {
+      "import": {
+        "types": "./dist/esm/jsx-runtime.d.ts",
+        "default": "./dist/esm/jsx-runtime.js"
+      },
+      "require": {
+        "types": "./dist/cjs/jsx-runtime.d.cts",
+        "default": "./dist/cjs/jsx-runtime.cjs"
+      }
     },
     "./batteries/docs": {
-      "import": "./dist/esm/batteries/docs.js",
-      "require": "./dist/cjs/batteries/docs.cjs"
+      "import": {
+        "types": "./dist/esm/batteries/docs.d.ts",
+        "default": "./dist/esm/batteries/docs.js"
+      },
+      "require": {
+        "types": "./dist/cjs/batteries/docs.d.cts",
+        "default": "./dist/cjs/batteries/docs.cjs"
+      }
     },
     "./batteries/natural-language-router": {
-      "import": "./dist/esm/batteries/natural-language-router.js",
-      "require": "./dist/cjs/batteries/natural-language-router.cjs"
+      "import": {
+        "types": "./dist/esm/batteries/natural-language-router.d.ts",
+        "default": "./dist/esm/batteries/natural-language-router.js"
+      },
+      "require": {
+        "types": "./dist/cjs/batteries/natural-language-router.d.cts",
+        "default": "./dist/cjs/batteries/natural-language-router.cjs"
+      }
     },
     "./batteries/use-tools": {
-      "import": "./dist/esm/batteries/use-tools.js",
-      "require": "./dist/cjs/batteries/use-tools.cjs"
+      "import": {
+        "types": "./dist/esm/batteries/use-tools.d.ts",
+        "default": "./dist/esm/batteries/use-tools.js"
+      },
+      "require": {
+        "types": "./dist/cjs/batteries/use-tools.d.cts",
+        "default": "./dist/cjs/batteries/use-tools.cjs"
+      }
     },
     "./batteries/langchain-wrapper": {
-      "import": "./dist/esm/batteries/langchain-wrapper.js",
-      "require": "./dist/cjs/batteries/langchain-wrapper.cjs"
+      "import": {
+        "types": "./dist/esm/batteries/langchain-wrapper.d.ts",
+        "default": "./dist/esm/batteries/langchain-wrapper.js"
+      },
+      "require": {
+        "types": "./dist/cjs/batteries/langchain-wrapper.d.cts",
+        "default": "./dist/cjs/batteries/langchain-wrapper.cjs"
+      }
     },
     "./core/completion": {
-      "import": "./dist/esm/core/completion.js",
-      "require": "./dist/cjs/core/completion.cjs"
+      "import": {
+        "types": "./dist/esm/core/completion.d.ts",
+        "default": "./dist/esm/core/completion.js"
+      },
+      "require": {
+        "types": "./dist/cjs/core/completion.d.cts",
+        "default": "./dist/cjs/core/completion.cjs"
+      }
     },
     "./core/image-gen": {
-      "import": "./dist/esm/core/image-gen.js",
-      "require": "./dist/cjs/core/image-gen.js"
+      "import": {
+        "types": "./dist/esm/core/image-gen.d.ts",
+        "default": "./dist/esm/core/image-gen.js"
+      },
+      "require": {
+        "types": "./dist/cjs/core/image-gend.cts",
+        "default": "./dist/cjs/core/image-gen.js"
+      }
     },
     "./core/debug": {
-      "import": "./dist/esm/core/debug.js",
-      "require": "./dist/cjs/core/debug.cjs"
+      "import": {
+        "types": "./dist/esm/core/debug.d.ts",
+        "default": "./dist/esm/core/debug.js"
+      },
+      "require": {
+        "types": "./dist/cjs/core/debug.d.cts",
+        "default": "./dist/cjs/core/debug.cjs"
+      }
     },
     "./core/error-boundary": {
-      "import": "./dist/esm/core/error-boundary.js",
-      "require": "./dist/cjs/core/error-boundary.cjs"
+      "import": {
+        "types": "./dist/esm/core/error-boundary.d.ts",
+        "default": "./dist/esm/core/error-boundary.js"
+      },
+      "require": {
+        "types": "./dist/cjs/core/error-boundary.d.cts",
+        "default": "./dist/cjs/core/error-boundary.cjs"
+      }
     },
     "./core/inline": {
-      "import": "./dist/esm/core/inline.js",
-      "require": "./dist/cjs/core/inline.cjs"
+      "import": {
+        "types": "./dist/esm/core/inline.d.ts",
+        "default": "./dist/esm/core/inline.js"
+      },
+      "require": {
+        "types": "./dist/cjs/core/inline.d.cts",
+        "default": "./dist/cjs/core/inline.cjs"
+      }
     },
     "./core/log": {
-      "import": "./dist/esm/core/log.js",
-      "require": "./dist/cjs/core/log.cjs"
+      "import": {
+        "types": "./dist/esm/core/log.d.ts",
+        "default": "./dist/esm/core/log.js"
+      },
+      "require": {
+        "types": "./dist/cjs/core/log.d.cts",
+        "default": "./dist/cjs/core/log.cjs"
+      }
     },
     "./core/memoize": {
-      "import": "./dist/esm/core/memoize.js",
-      "require": "./dist/cjs/core/memoize.cjs"
+      "import": {
+        "types": "./dist/esm/core/memoize.d.ts",
+        "default": "./dist/esm/core/memoize.js"
+      },
+      "require": {
+        "types": "./dist/cjs/core/memoize.d.cts",
+        "default": "./dist/cjs/core/memoize.cjs"
+      }
     },
     "./core/inspector": {
-      "import": "./dist/esm/inspector/console.js",
-      "require": "./dist/cjs/inspector/console.cjs"
+      "import": {
+        "types": "./dist/esm/inspector/console.d.ts",
+        "default": "./dist/esm/inspector/console.js"
+      },
+      "require": {
+        "types": "./dist/cjs/inspector/console.d.cts",
+        "default": "./dist/cjs/inspector/console.cjs"
+      }
     },
     "./core/errors": {
-      "import": "./dist/esm/core/errors.js",
-      "require": "./dist/cjs/core/errors.cjs"
+      "import": {
+        "types": "./dist/esm/core/errors.d.ts",
+        "default": "./dist/esm/core/errors.js"
+      },
+      "require": {
+        "types": "./dist/cjs/core/errors.d.cts",
+        "default": "./dist/cjs/core/errors.cjs"
+      }
     },
     "./batteries/prompts": {
-      "import": "./dist/esm/batteries/prompts.js",
-      "require": "./dist/cjs/batteries/prompts.js"
+      "import": {
+        "types": "./dist/esm/batteries/prompts.d.ts",
+        "default": "./dist/esm/batteries/prompts.js"
+      },
+      "require": {
+        "types": "./dist/cjs/batteries/promptsd.cts",
+        "default": "./dist/cjs/batteries/prompts.js"
+      }
     },
     "./batteries/constrained-output": {
-      "import": "./dist/esm/batteries/constrained-output.js",
-      "require": "./dist/cjs/batteries/constrained-output.js"
+      "import": {
+        "types": "./dist/esm/batteries/constrained-output.d.ts",
+        "default": "./dist/esm/batteries/constrained-output.js"
+      },
+      "require": {
+        "types": "./dist/cjs/batteries/constrained-outputd.cts",
+        "default": "./dist/cjs/batteries/constrained-output.js"
+      }
     },
     "./lib/openai": {
-      "import": "./dist/esm/lib/openai.js",
-      "require": "./dist/cjs/lib/openai.cjs"
+      "import": {
+        "types": "./dist/esm/lib/openai.d.ts",
+        "default": "./dist/esm/lib/openai.js"
+      },
+      "require": {
+        "types": "./dist/cjs/lib/openai.d.cts",
+        "default": "./dist/cjs/lib/openai.cjs"
+      }
     },
     "./react": {
-      "import": "./dist/esm/react/index.js",
-      "require": "./dist/cjs/react/index.cjs"
+      "import": {
+        "types": "./dist/esm/react/index.d.ts",
+        "default": "./dist/esm/react/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/react/index.d.cts",
+        "default": "./dist/cjs/react/index.cjs"
+      }
+    },
+    "./react/jsx-runtime": {
+      "import": {
+        "types": "./dist/esm/react/jsx-runtime.d.ts",
+        "default": "./dist/esm/react/jsx-runtime.js"
+      },
+      "require": {
+        "types": "./dist/cjs/react/jsx-runtime.d.cts",
+        "default": "./dist/cjs/react/jsx-runtime.cjs"
+      }
+    },
+    "./react/jsx-dev-runtime": {
+      "import": {
+        "types": "./dist/esm/react/jsx-runtime.d.ts",
+        "default": "./dist/esm/react/jsx-runtime.js"
+      },
+      "require": {
+        "types": "./dist/cjs/react/jsx-runtime.d.cts",
+        "default": "./dist/cjs/react/jsx-runtime.cjs"
+      }
     },
     "./react/completion": {
-      "import": "./dist/esm/react/completion.js",
-      "require": "./dist/cjs/react/completion.cjs"
+      "import": {
+        "types": "./dist/esm/react/completion.d.ts",
+        "default": "./dist/esm/react/completion.js"
+      },
+      "require": {
+        "types": "./dist/cjs/react/completion.d.cts",
+        "default": "./dist/cjs/react/completion.cjs"
+      }
+    },
+    "./next": {
+      "import": {
+        "types": "./dist/esm/next/index.d.ts",
+        "default": "./dist/esm/next/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/next/index.d.cts",
+        "default": "./dist/cjs/next/index.cjs"
+      }
     }
   },
   "files": [
@@ -144,6 +308,7 @@
     "openai": "^3.3.0",
     "pino": "^8.14.1",
     "react-use": "^17.4.0",
+    "server-only": "^0.0.1",
     "sinon": "^15.1.0",
     "terminal-link": "^3.0.0",
     "tiny-typed-emitter": "^2.1.0",

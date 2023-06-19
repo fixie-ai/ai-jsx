@@ -65,6 +65,19 @@ const cssModuleRegex = /\.module\.css$/;
 const sassRegex = /\.(scss|sass)$/;
 const sassModuleRegex = /\.module\.(scss|sass)$/;
 
+const hasJsxRuntime = (() => {
+  if (process.env.DISABLE_NEW_JSX_TRANSFORM === 'true') {
+    return false;
+  }
+
+  try {
+    require.resolve('react/jsx-runtime');
+    return true;
+  } catch (e) {
+    return false;
+  }
+})();
+
 // This is the production and development configuration.
 // It is focused on developer experience, fast rebuilds, and a minimal bundle.
 module.exports = function (webpackEnv) {
@@ -241,8 +254,10 @@ module.exports = function (webpackEnv) {
               // Pending further investigation:
               // https://github.com/terser-js/terser/issues/120
               inline: 2,
+              keep_fnames: true,
             },
             mangle: {
+              keep_fnames: true,
               safari10: true,
             },
             // Added for profiling in devtools
@@ -380,7 +395,7 @@ module.exports = function (webpackEnv) {
                   [
                     require.resolve('babel-preset-react-app'),
                     {
-                      runtime: 'classic',
+                      runtime: hasJsxRuntime ? 'automatic' : 'classic',
                     },
                   ],
                 ],
@@ -679,7 +694,9 @@ module.exports = function (webpackEnv) {
           baseConfig: {
             extends: [require.resolve('eslint-config-react-app/base')],
             rules: {
-              'react/react-in-jsx-scope': 'error',
+              ...(!hasJsxRuntime && {
+                'react/react-in-jsx-scope': 'error',
+              }),
             },
           },
         }),

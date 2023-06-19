@@ -9,7 +9,6 @@ import { TokenTextSplitter } from 'langchain/text_splitter';
 import { similarity } from 'ml-distance';
 import { Jsonifiable } from 'type-fest';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
-import * as LLMx from '../index.js';
 import { Node } from '../index.js';
 
 /**
@@ -249,26 +248,32 @@ export type Chunker<
   ChunkMetadata extends Jsonifiable = Jsonifiable
 > = (document: Document<DocumentMetadata>) => Promise<Chunk<ChunkMetadata>[]>;
 
+/** Create a chunker with the given parameters. */
+export function makeChunker<Metadata extends Jsonifiable = Jsonifiable>(
+  chunkSize: number,
+  chunkOverlap: number
+): Chunker<Metadata, Metadata> {
+  return async (doc: Document<Metadata>) => {
+    const splitter = new TokenTextSplitter({
+      encodingName: 'gpt2',
+      chunkSize,
+      chunkOverlap,
+    });
+    const lcDocs = await splitter.createDocuments(doc.pageContent);
+    const chunks = lcDocs.map(
+      (lcDoc) =>
+        ({
+          content: lcDoc.pageContent,
+          documentName: doc.name,
+          metadata: doc.metadata,
+        } as Chunk<Metadata>)
+    );
+    return chunks;
+  };
+}
+
 /** A simple token size based text chunker. This is a good starting point for text documents. */
-export const defaultChunker = async <Metadata extends Jsonifiable = Jsonifiable>(doc: Document<Metadata>) => {
-  const splitter = new TokenTextSplitter({
-    encodingName: 'gpt2',
-    chunkSize: 600,
-    chunkOverlap: 100,
-  });
-
-  const lcDocs = await splitter.createDocuments(doc.pageContent);
-  const chunks = lcDocs.map(
-    (lcDoc) =>
-      ({
-        content: lcDoc.pageContent,
-        documentName: doc.name,
-        metadata: doc.metadata,
-      } as Chunk<Metadata>)
-  );
-
-  return chunks;
-};
+export const defaultChunker = makeChunker(600, 100);
 
 /**
  * A piece of a document that's appropriately sized for an LLM's
@@ -521,29 +526,33 @@ export interface DocsQAProps {
   corpus: Corpus;
 
   /**
-   * The query to answer.
+   * The question to answer.
    */
   question: string;
 
   /**
    *
-   * The maximum number of documents to return.
+   * When processing a DocsQA query, the most relevent chunks are presented to the model. This
+   * field limits the number of chunks to consider. If this value is too large, the size
+   * of the chunks may exceed the token limit of the model.
    */
-  limit?: number;
+  chunkLimit?: number;
 
   /**
    * The component used to format document chunks when they're presented to the model.
+   * This can be used to present the model with some metadata about the chunk, in a format
+   * that is appropriate to the type of document.
    *
    * ```tsx
-   *  function MyDocsComponent({ doc }: { doc: ScoredChunk }) {
+   *  function FormatChunk({ chunk }: { chunk: ScoredChunk }) {
    *    return <>
-   *      Title: {doc.chunk.documentName}
-   *      Content: {doc.content}
+   *      Title: {chunk.chunk.documentName}
+   *      Content: {chunk.chunk.content}
    *    </>
    *  }
    * ```
    */
-  docComponent: (props: { doc: ScoredChunk }) => Node;
+  chunkFormatter: (props: { doc: ScoredChunk }) => Node;
 }
 /**
  * A component that can be used to answer questions about documents. This is a very common usecase for LLMs.
@@ -553,7 +562,7 @@ export async function DocsQA(props: DocsQAProps) {
   if (status !== Corpus.LoadingState.COMPLETED) {
     return `Corpus is not loaded. It's in state: ${status.toString()}`;
   }
-  const docs = await props.corpus.search(props.question, { limit: props.limit });
+  const docs = await props.corpus.search(props.question, { limit: props.chunkLimit });
   return (
     <ChatCompletion>
       <SystemMessage>
@@ -561,11 +570,21 @@ export async function DocsQA(props: DocsQAProps) {
         use any other knowledge you have about the world. If you don't know how to answer the question, just say "I
         don't know." Here are the relevant document excerpts you have been given:
         {docs.map((doc) => (
-          <props.docComponent doc={doc} />
+          <props.chunkFormatter doc={doc} />
         ))}
         And here is the question you must answer:
       </SystemMessage>
-      <UserMessage> {props.question} </UserMessage>
+      <UserMessage>{props.question}</UserMessage>
     </ChatCompletion>
   );
 }
+
+/**
+ * A default component for formatting document chunks.
+ */
+export const DefaultFormatter = ({ doc }: { doc: ScoredChunk }) => (
+  <>
+    Title: {doc.chunk.documentName ?? 'Untitled'}
+    Content: {doc.chunk.content}
+  </>
+);

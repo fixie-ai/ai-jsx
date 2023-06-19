@@ -1,6 +1,5 @@
 import { showInspector } from 'ai-jsx/core/inspector';
 import { Inline } from 'ai-jsx/core/inline';
-import * as LLMx from 'ai-jsx';
 import { Node } from 'ai-jsx';
 import { Completion } from 'ai-jsx/core/completion';
 
@@ -13,13 +12,16 @@ function CharacterGenerator() {
 
   return (
     <Inline>
-      The following is a character profile for an RPG game in JSON format:{'\n'}
+      Generate a character profile for a fantasy role-playing game in JSON format.{'\n'}
       {'{'}
-      {'\n  '}"class": "{inlineCompletion}",
       {'\n  '}"name": "{inlineCompletion}",
-      {'\n  '}"mantra": "{inlineCompletion}"{'\n'}
-      {'}'}
+      {'\n  '}"class": "{inlineCompletion}",
+      {'\n  '}"race": "{inlineCompletion}",
+      {'\n  '}"alignment": "{inlineCompletion}",
+      {'\n  '}"weapons": "{inlineCompletion}",
+      {'\n  '}"spells": "{inlineCompletion}",
+      {'\n}'}
     </Inline>
   );
 }
-showInspector(<CharacterGenerator />);
+showInspector(<CharacterGenerator />, { showDebugTree: false });

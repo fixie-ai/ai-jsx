@@ -1,8 +1,9 @@
-/** @jsx AI.createElement */
-import * as AI from './index.js';
+/** @jsxImportSource ai-jsx/react */
+import * as AI from './core.js';
 import React from 'react';
 import { SystemMessage, UserMessage } from '../core/completion.js';
 import { JsonChatCompletion } from '../batteries/constrained-output.js';
+import { isJsxBoundary } from './jsx-boundary.js';
 
 function reactComponentName(component: React.JSXElementConstructor<any> | string) {
   return typeof component === 'string' ? component : component.name;
@@ -23,14 +24,14 @@ export async function UICompletion(
         reactComponents.add(node.type);
       }
 
-      const childrenAreReact = (inReact || node.type === AI.React) && node.type !== AI.jsx;
+      const childrenAreReact = (inReact || node.type === AI.React) && !isJsxBoundary(node.type);
       if ('children' in node.props) {
         collectComponents(node.props.children, childrenAreReact);
       }
     }
 
     if (AI.isElement(node)) {
-      const childrenAreReact = (inReact || node.tag === AI.React) && node.tag !== AI.jsx;
+      const childrenAreReact = (inReact || node.tag === AI.React) && !isJsxBoundary(node.tag);
       if ('children' in node.props) {
         collectComponents(node.props.children, childrenAreReact);
       }

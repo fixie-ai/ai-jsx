@@ -1,4 +1,3 @@
-import * as LLMx from 'ai-jsx';
 import { showInspector } from 'ai-jsx/core/inspector';
 import {
   ChatCompletion,

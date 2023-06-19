@@ -1,76 +1,48 @@
-/** @jsx LLMx.createElement */
-/** @jsxFrag LLMx.Fragment */
-/* eslint-disable react/jsx-key */
-import * as LLMx from 'ai-jsx';
-import React, { useEffect, useRef } from 'react';
-import { DocsQA, ScoredChunk, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
-import { memo } from 'ai-jsx/core/memoize';
-// @ts-expect-error
-import markdownPath from './brand-new.md';
-import { atom, useAtom } from 'jotai';
+/** @jsxImportSource ai-jsx/react */
+import { DocsQA, DefaultFormatter, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
 
-import _ from 'lodash';
+let globalCorpus: LocalCorpus | undefined;
 
-export interface ChatMessage {
-  type?: string;
-  content?: string;
+/**
+ * This is a very simple example of how to build a document corpus.
+ * We pull markdown content from a set of URLs and then index it.
+ */
+export async function indexCorpus() {
+  const files = {
+    'getting-started.md': 'Getting Started',
+    'guides/ai-ui.md': 'AI + UI',
+    'guides/brand-new.md': 'Guide for AI Newcomers',
+    'guides/docsqa.md': 'Docs QA: Grounding Answers',
+    'guides/esm.md': 'ESM',
+    'guides/jsx.md': 'JSX: Build System Considerations',
+    'guides/observability.md': 'Observability',
+    'guides/prompting.md': 'Getting the AI to say things',
+    'guides/rules-of-jsx.md': 'Rules of AI.JSX',
+  };
+  const docs = await Promise.all(
+    Object.entries(files).map(async ([path, title]) => {
+      const url = `https://raw.githubusercontent.com/fixie-ai/ai-jsx/main/packages/docs/docs/${path}`;
+      const response = await fetch(url);
+      const markdown = await response.text();
+      console.log(`Retrieved document from ${url}`);
+      return {
+        pageContent: [markdown],
+        name: title,
+      };
+    })
+  );
+  const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
+  const stats = await corpus.startLoading();
+  console.log(`Finished indexing documents, chunk count=${stats.numChunks}`);
+  return corpus;
 }
 
-export const conversationAtom = atom<ChatMessage[]>([]);
-export const modelCallInProgress = atom<boolean>(false);
-
-// For now, we load the ai.jsx docs from a local markdown file. Once we have a HTML->Markdown converter,
-// we can load the docs from the site directly.
-const docResponse = await fetch(markdownPath);
-const docText = await docResponse.text();
-const docs = [
-  {
-    pageContent: [docText],
-    name: 'Guide for AI Newcomers',
-  },
-];
-const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
-await corpus.startLoading();
-
-const ShowDoc = ({ doc }: { doc: ScoredChunk }) => (
-  <>
-    Title: {doc.chunk.documentName ?? 'Untitled'}
-    Content: {doc.chunk.content}
-  </>
-);
-
-function DocsAgent({ conversation }: { conversation: any[] }) {
-  const query = _.last(conversation)?.content;
-  return <DocsQA question={query} corpus={corpus} limit={5} docComponent={ShowDoc} />;
-}
-
-function AI() {
-  const [conversation, setConversation] = useAtom(conversationAtom);
-  const [, setCallInProgress] = useAtom(modelCallInProgress);
-  const isInProgressRef = useRef(false);
-  const children = memo(<DocsAgent conversation={conversation} />);
-  const when = conversation.length && _.last(conversation)?.type === 'user';
-
-  useEffect(() => {
-    if (isInProgressRef.current || !when) {
-      return;
-    }
-    setCallInProgress(true);
-    isInProgressRef.current = true;
-    // I couldn't get streaming to work here and I don't know why.
-    // Maybe because we're in the client and however Axios is doing it only works in Node?
-    LLMx.createRenderContext()
-      .render(children)
-      .then((finalFrame) => {
-        isInProgressRef.current = false;
-        setCallInProgress(false);
-        setConversation((prev) => [...prev, { type: 'assistant', content: finalFrame }]);
-      });
-  }, [children, setCallInProgress, when, setConversation]);
-
-  return null;
-}
-
-export function AIRoot() {
-  return React.createElement(AI, {});
+/**
+ * Build the corpus on the first query, then use it for all subsequent queries.
+ */
+export async function DocsAgent({ question }: { question: string }) {
+  if (!globalCorpus) {
+    globalCorpus = await indexCorpus();
+  }
+  return <DocsQA question={question} corpus={globalCorpus} chunkLimit={5} chunkFormatter={DefaultFormatter} />;
 }

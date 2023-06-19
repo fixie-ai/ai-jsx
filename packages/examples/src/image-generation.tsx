@@ -1,4 +1,4 @@
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 import { Prompt } from 'ai-jsx/batteries/prompts';
 import { ImageGen } from 'ai-jsx/core/image-gen';
@@ -20,4 +20,4 @@ function RecipeWithImage() {
   );
 }
 
-console.log(await LLMx.createRenderContext().render(<RecipeWithImage />));
+console.log(await AI.createRenderContext().render(<RecipeWithImage />));
