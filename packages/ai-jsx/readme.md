@@ -8,7 +8,7 @@
 [![Discord Follow](https://dcbadge.vercel.app/api/server/MsKAeKF8kU?style=flat)](https://discord.gg/MsKAeKF8kU)
 [![Twitter Follow](https://img.shields.io/twitter/follow/fixieai?style=social)](https://twitter.com/fixieai)
 
-AI.JSX is a framework for building AI applications using [JSX](https://react.dev/learn/writing-markup-with-jsx). With AI.JSX, you don't just use JSX to describe what your UI should look like, you also use it to describe how **AI (LLMs)** should integrate into the rest of your application. The end result is a powerful combination where _intelligence_ can be deeply embedded into the application stack.
+AI.JSX is a framework for building AI applications using JSX. With AI.JSX, you don't just use JSX to describe what your UI should look like, you also use it to describe how Large Language Models, such as ChatGPT, should integrate into the rest of your application. The end result is a powerful combination where intelligence can be deeply embedded into the application stack.
 
 AI.JSX is designed to give you two important capabilities out of the box:
 
