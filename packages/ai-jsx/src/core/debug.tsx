@@ -1,9 +1,19 @@
+/**
+ * This module provides helper functions for debugging AI.JSX applications.
+ *
+ * @packageDocumentation
+ */
+
 import * as AI from '../index.js';
 import { Element, ElementPredicate, Node, RenderContext } from '../index.js';
 import { isMemoizedSymbol } from './memoize.js';
 
 const maxStringLength = 1000;
 
+/**
+ * Used by {@link DebugTree} to render a tree of {@link Node}s.
+ * @hidden
+ */
 export function debug(value: unknown, expandJSXChildren: boolean = true): string {
   const previouslyMemoizedIds = new Set();
 
@@ -125,9 +135,10 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
 /**
  * Render a tree of JSX elements as a string, yielding each step of the rendering process.
  *
- * Most devs will not need to use this directly, and should use `showInspector` instead.
+ * Most devs will not need to use this directly, and should use {@link showInspector} instead.
  *
  * @example
+ * ```tsx
  *    <DebugTree>
  *      <MyComponent />
  *    </DebugTree>
@@ -135,6 +146,7 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
  * ==>
  *  Frame 0: <DebugTree><MyComponent /></DebugTree>
  *  Frame 1: <DebugTree>the text my component resolved to</DebugTree>
+ * ```
  */
 export async function* DebugTree(props: { children: Node }, { render }: RenderContext) {
   let current = props.children;

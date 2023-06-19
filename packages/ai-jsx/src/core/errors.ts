@@ -1,3 +1,6 @@
+/**
+ * Represents an error that occurs while invoking an HTTP request to a Large Language Model.
+ */
 export class HttpError extends Error {
   constructor(
     message: string,

@@ -1,10 +1,9 @@
 /**
- * Basic prompts for LLMs.
- * This file attemps to have suggestions to guide the thinking of inexperienced users
- * to use good practices when using LLMs.
+ * This module provides some basic prompts for LLMs.
  *
  * Prompting is still a developing field. There are many different ways to prompt an LLM.
  * This file attempts to provide some good defaults as a starting point.
+ * @packageDocumentation
  */
 import { SystemMessage } from '../core/completion.js';
 
@@ -17,10 +16,18 @@ import { SystemMessage } from '../core/completion.js';
  *
  * We intend to improve this collection over time and welcome contributions.
  *
- * Note: even though a SystemPrompt component is used, you can think of this as a default value.
+ * Note: even though a {@link SystemPrompt} component is used, you can think of this as a default value.
  * For example:
  *   * if used in a Completion model, the SystemPrompt will be ignored;
  *   * if wrapped with a UserMessage, the SystemPrompt will be stripped.
+ *
+ * @example
+ * ```tsx
+ *  <ChatCompletion>
+ *    <Prompt persona="A cat with a PhD in physics" />
+ *    <UserMessage>What is the meaning of life?</UserMessage>
+ *  </ChatCompletion>
+ * ```
  */
 export function Prompt({
   hhh = false,
@@ -77,10 +84,12 @@ export function Prompt({
  * See Table 7 in Appendix C for comparison.
  *
  * @example
+ * ```tsx
  *   <ChatCompletion>
  *    <UserMessage>What is the 4th word in the phrase "I am not what I am"?</UserMessage>
  *    <PromptStepByStep />
  *   </ChatCompletion>
+ * ```
  */
 export function PromptStepByStep() {
   return <SystemMessage>Let's work this out in a step by step way to be sure we have the right answer.</SystemMessage>;

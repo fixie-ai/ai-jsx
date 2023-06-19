@@ -14,10 +14,10 @@ const noMatch = 'None of the routes match what the user said.';
 // make it explicit.
 
 /**
- * Ask the model to steer the control flow of your application.
+ * Use a Large Language Model to steer the control flow of your application.
  *
- * You give this component two pieces: `children`, which contains `Route`s, and `query`, which is used to steer. The
- * model will pick the `Route` that's the best match for the `query`.
+ * You give this component two pieces: `children`, which contains {@link Route}s, and `query`, which is used to steer. The
+ * model will pick the {@link Route} that's the best match for the `query`.
  *
  * ```tsx
  *    <NaturalLanguageRouter query="I'd like to cancel my account.">
@@ -35,7 +35,7 @@ const noMatch = 'None of the routes match what the user said.';
  *
  * Typically, instead of hardcoding `query` as in the example above, you'd be receiving it from user input.
  *
- * The `Route`s do not need to be the direct descendents of the `NaturalLanguageRouter`:
+ * The {@link Route}s do not need to be the direct descendents of the {@link NaturalLanguageRouter}:
  *
  * ```tsx
  * <NaturalLanguageRouter query="I'd like to cancel my account.">
@@ -45,7 +45,9 @@ const noMatch = 'None of the routes match what the user said.';
  * </NaturalLanguageRouter>
  * ```
  *
- * However, you can't use nested Route components. If a <Route> contains another <Route>, the inner <Route>'s `when` will not be considered. The inner Route will always show its children. For example:
+ * However, you can't use nested Route components. If a {@link Route} contains another {@link Route},
+ * the inner {@link Route}'s `when` will not be considered. The inner {@link Route} will always show
+ * its children. For example:
  *
  * ```tsx
  * <NaturalLanguageRouter>
@@ -108,7 +110,10 @@ export async function* NaturalLanguageRouter(props: { children: Node; query: Nod
   });
 }
 
-type RouteProps = { children: Node } & MergeExclusive<
+/**
+ * Properties to pass to the {@link Route} component.
+ */
+export type RouteProps = { children: Node } & MergeExclusive<
   {
     /**
      * The model will match this against the query. (Typically, this query will come from the user.)
@@ -124,7 +129,7 @@ type RouteProps = { children: Node } & MergeExclusive<
 >;
 
 /**
- * Use with `NaturalLanguageRouter` to define a route.
+ * Use with {@link NaturalLanguageRouter} to define a route.
  *
  * @see NaturalLanguageRouter
  */
