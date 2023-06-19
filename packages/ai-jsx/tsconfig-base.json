@@ -2,9 +2,12 @@
   "extends": "@tsconfig/node18/tsconfig.json",
   "include": ["src/**/*", ".eslintrc.cjs"],
   "compilerOptions": {
-    "jsx": "react",
-    "jsxFactory": "LLMx.createElement",
-    "jsxFragmentFactory": "LLMx.Fragment",
+    "jsx": "react-jsx",
+    "jsxImportSource": "ai-jsx",
+    "paths": {
+      "ai-jsx/jsx-runtime": ["./src/jsx-runtime.ts"],
+      "ai-jsx/react/jsx-runtime": ["./src/react/jsx-runtime.ts"]
+    },
     "module": "esnext",
     // This is a potential footgun. We want our code to be isomorphic (run in Node and in the browser).
     // By enabling the "DOM" lib, we are allowing ourselves to use DOM APIs in our code,

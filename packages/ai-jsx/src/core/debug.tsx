@@ -1,4 +1,4 @@
-import * as LLMx from '../index.js';
+import * as AI from '../index.js';
 import { Element, ElementPredicate, Node, RenderContext } from '../index.js';
 import { isMemoizedSymbol } from './memoize.js';
 
@@ -36,8 +36,8 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
         case 'props':
           return '{null}';
       }
-    } else if (LLMx.isElement(value)) {
-      const tag = value.tag === LLMx.Fragment ? '' : value.tag.name;
+    } else if (AI.isElement(value)) {
+      const tag = value.tag === AI.Fragment ? '' : value.tag.name;
       const childIndent = `${indent}  `;
 
       const isMemoized = isMemoizedSymbol in value.props;
@@ -74,7 +74,7 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
       const child =
         children !== ''
           ? `<${tag}${propsString}>\n${childIndent}${children}\n${indent}</${tag}>`
-          : value.tag !== LLMx.Fragment
+          : value.tag !== AI.Fragment
           ? `<${tag}${propsString} />`
           : '<></>';
 

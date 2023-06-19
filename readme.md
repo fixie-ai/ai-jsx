@@ -80,8 +80,8 @@ Set up your `tsconfig.json` to use AI.JSX's JSX support:
   "include": ["index.tsx"],
   "compilerOptions": {
     "jsx": "react",
-    "jsxFactory": "LLMx.createElement",
-    "jsxFragmentFactory": "LLMx.Fragment",
+    "jsxFactory": "AI.createElement",
+    "jsxFragmentFactory": "AI.Fragment",
     "moduleResolution": "node16",
     "module": "esnext",
     "resolveJsonModule": true,
@@ -93,7 +93,7 @@ Set up your `tsconfig.json` to use AI.JSX's JSX support:
 Create a new `index.tsx` file with the following simple example:
 
 ```tsx
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 
 function App() {
@@ -105,7 +105,7 @@ function App() {
   );
 }
 
-console.log(await LLMx.createRenderContext().render(<App />));
+console.log(await AI.createRenderContext().render(<App />));
 ```
 
 ## Features

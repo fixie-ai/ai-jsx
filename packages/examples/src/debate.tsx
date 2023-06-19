@@ -1,23 +1,23 @@
 import _ from 'lodash';
 import { showInspector } from 'ai-jsx/core/inspector';
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { Inline } from 'ai-jsx/core/inline';
 
 async function ConversationRemapper(
   props: {
-    system?: LLMx.ElementPredicate;
-    users?: Record<string, LLMx.ElementPredicate> | LLMx.ElementPredicate;
-    assistant?: LLMx.ElementPredicate;
-    children: LLMx.Node;
+    system?: AI.ElementPredicate;
+    users?: Record<string, AI.ElementPredicate> | AI.ElementPredicate;
+    assistant?: AI.ElementPredicate;
+    children: AI.Node;
   },
-  { render }: LLMx.ComponentContext
+  { render }: AI.ComponentContext
 ) {
   const system = props.system ?? (() => false);
   const users = props.users ?? (() => false);
   const assistant = props.assistant ?? (() => false);
 
-  const allPredicates: LLMx.ElementPredicate[] = [
+  const allPredicates: AI.ElementPredicate[] = [
     system,
     ...(typeof users === 'function' ? [users] : Object.values(users)),
     assistant,
@@ -27,7 +27,7 @@ async function ConversationRemapper(
     stop: (e) => Boolean(allPredicates.find((pred) => pred(e))),
   });
 
-  return partiallyRendered.filter(LLMx.isElement).map((node) => {
+  return partiallyRendered.filter(AI.isElement).map((node) => {
     if (system(node)) {
       return <SystemMessage>{node}</SystemMessage>;
     }
@@ -52,13 +52,13 @@ async function ConversationRemapper(
   });
 }
 
-function Debater(props: { position: string; name: string; inFavor: boolean; children: LLMx.Node }) {
+function Debater(props: { position: string; name: string; inFavor: boolean; children: AI.Node }) {
   return (
     <UserMessage name={props.name}>
       <ChatCompletion temperature={0.1}>
         <ConversationRemapper
           assistant={(node) =>
-            node.tag === UserMessage && (node.props as LLMx.PropsOfComponent<typeof UserMessage>).name === props.name
+            node.tag === UserMessage && (node.props as AI.PropsOfComponent<typeof UserMessage>).name === props.name
           }
         >
           <SystemMessage>
@@ -73,7 +73,7 @@ function Debater(props: { position: string; name: string; inFavor: boolean; chil
 }
 
 function DebateDemo(props: { position: string; rounds: number }) {
-  function Moderator({ children }: { children: LLMx.Node }) {
+  function Moderator({ children }: { children: AI.Node }) {
     return (
       <>
         Moderator: <UserMessage name="Moderator">{children}</UserMessage>
@@ -82,7 +82,7 @@ function DebateDemo(props: { position: string; rounds: number }) {
     );
   }
 
-  function Alice({ children }: { children: LLMx.Node }) {
+  function Alice({ children }: { children: AI.Node }) {
     return (
       <>
         {Alice.name}:{' '}
@@ -94,7 +94,7 @@ function DebateDemo(props: { position: string; rounds: number }) {
     );
   }
 
-  function Bob({ children }: { children: LLMx.Node }) {
+  function Bob({ children }: { children: AI.Node }) {
     return (
       <>
         {Bob.name}:{' '}
@@ -137,9 +137,9 @@ function DebateDemo(props: { position: string; rounds: number }) {
       )}
       {_.times(props.rounds, () => [
         <Moderator>Alice, please respond to Bob.</Moderator>,
-        (conversation: LLMx.Node) => <Alice>{conversation}</Alice>,
+        (conversation: AI.Node) => <Alice>{conversation}</Alice>,
         <Moderator>Bob, please respond to Alice.</Moderator>,
-        (conversation: LLMx.Node) => <Bob>{conversation}</Bob>,
+        (conversation: AI.Node) => <Bob>{conversation}</Bob>,
       ])}
       {(conversation) => (
         // Closing statements are made in parallel.

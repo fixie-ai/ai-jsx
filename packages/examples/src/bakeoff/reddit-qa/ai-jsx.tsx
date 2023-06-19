@@ -1,5 +1,4 @@
 // This script assumes that ./load-articles has been run first.
-import * as LLMx from 'ai-jsx';
 import { DocsQA, Document, ScoredChunk, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
 import { showInspector } from 'ai-jsx/core/inspector';
 import { globbySync } from 'globby';

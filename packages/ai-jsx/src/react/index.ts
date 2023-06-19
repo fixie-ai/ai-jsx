@@ -1,12 +1,12 @@
 import * as ReactModule from 'react';
-import * as LLMx from './core.js';
+import * as AI from './core.js';
 import { asJsxBoundary } from './jsx-boundary.js';
 export * from './core.js';
 
-function unwrapReact(partiallyRendered: LLMx.PartiallyRendered): ReactModule.ReactNode {
-  if (LLMx.isElement(partiallyRendered)) {
+function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
+  if (AI.isElement(partiallyRendered)) {
     // This should be an AI.React element.
-    if (partiallyRendered.tag !== LLMx.React) {
+    if (partiallyRendered.tag !== AI.React) {
       throw new Error('unwrapReact only expects to see AI.React elements or strings.');
     }
 
@@ -20,7 +20,7 @@ function unwrapReact(partiallyRendered: LLMx.PartiallyRendered): ReactModule.Rea
  * Renders an AI.jsx component into React. Used by the <AI.jsx> element internally but
  * can be used directly an entrypoint into AI.jsx.
  */
-export function useAI(children: LLMx.Node, onStreamStart?: () => void, onStreamEnd?: () => void) {
+export function useAI(children: AI.Node, onStreamStart?: () => void, onStreamEnd?: () => void) {
   const [result, setResult] = ReactModule.useState([] as ReactModule.ReactNode);
   const [isDone, setIsDone] = ReactModule.useState(false);
 
@@ -32,8 +32,8 @@ export function useAI(children: LLMx.Node, onStreamStart?: () => void, onStreamE
       setIsDone(false);
 
       // TODO: add a way for a render context to be aborted
-      const renderResult = LLMx.createRenderContext().render(children, {
-        stop: (e) => e.tag == LLMx.React,
+      const renderResult = AI.createRenderContext().render(children, {
+        stop: (e) => e.tag == AI.React,
         map: (frame) => frame.map(unwrapReact),
       });
       for await (const reactFrame of renderResult) {
@@ -73,8 +73,8 @@ export const jsx = asJsxBoundary(function jsx(
     onStreamStart,
     onStreamEnd,
     loading = '',
-  }: { children: LLMx.Node; onStreamStart?: () => void; onStreamEnd?: () => void; loading?: React.ReactNode },
-  context?: any | LLMx.ComponentContext
+  }: { children: AI.Node; onStreamStart?: () => void; onStreamEnd?: () => void; loading?: React.ReactNode },
+  context?: any | AI.ComponentContext
 ) {
   if (typeof context?.render === 'function') {
     // We're in AI.JSX already.

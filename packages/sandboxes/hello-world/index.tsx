@@ -1,4 +1,4 @@
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { PinoLogger } from 'ai-jsx/core/log';
 import { pino } from 'pino';
@@ -23,7 +23,7 @@ const pinoStdoutLogger = pino({
 });
 
 console.log(
-  await LLMx.createRenderContext({
+  await AI.createRenderContext({
     logger: new PinoLogger(pinoStdoutLogger),
   }).render(<App />)
 );

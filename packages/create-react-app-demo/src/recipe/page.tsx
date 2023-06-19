@@ -1,5 +1,4 @@
-/** @jsx AI.createElement */
-/** @jsxFrag AI.Fragment */
+/** @jsxImportSource ai-jsx/react */
 import * as AI from 'ai-jsx/react';
 import { UICompletion } from 'ai-jsx/react/completion';
 import { useState, ReactNode } from 'react';

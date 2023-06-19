@@ -3,7 +3,7 @@
 In this guide, we'll start with the [hello world example](https://github.com/fixie-ai/ai-jsx-template) and iteratively add logging.
 
 ```tsx file="index.tsx"
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 
 function App() {
@@ -15,7 +15,7 @@ function App() {
   );
 }
 
-console.log(await LLMx.createRenderContext().render(<App />));
+console.log(await AI.createRenderContext().render(<App />));
 ```
 
 This produces no logging.
@@ -25,7 +25,7 @@ This produces no logging.
 To log to a file:
 
 ```tsx file="index.tsx"
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 // highlight-next-line
 import { PinoLogger } from 'ai-jsx/core/log';
@@ -40,7 +40,7 @@ function App() {
 }
 
 console.log(
-  await LLMx.createRenderContext({
+  await AI.createRenderContext({
     // highlight-next-line
     logger: new PinoLogger(),
   }).render(<App />)
@@ -101,7 +101,7 @@ You can use `grep` to filter the log to just the events or loglevels you care ab
 If you want to customize the log sources further, you can create your own `pino` logger instance:
 
 ```tsx file="index.tsx"
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { PinoLogger } from 'ai-jsx/core/log';
 // highlight-next-line
@@ -130,7 +130,7 @@ const pinoStdoutLogger = pino({
 // highlight-end
 
 console.log(
-  await LLMx.createRenderContext({
+  await AI.createRenderContext({
     // highlight-next-line
     logger: new PinoLogger(pinoStdoutLogger),
   }).render(<App />)
@@ -201,9 +201,9 @@ Sometimes, you want a logger that wraps every `render` call for part of your com
  *      <MyComponentC />
  *    </MyTracer>
  */
-function MyTracer(props: { children: LLMx.Node }, { wrapRender }: LLMx.ComponentContext) {
+function MyTracer(props: { children: AI.Node }, { wrapRender }: AI.ComponentContext) {
   // Create a new context for this subtree.
-  return LLMx.withContext(
+  return AI.withContext(
     // Pass all children to the renderer.
     <>{props.children}</>,
 
@@ -222,7 +222,7 @@ function MyTracer(props: { children: LLMx.Node }, { wrapRender }: LLMx.Component
           } finally {
             // Take some action once the render is done.
             const end = performance.now();
-            if (LLMx.isElement(renderable)) {
+            if (AI.isElement(renderable)) {
               console.error(`Finished rendering ${debug(renderable, false)} (${end - start}ms @ ${end})`);
             }
           }

@@ -1,5 +1,4 @@
-/** @jsx AI.createElement */
-/** @jsxFrag AI.Fragment */
+/** @jsxImportSource ai-jsx/react */
 /* eslint-disable react/jsx-key */
 import * as AI from 'ai-jsx/react';
 import { useEffect, useRef } from 'react';
