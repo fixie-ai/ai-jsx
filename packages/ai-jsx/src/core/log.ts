@@ -106,7 +106,7 @@ export class PinoLogger extends LogImplementation {
 }
 
 /**
- * A BoundLogger binds a {@link LogImplementation} to a specific render of an {@link Element}.
+ * A BoundLogger binds a {@link LogImplementation} to a specific render of an Element.
  */
 export class BoundLogger implements Logger {
   constructor(

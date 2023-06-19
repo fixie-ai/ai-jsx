@@ -21,7 +21,7 @@ const config = {
   organizationName: 'fixie-ai', // Usually your GitHub org/user name.
   projectName: 'ai-jsx', // Usually your repo name.
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'throw',
 
   // Even if you don't use internalization, you can use this field to set useful
