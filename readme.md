@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="https://docs.ai-jsx.com/img/ai-jsx.png" alt="AI.JSX logo" width="100" />
-</p>
-
 # AI.JSX — The AI Application Framework for Javascript
 
 [![Docs Site](https://img.shields.io/badge/Docs%20Site-docs.ai--jsx.com-orange)](https://docs.ai-jsx.com)
