@@ -1,3 +1,4 @@
+/** @jsxImportSource ai-jsx/react */
 import * as AI from 'ai-jsx/next';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 import InputPrompt from '@/components/InputPrompt';

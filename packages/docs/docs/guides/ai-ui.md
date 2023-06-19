@@ -19,11 +19,10 @@ The subdemos are:
 
 ### How To
 
-If you're nesting AI and UI components, you need to import our custom React wrapper:
+To use AI.jsx components within a file, you can use the `/** @jsxImportSource ai-jsx/react */` pragma:
 
 ```tsx
-/** @jsx AI.createElement */
-/** @jsxFrag AI.Fragment */
+/** @jsxImportSource ai-jsx/react */
 import * as AI from 'ai-jsx/react';
 
 function MyComponent() {
@@ -59,9 +58,10 @@ For this demo, we've set up a hacked version of NextJS to support server-side re
 
 ### How To
 
-1.  Import the `ai-jsx/next` module:
+1.  Import the `ai-jsx/next` module and use the `ai-jsx/react` JSX factory:
 
     ```tsx
+    /** @jsxImportSource ai-jsx/react */
     import * as AI from 'ai-jsx/next';
     ```
 
