@@ -61,7 +61,7 @@ export const jsx = asJsxBoundary(function jsx(
 ) {
   if (typeof context?.render === 'function') {
     // We're in AI.JSX already.
-    return children;
+    return children as LLMx.JSX.Element;
   }
 
   const renderResult = LLMx.createRenderContext().render(children, {
@@ -134,5 +134,7 @@ export const jsx = asJsxBoundary(function jsx(
   }
 
   // Since we start without any prefix or <Suspense> boundary, `replace` is simply the identity function.
-  return ReactModule.createElement(Stream as any, { replace: (node: ReactModule.ReactNode) => node });
+  return ReactModule.createElement(Stream as any, {
+    replace: (node: ReactModule.ReactNode) => node,
+  }) as LLMx.JSX.Element;
 });

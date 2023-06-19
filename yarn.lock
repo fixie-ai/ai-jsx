@@ -11811,7 +11811,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"examples@npm:1.0.0, examples@workspace:packages/examples":
+"examples@workspace:packages/examples":
   version: 0.0.0-use.local
   resolution: "examples@workspace:packages/examples"
   dependencies:
@@ -17154,7 +17154,6 @@ __metadata:
     eslint: "npm:8.42.0"
     eslint-config-next: "npm:^13.4.6"
     eslint-config-nth: "npm:^2.0.1"
-    examples: "npm:1.0.0"
     lodash: "npm:^4.17.21"
     next: "npm:^13.4.6"
     postcss: "npm:8.4.24"
