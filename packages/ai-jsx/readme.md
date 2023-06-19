@@ -124,4 +124,4 @@ For a full set of examples, see [the examples package](https://github.com/fixie-
 
 ## Contributing
 
-We welcome contributions! See [Contributing](./contributing.md) for how to get started.
+We welcome contributions! See [Contributing](https://github.com/fixie-ai/ai-jsx/blob/main/packages/docs/docs/contributing/index.md) for how to get started.
