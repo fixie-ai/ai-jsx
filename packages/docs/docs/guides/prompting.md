@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Getting the AI to say things
+# Prompting in AI.JSX
 
 - Prereqs:
   - [Basic AI knowledge](brand-new.md)
