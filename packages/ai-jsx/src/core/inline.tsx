@@ -6,10 +6,10 @@ type InlineChild = Node | InlineFn;
 type InlineChildren = InlineChild | InlineChildren[];
 
 /**
- * Use this to do a completion where you have access to the previously-rendered content.
+ * The Inline component renders each of its children in sequence, optionally passing the previously rendered content to the next child.
  *
- * @see ../../../examples/inline-completion.tsx
- * ```
+ * @example
+ * ```tsx
  *  const inlineCompletion = (prompt: Node) => (
  *   <Completion stop={['"']} temperature={1.0}>
  *     {prompt}

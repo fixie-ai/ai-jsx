@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { Text } from 'ink';
 import spinners, { SpinnerName } from 'cli-spinners';
 
+/** @hidden */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type Props = {
   /**

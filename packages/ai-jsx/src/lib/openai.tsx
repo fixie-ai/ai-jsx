@@ -1,3 +1,8 @@
+/**
+ * This module provides interfaces to OpenAI's various models.
+ * @packageDocumentation
+ */
+
 import {
   AssistantMessage,
   ChatProvider,
@@ -58,6 +63,13 @@ export const openAiClientContext = AI.createContext<OpenAIApi>(
   )
 );
 
+/**
+ * An AI.JSX component that invokes an OpenAI Large Language Model.
+ * @param children The children to render.
+ * @param chatModel The chat model to use.
+ * @param completionModel The completion model to use.
+ * @param client The OpenAI client.
+ */
 export function OpenAI({
   children,
   chatModel,
@@ -95,6 +107,7 @@ export function OpenAI({
  *  - https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events
  *  - https://github.com/openai/openai-cookbook/blob/970d8261fbf6206718fe205e88e37f4745f9cf76/examples/How_to_stream_completions.ipynb
  * @param iterable A byte stream from an OpenAI SSE response.
+ * @returns An async generator that yields the parsed JSON objects from the stream.
  */
 async function* openAiEventsToJson<T>(iterable: AsyncIterable<String>): AsyncGenerator<T> {
   const SSE_PREFIX = 'data: ';
@@ -143,6 +156,9 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
 
 type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
 
+/**
+ * Represents an error that occurs when making an OpenAI API call.
+ */
 export class OpenAIError<M extends OpenAIMethod> extends HttpError {
   readonly errorResponse: Record<string, any> | null;
 
@@ -191,6 +207,9 @@ async function checkOpenAIResponse<M extends OpenAIMethod>(response: Response, l
   }
 }
 
+/**
+ * Represents an OpenAI text completion model (e.g., `text-davinci-003`).
+ */
 export async function* OpenAICompletionModel(
   props: ModelPropsWithChildren & { model: ValidCompletionModel; logitBias?: Record<string, number> },
   { render, getContext, logger }: AI.ComponentContext
@@ -229,6 +248,9 @@ export async function* OpenAICompletionModel(
   return resultSoFar;
 }
 
+/**
+ * Represents an OpenAI text chat model (e.g., `gpt-4`).
+ */
 export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & {
     model: ValidChatModel;
@@ -382,7 +404,9 @@ export async function* OpenAIChatModel(
  * Generates an image from a prompt using the DALL-E model.
  * @see https://platform.openai.com/docs/guides/images/introduction
  *
- * @returns the URL of the generated image.
+ * @param numSamples The number of images to generate. Defaults to 1.
+ * @param size The size of the image to generate. Defaults to `512x512`.
+ * @returns The URL of the generated image.
  *          If numSamples is greater than 1, URLs are separated by newlines.
  */
 export async function DalleImageGen(

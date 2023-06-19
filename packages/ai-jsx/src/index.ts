@@ -1,41 +1,76 @@
+/**
+ * AI.JSX - The AI Application Framework for Javascript.
+ *
+ * See: https://ai-jsx.com for more details.
+ *
+ * @packageDocumentation
+ */
+
 import { v4 as uuidv4 } from 'uuid';
 import { BoundLogger, NoOpLogImplementation, LogImplementation, Logger, PinoLogger } from './core/log.js';
 
+/** @hidden */
 export interface ComponentContext extends RenderContext {
   logger: Logger;
 }
+/** @hidden */
 export type Component<P> = (props: P, context: ComponentContext) => Renderable;
+
+/**
+ * A Literal represents a literal value.
+ */
 export type Literal = string | number | null | undefined | boolean;
 
 const attachedContext = Symbol('AI.attachedContext');
+/**
+ * An Element represents an instance of an AI.JSX component, with an associated tag, properties, and a render function.
+ */
 export interface Element<P> {
+  /** The tag associated with this {@link Element}. */
   tag: Component<P>;
+  /** The component properties. */
   props: P;
+  /** A function that renders this {@link Element} to a {@link Renderable}. */
   render: (renderContext: RenderContext, logger: Logger) => Renderable;
+  /** The {@link RenderContext} associated with this {@link Element}. */
   [attachedContext]?: RenderContext;
 }
 
 const indirectNodeSymbol = Symbol('AI.indirectNode');
 /**
- * An opaque type with a reference to an AI.Node that represents it.
+ * An IndirectNode represents an opaque type with a reference to a {@link Node} that represents it.
  */
 export interface IndirectNode {
   [indirectNodeSymbol]: Node;
 }
 
+/**
+ * A Node represents an element of an AI.JSX component tree.
+ */
 export type Node = Element<any> | Literal | Node[] | IndirectNode;
 
-interface RenderableStream {
+/**
+ * A RenderableStream represents an async iterable that yields {@link Renderable}s.
+ */
+export interface RenderableStream {
   [Symbol.asyncIterator]: () => AsyncIterator<Renderable, Renderable>;
 }
 
+/**
+ * A Renderable represents a value that can be rendered to a string.
+ */
 export type Renderable = Node | PromiseLike<Renderable> | RenderableStream;
 
+/** @hidden */
 export type ElementPredicate = (e: Element<any>) => boolean;
+
+/** @hidden */
 export type PropsOfComponent<T extends Component<any>> = T extends Component<infer P> ? P : never;
 
+/** @hidden */
 export type PartiallyRendered = string | Element<any>;
 
+/** @hidden */
 export type StreamRenderer = (
   renderContext: RenderContext,
   renderable: Renderable,
@@ -43,6 +78,7 @@ export type StreamRenderer = (
 ) => AsyncGenerator<PartiallyRendered[], PartiallyRendered[]>;
 
 const contextKey = Symbol('AI.contextKey');
+/** @hidden */
 export interface Context<T> {
   Provider: Component<{ children: Node; value: T }>;
   [contextKey]: { defaultValue: T; userContextSymbol: symbol };
@@ -69,12 +105,15 @@ interface RenderOpts<TIntermediate = string, TFinal = string> {
  * The result of rendering. Can be `await`ed for the final result or used as an async
  * iterable to access the intermediate and final results.
  */
-interface RenderResult<TIntermediate, TFinal> {
+export interface RenderResult<TIntermediate, TFinal> {
   then: InstanceType<typeof Promise<TFinal>>['then'];
   [Symbol.asyncIterator]: () => AsyncIterator<TIntermediate, TFinal, unknown>;
 }
 
 const pushContextSymbol = Symbol('RenderContext.pushContext');
+/**
+ * A RenderContext is responsible for rendering an AI.JSX Node tree.
+ */
 export interface RenderContext {
   /**
    * Renders a value to a string, or if a `stop` function is provided, to an array
@@ -115,6 +154,10 @@ export interface RenderContext {
 
 type AIElement = Element<any>;
 
+/**
+ * The following is used to ensure type checking for JSX elements works correctly.
+ * See: https://www.typescriptlang.org/docs/handbook/jsx.html#type-checking
+ */
 export declare namespace JSX {
   type ElementType = Component<any>;
   interface Element extends AIElement {}
@@ -124,16 +167,19 @@ export declare namespace JSX {
   }
 }
 
+/** @hidden */
 export function createElement<P extends { children: C }, C>(
   tag: Component<P>,
   props: Omit<P, 'children'> | null,
   ...children: [C]
 ): Element<P>;
+/** @hidden */
 export function createElement<P extends { children: C[] }, C>(
   tag: Component<P>,
   props: Omit<P, 'children'> | null,
   ...children: C[]
 ): Element<P>;
+/** @hidden */
 export function createElement<P extends { children: C | C[] }, C>(
   tag: Component<P>,
   props: Omit<P, 'children'> | null,
@@ -154,14 +200,17 @@ export function createElement<P extends { children: C | C[] }, C>(
   return result;
 }
 
+/** @hidden */
 export function isElement(value: unknown): value is Element<any> {
   return value !== null && typeof value === 'object' && 'tag' in value;
 }
 
+/** @hidden */
 export function Fragment({ children }: { children: Node }): Renderable {
   return children;
 }
 
+/** @hidden */
 export function withContext<P extends object>(element: Element<P>, context: RenderContext): Element<P> {
   const withContext = {
     ...element,
@@ -172,6 +221,7 @@ export function withContext<P extends object>(element: Element<P>, context: Rend
   return withContext;
 }
 
+/** @hidden */
 export function createContext<T>(defaultValue: T): Context<T> {
   const ctx: Context<T> = {
     Provider: function ContextProvider(props: { value: T; children: Node }, { [pushContextSymbol]: pushContext }) {
@@ -184,14 +234,17 @@ export function createContext<T>(defaultValue: T): Context<T> {
   return ctx;
 }
 
+/** @hidden */
 export function isIndirectNode(value: unknown): value is IndirectNode {
   return value !== null && typeof value === 'object' && indirectNodeSymbol in value;
 }
 
+/** @hidden */
 export function getReferencedNode(value: IndirectNode): Node {
   return value[indirectNodeSymbol];
 }
 
+/** @hidden */
 export function makeIndirectNode<T extends object>(value: T, node: Node): T & IndirectNode {
   return new Proxy(value, {
     has: (target, p) => p === indirectNodeSymbol || p in target,
@@ -199,7 +252,7 @@ export function makeIndirectNode<T extends object>(value: T, node: Node): T & In
   }) as T & IndirectNode;
 }
 
-// Default is a no-op logger.
+/** @hidden */
 export const LoggerContext = createContext<LogImplementation>(new NoOpLogImplementation());
 
 async function* renderStream(
@@ -331,6 +384,11 @@ async function* renderStream(
   return yield* context.render(nextRenderable, recursiveRenderOpts);
 }
 
+/**
+ * Creates a new {@link RenderContext} with the provided logger.
+ * @param logger The logger to use for the new context. If not provided, a new {@link PinoLogger} will be created.
+ * @returns A new RenderContext.
+ */
 export function createRenderContext(opts?: { logger?: LogImplementation }) {
   const logger = opts?.logger ?? new PinoLogger();
   return createRenderContextInternal(renderStream, {

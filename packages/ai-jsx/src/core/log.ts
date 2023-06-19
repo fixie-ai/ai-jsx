@@ -1,11 +1,22 @@
+/**
+ * This module provides logging functions.
+ * @packageDocumentation
+ */
+
 import _ from 'lodash';
 import pino from 'pino';
 import { Element } from '../index.js';
 
 export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
 
+/**
+ * A Logger represents an object that can log messages.
+ */
 export type Logger = Record<LogLevel, (obj: object | string, msg?: string) => void>;
 
+/**
+ * An abstract class that represents an implementation of {@link Logger}.
+ */
 export abstract class LogImplementation {
   protected readonly loggedExceptions = new WeakMap<object, boolean>();
 
@@ -53,6 +64,9 @@ export abstract class LogImplementation {
   }
 }
 
+/**
+ * An implementation of {@link LogImplementation} that does nothing.
+ */
 export class NoOpLogImplementation extends LogImplementation {
   log(): void {}
 }
@@ -70,6 +84,9 @@ const defaultPinoLogger = _.once(() =>
   )
 );
 
+/**
+ * An implementation of {@link LogImplementation} that uses the `pino` logging library.
+ */
 export class PinoLogger extends LogImplementation {
   constructor(private readonly pino: pino.Logger = defaultPinoLogger()) {
     super();
@@ -89,7 +106,7 @@ export class PinoLogger extends LogImplementation {
 }
 
 /**
- * Binds a LogImplementation to a specific render of an `Element`.
+ * A BoundLogger binds a {@link LogImplementation} to a specific render of an {@link Element}.
  */
 export class BoundLogger implements Logger {
   constructor(
