@@ -9,11 +9,12 @@
 import { v4 as uuidv4 } from 'uuid';
 import { BoundLogger, NoOpLogImplementation, LogImplementation, Logger, PinoLogger } from './core/log.js';
 
-/** @hidden */
+/** A context that is used to render an AI.JSX component. */
 export interface ComponentContext extends RenderContext {
   logger: Logger;
 }
-/** @hidden */
+
+/** Represents a single AI.JSX component. */
 export type Component<P> = (props: P, context: ComponentContext) => Renderable;
 
 /**

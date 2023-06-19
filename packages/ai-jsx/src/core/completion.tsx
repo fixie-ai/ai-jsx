@@ -273,7 +273,6 @@ export function Completion(
  *
  *    <ChatCompletion>
  *      <SystemMessage>You are a nice person.</SystemMessage>
- *      {/* This is fine, because MyUserMessage renders to a UserMessage. */}
  *      <MyUserMessage />
  *    </ChatCompletion>
  * ```

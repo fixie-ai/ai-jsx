@@ -9,7 +9,6 @@ import { Node, RenderContext } from '../index.js';
  * ```tsx
  *  <ErrorBoundary fallback="User data could not be fetched.">
  *    {fetchUserData()}
- *
  *  </ErrorBoundary>
  * ```
  * This is useful, because without it, any exception will make your entire request fail. It also gives you a chance to

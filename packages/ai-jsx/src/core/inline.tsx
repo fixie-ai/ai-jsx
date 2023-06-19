@@ -39,6 +39,8 @@ type InlineChildren = InlineChild | InlineChildren[];
  *    'The following is a character profile for an RPG game in JSON format: {"class": "Paladin", "name": "'
  * ```
  * In this way, we're able to iteratively build up a response where we control the overall structure but call out to the model at specified points.
+ *
+ * For more details, see [this example code](https://github.com/fixie-ai/ai-jsx/blob/main/packages/tutorial/src/part2.tsx).
  */
 export function Inline(props: { children: InlineChildren }) {
   const flattened = [props.children].flat(Infinity as 1) as InlineChild[];
