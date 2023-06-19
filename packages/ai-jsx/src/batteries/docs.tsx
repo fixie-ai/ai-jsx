@@ -7,6 +7,7 @@ import { Embeddings } from 'langchain/embeddings/base';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { TokenTextSplitter } from 'langchain/text_splitter';
 import { VectorStore } from 'langchain/vectorstores';
+import _ from 'lodash';
 import { similarity } from 'ml-distance';
 import { Jsonifiable } from 'type-fest';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
@@ -342,13 +343,7 @@ export function asVectorizer<
   ChunkMetadata extends Jsonifiable = Jsonifiable
 >(chunker: Chunker<DocumentMetadata, ChunkMetadata>, embedding: Embedding) {
   return async (docs: Document<DocumentMetadata>[]) => {
-    const chunks: Chunk<ChunkMetadata>[] = [];
-    await Promise.all(
-      docs.map(async (doc) => {
-        const docChunks = await chunker(doc);
-        chunks.push(...docChunks);
-      })
-    );
+    const chunks = _.flatten(await Promise.all(docs.map((doc) => chunker(doc))));
     const vectors: number[][] = await embedding.embedBatch(chunks.map((chunk) => chunk.content));
     return chunks.map((chunk, i) => ({ ...chunk, vector: vectors[i] } as EmbeddedChunk<ChunkMetadata>));
   };
