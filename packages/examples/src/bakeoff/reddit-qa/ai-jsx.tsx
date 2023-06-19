@@ -1,5 +1,5 @@
 // This script assumes that ./load-articles has been run first.
-import { DocsQA, Document, ScoredChunk, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
+import { DocsQA, Document, LocalCorpus, ScoredChunk, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
 import { showInspector } from 'ai-jsx/core/inspector';
 import { globbySync } from 'globby';
 import { loadJsonFile } from 'load-json-file';
@@ -33,6 +33,7 @@ const docs = await Promise.all(
 
 const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
 await corpus.startLoading();
+await corpus.waitForLoadingToComplete();
 
 function FormatChunk({ doc }: { doc: ScoredChunk }) {
   return (

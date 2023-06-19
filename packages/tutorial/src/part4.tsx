@@ -1,7 +1,7 @@
+import { DocsQA, LocalCorpus, ScoredChunk, makeChunker, staticLoader } from 'ai-jsx/batteries/docs';
+import { showInspector } from 'ai-jsx/core/inspector';
 import fetch from 'node-fetch';
 import TurndownService from 'turndown';
-import { DocsQA, ScoredChunk, LocalCorpus, makeChunker, staticLoader } from 'ai-jsx/batteries/docs';
-import { showInspector } from 'ai-jsx/core/inspector';
 
 const URL = 'https://en.wikipedia.org/wiki/Hurricane_Katrina';
 
@@ -16,6 +16,7 @@ const docs = [
 ];
 const corpus = new LocalCorpus(staticLoader(docs), makeChunker(600, 100));
 await corpus.startLoading();
+await corpus.waitForLoadingToComplete();
 
 function GetChunk({ doc }: { doc: ScoredChunk }) {
   return doc.chunk.content;

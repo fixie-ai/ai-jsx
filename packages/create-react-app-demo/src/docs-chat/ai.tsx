@@ -1,5 +1,5 @@
 /** @jsxImportSource ai-jsx/react */
-import { DocsQA, DefaultFormatter, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
+import { DefaultFormatter, DocsQA, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
 import _ from 'lodash';
 
 /**
@@ -32,7 +32,8 @@ const indexCorpus = _.once(async () => {
     })
   );
   const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
-  const stats = await corpus.startLoading();
+  await corpus.startLoading();
+  const stats = await corpus.waitForLoadingToComplete();
   console.log(`Finished indexing documents, chunk count=${stats.numChunks}`);
   return corpus;
 });
