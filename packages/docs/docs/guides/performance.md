@@ -8,9 +8,13 @@ The key strategies are:
 - [Minimize how long the output needs to be](#minimize-how-long-the-output-needs-to-be)
 - [Avoid waterfalls / roundtrips](#avoid-waterfalls--roundtrips)
 - [Defer execution](#defer-execution)
-- Use a faster model
+- [Use a faster model](#use-a-faster-model)
 
 Fortunately, AI.JSX helps you with all of these.
+
+:::note Performance vs. Reliability
+Aside from "stream", all these strategies trade off between performance and reliability of correctness. You'll have to find the tradeoff that works for your application. In general, we recommend starting with correctness, then trading off for performance while keeping correctness above an acceptable threshold. No one cares how fast your app is if the results are bad. :smile:
+:::
 
 ## Stream
 
@@ -62,6 +66,45 @@ A model generation takes linearly more time as the output length increases, so t
 For example, you may have a scenario where you instruct the model to give you output in a structured format, like JSON. If you can come up with a simpler JSON format that takes fewer characters, the model will produce it faster.
 
 ## Avoid waterfalls / roundtrips
+
+Just like with UI engineering, waterfalls can hurt your performance. Sometimes they're unavoidable, but be mindful when introducing them.
+
+For instance:
+
+```tsx
+function CharacterGenerator() {
+  return <ChatCompletion>
+    <UserMessage>Write me a profile for a fantasy character</UserMessage>
+  </ChatCompletion>
+}
+
+function ToJson({children}: {AI.Node}) {
+  return <ChatCompletion>
+    <UserMessage>Convert this to JSON: {children}</UserMessage>
+  </ChatCompletion>
+}
+
+function App() {
+  return <ToJson><CharacterGenerator /></ToJson>
+}
+```
+
+This is a waterfall, because the `CharacterGenerator` call needs to complete before the `ToJson` call can start.
+
+Instead, we could combine them into a single model call:
+
+```tsx
+function CharacterGenerator() {
+  return (
+    <ChatCompletion>
+      <SystemMessage>Respond in JSON.</SystemMessage>
+      <UserMessage>Write me a profile for a fantasy character</UserMessage>
+    </ChatCompletion>
+  );
+}
+```
+
+If you can get the model to do what you want in a single shot, that'll be more performant. However, asking the model to do more at once decreases reliability. It's more split your workload into simple, discrete tasks for the model. So, there are tradeoffs to balance here. You want the task size to be as complicated as the model can reliably do in a single pass, but no more complicated.
 
 ## Defer Execution
 
@@ -124,3 +167,11 @@ function StoryGenerator(props, { render }) {
 ```
 
 With this approach, you're still deferring execution optimally, but you also ensure that each instance of `heroName` will resolve to the same generated result.
+
+## Use a faster model
+
+Different models have different performance profiles. GPT-4 is slower than GPT-3.5-Turbo, for instance. But, unfortunately, the slower models tend to be more correct. So you'll have to find the tradeoff that works for you.
+
+OpenAI's recommendation is to start with the most powerful model, get your app working, then move to faster models if it's possible to do so without sacrificing correctness.
+
+You may also want to consider different model providers; OpenAI vs. [OpenAI-on-Azure](https://azure.microsoft.com/en-us/products/cognitive-services/openai-service) may have different performance and uptime profiles. AI.JSX makes it easy to switch model providers for a part or whole of your app via [context](./rules-of-jsx.md#context).
