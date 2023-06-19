@@ -40,7 +40,7 @@ const AgentResponse = React.memo(function AgentResponse({ question }: { question
 export default function DocsChat({ searchParams }: { searchParams: any }) {
   const defaultValue = 'What is AI.JSX?';
   const query = searchParams.message ?? defaultValue;
-  const userMessages: string[] = [query];
+  const userMessages = [query];
 
   return (
     <ResultContainer
