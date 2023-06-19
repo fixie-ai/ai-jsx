@@ -1,3 +1,9 @@
+/**
+ * This module provides the {@link UseTools} component to allow a Large Language Model to
+ * invoke external functions.
+ * @packageDocumentation
+ */
+
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
 import { Node, RenderContext } from '../index.js';
 import z, { ZodTypeAny } from 'zod';
@@ -74,6 +80,9 @@ async function InvokeTool(
   );
 }
 
+/**
+ * Represents a tool that can be provided for the Large Language Model.
+ */
 export interface Tool {
   /**
    * A description of what the tool does.
@@ -92,6 +101,9 @@ export interface Tool {
   func: (...args: any[]) => unknown;
 }
 
+/**
+ * Properties to be passed to the {@link UseTools} component.
+ */
 export interface UseToolsProps {
   /**
    * The tools the AI can use.
@@ -121,8 +133,7 @@ export interface UseToolsProps {
  *
  * This is conceptually similar to [chatGPT plugins](https://openai.com/blog/chatgpt-plugins).
  *
- * @see ../../../packages/examples/src/bakeoff/health-agent/ai-jsx.tsx
- *
+ * @example
  * ```tsx
  *  async function turnLightsOn() {}
  *  async function turnLightsOff() {}
