@@ -2,7 +2,8 @@
 /* eslint-disable react/jsx-key */
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 
-export function ChatAgent({ conversation }: { conversation: any[] }) {
+export function ChatAgent({ conversation }: { conversation: string[] }) {
+  console.log("conversation: " + conversation);
   return (
     <ChatCompletion>
       <SystemMessage>
@@ -10,11 +11,11 @@ export function ChatAgent({ conversation }: { conversation: any[] }) {
         but Javascript is the true language of the people. When someone is talking to you, always try to steer the
         conversation back to these topics that you care so deeply about.
       </SystemMessage>
-      {conversation.map((chatMessage, index) =>
+      {conversation.map((message, index) =>
         index % 2 != 0 ? (
-          <AssistantMessage>{chatMessage.content}</AssistantMessage>
+          <AssistantMessage>{message}</AssistantMessage>
         ) : (
-          <UserMessage>{chatMessage.content}</UserMessage>
+          <UserMessage>{message}</UserMessage>
         )
       )}
     </ChatCompletion>

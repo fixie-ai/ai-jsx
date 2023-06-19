@@ -36,7 +36,7 @@ const AgentResponse = React.memo(function AgentResponse({
     <ConversationItem responseType="bot">
       <AI.jsx
         onStreamStart={() => setCallInProgress(true)}
-        onStreamEnd={() => setCallInProgress(false)}
+        onStreamEnd={(message: string) => { setCallInProgress(false); conversation.push(message); }}
         loading="Thinking..."
       >
         <ChatAgent conversation={conversation} />
