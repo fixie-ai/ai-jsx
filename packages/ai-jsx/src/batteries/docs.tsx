@@ -328,7 +328,7 @@ export const defaultEmbedding = new LangChainEmbeddingWrapper(
 );
 
 /**
- * A function converting documents into EmbeddedChunks.
+ * A function that converts documents into EmbeddedChunks.
  *
  * @see asVectorizer
  */
@@ -498,7 +498,7 @@ async function loadCorpus<
   loader: Loader<DocumentMetadata>,
   vectorize: Vectorizer<DocumentMetadata, ChunkMetadata>,
   chunkConsumer: (chunks: EmbeddedChunk<ChunkMetadata>[]) => Promise<void>,
-  maxRequests: number = 50
+  maxRequests: number = Number.MAX_SAFE_INTEGER
 ): Promise<CorpusStats> {
   const activePartitionsToToken = new Map<CorpusPartition['name'] | null, string | null>();
   const completedPartitions = new Set<CorpusPartition['name']>();
@@ -513,7 +513,7 @@ async function loadCorpus<
 
     const response = await loader({ partition, pageToken } as CorpusLoadRequest);
     if (!response.page && !response.partitions) {
-      throw Error('Loader responses must include a page, new partitions, or both.');
+      throw Error(`Loader responses must include a page, new partitions, or both. However, the loader returned ${JSON.stringify(response)}. Update your loader to return the right type.`);
     }
     for (const newPartition of response.partitions ?? []) {
       if (!completedPartitions.has(newPartition.name) && !activePartitionsToToken.has(newPartition.name)) {
@@ -629,12 +629,14 @@ export class LoadableLangchainCorpus<
   }
 }
 
+const defaultLangchainChunkLimit = 4;
+
 async function searchVectorStore<ChunkMetadata extends Jsonifiable = Jsonifiable>(
   vectorStore: VectorStore,
   query: string,
   params?: { limit?: number; score_threshold?: number }
 ): Promise<ScoredChunk<ChunkMetadata>[]> {
-  const scoredLcDocs = await vectorStore.similaritySearchWithScore(query, params?.limit ?? 4, params);
+  const scoredLcDocs = await vectorStore.similaritySearchWithScore(query, params?.limit ?? defaultLangchainChunkLimit, params);
   return scoredLcDocs.map((lcDocAndScore) => {
     const lcDoc = lcDocAndScore[0];
     return {
@@ -681,21 +683,14 @@ export interface DocsQAProps<ChunkMetadata extends Jsonifiable = Jsonifiable> {
    *  }
    * ```
    */
-  chunkFormatter: (props: { doc: ScoredChunk<ChunkMetadata> }) => Node;
+  chunkFormatter?: (props: { doc: ScoredChunk<ChunkMetadata> }) => Node;
 }
 /**
  * A component that can be used to answer questions about documents. This is a very common usecase for LLMs.
  */
 export async function DocsQA<ChunkMetadata extends Jsonifiable = Jsonifiable>(props: DocsQAProps<ChunkMetadata>) {
-  let docs: ScoredChunk<ChunkMetadata>[];
-  try {
-    docs = await props.corpus.search(props.question, { limit: props.chunkLimit });
-  } catch (e) {
-    if (e instanceof CorpusNotReadyError) {
-      return e.message;
-    }
-    throw e;
-  }
+  const chunks = await props.corpus.search(props.question, { limit: props.chunkLimit });
+  const chunkFormatter: (props: { doc: ScoredChunk<ChunkMetadata> }) => Node = props.chunkFormatter ?? DefaultFormatter;
 
   return (
     <ChatCompletion>
@@ -703,8 +698,8 @@ export async function DocsQA<ChunkMetadata extends Jsonifiable = Jsonifiable>(pr
         You are a trained question answerer. Answer questions truthfully, using only the document excerpts below. Do not
         use any other knowledge you have about the world. If you don't know how to answer the question, just say "I
         don't know." Here are the relevant document excerpts you have been given:
-        {docs.map((doc) => (
-          <props.chunkFormatter doc={doc} />
+        {chunks.map((chunk) => (
+          chunkFormatter({doc: chunk})
         ))}
         And here is the question you must answer:
       </SystemMessage>

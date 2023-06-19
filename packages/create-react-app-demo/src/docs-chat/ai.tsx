@@ -1,5 +1,5 @@
 /** @jsxImportSource ai-jsx/react */
-import { DefaultFormatter, DocsQA, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
+import { DocsQA, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
 import _ from 'lodash';
 
 /**
@@ -38,5 +38,5 @@ const indexCorpus = _.once(async () => {
 });
 
 export async function DocsAgent({ question }: { question: string }) {
-  return <DocsQA question={question} corpus={await indexCorpus()} chunkLimit={5} chunkFormatter={DefaultFormatter} />;
+  return <DocsQA question={question} corpus={await indexCorpus()} chunkLimit={5} />;
 }

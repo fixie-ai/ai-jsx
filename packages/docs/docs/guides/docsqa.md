@@ -80,7 +80,7 @@ function sleep(millis: number) {
 }
 ```
 
-Typically you'll want to make sure a corpus has completed loading before exposing it to your users, but for small corpora loading just in time can work as well. (If you invoke the DocsQA primitive with a LoadableCorpus that hasn't completed loading, you'll just get a message about the corpus not being ready instead of a real response from the LLM.)
+Typically you'll want to make sure a corpus has completed loading before exposing it to your users, but for small corpora loading just in time can work as well.
 
 ## Responding to Queries
 
