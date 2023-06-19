@@ -7,7 +7,7 @@ export interface ComponentContext extends RenderContext {
 export type Component<P> = (props: P, context: ComponentContext) => Renderable;
 export type Literal = string | number | null | undefined | boolean;
 
-const attachedContext = Symbol('LLMx.attachedContext');
+const attachedContext = Symbol('AI.attachedContext');
 export interface Element<P> {
   tag: Component<P>;
   props: P;
@@ -17,7 +17,7 @@ export interface Element<P> {
 
 const indirectNodeSymbol = Symbol('AI.indirectNode');
 /**
- * An opaque type with a reference to an LLMx.Node that represents it.
+ * An opaque type with a reference to an AI.Node that represents it.
  */
 export interface IndirectNode {
   [indirectNodeSymbol]: Node;
@@ -42,7 +42,7 @@ export type StreamRenderer = (
   shouldStop: ElementPredicate
 ) => AsyncGenerator<PartiallyRendered[], PartiallyRendered[]>;
 
-const contextKey = Symbol('LLMx.contextKey');
+const contextKey = Symbol('AI.contextKey');
 export interface Context<T> {
   Provider: Component<{ children: Node; value: T }>;
   [contextKey]: { defaultValue: T; userContextSymbol: symbol };

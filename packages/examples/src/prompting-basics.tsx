@@ -1,4 +1,4 @@
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { UserMessage, ChatCompletion } from 'ai-jsx/core/completion';
 import { Prompt } from 'ai-jsx/batteries/prompts';
 import { showInspector } from 'ai-jsx/core/inspector';

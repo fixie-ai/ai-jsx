@@ -1,6 +1,6 @@
 import * as math from 'mathjs';
 import { z } from 'zod';
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { UseTools, Tool } from 'ai-jsx/batteries/use-tools';
 import { showInspector } from 'ai-jsx/core/inspector';
 

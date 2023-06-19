@@ -1,4 +1,4 @@
-import * as LLMx from '../index.js';
+import * as AI from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
 
@@ -64,11 +64,11 @@ function AutomaticChatModel({ children, ...props }: ModelPropsWithChildren) {
   );
 }
 
-const completionContext = LLMx.createContext<[ModelComponent<ModelPropsWithChildren>, ModelProps]>([
+const completionContext = AI.createContext<[ModelComponent<ModelPropsWithChildren>, ModelProps]>([
   AutomaticCompletionModel,
   {},
 ]);
-const chatContext = LLMx.createContext<[ModelComponent<ModelPropsWithChildren>, ModelProps]>([AutomaticChatModel, {}]);
+const chatContext = AI.createContext<[ModelComponent<ModelPropsWithChildren>, ModelProps]>([AutomaticChatModel, {}]);
 
 export function CompletionProvider<T extends ModelPropsWithChildren>(
   { component, children, ...newDefaults }: { component?: ModelComponent<T> } & T,
@@ -192,7 +192,7 @@ export function FunctionCall({ name, args }: { name: string; args: Record<string
  */
 export async function FunctionResponse(
   { name, children }: { name: string; children: Node },
-  { render }: LLMx.ComponentContext
+  { render }: AI.ComponentContext
 ) {
   const output = await render(children);
   return `function ${name} returns ${output}`;

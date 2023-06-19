@@ -1,4 +1,4 @@
-import * as LLMx from './core.js';
+import * as AI from './core.js';
 import React from 'react';
 import { SystemMessage, UserMessage } from '../core/completion.js';
 import { JsonChatCompletion } from '../batteries/constrained-output.js';
@@ -9,11 +9,11 @@ function reactComponentName(component: React.JSXElementConstructor<any> | string
 }
 
 export async function UICompletion(
-  { example, children }: { example: React.ReactNode; children: LLMx.Node },
-  { render, logger }: LLMx.ComponentContext
+  { example, children }: { example: React.ReactNode; children: AI.Node },
+  { render, logger }: AI.ComponentContext
 ) {
   const reactComponents = new Set<React.JSXElementConstructor<any> | string>();
-  function collectComponents(node: React.ReactNode | LLMx.Node, inReact: boolean) {
+  function collectComponents(node: React.ReactNode | AI.Node, inReact: boolean) {
     if (Array.isArray(node)) {
       node.forEach((node) => collectComponents(node, inReact));
     }
@@ -23,14 +23,14 @@ export async function UICompletion(
         reactComponents.add(node.type);
       }
 
-      const childrenAreReact = (inReact || node.type === LLMx.React) && !isJsxBoundary(node.type);
+      const childrenAreReact = (inReact || node.type === AI.React) && !isJsxBoundary(node.type);
       if ('children' in node.props) {
         collectComponents(node.props.children, childrenAreReact);
       }
     }
 
-    if (LLMx.isElement(node)) {
-      const childrenAreReact = (inReact || node.tag === LLMx.React) && !isJsxBoundary(node.tag);
+    if (AI.isElement(node)) {
+      const childrenAreReact = (inReact || node.tag === AI.React) && !isJsxBoundary(node.tag);
       if ('children' in node.props) {
         collectComponents(node.props.children, childrenAreReact);
       }
@@ -46,7 +46,7 @@ export async function UICompletion(
         respond using a set of React components to create a UI for the content. Here are the only available React
         components and how they should be used:
         {'\n'}
-        <LLMx.React>{example}</LLMx.React>
+        <AI.React>{example}</AI.React>
         {'\n'}
         Respond with a JSON object that encodes your UI. The JSON object should match this TypeScript interface:
         interface Element {'{'}
@@ -94,9 +94,9 @@ export async function UICompletion(
       typeof serializedComponent.children === 'string' ? [serializedComponent.children] : serializedComponent.children;
 
     return (
-      <LLMx.React>
+      <AI.React>
         <Component>{children.map(toComponent)}</Component>
-      </LLMx.React>
+      </AI.React>
     );
   }
 

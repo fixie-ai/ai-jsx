@@ -1,4 +1,4 @@
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { Completion } from 'ai-jsx/core/completion';
 import { showInspector } from 'ai-jsx/core/inspector';
 
@@ -12,4 +12,4 @@ function App() {
 }
 
 showInspector(<App />);
-// console.log(await LLMx.createRenderContext().render(<App />));
+// console.log(await AI.createRenderContext().render(<App />));

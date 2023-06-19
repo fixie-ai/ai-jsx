@@ -2,7 +2,7 @@
  * Run this with `yarn demo:health-agent`
  */
 
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { NaturalLanguageRouter, Route } from 'ai-jsx/batteries/natural-language-router';
 import fixtureUserData from './user-data.json';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';

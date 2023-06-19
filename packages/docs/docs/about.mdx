@@ -51,7 +51,7 @@ Newcomers](https://docs.ai-jsx.com/guides/brand-new).
 Here is a simple example using AI.JSX to generate an AI response to a prompt:
 
 ```tsx
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 
 const app = (
@@ -59,7 +59,7 @@ const app = (
     <UserMessage>Write a Shakespearean sonnet about AI models.</UserMessage>
   </ChatCompletion>
 );
-const renderContext = LLMx.createRenderContext();
+const renderContext = AI.createRenderContext();
 const response = await renderContext.render(app);
 console.log(response);
 ```
