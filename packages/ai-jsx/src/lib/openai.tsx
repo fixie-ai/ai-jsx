@@ -23,7 +23,7 @@ import {
   CreateImageRequestResponseFormatEnum,
   ResponseTypes,
 } from '@nick.heiner/openai-edge';
-import * as LLMx from '../index.js';
+import * as AI from '../index.js';
 import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import { Merge } from 'type-fest';
@@ -47,11 +47,14 @@ type ChatOrCompletionModelOrBoth =
 
 const decoder = new TextDecoder();
 
-export const openAiClientContext = LLMx.createContext<OpenAIApi>(
+export const openAiClientContext = AI.createContext<OpenAIApi>(
   new OpenAIApi(
     new Configuration({
       apiKey: process.env.OPENAI_API_KEY,
-    })
+    }),
+    undefined,
+    // TODO: Figure out a better way to work around NextJS fetch blocking streaming
+    (globalThis as any)._nextOriginalFetch ?? globalThis.fetch
   )
 );
 
@@ -190,7 +193,7 @@ async function checkOpenAIResponse<M extends OpenAIMethod>(response: Response, l
 
 export async function* OpenAICompletionModel(
   props: ModelPropsWithChildren & { model: ValidCompletionModel; logitBias?: Record<string, number> },
-  { render, getContext, logger }: LLMx.ComponentContext
+  { render, getContext, logger }: AI.ComponentContext
 ) {
   yield '';
 
@@ -232,7 +235,7 @@ export async function* OpenAIChatModel(
     logitBias?: Record<string, number>;
     functionDefinitions?: FunctionDefinition[];
   },
-  { render, getContext, logger }: LLMx.ComponentContext
+  { render, getContext, logger }: AI.ComponentContext
 ) {
   const messageElements = await render(props.children, {
     stop: (e) =>
@@ -244,7 +247,7 @@ export async function* OpenAIChatModel(
   });
   yield '';
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
-    messageElements.filter(LLMx.isElement).map(async (message) => {
+    messageElements.filter(AI.isElement).map(async (message) => {
       switch (message.tag) {
         case SystemMessage:
           return {
@@ -384,7 +387,7 @@ export async function* OpenAIChatModel(
  */
 export async function DalleImageGen(
   { numSamples = 1, size = '512x512', children }: ImageGenPropsWithChildren,
-  { render, getContext, logger }: LLMx.ComponentContext
+  { render, getContext, logger }: AI.ComponentContext
 ) {
   const prompt = await render(children);
 

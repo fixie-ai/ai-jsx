@@ -29,7 +29,7 @@ Follow these steps to make a new demo.
 1. Add the your demo to that file. For example:
 
    ```tsx
-   import * as LLMx from 'ai-jsx';
+   import * as AI from 'ai-jsx';
    import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
    import { showInspector } from 'ai-jsx/core/inspector';
 

@@ -4,11 +4,7 @@ sidebar_position: 1
 slug: /
 ---
 
-# Welcome to AI.JSX!
-
-<p align="center">
-  <img src="img/ai-jsx.svg" alt="AI.JSX logo" width="200" />
-</p>
+# Welcome to AI.JSX
 
 [![Docs Site](https://img.shields.io/badge/Docs%20Site-docs.ai--jsx.com-orange)](https://docs.ai-jsx.com)
 [![Discord Follow](https://dcbadge.vercel.app/api/server/MsKAeKF8kU?style=flat)](https://discord.gg/MsKAeKF8kU)
@@ -51,7 +47,7 @@ Newcomers](https://docs.ai-jsx.com/guides/brand-new).
 Here is a simple example using AI.JSX to generate an AI response to a prompt:
 
 ```tsx
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 
 const app = (
@@ -59,7 +55,7 @@ const app = (
     <UserMessage>Write a Shakespearean sonnet about AI models.</UserMessage>
   </ChatCompletion>
 );
-const renderContext = LLMx.createRenderContext();
+const renderContext = AI.createRenderContext();
 const response = await renderContext.render(app);
 console.log(response);
 ```

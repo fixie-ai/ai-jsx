@@ -1,6 +1,6 @@
-/** @jsx AI.createElement */
-import * as AI from './index.js';
+import * as AI from './core.js';
 import React from 'react';
+import { isJsxBoundary } from './jsx-boundary.js';
 
 function reactComponentName(component: React.JSXElementConstructor<any> | string) {
   return typeof component === 'string' ? component : component.name;
@@ -15,7 +15,7 @@ export function Serialize({ children }: { children: React.ReactNode }): AI.Rende
   }
 
   const child = children;
-  if (React.isValidElement(child) && child.type !== AI.jsx) {
+  if (React.isValidElement(child) && !isJsxBoundary(child.type)) {
     // Serialize the React element and any children.
     const typeName = reactComponentName(child.type);
     // TODO: support prop serialization

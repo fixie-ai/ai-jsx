@@ -1,4 +1,3 @@
-import * as LLMx from 'ai-jsx';
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { Inline } from 'ai-jsx/core/inline';
 import { showInspector } from 'ai-jsx/core/inspector';

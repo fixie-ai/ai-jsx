@@ -1,4 +1,3 @@
-import * as LLMx from 'ai-jsx';
 import { UserMessage } from 'ai-jsx/core/completion';
 import { JsonChatCompletion, YamlChatCompletion } from 'ai-jsx/batteries/constrained-output';
 import { showInspector } from 'ai-jsx/core/inspector';

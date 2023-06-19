@@ -2,7 +2,7 @@
  * This module defines affordances for constraining the output of the model
  * into specific formats, such as JSON, YAML, or Markdown.
  */
-import * as LLMx from '../index.js';
+import * as AI from '../index.js';
 import { ChatCompletion, SystemMessage, AssistantMessage, UserMessage } from '../core/completion.js';
 import yaml from 'js-yaml';
 
@@ -17,7 +17,7 @@ interface ValidationResult {
  *
  * @returns a string that is a valid JSON or throws an error after `retries` attempts
  */
-export function JsonChatCompletion({ children, ...props }: { children: LLMx.Node }) {
+export function JsonChatCompletion({ children, ...props }: { children: AI.Node }) {
   return (
     <ObjectFormatChatCompletion typeName="JSON" validator={isJsonString} {...{ ...props }}>
       {children}
@@ -30,7 +30,7 @@ export function JsonChatCompletion({ children, ...props }: { children: LLMx.Node
  *
  * @returns a string that is a valid YAML or throws an error after `retries` attempts
  */
-export function YamlChatCompletion({ children, ...props }: { children: LLMx.Node }) {
+export function YamlChatCompletion({ children, ...props }: { children: AI.Node }) {
   return (
     <ObjectFormatChatCompletion typeName="YAML" validator={isYamlString} {...{ ...props }}>
       {children}
@@ -58,9 +58,9 @@ async function ObjectFormatChatCompletion(
     retries?: number;
     /** retries if output fails validation, how many times should we retry.
      * Note: you can have `1 + retries` LLM calls in total. */
-    children: LLMx.Node;
+    children: AI.Node;
   },
-  { render, logger }: LLMx.ComponentContext
+  { render, logger }: AI.ComponentContext
 ) {
   const childrenWithCompletion = (
     <ChatCompletion {...props}>

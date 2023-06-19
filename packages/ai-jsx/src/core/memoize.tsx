@@ -1,4 +1,4 @@
-import * as LLMx from '../index.js';
+import * as AI from '../index.js';
 import { RenderContext, Node, Renderable } from '../index.js';
 import { Logger } from './log.js';
 
@@ -46,15 +46,15 @@ export function memo(renderable: Renderable): Node {
   if (typeof renderable !== 'object' || renderable === null) {
     return renderable;
   }
-  if (LLMx.isIndirectNode(renderable)) {
-    const memoized = memo(LLMx.getReferencedNode(renderable));
-    return LLMx.makeIndirectNode(renderable, memoized);
+  if (AI.isIndirectNode(renderable)) {
+    const memoized = memo(AI.getReferencedNode(renderable));
+    return AI.makeIndirectNode(renderable, memoized);
   }
 
   if (Array.isArray(renderable)) {
     return renderable.map(memo);
   }
-  if (LLMx.isElement(renderable)) {
+  if (AI.isElement(renderable)) {
     if (isMemoizedSymbol in renderable.props) {
       return renderable;
     }
