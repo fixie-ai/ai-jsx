@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 import * as AI from 'ai-jsx/next';
 import React, { Suspense } from 'react';
 import { UICompletion } from 'ai-jsx/react/completion';
