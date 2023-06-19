@@ -90,6 +90,16 @@ const config = {
             position: 'left',
             label: 'Docs',
           },
+          {
+            href: 'https://github.com/fixie-ai/ai-jsx',
+            label: 'GitHub',
+            position: 'right',
+          },
+          {
+            href: 'https://discord.gg/MsKAeKF8kU',
+            label: 'Discord',
+            position: 'right',
+          },
         ],
       },
       footer: {
