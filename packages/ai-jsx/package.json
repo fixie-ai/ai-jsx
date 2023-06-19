@@ -1,6 +1,6 @@
 {
   "name": "ai-jsx",
-  "version": "0.2.0-5",
+  "version": "0.2.0-6",
   "volta": {
     "extends": "../../package.json"
   },
