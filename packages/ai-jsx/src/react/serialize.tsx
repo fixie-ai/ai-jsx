@@ -1,6 +1,6 @@
-/** @jsx AI.createElement */
-import * as AI from './index.js';
+import * as LLMx from './core.js';
 import React from 'react';
+import { isJsxBoundary } from './jsx-boundary.js';
 
 function reactComponentName(component: React.JSXElementConstructor<any> | string) {
   return typeof component === 'string' ? component : component.name;
@@ -9,13 +9,13 @@ function reactComponentName(component: React.JSXElementConstructor<any> | string
 /**
  * Serializes React components to a textual representation.
  */
-export function Serialize({ children }: { children: React.ReactNode }): AI.Renderable {
+export function Serialize({ children }: { children: React.ReactNode }): LLMx.Renderable {
   if (Array.isArray(children)) {
     return children.map((child) => <Serialize>{child}</Serialize>);
   }
 
   const child = children;
-  if (React.isValidElement(child) && child.type !== AI.jsx) {
+  if (React.isValidElement(child) && !isJsxBoundary(child.type)) {
     // Serialize the React element and any children.
     const typeName = reactComponentName(child.type);
     // TODO: support prop serialization
@@ -26,5 +26,5 @@ export function Serialize({ children }: { children: React.ReactNode }): AI.Rende
     return `<${typeName}/>`;
   }
 
-  return child as AI.Renderable;
+  return child as LLMx.Renderable;
 }

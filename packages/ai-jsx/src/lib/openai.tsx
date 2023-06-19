@@ -51,7 +51,10 @@ export const openAiClientContext = LLMx.createContext<OpenAIApi>(
   new OpenAIApi(
     new Configuration({
       apiKey: process.env.OPENAI_API_KEY,
-    })
+    }),
+    undefined,
+    // TODO: Figure out a better way to work around NextJS fetch blocking streaming
+    (globalThis as any)._nextOriginalFetch ?? globalThis.fetch
   )
 );
 

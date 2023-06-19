@@ -1,7 +1,6 @@
 // @ts-nocheck
 
-import React from '../react';
-import { AIComponent } from '../ai';
+import * as AI from 'ai-jsx/next';
 import ResultContainer from '@/components/ResultContainer';
 import InputPrompt from '@/components/InputPrompt';
 import HealthAgent from 'examples/dist/bakeoff/health-agent/agent';
@@ -15,9 +14,9 @@ export default function Sleep({ searchParams }: { searchParams: any }) {
       <InputPrompt label="Ask a question about sleep" defaultValue={defaultValue} />
 
       <ResultContainer title={`AI answers this sleep question: "${query}"`}>
-        <AIComponent>
+        <AI.jsx>
           <HealthAgent query={query} />
-        </AIComponent>
+        </AI.jsx>
       </ResultContainer>
     </>
   );

@@ -1,65 +1,94 @@
 ---
-id: my-home-doc
+id: about
 sidebar_position: 1
 slug: /
 ---
 
-# About AI.JSX
+# Welcome to AI.JSX!
 
 <p align="center">
-  <img src="img/ai-jsx.svg" alt="AI.JSX logo" width="100" />
+  <img src="img/ai-jsx.svg" alt="AI.JSX logo" width="200" />
 </p>
 
-AI.JSX is a framework that helps you build [AI-powered apps](./guides/brand-new.md). It aims to solve the following problems for developers:
+[![Docs Site](https://img.shields.io/badge/Docs%20Site-docs.ai--jsx.com-orange)](https://docs.ai-jsx.com)
+[![Discord Follow](https://dcbadge.vercel.app/api/server/MsKAeKF8kU?style=flat)](https://discord.gg/MsKAeKF8kU)
+[![Twitter Follow](https://img.shields.io/twitter/follow/fixieai?style=social)](https://twitter.com/fixieai)
 
-- “How do I get data into my LLM call?”
-- “How do I easily switch between model providers?”
-- “How do I performantly chain the results of LLM calls together?”
-- “How do I take advantage of community tools + patterns (e.g. chain of thought)?”
-- “How do I make the model use tools?”
-- “How do I constrain the model’s output?”
-- “How do I structure my app in a post-AI world?”
+AI.JSX is a framework for building AI applications using
+[JSX](https://react.dev/learn/writing-markup-with-jsx). With AI.JSX,
+you don't just use JSX to describe what your UI should look like,
+you also use it to describe how **Large Language Models**, such as
+ChatGPT, should integrate into the rest of your application. The
+end result is a powerful combination where _intelligence_ can be
+deeply embedded into the application stack.
 
-JSX provides a powerful substrate on which to build apps that address these needs.
+AI.JSX is designed to give you two important capabilities out of the box:
+
+1. An intuitive mechanism for orchestrating multiple LLM calls
+   expressed as modular, re-usable components.
+1. The ability to seamlessly interweave UI components with your AI components. This
+   means you can rely on the LLM to construct your UI dynamically from
+   a set of standard React components.
+
+## Getting started
+
+To get started, follow the [Getting Started Guide](./getting-started), or check out the
+[examples](https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples).
+
+AI.JSX can be used to create standalone LLM applications that can
+be deployed anywhere Node.JS is supported, or it can be used as
+part of a larger React application. We have examples that use
+[Next.js](https://github.com/fixie-ai/ai-jsx/tree/main/packages/nextjs-demo)
+and [Create React
+App](https://github.com/fixie-ai/ai-jsx/tree/main/packages/create-react-app-demo).
+For more details, see the [AI+UI guide](./guides/ai-ui).
+
+New to the world of AI and LLMs? Read our [Guide for AI
+Newcomers](https://docs.ai-jsx.com/guides/brand-new).
+
+## Examples
+
+Here is a simple example using AI.JSX to generate an AI response to a prompt:
 
 ```tsx
-function App() {
-  return (
-    <ChatCompletion>
-      <SystemMessage>You are an assistant who only uses one syllable words.</SystemMessage>
-      <UserMessage>Why is the sky blue?</UserMessage>
-    </ChatCompletion>
-  );
-}
+import * as LLMx from 'ai-jsx';
+import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 
-showInspector(<App />);
-// ==> "Sky blue due to light."
+const app = (
+  <ChatCompletion>
+    <UserMessage>Write a Shakespearean sonnet about AI models.</UserMessage>
+  </ChatCompletion>
+);
+const renderContext = LLMx.createRenderContext();
+const response = await renderContext.render(app);
+console.log(response);
 ```
 
-# Live Example
+Here's a more complex example that uses the built-in `<Inline>` component to progressively
+generate multiple fields in a JSON object:
 
-The following is a CodeSandbox sandbox that shows a simple Hello World AI.JSX app.
-You can edit the code and see the results live in the browser.
+```tsx
+function CharacterGenerator() {
+  const inlineCompletion = (prompt: Node) => (
+    <Completion stop={['"']} temperature={1.0}>
+      {prompt}
+    </Completion>
+  );
 
-1. Add your `OPENAI_API_KEY` to the environment variables in the CodeSandbox UI.
-1. In the `Run Hello World` tab, click the "Reload" icon to re-run the app with your changes.
+  return (
+    <Inline>
+      Generate a character profile for a fantasy role-playing game in JSON format.{'\n'}
+      {'{'}
+      {'\n  '}"name": "{inlineCompletion}",
+      {'\n  '}"class": "{inlineCompletion}",
+      {'\n  '}"race": "{inlineCompletion}",
+      {'\n  '}"alignment": "{inlineCompletion}",
+      {'\n  '}"weapons": "{inlineCompletion}",
+      {'\n  '}"spells": "{inlineCompletion}",
+      {'\n}'}
+    </Inline>
+  );
+}
+```
 
-export const SandboxExample = () => (
-  <iframe
-    style={{
-      border: '1px solid rgba(0, 0, 0, 0.1)',
-      borderRadius: '2px',
-    }}
-    width="100%"
-    height="700"
-    src="https://codesandbox.io/p/sandbox/late-pond-rnf95v?embed=1"
-    allowfullscreen
-  ></iframe>
-);
-
-<SandboxExample />;
-
-# Prerequisite Knowledge
-
-- [JSX](https://www.patterns.dev/posts/reactjs) (that overview is React-specific but almost everything is transferrable to JSX generally).
-- [TypeScript](https://www.typescriptlang.org/)
+[![AI.JSX demo](https://asciinema.org/a/m08ORXH8AdcmV8gA95d6UYJzW.svg)](https://asciinema.org/a/m08ORXH8AdcmV8gA95d6UYJzW)
