@@ -50,7 +50,9 @@ We can also embed UI components within AI components:
 
 In this example, we create a set of React components, then provide them to the model along with a prompt. The model decides how to use the React components to structure its result, and AI.JSX renders those components into the tree.
 
-Today, we support AI.JSX integration with NextJS. Soon, we'll add support for generic React apps, and non-React frameworks. ([File an issue](https://github.com/fixie-ai/ai-jsx/issues) if you'd like to vote on what we support. :smile:)
+:::note Support
+Today, we support AI.JSX integration with NextJS. Soon, we'll add support for generic React apps, non-React frameworks, and [other architectures](./architecture.md). ([File an issue](https://github.com/fixie-ai/ai-jsx/issues) if you'd like to vote on what we support. :smile:)
+:::
 
 ## Getting Started
 

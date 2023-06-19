@@ -1,5 +1,12 @@
 # Performance
 
+:::note See Also
+
+- [Architecture](./architecture.md)
+- [AI+UI](./ai-ui.md)
+
+:::
+
 AI programming brings a new set of performance considerations. The fundamental difference is that model calls (e.g. to GPT-4) are an order of magnitude slower than traditional API calls. Generating a few sentences can take a few seconds.
 
 The key strategies are:
@@ -65,6 +72,16 @@ A model generation takes linearly more time as the output length increases, so t
 
 For example, you may have a scenario where you instruct the model to give you output in a structured format, like JSON. If you can come up with a simpler JSON format that takes fewer characters, the model will produce it faster.
 
+Additionally, if you know the limit of how long you want your response to be, you can set the [`max_tokens`](https://platform.openai.com/docs/api-reference/chat/create#chat/create-max_tokens) param:
+
+```tsx
+<ChatCompletion max_tokens={200}>
+  <UserMessage>Write a concise summary of an imaginary movie.</UserMessage>
+</ChatCompletion>
+```
+
+This forces the model to end its response within 200 tokens. If you only want short responses, this both improves your correctness, and prevents the model from droning on by producing an unwanted long response.
+
 ## Avoid waterfalls / roundtrips
 
 Just like with UI engineering, waterfalls can hurt your performance. Sometimes they're unavoidable, but be mindful when introducing them.
@@ -104,7 +121,15 @@ function CharacterGenerator() {
 }
 ```
 
-If you can get the model to do what you want in a single shot, that'll be more performant. However, asking the model to do more at once decreases reliability. It's more split your workload into simple, discrete tasks for the model. So, there are tradeoffs to balance here. You want the task size to be as complicated as the model can reliably do in a single pass, but no more complicated.
+If you can get the model to do what you want in a single shot, that'll be more performant. However, asking the model to do more at once decreases reliability. It's more robust to split your workload into simple, discrete tasks for the model. So, there are tradeoffs to balance here. You want the task size to be as complicated as the model can reliably do in a single pass, but no more complicated.
+
+:::note What are roundtrips?
+A roundtrip is when your client needs to make a connection to your backend. Depending on the quality of the user's network connection, this can have a big negative impact on performance. As a result, many performance strategies involve minimizing roundtrips.
+
+Any clientside app can have roundtrips (calling out to APIs, etc). With AI apps, we add a new type of roundtrip: calling out to a model provider (e.g. OpenAI).
+
+The amount of roundtrips in your logic depends on how you structure your AI.JSX program. A program with many sequential calls out to a model will have more roundtrips than one that does a single shot. (Of course, unlike traditional API calls, model calls are so slow that the client/server latency is a less important contributor to the overall performance profile.)
+:::
 
 ## Defer Execution
 
@@ -174,4 +199,4 @@ Different models have different performance profiles. GPT-4 is slower than GPT-3
 
 OpenAI's recommendation is to start with the most powerful model, get your app working, then move to faster models if it's possible to do so without sacrificing correctness.
 
-You may also want to consider different model providers; OpenAI vs. [OpenAI-on-Azure](https://azure.microsoft.com/en-us/products/cognitive-services/openai-service) may have different performance and uptime profiles. AI.JSX makes it easy to switch model providers for a part or whole of your app via [context](./rules-of-jsx.md#context).
+You may also want to consider different model providers; OpenAI vs. Anthropic may have different performance and uptime profiles. AI.JSX makes it easy to switch model providers for a part or whole of your app via [context](./rules-of-jsx.md#context).

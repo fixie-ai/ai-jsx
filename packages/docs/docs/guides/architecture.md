@@ -1,5 +1,12 @@
 # Architecture
 
+:::note See Also
+
+- [Performance](./performance.md)
+- [AI+UI](./ai-ui.md)
+
+:::
+
 AI.JSX runs in both NodeJS and the browser, so you can choose an architecture that meets your needs. Here are some options, listed in order of most to least client logic:
 
 1. [Run entirely on the client](#run-entirely-on-the-client)
@@ -14,17 +21,11 @@ The key tradeoffs are:
 - Latency (as a result of roundtrips)
 - How reusable your AI.JSX logic is
 
-:::note What are roundtrips?
-A roundtrip is when your client needs to make a connection to your backend. Depending on the quality of the user's network connection, this can have a big negative impact on performance. As a result, many performance strategies involve minimizing roundtrips.
-
-Any clientside app can have roundtrips (calling out to APIs, etc). With AI apps, we add a new type of roundtrip: calling out to a model provider (e.g. OpenAI).
-
-The amount of roundtrips in your logic depends on how you structure your AI.JSX program. A program with many sequential calls out to a model will have more roundtrips than one that does a single shot. (Of course, unlike traditional API calls, model calls are so slow that the client/server latency is a less important contributor to the overall performance profile.)
-
-For more details, see [Performance](./performance.md).
+:::tip tl;dr
+If you're starting a new project, we recommend using the [run entirely on the server](#run-entirely-on-the-server) pattern with [NextJS](https://nextjs.org/).
 :::
 
-:::tip Where can AI.JSX run?
+:::note Where can AI.JSX run?
 In addition to the client, AI.JSX can run in serverless/edge functions, traditional standalone servers, or any other NodeJS process.
 :::
 
@@ -136,9 +137,13 @@ In this example, we have a value from our UI logic, `dataPromise`, and we embed 
 
 If the AI.JSX logic lived entirely serverside, then we'd need to serialize everything that gets sent between the UI and AI layers.
 
-Because of this, JIT UI is not supported with the "UI on the client / AI on the server" pattern. (It's straightforward for us to add support for this, but we haven't done so yet.)
+Because of this, [JIT UI](./ai-ui.md#just-in-time-jit-ui) is not supported with the "UI on the client / AI on the server" pattern. (It's straightforward for us to add support for this, but we haven't done so yet.)
 
 ## Run entirely on the server
+
+:::tip Recommendation
+Aligning with [React's guidance](https://react.dev/learn/start-a-new-react-project), this is our recommended pattern for new AI.JSX apps.
+:::
 
 In this approach, you generate your HTML on the server and stream it to the client. If your app is full-stack JS, you'd typically do this with the help of a server-side rendering framework like [NextJS](https://nextjs.org/).
 
