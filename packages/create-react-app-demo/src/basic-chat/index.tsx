@@ -30,6 +30,7 @@ function ChatAgent({ conversation }: { conversation: string[] }) {
         the user.
       </SystemMessage>
       {conversation.map((message, index) =>
+        // eslint-disable-next-line react/jsx-key
         index % 2 ? <AssistantMessage>{message}</AssistantMessage> : <UserMessage>{message}</UserMessage>
       )}
     </ChatCompletion>
@@ -52,7 +53,7 @@ export function BasicChat() {
     pushMessage(message, '⎕');
     setCallInProgress(true);
     await AI.createRenderContext().render(<ChatAgent conversation={[...messages, message]} />, {
-      map: (frame) => {
+      map: (frame: string) => {
         updateMessage(index, frame);
       },
     });
