@@ -15,8 +15,7 @@ const docs = [
   },
 ];
 const corpus = new LocalCorpus(staticLoader(docs), makeChunker(600, 100));
-await corpus.startLoading();
-await corpus.waitForLoadingToComplete();
+await corpus.load();
 
 function GetChunk({ doc }: { doc: ScoredChunk }) {
   return doc.chunk.content;

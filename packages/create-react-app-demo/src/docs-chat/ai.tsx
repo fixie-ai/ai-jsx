@@ -32,8 +32,7 @@ const indexCorpus = _.once(async () => {
     })
   );
   const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
-  await corpus.startLoading();
-  const stats = await corpus.waitForLoadingToComplete();
+  const stats = await corpus.load();
   console.log(`Finished indexing documents, chunk count=${stats.numChunks}`);
   return corpus;
 });

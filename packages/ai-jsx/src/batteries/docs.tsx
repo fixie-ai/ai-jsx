@@ -326,7 +326,11 @@ export const defaultEmbedding = new LangChainEmbeddingWrapper(
   new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY })
 );
 
-/** A function converting documents into EmbeddedChunks. Also see `asVectorizer`. */
+/**
+ * A function converting documents into EmbeddedChunks.
+ *
+ * @see asVectorizer
+ */
 export type Vectorizer<
   DocumentMetadata extends Jsonifiable = Jsonifiable,
   ChunkMetadata extends Jsonifiable = Jsonifiable
@@ -387,31 +391,9 @@ export interface ScoredChunk<ChunkMetadata extends Jsonifiable = Jsonifiable> {
 
 /**
  * A corpus is a collection of documents that can be provided to an LLM to provide grounding for
- * responses, along with the machinery to load and index those documents.
+ * responses.
  */
 export interface Corpus<ChunkMetadata extends Jsonifiable = Jsonifiable> {
-  /**
-   * Begins loading documents into the corpus using a Loader, Chunker, and Embedding.
-   *
-   * Note: This returns a promise because some implementations may make an external request
-   * to begin loading. However, the promise will typically resolve prior to the corpus being fully
-   * loaded. In such cases, use `getStats` to check progress.
-   */
-  startLoading: () => Promise<Corpus.Stats>;
-
-  /**
-   * Convenience method that waits for the corpus to be fully loaded. If the returned promise
-   * resolves succesfully, the corpus will be in COMPLETED state. If it rejects, the corpus may
-   * be in FAILED state.
-   *
-   * Note: Corpus loading may be quite time consuming. It's best to ensure loading is done prior
-   * to exposing this corpus to your users.
-   */
-  waitForLoadingToComplete: () => Promise<Corpus.Stats>;
-
-  /** Reveals statistics about this corpus, including its LoadingState. */
-  getStats: () => Corpus.Stats;
-
   /** Finds document chunks that are semantically similar to the provided query. */
   search: (
     query: string,
@@ -419,29 +401,99 @@ export interface Corpus<ChunkMetadata extends Jsonifiable = Jsonifiable> {
   ) => Promise<ScoredChunk<ChunkMetadata>[]>;
 }
 
-export namespace Corpus {
-  /** An indication of what steps are necessary to make this corpus ready for serving. */
-  export enum LoadingState {
-    /** Documents have not been loaded. Call `startLoading` to begin loading them. */
-    NOT_STARTED = 'NOT_STARTED',
-    /** Documents are currently being loaded. */
-    IN_PROGRESS = 'IN_PROGRESS',
-    /** Documents were successfully loaded. The corpus is ready for serving. */
-    COMPLETED = 'COMPLETED',
-    /** Documents failed to load. See details for your implementation to try to resolve. */
-    FAILED = 'FAILED',
+/** An indication of what steps are necessary to make this corpus ready for serving. */
+export enum CorpusLoadingState {
+  /** Documents have not been loaded. Call `startLoading` to begin loading them. */
+  NOT_STARTED = 'NOT_STARTED',
+  /** Documents are currently being loaded. */
+  IN_PROGRESS = 'IN_PROGRESS',
+  /** Documents were successfully loaded. The corpus is ready for serving. */
+  COMPLETED = 'COMPLETED',
+  /** Documents failed to load. See details for your implementation to try to resolve. */
+  FAILED = 'FAILED',
+}
+
+/** Statistics about a corpus, including its LoadingState. */
+export interface CorpusStats {
+  loadingState: CorpusLoadingState;
+  completedPartitions: number;
+  activePartitions: number;
+  numDocuments: number;
+  numChunks: number;
+  /** If loadingState == FAILED, the error that caused it. */
+  loadingError?: Error;
+}
+
+class CorpusNotReadyError extends Error {
+  constructor(state: CorpusLoadingState) {
+    super(`Corpus is not ready. It's in state ${state}. Call load() to load documents.`);
+  }
+}
+
+/**
+ * A LoadableCorpus is a Corpus that can additionally load and index documents.
+ */
+export abstract class LoadableCorpus<
+  DocumentMetadata extends Jsonifiable = Jsonifiable,
+  ChunkMetadata extends Jsonifiable = Jsonifiable
+> implements Corpus<ChunkMetadata>
+{
+  private stats: CorpusStats = {
+    loadingState: CorpusLoadingState.NOT_STARTED,
+    completedPartitions: 0,
+    activePartitions: 0,
+    numDocuments: 0,
+    numChunks: 0,
+  };
+  private loadingPromise: Promise<CorpusStats> | null = null;
+  constructor(
+    readonly loader: Loader<DocumentMetadata>,
+    readonly vectorizer: Vectorizer<DocumentMetadata, ChunkMetadata>,
+    readonly chunkConsumer: (chunks: EmbeddedChunk<ChunkMetadata>[]) => Promise<void>
+  ) {}
+
+  /**
+   * Loads documents into the corpus using a Loader, Chunker, and Embedding. If the returned
+   * promise resolves succesfully, the corpus will be in COMPLETED state. If it rejects, the corpus
+   * may be in FAILED state.
+   *
+   * Note: Corpus loading may be quite time consuming. It's best to ensure loading is done prior
+   * to exposing this corpus to your users.
+   *
+   * Note: This method is idempotent. Calling it multiple times will not result in multiple loads.
+   */
+  async load(): Promise<CorpusStats> {
+    if (!this.loadingPromise) {
+      this.stats.loadingState = CorpusLoadingState.IN_PROGRESS;
+      this.loadingPromise = loadCorpus(this.loader, this.vectorizer, this.chunkConsumer);
+    }
+    try {
+      this.stats = await this.loadingPromise;
+    } catch (e) {
+      this.stats.loadingState = CorpusLoadingState.FAILED;
+      if (e instanceof Error) {
+        this.stats.loadingError = e;
+      }
+      throw e;
+    }
+    return this.stats;
   }
 
-  /** Statistics about a corpus, including its LoadingState. */
-  export interface Stats {
-    loadingState: LoadingState;
-    completedPartitions: number;
-    activePartitions: number;
-    numDocuments: number;
-    numChunks: number;
-    /** If loadingState == FAILED, the error that caused it. */
-    loadingError?: Error;
+  /** Reveals statistics about this corpus, including its LoadingState. */
+  getStats(): CorpusStats {
+    return this.stats;
   }
+
+  protected checkReady(): void {
+    if (this.stats.loadingState !== CorpusLoadingState.COMPLETED) {
+      throw new CorpusNotReadyError(this.stats.loadingState);
+    }
+  }
+
+  abstract search(
+    query: string,
+    params?: { limit?: number; score_threshold?: number }
+  ): Promise<ScoredChunk<ChunkMetadata>[]>;
 }
 
 async function loadCorpus<
@@ -452,7 +504,7 @@ async function loadCorpus<
   vectorize: Vectorizer<DocumentMetadata, ChunkMetadata>,
   chunkConsumer: (chunks: EmbeddedChunk<ChunkMetadata>[]) => Promise<void>,
   maxRequests: number = 50
-): Promise<Corpus.Stats> {
+): Promise<CorpusStats> {
   const activePartitionsToToken = new Map<CorpusPartition['name'] | null, string | null>();
   const completedPartitions = new Set<CorpusPartition['name']>();
   let numDocuments = 0;
@@ -487,7 +539,7 @@ async function loadCorpus<
   }
 
   return {
-    loadingState: Corpus.LoadingState.COMPLETED,
+    loadingState: CorpusLoadingState.COMPLETED,
     completedPartitions: completedPartitions.size,
     activePartitions: activePartitionsToToken.size,
     numDocuments,
@@ -496,7 +548,7 @@ async function loadCorpus<
 }
 
 /*
- * A Corpus implementation that runs locally and stores chunks in memory.
+ * A LoadableCorpus implementation that runs locally and stores chunks in memory.
  *
  * This implementation doesn't make external requests except through the provided Loader, Chunker,
  * and Embedding (but note that the default Embedding does make external requests).
@@ -504,62 +556,25 @@ async function loadCorpus<
 export class LocalCorpus<
   DocumentMetadata extends Jsonifiable = Jsonifiable,
   ChunkMetadata extends Jsonifiable = Jsonifiable
-> implements Corpus<ChunkMetadata>
-{
+> extends LoadableCorpus<DocumentMetadata, ChunkMetadata> {
   private readonly vectors: EmbeddedChunk<ChunkMetadata>[] = [];
-  private stats: Corpus.Stats = {
-    loadingState: Corpus.LoadingState.NOT_STARTED,
-    completedPartitions: 0,
-    activePartitions: 0,
-    numDocuments: 0,
-    numChunks: 0,
-  };
-  private loadingPromise: Promise<void> | null = null;
   constructor(
     readonly loader: Loader<DocumentMetadata>,
     readonly chunker: Chunker<DocumentMetadata, ChunkMetadata>,
     readonly embedding: Embedding = defaultEmbedding
-  ) {}
-
-  /* eslint-disable require-await */
-  async startLoading(): Promise<Corpus.Stats> {
-    if (this.stats.loadingState !== Corpus.LoadingState.NOT_STARTED) {
-      return this.getStats();
-    }
-    this.stats.loadingState = Corpus.LoadingState.IN_PROGRESS;
+  ) {
     const chunkConsumer = (chunks: EmbeddedChunk<ChunkMetadata>[]) => {
       this.vectors.push(...chunks);
       return Promise.resolve();
     };
-    this.loadingPromise = loadCorpus(this.loader, asVectorizer(this.chunker, this.embedding), chunkConsumer).then(
-      (stats) => {
-        this.stats = stats;
-      },
-      (e) => {
-        this.stats.loadingState = Corpus.LoadingState.FAILED;
-        this.stats.loadingError = e;
-      }
-    );
-    return this.getStats();
-  }
-  /* eslint-enable require-await */
-
-  async waitForLoadingToComplete(): Promise<Corpus.Stats> {
-    if (!this.loadingPromise) {
-      await this.startLoading();
-    }
-    await this.loadingPromise;
-    return this.stats;
-  }
-
-  getStats(): Corpus.Stats {
-    return this.stats;
+    super(loader, asVectorizer(chunker, embedding), chunkConsumer);
   }
 
   async search(
     query: string,
     params?: { limit?: number; score_threshold?: number }
   ): Promise<ScoredChunk<ChunkMetadata>[]> {
+    this.checkReady();
     const queryVector = await this.embedding.embed(query);
     return this.vectors
       .map(
@@ -580,72 +595,28 @@ export class LocalCorpus<
   }
 }
 
-/** A Corpus that is assumed to already be completely loaded. */
-abstract class PreloadedCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implements Corpus<ChunkMetadata> {
-  constructor(readonly stats: Corpus.Stats) {
-    if (stats.loadingState !== Corpus.LoadingState.COMPLETED) {
-      throw Error('PreloadedCorpus must be initialized with stats in a COMPLETED state.');
-    }
-  }
-
-  startLoading() {
-    return Promise.resolve(this.stats);
-  }
-
-  waitForLoadingToComplete() {
-    return Promise.resolve(this.stats);
-  }
-
-  getStats() {
-    return this.stats;
-  }
-
-  abstract search(
-    query: string,
-    params?: { limit?: number; score_threshold?: number }
-  ): Promise<ScoredChunk<ChunkMetadata>[]>;
-}
-
-/** A PreloadedCorpus backed by a LangChain VectorStore. */
-export class PreloadedLangchainCorpus<
-  ChunkMetadata extends Jsonifiable & Record<string, any> = Record<string, any>
-> extends PreloadedCorpus<ChunkMetadata> {
-  constructor(readonly stats: Corpus.Stats, readonly vectorStore: VectorStore) {
-    super(stats);
-  }
+/** A Corpus backed by a LangChain VectorStore. */
+export class LangchainCorpus<ChunkMetadata extends Jsonifiable & Record<string, any> = Record<string, any>>
+  implements Corpus<ChunkMetadata>
+{
+  constructor(readonly vectorStore: VectorStore) {}
 
   search(query: string, params?: { limit?: number; score_threshold?: number }): Promise<ScoredChunk<ChunkMetadata>[]> {
     return searchVectorStore(this.vectorStore, query, params);
   }
 }
 
-/** A Corpus backed by a LangChain VectorStore. */
-export class LangchainCorpus<
+/** A LoadableCorpus backed by a LangChain VectorStore. */
+export class LoadableLangchainCorpus<
   DocumentMetadata extends Jsonifiable = Jsonifiable,
   ChunkMetadata extends Jsonifiable & Record<string, any> = Record<string, any>
-> implements Corpus<ChunkMetadata>
-{
-  private stats: Corpus.Stats = {
-    loadingState: Corpus.LoadingState.NOT_STARTED,
-    completedPartitions: 0,
-    activePartitions: 0,
-    numDocuments: 0,
-    numChunks: 0,
-  };
-  private loadingPromise: Promise<void> | null = null;
+> extends LoadableCorpus<DocumentMetadata, ChunkMetadata> {
   constructor(
     readonly vectorstore: VectorStore,
     readonly loader: Loader<DocumentMetadata>,
     readonly chunker: Chunker<DocumentMetadata, ChunkMetadata>,
     readonly embedding: Embedding = defaultEmbedding
-  ) {}
-
-  /* eslint-disable require-await */
-  async startLoading(): Promise<Corpus.Stats> {
-    if (this.stats.loadingState !== Corpus.LoadingState.NOT_STARTED) {
-      return this.getStats();
-    }
-    this.stats.loadingState = Corpus.LoadingState.IN_PROGRESS;
+  ) {
     const chunkConsumer = async (chunks: EmbeddedChunk<ChunkMetadata>[]) => {
       const vectors = chunks.map((chunk) => chunk.vector);
       const lcDocs = chunks.map((chunk) => ({
@@ -654,32 +625,11 @@ export class LangchainCorpus<
       }));
       await this.vectorstore.addVectors(vectors, lcDocs);
     };
-    this.loadingPromise = loadCorpus(this.loader, asVectorizer(this.chunker, this.embedding), chunkConsumer).then(
-      (stats) => {
-        this.stats = stats;
-      },
-      (e) => {
-        this.stats.loadingState = Corpus.LoadingState.FAILED;
-        this.stats.loadingError = e;
-      }
-    );
-    return this.getStats();
-  }
-  /* eslint-enable require-await */
-
-  async waitForLoadingToComplete(): Promise<Corpus.Stats> {
-    if (!this.loadingPromise) {
-      await this.startLoading();
-    }
-    await this.loadingPromise;
-    return this.stats;
-  }
-
-  getStats(): Corpus.Stats {
-    return this.stats;
+    super(loader, asVectorizer(chunker, embedding), chunkConsumer);
   }
 
   search(query: string, params?: { limit?: number; score_threshold?: number }): Promise<ScoredChunk<ChunkMetadata>[]> {
+    this.checkReady();
     return searchVectorStore(this.vectorstore, query, params);
   }
 }
@@ -703,11 +653,11 @@ async function searchVectorStore<ChunkMetadata extends Jsonifiable = Jsonifiable
   });
 }
 
-export interface DocsQAProps {
+export interface DocsQAProps<ChunkMetadata extends Jsonifiable = Jsonifiable> {
   /**
    * The corpus of documents that may be relevant to a query.
    */
-  corpus: Corpus;
+  corpus: Corpus<ChunkMetadata>;
 
   /**
    * The question to answer.
@@ -736,17 +686,22 @@ export interface DocsQAProps {
    *  }
    * ```
    */
-  chunkFormatter: (props: { doc: ScoredChunk }) => Node;
+  chunkFormatter: (props: { doc: ScoredChunk<ChunkMetadata> }) => Node;
 }
 /**
  * A component that can be used to answer questions about documents. This is a very common usecase for LLMs.
  */
-export async function DocsQA(props: DocsQAProps) {
-  const status = (await props.corpus.getStats()).loadingState;
-  if (status !== Corpus.LoadingState.COMPLETED) {
-    return `Corpus is not loaded. It's in state: ${status.toString()}`;
+export async function DocsQA<ChunkMetadata extends Jsonifiable = Jsonifiable>(props: DocsQAProps<ChunkMetadata>) {
+  let docs: ScoredChunk<ChunkMetadata>[];
+  try {
+    docs = await props.corpus.search(props.question, { limit: props.chunkLimit });
+  } catch (e) {
+    if (e instanceof CorpusNotReadyError) {
+      return e.message;
+    }
+    throw e;
   }
-  const docs = await props.corpus.search(props.question, { limit: props.chunkLimit });
+
   return (
     <ChatCompletion>
       <SystemMessage>

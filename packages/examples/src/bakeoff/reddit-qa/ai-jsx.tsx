@@ -32,8 +32,7 @@ const docs = await Promise.all(
 );
 
 const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
-await corpus.startLoading();
-await corpus.waitForLoadingToComplete();
+await corpus.load();
 
 function FormatChunk({ doc }: { doc: ScoredChunk }) {
   return (
