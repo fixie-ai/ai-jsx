@@ -1,32 +1,59 @@
-import React from 'react';
-import { AIRoot, ChatMessage, conversationAtom, modelCallInProgress } from './ai.tsx';
-import { useAtom } from 'jotai';
+/** @jsxImportSource ai-jsx/react */
+import * as AI from 'ai-jsx/react';
+import React, {useState} from 'react';
+import { ChatAgent } from './ai.tsx';
+import { useList } from 'react-use';
 import ResultContainer from '../ResultContainer.tsx';
 
-function ConversationItem({ response }: { response: ChatMessage }) {
-  const emoji = response.type === 'user' ? '👤' : '🤖';
+function ConversationItem({
+  responseType,
+  children: responseContent,
+}: {
+  responseType: 'user' | 'bot';
+  children: React.ReactNode;
+}) {
+  const emoji = responseType === 'user' ? '👤' : '🤖';
   return (
     <div>
-      {emoji}: {response.content}
+      {emoji}: {responseContent}
     </div>
   );
 }
 
-function ConversationHistory() {
-  const [conversation, setConversation] = useAtom(conversationAtom);
-  const [callInProgress] = useAtom(modelCallInProgress);
+/**
+ * We need to memoize this function. Otherwise, every time the parent component of AgentResponse re-renders,
+ * AgentReponse will re-render, which will trigger a new LLM call, which will produce a different result than the
+ * prior call.
+ */
+const AgentResponse = React.memo(function AgentResponse({
+  conversation,
+  setCallInProgress,
+}: {
+  conversation: any[];
+  setCallInProgress: (x: boolean) => void;
+}) {
+  return (
+    <ConversationItem responseType="bot">
+      <AI.jsx
+        onStreamStart={() => setCallInProgress(true)}
+        onStreamEnd={() => setCallInProgress(false)}
+        loading="Thinking..."
+      >
+        <ChatAgent conversation={conversation} />
+      </AI.jsx>
+    </ConversationItem>
+  );
+});
+
+export function BasicChat() {
+  const [userMessages, { push: pushUserMessage }] = useList<string>([]);
+  const [callInProgress, setCallInProgress] = useState(false);
 
   function handleInputSubmit(event: React.FormEvent<HTMLFormElement>) {
     // @ts-expect-error
     const element = event.target.elements.message;
     event.preventDefault();
-    setConversation((prev) => [
-      ...prev,
-      {
-        type: 'user',
-        content: element.value,
-      },
-    ]);
+    pushUserMessage(element.value);
 
     element.value = '';
   }
@@ -34,13 +61,15 @@ function ConversationHistory() {
   return (
     <ResultContainer title="Basic Chat" description="In this demo, you can chat with a quirky assistant.">
       <ul>
-        {conversation.map((response, index) => (
-          <li key={index} className="mt-4">
-            <ConversationItem response={response} />
-          </li>
-        ))}
-      </ul>
-      {callInProgress && <div>Waiting for AI response...</div>}
+        {userMessages.map((response, index) => [
+          <li key={`${index}-user`} className="mt-4">
+            <ConversationItem responseType="user">{response}</ConversationItem>
+          </li>,
+          <li key={`${index}-agent`} className="mt-4">
+            <AgentResponse conversation={userMessages} setCallInProgress={setCallInProgress} />
+          </li>,
+        ])}
+      </ul>      
       <form onSubmit={handleInputSubmit} className="mt-4 flex w-full">
         <input
           disabled={callInProgress}
@@ -57,14 +86,5 @@ function ConversationHistory() {
         </button>
       </form>
     </ResultContainer>
-  );
-}
-
-export function BasicChat() {
-  return (
-    <>
-      <AIRoot />
-      <ConversationHistory />
-    </>
   );
 }
