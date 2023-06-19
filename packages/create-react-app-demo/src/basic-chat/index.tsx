@@ -21,31 +21,6 @@ function ConversationItem({
   );
 }
 
-/**
- * We need to memoize this function. Otherwise, every time the parent component of AgentResponse re-renders,
- * AgentReponse will re-render, which will trigger a new LLM call, which will produce a different result than the
- * prior call.
- */
-const AgentResponse = React.memo(function AgentResponse({
-  conversation,
-  setCallInProgress,
-}: {
-  conversation: any[];
-  setCallInProgress: (x: boolean) => void;
-}) {
-  return (
-    <ConversationItem responseType="bot">
-      <AI.jsx
-        onStreamStart={() => setCallInProgress(true)}
-        onStreamEnd={() => setCallInProgress(false)}
-        loading="Thinking..."
-      >
-        <ChatAgent conversation={conversation} />
-      </AI.jsx>
-    </ConversationItem>
-  );
-});
-
 export function BasicChat() {
   const [userMessages, { push: pushUserMessage, updateAt: updateUserMessage }] = useList<string>([]);
   const [callInProgress, setCallInProgress] = useState(false);
@@ -56,7 +31,7 @@ export function BasicChat() {
     event.preventDefault();
     const message = element.value;
     element.value = '';
-    pushUserMessage(message, '...');
+    pushUserMessage(message, '');
     const index = userMessages.length + 1;
     setCallInProgress(true);
     await AI.createRenderContext().render(<ChatAgent conversation={[...userMessages, message]} />, {
