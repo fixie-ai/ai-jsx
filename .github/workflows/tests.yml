@@ -29,4 +29,4 @@ jobs:
         env:
           OPENAI_API_KEY: 'FAKE-OPENAI-API-KEY'
 
-      - run: ~/.volta/bin/yarn test        
+      - run: ~/.volta/bin/yarn test
