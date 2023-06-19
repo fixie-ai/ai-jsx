@@ -36,7 +36,7 @@ async function* DocsResponse(
   }: {
     conversation: ConversationMessage[];
     children: AI.Node;
-    onComplete: (messages: ConversationMessage[]) => Promise<unknown>;
+    onComplete: (message: ConversationMessage) => Promise<unknown>;
   },
   { render, logger }: AI.ComponentContext
 ) {
@@ -44,10 +44,7 @@ async function* DocsResponse(
   const query = await render(children);
   const response = yield* render(<DocsAgent question={query} />);
 
-  await onComplete([
-    { author: 'user', message: query },
-    { author: 'bot', message: response },
-  ]);
+  await onComplete({ author: 'bot', message: response });
   return response;
 }
 
@@ -67,7 +64,7 @@ async function getConversation(id: string): Promise<ConversationMessage[]> {
   }
 }
 
-async function appendConversation(id: string, ...messages: ConversationMessage[]): Promise<void> {
+export async function appendConversation(id: string, ...messages: ConversationMessage[]): Promise<void> {
   if (process.env.KV_REST_API_URL) {
     await kv.rpush(id, ...messages);
     return;
@@ -83,9 +80,12 @@ export default async function DocsChat({
   params: { id: string };
   searchParams: { message?: string };
 }) {
-  const conversationHistory = await getConversation(params.id);
-  const newMessage =
-    conversationHistory.length == 0 && searchParams.message === undefined ? 'What is AI.JSX?' : searchParams.message;
+  let conversationHistory = await getConversation(params.id);
+
+  if (conversationHistory.length === 0) {
+    await appendConversation(params.id, { author: 'user', message: 'What is AI.JSX?' });
+    conversationHistory = await getConversation(params.id);
+  }
 
   return (
     <ResultContainer
@@ -104,17 +104,16 @@ export default async function DocsChat({
         {conversationHistory.map((response, index) => (
           <ConversationItem responseType={response.author}>{response.message}</ConversationItem>
         ))}
-        {newMessage !== undefined && (
+        {conversationHistory[conversationHistory.length - 1].author == 'user' && (
           <>
-            <ConversationItem responseType="user">{newMessage}</ConversationItem>
             <ConversationItem responseType="bot">
               <Suspense fallback="⎕">
                 <AI.jsx>
                   <DocsResponse
                     conversation={conversationHistory}
-                    onComplete={(messages) => appendConversation(params.id, ...messages)}
+                    onComplete={(message) => appendConversation(params.id, message)}
                   >
-                    {newMessage}
+                    {conversationHistory[conversationHistory.length - 1].message}
                   </DocsResponse>
                 </AI.jsx>
               </Suspense>
@@ -122,7 +121,7 @@ export default async function DocsChat({
           </>
         )}
       </ul>
-      <form className="mt-4 flex w-full">
+      <form className="mt-4 flex w-full" method="POST" action={`/docs-chat/${params.id}/messages`}>
         <input
           type="text"
           name="message"
