@@ -149,7 +149,7 @@ Pros:
 
 Cons:
 
-- In JS, requires use of a framework like [NextJS](https://nextjs.org/) to get the full benefits. (NextJS is a great choice for new apps, but exisiting codebases may not be able to adopt it immediately.)
+- In JS, requires use of a framework like [NextJS](https://nextjs.org/) to get the full benefits. (NextJS is a great choice for new apps, but existing codebases may not be able to adopt it immediately.)
 
 ```mermaid
 sequenceDiagram
