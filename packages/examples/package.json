@@ -8,6 +8,7 @@
     "@tsconfig/node18": "^2.0.1",
     "@types/lodash": "^4.14.195",
     "@types/node": "^20.3.1",
+    "@types/prompt-sync": "^4.2.0",
     "@types/uuid": "^9.0.2",
     "@typescript-eslint/eslint-plugin": "^5.59.6",
     "@typescript-eslint/parser": "^5.59.6",
@@ -25,6 +26,7 @@
     "demo:multi-model": "yarn build && node dist/multi-model.js",
     "demo:opentelemetry": "yarn build && node dist/opentelemetry.js",
     "demo:wandb": "yarn build && node dist/wandb.js",
+    "demo:helloworld": "yarn build && node dist/helloworld.js",
     "demo:inline-chat": "yarn build && node dist/inline-chat.js",
     "demo:inline-completion": "yarn build && node dist/inline-completion.js",
     "demo:simple-chat": "yarn build && node dist/simple-chat.js",
@@ -34,6 +36,8 @@
     "demo:router": "yarn build && node dist/router.js",
     "demo:debug": "yarn build && node dist/debug.js",
     "demo:summarizer": "yarn build && node dist/summarizer.js",
+    "demo:use-tools": "yarn build && node dist/use-tools.js",
+    "demo:chat-function-call": "yarn build && node dist/chat-function-call.js",
     "demo:health-agent": "yarn build && node dist/bakeoff/health-agent/ai-jsx.js",
     "demo:reddit": "yarn build && node dist/bakeoff/reddit-qa/ai-jsx.js",
     "demo:prompting-basics": "yarn build && node dist/prompting-basics.tsx",
@@ -60,11 +64,14 @@
     "langchain": "^0.0.95",
     "load-json-file": "^7.0.1",
     "lodash": "^4.17.21",
+    "mathjs": "^11.8.1",
     "node-fetch": "^3.3.1",
     "pino": "^8.14.1",
     "pino-pretty": "^10.0.0",
+    "prompt-sync": "^4.2.0",
     "type-fest": "^3.12.0",
     "uuid": "^9.0.0",
-    "write-json-file": "^5.0.0"
+    "write-json-file": "^5.0.0",
+    "zod": "^3.21.4"
   }
 }

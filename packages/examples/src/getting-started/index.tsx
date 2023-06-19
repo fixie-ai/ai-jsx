@@ -71,7 +71,15 @@ function WriteStoryWithImage() {
   const story = memo(<WriteStory />);
   return (
     <>
-      Banner URL: <ImageGen clipLongPrompt>Generate an image for this story: {story}</ImageGen>
+      Banner URL:{' '}
+      <ImageGen>
+        <ChatCompletion>
+          <UserMessage>
+            You are an artist. You are creating a sketch for a new book. Concisely describe a sketch for scene from the
+            following story: {story}
+          </UserMessage>
+        </ChatCompletion>
+      </ImageGen>
       {'\n\n'}
       {story}
     </>

@@ -11,14 +11,12 @@ module.exports = {
 
   env: {
     node: true,
-    es6: true,
   },
 
   rules: {
-    // Disable eslint rules to let their TS equivalents take over.
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': ['warn', { ignoreRestSiblings: true, argsIgnorePattern: '^_' }],
-    'no-undef': 'off',
+
     'no-magic-numbers': 'off',
     '@typescript-eslint/no-magic-numbers': 'off',
 
@@ -30,7 +28,6 @@ module.exports = {
 
     'no-trailing-spaces': 'warn',
     'no-else-return': ['warn', { allowElseIf: false }],
-    'no-constant-condition': ['error', { checkLoops: false }],
 
     // Disable style rules to let prettier own it
     'object-curly-spacing': 'off',
@@ -43,7 +40,6 @@ module.exports = {
     'generator-star-spacing': 'off',
     'space-before-function-paren': 'off',
     'jsx-quotes': 'off',
-    'brace-style': 'off',
 
     // Add additional strictness beyond the recommended set
     '@typescript-eslint/parameter-properties': ['warn', { prefer: 'parameter-properties' }],

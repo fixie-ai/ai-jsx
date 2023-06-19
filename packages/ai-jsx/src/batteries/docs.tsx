@@ -249,26 +249,32 @@ export type Chunker<
   ChunkMetadata extends Jsonifiable = Jsonifiable
 > = (document: Document<DocumentMetadata>) => Promise<Chunk<ChunkMetadata>[]>;
 
+/** Create a chunker with the given parameters. */
+export function makeChunker<Metadata extends Jsonifiable = Jsonifiable>(
+  chunkSize: number,
+  chunkOverlap: number
+): Chunker<Metadata, Metadata> {
+  return async (doc: Document<Metadata>) => {
+    const splitter = new TokenTextSplitter({
+      encodingName: 'gpt2',
+      chunkSize,
+      chunkOverlap,
+    });
+    const lcDocs = await splitter.createDocuments(doc.pageContent);
+    const chunks = lcDocs.map(
+      (lcDoc) =>
+        ({
+          content: lcDoc.pageContent,
+          documentName: doc.name,
+          metadata: doc.metadata,
+        } as Chunk<Metadata>)
+    );
+    return chunks;
+  };
+}
+
 /** A simple token size based text chunker. This is a good starting point for text documents. */
-export const defaultChunker = async <Metadata extends Jsonifiable = Jsonifiable>(doc: Document<Metadata>) => {
-  const splitter = new TokenTextSplitter({
-    encodingName: 'gpt2',
-    chunkSize: 600,
-    chunkOverlap: 100,
-  });
-
-  const lcDocs = await splitter.createDocuments(doc.pageContent);
-  const chunks = lcDocs.map(
-    (lcDoc) =>
-      ({
-        content: lcDoc.pageContent,
-        documentName: doc.name,
-        metadata: doc.metadata,
-      } as Chunk<Metadata>)
-  );
-
-  return chunks;
-};
+export const defaultChunker = makeChunker(600, 100);
 
 /**
  * A piece of a document that's appropriately sized for an LLM's
@@ -312,8 +318,13 @@ export class LangChainEmbeddingWrapper implements Embedding {
   }
 }
 
-/** A default embedding useful for DocsQA. Note that this requires an OPENAI_API_KEY. */
-export const defaultEmbedding = new LangChainEmbeddingWrapper(new OpenAIEmbeddings());
+/** A default embedding useful for DocsQA. Note that this requires OPENAI_API_KEY to be set. */
+if (!process.env.OPENAI_API_KEY) {
+  throw new Error('OPENAI_API_KEY not set');
+}
+export const defaultEmbedding = new LangChainEmbeddingWrapper(
+  new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY })
+);
 
 /** A piece of a document that is ready to be added into a vector space. */
 export interface EmbeddedChunk<ChunkMetadata extends Jsonifiable = Jsonifiable> {
@@ -509,51 +520,72 @@ export class LocalCorpus<
   }
 }
 
-export interface DocsQAProps<Doc extends Document> {
+export interface DocsQAProps {
   /**
    * The corpus of documents that may be relevant to a query.
    */
   corpus: Corpus;
 
   /**
-   * The query to answer.
+   * The question to answer.
    */
   question: string;
 
   /**
-   * The component used to format documents when they're presented to the model.
+   *
+   * When processing a DocsQA query, the most relevent chunks are presented to the model. This
+   * field limits the number of chunks to consider. If this value is too large, the size
+   * of the chunks may exceed the token limit of the model.
+   */
+  chunkLimit?: number;
+
+  /**
+   * The component used to format document chunks when they're presented to the model.
+   * This can be used to present the model with some metadata about the chunk, in a format
+   * that is appropriate to the type of document.
    *
    * ```tsx
-   *  function MyDocsComponent({ doc }: { doc: MyDocument }) {
+   *  function FormatChunk({ chunk }: { chunk: ScoredChunk }) {
    *    return <>
-   *      Title: {doc.metadata.title}
-   *      Content: {doc.pageContent}
+   *      Title: {chunk.chunk.documentName}
+   *      Content: {chunk.chunk.content}
    *    </>
    *  }
    * ```
    */
-  docComponent: (props: { doc: Doc }) => Node;
+  chunkFormatter: (props: { doc: ScoredChunk }) => Node;
 }
 /**
  * A component that can be used to answer questions about documents. This is a very common usecase for LLMs.
  */
-export async function DocsQA<Doc extends Document>(props: DocsQAProps<Doc>) {
+export async function DocsQA(props: DocsQAProps) {
   const status = (await props.corpus.getStats()).loadingState;
   if (status !== Corpus.LoadingState.COMPLETED) {
     return `Corpus is not loaded. It's in state: ${status.toString()}`;
   }
-  const docs = await props.corpus.search(props.question);
+  const docs = await props.corpus.search(props.question, { limit: props.chunkLimit });
   return (
     <ChatCompletion>
       <SystemMessage>
-        You are a customer service agent. Answer questions truthfully. Here is what you know:
+        You are a trained question answerer. Answer questions truthfully, using only the document excerpts below. Do not
+        use any other knowledge you have about the world. If you don't know how to answer the question, just say "I
+        don't know." Here are the relevant document excerpts you have been given:
         {docs.map((doc) => (
-          // TODO improve types
-          // @ts-expect-error
-          <props.docComponent doc={doc} />
+          <props.chunkFormatter doc={doc} />
         ))}
+        And here is the question you must answer:
       </SystemMessage>
-      <UserMessage> {props.question} </UserMessage>
+      <UserMessage>{props.question}</UserMessage>
     </ChatCompletion>
   );
 }
+
+/**
+ * A default component for formatting document chunks.
+ */
+export const DefaultFormatter = ({ doc }: { doc: ScoredChunk }) => (
+  <>
+    Title: {doc.chunk.documentName ?? 'Untitled'}
+    Content: {doc.chunk.content}
+  </>
+);

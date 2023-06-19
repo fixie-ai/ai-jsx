@@ -97,6 +97,7 @@
     "README.md"
   ],
   "devDependencies": {
+    "@tsconfig/node16": "^1.0.4",
     "@tsconfig/node18": "^2.0.1",
     "@types/eslint": "^8",
     "@types/js-yaml": "^4.0.5",
@@ -132,6 +133,8 @@
     "react": "^16.8.0  || ^17.0.0 || ^18.0.0"
   },
   "dependencies": {
+    "@nick.heiner/openai-edge": "1.0.1-7",
+    "axios": "^1.4.0",
     "cli-highlight": "^2.1.11",
     "cli-spinners": "^2.9.0",
     "find-up": "^6.3.0",
@@ -146,7 +149,7 @@
     "load-json-file": "^7.0.1",
     "lodash": "^4.17.21",
     "ml-distance": "^4.0.1",
-    "openai": "^3.2.1",
+    "openai": "^3.3.0",
     "pino": "^8.14.1",
     "react-use": "^17.4.0",
     "server-only": "^0.0.1",

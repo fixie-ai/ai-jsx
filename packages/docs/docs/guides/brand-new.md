@@ -122,68 +122,7 @@ More detail: `UseTools` (`packages/ai-jsx/src/batteries/use-tools.tsx`).
 
 LLMs have "soft knowledge" of the world, but if you just ask a question without providing any context, they're prone to hallucination. And, LLMs were only trained on public data, so they don't have context on the private data you care about.
 
-To address this, the community has developed a variety of techniques, known collectively as Docs QA. The core elements of the problem:
-
-1. [Find your docs.](#find-your-docs)
-1. [Ingest them into a form the LLM can access.](#ingest-the-docs)
-1. [Pick the right docs to show the LLM at query time.](#pick-the-right-docs-to-show)
-1. [Run this ETL offline](#run-the-etl)
-
-(Some of these steps may not be necessary, depending on your use-case.)
-
-### Find Your Docs
-
-A collection of docs is called a "corpus".
-
-In the simple case, your docs are easy to find, because you have a hardcoded list of them. (For instance, you're building an AI app to answer questions for your company's customer support, and you have a fixed set of support docs you can download on a cadence.) You can fetch your docs with a simple script, and you can probably get GPT-4 to write the script for you.
-
-In the harder case, you need a crawler. (For instance, you want to traverse numerous websites, follow links, etc.) If you use [Fixie](https://fixie.ai/), this is [handled for you](https://docs.fixie.ai/document-qa/). You can provide a URL pattern like `https://my-site.com/help/*`, and Fixie handles the rest.
-
-### Ingest the Docs
-
-Now that you have the doc contents, you may need to transform them to be useful for the model.
-
-In the simplest case, no transformation is necessary. However, transformation will be helpful if:
-
-1. A single doc is longer than the context window.
-1. A single doc talks about many different topics, and could confuse the model if we give it the whole thing at once.
-1. The docs are some non-text format (PDF, Word doc, CSV, YouTube video that needs to be transcribed, etc).
-
-To address points (1) and (2), we use a process called **chunking**, where you split the document into chunks. The simplest possible chunking is just cutting it into appropriately-sized strings. A more sophisticated chunking will be content aware, and try to produce semantically-related chunks. (So, you'd rather each chunk be a paragraph that talks about a single topic, rather than just cutting your string into 100 pieces and having each piece randomly cut off in the middle of a sentence.)
-
-To address point (3), you want to find a loader that can parse text out of your files.
-
-If you use [Fixie](https://fixie.ai/), all three of these points are handled for you.
-
-See also: [Pinecone Guidance on Chunking Strategies](https://www.pinecone.io/learn/chunking-strategies/).
-
-### Pick the Right Docs to Show
-
-In the simplest case, your context window is long enough to put every doc in the prompt every time, and the model happens to not get confused by this.
-
-In the more complicated case, you need to pick which docs to put in the prompt. Sometimes, this might be deterministic (e.g. a customer service AI always pulling in the most recent prior support interaction with the customer). But most of the time, you'll want to do a semantic search, where you have a topic in the query ("change my billing plan"), and you want to find related docs.
-
-To do this, use a vector database (VDB). A vector database creates a semantic vector (also known as an "embedding") for each doc, then allows you to do a semantic search.
-
-There are many different vector databases; [Pinecone](https://www.pinecone.io/) and [Chroma](https://www.trychroma.com/) are two big ones. AI.JSX ships with an in memory vector database suitable (`packages/ai-jsx/src/batteries/docs.tsx`), which is a good simple solution when you're below a certain scale.
-
-To use a vector db, you have to sign up for one of those providers, load your docs, and keep the DBs up-to-date as your docs change. Or you can use [Fixie](https://fixie.ai/), and it's all handled for you.
-
-### Run the ETL
-
-The steps above form an ETL (extract, transform, load) process.
-
-In the simple case, your corpus is so small that you can do it on the fly, either ask the user is asking a question, or when your app is starting up:
-
-```tsx
-const myDocs = await loadDocs();
-const vdb = createVectorDatabase(myDocs);
-const answer = askLLM('how do I cancel my account', vdb);
-```
-
-With larger corpora, or with more performance-intensive applications, this won't work. Instead, you'll want to keep an external vector db up to date, and have the LLM query it at runtime.
-
-If you use [Fixie](https://fixie.ai/), the offline ELT is handled for you.
+To address this, the community has developed a variety of techniques, known collectively as "DocsQA". For more details, see [DocsQA in ai-jsx](./docsqa.md).
 
 ## Streaming
 

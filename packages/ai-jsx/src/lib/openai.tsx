@@ -6,18 +6,23 @@ import {
   ModelPropsWithChildren,
   SystemMessage,
   UserMessage,
+  FunctionDefinition,
+  FunctionCall,
+  FunctionResponse,
 } from '../core/completion.js';
 import { ImageGenPropsWithChildren } from '../core/image-gen.js';
+// openai-edge hasn't updated its types to support the new function types yet,
+// so we'll import the types from openai until it does.
+import { ChatCompletionFunctions, ChatCompletionResponseMessage, ChatCompletionRequestMessage } from 'openai';
 import {
-  ChatCompletionRequestMessage,
-  ChatCompletionResponseMessage,
   Configuration,
   CreateChatCompletionResponse,
   CreateCompletionResponse,
   OpenAIApi,
   CreateImageRequestSizeEnum,
   CreateImageRequestResponseFormatEnum,
-} from 'openai';
+  ResponseTypes,
+} from '@nick.heiner/openai-edge';
 import * as LLMx from '../index.js';
 import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
@@ -40,7 +45,9 @@ type ChatOrCompletionModelOrBoth =
   | { chatModel: ValidChatModel; completionModel?: ValidCompletionModel }
   | { chatModel?: ValidChatModel; completionModel: ValidCompletionModel };
 
-const openAiClientContext = LLMx.createContext<OpenAIApi>(
+const decoder = new TextDecoder();
+
+export const openAiClientContext = LLMx.createContext<OpenAIApi>(
   new OpenAIApi(
     new Configuration({
       apiKey: process.env.OPENAI_API_KEY,
@@ -86,7 +93,7 @@ export function OpenAI({
  *  - https://github.com/openai/openai-cookbook/blob/970d8261fbf6206718fe205e88e37f4745f9cf76/examples/How_to_stream_completions.ipynb
  * @param iterable A byte stream from an OpenAI SSE response.
  */
-async function* openAiEventsToJson<T>(iterable: AsyncIterable<Buffer>): AsyncGenerator<T> {
+async function* openAiEventsToJson<T>(iterable: AsyncIterable<String>): AsyncGenerator<T> {
   const SSE_PREFIX = 'data: ';
   const SSE_TERMINATOR = '\n\n';
   const SSE_FINAL_EVENT = '[DONE]';
@@ -94,7 +101,7 @@ async function* openAiEventsToJson<T>(iterable: AsyncIterable<Buffer>): AsyncGen
   let bufferedContent = '';
 
   for await (const chunk of iterable) {
-    const textToParse = bufferedContent + chunk.toString('utf8');
+    const textToParse = bufferedContent + chunk;
     const eventsWithExtra = textToParse.split(SSE_TERMINATOR);
 
     // Any content not terminated by a "\n\n" will be buffered for the next chunk.
@@ -132,12 +139,11 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
 }
 
 type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
-type AxiosResponse<M> = M extends OpenAIMethod ? Awaited<ReturnType<InstanceType<typeof OpenAIApi>[M]>> : never;
 
 export class OpenAIError<M extends OpenAIMethod> extends HttpError {
   readonly errorResponse: Record<string, any> | null;
 
-  constructor(response: AxiosResponse<M>, method: M, responseText: string) {
+  constructor(response: Response, method: M, responseText: string) {
     let errorResponse = null as Record<string, any> | null;
     let responseSuffix = '';
     try {
@@ -155,20 +161,28 @@ export class OpenAIError<M extends OpenAIMethod> extends HttpError {
       `OpenAI ${method} request failed with status code ${response.status}${responseSuffix}\n\nFor more information, see https://platform.openai.com/docs/guides/error-codes/api-errors`,
       response.status,
       responseText,
-      response.headers
+      Object.fromEntries(response.headers.entries())
     );
     this.errorResponse = errorResponse;
   }
 }
 
-async function checkOpenAIResponse<M extends OpenAIMethod>(response: AxiosResponse<M>, logger: Logger, method: M) {
-  if (response.status < 200 || response.status >= 300) {
-    const responseData = [] as string[];
-    for await (const body of response.data as unknown as AsyncIterable<Buffer>) {
-      responseData.push(body.toString('utf8'));
+async function* asyncIteratorOfFetchStream(reader: ReturnType<NonNullable<Response['body']>['getReader']>) {
+  while (true) {
+    const { done, value } =
+      // I don't know why the types fail here, but the code works.
+      // @ts-expect-error
+      await reader.read();
+    if (done) {
+      return;
     }
+    yield decoder.decode(value);
+  }
+}
 
-    throw new OpenAIError(response, method, responseData.join(''));
+async function checkOpenAIResponse<M extends OpenAIMethod>(response: Response, logger: Logger, method: M) {
+  if (response.status < 200 || response.status >= 300 || !response.body) {
+    throw new OpenAIError(response, method, await response.text());
   } else {
     logger.debug({ statusCode: response.status, headers: response.headers }, `${method} succeeded`);
   }
@@ -192,18 +206,16 @@ export async function* OpenAICompletionModel(
   };
   logger.debug({ completionRequest }, 'Calling createCompletion');
 
-  const completionResponse = await openai.createCompletion(completionRequest, {
-    responseType: 'stream',
-    validateStatus: () => true,
-  });
+  const completionResponse = await openai.createCompletion(completionRequest);
 
   await checkOpenAIResponse(completionResponse, logger, 'createCompletion');
 
   let resultSoFar = '';
 
-  for await (const event of openAiEventsToJson<CreateCompletionResponse>(
-    completionResponse.data as unknown as AsyncIterable<Buffer>
-  )) {
+  // checkOpenAIResponse will throw if completionResponse.body is null, so we know it's not null here.
+  const responseIterator = asyncIteratorOfFetchStream(completionResponse.body!.getReader());
+
+  for await (const event of openAiEventsToJson<CreateCompletionResponse>(responseIterator)) {
     logger.trace({ event }, 'Got createCompletion event');
     resultSoFar += event.choices[0].text;
     yield resultSoFar;
@@ -215,11 +227,20 @@ export async function* OpenAICompletionModel(
 }
 
 export async function* OpenAIChatModel(
-  props: ModelPropsWithChildren & { model: ValidChatModel; logitBias?: Record<string, number> },
+  props: ModelPropsWithChildren & {
+    model: ValidChatModel;
+    logitBias?: Record<string, number>;
+    functionDefinitions?: FunctionDefinition[];
+  },
   { render, getContext, logger }: LLMx.ComponentContext
 ) {
   const messageElements = await render(props.children, {
-    stop: (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage,
+    stop: (e) =>
+      e.tag == SystemMessage ||
+      e.tag == UserMessage ||
+      e.tag == AssistantMessage ||
+      e.tag == FunctionCall ||
+      e.tag == FunctionResponse,
   });
   yield '';
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
@@ -241,11 +262,48 @@ export async function* OpenAIChatModel(
             role: 'assistant',
             content: await render(message),
           };
+        case FunctionCall:
+          return {
+            role: 'assistant',
+            content: '',
+            function_call: {
+              name: message.props.name,
+              arguments: JSON.stringify(message.props.args),
+            },
+          };
+        case FunctionResponse:
+          return {
+            role: 'function',
+            name: message.props.name,
+            content: await render(message.props.children),
+          };
         default:
           throw new Error(
             `ChatCompletion's prompts must be SystemMessage, UserMessage, or AssistantMessage, but this child was ${message.tag.name}`
           );
       }
+    })
+  );
+
+  const openaiFunctions: ChatCompletionFunctions[] | undefined = props.functionDefinitions?.map(
+    (functionDefinition) => ({
+      name: functionDefinition.name,
+      description: functionDefinition.description,
+      parameters: {
+        type: 'object',
+        required: Object.keys(functionDefinition.parameters).filter(
+          (name) => functionDefinition.parameters[name].required
+        ),
+        properties: Object.keys(functionDefinition.parameters).reduce(
+          (map: Record<string, any>, paramName) => ({
+            ...map,
+            [paramName]: {
+              type: functionDefinition.parameters[paramName].type,
+            },
+          }),
+          {}
+        ),
+      },
     })
   );
 
@@ -255,44 +313,66 @@ export async function* OpenAIChatModel(
     max_tokens: props.maxTokens,
     temperature: props.temperature,
     messages,
+    functions: openaiFunctions,
     stop: props.stop,
     logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
     stream: true,
   };
 
   logger.debug({ chatCompletionRequest }, 'Calling createChatCompletion');
-  const chatResponse = await openai.createChatCompletion(chatCompletionRequest, {
-    responseType: 'stream',
-    validateStatus: () => true,
-  });
+  const chatResponse = await openai.createChatCompletion(
+    // We can remove this once openai-edge updates to reflect the new chat function types.
+    // @ts-expect-error
+    chatCompletionRequest
+  );
 
   await checkOpenAIResponse(chatResponse, logger, 'createChatCompletion');
 
   type ChatCompletionDelta = Merge<
     CreateChatCompletionResponse,
     {
-      choices: { delta: Partial<ChatCompletionResponseMessage> }[];
+      choices: { delta: Partial<ChatCompletionResponseMessage>; finish_reason: string | undefined }[];
     }
   >;
 
-  const currentMessage = { content: '' } as Partial<ChatCompletionResponseMessage>;
+  const currentMessage = { content: undefined, function_call: undefined } as Partial<ChatCompletionResponseMessage>;
+  let finishReason: string | undefined = undefined;
   for await (const deltaMessage of openAiEventsToJson<ChatCompletionDelta>(
-    chatResponse.data as unknown as AsyncIterable<Buffer>
+    asyncIteratorOfFetchStream(chatResponse.body!.getReader())
   )) {
     logger.trace({ deltaMessage }, 'Got delta message');
+    finishReason = finishReason ?? deltaMessage.choices[0].finish_reason;
     const delta = deltaMessage.choices[0].delta;
     if (delta.role) {
       currentMessage.role = deltaMessage.choices[0].delta.role;
     }
     if (delta.content) {
+      currentMessage.content = currentMessage.content ?? '';
       currentMessage.content += delta.content;
       yield currentMessage.content;
+    }
+    if (delta.function_call) {
+      currentMessage.function_call = currentMessage.function_call ?? { name: '', arguments: '' };
+      if (delta.function_call.name) {
+        currentMessage.function_call.name += delta.function_call.name;
+      }
+      if (delta.function_call.arguments) {
+        currentMessage.function_call.arguments += delta.function_call.arguments;
+      }
     }
   }
 
   logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
 
-  return currentMessage.content;
+  if (currentMessage.function_call) {
+    return (
+      <FunctionCall
+        name={currentMessage.function_call.name ?? ''}
+        args={JSON.parse(currentMessage.function_call.arguments ?? '{}')}
+      />
+    );
+  }
+  return currentMessage.content ?? '';
 }
 
 /**
@@ -303,16 +383,10 @@ export async function* OpenAIChatModel(
  *          If numSamples is greater than 1, URLs are separated by newlines.
  */
 export async function DalleImageGen(
-  { numSamples = 1, size = '512x512', clipLongPrompt = true, children }: ImageGenPropsWithChildren,
+  { numSamples = 1, size = '512x512', children }: ImageGenPropsWithChildren,
   { render, getContext, logger }: LLMx.ComponentContext
 ) {
-  let prompt = await render(children);
-
-  // TODO: I only found the maximum length in their docs, not in the API itself.
-  const maxPromptLength = 1000;
-  if (clipLongPrompt && prompt.length > maxPromptLength) {
-    prompt = `${prompt.substring(0, maxPromptLength - 4)} ...`;
-  }
+  const prompt = await render(children);
 
   const openai = getContext(openAiClientContext);
 
@@ -343,11 +417,12 @@ export async function DalleImageGen(
   const response = await openai.createImage(imageRequest);
 
   if (response.status < 200 || response.status >= 300) {
-    throw new OpenAIError(response, 'createImage', JSON.stringify(response.data));
+    throw new OpenAIError(response, 'createImage', await response.text());
   } else {
     logger.debug({ statusCode: response.status, headers: response.headers }, 'createImage succeeded');
   }
 
   // return all image URLs as a newline-separated string
-  return _.map(response.data.data, 'url').join('\n');
+  const responseJson = (await response.json()) as ResponseTypes['createImage'];
+  return _.map(responseJson.data, 'url').join('\n');
 }
