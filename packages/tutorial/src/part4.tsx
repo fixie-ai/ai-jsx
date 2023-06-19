@@ -18,18 +18,23 @@ const docs = [
 const corpus = new LocalCorpus(staticLoader(docs), makeChunker(600, 100));
 await corpus.startLoading();
 
-function ShowDoc({ doc }: { doc: ScoredChunk }) {
+function GetChunk({ doc }: { doc: ScoredChunk }) {
   return doc.chunk.content;
 }
 
 function App() {
   return (
     <>
-      <DocsQA question="What was Hurricane Katrina?" corpus={corpus} limit={5} docComponent={ShowDoc} />
+      <DocsQA question="What was Hurricane Katrina?" corpus={corpus} chunkLimit={5} chunkFormatter={GetChunk} />
       {'\n\n'}
-      <DocsQA question="Which dates did the storm occur?" corpus={corpus} limit={5} docComponent={ShowDoc} />
+      <DocsQA question="Which dates did the storm occur?" corpus={corpus} chunkLimit={5} chunkFormatter={GetChunk} />
       {'\n\n'}
-      <DocsQA question="Where were the strongest winds reported?" corpus={corpus} limit={5} docComponent={ShowDoc} />
+      <DocsQA
+        question="Where were the strongest winds reported?"
+        corpus={corpus}
+        chunkLimit={5}
+        chunkFormatter={GetChunk}
+      />
     </>
   );
 }

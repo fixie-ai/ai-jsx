@@ -527,29 +527,33 @@ export interface DocsQAProps {
   corpus: Corpus;
 
   /**
-   * The query to answer.
+   * The question to answer.
    */
   question: string;
 
   /**
    *
-   * The maximum number of documents to return.
+   * When processing a DocsQA query, the most relevent chunks are presented to the model. This
+   * field limits the number of chunks to consider. If this value is too large, the size
+   * of the chunks may exceed the token limit of the model.
    */
-  limit?: number;
+  chunkLimit?: number;
 
   /**
    * The component used to format document chunks when they're presented to the model.
+   * This can be used to present the model with some metadata about the chunk, in a format
+   * that is appropriate to the type of document.
    *
    * ```tsx
-   *  function MyDocsComponent({ doc }: { doc: ScoredChunk }) {
+   *  function FormatChunk({ chunk }: { chunk: ScoredChunk }) {
    *    return <>
-   *      Title: {doc.chunk.documentName}
-   *      Content: {doc.content}
+   *      Title: {chunk.chunk.documentName}
+   *      Content: {chunk.chunk.content}
    *    </>
    *  }
    * ```
    */
-  docComponent: (props: { doc: ScoredChunk }) => Node;
+  chunkFormatter: (props: { doc: ScoredChunk }) => Node;
 }
 /**
  * A component that can be used to answer questions about documents. This is a very common usecase for LLMs.
@@ -559,7 +563,7 @@ export async function DocsQA(props: DocsQAProps) {
   if (status !== Corpus.LoadingState.COMPLETED) {
     return `Corpus is not loaded. It's in state: ${status.toString()}`;
   }
-  const docs = await props.corpus.search(props.question, { limit: props.limit });
+  const docs = await props.corpus.search(props.question, { limit: props.chunkLimit });
   return (
     <ChatCompletion>
       <SystemMessage>
@@ -567,7 +571,7 @@ export async function DocsQA(props: DocsQAProps) {
         use any other knowledge you have about the world. If you don't know how to answer the question, just say "I
         don't know." Here are the relevant document excerpts you have been given:
         {docs.map((doc) => (
-          <props.docComponent doc={doc} />
+          <props.chunkFormatter doc={doc} />
         ))}
         And here is the question you must answer:
       </SystemMessage>
