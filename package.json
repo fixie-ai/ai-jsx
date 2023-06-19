@@ -14,7 +14,7 @@
   "type": "module",
   "volta": {
     "node": "18.16.0",
-    "yarn": "4.0.0-rc.45"
+    "yarn": "3.6.0"
   },
   "scripts": {
     "format-for-turbo": "prettier --write .",
