@@ -11,7 +11,7 @@ export function ChatAgent({ conversation }: { conversation: string[] }) {
         conversation back to these topics that you care so deeply about.
       </SystemMessage>
       {conversation.map((message, index) =>
-        index % 2 != 0 ? <AssistantMessage>{message}</AssistantMessage> : <UserMessage>{message}</UserMessage>
+        index % 2 ? <AssistantMessage>{message}</AssistantMessage> : <UserMessage>{message}</UserMessage>
       )}
     </ChatCompletion>
   );
