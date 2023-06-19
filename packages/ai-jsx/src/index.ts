@@ -152,22 +152,6 @@ export interface RenderContext {
   [pushContextSymbol]: <T>(context: Context<T>, value: T) => RenderContext;
 }
 
-type AIElement = Element<any>;
-
-/**
- * The following is used to ensure type checking for JSX elements works correctly.
- * See: https://www.typescriptlang.org/docs/handbook/jsx.html#type-checking
- */
-export declare namespace JSX {
-  type ElementType = Component<any>;
-  interface Element extends AIElement {}
-  interface IntrinsicElements {}
-  interface ElementChildrenAttribute {
-    children: {};
-  }
-}
-
-/** @hidden */
 export function createElement<P extends { children: C }, C>(
   tag: Component<P>,
   props: Omit<P, 'children'> | null,

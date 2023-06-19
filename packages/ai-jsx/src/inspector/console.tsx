@@ -1,8 +1,7 @@
-/** @jsx React.createElement */
+/** @jsxImportSource ai-jsx/react */
 import * as AI from '../index.js';
 import { Node } from '../index.js';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import reactUse from 'react-use';
 import SyntaxHighlight from './syntax-highlight.js';
 import { memo } from '../core/memoize.js';
@@ -10,7 +9,6 @@ import Spinner from './spinner.js';
 import { DebugTree } from '../core/debug.js';
 
 import { Box, render, Text, useInput } from 'ink';
-// const { Box, render, Text, useInput } = require('ink');
 
 const { useList } = reactUse;
 
@@ -27,7 +25,7 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
 
     async function getAllFrames() {
       // This results in some duplicate pages.
-      const finalResult = await renderContext.render(AI.createElement(DebugTree, {}, memoized), {
+      const finalResult = await renderContext.render(<DebugTree>{memoized}</DebugTree>, {
         map: pushDebugTreeStep,
       });
       pushDebugTreeStep(finalResult);

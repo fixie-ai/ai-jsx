@@ -2,6 +2,7 @@ import 'server-only';
 import * as ReactModule from 'react';
 import * as AI from '../react/core.js';
 export * from '../react/core.js';
+import { JSX } from '../react/jsx-runtime.js';
 import { asJsxBoundary } from '../react/jsx-boundary.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
@@ -58,10 +59,10 @@ function computeSuffix(
 export const jsx = asJsxBoundary(function jsx(
   { children }: { children: AI.Node },
   context?: any | AI.ComponentContext
-) {
+): JSX.Element {
   if (typeof context?.render === 'function') {
     // We're in AI.JSX already.
-    return children as AI.JSX.Element;
+    return children as JSX.Element;
   }
 
   const renderResult = AI.createRenderContext().render(children, {
@@ -136,5 +137,5 @@ export const jsx = asJsxBoundary(function jsx(
   // Since we start without any prefix or <Suspense> boundary, `replace` is simply the identity function.
   return ReactModule.createElement(Stream as any, {
     replace: (node: ReactModule.ReactNode) => node,
-  }) as AI.JSX.Element;
+  }) as JSX.Element;
 });

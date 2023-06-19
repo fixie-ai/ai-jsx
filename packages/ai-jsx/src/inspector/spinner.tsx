@@ -1,4 +1,4 @@
-/** @jsx React.createElement */
+/** @jsxImportSource ai-jsx/react */
 
 /**
  * Adapted from https://github.com/vadimdemedes/ink-spinner

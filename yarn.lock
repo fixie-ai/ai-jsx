@@ -7359,7 +7359,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"ai-jsx@0.2.0-4, ai-jsx@^0.2.0-1, ai-jsx@^0.2.0-4, ai-jsx@workspace:packages/ai-jsx":
+"ai-jsx@^0.2.0-1, ai-jsx@^0.2.0-4, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
@@ -9378,7 +9378,7 @@ __metadata:
     "@types/react-dom": ^18.2.5
     "@typescript-eslint/eslint-plugin": ^5.59.11
     "@typescript-eslint/parser": ^5.59.11
-    ai-jsx: 0.2.0-4
+    ai-jsx: ^0.2.0-4
     babel-jest: ^27.4.2
     babel-loader: ^8.2.3
     babel-plugin-named-asset-import: ^0.3.8

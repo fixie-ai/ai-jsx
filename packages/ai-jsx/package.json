@@ -1,6 +1,10 @@
 {
   "name": "ai-jsx",
-  "version": "0.2.0-4",
+  "license": "MIT",
+  "repository": "fixie-ai/ai-jsx",
+  "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
+  "homepage": "https://ai-jsx.com",
+  "version": "0.2.0-6",
   "volta": {
     "extends": "../../package.json"
   },
@@ -13,6 +17,26 @@
       "require": {
         "types": "./dist/cjs/index.d.cts",
         "default": "./dist/cjs/index.cjs"
+      }
+    },
+    "./jsx-runtime": {
+      "import": {
+        "types": "./dist/esm/jsx-runtime.d.ts",
+        "default": "./dist/esm/jsx-runtime.js"
+      },
+      "require": {
+        "types": "./dist/cjs/jsx-runtime.d.cts",
+        "default": "./dist/cjs/jsx-runtime.cjs"
+      }
+    },
+    "./jsx-dev-runtime": {
+      "import": {
+        "types": "./dist/esm/jsx-runtime.d.ts",
+        "default": "./dist/esm/jsx-runtime.js"
+      },
+      "require": {
+        "types": "./dist/cjs/jsx-runtime.d.cts",
+        "default": "./dist/cjs/jsx-runtime.cjs"
       }
     },
     "./batteries/docs": {
@@ -185,6 +209,26 @@
         "default": "./dist/cjs/react/index.cjs"
       }
     },
+    "./react/jsx-runtime": {
+      "import": {
+        "types": "./dist/esm/react/jsx-runtime.d.ts",
+        "default": "./dist/esm/react/jsx-runtime.js"
+      },
+      "require": {
+        "types": "./dist/cjs/react/jsx-runtime.d.cts",
+        "default": "./dist/cjs/react/jsx-runtime.cjs"
+      }
+    },
+    "./react/jsx-dev-runtime": {
+      "import": {
+        "types": "./dist/esm/react/jsx-runtime.d.ts",
+        "default": "./dist/esm/react/jsx-runtime.js"
+      },
+      "require": {
+        "types": "./dist/cjs/react/jsx-runtime.d.cts",
+        "default": "./dist/cjs/react/jsx-runtime.cjs"
+      }
+    },
     "./react/completion": {
       "import": {
         "types": "./dist/esm/react/completion.d.ts",
@@ -203,16 +247,6 @@
       "require": {
         "types": "./dist/cjs/next/index.d.cts",
         "default": "./dist/cjs/next/index.cjs"
-      }
-    },
-    "./next/jsx-runtime": {
-      "import": {
-        "types": "./dist/esm/next/jsx-runtime.d.ts",
-        "default": "./dist/esm/next/jsx-runtime.js"
-      },
-      "require": {
-        "types": "./dist/cjs/next/jsx-runtime.d.cts",
-        "default": "./dist/cjs/next/jsx-runtime.cjs"
       }
     }
   },

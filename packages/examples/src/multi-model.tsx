@@ -1,4 +1,3 @@
-import * as AI from 'ai-jsx';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { OpenAI } from 'ai-jsx/lib/openai';
 import { showInspector } from 'ai-jsx/core/inspector';

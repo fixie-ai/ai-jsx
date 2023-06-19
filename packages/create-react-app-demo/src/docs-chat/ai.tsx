@@ -1,15 +1,13 @@
-/** @jsx AI.createElement */
-/** @jsxFrag AI.Fragment */
-import * as AI from 'ai-jsx';
+/** @jsxImportSource ai-jsx/react */
 import { DocsQA, DefaultFormatter, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
-
-let globalCorpus: LocalCorpus | undefined;
+import _ from 'lodash';
 
 /**
  * This is a very simple example of how to build a document corpus.
  * We pull markdown content from a set of URLs and then index it.
+ * Note the use of once() to ensure we cache the indexing result.
  */
-export async function indexCorpus() {
+const indexCorpus = _.once(async () => {
   const files = {
     'getting-started.md': 'Getting Started',
     'guides/ai-ui.md': 'AI + UI',
@@ -37,14 +35,8 @@ export async function indexCorpus() {
   const stats = await corpus.startLoading();
   console.log(`Finished indexing documents, chunk count=${stats.numChunks}`);
   return corpus;
-}
+});
 
-/**
- * Build the corpus on the first query, then use it for all subsequent queries.
- */
 export async function DocsAgent({ question }: { question: string }) {
-  if (!globalCorpus) {
-    globalCorpus = await indexCorpus();
-  }
-  return <DocsQA question={question} corpus={globalCorpus} chunkLimit={5} chunkFormatter={DefaultFormatter} />;
+  return <DocsQA question={question} corpus={await indexCorpus()} chunkLimit={5} chunkFormatter={DefaultFormatter} />;
 }

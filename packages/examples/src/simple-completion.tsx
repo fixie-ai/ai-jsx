@@ -1,4 +1,3 @@
-import * as AI from 'ai-jsx';
 import { Completion } from 'ai-jsx/core/completion';
 import { showInspector } from 'ai-jsx/core/inspector';
 

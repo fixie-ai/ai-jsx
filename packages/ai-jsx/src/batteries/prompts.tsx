@@ -5,8 +5,6 @@
  * This file attempts to provide some good defaults as a starting point.
  * @packageDocumentation
  */
-
-import * as AI from '../index.js';
 import { SystemMessage } from '../core/completion.js';
 
 /**
