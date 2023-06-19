@@ -1,5 +1,9 @@
 {
   "name": "ai-jsx",
+  "license": "MIT",
+  "repository": "fixie-ai/ai-jsx",
+  "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
+  "homepage": "https://ai-jsx.com",
   "version": "0.2.0-6",
   "volta": {
     "extends": "../../package.json"
