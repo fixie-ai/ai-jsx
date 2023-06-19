@@ -40,11 +40,11 @@ const indexCorpus = _.once(async () => {
   ];
 
   const docs = await Promise.all(
-    Object.entries(files).map(async (path) => {
+    files.map(async (path) => {
       const url = `https://raw.githubusercontent.com/fixie-ai/ai-jsx/main/packages/docs/docs/${path}`;
       const response = await fetch(url);
       const markdown = await response.text();
-      const titleMatch = markdown.match(/^# (.*)/);
+      const titleMatch = markdown.match(/# (.*)/);
       const title = titleMatch ? titleMatch[1] : 'Untitled';
       console.log(`Retrieved document from ${url}, title=${title}`);
       return {
