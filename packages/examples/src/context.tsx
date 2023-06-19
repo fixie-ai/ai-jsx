@@ -1,10 +1,10 @@
 import { showInspector } from 'ai-jsx/core/inspector';
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { Completion } from 'ai-jsx/core/completion';
 import { Inline } from 'ai-jsx/core/inline';
 import { Node, RenderContext } from 'ai-jsx';
 
-const Temperature = LLMx.createContext(0.0);
+const Temperature = AI.createContext(0.0);
 
 function CharacterGenerator(props: Record<string, never>, { getContext }: RenderContext) {
   const inlineCompletion = (prompt: Node) => (

@@ -1,5 +1,4 @@
-// @ts-nocheck
-
+/** @jsxImportSource ai-jsx/react */
 import * as AI from 'ai-jsx/next';
 import ResultContainer from '@/components/ResultContainer';
 import InputPrompt from '@/components/InputPrompt';

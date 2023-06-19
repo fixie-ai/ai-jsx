@@ -1,4 +1,4 @@
-import * as LLMx from '../index.js';
+import * as AI from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
 import { DalleImageGen } from '../lib/openai.js';
 
@@ -30,7 +30,7 @@ function AutomaticImageGenModel({ children, ...props }: ImageGenPropsWithChildre
   );
 }
 
-const imageGenContext = LLMx.createContext<[ImageGenComponent<ImageGenPropsWithChildren>, ImageGenProps]>([
+const imageGenContext = AI.createContext<[ImageGenComponent<ImageGenPropsWithChildren>, ImageGenProps]>([
   AutomaticImageGenModel,
   {},
 ]);

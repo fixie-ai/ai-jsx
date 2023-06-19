@@ -139,7 +139,7 @@ function App() {
     </ChatCompletion>
   );
 }
-LLMx.createRenderContext().render(<App />, {
+AI.createRenderContext().render(<App />, {
   map: handlePartialResults,
 });
 ```
@@ -229,7 +229,7 @@ interface PersonAvailability {
 }
 
 // Format the user's availability as a JSON object
-const availability: PersonAvailability = await LLMx.createRenderContext().render(
+const availability: PersonAvailability = await AI.createRenderContext().render(
   <JsonOutput>
     <ChatCompletion>
       <SystemMessage>You are an English-to-JSON translator. The user will give you a list of people's availabilities.

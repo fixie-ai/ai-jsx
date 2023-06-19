@@ -1,5 +1,4 @@
 import { showInspector } from 'ai-jsx/core/inspector';
-import * as LLMx from 'ai-jsx';
 import { Node } from 'ai-jsx';
 import { SystemMessage, Completion } from 'ai-jsx/core/completion';
 import { Inline } from 'ai-jsx/core/inline';

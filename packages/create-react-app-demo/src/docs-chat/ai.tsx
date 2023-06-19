@@ -1,6 +1,4 @@
-/** @jsx AI.createElement */
-/** @jsxFrag AI.Fragment */
-import * as AI from 'ai-jsx';
+/** @jsxImportSource ai-jsx/react */
 import { DocsQA, DefaultFormatter, LocalCorpus, defaultChunker, staticLoader } from 'ai-jsx/batteries/docs';
 
 let globalCorpus: LocalCorpus | undefined;

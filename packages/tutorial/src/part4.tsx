@@ -1,6 +1,5 @@
 import fetch from 'node-fetch';
 import TurndownService from 'turndown';
-import * as LLMx from 'ai-jsx';
 import { DocsQA, ScoredChunk, LocalCorpus, makeChunker, staticLoader } from 'ai-jsx/batteries/docs';
 import { showInspector } from 'ai-jsx/core/inspector';
 

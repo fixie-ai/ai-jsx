@@ -15,22 +15,29 @@ async function moveAndRename(source) {
     } else if (file.isFile()) {
       const parsed = parse(file.name);
 
-      // Ignore anything that's not a .js file
-      if (parsed.ext !== '.js') {
-        continue;
+      if (parsed.ext === '.js') {
+        // Rewrite any require statements to use .cjs
+        const content = await readFile(abs(`${source}/${file.name}`), 'utf8');
+        const rewritten = content.replace(/require\("(\..+?).js"\)/g, (_, p1) => {
+          return `require("${p1}.cjs")`;
+        });
+
+        // Rename the file to .cjs
+        const renamed = format({ name: parsed.name, ext: '.cjs' });
+
+        await writeFile(abs(`${source}/${renamed}`), rewritten, 'utf8');
+        await unlink(abs(`${source}/${file.name}`));
+      } else if (parsed.ext === '.ts') {
+        // Rewrite any import/export statements to use .cts
+        const content = await readFile(abs(`${source}/${file.name}`), 'utf8');
+        const rewritten = content.replace(/((import|export) .* from )["'](\..+?)\.js["']/g, (_, p1, p2, p3) => {
+          return `${p1}"${p3}.cjs"`;
+        });
+
+        const renamed = format({ name: parsed.name, ext: '.cts' });
+        await writeFile(abs(`${source}/${renamed}`), rewritten, 'utf8');
+        await unlink(abs(`${source}/${file.name}`));
       }
-
-      // Rewrite any require statements to use .cjs
-      const content = await readFile(abs(`${source}/${file.name}`), 'utf8');
-      const rewritten = content.replace(/require\("(\..+?).js"\)/g, (_, p1) => {
-        return `require("${p1}.cjs")`;
-      });
-
-      // Rename the file to .cjs
-      const renamed = format({ name: parsed.name, ext: '.cjs' });
-
-      await writeFile(abs(`${source}/${renamed}`), rewritten, 'utf8');
-      await unlink(abs(`${source}/${file.name}`));
     }
   }
 }

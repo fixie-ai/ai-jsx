@@ -1,5 +1,5 @@
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
-import * as LLMx from '../index.js';
+import * as AI from '../index.js';
 import { Node, RenderContext } from '../index.js';
 import { MergeExclusive } from 'type-fest';
 import _ from 'lodash';
@@ -66,9 +66,9 @@ export async function* NaturalLanguageRouter(props: { children: Node; query: Nod
   });
   const whenOptionsFromThisRenderedChildren = _.compact(
     renderedChildren
-      .filter(LLMx.isElement)
+      .filter(AI.isElement)
       .filter(({ tag }) => tag === Route)
-      .map(({ props }: { props: LLMx.PropsOfComponent<typeof Route> }) => props.when)
+      .map(({ props }: { props: AI.PropsOfComponent<typeof Route> }) => props.when)
   );
 
   const whenOptions = [noMatch, ...whenOptionsFromThisRenderedChildren];
@@ -77,7 +77,7 @@ export async function* NaturalLanguageRouter(props: { children: Node; query: Nod
   const logitBiases = Object.fromEntries(_.range(whenOptions.length + 1).map((i) => [i.toString(), 100]));
 
   // Yield the surrounding content before blocking on the completion.
-  yield renderedChildren.filter((e) => !LLMx.isElement(e));
+  yield renderedChildren.filter((e) => !AI.isElement(e));
 
   const choice = await render(
     <ChatCompletion maxTokens={1} logitBias={logitBiases}>
@@ -99,7 +99,7 @@ export async function* NaturalLanguageRouter(props: { children: Node; query: Nod
 
   // Keep only the routes that matched.
   return renderedChildren.filter((e) => {
-    if (!LLMx.isElement(e)) {
+    if (!AI.isElement(e)) {
       return true;
     }
 

@@ -1,7 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import * as LLMx from 'ai-jsx';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { ImageGen } from 'ai-jsx/core/image-gen';
 import { showInspector } from 'ai-jsx/core/inspector';
@@ -24,7 +23,7 @@ async function App() {
 }
 
 showInspector(<App />);
-// console.log(await LLMx.createRenderContext().render(<App />));
+// console.log(await AI.createRenderContext().render(<App />));
 
 function MakeCharacter() {
   return (
@@ -87,4 +86,4 @@ function WriteStoryWithImage() {
 }
 
 // showInspector(<WriteStoryWithImage />)
-// console.log(await LLMx.createRenderContext().render(<WriteStoryWithImage />));
+// console.log(await AI.createRenderContext().render(<WriteStoryWithImage />));

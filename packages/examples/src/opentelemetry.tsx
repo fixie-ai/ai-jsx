@@ -3,7 +3,7 @@ import { NodeSDK } from '@opentelemetry/sdk-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx';
 import { Completion } from 'ai-jsx/core/completion';
 import { Inline } from 'ai-jsx/core/inline';
 import { debug } from 'ai-jsx/core/debug';
@@ -25,13 +25,13 @@ export function bindAsyncGenerator<T = unknown, TReturn = any, TNext = unknown>(
   return result;
 }
 
-function OpenTelemetryTracer(props: { children: LLMx.Node }, { wrapRender }: LLMx.ComponentContext) {
-  return LLMx.withContext(
+function OpenTelemetryTracer(props: { children: AI.Node }, { wrapRender }: AI.ComponentContext) {
+  return AI.withContext(
     <>{props.children}</>,
     wrapRender((r) => {
       const tracer = opentelemetry.trace.getTracer('ai.jsx');
       return (renderContext, renderable, shouldStop) =>
-        LLMx.isElement(renderable)
+        AI.isElement(renderable)
           ? tracer.startActiveSpan(
               `<${renderable.tag.name}>`,
               { attributes: { 'ai.jsx.tag': renderable.tag.name, 'ai.jsx.tree': debug(renderable, true) } },
@@ -53,7 +53,7 @@ function OpenTelemetryTracer(props: { children: LLMx.Node }, { wrapRender }: LLM
 }
 
 function CharacterGenerator() {
-  const inlineCompletion = (prompt: LLMx.Node) => (
+  const inlineCompletion = (prompt: AI.Node) => (
     <Completion stop={['"']} temperature={1.0}>
       {prompt}
     </Completion>
@@ -103,7 +103,7 @@ const sdk = new NodeSDK({
 sdk.start();
 
 console.log(
-  await LLMx.createRenderContext().render(
+  await AI.createRenderContext().render(
     <OpenTelemetryTracer>
       <CharacterGenerator />
     </OpenTelemetryTracer>
