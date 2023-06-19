@@ -9,7 +9,6 @@ import { TokenTextSplitter } from 'langchain/text_splitter';
 import { similarity } from 'ml-distance';
 import { Jsonifiable } from 'type-fest';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
-import * as AI from '../index.js';
 import { Node } from '../index.js';
 
 /**
