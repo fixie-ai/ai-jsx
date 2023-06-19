@@ -25,7 +25,7 @@ export default function Home(props: { searchParams: any }) {
       </ResultContainer>
       <ResultContainer
         title={`Natural Language GitHub Search for: "${githubTopic}"`}
-        description="AI has been asked to output HTML, and we write it directly into the DOM."
+        description="AI has been asked to output HTML, and we write it directly into the DOM. (If the AI generates something other than HTML, this could produce funky results.)"
       >
         <AI.jsx>
           <NaturalLanguageGitHubSearch query={githubTopic} outputFormat="html" />

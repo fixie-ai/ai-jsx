@@ -1,10 +1,10 @@
 const isJsxBoundarySymbol = Symbol('AI.jsx boundary');
 
 /**
- * Indicates that the tag is an AI.jsx tag. (Different flavors of React have different implementations.)
+ * Indicates that the tag is an AI.jsx tag. Different flavors of React (e.g. React vs NextJS) can have different implementations.
  */
-export function markAsJsxBoundary(tag: Function) {
-  return ((tag as any)[isJsxBoundarySymbol] = true);
+export function asJsxBoundary<T extends Function>(tag: T): T {
+  return Object.assign(tag, { [isJsxBoundarySymbol]: true });
 }
 
 /**

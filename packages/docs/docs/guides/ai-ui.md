@@ -59,25 +59,39 @@ For this demo, we've set up a hacked version of NextJS to support server-side re
 
 ### How To
 
-1. Import the `ai-jsx/next` module:
+1.  Import the `ai-jsx/next` module:
 
-   ```tsx
-   import * as AI from 'ai-jsx/next';
-   ```
+    ```tsx
+    import * as AI from 'ai-jsx/next';
+    ```
 
-1. Use the `AI.jsx` component to convert between React and AI.JSX components:
+1.  Use the `AI.jsx` component to convert between React and AI.JSX components:
 
-   ```tsx
-   <ResultContainer title={`AI lists ten facts about ${query}`}>
-     <AI.jsx>
-       <ChatCompletion temperature={1}>
-         <UserMessage>Give me ten facts about {query}</UserMessage>
-       </ChatCompletion>
-     </AI.jsx>
-   </ResultContainer>
-   ```
+    ```tsx
+    <ResultContainer title={`AI lists ten facts about ${query}`}>
+      <AI.jsx>
+        <ChatCompletion temperature={1}>
+          <UserMessage>Give me ten facts about {query}</UserMessage>
+        </ChatCompletion>
+      </AI.jsx>
+    </ResultContainer>
+    ```
 
-1. TODO: Support embedded React components
+1.  Within an `AI.jsx` subtree, you can use `AI.React` to nest React components. If they are internally rendered to
+    a string (e.g. as part of a prompt), they will be serialized to JSX. Otherwise they will be emitted by the top-level
+    `AI.jsx` component.
+
+        ```tsx
+        <ReactComponent>
+          <AI.jsx>
+            <AIComponent>
+              <AI.React>
+                <ReactComponent />
+              </AI.React>
+            </AIComponent>
+          </AI.jsx>
+        </ReactComponent>
+        ```
 
 ### Limitations & Implementation Notes
 

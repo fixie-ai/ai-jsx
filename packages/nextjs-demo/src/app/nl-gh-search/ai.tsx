@@ -1,5 +1,5 @@
 // @ts-nocheck
-import * as LLMx from 'ai-jsx';
+import * as AI from 'ai-jsx/next';
 import { graphql } from '@octokit/graphql';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 
@@ -15,7 +15,7 @@ function QueryGitHub({ query }: { query: string }) {
   );
 }
 
-async function FetchGitHubGraphQL({ graphQLQuery }: { graphQLQuery: LLMx.Node }, context: LLMx.RenderContext) {
+async function FetchGitHubGraphQL({ graphQLQuery }: { graphQLQuery: AI.Node }, context: AI.RenderContext) {
   const ghToken = process.env.GITHUB_TOKEN;
   if (!ghToken) {
     throw new Error('Please set the GITHUB_TOKEN environment variable.');
@@ -36,8 +36,8 @@ async function FetchGitHubGraphQL({ graphQLQuery }: { graphQLQuery: LLMx.Node },
   return JSON.stringify(response);
 }
 
-function FormatAsHtml({ children }: { children: LLMx.Node }) {
-  return (
+async function FormatAsHtml({ children }: { children: AI.Node }, { render }: AI.ComponentContext) {
+  const html = await render(
     <ChatCompletion>
       <SystemMessage>
         You are an expert designer. The user will give you a JSON blob, and you respond with styled HTML to display it.
@@ -46,9 +46,15 @@ function FormatAsHtml({ children }: { children: LLMx.Node }) {
       <UserMessage>{children}</UserMessage>
     </ChatCompletion>
   );
+
+  return (
+    <AI.React>
+      <div dangerouslySetInnerHTML={{ __html: html }} />
+    </AI.React>
+  );
 }
 
-function FormatAsProse({ children }: { children: LLMx.Node }) {
+function FormatAsProse({ children }: { children: AI.Node }) {
   return (
     <ChatCompletion>
       <SystemMessage>

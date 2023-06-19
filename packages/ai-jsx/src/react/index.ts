@@ -1,6 +1,6 @@
 import * as ReactModule from 'react';
 import * as LLMx from './core.js';
-import { markAsJsxBoundary } from './jsx-boundary.js';
+import { asJsxBoundary } from './jsx-boundary.js';
 export * from './core.js';
 
 function unwrapReact(partiallyRendered: LLMx.PartiallyRendered): ReactModule.ReactNode {
@@ -67,7 +67,7 @@ export function useAI(children: LLMx.Node, onStreamStart?: () => void, onStreamE
 /**
  * A JSX component that allows AI.jsx elements to be used in a React component tree.
  */
-export function jsx(
+export const jsx = asJsxBoundary(function jsx(
   {
     children,
     onStreamStart,
@@ -85,6 +85,4 @@ export function jsx(
   const waitingForFirstAIResponse = !ai.isDone && Array.isArray(ai.result) && ai.result.length === 0;
 
   return ReactModule.createElement(ReactModule.Fragment, null, waitingForFirstAIResponse ? loading : ai.result) as any;
-}
-
-markAsJsxBoundary(jsx);
+});
