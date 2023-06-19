@@ -1,6 +1,7 @@
 {
   "name": "ai-jsx",
   "version": "0.2.0-4",
+  "license": "MIT",
   "volta": {
     "extends": "../../package.json"
   },
