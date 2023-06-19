@@ -106,6 +106,10 @@ import * as AI from 'ai-jsx/next';
 </div>;
 ```
 
+:::caution AI.JSX is not React
+AI.JSX is conceptually similar to, but not the same as, React. There are different (simpler) [rules of how it works](./rules-of-jsx.md).
+:::
+
 ## Just-in-Time (JIT) UI
 
 In traditional UI development, human engineers write deterministic code to handle every possible UI state. With JIT UI, human engineers produce building block components, then hand those to an AI to use in its response.
