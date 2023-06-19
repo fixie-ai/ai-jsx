@@ -3,7 +3,7 @@
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 
 export function ChatAgent({ conversation }: { conversation: string[] }) {
-  console.log("conversation: " + conversation);
+  console.log('conversation: ' + conversation);
   return (
     <ChatCompletion>
       <SystemMessage>
@@ -12,11 +12,7 @@ export function ChatAgent({ conversation }: { conversation: string[] }) {
         conversation back to these topics that you care so deeply about.
       </SystemMessage>
       {conversation.map((message, index) =>
-        index % 2 != 0 ? (
-          <AssistantMessage>{message}</AssistantMessage>
-        ) : (
-          <UserMessage>{message}</UserMessage>
-        )
+        index % 2 != 0 ? <AssistantMessage>{message}</AssistantMessage> : <UserMessage>{message}</UserMessage>
       )}
     </ChatCompletion>
   );

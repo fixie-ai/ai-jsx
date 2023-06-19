@@ -1,6 +1,7 @@
 /** @jsxImportSource ai-jsx/react */
 import * as AI from 'ai-jsx/react';
-import React, {useState} from 'react';
+import { useAI } from 'ai-jsx/react';
+import React, { useState } from 'react';
 import { ChatAgent } from './ai.tsx';
 import { useList } from 'react-use';
 import ResultContainer from '../ResultContainer.tsx';
@@ -36,7 +37,7 @@ const AgentResponse = React.memo(function AgentResponse({
     <ConversationItem responseType="bot">
       <AI.jsx
         onStreamStart={() => setCallInProgress(true)}
-        onStreamEnd={(message: string) => { setCallInProgress(false); conversation.push(message); }}
+        onStreamEnd={() => setCallInProgress(false)}
         loading="Thinking..."
       >
         <ChatAgent conversation={conversation} />
@@ -46,30 +47,35 @@ const AgentResponse = React.memo(function AgentResponse({
 });
 
 export function BasicChat() {
-  const [userMessages, { push: pushUserMessage }] = useList<string>([]);
+  const [userMessages, { push: pushUserMessage, updateAt: updateUserMessage }] = useList<string>([]);
   const [callInProgress, setCallInProgress] = useState(false);
 
-  function handleInputSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleInputSubmit(event: React.FormEvent<HTMLFormElement>) {
     // @ts-expect-error
     const element = event.target.elements.message;
     event.preventDefault();
-    pushUserMessage(element.value);
-
+    const message = element.value;
     element.value = '';
+    pushUserMessage(message, '...');
+    const index = userMessages.length + 1;
+    setCallInProgress(true);
+    await AI.createRenderContext().render(<ChatAgent conversation={[...userMessages, message]} />, {
+      map: (frame) => {
+        updateUserMessage(index, frame);
+      },
+    });
+    setCallInProgress(false);
   }
 
   return (
     <ResultContainer title="Basic Chat" description="In this demo, you can chat with a quirky assistant.">
       <ul>
         {userMessages.map((response, index) => [
-          <li key={`${index}-user`} className="mt-4">
-            <ConversationItem responseType="user">{response}</ConversationItem>
-          </li>,
-          <li key={`${index}-agent`} className="mt-4">
-            <AgentResponse conversation={userMessages} setCallInProgress={setCallInProgress} />
+          <li key={index} className="mt-4">
+            <ConversationItem responseType={index % 2 ? 'bot' : 'user'}>{response}</ConversationItem>
           </li>,
         ])}
-      </ul>      
+      </ul>
       <form onSubmit={handleInputSubmit} className="mt-4 flex w-full">
         <input
           disabled={callInProgress}
