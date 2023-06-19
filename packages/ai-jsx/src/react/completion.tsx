@@ -1,3 +1,4 @@
+/** @jsxImportSource ai-jsx/react */
 import * as AI from './core.js';
 import React from 'react';
 import { SystemMessage, UserMessage } from '../core/completion.js';

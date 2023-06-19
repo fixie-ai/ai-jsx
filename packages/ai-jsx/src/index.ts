@@ -113,17 +113,6 @@ export interface RenderContext {
   [pushContextSymbol]: <T>(context: Context<T>, value: T) => RenderContext;
 }
 
-type AIElement = Element<any>;
-
-export declare namespace JSX {
-  type ElementType = Component<any>;
-  interface Element extends AIElement {}
-  interface IntrinsicElements {}
-  interface ElementChildrenAttribute {
-    children: {};
-  }
-}
-
 export function createElement<P extends { children: C }, C>(
   tag: Component<P>,
   props: Omit<P, 'children'> | null,
