@@ -28,4 +28,7 @@ jobs:
       - run: YARN_CHECKSUM_BEHAVIOR=ignore ~/.volta/bin/yarn install --immutable
         env:
           OPENAI_API_KEY: 'FAKE-OPENAI-API-KEY'
+      # Build everything with turbo
       - run: ~/.volta/bin/yarn test
+      # Run tests for each package. When a package is set up with jest, add it here.
+      - run: ~/.volta/bin/yarn workspace ai-jsx test
