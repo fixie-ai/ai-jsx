@@ -34,6 +34,7 @@ function InspectorTitle({ frame, totalFrames, done }: { frame: number; totalFram
       <Text>🦊 AI.JSX Inspector</Text>
       <Spacer />
       <Text color="grey">
+        {!done ? <Spinner /> : ''}
         Frame {frame}/{totalFrames}
         {done ? '' : '+'}
       </Text>
@@ -80,7 +81,7 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
   const [debugTreeSteps, { push: pushDebugTreeStep }] = useList([] as string[]);
   const [debugTreeFrameIndex, setDebugTreeFrameIndex] = useState<number | null>(null);
   const [debugTreeStreamIsDone, setDebugTreeStreamIsDone] = useState(false);
-  const [columns, rows] = useStdoutDimensions();
+  const [_columns, rows] = useStdoutDimensions();
 
   const [renderedContent, setRenderedContent] = useState('');
 
