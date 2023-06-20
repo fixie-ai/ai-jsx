@@ -6,13 +6,16 @@ if (!process.env.OPENAI_API_KEY) {
 }
 const app = express();
 
-app.post('*', expressHttpProxy('https://api.openai.com', {
-  proxyReqOptDecorator(req) {
-    req.headers = req.headers ?? {};
-    req.headers.authorization = `Bearer ${process.env.OPENAI_API_KEY}`;
-    return req;
-  }
-}));
+app.post(
+  '*',
+  expressHttpProxy('https://api.openai.com', {
+    proxyReqOptDecorator(req) {
+      req.headers = req.headers ?? {};
+      req.headers.authorization = `Bearer ${process.env.OPENAI_API_KEY}`;
+      return req;
+    },
+  })
+);
 
 app.listen(4000, () => {
   console.log('Server listening on port 4000');
