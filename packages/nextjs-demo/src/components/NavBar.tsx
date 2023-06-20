@@ -11,8 +11,8 @@ export default function NavBar() {
   const pages = {
     'Basic Completion': '/basic-completion',
     'Docs Chat': '/docs-chat',
-    'JIT UI: React': '/recipe',
-    'JIT UI: Raw HTML': '/nl-gh-search',
+    'Recipe JIT UI (Components)': '/recipe',
+    'GitHub JIT UI (Raw HTML)': '/nl-gh-search',
   };
 
   return (

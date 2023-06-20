@@ -72,7 +72,7 @@ export default function RecipeWrapper({ searchParams }: { searchParams: any }) {
     <>
       <InputPrompt label="What would you like a recipe for?" defaultValue={defaultValue} />
 
-      <ResultContainer title={`AI comes up with a recipe for ${query}`}>
+      <ResultContainer title={`AI comes up with a recipe for "${query}"`}>
         <Suspense fallback={'Loading...'}>
           <AI.jsx>
             <UICompletion
