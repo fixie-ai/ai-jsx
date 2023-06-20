@@ -325,7 +325,9 @@ export class LangChainEmbeddingWrapper implements Embedding {
 //   throw new Error('OPENAI_API_KEY not set');
 // }
 export const defaultEmbedding = new LangChainEmbeddingWrapper(
-  new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY })
+  // new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY })
+  // @ts-expect-error
+  null
 );
 
 /**
