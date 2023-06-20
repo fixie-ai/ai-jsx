@@ -21,7 +21,7 @@ export default function BasicCompletion() {
           </UseHostOpenAIProxy>
         </AI.jsx>
       </ResultContainer>
-      <ResultContainer title={`AI lists ten facts about ${query}`}>
+      {/* <ResultContainer title={`AI lists ten facts about ${query}`}>
         <AI.jsx>
           <UseHostOpenAIProxy>
             <ChatCompletion temperature={1}>
@@ -29,7 +29,7 @@ export default function BasicCompletion() {
             </ChatCompletion>
           </UseHostOpenAIProxy>
         </AI.jsx>
-      </ResultContainer>
+      </ResultContainer> */}
     </>
   );
 }

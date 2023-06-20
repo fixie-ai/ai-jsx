@@ -9465,6 +9465,7 @@ __metadata:
     fs-extra: ^10.0.0
     html-webpack-plugin: ^5.5.0
     http-proxy: ^1.18.1
+    http-proxy-middleware: ^2.0.6
     identity-obj-proxy: ^3.0.0
     jest: ^27.4.3
     jest-resolve: ^27.4.2
@@ -13482,7 +13483,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"http-proxy-middleware@npm:^2.0.3":
+"http-proxy-middleware@npm:^2.0.3, http-proxy-middleware@npm:^2.0.6":
   version: 2.0.6
   resolution: "http-proxy-middleware@npm:2.0.6"
   dependencies:
