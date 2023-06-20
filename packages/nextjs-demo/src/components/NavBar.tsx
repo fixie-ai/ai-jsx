@@ -13,6 +13,7 @@ export default function NavBar() {
     'Docs Chat': '/docs-chat',
     'JIT UI: React': '/recipe',
     'JIT UI: Raw HTML': '/nl-gh-search',
+    'Streaming API': '/stream',
   };
 
   return (
