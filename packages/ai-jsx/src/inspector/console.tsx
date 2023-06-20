@@ -43,7 +43,7 @@ function InspectorTitle({ frame, totalFrames, done }: { frame: number; totalFram
 
 function LiveStream({ content, width, height }: { content: string; width: string; height: number | string }) {
   return (
-    <Box borderStyle="round" borderColor="blue" flexDirection="column" width={width} height={height}>
+    <Box borderStyle="round" borderColor="blue" flexDirection="column" width={width} height={height} overflow="hidden" >
       <Text>{content}</Text>
     </Box>
   );
@@ -51,7 +51,7 @@ function LiveStream({ content, width, height }: { content: string; width: string
 
 function DebugTreeStream({ content, width, height }: { content: string; width: string; height: number | string }) {
   return (
-    <Box borderStyle="round" borderColor="blue" flexDirection="column" paddingLeft={2} width={width} height={height}>
+    <Box borderStyle="round" borderColor="blue" flexDirection="column" paddingLeft={2} width={width} height={height} overflow="hidden" >
       <Text color="green">
         {/* This doesn't handle JSX well, but it's better than nothing. */}
         <SyntaxHighlight code={content} language="javascript"></SyntaxHighlight>
@@ -63,7 +63,7 @@ function DebugTreeStream({ content, width, height }: { content: string; width: s
 function StatusBar() {
   return (
     <Box width="100%" height={1}>
-      <Text>Left/right arrow keys to browse history, q to quit.</Text>
+      <Text>Left/right arrow keys to browse history, 1=first, 9=last, q to quit.</Text>
     </Box>
   );
 }
@@ -106,6 +106,12 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
       setDebugTreeFrameIndex((prevIndex) =>
         prevIndex === null ? debugTreeSteps.length - 2 : Math.max(0, prevIndex - 1)
       );
+    }
+    if (input === "1") {
+      setDebugTreeFrameIndex(0);
+    }
+    if (input === "9") {
+      setDebugTreeFrameIndex(debugTreeSteps.length - 1);
     }
     if (input === 'q') {
       process.exit();
