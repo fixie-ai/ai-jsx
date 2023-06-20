@@ -167,7 +167,7 @@ export function useAIStream(options: UseAIStreamOpts): UseAIStreamResult {
 }
 
 /**
- * A JSX component that allows AI.jsx elements to be used in a React component tree.
+ * A JSX component that allows AI.JSX elements to be used in a React component tree.
  */
 export const jsx = asJsxBoundary(function jsx(
   {
@@ -188,3 +188,4 @@ export const jsx = asJsxBoundary(function jsx(
 
   return ReactModule.createElement(ReactModule.Fragment, null, waitingForFirstAIResponse ? loading : ai.result) as any;
 });
+export const JSX = jsx;
