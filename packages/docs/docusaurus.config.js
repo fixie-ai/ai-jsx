@@ -38,25 +38,13 @@ const config = {
       {
         // If you add new public-facing entry points, please ensure that they are listed below
         // so that the published API documentation will include them.
-        entryPoints: [
-          '../ai-jsx/src/index.ts',
-          '../ai-jsx/src/core/completion.tsx',
-          '../ai-jsx/src/core/debug.tsx',
-          '../ai-jsx/src/core/error-boundary.ts',
-          '../ai-jsx/src/core/errors.ts',
-          '../ai-jsx/src/core/image-gen.tsx',
-          '../ai-jsx/src/core/inline.tsx',
-          '../ai-jsx/src/core/log.ts',
-          '../ai-jsx/src/core/memoize.tsx',
-          '../ai-jsx/src/inspector/console.tsx',
-          '../ai-jsx/src/lib/openai.tsx',
-          '../ai-jsx/src/batteries/constrained-output.tsx',
-          '../ai-jsx/src/batteries/docs.tsx',
-          '../ai-jsx/src/batteries/natural-language-router.tsx',
-          '../ai-jsx/src/batteries/prompts.tsx',
-          '../ai-jsx/src/batteries/use-tools.tsx',
-        ],
         tsconfig: '../ai-jsx/tsconfig.json',
+        sidebar: {
+          categoryLabel: 'API Reference',
+          collapsed: true,
+          position: 20,
+          fullNames: true,
+        },
       },
     ],
   ],
@@ -101,6 +89,16 @@ const config = {
             sidebarId: 'tutorialSidebar',
             position: 'left',
             label: 'Docs',
+          },
+          {
+            href: 'https://github.com/fixie-ai/ai-jsx',
+            label: 'GitHub',
+            position: 'right',
+          },
+          {
+            href: 'https://discord.gg/MsKAeKF8kU',
+            label: 'Discord',
+            position: 'right',
           },
         ],
       },

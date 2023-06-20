@@ -3,5 +3,33 @@
   "include": ["src/**/*", ".eslintrc.cjs"],
   "compilerOptions": {
     "outDir": "dist/esm"
+  },
+  "typedocOptions": {
+    "entryPoints": [
+      "src/core/core.ts",
+      "src/core/completion.tsx",
+      "src/core/debug.tsx",
+      "src/core/error-boundary.ts",
+      "src/core/errors.ts",
+      "src/core/image-gen.tsx",
+      "src/core/inline.tsx",
+      "src/core/log.ts",
+      "src/core/memoize.tsx",
+      "src/inspector/console.tsx",
+      "src/lib/openai.tsx",
+      "src/batteries/constrained-output.tsx",
+      "src/batteries/docs.tsx",
+      "src/batteries/natural-language-router.tsx",
+      "src/batteries/prompts.tsx",
+      "src/batteries/use-tools.tsx"
+    ],
+    "sort": ["kind", "visibility", "instance-first", "required-first", "alphabetical"],
+    "excludePrivate": true,
+    "excludeInternal": true,
+    "excludeExternals": true,
+    "excludeNotDocumented": false,
+    "includeVersion": true,
+    "sourceLinkTemplate": "https://github.com/fixie-ai/ai-jsx/blob/{gitRevision}/{path}#L{line}",
+    "readme": "none"
   }
 }
