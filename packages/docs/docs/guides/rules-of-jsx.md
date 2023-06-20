@@ -60,7 +60,7 @@ function* OrgData() {
 
 ## Component API
 
-Components take props as the first argument and ComponentContext (`packages/ai-jsx/src/index.ts`) as the second:
+Components take props as the first argument and ComponentContext ([`packages/ai-jsx/src/index.ts`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/index.ts)) as the second:
 
 ```tsx
 function MyComponent(props, componentContext) {}
@@ -82,7 +82,7 @@ function App() {
 /**
  * Ensure the model's response is JSON.
  */
-function ValidateJsonOutput({ children }, { render }): string {
+function JsonOutput({ children }, { render }): string {
   // highlight-next-line
   const rendered = await render(children);
   try {
@@ -195,12 +195,12 @@ Each instance of `CharacterGenerator` will use the context value set by its near
 
 See also:
 
-- API (`packages/ai-jsx/src/index.ts`)
-- Usage example (`packages/examples/src/context.tsx`)
+- API ([`packages/ai-jsx/src/core/core.ts`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/core/core.ts))
+- Usage example ([`packages/examples/src/context.tsx`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/context.tsx))
 
 ## Handling Errors
 
-Use an Error Boundary (`packages/ai-jsx/src/core/error-boundary.ts`) to provide fallback values when a component throws:
+Use an Error Boundary ([`packages/ai-jsx/src/core/error-boundary.ts`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/core/error-boundary.ts)) to provide fallback values when a component throws:
 
 ```tsx
 <ErrorBoundary fallback={'✅ Error was handled'}>
@@ -208,7 +208,7 @@ Use an Error Boundary (`packages/ai-jsx/src/core/error-boundary.ts`) to provide 
 </ErrorBoundary>
 ```
 
-Error boundary example (`packages/examples/src/errors.tsx`).
+Error boundary example ([`packages/examples/src/errors.tsx`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/errors.tsx)).
 
 ## Memoization
 
@@ -249,7 +249,7 @@ const catName = memo(
 
 Now, `catName` will result in a single model call, and its value will be reused everywhere that component appears in the tree.
 
-- API (`packages/ai-jsx/src/core/memoize.tsx`)
+- API ([`packages/ai-jsx/src/core/memoize.tsx`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/core/memoize.tsx))
 
 # See Also
 

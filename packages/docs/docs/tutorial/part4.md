@@ -5,7 +5,7 @@ sidebar_position: 4
 # Tutorial Part 4 - Document Q&A
 
 One of the most powerful capabilities of Large Language Models is the ability to
-answer questions about the contents of a set of documents. AI. JSX provides a powerful
+answer questions about the contents of a set of documents. AI.JSX provides a powerful
 component called `<DocsQA>` that can answer a question about a corpus of documents
 using the LLM.
 
