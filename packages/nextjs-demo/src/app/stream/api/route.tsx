@@ -1,7 +1,6 @@
 /** @jsxImportSource ai-jsx */
 import * as AI from 'ai-jsx/next';
 import { NextRequest } from 'next/server';
-import { TextEncoder } from 'util';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 
 async function* aiJsxToSseJson(renderable: AI.Renderable) {

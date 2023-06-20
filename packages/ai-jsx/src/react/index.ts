@@ -64,6 +64,80 @@ export function useAI(children: AI.Node, onStreamStart?: () => void, onStreamEnd
   return { result, isDone };
 }
 
+type StreamedObject = { type: 'replace'; value: string[] } | { type: 'complete' };
+
+function aiTransformer() {
+  const SSE_PREFIX = 'data: ';
+  const SSE_TERMINATOR = '\n\n';
+
+  let bufferedContent = '';
+
+  return new TransformStream<string, StreamedObject>({
+    transform(chunk, controller) {
+      const textToParse = bufferedContent + chunk;
+      const eventsWithExtra = textToParse.split(SSE_TERMINATOR);
+
+      // Any content not terminated by a "\n\n" will be buffered for the next chunk.
+      const events = eventsWithExtra.slice(0, -1);
+      bufferedContent = eventsWithExtra[eventsWithExtra.length - 1] ?? '';
+
+      for (const event of events) {
+        if (!event.startsWith(SSE_PREFIX)) {
+          continue;
+        }
+        const text = event.slice(SSE_PREFIX.length);
+        controller.enqueue(JSON.parse(text));
+      }
+    },
+  });
+}
+
+export function useAIStream(placeholder: ReactModule.ReactNode) {
+  const [currentStream, setCurrentStream] = ReactModule.useState<ReadableStream<StreamedObject> | null>(null);
+  const [currentUI, setCurrentUI] = ReactModule.useState(placeholder);
+
+  function fetchAI(...fetchArguments: Parameters<typeof fetch>) {
+    fetch(...fetchArguments).then((response) => {
+      if (response.ok) {
+        setCurrentStream(response.body?.pipeThrough(new TextDecoderStream()).pipeThrough(aiTransformer()) ?? null);
+      }
+    });
+  }
+
+  ReactModule.useEffect(() => {
+    let shouldStop = false;
+
+    async function readStream() {
+      if (currentStream !== null) {
+        const reader = currentStream.getReader();
+        while (!shouldStop) {
+          const { done, value } = await reader.read();
+          if (value?.type === 'replace') {
+            setCurrentUI(value.value);
+          }
+          if (done) {
+            setCurrentStream(null);
+            break;
+          }
+        }
+        reader.releaseLock();
+      }
+    }
+
+    readStream();
+
+    return () => {
+      shouldStop = true;
+    };
+  }, [currentStream]);
+
+  return {
+    current: currentUI,
+    fetchAI,
+    isStreaming: currentStream !== null,
+  };
+}
+
 /**
  * A JSX component that allows AI.jsx elements to be used in a React component tree.
  */
