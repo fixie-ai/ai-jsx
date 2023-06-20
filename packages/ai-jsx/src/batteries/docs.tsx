@@ -157,7 +157,7 @@ export interface CorpusLoadRequest {
   readonly pageToken?: string;
 }
 
-/** The response to a CorpusLoadRequest. */
+/** The response to a {@link CorpusLoadRequest}. */
 export interface CorpusLoadResponse<DocType extends RawDocument | Document> {
   /** A page of documents from the requested partition. */
   readonly page?: CorpusPage<DocType>;
@@ -177,7 +177,7 @@ export type Loader<DocumentMetadata extends Jsonifiable = Jsonifiable> = (
 /** A function responsible for loading a corpus when parsing is handled separately. */
 export type RawLoader = (request: CorpusLoadRequest) => Promise<CorpusLoadResponse<RawDocument>>;
 
-/** Combines a RawLoader with a Parser to produce a Loader. */
+/** Combines a {@link RawLoader} with a {@link Parser} to produce a {@link Loader}. */
 export function toLoader<DocumentMetadata extends Jsonifiable = Jsonifiable>(
   rawLoader: RawLoader,
   parser: Parser<DocumentMetadata> = defaultParser
@@ -233,7 +233,7 @@ class StaticLoader<DocumentMetadata extends Jsonifiable = Jsonifiable> {
   /* eslint-enable */
 }
 
-/** A loader that provides a static set of in-memory documents, optionally with pagination. */
+/** A {@link Loader} that provides a static set of in-memory documents, optionally with pagination. */
 export function staticLoader<DocumentMetadata extends Jsonifiable = Jsonifiable>(
   documents: Document<DocumentMetadata>[],
   pageSize?: number
@@ -251,7 +251,7 @@ export type Chunker<
   ChunkMetadata extends Jsonifiable = Jsonifiable
 > = (document: Document<DocumentMetadata>) => Promise<Chunk<ChunkMetadata>[]>;
 
-/** Create a chunker with the given parameters. */
+/** Creates a {@link Chunker} with the given parameters. */
 export function makeChunker<Metadata extends Jsonifiable = Jsonifiable>(
   chunkSize: number,
   chunkOverlap: number
@@ -307,7 +307,7 @@ export interface Embedding {
   embedBatch(chunks: string[]): Promise<number[][]>;
 }
 
-/** An Embedding implementation that defers to a LangChain `Embeddings` object. */
+/** An {@link Embedding} implementation that defers to a LangChain `Embeddings` object. */
 export class LangChainEmbeddingWrapper implements Embedding {
   constructor(readonly lcEmbedding: Embeddings) {}
 
@@ -329,7 +329,7 @@ export const defaultEmbedding = new LangChainEmbeddingWrapper(
 );
 
 /**
- * A function that converts documents into EmbeddedChunks.
+ * A function that converts documents into {@link EmbeddedChunk}s.
  *
  * @see asVectorizer
  */
@@ -338,7 +338,7 @@ export type Vectorizer<
   ChunkMetadata extends Jsonifiable = Jsonifiable
 > = (documents: Document<DocumentMetadata>[]) => Promise<EmbeddedChunk<ChunkMetadata>[]>;
 
-/** Converts a Chunker + Embedding into a unified Vectorizer function. */
+/** Converts a {@link Chunker} + {@link Embedding} into a unified {@link Vectorizer} function. */
 export function asVectorizer<
   DocumentMetadata extends Jsonifiable = Jsonifiable,
   ChunkMetadata extends Jsonifiable = Jsonifiable
@@ -449,9 +449,9 @@ export abstract class LoadableCorpus<
   ) {}
 
   /**
-   * Loads documents into the corpus using a Loader, Chunker, and Embedding. If the returned
-   * promise resolves succesfully, the corpus will be in COMPLETED state. If it rejects, the corpus
-   * may be in FAILED state.
+   * Loads documents into the corpus using a {@link Loader}, {@link Chunker}, and
+   * {@link Embedding}. If the returned promise resolves succesfully, the corpus will be in
+   * COMPLETED state. If it rejects, the corpus may be in FAILED state.
    *
    * Note: Corpus loading may be quite time consuming. It's best to ensure loading is done prior
    * to exposing this corpus to your users.
@@ -514,7 +514,11 @@ async function loadCorpus<
 
     const response = await loader({ partition, pageToken } as CorpusLoadRequest);
     if (!response.page && !response.partitions) {
-      throw Error(`Loader responses must include a page, new partitions, or both. However, the loader returned ${JSON.stringify(response)}. Update your loader to return the right type.`);
+      throw Error(
+        `Loader responses must include a page, new partitions, or both. However, the loader returned ${JSON.stringify(
+          response
+        )}. Update your loader to return the right type.`
+      );
     }
     for (const newPartition of response.partitions ?? []) {
       if (!completedPartitions.has(newPartition.name) && !activePartitionsToToken.has(newPartition.name)) {
@@ -543,8 +547,8 @@ async function loadCorpus<
   };
 }
 
-/*
- * A LoadableCorpus implementation that runs locally and stores chunks in memory.
+/**
+ * A {@link LoadableCorpus} implementation that runs locally and stores chunks in memory.
  *
  * This implementation doesn't make external requests except through the provided Loader, Chunker,
  * and Embedding (but note that the default Embedding does make external requests).
@@ -637,7 +641,11 @@ async function searchVectorStore<ChunkMetadata extends Jsonifiable = Jsonifiable
   query: string,
   params?: { limit?: number; score_threshold?: number }
 ): Promise<ScoredChunk<ChunkMetadata>[]> {
-  const scoredLcDocs = await vectorStore.similaritySearchWithScore(query, params?.limit ?? defaultLangchainChunkLimit, params);
+  const scoredLcDocs = await vectorStore.similaritySearchWithScore(
+    query,
+    params?.limit ?? defaultLangchainChunkLimit,
+    params
+  );
   return scoredLcDocs.map((lcDocAndScore) => {
     const lcDoc = lcDocAndScore[0];
     return {
@@ -650,6 +658,14 @@ async function searchVectorStore<ChunkMetadata extends Jsonifiable = Jsonifiable
     } as ScoredChunk<ChunkMetadata>;
   });
 }
+
+/** A default component for formatting document chunks. */
+export const DefaultFormatter = ({ doc }: { doc: ScoredChunk }) => (
+  <>
+    Title: {doc.chunk.documentName ?? 'Untitled'}
+    Content: {doc.chunk.content}
+  </>
+);
 
 /** Properties to be passed to the {@link DocsQA} component. */
 export interface DocsQAProps<ChunkMetadata extends Jsonifiable = Jsonifiable> {
@@ -705,22 +721,10 @@ export async function DocsQA<ChunkMetadata extends Jsonifiable = Jsonifiable>(pr
         You are a trained question answerer. Answer questions truthfully, using only the document excerpts below. Do not
         use any other knowledge you have about the world. If you don't know how to answer the question, just say "I
         don't know." Here are the relevant document excerpts you have been given:
-        {chunks.map((chunk) => (
-          chunkFormatter({doc: chunk})
-        ))}
+        {chunks.map((chunk) => chunkFormatter({ doc: chunk }))}
         And here is the question you must answer:
       </SystemMessage>
       <UserMessage>{props.question}</UserMessage>
     </ChatCompletion>
   );
 }
-
-/**
- * A default component for formatting document chunks.
- */
-export const DefaultFormatter = ({ doc }: { doc: ScoredChunk }) => (
-  <>
-    Title: {doc.chunk.documentName ?? 'Untitled'}
-    Content: {doc.chunk.content}
-  </>
-);
