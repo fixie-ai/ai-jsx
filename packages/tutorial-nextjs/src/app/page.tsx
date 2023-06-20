@@ -7,7 +7,7 @@ import * as AI from 'ai-jsx/next';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 
 function Poem({ about }: { about: string }) {
-  return "Hello World";
+  return 'Hello World';
   // return (
   //   <AI.jsx>
   //     <ChatCompletion>
