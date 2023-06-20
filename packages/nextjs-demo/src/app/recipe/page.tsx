@@ -45,7 +45,7 @@ export function SelectIngredientsButton() {
   return (
     <button
       data-test="select-ingredients-button"
-      className="mt-2 rounded bg-indigo-600 px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+      className="mt-2 rounded bg-fixie-fresh-salmon px-2 py-1 text-sm font-semibold text-white shadow-sm hover:bg-fixie-ripe-salmon focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon"
     >
       Add selected ingredients to shopping list
     </button>

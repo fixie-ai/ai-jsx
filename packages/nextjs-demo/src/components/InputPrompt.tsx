@@ -13,7 +13,7 @@ export default function InputPrompt({ label, defaultValue }: { label: string; de
   }
 
   return (
-    <Suspense>      
+    <Suspense>
       <div className="min-w-full max-w-7xl pb-8">
         <form className="mt-4 flex w-full" onSubmit={handleSubmit}>
           <input
