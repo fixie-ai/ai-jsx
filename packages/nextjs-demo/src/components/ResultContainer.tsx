@@ -7,7 +7,7 @@ export default function ResultContainer({
 }: {
   title: string;
   children: React.ReactNode;
-  description?: string;
+  description?: React.ReactNode;
 }) {
   return (
     <div className="max-w-7xl py-6 min-w-full">

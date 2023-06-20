@@ -1,7 +1,9 @@
 /**
  * This module defines affordances for constraining the output of the model
  * into specific formats, such as JSON, YAML, or Markdown.
+ * @packageDocumentation
  */
+
 import * as AI from '../index.js';
 import { ChatCompletion, SystemMessage, AssistantMessage, UserMessage } from '../core/completion.js';
 import yaml from 'js-yaml';
@@ -13,9 +15,11 @@ interface ValidationResult {
 
 // TODO: schema
 /**
- * A ChatCompletion component that constrains the output to be a valid JSON string.
+ * A {@link ChatCompletion} component that constrains the output to be a valid JSON string.
  *
- * @returns a string that is a valid JSON or throws an error after `retries` attempts
+ * @param retries The maximum number of times to retry the completion if the output is invalid.
+ * @param children The children to render.
+ * @returns a string that is a valid JSON or throws an error after `retries` attempts.
  */
 export function JsonChatCompletion({ children, ...props }: { children: AI.Node }) {
   return (
@@ -26,9 +30,11 @@ export function JsonChatCompletion({ children, ...props }: { children: AI.Node }
 }
 
 /**
- * A ChatCompletion component that constrains the output to be a valid YAML string.
+ * A {@link ChatCompletion} component that constrains the output to be a valid YAML string.
  *
- * @returns a string that is a valid YAML or throws an error after `retries` attempts
+ * @param retries The maximum number of times to retry the completion if the output is invalid.
+ * @param children The children to render.
+ * @returns a string that is a valid YAML or throws an error after `retries` attempts.
  */
 export function YamlChatCompletion({ children, ...props }: { children: AI.Node }) {
   return (
@@ -39,8 +45,12 @@ export function YamlChatCompletion({ children, ...props }: { children: AI.Node }
 }
 
 /**
- * A ChatCompletion components that constrains the output to be a valid object format (e.g. JSON/YAML).
+ * A {@link ChatCompletion} component that constrains the output to be a valid object format (e.g. JSON/YAML).
  *
+ * @param retries The maximum number of times to retry the completion if the output is invalid.
+ * @param validator A function that returns a {@link ValidationResult} for a given string.
+ * @param typeName The name of the type, to be used in the prompt.
+ * @param children The children to render.
  * @returns a string that validates as the given type or throws an error after `retries` attempts
  */
 async function ObjectFormatChatCompletion(

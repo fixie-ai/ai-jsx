@@ -1,11 +1,19 @@
+/**
+ * This module provides components for image generation.
+ * @packageDocumentation
+ */
+
 import * as AI from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
 import { DalleImageGen } from '../lib/openai.js';
 
+/**
+ * Represents properties passed to the {@link ImageGen} component.
+ */
 export interface ImageGenProps {
-  /** defines how many image samples should be produced */
+  /** The number of image samples to produce. */
   numSamples?: number;
-  /** defines the image resolution */
+  /** The image resolution. */
   size?: '256x256' | '512x512' | '1024x1024';
 }
 
@@ -30,11 +38,15 @@ function AutomaticImageGenModel({ children, ...props }: ImageGenPropsWithChildre
   );
 }
 
+/** The default context used by {@link ImageGen}. */
 const imageGenContext = AI.createContext<[ImageGenComponent<ImageGenPropsWithChildren>, ImageGenProps]>([
   AutomaticImageGenModel,
   {},
 ]);
 
+/**
+ * An ImageGenProvider is used by {@link ImageGen} to access an underlying image-generation model.
+ */
 export function ImageGenProvider<T extends ImageGenPropsWithChildren>(
   { component, children, ...newDefaults }: { component?: ImageGenComponent<T> } & T,
   { getContext }: RenderContext
@@ -53,9 +65,16 @@ export function ImageGenProvider<T extends ImageGenPropsWithChildren>(
 }
 
 /**
- * Perform a model call to do a [image generation](https://platform.openai.com/docs/guides/images/introduction).
+ * This component can be used to perform an [image generation](https://platform.openai.com/docs/guides/images/introduction).
  *
- * @returns a URL to the generated image
+ * @returns a URL to the generated image.
+ *
+ * @example
+ * ```tsx
+ *    <ImageGen size="256x256" numSamples={1}>
+ *    An image of a chicken riding a rocket ship
+ *    </ImageGen>
+ * ```
  */
 export function ImageGen(
   { children, ...props }: ImageGenPropsWithChildren & Record<string, unknown>,

@@ -1,10 +1,9 @@
 /** @jsxImportSource ai-jsx/react */
-import * as AI from 'ai-jsx/react';
+import * as AI from 'ai-jsx/next';
 import * as React from 'react';
-import { useState } from 'react';
-import { DocsAgent } from './ai.tsx';
-import { useList } from 'react-use';
-import ResultContainer from '../ResultContainer.tsx';
+import { Suspense } from 'react';
+import { DocsAgent } from './ai';
+import ResultContainer from '@/components/ResultContainer';
 
 function ConversationItem({
   responseType,
@@ -21,39 +20,22 @@ function ConversationItem({
   );
 }
 
-/**
- * We need to memoize this function. Otherwise, every time the parent component of AgentResponse re-renders,
- * AgentReponse will re-render, which will trigger a new LLM call, which will produce a different result than the
- * prior call.
- */
-const AgentResponse = React.memo(function AgentResponse({
-  question,
-  setCallInProgress,
-}: {
-  question: string;
-  setCallInProgress: (x: boolean) => void;
-}) {
+const AgentResponse = function AgentResponse({ question }: { question: string }) {
   return (
     <ConversationItem responseType="bot">
-      <AI.jsx onStreamStart={() => setCallInProgress(true)} onStreamEnd={() => setCallInProgress(false)} loading="⎕">
-        <DocsAgent question={question} />
-      </AI.jsx>
+      <Suspense fallback="⎕">
+        <AI.jsx>
+          <DocsAgent question={question} />
+        </AI.jsx>
+      </Suspense>
     </ConversationItem>
   );
-});
+};
 
-export function DocsChat() {
-  const [userMessages, { push: pushUserMessage }] = useList<string>([]);
-  const [callInProgress, setCallInProgress] = useState(false);
-
-  function handleInputSubmit(event: React.FormEvent<HTMLFormElement>) {
-    // @ts-expect-error
-    const element = event.target.elements.message;
-    event.preventDefault();
-    pushUserMessage(element.value);
-
-    element.value = '';
-  }
+export default function DocsChat({ searchParams }: { searchParams: any }) {
+  const defaultValue = 'What is AI.JSX?';
+  const query = searchParams.message ?? defaultValue;
+  const userMessages = [query];
 
   return (
     <ResultContainer
@@ -74,13 +56,12 @@ export function DocsChat() {
             <ConversationItem responseType="user">{response}</ConversationItem>
           </li>,
           <li key={`${index}-agent`} className="mt-4">
-            <AgentResponse question={response} setCallInProgress={setCallInProgress} />
+            <AgentResponse question={response} />
           </li>,
         ])}
       </ul>
-      <form onSubmit={handleInputSubmit} className="mt-4 flex w-full">
+      <form className="mt-4 flex w-full">
         <input
-          disabled={callInProgress}
           type="text"
           name="message"
           placeholder="Ask a question..."
