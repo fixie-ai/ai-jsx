@@ -321,9 +321,9 @@ export class LangChainEmbeddingWrapper implements Embedding {
 }
 
 /** A default embedding useful for DocsQA. Note that this requires `OPENAI_API_KEY` to be set. */
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('OPENAI_API_KEY not set');
-}
+// if (!process.env.OPENAI_API_KEY) {
+//   throw new Error('OPENAI_API_KEY not set');
+// }
 export const defaultEmbedding = new LangChainEmbeddingWrapper(
   new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY })
 );
