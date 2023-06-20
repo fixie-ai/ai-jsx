@@ -75,9 +75,13 @@ export default function RecipeWrapper() {
 
   return (
     <>
-      <InputPrompt label="What would you like a recipe for?" value={query} setValue={setQuery} />
-
-      <ResultContainer title={`AI comes up with a recipe for ${query}`}>
+      <ResultContainer
+        title="Recipe Maker"
+        description="In this demo, you can give the AI a food item and it will generate a recipe on-the-fly with a custom user interface."
+      >
+        <InputPrompt label="What would you like a recipe for?" value={query} setValue={setQuery} />
+      </ResultContainer>
+      <ResultContainer title={`AI comes up with a recipe for "${query}"`}>
         <AI.jsx>
           <UICompletion
             example={
