@@ -27,19 +27,19 @@ function ConversationItem({ response, isLastResponse }: { response: ChatMessage;
     if (response.action === 'chat') {
       return (
         <div>
-          <span className="font-bold">User:</span> "{response.content}"
+          <span className="font-bold">👤:</span> "{response.content}"
         </div>
       );
     }
     return (
       <div>
-        <span className="font-bold">User clicked:</span> {response.id}
+        <span className="font-bold">👤 clicked:</span> {response.id}
       </div>
     );
   }
   return (
     <div>
-      <span className="font-bold">AI:</span>{' '}
+      <span className="font-bold">🤖:</span>{' '}
       {response.parts.flatMap((part, index) => {
         if (part.type === 'text') {
           return <div key={index}>{part.content}</div>;
@@ -110,8 +110,8 @@ function ConversationHistory() {
 
   return (
     <ResultContainer
-      title="Chat"
-      description="In this demo, the AI is able to respond by rendering both text and buttons as it sees fit. As the user interacts with the buttons (or types freeform responses), the AI ambiently adapts."
+      title="Choose Your Own Adventure"
+      description="In this demo, you can play an adventure game, in which the AI is able to respond with both text and buttons as it sees fit. As you interact with the buttons (or type freeform responses), the AI ambiently adapts."
     >
       <ul>
         {conversation.map((response, index) => (
@@ -120,17 +120,17 @@ function ConversationHistory() {
           </li>
         ))}
       </ul>
-      {callInProgress && <div>Waiting for AI response...</div>}
+      {callInProgress && <div>🤖: Thinking...</div>}
       <form onSubmit={handleInputSubmit} className="mt-4">
         <input
           disabled={callInProgress}
           type="text"
           name="message"
-          className="rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+          className="rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-fixie-fresh-salmon sm:text-sm sm:leading-6"
         />
         <button
           type="submit"
-          className="ml-4 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          className="ml-4 rounded-md bg-fixie-fresh-salmon px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-fixie-ripe-salmon focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon"
         >
           Send
         </button>
