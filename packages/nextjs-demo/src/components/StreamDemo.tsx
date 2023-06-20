@@ -1,6 +1,5 @@
 'use client';
 import * as AI from 'ai-jsx/react';
-import React, { ReactNode, useEffect, useState } from 'react';
 
 export function StreamDemo() {
   const { current, fetchAI, isStreaming } = AI.useAIStream(
@@ -13,11 +12,9 @@ export function StreamDemo() {
   );
 
   return (
-    <div>
-      <div className="whitespace-pre-line">
-        {current}
-        {isStreaming && '█'}
-      </div>
+    <div className="whitespace-pre-line">
+      {current}
+      {isStreaming && '█'}
     </div>
   );
 }
