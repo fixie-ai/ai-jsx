@@ -1,7 +1,7 @@
 export default function About() {
   return (
     <div className="flex flex-col items-start px-24 py-6">
-      <div className="w-full overflow-hidden bg-[#f8f7f4] rounded-lg shadow-sm">
+      <div className="w-full overflow-hidden rounded-lg bg-fixie-light-dust shadow-sm">
         <div className="px-4 py-5 sm:px-6">
           <p className="text-center">
             This is a React-based demo of{' '}
