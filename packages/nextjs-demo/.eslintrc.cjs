@@ -4,7 +4,7 @@ module.exports = {
   extends: ['eslint:recommended', 'nth', 'plugin:@next/next/recommended'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: [path.join(__dirname, 'tsconfig.json')],
+    project: [path.join(__dirname, 'tsconfig.json'), path.join(__dirname, 'backend', 'tsconfig.json')],
   },
   plugins: ['@typescript-eslint'],
   root: true,
