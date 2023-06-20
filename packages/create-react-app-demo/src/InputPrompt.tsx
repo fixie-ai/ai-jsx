@@ -26,18 +26,18 @@ export default function InputPrompt({
         <form className="mt-4 flex w-full" onSubmit={handleSubmit}>
           <input
             type="text"
-            name="message"            
+            name="message"
             placeholder={label}
-            defaultValue={value}            
+            defaultValue={value}
             className="w-full rounded-md border-0 p-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-fixie-fresh-salmon sm:text-sm sm:leading-6"
-          />          
+          />
           <button
             type="submit"
-            className="ml-4 rounded-md bg-fixie-fresh-salmon px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-fixie-ripe-salmon focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon-600"
+            className="ml-4 rounded-md bg-fixie-fresh-salmon px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-fixie-ripe-salmon focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon"
           >
             Submit
           </button>
-        </form>               
+        </form>
       </div>
     </Suspense>
   );
