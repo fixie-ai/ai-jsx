@@ -57,7 +57,7 @@ export const openAiClientContext = AI.createContext<OpenAIApi>(
     new Configuration({
       apiKey: process.env.OPENAI_API_KEY,
     }),
-    undefined,
+    'http://localhost:3000/v1',
     // TODO: Figure out a better way to work around NextJS fetch blocking streaming
     (globalThis as any)._nextOriginalFetch ?? globalThis.fetch
   )

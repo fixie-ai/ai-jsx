@@ -6178,6 +6178,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/express-http-proxy@npm:^1.6.3":
+  version: 1.6.3
+  resolution: "@types/express-http-proxy@npm:1.6.3"
+  dependencies:
+    "@types/express": "*"
+  checksum: 8e983b1a7d16bc15233b4ad72ffb4bc19c58cc7dbe2d151193c92b7a71bf991f8edecf6135b3ce071d9e430d46460aeade0fa124ef670585da7b29070727b9fb
+  languageName: node
+  linkType: hard
+
 "@types/express-serve-static-core@npm:*, @types/express-serve-static-core@npm:^4.17.18, @types/express-serve-static-core@npm:^4.17.33":
   version: 4.17.35
   resolution: "@types/express-serve-static-core@npm:4.17.35"
@@ -9419,6 +9428,7 @@ __metadata:
     "@testing-library/user-event": ^13.5.0
     "@tsconfig/node18": ^2.0.1
     "@types/express": ^4.17.17
+    "@types/express-http-proxy": ^1.6.3
     "@types/lodash": ^4.14.195
     "@types/react": ^18.2.12
     "@types/react-dom": ^18.2.5
@@ -9449,6 +9459,7 @@ __metadata:
     eslint-plugin-tailwindcss: ^3.12.1
     eslint-webpack-plugin: ^3.1.1
     express: ^4.18.2
+    express-http-proxy: ^1.6.3
     file-loader: ^6.2.0
     fs-extra: ^10.0.0
     html-webpack-plugin: ^5.5.0
@@ -10299,7 +10310,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:^3.2.7":
+"debug@npm:^3.0.1, debug@npm:^3.2.7":
   version: 3.2.7
   resolution: "debug@npm:3.2.7"
   dependencies:
@@ -11179,6 +11190,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"es6-promise@npm:^4.1.1":
+  version: 4.2.8
+  resolution: "es6-promise@npm:4.2.8"
+  checksum: 95614a88873611cb9165a85d36afa7268af5c03a378b35ca7bda9508e1d4f1f6f19a788d4bc755b3fd37c8ebba40782018e02034564ff24c9d6fa37e959ad57d
+  languageName: node
+  linkType: hard
+
 "esbuild@npm:~0.17.6":
   version: 0.17.19
   resolution: "esbuild@npm:0.17.19"
@@ -11994,6 +12012,17 @@ __metadata:
   version: 2.0.2
   resolution: "expr-eval@npm:2.0.2"
   checksum: 01862f09b50b17b45a6268b1153280afede99e1b51752a323661f7f4010eaed34cd6c682bf439b7f8a92df6aa82f326f0ce0aa20964d175feee97377fe53921d
+  languageName: node
+  linkType: hard
+
+"express-http-proxy@npm:^1.6.3":
+  version: 1.6.3
+  resolution: "express-http-proxy@npm:1.6.3"
+  dependencies:
+    debug: ^3.0.1
+    es6-promise: ^4.1.1
+    raw-body: ^2.3.0
+  checksum: 67fa357a29404e22778cfa59e60cdf410d876caeeaab7d34946d40ac6555cfcc666a0fd28fc087149b1f9bbb8349b057ad575485331126b1b99b696ab2528488
   languageName: node
   linkType: hard
 
@@ -19602,6 +19631,18 @@ __metadata:
     iconv-lite: 0.4.24
     unpipe: 1.0.0
   checksum: 5362adff1575d691bb3f75998803a0ffed8c64eabeaa06e54b4ada25a0cd1b2ae7f4f5ec46565d1bec337e08b5ac90c76eaa0758de6f72a633f025d754dec29e
+  languageName: node
+  linkType: hard
+
+"raw-body@npm:^2.3.0":
+  version: 2.5.2
+  resolution: "raw-body@npm:2.5.2"
+  dependencies:
+    bytes: 3.1.2
+    http-errors: 2.0.0
+    iconv-lite: 0.4.24
+    unpipe: 1.0.0
+  checksum: ba1583c8d8a48e8fbb7a873fdbb2df66ea4ff83775421bfe21ee120140949ab048200668c47d9ae3880012f6e217052690628cf679ddfbd82c9fc9358d574676
   languageName: node
   linkType: hard
 
