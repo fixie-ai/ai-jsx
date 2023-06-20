@@ -1,8 +1,9 @@
-import 'server-only';
 import * as ReactModule from 'react';
+import 'server-only';
+import { LogImplementation, NoOpLogImplementation } from '../core/log.js';
 import * as AI from '../react/core.js';
-export * from '../react/core.js';
 import { asJsxBoundary } from '../react/jsx-boundary.js';
+export * from '../react/core.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
   if (AI.isElement(partiallyRendered)) {
@@ -56,7 +57,7 @@ function computeSuffix(
  * A JSX component that allows AI.JSX elements to be used in a [NextJS RSC component tree](https://nextjs.org/docs/getting-started/react-essentials#server-components).
  */
 export const jsx = asJsxBoundary(function jsx(
-  { children }: { children: AI.Node },
+  { props, children }: { props?: { logger?: LogImplementation }; children: AI.Node },
   context?: any | AI.ComponentContext
 ) {
   if (typeof context?.render === 'function') {
@@ -64,7 +65,10 @@ export const jsx = asJsxBoundary(function jsx(
     return children as any;
   }
 
-  const renderResult = AI.createRenderContext().render(children, {
+  // Disable logging by default in NextJS. Creating files may be disallowed by the server on
+  // which this is deployed (e.g. Vercel).
+  const logger = props?.logger ?? new NoOpLogImplementation();
+  const renderResult = AI.createRenderContext({ logger }).render(children, {
     stop: (e) => e.tag === AI.React,
     map: (frame) => frame.map(unwrapReact),
   });
