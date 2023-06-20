@@ -20,15 +20,11 @@ export default function NavBar() {
             <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
               <div className="flex shrink-0 items-center">
                 <img
-                  className="block h-6 w-auto lg:hidden"
-                  src="https://app.fixie.ai/static/logos/charcoal.png"
-                  alt="Fixie Logo"
+                  className="hidden h-12 w-auto lg:block"
+                  src="https://docs.ai-jsx.com/img/foxie.png"
+                  alt="AI.JSX Logo"
                 />
-                <img
-                  className="hidden h-6 w-auto lg:block"
-                  src="https://app.fixie.ai/static/logos/charcoal.png"
-                  alt="Fixie Logo"
-                />
+                <b className="pl-4">AI.JSX Demo</b>
               </div>
               <div className="hidden w-full justify-center sm:ml-6 sm:flex sm:space-x-8">
                 {Object.entries(pages).map(([name, href]) => (
