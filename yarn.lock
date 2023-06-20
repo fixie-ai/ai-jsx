@@ -17629,13 +17629,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai-edge@npm:^1.1.0":
-  version: 1.1.0
-  resolution: "openai-edge@npm:1.1.0"
-  checksum: 0a07b10c49c9adddd1f6140dfb988276fd76961b26727df256068bd7af10b820372b50af40617f582fc3ca62502f3008e8bad41ca576163d46986440eff27e44
-  languageName: node
-  linkType: hard
-
 "openai@npm:^3.2.0, openai@npm:^3.3.0":
   version: 3.3.0
   resolution: "openai@npm:3.3.0"
@@ -22391,6 +22384,7 @@ __metadata:
     "@babel/core": ^7.22.5
     "@babel/plugin-transform-react-jsx": ^7.22.5
     "@next/eslint-plugin-next": ^13.4.6
+    "@nick.heiner/openai-edge": 1.0.1-7
     "@types/node": 20.3.1
     "@types/react": 18.2.12
     "@types/react-dom": 18.2.5
@@ -22402,7 +22396,6 @@ __metadata:
     eslint-config-next: 13.4.6
     eslint-config-nth: ^2.0.1
     next: 13.4.6
-    openai-edge: ^1.1.0
     react: 18.2.0
     react-dom: 18.2.0
     typescript: 5.1.3

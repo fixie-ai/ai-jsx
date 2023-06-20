@@ -4,7 +4,10 @@
  * Code is adapted from: https://sdk.vercel.ai/
  */
 
-import { Configuration, OpenAIApi } from 'openai-edge';
+// We are using @nick.heiner/openai-edge here because the current openai-edge
+// package is lacking TypeScript type declarations.
+// TODO: Remove this hack once openai-edge has been updated.
+import { Configuration, OpenAIApi } from '@nick.heiner/openai-edge';
 import { OpenAIStream, StreamingTextResponse } from 'ai';
 
 export const runtime = 'edge';
