@@ -27,4 +27,4 @@ const app = (
   </Inline>
 );
 
-showInspector(app, { showDebugTree: false });
+showInspector(app);
