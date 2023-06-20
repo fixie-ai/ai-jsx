@@ -1,22 +1,16 @@
-import express from 'express';
-import expressHttpProxy from 'express-http-proxy';
+import httpProxy from 'http-proxy';
+import http from 'node:http';
 
 if (!process.env.OPENAI_API_KEY) {
   throw new Error('OPENAI_API_KEY environment variable must be set');
 }
-const app = express();
 
-app.post(
-  '*',
-  expressHttpProxy('https://api.openai.com', {
-    proxyReqOptDecorator(req) {
-      req.headers = req.headers ?? {};
-      req.headers.authorization = `Bearer ${process.env.OPENAI_API_KEY}`;
-      return req;
-    },
-  })
-);
+const proxy = httpProxy.createProxy({ target: 'https://api.openai.com' });
+const server = http.createServer(function(req, res) {
+  req.headers.authorization = `Bearer ${process.env.OPENAI_API_KEY}`;
+  proxy.web(req, res);
+});
 
-app.listen(4000, () => {
+server.listen(4000, () => {
   console.log('Server listening on port 4000');
 });
