@@ -7,14 +7,12 @@ async function* aiJsxToSseJson(renderable: AI.Renderable) {
   const renderContext = AI.createRenderContext();
   const renderResult = renderContext.render(renderable, { map: (x) => x, stop: () => false });
   const asyncIterator = renderResult[Symbol.asyncIterator]();
-  let lastFrame: AI.PartiallyRendered[] | null = null;
   while (true) {
     const nextResult = await asyncIterator.next();
 
     // TODO: diff the current frame with the previous frame.
     yield { type: 'replace', value: nextResult.value };
 
-    lastFrame = nextResult.value;
     if (nextResult.done) {
       break;
     }
@@ -37,11 +35,12 @@ function aiJsxToSseStream(renderable: AI.Renderable): ReadableStream {
   }).pipeThrough(new TextEncoderStream());
 }
 
-export function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
+  const json = await request.json();
   return new Response(
     aiJsxToSseStream(
       <ChatCompletion>
-        <UserMessage>Write a poem about foxes.</UserMessage>
+        <UserMessage>Write a haiku about {json.topic ?? 'foxes'}.</UserMessage>
       </ChatCompletion>
     ),
     {

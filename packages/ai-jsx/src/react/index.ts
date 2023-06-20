@@ -92,9 +92,9 @@ function aiTransformer() {
   });
 }
 
-export function useAIStream(placeholder: ReactModule.ReactNode) {
+export function useAIStream(onComplete: (result: ReactModule.ReactNode) => ReactModule.ReactNode = (node) => node) {
   const [currentStream, setCurrentStream] = ReactModule.useState<ReadableStream<StreamedObject> | null>(null);
-  const [currentUI, setCurrentUI] = ReactModule.useState(placeholder);
+  const [currentUI, setCurrentUI] = ReactModule.useState(null as ReactModule.ReactNode);
 
   function fetchAI(...fetchArguments: Parameters<typeof fetch>) {
     fetch(...fetchArguments).then((response) => {
@@ -105,18 +105,22 @@ export function useAIStream(placeholder: ReactModule.ReactNode) {
   }
 
   ReactModule.useEffect(() => {
-    let shouldStop = false;
+    let shouldStopValue = false;
+    const shouldStop = () => shouldStopValue;
 
     async function readStream() {
       if (currentStream !== null) {
         const reader = currentStream.getReader();
-        while (!shouldStop) {
+        let currentUI: ReactModule.ReactNode = null;
+        while (!shouldStop()) {
           const { done, value } = await reader.read();
           if (value?.type === 'replace') {
-            setCurrentUI(value.value);
+            currentUI = value.value;
+            setCurrentUI(currentUI);
           }
           if (done) {
             setCurrentStream(null);
+            setCurrentUI(onComplete(currentUI));
             break;
           }
         }
@@ -127,14 +131,13 @@ export function useAIStream(placeholder: ReactModule.ReactNode) {
     readStream();
 
     return () => {
-      shouldStop = true;
+      shouldStopValue = true;
     };
   }, [currentStream]);
 
   return {
     current: currentUI,
     fetchAI,
-    isStreaming: currentStream !== null,
   };
 }
 
