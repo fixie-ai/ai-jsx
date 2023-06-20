@@ -10,7 +10,7 @@ export default function ResultContainer({
   description?: React.ReactNode;
 }) {
   return (
-    <div className="min-w-full max-w-7xl py-6">
+    <div className="min-w-full max-w-7xl pb-8">
       <div className="min-w-full max-w-none">
         <div className="overflow-hidden bg-white sm:rounded-lg sm:shadow">
           <div className="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
