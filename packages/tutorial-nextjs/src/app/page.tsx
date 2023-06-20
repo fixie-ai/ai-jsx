@@ -7,13 +7,14 @@ import * as AI from 'ai-jsx/next';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 
 function Poem({ about }: { about: string }) {
-  return (
-    <AI.jsx>
-      <ChatCompletion>
-        <UserMessage>Write a poem about {about}.</UserMessage>
-      </ChatCompletion>
-    </AI.jsx>
-  );
+  return "Hello World";
+  // return (
+  //   <AI.jsx>
+  //     <ChatCompletion>
+  //       <UserMessage>Write a poem about {about}.</UserMessage>
+  //     </ChatCompletion>
+  //   </AI.jsx>
+  // );
 }
 
 export default function Home() {
