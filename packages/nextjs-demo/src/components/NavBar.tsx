@@ -10,9 +10,9 @@ export default function NavBar() {
 
   const pages = {
     'Basic Completion': '/basic-completion',
-    'Docs Chat': '/docs-chat',
-    'JIT UI: React': '/recipe',
-    'JIT UI: Raw HTML': '/nl-gh-search',
+    'Docs Chat': '/docs-chat',    
+    'Recipe JIT UI': '/recipe',
+    'GitHub JIT UI (Raw HTML)': '/nl-gh-search',
     'Streaming API': '/stream',
   };
 
@@ -48,7 +48,7 @@ export default function NavBar() {
                       className={classNames(
                         'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700',
                         {
-                          'border-indigo-500 text-gray-900': active,
+                          'border-fixie-ripe-salmon text-gray-900': active,
                           'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': !active,
                         }
                       )}
