@@ -2,7 +2,7 @@ import './App.css';
 import React from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import RootLayout from './layout.tsx';
-import BasicCompletion from './basic-completion.tsx';
+import BasicCompletion from './basic-completion/index.tsx';
 import { ChooseYourOwnAdventure } from './choose-your-adventure/index.tsx';
 import RecipeWrapper from './recipe/page.tsx';
 import { BasicChat } from './basic-chat/index.tsx';
