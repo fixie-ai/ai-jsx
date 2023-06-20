@@ -1,6 +1,7 @@
 import * as ReactModule from 'react';
 import * as AI from './core.js';
 import { asJsxBoundary } from './jsx-boundary.js';
+import { fromStreamResponse } from '../stream/index.js';
 export * from './core.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
@@ -64,42 +65,14 @@ export function useAI(children: AI.Node, onStreamStart?: () => void, onStreamEnd
   return { result, isDone };
 }
 
-type StreamedObject = { type: 'replace'; value: string[] } | { type: 'complete' };
-
-function aiTransformer() {
-  const SSE_PREFIX = 'data: ';
-  const SSE_TERMINATOR = '\n\n';
-
-  let bufferedContent = '';
-
-  return new TransformStream<string, StreamedObject>({
-    transform(chunk, controller) {
-      const textToParse = bufferedContent + chunk;
-      const eventsWithExtra = textToParse.split(SSE_TERMINATOR);
-
-      // Any content not terminated by a "\n\n" will be buffered for the next chunk.
-      const events = eventsWithExtra.slice(0, -1);
-      bufferedContent = eventsWithExtra[eventsWithExtra.length - 1] ?? '';
-
-      for (const event of events) {
-        if (!event.startsWith(SSE_PREFIX)) {
-          continue;
-        }
-        const text = event.slice(SSE_PREFIX.length);
-        controller.enqueue(JSON.parse(text));
-      }
-    },
-  });
-}
-
 export function useAIStream(onComplete: (result: ReactModule.ReactNode) => ReactModule.ReactNode = (node) => node) {
-  const [currentStream, setCurrentStream] = ReactModule.useState<ReadableStream<StreamedObject> | null>(null);
+  const [currentStream, setCurrentStream] = ReactModule.useState<ReadableStream<ReactModule.ReactNode> | null>(null);
   const [currentUI, setCurrentUI] = ReactModule.useState(null as ReactModule.ReactNode);
 
   function fetchAI(...fetchArguments: Parameters<typeof fetch>) {
     fetch(...fetchArguments).then((response) => {
-      if (response.ok) {
-        setCurrentStream(response.body?.pipeThrough(new TextDecoderStream()).pipeThrough(aiTransformer()) ?? null);
+      if (response.ok && response.body) {
+        setCurrentStream(fromStreamResponse(response.body) as ReadableStream<ReactModule.ReactNode>);
       }
     });
   }
@@ -111,17 +84,16 @@ export function useAIStream(onComplete: (result: ReactModule.ReactNode) => React
     async function readStream() {
       if (currentStream !== null) {
         const reader = currentStream.getReader();
-        let currentUI: ReactModule.ReactNode = null;
+        let lastUI: ReactModule.ReactNode = null;
         while (!shouldStop()) {
           const { done, value } = await reader.read();
-          if (value?.type === 'replace') {
-            currentUI = value.value;
-            setCurrentUI(currentUI);
-          }
           if (done) {
             setCurrentStream(null);
-            setCurrentUI(onComplete(currentUI));
+            setCurrentUI(onComplete(lastUI));
             break;
+          } else {
+            setCurrentUI(value);
+            lastUI = value;
           }
         }
         reader.releaseLock();

@@ -248,6 +248,16 @@
         "types": "./dist/cjs/next/index.d.cts",
         "default": "./dist/cjs/next/index.cjs"
       }
+    },
+    "./stream": {
+      "import": {
+        "types": "./dist/esm/stream/index.d.ts",
+        "default": "./dist/esm/stream/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/stream/index.d.cts",
+        "default": "./dist/cjs/stream/index.cjs"
+      }
     }
   },
   "files": [
