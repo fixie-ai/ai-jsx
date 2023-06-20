@@ -65,9 +65,22 @@ function createOpenAIClient(basePath?: string) {
 
 export const openAiClientContext = AI.createContext<OpenAIApi>(createOpenAIClient());
 
-export function UseOpenAIProxy({ children, basePath }: { children: Node; basePath: string }) {
+export function UseOpenAIProxy({
+  children,
+  basePath,
+  chatModel,
+  completionModel,
+}: { children: Node; basePath: string } & Partial<ChatOrCompletionModelOrBoth>) {
   const client = createOpenAIClient(basePath);
-  return <openAiClientContext.Provider value={client}>{children}</openAiClientContext.Provider>;
+  return (
+    <OpenAI
+      client={client}
+      chatModel={chatModel ?? 'gpt-3.5-turbo'}
+      completionModel={completionModel ?? 'text-davinci-003'}
+    >
+      {children}
+    </OpenAI>
+  );
 }
 
 /**
