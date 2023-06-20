@@ -1,3 +1,7 @@
+---
+sidebar_position: 4
+---
+
 # AI + UI
 
 We're very excited about AI.JSX's capability to seamless integrate UI and AI logic:
