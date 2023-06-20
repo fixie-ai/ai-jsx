@@ -5,7 +5,7 @@ if (!process.env.OPENAI_API_KEY) {
   throw new Error('OPENAI_API_KEY environment variable must be set');
 }
 
-const proxy = httpProxy.createProxy({ target: 'https://api.openai.com' });
+const proxy = httpProxy.createProxy({ target: 'https://api.openai.com', changeOrigin: true });
 const server = http.createServer(function(req, res) {
   req.headers.authorization = `Bearer ${process.env.OPENAI_API_KEY}`;
   proxy.web(req, res);
