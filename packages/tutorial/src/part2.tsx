@@ -4,6 +4,9 @@ import { showInspector } from 'ai-jsx/core/inspector';
 
 const app = (
   <Inline>
+    {'This is an AI.JSX demo application that generates a poem about a mythical forest animal.'}
+    {'\n\n'}
+    {'Come up with the name of a mythical forest animal: '}
     <ChatCompletion>
       <UserMessage>Come up with the name of a mythical forest animal.</UserMessage>
     </ChatCompletion>
@@ -14,6 +17,8 @@ const app = (
       </ChatCompletion>
     )}
     {'\n\n'}
+    {'Now, write a poem about it: '}
+    {'\n\n'}
     {(conversation) => (
       <ChatCompletion>
         <UserMessage>Now write a poem about this animal: {conversation}</UserMessage>
@@ -22,4 +27,4 @@ const app = (
   </Inline>
 );
 
-showInspector(app);
+showInspector(app, { showDebugTree: false });
