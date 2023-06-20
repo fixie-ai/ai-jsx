@@ -325,7 +325,7 @@ function defaultEmbedding() {
   if (!process.env.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY not set');
   }
-  return new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY }) as unknown as Embedding;
+  return new LangChainEmbeddingWrapper(new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY }));
 }
 
 /**
