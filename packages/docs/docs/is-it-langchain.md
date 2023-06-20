@@ -1,3 +1,7 @@
+---
+sidebar_position: 4
+---
+
 # AI.JSX & LangChain
 
 [LangChain](https://langchain.com) is a popular library available for both Python and JavaScript for building on top of LLMs. AI.JSX is designed to be complementary to LangChainJS in some ways, and overlapping with it in others.
