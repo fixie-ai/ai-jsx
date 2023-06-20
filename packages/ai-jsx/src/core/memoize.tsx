@@ -6,19 +6,19 @@ let memoizedId = 0;
 export const isMemoizedSymbol = Symbol('isMemoized');
 
 /**
- * Memoize a renderable so it always returns the same thing.
+ * Memoize a {@link Renderable} so it always returns the same thing.
  *
  * For example, imagine you have the following:
  * ```tsx
- *    const catName = <ChatCompletion>
- *      <UserMessage>Give me a cat name</UserMessage>
- *    </ChatCompletion>;
+ *    const catName = (
+ *      <ChatCompletion>
+ *        <UserMessage>Give me a cat name</UserMessage>
+ *      </ChatCompletion>
+ *    );
  *
  *    <ChatCompletion>
  *      <UserMessage>
- *        Give me a story about these two cats:
- *          {catName}
- *          {catName}
+ *        I have a cat named {catName}. Tell me a story about {catName}.
  *      </UserMessage>
  *     </ChatCompletion>
  * ```

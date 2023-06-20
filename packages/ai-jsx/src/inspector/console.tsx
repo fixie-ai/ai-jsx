@@ -88,16 +88,26 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
 }
 
 /**
- * Take over the command line and render an interactive debug tool. The left side shows the streamed final output, and
- * the right side shows the debug tree. You can use the left and right arrow keys to step through the debug tree, to see
+ * `showInspector` renders an interactive, ASCII-based debug tool in the terminal window.
+ *
+ * The left side shows the streamed final output, and the right side shows the debug tree.
+ * You can use the left and right arrow keys to step through the debug tree, to see
  * how your program was evaluated step by step.
  *
- * If you call `showInspector` and also write to stdout or stderr (for instance, with `console.log`), the output may be messed up.
+ * Note that if you call `showInspector` and also write to stdout or stderr (for instance, with `console.log`), the output may be messed up.
  *
  * @see DebugTree
  *
+ * @example
  * ```tsx
- * showInspector(<App />)
+ * function MyApp() {
+ *   return (
+ *    <ChatCompletion>
+ *     <UserMessage>Generate a poem about red pandas.</UserMessage>
+ *    </ChatCompletion>
+ *   );
+ * }
+ * showInspector(<MyApp />);
  * ```
  */
 export function showInspector(componentToInspect: Node, opts: { showDebugTree?: boolean } = {}) {
@@ -105,20 +115,3 @@ export function showInspector(componentToInspect: Node, opts: { showDebugTree?: 
   const finalOpts = { ...defaultOpts, ...opts };
   render(<Inspector componentToInspect={componentToInspect} {...finalOpts} />);
 }
-
-/**
- * Notes
- *
- * I think it'll be hard to make a polished UI with this. For instance:
- *
- *    - This doesn't handle large inputs well; I don't think it's possible to have a fixed area and a scrolling area.
- *    - If the size overflows the terminal, the whole layout breaks.
- *    - Flexbox sometimes has its children overflow.
- *    - Box borders sometimes are pushed in when they're next to text.
- *    - terminal-link isn't actually supported in many terminals.
- *    - It sometimes breaks in Warp. 🤪
- */
-
-/**
- * If an error gets thrown, it breaks the UI.
- */

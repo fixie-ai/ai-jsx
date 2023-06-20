@@ -1,6 +1,7 @@
 /**
- * Types and simple implementations for DocsQA. Also see
- * {@link https://docs.ai-jsx.com/guides/brand-new#accessing-knowledge-docs-qa}
+ * This module provides the {@link DocsQA} component for document question and answering using an LLM.
+ * See: {@link https://docs.ai-jsx.com/guides/brand-new#accessing-knowledge-docs-qa}
+ * @packageDocumentation
  */
 
 import { Embeddings } from 'langchain/embeddings/base';
@@ -82,7 +83,7 @@ export interface CorpusPartition {
   readonly firstPageToken?: string;
 }
 
-/** A collection of sequential documents within a single CorpusPartition. */
+/** A collection of sequential documents within a single {@link CorpusPartition}. */
 export interface CorpusPage<DocType extends RawDocument | Document> {
   /** Documents to load into the corpus. */
   readonly documents: DocType[];
@@ -97,22 +98,22 @@ export interface CorpusPage<DocType extends RawDocument | Document> {
  *
  * In addition to returning documents, each response may expand the corpus space in one or both of
  * two dimensions:
- *      Responses may include new partitions to be loaded. Partitions are non-overlapping subsets
- *          of a corpus which may be loaded in parallel. A response's new partitions will be
- *          ignored if previously included in another response.
- *      When a response includes a page of documents, that page may indicate that another page is
- *          available in the same partition. Pages are always loaded serially in order. The
- *          partition is completed when a response has a page with no next page token.
+ * 1. Responses may include new partitions to be loaded. Partitions are non-overlapping subsets
+ *    of a corpus which may be loaded in parallel. A response's new partitions will be
+ *    ignored if previously included in another response.
+ * 1. When a response includes a page of documents, that page may indicate that another page is
+ *    available in the same partition. Pages are always loaded serially in order. The
+ *    partition is completed when a response has a page with no next page token.
  *
  * Loading will always begin with a request with the default (unnamed) partition and no page token.
  * Subsequent requests depend on prior responses and will always include at least one of those
  * fields.
  *
  *  Examples:
- *      Simple handful of documents:
+ *  * Simple handful of documents:
  *          The response to the initial request contains only a page of documents. This could
  *          include a next page token for more documents in the single default partition if needed.
- *      Web crawl:
+ *  * Web crawl:
  *          Each URL corresponds to a partition and the responses never include tokens. The initial
  *          response only includes partitions, one for each root URL to crawl. Each subsequent
  *          request includes the partition (the URL) and the corresponding response contains a page
@@ -120,7 +121,7 @@ export interface CorpusPage<DocType extends RawDocument | Document> {
  *          resources that should be included in the corpus, then the response also contains those
  *          URLs as new partitions. The process repeats for all partitions until there are no known
  *          incomplete partitions (or until crawl limits are reached).
- *      Database:
+ *  * Database:
  *          Consider a database with a parent table keyed by parent_id and an interleaved child
  *          table keyed by (parent_id, child_id) whose rows correspond to corpus documents. This
  *          loader will use tokens that encode a read timestamp (for consistency) and an offset to
@@ -319,7 +320,7 @@ export class LangChainEmbeddingWrapper implements Embedding {
   }
 }
 
-/** A default embedding useful for DocsQA. Note that this requires OPENAI_API_KEY to be set. */
+/** A default embedding useful for DocsQA. Note that this requires `OPENAI_API_KEY` to be set. */
 if (!process.env.OPENAI_API_KEY) {
   throw new Error('OPENAI_API_KEY not set');
 }
@@ -426,7 +427,7 @@ class CorpusNotReadyError extends Error {
 }
 
 /**
- * A LoadableCorpus is a Corpus that can additionally load and index documents.
+ * A LoadableCorpus is a {@link Corpus} that can additionally load and index documents.
  */
 export abstract class LoadableCorpus<
   DocumentMetadata extends Jsonifiable = Jsonifiable,
@@ -590,7 +591,7 @@ export class LocalCorpus<
   }
 }
 
-/** A Corpus backed by a LangChain VectorStore. */
+/** A {@link Corpus} backed by a LangChain {@link VectorStore}. */
 export class LangchainCorpus<ChunkMetadata extends Jsonifiable & Record<string, any> = Record<string, any>>
   implements Corpus<ChunkMetadata>
 {
@@ -601,7 +602,7 @@ export class LangchainCorpus<ChunkMetadata extends Jsonifiable & Record<string, 
   }
 }
 
-/** A LoadableCorpus backed by a LangChain VectorStore. */
+/** A {@link LoadableCorpus} backed by a LangChain {@link VectorStore}. */
 export class LoadableLangchainCorpus<
   DocumentMetadata extends Jsonifiable = Jsonifiable,
   ChunkMetadata extends Jsonifiable & Record<string, any> = Record<string, any>
@@ -650,6 +651,7 @@ async function searchVectorStore<ChunkMetadata extends Jsonifiable = Jsonifiable
   });
 }
 
+/** Properties to be passed to the {@link DocsQA} component. */
 export interface DocsQAProps<ChunkMetadata extends Jsonifiable = Jsonifiable> {
   /**
    * The corpus of documents that may be relevant to a query.
@@ -685,8 +687,13 @@ export interface DocsQAProps<ChunkMetadata extends Jsonifiable = Jsonifiable> {
    */
   chunkFormatter?: (props: { doc: ScoredChunk<ChunkMetadata> }) => Node;
 }
+
 /**
  * A component that can be used to answer questions about documents. This is a very common usecase for LLMs.
+ * @example
+ * ```tsx
+ *   <DocsQA question="What was Hurricane Katrina?" corpus={corpus} chunkLimit={5} chunkFormatter={GetChunk} />
+ * ```
  */
 export async function DocsQA<ChunkMetadata extends Jsonifiable = Jsonifiable>(props: DocsQAProps<ChunkMetadata>) {
   const chunks = await props.corpus.search(props.question, { limit: props.chunkLimit });
