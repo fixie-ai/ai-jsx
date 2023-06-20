@@ -6510,7 +6510,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:>=12.12.47, @types/node@npm:>=13.7.0, @types/node@npm:^20.2.1, @types/node@npm:^20.3.1":
+"@types/node@npm:*, @types/node@npm:20.3.1, @types/node@npm:>=12.12.47, @types/node@npm:>=13.7.0, @types/node@npm:^20.2.1, @types/node@npm:^20.3.1":
   version: 20.3.1
   resolution: "@types/node@npm:20.3.1"
   checksum: 63a393ab6d947be17320817b35d7277ef03728e231558166ed07ee30b09fd7c08861be4d746f10fdc63ca7912e8cd023939d4eab887ff6580ff704ff24ed810c
@@ -6627,7 +6627,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:^18.0.0, @types/react-dom@npm:^18.2.5":
+"@types/react-dom@npm:18.2.5, @types/react-dom@npm:^18.0.0, @types/react-dom@npm:^18.2.5":
   version: 18.2.5
   resolution: "@types/react-dom@npm:18.2.5"
   dependencies:
@@ -6668,7 +6668,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:*, @types/react@npm:^18.2.12, @types/react@npm:^18.2.7":
+"@types/react@npm:*, @types/react@npm:18.2.12, @types/react@npm:^18.2.12, @types/react@npm:^18.2.7":
   version: 18.2.12
   resolution: "@types/react@npm:18.2.12"
   dependencies:
@@ -11265,7 +11265,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-config-next@npm:^13.4.6":
+"eslint-config-next@npm:13.4.6, eslint-config-next@npm:^13.4.6":
   version: 13.4.6
   resolution: "eslint-config-next@npm:13.4.6"
   dependencies:
@@ -11650,7 +11650,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:^8.3.0, eslint@npm:^8.40.0, eslint@npm:^8.42.0":
+"eslint@npm:8.43.0, eslint@npm:^8.3.0, eslint@npm:^8.40.0, eslint@npm:^8.42.0":
   version: 8.43.0
   resolution: "eslint@npm:8.43.0"
   dependencies:
@@ -17075,7 +17075,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"next@npm:^13.4.6":
+"next@npm:13.4.6, next@npm:^13.4.6":
   version: 13.4.6
   resolution: "next@npm:13.4.6"
   dependencies:
@@ -22287,6 +22287,29 @@ __metadata:
   checksum: 4779580c3439d0385e7dd71144bf0f72884cf7fb492bd2f5600ff256fa7c9ae9663ef284507021de90d54d62885fc027d740d578a3e11a1ae83e84a107eedd38
   languageName: node
   linkType: hard
+
+"tutorial-nextjs@workspace:packages/tutorial-nextjs":
+  version: 0.0.0-use.local
+  resolution: "tutorial-nextjs@workspace:packages/tutorial-nextjs"
+  dependencies:
+    "@babel/core": ^7.22.5
+    "@babel/plugin-transform-react-jsx": ^7.22.5
+    "@next/eslint-plugin-next": ^13.4.6
+    "@types/node": 20.3.1
+    "@types/react": 18.2.12
+    "@types/react-dom": 18.2.5
+    "@typescript-eslint/eslint-plugin": ^5.59.9
+    "@typescript-eslint/parser": ^5.59.9
+    ai-jsx: ^0.2.0-4
+    eslint: 8.43.0
+    eslint-config-next: 13.4.6
+    eslint-config-nth: ^2.0.1
+    next: 13.4.6
+    react: 18.2.0
+    react-dom: 18.2.0
+    typescript: 5.1.3
+  languageName: unknown
+  linkType: soft
 
 "tutorial@workspace:packages/tutorial":
   version: 0.0.0-use.local
