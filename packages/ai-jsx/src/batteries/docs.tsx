@@ -498,7 +498,7 @@ async function loadCorpus<
   loader: Loader<DocumentMetadata>,
   vectorize: Vectorizer<DocumentMetadata, ChunkMetadata>,
   chunkConsumer: (chunks: EmbeddedChunk<ChunkMetadata>[]) => Promise<void>,
-  maxRequests: number = Number.MAX_SAFE_INTEGER
+  maxRequests: number = 5000
 ): Promise<CorpusStats> {
   const activePartitionsToToken = new Map<CorpusPartition['name'] | null, string | null>();
   const completedPartitions = new Set<CorpusPartition['name']>();

@@ -30,6 +30,9 @@ const docs = await Promise.all(
     } as Document<RedditMetadata>;
   })
 );
+if (docs.length === 0) {
+  throw Error('No documents available. Did you run load-articles first?');
+}
 
 const corpus = new LocalCorpus(staticLoader(docs), defaultChunker);
 await corpus.load();
@@ -39,7 +42,7 @@ function AskAndAnswer({ query }: { query: string }) {
     <>
       Q: {query}
       {'\n'}
-      A: <DocsQA question={query} corpus={corpus} />
+      A: <DocsQA question={query} corpus={corpus} chunkLimit={5} />
     </>
   );
 }
