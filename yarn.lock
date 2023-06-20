@@ -6636,15 +6636,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:18.2.6":
-  version: 18.2.6
-  resolution: "@types/react-dom@npm:18.2.6"
-  dependencies:
-    "@types/react": "*"
-  checksum: b56e42efab121a3a8013d2eb8c1688e6028a25ea6d33c4362d2846f0af3760b164b4d7c34846614024cfb8956cca70dd1743487f152e32ff89a00fe6fbd2be54
-  languageName: node
-  linkType: hard
-
 "@types/react-router-config@npm:*, @types/react-router-config@npm:^5.0.6":
   version: 5.0.7
   resolution: "@types/react-router-config@npm:5.0.7"
@@ -6685,17 +6676,6 @@ __metadata:
     "@types/scheduler": "npm:*"
     csstype: "npm:^3.0.2"
   checksum: ad85a7eadaf1b35cfeee9f715b39311420ff46d46e0650377d918b3f888c2e47416037da4a765e1dccd3d1916abd54c105a3bee803c971ba56c955a7768ce976
-  languageName: node
-  linkType: hard
-
-"@types/react@npm:18.2.13":
-  version: 18.2.13
-  resolution: "@types/react@npm:18.2.13"
-  dependencies:
-    "@types/prop-types": "*"
-    "@types/scheduler": "*"
-    csstype: ^3.0.2
-  checksum: f7c15f19c164a29262993ea2aae2085fa38cddd9b8359fd8fefabfced91010b515a3abe2042b2b7f2f86e6b38a25b191415aa9313a9027175e3a000883c858cc
   languageName: node
   linkType: hard
 
@@ -7438,6 +7418,30 @@ __metadata:
     react: ^16.8.0  || ^17.0.0 || ^18.0.0
   languageName: unknown
   linkType: soft
+
+"ai@npm:^2.1.3":
+  version: 2.1.3
+  resolution: "ai@npm:2.1.3"
+  dependencies:
+    eventsource-parser: 1.0.0
+    nanoid: ^3.3.6
+    sswr: ^1.10.0
+    swr: 2.1.5
+    swrv: 1.0.3
+  peerDependencies:
+    react: ^18.0.0
+    svelte: ^3.29.0
+    vue: ^3.3.4
+  peerDependenciesMeta:
+    react:
+      optional: true
+    svelte:
+      optional: true
+    vue:
+      optional: true
+  checksum: db1639a5a5bec82165ff614e2626d1e5b56654fa94c129622fefba34c8b0e7a7967625e59d0dad61136d88f941b5c8b39242d5b20cab0b91baf7bc1fde3d8c24
+  languageName: node
+  linkType: hard
 
 "ajv-formats@npm:^2.1.1":
   version: 2.1.1
@@ -11831,6 +11835,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eventsource-parser@npm:1.0.0":
+  version: 1.0.0
+  resolution: "eventsource-parser@npm:1.0.0"
+  checksum: 1bcef98c6e35e5afe6bdbcd6985187d26f3e706f7283a9a8e114491322a2a3be6fb75298ad8426bd5f7ca3de99a632417e8b60d14cc9bc3f4b6aebc03a81c00d
+  languageName: node
+  linkType: hard
+
 "examples@workspace:packages/examples":
   version: 0.0.0-use.local
   resolution: "examples@workspace:packages/examples"
@@ -12333,22 +12344,6 @@ __metadata:
   checksum: faa66059b66358ba65c234c2f2a37fcec029dc22775f35d9ad6abac56003268baf41e55f9ee645957b32c7d9f62baf1f0b906e68267276f54ec4b4c597c2b190
   languageName: node
   linkType: hard
-
-"foooo@workspace:packages/foooo":
-  version: 0.0.0-use.local
-  resolution: "foooo@workspace:packages/foooo"
-  dependencies:
-    "@types/node": 20.3.1
-    "@types/react": 18.2.13
-    "@types/react-dom": 18.2.6
-    eslint: 8.43.0
-    eslint-config-next: 13.4.6
-    next: 13.4.6
-    react: 18.2.0
-    react-dom: 18.2.0
-    typescript: 5.1.3
-  languageName: unknown
-  linkType: soft
 
 "for-each@npm:^0.3.3":
   version: 0.3.3
@@ -21289,6 +21284,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sswr@npm:^1.10.0":
+  version: 1.10.0
+  resolution: "sswr@npm:1.10.0"
+  dependencies:
+    swrev: ^3.0.0
+  peerDependencies:
+    svelte: ^3.29.0
+  checksum: a5331c8d0efed38efcbc41e37b5cb701cc3ce994935eadf4bd28652361a095a6e2cc101d1a6a6e8784aae2bc5096f4a1d1106db110565dd613b472580c31ca43
+  languageName: node
+  linkType: hard
+
 "stable@npm:^0.1.8":
   version: 0.1.8
   resolution: "stable@npm:0.1.8"
@@ -21771,6 +21777,33 @@ __metadata:
   bin:
     svgo: bin/svgo
   checksum: b92f71a8541468ffd0b81b8cdb36b1e242eea320bf3c1a9b2c8809945853e9d8c80c19744267eb91cabf06ae9d5fff3592d677df85a31be4ed59ff78534fa420
+  languageName: node
+  linkType: hard
+
+"swr@npm:2.1.5":
+  version: 2.1.5
+  resolution: "swr@npm:2.1.5"
+  dependencies:
+    use-sync-external-store: ^1.2.0
+  peerDependencies:
+    react: ^16.11.0 || ^17.0.0 || ^18.0.0
+  checksum: f2ef9b83ec4b2ebf4d520578ab847307700db01ffcab64b3aec6ea94feaf96ca10e38e8b08bc8adfab8eaa6ec1bdfd64f82b6f5c14cc4cb5cf11e6fd22b405a4
+  languageName: node
+  linkType: hard
+
+"swrev@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "swrev@npm:3.0.0"
+  checksum: 1dfc42916649059919ae2c2e4e7ff0f206a30e09a0dd4bb61ffad19bb05f0aa66fa0ab389f24c125d04ee497579f91a14e9124aa43406fda7d3fd636e5f42a00
+  languageName: node
+  linkType: hard
+
+"swrv@npm:1.0.3":
+  version: 1.0.3
+  resolution: "swrv@npm:1.0.3"
+  peerDependencies:
+    vue: ">=3.2.26 < 4"
+  checksum: fe2e7c46d76419cfd9dda1b17018f284d54f216c1129c396892947b47ea4b6dc007cfea56bba1b414543824e0c0ae9521ee2beebf10ff6ea92056aa13d65f0e3
   languageName: node
   linkType: hard
 
@@ -22336,6 +22369,7 @@ __metadata:
     "@types/react-dom": 18.2.5
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
+    ai: ^2.1.3
     ai-jsx: ^0.2.0-4
     eslint: 8.43.0
     eslint-config-next: 13.4.6
