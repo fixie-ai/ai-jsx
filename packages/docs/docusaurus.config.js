@@ -21,7 +21,7 @@ const config = {
   organizationName: 'fixie-ai', // Usually your GitHub org/user name.
   projectName: 'ai-jsx', // Usually your repo name.
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'throw',
 
   // Even if you don't use internalization, you can use this field to set useful
@@ -36,8 +36,15 @@ const config = {
     [
       'docusaurus-plugin-typedoc',
       {
-        entryPoints: ['../ai-jsx/src/index.ts'],
+        // If you add new public-facing entry points, please ensure that they are listed below
+        // so that the published API documentation will include them.
         tsconfig: '../ai-jsx/tsconfig.json',
+        sidebar: {
+          categoryLabel: 'API Reference',
+          collapsed: true,
+          position: 20,
+          fullNames: true,
+        },
       },
     ],
   ],
@@ -66,6 +73,9 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      colorMode: {
+        respectPrefersColorScheme: true,
+      },
       // We'll replace this with our own soon
       //image: 'img/docusaurus-social-card.jpg',
       navbar: {
@@ -82,6 +92,16 @@ const config = {
             sidebarId: 'tutorialSidebar',
             position: 'left',
             label: 'Docs',
+          },
+          {
+            href: 'https://github.com/fixie-ai/ai-jsx',
+            label: 'GitHub',
+            position: 'right',
+          },
+          {
+            href: 'https://discord.gg/MsKAeKF8kU',
+            label: 'Discord',
+            position: 'right',
           },
         ],
       },

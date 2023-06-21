@@ -2,7 +2,6 @@ import 'server-only';
 import * as ReactModule from 'react';
 import * as AI from '../react/core.js';
 export * from '../react/core.js';
-import { JSX } from '../react/jsx-runtime.js';
 import { asJsxBoundary } from '../react/jsx-boundary.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
@@ -54,15 +53,15 @@ function computeSuffix(
 }
 
 /**
- * A JSX component that allows AI.jsx elements to be used in a [NextJS RSC component tree](https://nextjs.org/docs/getting-started/react-essentials#server-components).
+ * A JSX component that allows AI.JSX elements to be used in a [NextJS RSC component tree](https://nextjs.org/docs/getting-started/react-essentials#server-components).
  */
 export const jsx = asJsxBoundary(function jsx(
   { children }: { children: AI.Node },
   context?: any | AI.ComponentContext
-): JSX.Element {
+) {
   if (typeof context?.render === 'function') {
     // We're in AI.JSX already.
-    return children as JSX.Element;
+    return children as any;
   }
 
   const renderResult = AI.createRenderContext().render(children, {
@@ -139,3 +138,4 @@ export const jsx = asJsxBoundary(function jsx(
     replace: (node: ReactModule.ReactNode) => node,
   }) as JSX.Element;
 });
+export const JSX = jsx;

@@ -146,6 +146,8 @@ AI.createRenderContext().render(<App />, {
 
 The pit of success in AI.JSX is your program being automatically parallelized and streamed to the caller.
 
+For more detail: [Performance](./performance.md).
+
 ## Semantic Similarity ("Embeddings")
 
 LLMs can tell us how related two pieces of text are. An embedding is a very long vector locating a given piece of text in semantic space. We could imagine a model that embeds according to this scheme:

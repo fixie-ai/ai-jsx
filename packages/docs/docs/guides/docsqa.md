@@ -26,7 +26,8 @@ flowchart LR
 
 ## Preparing a Corpus
 
-We need to populate a corpus before we can search it. We do that via the following steps:
+If you already have a populated corpus available, you can use that (for example with `LangchainCorpus`).
+Otherwise we need to populate a corpus before we can search it. We do that via the following steps:
 
 ### Step 1: Loading (and Parsing)
 
@@ -52,33 +53,34 @@ With vectors in hand, your text chunks can be added to a vector database. When r
 
 ### Starting and Monitoring Loading
 
-The ai.jsx "Corpus" interface provides a "startLoading" method that will begin loading and vectorizing documents so they're available for querying later. It also provides a "getStats" method so you can inspect a corpus's progress.
+The ai.jsx "Corpus" interface provides a "load" method that will begin loading and vectorizing documents so they're available for querying later. It also provides a "getStats" method so you can inspect a corpus's progress.
 
 ```typescript
-// Have the corpus begin loading.
-let stats = await corpus.startLoading();
+// Have the corpus begin loading. This promise may take a while to resolve, but we'll be ready to
+// use the Corpus when it does.
+const loadingPromise = corpus.load();
 
-// Poll loading state until loading has completed.
-while (stats.loadingState !== Corpus.LoadingState.COMPLETED) {
+// Optional: Poll loading state until loading has completed.
+let stats = corpus.getStats();
+while (stats.loadingState !== CorpusLoadingState.COMPLETED) {
   await sleep(5000);
-  stats = await corpus.getStats();
-  if (stats.loadingState === Corpus.LoadingState.FAILED) {
+  stats = corpus.getStats();
+  if (stats.loadingState === CorpusLoadingState.FAILED) {
     throw Error(`Corpus failed to load. Final stats: ${stats}`);
   }
 }
+console.log(`Finished indexing ${stats.numDocuments} documents, chunk count=${stats.numChunks}`);
+
+// Alternative:
+const stats = await loadingPromise;
+console.log(`Finished indexing ${stats.numDocuments} documents, chunk count=${stats.numChunks}`);
 
 function sleep(millis: number) {
   return new Promise((resolve) => setTimeout(resolve, millis));
 }
 ```
 
-Typically you'll want to make sure a corpus has completed loading before exposing it to your users, but for small corpora loading just in time can work as well. (If you invoke the DocsQA primitive with a corpus that hasn't completed loading, you'll just get a message about the corpus not being ready instead of a real response from the LLM.)
-
-:::note Note:
-
-`LocalCorpus` simplifies this flow a bit for the simple use cases it supports by having a `COMPLETED` `LoadingState` by the time the promise from `startLoading()` has resolved.
-
-:::
+Typically you'll want to make sure a corpus has completed loading before exposing it to your users, but for small corpora loading just in time can work as well.
 
 ## Responding to Queries
 
