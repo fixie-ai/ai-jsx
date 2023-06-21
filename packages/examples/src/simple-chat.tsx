@@ -1,6 +1,5 @@
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
-import * as AI from 'ai-jsx';
-// import { showInspector } from 'ai-jsx/core/inspector';
+import { showInspector } from 'ai-jsx/core/inspector';
 
 function App() {
   return (
@@ -11,5 +10,4 @@ function App() {
   );
 }
 
-// showInspector(<App />);
-console.log(await AI.createRenderContext().render(<App />));
+showInspector(<App />);
