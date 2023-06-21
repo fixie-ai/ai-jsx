@@ -66,8 +66,8 @@ function AutomaticCompletionModel({ children, ...props }: ModelPropsWithChildren
 
   throw new Error(`No completion model was specified. To fix this, do one of the following:
     
-1. Set the OPENAI_API_KEY environment variable.
-2. Set the OPENAI_API_BASE environment variable.
+1. Set the OPENAI_API_KEY or REACT_APP_OPENAI_API_KEY environment variable.
+2. Set the OPENAI_API_BASE or REACT_APP_OPENAI_API_BASE environment variable.
 3. use an explicit CompletionProvider component.`);
 }
 

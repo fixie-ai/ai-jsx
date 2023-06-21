@@ -10,6 +10,10 @@ You may do this with any of the [Architecture Patterns](./architecture.mdx).
 
 **How to do this:** Set the `OPENAI_API_KEY` env var. (You can get this key from the [OpenAI API dashboard](https://platform.openai.com/account/api-keys))
 
+:::note create-react-app
+If your project is build on create-react-app, you'll want to set `REACT_APP_OPENAI_API_KEY` instead. ([More detail.](https://create-react-app.dev/docs/adding-custom-environment-variables/))
+:::
+
 ## Set a proxy env var
 
 **When to do this:** you have a proxy server that you'd like to use for OpenAI calls.
@@ -27,6 +31,10 @@ OPENAI_API_BASE=https://my-proxy-server/api
 # When you're running on the client, and want to make a request to the origin.
 OPENAI_API_BASE=/openai-proxy
 ```
+
+:::note create-react-app
+If your project is build on create-react-app, you'll want to set `REACT_APP_OPENAI_API_BASE` instead. ([More detail.](https://create-react-app.dev/docs/adding-custom-environment-variables/))
+:::
 
 ## Set a model provider in your JSX
 
