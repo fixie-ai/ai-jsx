@@ -26,7 +26,7 @@ export default function Chat({
     fetchAI(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: messages }),
+      body: JSON.stringify({ messages }),
     });
   }
 
@@ -46,7 +46,9 @@ export default function Chat({
           value={value}
           onChange={(e) => setValue(e.currentTarget.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') send();
+            if (e.key === 'Enter') {
+              send();
+            }
           }}
         />
         <button

@@ -13,7 +13,6 @@ function ChatAgent({ conversation }: { conversation: string[] }) {
         the user.
       </SystemMessage>
       {conversation.map((message, index) =>
-        // eslint-disable-next-line react/jsx-key
         index % 2 ? <AssistantMessage>{message}</AssistantMessage> : <UserMessage>{message}</UserMessage>
       )}
     </ChatCompletion>
