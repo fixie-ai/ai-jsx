@@ -429,10 +429,16 @@ class CorpusNotReadyError extends Error {
 /**
  * A LoadableCorpus is a {@link Corpus} that can additionally load and index documents.
  */
-export abstract class LoadableCorpus<
+export interface LoadableCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> extends Corpus<ChunkMetadata> {
+  load: () => Promise<CorpusStats>;
+
+  getStats: () => CorpusStats;
+}
+
+abstract class BaseLoadableCorpus<
   DocumentMetadata extends Jsonifiable = Jsonifiable,
   ChunkMetadata extends Jsonifiable = Jsonifiable
-> implements Corpus<ChunkMetadata>
+> implements LoadableCorpus<ChunkMetadata>
 {
   private stats: CorpusStats = {
     loadingState: CorpusLoadingState.NOT_STARTED,
@@ -556,7 +562,7 @@ async function loadCorpus<
 export class LocalCorpus<
   DocumentMetadata extends Jsonifiable = Jsonifiable,
   ChunkMetadata extends Jsonifiable = Jsonifiable
-> extends LoadableCorpus<DocumentMetadata, ChunkMetadata> {
+> extends BaseLoadableCorpus<DocumentMetadata, ChunkMetadata> {
   private readonly vectors: EmbeddedChunk<ChunkMetadata>[] = [];
   constructor(
     readonly loader: Loader<DocumentMetadata>,
@@ -610,13 +616,13 @@ export class LangchainCorpus<ChunkMetadata extends Jsonifiable & Record<string, 
 export class LoadableLangchainCorpus<
   DocumentMetadata extends Jsonifiable = Jsonifiable,
   ChunkMetadata extends Jsonifiable & Record<string, any> = Record<string, any>
-> extends LoadableCorpus<DocumentMetadata, ChunkMetadata> {
+> extends BaseLoadableCorpus<DocumentMetadata, ChunkMetadata> {
   constructor(
     readonly vectorstore: VectorStore,
     readonly loader: Loader<DocumentMetadata>,
-    readonly chunker: Chunker<DocumentMetadata, ChunkMetadata>,
-    readonly embedding: Embedding = defaultEmbedding()
+    readonly chunker: Chunker<DocumentMetadata, ChunkMetadata>
   ) {
+    const embedding = new LangChainEmbeddingWrapper(vectorstore.embeddings);
     const chunkConsumer = async (chunks: EmbeddedChunk<ChunkMetadata>[]) => {
       const vectors = chunks.map((chunk) => chunk.vector);
       const lcDocs = chunks.map((chunk) => ({

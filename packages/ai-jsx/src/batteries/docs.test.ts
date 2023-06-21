@@ -113,7 +113,7 @@ describe('corpus loading and search', () => {
       }
     }
     const vectorStore = new MemoryVectorStore(new FakeEmbeddings({}));
-    const corpus = new LoadableLangchainCorpus(vectorStore, loader, chunker, embedding);
+    const corpus = new LoadableLangchainCorpus(vectorStore, loader, chunker);
     const stats = await corpus.load();
     expect(stats).toEqual({
       loadingState: CorpusLoadingState.COMPLETED,
