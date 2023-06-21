@@ -9,7 +9,7 @@ This is a quickstart guide to [AI.JSX](https://ai-jsx.com).
 ## AI.JSX Hello World
 
 To use any of the AI.JSX examples (which use the OpenAI large language models), you first need to
-obtain an OpenAI API key from the [OpenAI API dashboard](https://beta.openai.com/docs/developer-quickstart/your-api-keys).
+obtain an OpenAI API key from the [OpenAI API dashboard](https://platform.openai.com/account/api-keys).
 
 For a quick "hello world" of AI.JSX in action, do this:
 
