@@ -3,6 +3,7 @@ import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 import { Prompt } from 'ai-jsx/batteries/prompts';
 import { ImageGen } from 'ai-jsx/core/image-gen';
 import { memo } from 'ai-jsx/core/memoize';
+// import { showInspector } from 'ai-jsx/core/inspector';
 
 function RecipeWithImage() {
   const recipeTitle = memo(
@@ -19,5 +20,8 @@ function RecipeWithImage() {
     </>
   );
 }
+
+// This doesn't look great for some reason.
+// showInspector(<RecipeWithImage />);
 
 console.log(await AI.createRenderContext().render(<RecipeWithImage />));

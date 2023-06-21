@@ -47,7 +47,7 @@
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.json",
-    "build": "yarn run typecheck"
+    "build": "rm -rf dist && yarn run typecheck"
   },
   "dependencies": {
     "@nick.heiner/wandb-fork": "0.5.2-5",
