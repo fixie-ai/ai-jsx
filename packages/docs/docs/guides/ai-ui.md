@@ -65,7 +65,7 @@ The fastest way to get started is to clone the AI.JSX NextJS template repo. Or, 
 1. Add these lines to the top of your files that combine React and AI.JSX components:
    ```tsx
    /** @jsxImportSource ai-jsx/react */
-   import * as AI from 'ai-jsx/next';
+   import * as AI from 'ai-jsx/experimental/next';
    ```
 1. Ensure that your `tsconfig.json` settings are the same as what `create-next-app` generated for you. In particular, this `compileOption` needs to be set:
    ```json
@@ -91,7 +91,7 @@ When you want to add AI.JSX components, use the `AI.jsx` component:
 
 ```tsx
 /** @jsxImportSource ai-jsx/react */
-import * as AI from 'ai-jsx/next';
+import * as AI from 'ai-jsx/experimental/next';
 
 <div>
   <MyComponent />
@@ -135,7 +135,7 @@ Then, we provide those components to the AI, along with a prompt of what we want
 
 ```tsx
 /** @jsxImportSource ai-jsx/react */
-import * as AI from 'ai-jsx/next';
+import * as AI from 'ai-jsx/experimental/next';
 import { UICompletion } from 'ai-jsx/react/completion';
 
 /* react component */
@@ -181,7 +181,7 @@ Then, use the `UICompletion` component:
 
 ```tsx
 /** @jsxImportSource ai-jsx/react */
-import * as AI from 'ai-jsx/next';
+import * as AI from 'ai-jsx/experimental/next';
 import { UICompletion } from 'ai-jsx/react/completion';
 
 function MakeRecipe() {
