@@ -75,7 +75,8 @@
   "type": "module",
   "scripts": {
     "start:backend": "rm -rf backend/dist && tsc -p backend/tsconfig.json && node backend/dist/index.js",
-    "start": "concurrently \"node scripts/start.cjs\" \"yarn run start:backend\"",
+    "start:arch-2": "concurrently \"yarn run start\" \"yarn run start:backend\"",
+    "start": "node scripts/start.cjs",
     "build": "node scripts/build.cjs",
     "test": "yarn run lint; yarn run typecheck",
     "dev": "yarn run start",

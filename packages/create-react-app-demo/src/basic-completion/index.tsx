@@ -18,11 +18,9 @@ export default function BasicCompletion() {
         <InputPrompt label="Give me a topic..." value={query} setValue={setQuery} />
         <ResultContainer title={`AI writes a poem about "${query}"`}>
           <AI.jsx>
-            <UseHostOpenAIProxy>
-              <ChatCompletion temperature={1}>
-                <UserMessage>Write me a poem about {query}</UserMessage>
-              </ChatCompletion>
-            </UseHostOpenAIProxy>
+            <ChatCompletion temperature={1}>
+              <UserMessage>Write me a poem about {query}</UserMessage>
+            </ChatCompletion>
           </AI.jsx>
         </ResultContainer>
         <ResultContainer title={`AI lists ten facts about "${query}"`}>
