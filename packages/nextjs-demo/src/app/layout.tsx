@@ -1,9 +1,10 @@
 import React from 'react';
 import './globals.css';
+import About from '@/components/About';
 import NavBar from '@/components/NavBar';
 
 export const metadata = {
-  title: 'AI.JSX + NextJS SSR Demo',
+  title: 'AI.JSX + NextJS Demo',
   description: 'A framework for AI-native UIs',
 };
 
@@ -12,6 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <NavBar />
+        <About />
         <main className="flex min-h-screen flex-col items-start p-24">{children}</main>
         <div className="hidden">
           <h1 className="text-2xl"></h1>
