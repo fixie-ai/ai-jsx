@@ -57,7 +57,7 @@ function createOpenAIClient() {
     new Configuration({
       apiKey: process.env.OPENAI_API_KEY,
     }),
-    process.env.OPENAI_API_BASE_URL,
+    process.env.OPENAI_API_BASE,
     // TODO: Figure out a better way to work around NextJS fetch blocking streaming
     (globalThis as any)._nextOriginalFetch ?? globalThis.fetch
   );
