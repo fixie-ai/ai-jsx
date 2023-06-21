@@ -4,10 +4,10 @@ import { NavLink } from 'react-router-dom';
 
 export default function NavBar() {
   const pages = {
-    'Choose your own adventure': '/',
     'Basic Completion': '/basic-completion',
     'Basic Chat': '/basic-chat',
     'Docs Chat': '/docs-chat',
+    'Choose Your Own Adventure': '/choose-yor-own-adventure',
     'Recipe JIT UI': '/recipe',
   };
 
