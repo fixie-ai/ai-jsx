@@ -239,14 +239,14 @@
         "default": "./dist/cjs/react/completion.cjs"
       }
     },
-    "./next": {
+    "./experimental/next": {
       "import": {
-        "types": "./dist/esm/next/index.d.ts",
-        "default": "./dist/esm/next/index.js"
+        "types": "./dist/esm/experimental/next/index.d.ts",
+        "default": "./dist/esm/experimental/next/index.js"
       },
       "require": {
-        "types": "./dist/cjs/next/index.d.cts",
-        "default": "./dist/cjs/next/index.cjs"
+        "types": "./dist/cjs/experimental/next/index.d.cts",
+        "default": "./dist/cjs/experimental/next/index.cjs"
       }
     },
     "./stream": {
