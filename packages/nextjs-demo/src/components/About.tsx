@@ -4,7 +4,7 @@ export default function About() {
       <div className="w-full overflow-hidden rounded-lg bg-fixie-light-dust shadow-sm">
         <div className="px-4 py-5 sm:px-6">
           <p className="text-center">
-            This is a NextJS-based demo of{' '}
+            This is a React-based demo of{' '}
             <a className="underline" href="https://ai-jsx.com/">
               AI.JSX
             </a>
