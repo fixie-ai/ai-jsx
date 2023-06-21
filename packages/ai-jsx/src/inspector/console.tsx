@@ -8,14 +8,81 @@ import { memo } from '../core/memoize.js';
 import Spinner from './spinner.js';
 import { DebugTree } from '../core/debug.js';
 
-import { Box, render, Text, useInput } from 'ink';
+import { Box, render, Spacer, Text, useInput, useStdout } from 'ink';
 
 const { useList } = reactUse;
+
+/** Get the size of the terminal window. */
+export function useStdoutDimensions(): [number, number] {
+  const { stdout } = useStdout();
+  const [dimensions, setDimensions] = useState<[number, number]>([stdout.columns, stdout.rows]);
+
+  useEffect(() => {
+    const handler = () => setDimensions([stdout.columns, stdout.rows]);
+    stdout.on('resize', handler);
+    return () => {
+      stdout.off('resize', handler);
+    };
+  }, [stdout]);
+
+  return dimensions;
+}
+
+function InspectorTitle({ frame, totalFrames, done }: { frame: number; totalFrames: number; done: boolean }) {
+  return (
+    <Box paddingLeft={1} width="100%">
+      <Text>🦊 AI.JSX Inspector</Text>
+      <Spacer />
+      <Text color="grey">
+        {!done ? <Spinner /> : ''}
+        Frame {frame}/{totalFrames}
+        {done ? '' : '+'}
+      </Text>
+    </Box>
+  );
+}
+
+function LiveStream({ content, width, height }: { content: string; width: string; height: number | string }) {
+  return (
+    <Box borderStyle="round" borderColor="blue" flexDirection="column" width={width} height={height} overflow="hidden">
+      <Text>{content}</Text>
+    </Box>
+  );
+}
+
+function DebugTreeStream({ content, width, height }: { content: string; width: string; height: number | string }) {
+  return (
+    <Box
+      borderStyle="round"
+      borderColor="blue"
+      flexDirection="column"
+      paddingLeft={2}
+      width={width}
+      height={height}
+      overflow="hidden"
+    >
+      <Text color="green">
+        {/* This doesn't handle JSX well, but it's better than nothing. */}
+        <SyntaxHighlight code={content} language="javascript"></SyntaxHighlight>
+      </Text>
+    </Box>
+  );
+}
+
+function StatusBar() {
+  return (
+    <Box width="100%" height={1}>
+      <Text>Left/right arrow keys to browse history, 1=first, 9=last, q to quit.</Text>
+    </Box>
+  );
+}
 
 function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: Node; showDebugTree: boolean }) {
   const [debugTreeSteps, { push: pushDebugTreeStep }] = useList([] as string[]);
   const [debugTreeFrameIndex, setDebugTreeFrameIndex] = useState<number | null>(null);
   const [debugTreeStreamIsDone, setDebugTreeStreamIsDone] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [columns, rows] = useStdoutDimensions();
 
   const [renderedContent, setRenderedContent] = useState('');
 
@@ -39,7 +106,7 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
     getRenderedContent();
   }, [componentToInspect]);
 
-  useInput((_input: any, key: any) => {
+  useInput((input: any, key: any) => {
     if (key.rightArrow) {
       setDebugTreeFrameIndex((prevIndex) =>
         prevIndex === null ? debugTreeSteps.length - 1 : Math.min(debugTreeSteps.length - 1, prevIndex + 1)
@@ -50,38 +117,35 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
         prevIndex === null ? debugTreeSteps.length - 2 : Math.max(0, prevIndex - 1)
       );
     }
+    if (input === '1') {
+      setDebugTreeFrameIndex(0);
+    }
+    if (input === '9') {
+      setDebugTreeFrameIndex(debugTreeSteps.length - 1);
+    }
+    if (input === 'q') {
+      process.exit();
+    }
   });
 
   const debugFrameIndexToUse = debugTreeFrameIndex === null ? debugTreeSteps.length - 1 : debugTreeFrameIndex;
 
   return (
     <>
-      <Box flexDirection="row">
-        <Box flexDirection="column" width={showDebugTree ? '50%' : '100%'}>
-          <Text bold underline>
-            Live-streaming output
-            {!debugTreeStreamIsDone && <Spinner />}
-          </Text>
-          <Text>{renderedContent}</Text>
+      <Box flexDirection="column" height={rows}>
+        <InspectorTitle
+          frame={debugFrameIndexToUse}
+          totalFrames={Math.max(0, debugTreeSteps.length - 1)}
+          done={debugTreeStreamIsDone}
+        />
+        <Box flexDirection="row">
+          <LiveStream content={renderedContent} width={showDebugTree ? '50%' : '100%'} height={rows - 6} />
+
+          {showDebugTree && (
+            <DebugTreeStream content={debugTreeSteps[debugFrameIndexToUse] ?? ''} width="50%" height={rows - 6} />
+          )}
         </Box>
-        {showDebugTree && (
-          <Box flexDirection="column" paddingLeft={2} width="50%">
-            <Text bold underline>
-              Tree Inspector
-            </Text>
-            <Text color="grey">
-              Viewing frame {debugFrameIndexToUse}/{Math.max(0, debugTreeSteps.length - 1)}
-              {debugTreeStreamIsDone ? '' : '+'}
-            </Text>
-            <Text color="green">
-              {/* This doesn't handle JSX well, but it's better than nothing. */}
-              <SyntaxHighlight
-                code={debugTreeSteps[debugFrameIndexToUse] ?? ''}
-                language="javascript"
-              ></SyntaxHighlight>
-            </Text>
-          </Box>
-        )}
+        <StatusBar />
       </Box>
     </>
   );

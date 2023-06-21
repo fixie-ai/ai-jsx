@@ -1,6 +1,7 @@
 import * as ReactModule from 'react';
 import * as AI from './core.js';
 import { asJsxBoundary } from './jsx-boundary.js';
+import { fromStreamResponse } from '../stream/index.js';
 export * from './core.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
@@ -62,6 +63,107 @@ export function useAI(children: AI.Node, onStreamStart?: () => void, onStreamEnd
   }, [children]);
 
   return { result, isDone };
+}
+
+/**
+ * Options for the useAIStream React hook.
+ */
+export interface UseAIStreamOpts {
+  /**
+   * An event handler that runs when an AI stream has completed.
+   * @param result The final rendering.
+   * @returns The value to replace `current` with.
+   */
+  onComplete?: (result: ReactModule.ReactNode) => ReactModule.ReactNode;
+
+  /**
+   * An event handler that runs when the request fails.
+   */
+  onError?: (error: Error) => void;
+}
+
+/**
+ * The return value of the useAIStream React hook.
+ */
+export interface UseAIStreamResult {
+  /**
+   * The current state of the streamed UI. Will be null if there is no stream in progress.
+   */
+  current: ReactModule.ReactNode | null;
+
+  /**
+   * An error thrown by the last `fetchAI` invocation.
+   */
+  error: Error | null;
+
+  /**
+   * A wrapper around `fetch` to invoke an API that will return an AI.JSX stream.
+   */
+  fetchAI: (...fetchArguments: Parameters<typeof fetch>) => void;
+}
+
+/**
+ * A React hook for presenting a UI stream from AI.JSX.
+ */
+export function useAIStream(options: UseAIStreamOpts): UseAIStreamResult {
+  const [currentStream, setCurrentStream] = ReactModule.useState<ReadableStream<ReactModule.ReactNode> | null>(null);
+  const [currentUI, setCurrentUI] = ReactModule.useState(null as ReactModule.ReactNode);
+  const [error, setError] = ReactModule.useState(null as Error | null);
+
+  const onComplete = options.onComplete ?? ((x) => x);
+
+  ReactModule.useEffect(() => {
+    let shouldStopValue = false;
+    const getShouldStop = () => shouldStopValue;
+
+    async function readStream() {
+      if (currentStream !== null) {
+        const reader = currentStream.getReader();
+        let lastUI: ReactModule.ReactNode = null;
+        while (!getShouldStop()) {
+          const { done, value } = await reader.read();
+          if (done) {
+            setCurrentStream(null);
+            setCurrentUI(onComplete(lastUI));
+            break;
+          } else {
+            setCurrentUI(value);
+            lastUI = value;
+          }
+        }
+        reader.releaseLock();
+      }
+    }
+
+    readStream();
+
+    return () => {
+      shouldStopValue = true;
+    };
+  }, [currentStream]);
+
+  return {
+    current: currentUI,
+    error,
+    fetchAI(...fetchArguments: Parameters<typeof fetch>) {
+      fetch(...fetchArguments)
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error((await response.text()) || `fetch failed with status ${response.status}`);
+          }
+          if (!response.body) {
+            throw new Error('The response body is empty.');
+          }
+
+          setCurrentStream(fromStreamResponse(response.body) as ReadableStream<ReactModule.ReactNode>);
+          setError(null);
+        })
+        .catch((error) => {
+          options.onError?.(error);
+          setError(error);
+        });
+    },
+  };
 }
 
 /**
