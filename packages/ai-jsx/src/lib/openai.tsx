@@ -52,16 +52,18 @@ type ChatOrCompletionModelOrBoth =
 
 const decoder = new TextDecoder();
 
-export const openAiClientContext = AI.createContext<OpenAIApi>(
-  new OpenAIApi(
+function createOpenAIClient() {
+  return new OpenAIApi(
     new Configuration({
       apiKey: process.env.OPENAI_API_KEY,
     }),
-    undefined,
+    process.env.OPENAI_API_BASE,
     // TODO: Figure out a better way to work around NextJS fetch blocking streaming
     (globalThis as any)._nextOriginalFetch ?? globalThis.fetch
-  )
-);
+  );
+}
+
+export const openAiClientContext = AI.createContext<OpenAIApi>(createOpenAIClient());
 
 /**
  * An AI.JSX component that invokes an OpenAI Large Language Model.

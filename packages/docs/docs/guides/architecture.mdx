@@ -29,7 +29,7 @@ AI.JSX runs in both NodeJS and the browser, so you can choose an architecture th
 
 1. [Run entirely on the client](#run-entirely-on-the-client)
 1. [UI + AI.JSX on the client; API calls on the server](#ui--aijsx-on-the-client-api-calls-on-the-server)
-1. [UI on the client; AI .JSX on the server](#ui-on-the-client-aijsx-on-the-server) <Highlight color="#4cb3d4">Recommended</Highlight>
+1. [UI on the client; AI.JSX on the server](#ui-on-the-client-aijsx-on-the-server) <Highlight color="#4cb3d4">Recommended</Highlight>
 1. [Run entirely on the server](#run-entirely-on-the-server) <Highlight color="#DDD" textColor="#000">In Progress</Highlight>
 
 The key tradeoffs are:
@@ -75,6 +75,14 @@ sequenceDiagram
     AI.JSX->>APIs: Other API calls (e.g. to Pinecone)
 ```
 
+### Example
+
+In the [ai-jsx monorepo](https://github.com/fixie-ai/ai-jsx), run this command from the repo root for a demo of this architecture:
+
+```console
+OPENAI_API_KEY=my-key yarn turbo run dev --scope create-react-app-demo
+```
+
 ## UI + AI.JSX on the client; API calls on the server
 
 This is just like the [Run Entirely on the Client](#run-entirely-on-the-client) pattern, except you add a proxy for API calls. You'd traditionally set this proxy up as a serverless or edge function. The proxy stores your API keys, keeping them safe from the client.
@@ -104,6 +112,16 @@ sequenceDiagram
     participant APIs
     end
 ```
+
+### Example
+
+In the [ai-jsx monorepo](https://github.com/fixie-ai/ai-jsx), run this command from the repo root for a demo of this architecture:
+
+```console
+OPENAI_API_BASE='/v1' yarn turbo run dev --scope create-react-app-demo
+```
+
+See `packages/create-react-app-demo/backend/index.ts` for a sample proxy server.
 
 ## UI on the client; AI.JSX on the server
 
