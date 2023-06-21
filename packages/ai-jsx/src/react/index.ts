@@ -188,3 +188,4 @@ export const jsx = asJsxBoundary(function jsx(
 
   return ReactModule.createElement(ReactModule.Fragment, null, waitingForFirstAIResponse ? loading : ai.result) as any;
 });
+export const JSX = jsx;
