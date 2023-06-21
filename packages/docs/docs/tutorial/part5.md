@@ -11,7 +11,7 @@ how to implement a simple React app that uses AI.JSX to interface to a Large Lan
 In this case, the app takes a prompt from the user, generates a poem based on the prompt,
 and streams the LLM response back to the client.
 
-You can check out the [full source code for this tutorial](https://github.com/fixie-ai/ai-jsx/tree/main/packages/tutorial-nextjs), and try out the [live demo](https://tutorial-nextjs-psi.vercel.app/) of the app. For this example,
+You can check out the [full source code for this tutorial](https://github.com/fixie-ai/ai-jsx/tree/main/packages/tutorial-nextjs), and try out the [live demo](https://ai-jsx-tutorial-nextjs.vercel.app/) of the app. For this example,
 we are using NextJS to build the React app, however, this approach will work with other frameworks,
 including plain React and even bare HTML/JavaScript.
 
