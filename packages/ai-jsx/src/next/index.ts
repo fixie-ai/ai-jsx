@@ -1,6 +1,6 @@
 import * as ReactModule from 'react';
 import 'server-only';
-import { LogImplementation, NoOpLogImplementation } from '../core/log.js';
+import { LogImplementation } from '../core/log.js';
 import * as AI from '../react/core.js';
 import { asJsxBoundary } from '../react/jsx-boundary.js';
 export * from '../react/core.js';
@@ -65,10 +65,7 @@ export const jsx = asJsxBoundary(function jsx(
     return children as any;
   }
 
-  // Disable logging by default in NextJS. Creating files may be disallowed by the server on
-  // which this is deployed (e.g. Vercel).
-  const logger = props?.logger ?? new NoOpLogImplementation();
-  const renderResult = AI.createRenderContext({ logger }).render(children, {
+  const renderResult = AI.createRenderContext(props ?? {}).render(children, {
     stop: (e) => e.tag === AI.React,
     map: (frame) => frame.map(unwrapReact),
   });

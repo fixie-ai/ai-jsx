@@ -18,7 +18,7 @@ function App() {
 console.log(await AI.createRenderContext().render(<App />));
 ```
 
-This uses default logging, which will write logs to a file similar to below.
+This produces no logging.
 
 ## File Logging
 
@@ -98,7 +98,7 @@ You can use `grep` to filter the log to just the events or loglevels you care ab
 
 :::note NextJS
 
-When used with NextJS, AI.JSX components will have logging disabled by default to ensure that no unexpected files are written when your binary is deployed on a server. Instead of overriding this as described above, you can pass a `LoggingImplementation` to the props of your `<AI.JSX>` tag.
+When using NextJS, instead of specifying a logger in `createRenderContext`, you can pass one to the props of your `<AI.JSX>` tag.
 
 :::
 
