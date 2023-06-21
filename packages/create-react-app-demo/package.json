@@ -79,7 +79,7 @@
     "start": "node scripts/start.cjs",
     "build": "node scripts/build.cjs",
     "test": "yarn run lint; yarn run typecheck",
-    "dev": "yarn run start",
+    "dev": "bash ./scripts/pick-start-version.bash",
     "lint": "eslint src --max-warnings 0",
     "lint:fix": "yarn run lint --fix",
     "typecheck": "tsc -p . && tsc -p backend/tsconfig.json"

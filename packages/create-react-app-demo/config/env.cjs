@@ -88,6 +88,7 @@ function getClientEnvironment(publicUrl) {
         FAST_REFRESH: process.env.FAST_REFRESH !== 'false',
 
         OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+        OPENAI_API_BASE_URL: process.env.OPENAI_API_BASE_URL,
       }
     );
   // Stringify all values so we can feed into webpack DefinePlugin

@@ -4,7 +4,6 @@ import ResultContainer from '../ResultContainer.tsx';
 import InputPrompt from '../InputPrompt.tsx';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 import { useState } from 'react';
-import { UseHostOpenAIProxy } from '../ai.tsx';
 
 export default function BasicCompletion() {
   const [query, setQuery] = useState('wild weasels');
