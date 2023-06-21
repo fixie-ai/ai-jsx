@@ -80,7 +80,7 @@ export function Banner({ children }: { children: string }) {
 export default function RecipeWrapper() {
   const [query, setQuery] = useState('beans');
 
-  const recipeSummary = memo(
+  const recipe = memo(
     <ChatCompletion temperature={1}>
       <Prompt persona="a Michelin Star Head Chef" />
       <UserMessage>Give me a recipe for {query}.</UserMessage>
@@ -117,9 +117,7 @@ export default function RecipeWrapper() {
               </Recipe>
             }
           >
-            <ChatCompletion>
-              <UserMessage>Give me a recipe for {query}.</UserMessage>
-            </ChatCompletion>
+            {recipe}
             {'\n'}
             Now here's a link to the banner URL for the recipe:{' '}
             <ImageGen>
@@ -127,7 +125,7 @@ export default function RecipeWrapper() {
               <ChatCompletion>
                 <UserMessage>
                   In two to three sentences, describe how the following recipe would look like when prepared by a chef:
-                  {recipeSummary}
+                  {recipe}
                 </UserMessage>
               </ChatCompletion>
             </ImageGen>
