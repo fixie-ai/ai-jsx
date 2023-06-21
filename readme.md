@@ -76,9 +76,8 @@ Set up your `tsconfig.json` to use AI.JSX's JSX support:
   "extends": "@tsconfig/node18/tsconfig.json",
   "include": ["index.tsx"],
   "compilerOptions": {
-    "jsx": "react",
-    "jsxFactory": "AI.createElement",
-    "jsxFragmentFactory": "AI.Fragment",
+    "jsx": "react-jsx",
+    "jsxImportSource": "ai-jsx",
     "moduleResolution": "node16",
     "module": "esnext",
     "resolveJsonModule": true,
