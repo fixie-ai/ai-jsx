@@ -2,6 +2,10 @@
 sidebar_position: 4
 ---
 
+:::note AI + UI Support
+Right now, AI and UI component integration is only supported when running completely client-side (e.g., via Create React App). We're working to add support for server-rendered scenarios (SSR or RSC), non-React frameworks, and [other architectures](./architecture.md). ([File an issue](https://github.com/fixie-ai/ai-jsx/issues) if you'd like to vote on what we support. :smile:)
+:::
+
 # AI + UI
 
 We're very excited about AI.JSX's capability to seamless integrate UI and AI logic:
@@ -54,13 +58,9 @@ We can also embed UI components within AI components:
 
 In this example, we create a set of React components, then provide them to the model along with a prompt. The model decides how to use the React components to structure its result, and AI.JSX renders those components into the tree.
 
-:::note Support
-Today, we support AI.JSX integration with client-side React apps (e.g., CRA). Soon, we'll add support for NextJS, non-React frameworks, and [other architectures](./architecture.md). ([File an issue](https://github.com/fixie-ai/ai-jsx/issues) if you'd like to vote on what we support. :smile:)
-:::
-
 ## Getting Started
 
-The fastest way to get started is to clone the AI.JSX NextJS template repo. Or, you can follow these steps:
+The fastest way to get started is to start from the [Creat React App demo](https://github.com/fixie-ai/ai-jsx/tree/main/packages/create-react-app-demo). Or, you can follow these steps:
 
 1. Install:
    ```console
