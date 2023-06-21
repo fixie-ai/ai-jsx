@@ -10,6 +10,9 @@ export type StreamEvent =
   | { type: 'append'; index: number; content: string }
   | { type: 'complete' };
 
+/**
+ * Render a {@link Renderable} to a stream of {@link StreamEvent}s.
+ */
 async function* renderToJsonEvents(renderable: Renderable): AsyncGenerator<StreamEvent, StreamEvent> {
   const renderContext = createRenderContext();
   const renderResult = renderContext.render(renderable, { map: (x) => x, stop: () => false });
@@ -56,6 +59,9 @@ async function* renderToJsonEvents(renderable: Renderable): AsyncGenerator<Strea
   return { type: 'complete' } as StreamEvent;
 }
 
+/**
+ * Generate a stream of SSE events from a {@link Renderable}.
+ */
 export function toEventStream(renderable: Renderable): ReadableStream<StreamEvent> {
   const generator = renderToJsonEvents(renderable);
   return new ReadableStream({
@@ -69,6 +75,10 @@ export function toEventStream(renderable: Renderable): ReadableStream<StreamEven
   });
 }
 
+/**
+ * Convert a {@link Renderable} to a {@link Response} that will stream the rendered
+ * content as SSE events.
+ */
 export function toStreamResponse(renderable: Renderable): Response {
   return new Response(
     toEventStream(renderable)

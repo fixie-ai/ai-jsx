@@ -1,5 +1,5 @@
 /** @jsxImportSource ai-jsx/react */
-import * as AI from 'ai-jsx/next';
+import * as AI from 'ai-jsx/experimental/next';
 import React, { Suspense } from 'react';
 import { UICompletion } from 'ai-jsx/react/completion';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
