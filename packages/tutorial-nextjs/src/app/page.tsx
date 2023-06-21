@@ -15,17 +15,22 @@ import { useAIStream } from 'ai-jsx/react';
  * A component that generates a poem about a given topic.
  */
 function PoemGenerator() {
+  const DEFAULT_PROMPT = "A red panda who likes to eat grapes";
   const { current, fetchAI } = useAIStream({});
-  const [topic, setTopic] = useState('a red panda who likes to eat grapes');
+  const [topic, setTopic] = useState(DEFAULT_PROMPT);
 
   return (
-    <div>
+    <div style={{width: '600px'}} >
       <textarea value={topic} onChange={(e) => setTopic(e.currentTarget.value)} style={{ width: '100%' }} />
       <br />
       <input
         type="submit"
         value="Write a poem"
         disabled={topic.trim() === ''}
+        // When the button is clicked, we fire off a POST request to the /api/poem
+        // handler defined in api/poem/route.tsx. fetchAI() is a wrapper around fetch()
+        // that decodes the stream of responses from the edge function, and sets the value
+        // of the `current` variable to the most recent response.
         onClick={() => {
           fetchAI('/api/poem', {
             method: 'POST',
@@ -34,7 +39,7 @@ function PoemGenerator() {
           });
         }}
       />
-      {current && <div style={{ whiteSpace: 'pre-line', maxWidth: '50vw' }}>{current}</div>}
+      {current && <div style={{ width: '100%', whiteSpace: 'pre-line', paddingTop: "10px" }}>{current}</div>}
     </div>
   );
 }
