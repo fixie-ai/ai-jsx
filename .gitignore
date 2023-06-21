@@ -19,3 +19,5 @@ data
 dist
 .turbo
 .vscode/settings.json
+
+.DS_Store
