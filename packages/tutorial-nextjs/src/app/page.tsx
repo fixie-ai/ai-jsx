@@ -1,47 +1,42 @@
 /**
  * This is the main page for the AI.JSX Next.js App Demo.
  *
- * This page invokes the /api/completion edge function via a fetch call,
- * passing in the prompt to the LLM. The edge function (found in api/completion/route.tsx)
- * runs AI.JSX, passes the prompt to the LLM, renders the result, and returns it to the client.
+ * This page invokes the /api/poem edge function via a fetch call, passing in the
+ * prompt to the LLM. The edge function (found in api/poem/route.tsx) runs AI.JSX,
+ * passes the prompt to the LLM and streams the result back to the client.
  */
 
 'use client';
 import styles from './page.module.css';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useAIStream } from 'ai-jsx/react';
 
 /**
  * A component that generates a poem about a given topic.
  */
-function Poem({ about }: { about: string }) {
-  const [poem, setPoem] = useState('');
+function PoemGenerator() {
+  const { current, fetchAI } = useAIStream({});
+  const [topic, setTopic] = useState('a red panda who likes to eat grapes');
 
-  useEffect(() => {
-    if (poem !== '') {
-      return;
-    }
-    const prompt = 'Write a poem about ' + about + '.';
-
-    const doCompletion = () => {
-      fetch('/api/completion', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({ userMessage: prompt }),
-      })
-        .then(function (response) {
-          return response.text();
-        })
-        .then(function (data) {
-          setPoem(data);
-        });
-    };
-    doCompletion();
-  }, [about, poem]);
-
-  return poem;
+  return (
+    <div>
+      <textarea value={topic} onChange={(e) => setTopic(e.currentTarget.value)} style={{ width: '100%' }} />
+      <br />
+      <input
+        type="submit"
+        value="Write a poem"
+        disabled={topic.trim() === ''}
+        onClick={() => {
+          fetchAI('/api/poem', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic }),
+          });
+        }}
+      />
+      {current && <div style={{ whiteSpace: 'pre-line', maxWidth: '50vw' }}>{current}</div>}
+    </div>
+  );
 }
 
 /**
@@ -54,7 +49,7 @@ export default function Home() {
         <h2>AI.JSX Next.js App Demo</h2>
       </div>
       <div>
-        <Poem about="A red panda who likes to eat grapes" />
+        <PoemGenerator />
       </div>
     </main>
   );
