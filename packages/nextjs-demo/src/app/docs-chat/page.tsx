@@ -3,10 +3,7 @@ import * as React from 'react';
 import Chat from '@/components/Chat';
 import ResultContainer from '@/components/ResultContainer';
 
-export default function DocsChat({ searchParams }: { searchParams: any }) {
-  const defaultValue = 'What is AI.JSX?';
-  const query = searchParams.message ?? defaultValue;
-
+export default function DocsChat() {
   return (
     <ResultContainer
       title="Docs Chat"
@@ -20,7 +17,7 @@ export default function DocsChat({ searchParams }: { searchParams: any }) {
         </>
       }
     >
-      <Chat initialMessages={[]} placeholder="Ask a question..." endpoint="docs-chat/api"/>
+      <Chat initialMessages={[]} placeholder="Ask a question..." endpoint="docs-chat/api" />
     </ResultContainer>
   );
 }
