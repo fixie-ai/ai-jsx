@@ -65,10 +65,34 @@ function createOpenAIClient(basePath?: string) {
 
 export const openAiClientContext = AI.createContext<OpenAIApi>(createOpenAIClient());
 
+/**
+ * Use this component to direct OpenAI calls from child components to a proxy server.
+ *
+ * @example
+ * ```tsx
+ *    <UseOpenAIProxy basePath="/my-proxy-endpoint">
+ *      <ChatCompletion>
+ *        <UserMessage>What does the fox say?</UserMessage>
+ *    </UseOpenAIProxy>;
+ * ```
+ */
 export function UseOpenAIProxy({
+  /** The AI.JSX tree to apply this proxy to. */
   children,
+
+  /**
+   * The basePath for OpenAI calls to use. This is passed directly to https://github.com/openai/openai-node. Use this to point OpenAI calls to a proxy server.
+   */
   basePath,
+
+  /**
+   * The chat model to use. Defaults to `gpt-3.5-turbo`.
+   */
   chatModel,
+
+  /**
+   * The completion model to use. Defaults to `text-davinci-003`.
+   */
   completionModel,
 }: { children: Node; basePath: string } & Partial<ChatOrCompletionModelOrBoth>) {
   const client = createOpenAIClient(basePath);
