@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="https://docs.ai-jsx.com/img/ai-jsx.png" alt="AI.JSX logo" width="100" />
-</p>
-
 # AI.JSX — The AI Application Framework for Javascript
 
 [![Docs Site](https://img.shields.io/badge/Docs%20Site-docs.ai--jsx.com-orange)](https://docs.ai-jsx.com)
@@ -16,6 +12,7 @@ AI.JSX is designed to give you two important capabilities out of the box:
 1. The ability to seamlessly interweave UI components with your AI components. This means you can rely on the LLM to construct your UI dynamically from a set of standard React components.
 
 AI.JSX can be used to create standalone LLM applications that can be deployed anywhere Node.JS is supported, or it can be used as part of a larger React application. Right now we recommend using NextJS, and we have [an example NextJS project](https://github.com/fixie-ai/ai-jsx/tree/main/packages/nextjs-demo) to get you started. For more details, see our [AI+UI guide](https://docs.ai-jsx.com/guides/ai-ui).
+You can also check out the [live demo app](https://ai-jsx-create-react-app-demo.vercel.app/).
 
 To get started, see the quickstart below, read our [Getting Started Guide](https://docs.ai-jsx.com/getting-started), or check out the [examples](https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples).
 
