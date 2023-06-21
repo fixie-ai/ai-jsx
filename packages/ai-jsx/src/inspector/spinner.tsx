@@ -24,7 +24,7 @@ export type Props = {
 /**
  * Spinner.
  */
-function Spinner({ type = 'dots' }: Props) {
+function Spinner({ type = 'bouncingBall' }: Props) {
   const [frame, setFrame] = useState(0);
   const spinner = spinners[type];
 

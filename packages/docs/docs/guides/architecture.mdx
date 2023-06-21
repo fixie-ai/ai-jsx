@@ -64,11 +64,11 @@ Cons:
 
 ```mermaid
 sequenceDiagram
-    box rgb(200, 200, 255) Client
+    box rgb(149, 117, 205) Client
     participant UI
     participant AI.JSX
     end
-    box rgb(200, 255, 200) Third-Party API
+    box rgb(67, 160, 71) Third-Party API
     participant APIs
     end
     AI.JSX->>APIs: Model calls (e.g. to OpenAI)
@@ -91,16 +91,16 @@ Cons:
 
 ```mermaid
 sequenceDiagram
-    box rgb(200, 200, 255) Client
+    box rgb(149, 117, 205) Client
     participant UI
     participant AI.JSX
     end
-    box rgb(200, 255, 200) API Proxy
+    box rgb(67, 160, 71) API Proxy
     participant Your Proxy
     end
     AI.JSX->>APIs: Model calls (e.g. to OpenAI)
     AI.JSX->>APIs: Other API calls (e.g. to Pinecone)
-    box rgb(200, 255, 200) Third-Party API
+    box rgb(67, 160, 71) Third-Party API
     participant APIs
     end
 ```
@@ -125,16 +125,16 @@ Cons:
 
 ```mermaid
 sequenceDiagram
-    box rgb(200, 200, 255) Client
+    box rgb(149, 117, 205) Client
     participant UI
     end
-    box rgb(200, 255, 200) Your Server
+    box rgb(67, 160, 71) Your Server
     participant AI.JSX
     end
     UI->>AI.JSX: Fetch AI output
     AI.JSX->>APIs: Model calls (e.g. to OpenAI)
     AI.JSX->>APIs: Other API calls (e.g. to Pinecone)
-    box rgb(200, 255, 200) Third-Party API
+    box rgb(67, 160, 71) Third-Party API
     participant APIs
     end
 ```
@@ -183,10 +183,10 @@ Cons:
 
 ```mermaid
 sequenceDiagram
-    box rgb(200, 200, 255) Client
+    box rgb(149, 117, 205) Client
     participant Browser
     end
-    box rgb(200, 255, 200) Your JS Server
+    box rgb(67, 160, 71) Your JS Server
     participant UI
     participant AI.JSX
     end
@@ -194,7 +194,7 @@ sequenceDiagram
     UI->>AI.JSX: Fetch AI output
     AI.JSX->>APIs: Model calls (e.g. to OpenAI)
     AI.JSX->>APIs: Other API calls (e.g. to Pinecone)
-    box rgb(200, 255, 200) Third-Party API
+    box rgb(67, 160, 71) Third-Party API
     participant APIs
     end
 ```
@@ -203,20 +203,20 @@ Or, if you're generating HTML from a non-JS app (like Django), you'd have a sepa
 
 ```mermaid
 sequenceDiagram
-    box rgb(200, 200, 255) Client
+    box rgb(149, 117, 205) Client
     participant Browser
     end
-    box rgb(200, 255, 200) Your Non-JS Server
+    box rgb(67, 160, 71) Your Non-JS Server
     participant UI
     end
-    box rgb(200, 255, 200) Your JS Server
+    box rgb(67, 160, 71) Your JS Server
     participant AI.JSX
     end
     UI->>Browser: Streamed HTML output
     UI->>AI.JSX: Fetch AI output
     AI.JSX->>APIs: Model calls (e.g. to OpenAI)
     AI.JSX->>APIs: Other API calls (e.g. to Pinecone)
-    box rgb(200, 255, 200) Third-Party API
+    box rgb(67, 160, 71) Third-Party API
     participant APIs
     end
 ```
