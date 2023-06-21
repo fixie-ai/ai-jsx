@@ -1,3 +1,4 @@
 dist
 jest.config.ts
 scripts/move-cjs-to-dist.js
+src/**/*.test.ts
