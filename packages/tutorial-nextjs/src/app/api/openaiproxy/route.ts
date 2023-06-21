@@ -20,18 +20,24 @@ const openai = new OpenAIApi(apiConfig);
 
 export async function POST(req: Request) {
   // Extract the `messages` from the body of the request
-  const { messages } = await req.json();
+  const request = await req.json();
+  const temperature = request.temperature ?? 0.7;
+  const top_p = request.top_p ?? 1;
+  const frequency_penalty = request.frequency_penalty ?? 1;
+  const presence_penalty = request.presence_penalty ?? 1;
+  const max_tokens = request.max_tokens ?? 500;
+  const messages = request.messages ?? [];
 
   // Request the OpenAI API for the response based on the prompt
   const response = await openai.createChatCompletion({
     model: 'gpt-3.5-turbo',
     stream: true,
     messages: messages,
-    max_tokens: 500,
-    temperature: 0.7,
-    top_p: 1,
-    frequency_penalty: 1,
-    presence_penalty: 1,
+    max_tokens: max_tokens,
+    temperature: temperature,
+    top_p: top_p,
+    frequency_penalty: frequency_penalty,
+    presence_penalty: presence_penalty,
   });
 
   // Convert the response into a friendly text-stream
