@@ -1854,7 +1854,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.3, @babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.18.6, @babel/runtime@npm:^7.20.13, @babel/runtime@npm:^7.20.7, @babel/runtime@npm:^7.22.5, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.9.2":
+"@babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.10.3, @babel/runtime@npm:^7.11.2, @babel/runtime@npm:^7.12.13, @babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.16.3, @babel/runtime@npm:^7.18.6, @babel/runtime@npm:^7.20.13, @babel/runtime@npm:^7.20.7, @babel/runtime@npm:^7.21.0, @babel/runtime@npm:^7.22.5, @babel/runtime@npm:^7.8.4, @babel/runtime@npm:^7.9.2":
   version: 7.22.5
   resolution: "@babel/runtime@npm:7.22.5"
   dependencies:
@@ -7863,6 +7863,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"asciinema-player@npm:^3.4.0":
+  version: 3.4.0
+  resolution: "asciinema-player@npm:3.4.0"
+  dependencies:
+    "@babel/runtime": ^7.21.0
+    solid-js: ^1.3.0
+  checksum: 75bcd9cac56f64edd2e2324044541fd82dc695f75f3f7448d97a5968d9c6f5c470565b7a4538733c51403bc77cd3be93445a8d6fab2aeb222021a5151c0d2fb8
+  languageName: node
+  linkType: hard
+
 "ast-types-flow@npm:^0.0.7":
   version: 0.0.7
   resolution: "ast-types-flow@npm:0.0.7"
@@ -9880,7 +9890,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"csstype@npm:^3.0.2, csstype@npm:^3.0.6":
+"csstype@npm:^3.0.2, csstype@npm:^3.0.6, csstype@npm:^3.1.0":
   version: 3.1.2
   resolution: "csstype@npm:3.1.2"
   checksum: e1a52e6c25c1314d6beef5168da704ab29c5186b877c07d822bd0806717d9a265e8493a2e35ca7e68d0f5d472d43fac1cdce70fd79fd0853dff81f3028d857b5
@@ -10688,6 +10698,7 @@ __metadata:
     "@easyops-cn/docusaurus-search-local": ^0.35.0
     "@mdx-js/react": ^1.6.22
     "@tsconfig/docusaurus": ^1.0.5
+    asciinema-player: ^3.4.0
     clsx: ^1.2.1
     docusaurus-plugin-typedoc: ^0.19.2
     prism-react-renderer: ^1.3.5
@@ -20868,6 +20879,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"seroval@npm:^0.5.0":
+  version: 0.5.1
+  resolution: "seroval@npm:0.5.1"
+  checksum: a4c1e42d6a65ed12de3c1f1b6a5b6b996e575c5bc838e1998e92daed7bc05421f3f6c82096387082dba33c475d64a31d0d932ac9b693352549259216e38dc091
+  languageName: node
+  linkType: hard
+
 "serve-handler@npm:^6.1.3":
   version: 6.1.5
   resolution: "serve-handler@npm:6.1.5"
@@ -21165,6 +21183,16 @@ __metadata:
     ip: ^2.0.0
     smart-buffer: ^4.2.0
   checksum: 259d9e3e8e1c9809a7f5c32238c3d4d2a36b39b83851d0f573bfde5f21c4b1288417ce1af06af1452569cd1eb0841169afd4998f0e04ba04656f6b7f0e46d748
+  languageName: node
+  linkType: hard
+
+"solid-js@npm:^1.3.0":
+  version: 1.7.6
+  resolution: "solid-js@npm:1.7.6"
+  dependencies:
+    csstype: ^3.1.0
+    seroval: ^0.5.0
+  checksum: 35306e7f16309075f41caec5aeaa832ecd7795e908195a55e9505e0840e8b2d0cbf04a3531ad9df5bce6a96ab595b1c754513123d612571d3d28783e3418af9c
   languageName: node
   linkType: hard
 
