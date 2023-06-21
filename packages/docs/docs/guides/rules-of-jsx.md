@@ -60,29 +60,29 @@ function* OrgData() {
 
 ## Component API
 
-Components take props as the first argument and ComponentContext ([`packages/ai-jsx/src/index.ts`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/index.ts)) as the second:
+Components take props as the first argument and [`ComponentContext`](../api/interfaces/core_core.ComponentContext) as the second:
 
 ```tsx
 function MyComponent(props, componentContext) {}
 ```
 
-`componentContext` contains a `render` method, which you can use to render other JSX components. One reason you would want to do this is to take action based on what a component renders to, like validating that it's well-formed JSON:
+`componentContext` contains a [`render`](../api/interfaces/core_core.ComponentContext#render) method, which you can use to render other JSX components. One reason you would want to do this is to take action based on what a component renders to, like validating that it's well-formed JSON:
 
 ```tsx
 function App() {
   return (
-    <JsonOutput>
+    <ValidateJsonOutput>
       <ChatCompletion>
         <UserMessage>Give me a JSON object representing a character in a fantasy game.</UserMessage>
       </ChatCompletion>
-    </JsonOutput>
+    </ValidateJsonOutput>
   );
 }
 
 /**
  * Ensure the model's response is JSON.
  */
-function JsonOutput({ children }, { render }): string {
+function ValidateJsonOutput({ children }, { render }): string {
   // highlight-next-line
   const rendered = await render(children);
   try {
@@ -94,7 +94,7 @@ function JsonOutput({ children }, { render }): string {
 }
 ```
 
-In this example, `JsonOutput` takes in a child, and returns a JSON result. To do that, it needs to know what the child renders to, so it uses `render`.
+In this example, `ValidateJsonOutput` takes in a child, and returns a JSON result. To do that, it needs to know what the child renders to, so it uses `render`.
 
 ### Intermediate Results
 
@@ -127,8 +127,8 @@ By default, `render` will render the entire tree down to a string. However, you 
 
 The main reason you'd want to do this is when you're writing a parent component that has knowledge of its children. For example:
 
-- `ChatCompletion` needs all its children to ultimately be a `SystemMessage`, `UserMessage,` or `AssistantMessage`. To find those children, it uses partial rendering.
-- `NaturalLanguageRouter` needs to know what all the `Route`s are, so it uses partial rendering to find them.
+- [`ChatCompletion`](../api/modules/core_completion#chatcompletion) needs all its children to ultimately be a `SystemMessage`, `UserMessage,` or `AssistantMessage`. To find those children, it uses partial rendering.
+- [`NaturalLanguageRouter`](../api/modules/batteries_natural_language_router#naturallanguagerouter) needs to know what all the `Route`s are, so it uses partial rendering to find them.
 
 To do partial rendering, pass a `stop` argument to `render`:
 
@@ -195,12 +195,12 @@ Each instance of `CharacterGenerator` will use the context value set by its near
 
 See also:
 
-- API ([`packages/ai-jsx/src/core/core.ts`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/core/core.ts))
+- API ([`packages/ai-jsx/src/core/core.ts`](../api/modules/core_core))
 - Usage example ([`packages/examples/src/context.tsx`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/context.tsx))
 
 ## Handling Errors
 
-Use an Error Boundary ([`packages/ai-jsx/src/core/error-boundary.ts`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/core/error-boundary.ts)) to provide fallback values when a component throws:
+Use an [`ErrorBoundary`](../api/modules/core_error_boundary) to provide fallback values when a component throws:
 
 ```tsx
 <ErrorBoundary fallback={'✅ Error was handled'}>
@@ -249,7 +249,7 @@ const catName = memo(
 
 Now, `catName` will result in a single model call, and its value will be reused everywhere that component appears in the tree.
 
-- API ([`packages/ai-jsx/src/core/memoize.tsx`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/core/memoize.tsx))
+- API ([`packages/ai-jsx/src/core/memoize.tsx`](../api/modules/core_memoize))
 
 # See Also
 
