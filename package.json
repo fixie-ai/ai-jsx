@@ -33,5 +33,6 @@
   "workspaces": [
     "packages/*",
     "packages/sandboxes/*"
-  ]
+  ],
+  "packageManager": "yarn@3.6.0"
 }
