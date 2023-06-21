@@ -4,7 +4,9 @@
 [![Discord Follow](https://dcbadge.vercel.app/api/server/MsKAeKF8kU?style=flat)](https://discord.gg/MsKAeKF8kU)
 [![Twitter Follow](https://img.shields.io/twitter/follow/fixieai?style=social)](https://twitter.com/fixieai)
 
-[Demo video](https://www.loom.com/share/c13b0c73f8d34f9f962048b39a4794f6)
+[![Demo video](./packages/docs/static/img/loom.png)](https://www.loom.com/share/c13b0c73f8d34f9f962048b39a4794f6)
+
+<div style="position: relative; padding-bottom: 64.63195691202873%; height: 0;"><iframe src="https://www.loom.com/embed/c13b0c73f8d34f9f962048b39a4794f6?sid=bfa5b918-e135-42d8-a4ef-2c2ce3d9fc83" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
 
 AI.JSX is a framework for building AI applications using Javascript and [JSX](https://react.dev/learn/writing-markup-with-jsx). While AI.JSX [is not React](https://docs.ai-jsx.com/is-it-react), it's designed to look and feel very similar while also integrating seamlessly with React-based projects. With AI.JSX, you don't just use JSX to describe what your UI should look like, you also use it to describe how **Large Language Models**, such as ChatGPT, should integrate into the rest of your application. The end result is a powerful combination where _intelligence_ can be deeply embedded into the application stack.
 
