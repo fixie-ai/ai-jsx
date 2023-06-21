@@ -3,6 +3,9 @@ import * as AI from 'ai-jsx/react';
 import { UICompletion } from 'ai-jsx/react/completion';
 import { useState, ReactNode } from 'react';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
+import { memo } from 'ai-jsx/core/memoize';
+import { Prompt } from 'ai-jsx/batteries/prompts';
+import { ImageGen } from 'ai-jsx/core/image-gen';
 import ResultContainer from '../ResultContainer.tsx';
 import InputPrompt from '../InputPrompt.tsx';
 import { atom, useAtom } from 'jotai';
@@ -70,8 +73,19 @@ export function RecipeInstructionListItem({ children }: { children: ReactNode })
   return <li data-test="recipe-instruction-list-item">{children}</li>;
 }
 
+export function Banner({ children }: { children: string }) {
+  return <img src={children} data-test="recipe-image" />;
+}
+
 export default function RecipeWrapper() {
   const [query, setQuery] = useState('beans');
+
+  const recipeSummary = memo(
+    <ChatCompletion temperature={1}>
+      <Prompt persona="a Michelin Star Head Chef" />
+      <UserMessage>Give me a recipe for {query}.</UserMessage>
+    </ChatCompletion>
+  );
 
   return (
     <>
@@ -86,6 +100,7 @@ export default function RecipeWrapper() {
           <UICompletion
             example={
               <Recipe>
+                <Banner>https://...</Banner>
                 <RecipeTitle>Crème Chantilly</RecipeTitle>
                 <RecipeIngredientList>
                   <RecipeIngredientListItem>2 cups heavy cream</RecipeIngredientListItem>
@@ -105,6 +120,17 @@ export default function RecipeWrapper() {
             <ChatCompletion>
               <UserMessage>Give me a recipe for {query}.</UserMessage>
             </ChatCompletion>
+            {'\n'}
+            Now here's a link to the banner URL for the recipe:{' '}
+            <ImageGen>
+              Generate an image for a recipe name
+              <ChatCompletion>
+                <UserMessage>
+                  In two to three sentences, describe how the following recipe would look like when prepared by a chef:
+                  {recipeSummary}
+                </UserMessage>
+              </ChatCompletion>
+            </ImageGen>
           </UICompletion>
         </AI.jsx>
       </ResultContainer>
