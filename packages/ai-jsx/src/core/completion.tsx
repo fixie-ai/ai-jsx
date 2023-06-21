@@ -86,8 +86,8 @@ function AutomaticChatModel({ children, ...props }: ModelPropsWithChildren) {
   }
   throw new Error(`No chat model was specified. To fix this, do one of the following:
     
-1. Set the OPENAI_API_KEY environment variable.
-2. Set the OPENAI_API_BASE environment variable.
+1. Set the OPENAI_API_KEY or REACT_APP_OPENAI_API_KEY environment variable.
+2. Set the OPENAI_API_BASE or REACT_APP_OPENAI_API_BASE environment variable.
 3. use an explicit ChatProvider component.`);
 }
 
