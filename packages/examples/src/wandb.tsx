@@ -45,8 +45,6 @@ function CharacterGenerator() {
   );
 }
 
-await wandb.init();
-
 console.log(
   await AI.createRenderContext().render(
     <WeightsAndBiasesTracer>

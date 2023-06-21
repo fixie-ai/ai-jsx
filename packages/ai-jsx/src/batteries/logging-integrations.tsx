@@ -12,6 +12,14 @@ import { debug } from '../core/debug.js';
 
 type WBSpan = Parameters<typeof addChildSpan>[0];
 
+/**
+ * The InitOptions type from wandb.
+ * Since the type definition is not exported, we need to redeclare it here.
+ *
+ * @hidden
+ */
+export type WBInitOptions = NonNullable<Parameters<typeof wandb.init>[0]>;
+
 function bindAsyncGenerator<T = unknown, TReturn = any, TNext = unknown>(
   generator: AsyncGenerator<T, TReturn, TNext>
 ): AsyncGenerator<T, TReturn, TNext> {
@@ -39,16 +47,17 @@ export { wandb };
  * The tracer allows for the creation of a trace tree that can be visualized in the
  * Weights and Biases UI. To use it, wrap your application in a `WeightsAndBiasesTracer` component.
  *
- * NOTE: make sure to
- * 1. run `await wandb.init()` first and `await wandb.finish()` after rendering
- * 2. set the `WANDB_API_KEY` environment variable (in Node environments) and
- *    `sessionStorage.getItem("WANDB_API_KEY")` (in browser environments)
+ * InitOptions, such as project name, can be passed to the `WeightsAndBiasesTracer` component.
+ *
+ * @note Make sure to
+ * 1. Set the `WANDB_API_KEY` environment variable (in Node environments) and
+ *    `sessionStorage.getItem("WANDB_API_KEY")` (in browser environments);
+ * 2. Run `await wandb.finish()` after rendering is done.
+ *
  * @see https://docs.wandb.ai/ref/js/ for more info.
  *
  * @example
  * ```tsx
- * await wandb.init();
- *
  * console.log(
  *   await AI.createRenderContext().render(
  *     <WeightsAndBiasesTracer>
@@ -60,13 +69,25 @@ export { wandb };
  * await wandb.finish();
  * ```
  */
-export function WeightsAndBiasesTracer(props: { children: AI.Node }, { wrapRender }: AI.ComponentContext) {
+export function WeightsAndBiasesTracer(
+  {
+    children,
+    wbInitOptions = undefined,
+  }: {
+    children: AI.Node;
+    /** If provided, the InitOptions are directly passed to `wandb.init` */
+    wbInitOptions?: WBInitOptions;
+  },
+  { wrapRender }: AI.ComponentContext
+) {
+  const initPromise = wandb.init(wbInitOptions);
   const currentSpanStorage = new AsyncLocalStorage<WBSpan>();
   const baseTime = new Date().valueOf() - performance.now();
 
   return AI.withContext(
-    <>{props.children}</>,
+    <>{children}</>,
     wrapRender((r) => (renderContext, renderable, shouldStop) => {
+      console.log('renderable', renderable);
       if (!AI.isElement(renderable)) {
         return r(renderContext, renderable, shouldStop);
       }
@@ -113,6 +134,7 @@ export function WeightsAndBiasesTracer(props: { children: AI.Node }, { wrapRende
             if (currentSpan) {
               currentSpan.end_time_ms = baseTime + performance.now();
               if (!parentSpan) {
+                await initPromise;
                 wandb.log({ langchain_trace: new WBTraceTree(currentSpan).toJSON() });
               }
             }
