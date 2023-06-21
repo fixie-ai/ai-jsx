@@ -1,13 +1,16 @@
 "use client"
 import styles from './page.module.css';
-import * as AI from 'ai-jsx/next';
-import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 import { useState, useEffect } from 'react';
 
 function Poem({ about }: { about: string }) {
   const [poem, setPoem] = useState('');
 
   useEffect(() => {
+    if (poem !== '') {
+      return;
+    }
+    const prompt = 'Write a poem about ' + about + '.';
+
     const doCompletion = () => {
       fetch("/api/completion", {
           method: 'POST',
@@ -15,7 +18,7 @@ function Poem({ about }: { about: string }) {
               'Content-Type': 'application/json',
               'Accept': 'application/json'
           },
-          body: JSON.stringify({ userMessage: 'Write a poem about ' + about, systemMessage: '', assistantMessage: '' })
+          body: JSON.stringify({ userMessage: prompt })
       }
       ).then(function (response) {
           return response.text();
