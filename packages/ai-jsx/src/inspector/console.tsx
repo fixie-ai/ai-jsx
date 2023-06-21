@@ -81,7 +81,8 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
   const [debugTreeSteps, { push: pushDebugTreeStep }] = useList([] as string[]);
   const [debugTreeFrameIndex, setDebugTreeFrameIndex] = useState<number | null>(null);
   const [debugTreeStreamIsDone, setDebugTreeStreamIsDone] = useState(false);
-  const [_columns, rows] = useStdoutDimensions();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [columns, rows] = useStdoutDimensions();
 
   const [renderedContent, setRenderedContent] = useState('');
 
