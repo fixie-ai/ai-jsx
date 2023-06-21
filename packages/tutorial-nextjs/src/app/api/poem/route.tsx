@@ -13,7 +13,6 @@ import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completi
 export const runtime = 'edge';
 
 export async function POST(req: Request) {
-
   // Extract the 'topic' field from the JSON body of the request.
   const { topic } = await req.json();
 

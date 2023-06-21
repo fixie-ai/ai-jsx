@@ -15,12 +15,12 @@ import { useAIStream } from 'ai-jsx/react';
  * A component that generates a poem about a given topic.
  */
 function PoemGenerator() {
-  const DEFAULT_PROMPT = "A red panda who likes to eat grapes";
+  const DEFAULT_PROMPT = 'A red panda who likes to eat grapes';
   const { current, fetchAI } = useAIStream({});
   const [topic, setTopic] = useState(DEFAULT_PROMPT);
 
   return (
-    <div style={{width: '600px'}} >
+    <div style={{ width: '600px' }}>
       <textarea value={topic} onChange={(e) => setTopic(e.currentTarget.value)} style={{ width: '100%' }} />
       <br />
       <input
@@ -39,7 +39,7 @@ function PoemGenerator() {
           });
         }}
       />
-      {current && <div style={{ width: '100%', whiteSpace: 'pre-line', paddingTop: "10px" }}>{current}</div>}
+      {current && <div style={{ width: '100%', whiteSpace: 'pre-line', paddingTop: '10px' }}>{current}</div>}
     </div>
   );
 }
