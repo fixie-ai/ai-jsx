@@ -7403,7 +7403,7 @@ __metadata:
   dependencies:
     "@tsconfig/node18": ^2.0.1
     "@types/node": ^20.3.1
-    ai-jsx: ^0.2.0-1
+    ai-jsx: ^0.5.0
     pino: ^8.14.1
     pino-pretty: ^10.0.0
     tsx: ^3.12.7
@@ -7426,7 +7426,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"ai-jsx@^0.2.0-1, ai-jsx@^0.2.0-12, ai-jsx@^0.2.0-4, ai-jsx@workspace:packages/ai-jsx":
+"ai-jsx@^0.5.0, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
@@ -7455,9 +7455,7 @@ __metadata:
     globby: ^13.1.4
     got: ^12.6.0
     gpt3-tokenizer: ^1.1.5
-    graphql: ^16.6.0
     ink: ^4.2.0
-    ink-syntax-highlight: ^1.0.1
     jest: ^29.5.0
     js-yaml: ^4.1.0
     langchain: ^0.0.81
@@ -7469,7 +7467,6 @@ __metadata:
     pino: ^8.14.1
     pino-pretty: ^10.0.0
     react: ^18.2.0
-    react-use: ^17.4.0
     server-only: ^0.0.1
     sinon: ^15.1.0
     terminal-link: ^3.0.0
@@ -7486,7 +7483,13 @@ __metadata:
     zod: ^3.21.4
     zod-to-json-schema: ^3.21.1
   peerDependencies:
+    ink: ^4.2.0
     react: ^16.8.0  || ^17.0.0 || ^18.0.0
+  peerDependenciesMeta:
+    ink:
+      optional: true
+    react:
+      optional: true
   languageName: unknown
   linkType: soft
 
@@ -8944,7 +8947,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cli-highlight@npm:^2.1.11, cli-highlight@npm:^2.1.9":
+"cli-highlight@npm:^2.1.11":
   version: 2.1.11
   resolution: "cli-highlight@npm:2.1.11"
   dependencies:
@@ -9499,7 +9502,7 @@ __metadata:
     "@types/react-dom": ^18.2.5
     "@typescript-eslint/eslint-plugin": ^5.59.11
     "@typescript-eslint/parser": ^5.59.11
-    ai-jsx: ^0.2.0-4
+    ai-jsx: ^0.5.0
     babel-jest: ^27.4.2
     babel-loader: ^8.2.3
     babel-plugin-named-asset-import: ^0.3.8
@@ -11972,12 +11975,14 @@ __metadata:
     "@types/uuid": ^9.0.2
     "@typescript-eslint/eslint-plugin": ^5.59.6
     "@typescript-eslint/parser": ^5.59.6
-    ai-jsx: ^0.2.0-4
+    ai-jsx: ^0.5.0
     axios: ^1.4.0
     csv-stringify: ^6.4.0
     eslint: ^8.40.0
     eslint-config-nth: ^2.0.1
     globby: ^13.1.4
+    graphql: ^16.6.0
+    ink: ^4.2.0
     langchain: ^0.0.95
     load-json-file: ^7.0.1
     lodash: ^4.17.21
@@ -11986,6 +11991,7 @@ __metadata:
     pino: ^8.14.1
     pino-pretty: ^10.0.0
     prompt-sync: ^4.2.0
+    react: ^18.2.0
     type-fest: ^3.12.0
     typescript: ^5.1.3
     uuid: ^9.0.0
@@ -13070,9 +13076,9 @@ __metadata:
   linkType: hard
 
 "graphql@npm:^16.6.0":
-  version: 16.6.0
-  resolution: "graphql@npm:16.6.0"
-  checksum: bf1d9e3c1938ce3c1a81e909bd3ead1ae4707c577f91cff1ca2eca474bfbc7873d5d7b942e1e9777ff5a8304421dba57a4b76d7a29eb19de8711cb70e3c2415e
+  version: 16.7.0
+  resolution: "graphql@npm:16.7.0"
+  checksum: 46199d850ac6d972e03bc6ac402c9a86ff47e0abf99ce96ac94a97d2469d94d33217047582a3e37b8c6bd5af3d16e5842cd7eb3c663f521b5553ac752da31cdb
   languageName: node
   linkType: hard
 
@@ -13797,18 +13803,6 @@ __metadata:
   version: 1.3.8
   resolution: "ini@npm:1.3.8"
   checksum: dfd98b0ca3a4fc1e323e38a6c8eb8936e31a97a918d3b377649ea15bdb15d481207a0dda1021efbd86b464cae29a0d33c1d7dcaf6c5672bee17fa849bc50a1b3
-  languageName: node
-  linkType: hard
-
-"ink-syntax-highlight@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "ink-syntax-highlight@npm:1.0.1"
-  dependencies:
-    cli-highlight: ^2.1.9
-  peerDependencies:
-    ink: ^3.0.0-4
-    react: ^16.8.2
-  checksum: a82bba40d7b17f77de1c0b312867cf19904c55ea75b8b172203c3869b4cd08b845619eb40d1b36b3bd0272305d0cf5f8f8c0aea2f4655018c33172f62c448bc5
   languageName: node
   linkType: hard
 
@@ -17305,7 +17299,7 @@ __metadata:
     "@types/react-dom": 18.2.4
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
-    ai-jsx: ^0.2.0-4
+    ai-jsx: ^0.5.0
     autoprefixer: 10.4.14
     classnames: ^2.3.2
     eslint: 8.42.0
@@ -22585,7 +22579,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
     ai: ^2.1.3
-    ai-jsx: ^0.2.0-12
+    ai-jsx: ^0.5.0
     eslint: 8.43.0
     eslint-config-next: 13.4.6
     eslint-config-nth: ^2.0.1
@@ -22608,7 +22602,7 @@ __metadata:
     "@types/uuid": ^9.0.2
     "@typescript-eslint/eslint-plugin": ^5.59.6
     "@typescript-eslint/parser": ^5.59.6
-    ai-jsx: ^0.2.0-4
+    ai-jsx: ^0.5.0
     axios: ^1.4.0
     eslint: ^8.40.0
     eslint-config-nth: ^2.0.1

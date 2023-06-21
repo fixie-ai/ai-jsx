@@ -15,7 +15,7 @@
     "@types/node": "20.2.5",
     "@types/react": "18.2.8",
     "@types/react-dom": "18.2.4",
-    "ai-jsx": "^0.2.0-4",
+    "ai-jsx": "^0.5.0",
     "autoprefixer": "10.4.14",
     "classnames": "^2.3.2",
     "eslint": "8.42.0",
