@@ -1,4 +1,22 @@
-# Architecture
+---
+id: architecture
+title: Deployment Architectures
+---
+
+export const Highlight = ({ children, color, textColor }) => (
+  <span
+    style={{
+      backgroundColor: color,
+      borderRadius: '10px',
+      color: textColor || '#fff',
+      padding: '0.3rem',
+      textTransform: 'uppercase',
+      fontSize: '11px',
+    }}
+  >
+    {children}
+  </span>
+);
 
 :::note See Also
 
@@ -11,18 +29,18 @@ AI.JSX runs in both NodeJS and the browser, so you can choose an architecture th
 
 1. [Run entirely on the client](#run-entirely-on-the-client)
 1. [UI + AI.JSX on the client; API calls on the server](#ui--aijsx-on-the-client-api-calls-on-the-server)
-1. [UI on the client; AI.JSX on the server](#ui-on-the-client-aijsx-on-the-server)
-1. [Run entirely on the server](#run-entirely-on-the-server)
+1. [UI on the client; AI .JSX on the server](#ui-on-the-client-aijsx-on-the-server) <Highlight color="#4cb3d4">Recommended</Highlight>
+1. [Run entirely on the server](#run-entirely-on-the-server) <Highlight color="#DDD" textColor="#000">In Progress</Highlight>
 
 The key tradeoffs are:
 
 - Whether you need to protect API keys
 - Where you want to put serialization boundaries
 - Latency (as a result of roundtrips)
-- How reusable your AI.JSX logic is
+- Whether you want to integrate AI and UI components
 
 :::tip tl;dr
-If you're starting a new project, we recommend using the [run entirely on the server](#run-entirely-on-the-server) pattern with [NextJS](https://nextjs.org/).
+If you're starting a new project, we recommend using the [UI on client; AI.JSX on server](#ui-on-the-client-aijsx-on-the-server) pattern with [NextJS](https://nextjs.org/).
 :::
 
 :::note Where can AI.JSX run?
@@ -36,6 +54,7 @@ With a pure client-side approach, you run your UI and AI.JSX logic on the client
 Pros:
 
 - Simple to implement
+- Easy to get started
 - The serialization boundary is at the API layer. The only way to access these APIs is through a serialization boundary, so your architecture isn't adding any new boundaries.
 
 Cons:
@@ -88,6 +107,10 @@ sequenceDiagram
 
 ## UI on the client; AI.JSX on the server
 
+:::tip Recommendation
+This is the most stable way to run and deploy an AI.JSX powered app at the moment.
+:::
+
 In this approach, your AI.JSX logic runs entirely in your backend environment.
 
 Pros:
@@ -137,15 +160,17 @@ In this example, we have a value from our UI logic, `dataPromise`, and we embed 
 
 If the AI.JSX logic lived entirely serverside, then we'd need to serialize everything that gets sent between the UI and AI layers.
 
-Because of this, [JIT UI](./ai-ui.md#just-in-time-jit-ui) is not supported with the "UI on the client / AI on the server" pattern. (It's straightforward for us to add support for this, but we haven't done so yet.)
+Because of this, [JIT UI](./ai-ui.md#just-in-time-jit-ui) is not supported with the "UI on the client / AI on the server" pattern. Supporting this is on our roadmap.
 
 ## Run entirely on the server
 
-:::tip Recommendation
-Aligning with [React's guidance](https://react.dev/learn/start-a-new-react-project), this is our recommended pattern for new AI.JSX apps.
+:::caution
+
+Running entirely on the server is still a work in progress.
+
 :::
 
-In this approach, you generate your HTML on the server and stream it to the client. If your app is full-stack JS, you'd typically do this with the help of a server-side rendering framework like [NextJS](https://nextjs.org/).
+In this approach, you generate your HTML on the server and stream it to the client. If your app is full-stack JS, you'd typically do this with the help of a framework like [NextJS](https://nextjs.org/).
 
 Pros:
 

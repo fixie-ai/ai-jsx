@@ -1,3 +1,7 @@
+---
+sidebar_position: 5
+---
+
 # Observability
 
 In this guide, we'll start with the [hello world example](https://github.com/fixie-ai/ai-jsx-template) and iteratively add logging.

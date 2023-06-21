@@ -1,5 +1,5 @@
 /** @jsxImportSource ai-jsx/react */
-import * as AI from 'ai-jsx/next';
+import * as AI from 'ai-jsx/experimental/next';
 import ResultContainer from '@/components/ResultContainer';
 import InputPrompt from '@/components/InputPrompt';
 import { NaturalLanguageGitHubSearch } from './ai';
