@@ -13,7 +13,7 @@ export default function About() {
               AI.JSX docs
             </a>
             , or the{' '}
-            <a className="underline" href="https://github.com/fixie-ai/ai-jsx/tree/main/packages/create-react-app-demo">
+            <a className="underline" href="https://github.com/fixie-ai/ai-jsx/tree/main/packages/nextjs-demo">
               source code
             </a>{' '}
             for this app.
