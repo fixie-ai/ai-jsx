@@ -2,7 +2,6 @@
 import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { useState, useEffect } from 'react';
-import reactUse from 'react-use';
 import SyntaxHighlight from './syntax-highlight.js';
 import { memo } from '../core/memoize.js';
 import Spinner from './spinner.js';
@@ -10,8 +9,6 @@ import { DebugTree } from '../core/debug.js';
 
 import { Box, render, Spacer, Text, useInput, useStdout } from 'ink';
 import { NoOpLogImplementation } from '../core/log.js';
-
-const { useList } = reactUse;
 
 /** Get the size of the terminal window. */
 export function useStdoutDimensions(): [number, number] {
@@ -79,13 +76,15 @@ function StatusBar() {
 }
 
 function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: Node; showDebugTree: boolean }) {
-  const [debugTreeSteps, { push: pushDebugTreeStep }] = useList([] as string[]);
+  const [debugTreeSteps, setDebugTreeSteps] = useState([] as string[]);
   const [debugTreeFrameIndex, setDebugTreeFrameIndex] = useState<number | null>(null);
   const [debugTreeStreamIsDone, setDebugTreeStreamIsDone] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [columns, rows] = useStdoutDimensions();
 
   const [renderedContent, setRenderedContent] = useState('');
+
+  const pushDebugTreeStep = (step: string) => setDebugTreeSteps((previous) => previous.concat([step]));
 
   useEffect(() => {
     const renderContext = AI.createRenderContext({ logger: new NoOpLogImplementation() });
