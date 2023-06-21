@@ -1,6 +1,5 @@
 import './App.css';
-import React from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import RootLayout from './layout.tsx';
 import BasicCompletion from './basic-completion/index.tsx';
 import { ChooseYourOwnAdventure } from './choose-your-adventure/index.tsx';
@@ -14,8 +13,8 @@ const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       {
-        path: '',
-        element: <ChooseYourOwnAdventure />,
+        index: true,
+        element: <Navigate to="/basic-completion" replace />,
       },
       {
         path: '/basic-completion',
@@ -28,6 +27,10 @@ const router = createBrowserRouter([
       {
         path: '/docs-chat',
         element: <DocsChat />,
+      },
+      {
+        path: '/choose-your-own-adventure',
+        element: <ChooseYourOwnAdventure />,
       },
       {
         path: '/recipe',

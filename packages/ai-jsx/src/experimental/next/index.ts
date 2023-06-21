@@ -1,8 +1,8 @@
 import 'server-only';
 import * as ReactModule from 'react';
-import * as AI from '../react/core.js';
-export * from '../react/core.js';
-import { asJsxBoundary } from '../react/jsx-boundary.js';
+import * as AI from '../../react/core.js';
+export * from '../../react/core.js';
+import { asJsxBoundary } from '../../react/jsx-boundary.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
   if (AI.isElement(partiallyRendered)) {
