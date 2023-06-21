@@ -8,9 +8,8 @@ Using JSX requires a build system. Since most projects use TypeScript, the easie
 
 ```json file="tsconfig.json"
 "compilerOptions": {
-  "jsx": "react",
-  "jsxFactory": "AI.createElement",
-  "jsxFragmentFactory": "AI.Fragment",
+  "jsx": "react-jsx",
+  "jsxImportSource": "ai-jsx",
 }
 ```
 
