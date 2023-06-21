@@ -73,6 +73,7 @@ export const openAiClientContext = AI.createContext<OpenAIApi>(createOpenAIClien
  *    <UseOpenAIProxy basePath="/my-proxy-endpoint">
  *      <ChatCompletion>
  *        <UserMessage>What does the fox say?</UserMessage>
+ *      </ChatCompletion>
  *    </UseOpenAIProxy>;
  * ```
  */
