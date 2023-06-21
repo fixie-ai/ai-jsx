@@ -25,6 +25,7 @@ export default function NavBar() {
             <div className="absolute inset-y-0 left-0 flex items-center sm:hidden"></div>
             <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
               <div className="flex shrink-0 items-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   className="hidden h-12 w-auto lg:block"
                   src="https://docs.ai-jsx.com/img/foxie.png"
