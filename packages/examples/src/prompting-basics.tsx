@@ -2,15 +2,6 @@ import { UserMessage, ChatCompletion } from 'ai-jsx/core/completion';
 import { Prompt } from 'ai-jsx/batteries/prompts';
 import { showInspector } from 'ai-jsx/core/inspector';
 
-function WordPuzzle() {
-  return (
-    <ChatCompletion>
-      <UserMessage>What is the 4th word in the phrase "I am not what I am"?</UserMessage>
-      <Prompt stepByStep />
-    </ChatCompletion>
-  );
-}
-
 function PersonaDesribeJSX() {
   return (
     <>
@@ -34,14 +25,23 @@ function PersonaDesribeJSX() {
   );
 }
 
+function WordPuzzle() {
+  return (
+    <ChatCompletion>
+      <UserMessage>What is the 4th word in the phrase "I am not what I am"?</UserMessage>
+      <Prompt stepByStep />
+    </ChatCompletion>
+  );
+}
+
 function App() {
   return (
     <>
-      Word puzzle example:{'\n'}
-      <WordPuzzle />
-      {'\n\n-----\n\n'}
       Persona example:{'\n'}
       <PersonaDesribeJSX />
+      {'\n\n-----\n\n'}
+      Word puzzle example:{'\n'}
+      <WordPuzzle />
     </>
   );
 }
