@@ -1,20 +1,32 @@
-/** @jsxImportSource ai-jsx/react */
-// The line above is important! It is required in order to
-// embed AI.JSX components into a React app.
-
+"use client"
 import styles from './page.module.css';
 import * as AI from 'ai-jsx/next';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
+import { useState, useEffect } from 'react';
 
 function Poem({ about }: { about: string }) {
-  return 'Hello World';
-  // return (
-  //   <AI.jsx>
-  //     <ChatCompletion>
-  //       <UserMessage>Write a poem about {about}.</UserMessage>
-  //     </ChatCompletion>
-  //   </AI.jsx>
-  // );
+  const [poem, setPoem] = useState('');
+
+  useEffect(() => {
+    const doCompletion = () => {
+      fetch("/api/completion", {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+          },
+          body: JSON.stringify({ userMessage: 'Write a poem about ' + about, systemMessage: '', assistantMessage: '' })
+      }
+      ).then(function (response) {
+          return response.text();
+      }).then(function (data) {
+          setPoem(data);
+      });
+    }
+    doCompletion()
+  }, [about, poem]);
+
+  return poem;
 }
 
 export default function Home() {
