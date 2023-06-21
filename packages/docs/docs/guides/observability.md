@@ -100,6 +100,12 @@ To view this in a nicer way, run `npx pino-pretty < ai-jsx.log`:
 
 You can use `grep` to filter the log to just the events or loglevels you care about.
 
+:::note NextJS
+
+When using NextJS, instead of specifying a logger in `createRenderContext`, you can pass one to the props of your `<AI.JSX>` tag.
+
+:::
+
 ## Custom Pino Logging
 
 If you want to customize the log sources further, you can create your own `pino` logger instance:
