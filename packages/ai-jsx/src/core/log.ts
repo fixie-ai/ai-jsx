@@ -73,15 +73,7 @@ export class NoOpLogImplementation extends LogImplementation {
 
 const defaultPinoLogger = _.once(() =>
   // @ts-expect-error
-  pino(
-    { name: 'ai-jsx', level: 'trace' },
-    // N.B. pino.destination is not available in the browser
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    pino.destination?.({
-      dest: './ai-jsx.log',
-      sync: true, // Synchronous logging
-    })
-  )
+  pino({ name: 'ai-jsx', level: 'info' })
 );
 
 /**
