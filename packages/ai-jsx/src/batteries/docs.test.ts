@@ -1,5 +1,15 @@
-import { expect, test } from '@jest/globals';
-import { RawLoader, staticLoader, toLoader } from '../../dist/cjs/batteries/docs.cjs';
+import { describe, expect, test } from '@jest/globals';
+import { Embeddings } from 'langchain/embeddings/base';
+import { MemoryVectorStore } from 'langchain/vectorstores/memory';
+import {
+  CorpusLoadingState,
+  Document,
+  LoadableLangchainCorpus,
+  LocalCorpus,
+  RawLoader,
+  staticLoader,
+  toLoader,
+} from '../../dist/cjs/batteries/docs.cjs';
 
 test('defaultParser handles simple text', async () => {
   const rawDoc = {
@@ -38,8 +48,85 @@ test('staticLoader supports pagination', async () => {
   expect(response3.partitions).toBeUndefined();
 });
 
-// Corpus loading (custom chunker and embedding), local and LC
-// Query for not read local corpus
-// Query for local corpus
-// Query for LC corpus
-// Ideally DocsQA component if we can mock out ChatCompletion
+describe('corpus loading and search', () => {
+  const docs = [
+    { name: 'doc1.txt', pageContent: ['Hello world1!'] },
+    { name: 'doc2.txt', pageContent: ['Hello world2!'] },
+    { name: 'doc3.txt', pageContent: ['Hello world3!'] },
+    { name: 'doc4.txt', pageContent: ['Hello world4!'] },
+    { name: 'doc5.txt', pageContent: ['Hello world5!'] },
+  ];
+  const loader = staticLoader(docs, 2);
+  const chunker = (doc: Document) => {
+    const chunkTexts: Array<string> = [];
+    doc.pageContent.map((content) => chunkTexts.push(...content.split(' ')));
+    return Promise.resolve(chunkTexts.map((text) => ({ content: text, documentName: doc.name })));
+  };
+  const embedding = {
+    embed: (text: string) => {
+      switch (text) {
+        case 'Hello':
+          return Promise.resolve([-1, -1]);
+        case 'world1!':
+          return Promise.resolve([1, 1]);
+        case 'world2!':
+          return Promise.resolve([1, 2]);
+        case 'world3!':
+          return Promise.resolve([1, 3]);
+        case 'world4!':
+          return Promise.resolve([1, 4]);
+        case 'world5!':
+          return Promise.resolve([1, 5]);
+      }
+      throw new Error(`Unexpected text chunk: ${text}`);
+    },
+    embedBatch: async (texts: Array<string>) => {
+      return Promise.all(texts.map((text) => embedding.embed(text)));
+    },
+  };
+
+  test('LocalCorpus', async () => {
+    const corpus = new LocalCorpus(loader, chunker, embedding);
+    const stats = await corpus.load();
+    expect(stats).toEqual({
+      loadingState: CorpusLoadingState.COMPLETED,
+      completedPartitions: 1,
+      activePartitions: 0,
+      numDocuments: 5,
+      numChunks: 10,
+    });
+    const results = await corpus.search('world2!', { limit: 1 });
+    expect(results.length).toEqual(1);
+    expect(results[0].chunk).toEqual({
+      content: 'world2!',
+      documentName: 'doc2.txt',
+    });
+  });
+
+  test('LangChainCorpus', async () => {
+    class FakeEmbeddings extends Embeddings {
+      async embedQuery(text: string): Promise<number[]> {
+        return embedding.embed(text);
+      }
+      async embedDocuments(texts: string[]): Promise<number[][]> {
+        return embedding.embedBatch(texts);
+      }
+    }
+    const vectorStore = new MemoryVectorStore(new FakeEmbeddings({}));
+    const corpus = new LoadableLangchainCorpus(vectorStore, loader, chunker, embedding);
+    const stats = await corpus.load();
+    expect(stats).toEqual({
+      loadingState: CorpusLoadingState.COMPLETED,
+      completedPartitions: 1,
+      activePartitions: 0,
+      numDocuments: 5,
+      numChunks: 10,
+    });
+    const results = await corpus.search('world2!', { limit: 1 });
+    expect(results.length).toEqual(1);
+    expect(results[0].chunk).toEqual({
+      content: 'world2!',
+      metadata: {},
+    });
+  });
+});
