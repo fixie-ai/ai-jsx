@@ -1,8 +1,12 @@
+---
+sidebar_position: 6
+---
+
 # Performance
 
 :::note See Also
 
-- [Architecture](./architecture.md)
+- [Architecture](./architecture.mdx)
 - [AI+UI](./ai-ui.md)
 
 :::

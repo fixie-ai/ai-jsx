@@ -105,7 +105,7 @@ export interface UseAIStreamResult {
 /**
  * A React hook for presenting a UI stream from AI.JSX.
  */
-export function useAIStream(options: UseAIStreamOpts): UseAIStreamResult {
+export function useAIStream(options: UseAIStreamOpts = {}): UseAIStreamResult {
   const [currentStream, setCurrentStream] = ReactModule.useState<ReadableStream<ReactModule.ReactNode> | null>(null);
   const [currentUI, setCurrentUI] = ReactModule.useState(null as ReactModule.ReactNode);
   const [error, setError] = ReactModule.useState(null as Error | null);
