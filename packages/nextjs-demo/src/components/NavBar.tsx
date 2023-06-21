@@ -10,9 +10,8 @@ export default function NavBar() {
 
   const pages = {
     'Basic Completion': '/basic-completion',
+    'Basic Chat': '/basic-chat',
     'Docs Chat': '/docs-chat',
-    'JIT UI: React': '/recipe',
-    'JIT UI: Raw HTML': '/nl-gh-search',
   };
 
   return (
@@ -22,20 +21,14 @@ export default function NavBar() {
           <div className="relative flex h-16 justify-between">
             <div className="absolute inset-y-0 left-0 flex items-center sm:hidden"></div>
             <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-              <div className="flex flex-shrink-0 items-center">
-                {/* We don't care about the perf for now. */}
+              <div className="flex shrink-0 items-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  className="block h-6 w-auto lg:hidden"
-                  src="https://app.fixie.ai/static/logos/charcoal.png"
-                  alt="Fixie Logo"
+                  className="hidden h-12 w-auto lg:block"
+                  src="https://docs.ai-jsx.com/img/foxie.png"
+                  alt="AI.JSX Logo"
                 />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  className="hidden h-6 w-auto lg:block"
-                  src="https://app.fixie.ai/static/logos/charcoal.png"
-                  alt="Fixie Logo"
-                />
+                <b className="pl-4">AI.JSX Demo</b>
               </div>
               <div className="hidden sm:ml-6 sm:flex justify-center w-full sm:space-x-8">
                 {Object.entries(pages).map(([name, href]) => {
@@ -47,7 +40,7 @@ export default function NavBar() {
                       className={classNames(
                         'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700',
                         {
-                          'border-indigo-500 text-gray-900': active,
+                          'border-fixie-ripe-salmon text-gray-900': active,
                           'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': !active,
                         }
                       )}

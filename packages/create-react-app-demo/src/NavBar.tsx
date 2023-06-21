@@ -4,11 +4,11 @@ import { NavLink } from 'react-router-dom';
 
 export default function NavBar() {
   const pages = {
-    'Choose your own adventure': '/',
     'Basic Completion': '/basic-completion',
     'Basic Chat': '/basic-chat',
     'Docs Chat': '/docs-chat',
-    'JIT UI: React': '/recipe',
+    'Choose Your Own Adventure': '/choose-yor-own-adventure',
+    'Recipe JIT UI': '/recipe',
   };
 
   return (
@@ -20,15 +20,11 @@ export default function NavBar() {
             <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
               <div className="flex shrink-0 items-center">
                 <img
-                  className="block h-6 w-auto lg:hidden"
-                  src="https://app.fixie.ai/static/logos/charcoal.png"
-                  alt="Fixie Logo"
+                  className="hidden h-12 w-auto lg:block"
+                  src="https://docs.ai-jsx.com/img/foxie.png"
+                  alt="AI.JSX Logo"
                 />
-                <img
-                  className="hidden h-6 w-auto lg:block"
-                  src="https://app.fixie.ai/static/logos/charcoal.png"
-                  alt="Fixie Logo"
-                />
+                <b className="pl-4">AI.JSX Demo</b>
               </div>
               <div className="hidden w-full justify-center sm:ml-6 sm:flex sm:space-x-8">
                 {Object.entries(pages).map(([name, href]) => (
@@ -39,7 +35,7 @@ export default function NavBar() {
                       classNames(
                         'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700',
                         {
-                          'border-indigo-500 text-gray-900': isActive,
+                          'border-fixie-ripe-salmon text-gray-900': isActive,
                           'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700': !isActive,
                         }
                       )

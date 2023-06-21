@@ -321,14 +321,12 @@ export class LangChainEmbeddingWrapper implements Embedding {
 }
 
 /** A default embedding useful for DocsQA. Note that this requires `OPENAI_API_KEY` to be set. */
-// if (!process.env.OPENAI_API_KEY) {
-//   throw new Error('OPENAI_API_KEY not set');
-// }
-export const defaultEmbedding = new LangChainEmbeddingWrapper(
-  // new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY })
-  // @ts-expect-error
-  null
-);
+function defaultEmbedding() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY not set');
+  }
+  return new LangChainEmbeddingWrapper(new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY }));
+}
 
 /**
  * A function that converts documents into {@link EmbeddedChunk}s.
@@ -563,7 +561,7 @@ export class LocalCorpus<
   constructor(
     readonly loader: Loader<DocumentMetadata>,
     readonly chunker: Chunker<DocumentMetadata, ChunkMetadata>,
-    readonly embedding: Embedding = defaultEmbedding
+    readonly embedding: Embedding = defaultEmbedding()
   ) {
     const chunkConsumer = (chunks: EmbeddedChunk<ChunkMetadata>[]) => {
       this.vectors.push(...chunks);
@@ -617,7 +615,7 @@ export class LoadableLangchainCorpus<
     readonly vectorstore: VectorStore,
     readonly loader: Loader<DocumentMetadata>,
     readonly chunker: Chunker<DocumentMetadata, ChunkMetadata>,
-    readonly embedding: Embedding = defaultEmbedding
+    readonly embedding: Embedding = defaultEmbedding()
   ) {
     const chunkConsumer = async (chunks: EmbeddedChunk<ChunkMetadata>[]) => {
       const vectors = chunks.map((chunk) => chunk.vector);

@@ -37,31 +37,31 @@ export function Prompt({
   noInternalKnowledge = false,
   stepByStep = false,
 }: {
-  hhh?: boolean;
   /** refers to the prompt "helpful, harmless, and honest assistant" */
-  apolitical?: boolean;
+  hhh?: boolean;
   /** asks the model to not offer opinions on political topics */
-  persona?: string | null;
+  apolitical?: boolean;
   /** asks the model to respond with a certain persona. LLMs are trained to
    *    output the average response even if it's wrong. A simple nudge can sometimes get
    *    the model to output better responses.
    *
    *    Example values:
-   *      * an expert in astrophysics
-   *      * Albert Einstein
-   *      * a 5 year old
-   *      * a tactful politician
+   *      - an expert in astrophysics
+   *      - Albert Einstein
+   *      - a 5 year old
+   *      - a tactful politician.
    *
    *    @see https://arxiv.org/pdf/2305.14930.pdf
    *    @see https://arxiv.org/pdf/2111.02080.pdf */
-  concise?: boolean;
+  persona?: string | null;
   /** asks the model to be concise */
-  noInternalKnowledge?: boolean;
+  concise?: boolean;
   /** asks the model to only use the given context to answer instead of baked-in knowledge.
    *  This is useful for knowledge-grounded question answering (DocsQA). */
-  stepByStep?: boolean;
+  noInternalKnowledge?: boolean;
   /** asks the model to work out the answer in a step-by-step way.
-   *      @see PromptStepByStep for more info */
+   *      @see  {@link PromptStepByStep} for more info */
+  stepByStep?: boolean;
 }) {
   return (
     <SystemMessage>

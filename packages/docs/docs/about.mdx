@@ -11,7 +11,7 @@ slug: /
 [![Twitter Follow](https://img.shields.io/twitter/follow/fixieai?style=social)](https://twitter.com/fixieai)
 
 AI.JSX is a framework for building AI applications using
-[JSX](https://react.dev/learn/writing-markup-with-jsx). With AI.JSX,
+[JSX](https://react.dev/learn/writing-markup-with-jsx). While AI.JSX [is not React](https://docs.ai-jsx.com/is-it-react), it's designed to look and feel very similar while also integrating seamlessly with React-based projects. With AI.JSX,
 you don't just use JSX to describe what your UI should look like,
 you also use it to describe how **Large Language Models**, such as
 ChatGPT, should integrate into the rest of your application. The
@@ -38,6 +38,7 @@ part of a larger React application. We have examples that use
 and [Create React
 App](https://github.com/fixie-ai/ai-jsx/tree/main/packages/create-react-app-demo).
 For more details, see the [AI+UI guide](./guides/ai-ui).
+You can also check out the [live demo app](https://ai-jsx-nextjs-demo.vercel.app/basic-completion).
 
 New to the world of AI and LLMs? Read our [Guide for AI
 Newcomers](https://docs.ai-jsx.com/guides/brand-new).
@@ -87,4 +88,12 @@ function CharacterGenerator() {
 }
 ```
 
-[![AI.JSX demo](https://asciinema.org/a/m08ORXH8AdcmV8gA95d6UYJzW.svg)](https://asciinema.org/a/m08ORXH8AdcmV8gA95d6UYJzW)
+import AsciinemaWidget from '@site/src/components/AsciinemaWidget';
+
+<AsciinemaWidget
+  src="https://asciinema.org/a/kLwqpHVf2jsOU0vxEpl8f47zw.cast"
+  rows={25}
+  idleTimeLimit={3}
+  preload={true}
+  poster="npt:0:10"
+/>

@@ -16,10 +16,21 @@ interface ValidationResult {
 // TODO: schema
 /**
  * A {@link ChatCompletion} component that constrains the output to be a valid JSON string.
+ * It uses a combination of prompt engineering and validation with retries to ensure that the output is valid.
+ *
+ * @example
+ * ```tsx
+ *    <JsonChatCompletion>
+ *     <UserMessage>
+ *      Create a nested family tree with names and ages.
+ *      It should include a total of 5 people.
+ *     </UserMessage>
+ *    </JsonChatCompletion>
+ * ```
  *
  * @param retries The maximum number of times to retry the completion if the output is invalid.
  * @param children The children to render.
- * @returns a string that is a valid JSON or throws an error after `retries` attempts.
+ * @returns A string that is a valid JSON or throws an error after `retries` attempts.
  */
 export function JsonChatCompletion({ children, ...props }: { children: AI.Node }) {
   return (
@@ -31,10 +42,21 @@ export function JsonChatCompletion({ children, ...props }: { children: AI.Node }
 
 /**
  * A {@link ChatCompletion} component that constrains the output to be a valid YAML string.
+ * It uses a combination of prompt engineering and validation with retries to ensure that the output is valid.
+ *
+ *  @example
+ * ```tsx
+ *    <YamlChatCompletion>
+ *     <UserMessage>
+ *      Create a nested family tree with names and ages.
+ *      It should include a total of 5 people.
+ *     </UserMessage>
+ *    </YamlChatCompletion>
+ * ```
  *
  * @param retries The maximum number of times to retry the completion if the output is invalid.
  * @param children The children to render.
- * @returns a string that is a valid YAML or throws an error after `retries` attempts.
+ * @returns A string that is a valid YAML or throws an error after `retries` attempts.
  */
 export function YamlChatCompletion({ children, ...props }: { children: AI.Node }) {
   return (
@@ -51,7 +73,7 @@ export function YamlChatCompletion({ children, ...props }: { children: AI.Node }
  * @param validator A function that returns a {@link ValidationResult} for a given string.
  * @param typeName The name of the type, to be used in the prompt.
  * @param children The children to render.
- * @returns a string that validates as the given type or throws an error after `retries` attempts
+ * @returns A string that validates as the given type or throws an error after `retries` attempts
  */
 async function ObjectFormatChatCompletion(
   {

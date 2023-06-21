@@ -1,3 +1,7 @@
+---
+sidebar_position: 5
+---
+
 # Observability
 
 In this guide, we'll start with the [hello world example](https://github.com/fixie-ai/ai-jsx-template) and iteratively add logging.
@@ -95,6 +99,12 @@ To view this in a nicer way, run `npx pino-pretty < ai-jsx.log`:
 `pino-pretty` has a number of [options](https://github.com/pinojs/pino-pretty#cli-arguments) you can use to further configure how you view the logs.
 
 You can use `grep` to filter the log to just the events or loglevels you care about.
+
+:::note NextJS
+
+When using NextJS, instead of specifying a logger in `createRenderContext`, you can pass one to the props of your `<AI.JSX>` tag.
+
+:::
 
 ## Custom Pino Logging
 
