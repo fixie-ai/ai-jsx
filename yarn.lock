@@ -3835,7 +3835,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nick.heiner/wandb-fork@npm:0.5.2-5":
+"@nick.heiner/wandb-fork@npm:0.5.2-5, @nick.heiner/wandb-fork@npm:^0.5.2-5":
   version: 0.5.2-5
   resolution: "@nick.heiner/wandb-fork@npm:0.5.2-5"
   dependencies:
@@ -7366,6 +7366,7 @@ __metadata:
   dependencies:
     "@jest/globals": ^29.5.0
     "@nick.heiner/openai-edge": 1.0.1-7
+    "@nick.heiner/wandb-fork": ^0.5.2-5
     "@tsconfig/node16": ^1.0.4
     "@tsconfig/node18": ^2.0.1
     "@types/eslint": ^8
