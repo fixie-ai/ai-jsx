@@ -47,7 +47,23 @@ deployment much simpler.
 
 The Edge Function is implemented in the file `packages/tutorial-nextjs/src/app/api/poem/route.tsx`.
 
+:::tip Ensure you have the `@jsxImportSource` line
+The line:
+
+```
+/** @jsxImportSource ai-jsx */
+```
+
+at the top of the `route.tsx` file is important! It tells the TypeScript
+compiler how to build the AI.JSX code in this file. Without this line you'll run into
+runtime errors running the code.
+:::
+
 ```tsx filename="packages/tutorial-nextjs/src/app/api/poem/route.tsx"
+/** @jsxImportSource ai-jsx */
+
+// ...
+
 export async function POST(req: Request) {
   // Extract the 'topic' field from the JSON body of the request.
   const { topic } = await req.json();
@@ -70,14 +86,26 @@ a `<ChatCompletion>` component to invoke the LLM. The `toStreamResponse` functio
 the rendered output of the AI.JSX component to a stream of JSON SSE responses that can be
 read by the client.
 
-Finally, we have `doCompletion`:
-
 ## The React Client
 
 The React client code is fairly simple. The `<Poem>` component simply invokes the Vercel
 EdgeFunction, defined above, using a `fetch` call within `useEffect`.
 
+:::tip Ensure that `'use client'` is at the top of your file
+The line:
+
+```
+'use client';
+```
+
+at the top of `page.tsx` informs NextJS that this code should run on the client.
+:::
+
 ```tsx filename="packages/tutorial-nextjs/src/app/page.tsx"
+'use client';
+
+// ...
+
 function PoemGenerator() {
   const DEFAULT_PROMPT = 'A red panda who likes to eat grapes';
   const { current, fetchAI } = useAIStream({});
