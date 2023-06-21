@@ -7,7 +7,7 @@ export default function NavBar() {
     'Basic Completion': '/basic-completion',
     'Basic Chat': '/basic-chat',
     'Docs Chat': '/docs-chat',
-    'Choose Your Own Adventure': '/choose-yor-own-adventure',
+    'Choose Your Own Adventure': '/choose-your-own-adventure',
     'Recipe JIT UI': '/recipe',
   };
 
