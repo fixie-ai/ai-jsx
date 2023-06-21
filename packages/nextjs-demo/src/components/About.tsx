@@ -4,7 +4,7 @@ export default function About() {
       <div className="w-full overflow-hidden rounded-lg bg-fixie-light-dust shadow-sm">
         <div className="px-4 py-5 sm:px-6">
           <p className="text-center">
-            This is a React-based demo of{' '}
+            This is a NextJS-based demo of{' '}
             <a className="underline" href="https://ai-jsx.com/">
               AI.JSX
             </a>
@@ -13,7 +13,7 @@ export default function About() {
               AI.JSX docs
             </a>
             , or the{' '}
-            <a className="underline" href="https://github.com/fixie-ai/ai-jsx/tree/main/packages/create-react-app-demo">
+            <a className="underline" href="https://github.com/fixie-ai/ai-jsx/tree/main/packages/nextjs-demo">
               source code
             </a>{' '}
             for this app.

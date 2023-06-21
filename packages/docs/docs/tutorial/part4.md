@@ -5,8 +5,8 @@ sidebar_position: 4
 # Tutorial Part 4 - Document Q&A
 
 One of the most powerful capabilities of Large Language Models is the ability to
-answer questions about the contents of a set of documents. AI. JSX provides a powerful
-component called `<DocsQA>` that can answer a question about a corpus of documents
+answer questions about the contents of a set of documents. AI.JSX provides a powerful
+component called [`<DocsQA>`](../api/modules/batteries_docs#docsqa) that can answer a question about a corpus of documents
 using the LLM.
 
 Here's an example of how this will look in your app:
@@ -36,7 +36,7 @@ The implementation of `<DocsQA>` in AI.JSX currently stores the chunks and embed
 vectors in memory. One could also use a vector database to store the embedding vectors, and
 in the near future we'll be adding support for this to AI.JSX.
 
-The `<DocsQA>` component takes in several props:
+The [`<DocsQA>`](../api/modules/batteries_docs#docsqa) component takes in several props:
 
 - `question` - the query to submit to the LLM about this document corpus.
 - `corpus` - the corpus of documents to search for the answer.
@@ -66,14 +66,14 @@ const docs = [
   },
 ];
 const corpus = new LocalCorpus(staticLoader(docs), makeChunker(600, 100));
-await corpus.startLoading();
+await corpus.load();
 ```
 
 We first fetch the contents of the web page and convert it to Markdown using
 the [Turndown](https://github.com/mixmark-io/turndown) library. We then create
-a `LocalCorpus` from this Markdown content.
+a [`LocalCorpus`](../api/classes/batteries_docs.LocalCorpus) from this Markdown content.
 
-Calling `corpus.startLoading()` will cause the corpus to be loaded into memory.
+Calling [`corpus.load()`](../api/classes/batteries_docs.LocalCorpus#load) will cause the corpus to be loaded into memory.
 This is an async operation, since loading the documents and generating vectors
 can take a while, but for this demo we `await` the result.
 

@@ -20,9 +20,9 @@ function App() {
 }
 ```
 
-`ChatCompletion` is preferred because all the most powerful models are chat-based, and [it's best to start with the most powerful models](./brand-new.md#recommended-dev-workflow).
+[`ChatCompletion`](../api/modules/core_completion?_highlight=chatcompletion#chatcompletion) is preferred to [`Completion`](../api/modules/core_completion?_highlight=chatcompletion#completion) because all the most powerful models are chat-based, and [it's best to start with the most powerful models](./brand-new.md#recommended-dev-workflow).
 
-To configure the output of `ChatCompletion`, use `ModelProps` (`packages/ai-jsx/src/core/completion.tsx`). This allows you to do things like making the model more creative or precise, telling the model how long a response you want back, etc. Combined with the natural language of your [prompt](./brand-new.md#prompt-engineering), this is how you control the model's output.
+To configure the output of `ChatCompletion`, use [`ModelProps`](../api/interfaces/core_completion.ModelProps.md). This allows you to do things like making the model more creative or precise, telling the model how long a response you want back, etc. Combined with the natural language of your [prompt](./brand-new.md#prompt-engineering), this is how you control the model's output.
 
 ## What about non-chat models?
 
@@ -44,7 +44,7 @@ The problem is that the model is predicting that a question about one state is o
 
 ## Primitives to get you prompting faster
 
-We have included a small set of prompts that we found useful in [`packages/ai-jsx/src/batteries/prompts.tsx`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/batteries/prompts.tsx).
+We have included a small set of prompts that we found useful via [`<Prompt />`](../api/modules/batteries_prompts#prompt).
 You can use them either as shortcuts, or as a starting point if you are new to prompting:
 
 ```tsx
@@ -87,4 +87,4 @@ function App() {
 ```
 
 Under the hood, this model will use a combination of prompting, validating the output, and asking them the model to retry
-if the validation fails (refer to [`packages/ai-jsx/src/batteries/constrained-output.tsx`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/batteries/constrained-output.tsx)).
+if the validation fails (refer to [`ai-jsx/batteries/constrained-output`](../api/modules/batteries_constrained_output)).

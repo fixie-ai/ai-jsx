@@ -2,25 +2,56 @@ import { PartiallyRendered, Renderable, createRenderContext } from '../index.js'
 
 export type StreamEvent =
   | {
-      type: 'replace';
+      type: 'all';
       content: PartiallyRendered[];
     }
+  | { type: 'replace'; index: number; content: PartiallyRendered }
+  | { type: 'multiple'; events: StreamEvent[] }
+  | { type: 'append'; index: number; content: string }
   | { type: 'complete' };
 
 /**
  * Render a {@link Renderable} to a stream of {@link StreamEvent}s.
  */
-async function* renderToJsonEvents(renderable: Renderable) {
+async function* renderToJsonEvents(renderable: Renderable): AsyncGenerator<StreamEvent, StreamEvent> {
   const renderContext = createRenderContext();
   const renderResult = renderContext.render(renderable, { map: (x) => x, stop: () => false });
   const asyncIterator = renderResult[Symbol.asyncIterator]();
+  let lastFrame = null as PartiallyRendered[] | null;
   while (true) {
-    const nextResult = await asyncIterator.next();
+    const { done, value: frame } = await asyncIterator.next();
+    if (lastFrame !== null && lastFrame.length === frame.length) {
+      const deltas = [] as StreamEvent[];
+      for (let i = 0; i < frame.length; ++i) {
+        const previous = lastFrame[i];
+        const current = frame[i];
 
-    // TODO: diff the current frame with the previous frame.
-    yield { type: 'replace', content: nextResult.value } as StreamEvent;
+        if (previous === current) {
+          // No change.
+          continue;
+        }
 
-    if (nextResult.done) {
+        if (typeof current === 'string' && typeof previous === 'string' && current.startsWith(previous)) {
+          // The change was a simple append.
+          deltas.push({ type: 'append', index: i, content: current.slice(previous.length) });
+          continue;
+        }
+
+        // Replace the index.
+        deltas.push({ type: 'replace', index: i, content: current });
+      }
+
+      if (deltas.length === 1) {
+        yield deltas[0];
+      } else if (deltas.length > 1) {
+        yield { type: 'multiple', events: deltas };
+      }
+    } else {
+      yield { type: 'all', content: frame } as StreamEvent;
+    }
+
+    lastFrame = frame;
+    if (done) {
       break;
     }
   }
@@ -95,10 +126,31 @@ function streamResponseParser() {
 }
 
 function assembleFromStreamEvents() {
+  let previousFrame = [] as PartiallyRendered[];
+
+  // Applies the delta event to the previous frame to update it.
+  function applyEvent(event: StreamEvent): boolean {
+    switch (event.type) {
+      case 'all':
+        previousFrame = event.content;
+        return true;
+      case 'replace':
+        previousFrame[event.index] = event.content;
+        return true;
+      case 'append':
+        previousFrame[event.index] = (previousFrame[event.index] as string) + event.content;
+        return true;
+      case 'multiple':
+        return event.events.reduce((didChange, subEvent) => applyEvent(subEvent) || didChange, false);
+      case 'complete':
+        return false;
+    }
+  }
+
   return new TransformStream<StreamEvent, PartiallyRendered[]>({
-    transform(chunk, controller) {
-      if (chunk.type === 'replace') {
-        controller.enqueue(chunk.content);
+    transform(event, controller) {
+      if (applyEvent(event)) {
+        controller.enqueue(previousFrame.slice());
       }
     },
   });
