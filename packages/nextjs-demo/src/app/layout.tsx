@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <NavBar />
         <About />
-        <main className="flex min-h-screen flex-col items-start p-24">{children}</main>
+        <main className="flex min-h-screen flex-col items-start px-24 py-6">{children}</main>
         <div className="hidden">
           <h1 className="text-2xl"></h1>
           <ul className="list-decimal"></ul>

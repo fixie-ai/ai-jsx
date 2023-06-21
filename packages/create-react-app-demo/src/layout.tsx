@@ -13,7 +13,7 @@ export default function RootLayout({ children = <Outlet /> }) {
     <>
       <NavBar />
       <About />
-      <main className="flex min-h-screen flex-col items-start px-24 py-6">{children}</main>
+      <main className="flex min-h-screen flex-col items-start px-24">{children}</main>
     </>
   );
 }
