@@ -12,13 +12,21 @@ import { ChatCompletion, AssistantMessage, SystemMessage, UserMessage } from 'ai
 
 export const runtime = 'edge';
 
-async function doCompletion({ userMessage, systemMessage, assistantMessage } : { userMessage: string, systemMessage: string, assistantMessage: string }) {
+async function doCompletion({
+  userMessage,
+  systemMessage,
+  assistantMessage,
+}: {
+  userMessage: string;
+  systemMessage: string;
+  assistantMessage: string;
+}) {
   const completion = (
-  <ChatCompletion>
-    { systemMessage && <SystemMessage>{systemMessage}</SystemMessage> }
-    { userMessage && <UserMessage>{userMessage}</UserMessage> }
-    { assistantMessage && <AssistantMessage>{assistantMessage}</AssistantMessage> }
-  </ChatCompletion>
+    <ChatCompletion>
+      {systemMessage && <SystemMessage>{systemMessage}</SystemMessage>}
+      {userMessage && <UserMessage>{userMessage}</UserMessage>}
+      {assistantMessage && <AssistantMessage>{assistantMessage}</AssistantMessage>}
+    </ChatCompletion>
   );
   const renderContext = AI.createRenderContext();
   const result = await renderContext.render(completion);
