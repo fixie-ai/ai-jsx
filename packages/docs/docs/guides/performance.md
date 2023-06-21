@@ -6,7 +6,7 @@ sidebar_position: 6
 
 :::note See Also
 
-- [Architecture](./architecture.md)
+- [Architecture](./architecture.mdx)
 - [AI+UI](./ai-ui.md)
 
 :::

@@ -3,7 +3,7 @@ sidebar_position: 4
 ---
 
 :::note AI + UI Support
-Right now, AI and UI component integration is only supported when running completely client-side (e.g., via Create React App). We're working to add support for server-rendered scenarios (SSR or RSC), non-React frameworks, and [other architectures](./architecture.md). ([File an issue](https://github.com/fixie-ai/ai-jsx/issues) if you'd like to vote on what we support. :smile:)
+Right now, AI and UI component integration is only supported when running completely client-side (e.g., via Create React App). We're working to add support for server-rendered scenarios (SSR or RSC), non-React frameworks, and [other architectures](./architecture.mdx). ([File an issue](https://github.com/fixie-ai/ai-jsx/issues) if you'd like to vote on what we support. :smile:)
 :::
 
 # AI + UI
