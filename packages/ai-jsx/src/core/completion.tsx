@@ -6,6 +6,7 @@
 import * as AI from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
+import { getEnvVar } from '../lib/util.js';
 
 /**
  * Represents properties passed to a given Large Language Model.
@@ -55,7 +56,7 @@ export interface FunctionParameter {
  * This is internal and users should not need to access this directly.
  */
 function AutomaticCompletionModel({ children, ...props }: ModelPropsWithChildren) {
-  if (process.env.OPENAI_API_KEY || process.env.OPENAI_API_BASE) {
+  if (getEnvVar('OPENAI_API_KEY', false) || getEnvVar('OPENAI_API_BASE', false)) {
     return (
       <OpenAICompletionModel model="text-davinci-003" {...props}>
         {children}
@@ -76,7 +77,7 @@ function AutomaticCompletionModel({ children, ...props }: ModelPropsWithChildren
  * This is internal and users should not need to access this directly.
  */
 function AutomaticChatModel({ children, ...props }: ModelPropsWithChildren) {
-  if (process.env.OPENAI_API_KEY || process.env.OPENAI_API_BASE) {
+  if (getEnvVar('OPENAI_API_KEY', false) || getEnvVar('OPENAI_API_BASE', false)) {
     return (
       <OpenAIChatModel model="gpt-3.5-turbo" {...props}>
         {children}
