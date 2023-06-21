@@ -18,7 +18,7 @@ test('defaultParser handles simple text', async () => {
     encoding: 'utf-8',
     mimeType: 'text/plain',
   };
-  const rawLoader: RawLoader = (_) => Promise.resolve({ page: { documents: [rawDoc] } });
+  const rawLoader: RawLoader = () => Promise.resolve({ page: { documents: [rawDoc] } });
   const loader = toLoader(rawLoader);
   const parsedDoc = (await loader({})).page!.documents[0];
   expect(parsedDoc).toEqual({
@@ -58,9 +58,12 @@ describe('corpus loading and search', () => {
   ];
   const loader = staticLoader(docs, 2);
   const chunker = (doc: Document) => {
-    const chunkTexts: Array<string> = [];
-    doc.pageContent.map((content) => chunkTexts.push(...content.split(' ')));
-    return Promise.resolve(chunkTexts.map((text) => ({ content: text, documentName: doc.name })));
+    return Promise.resolve(
+      doc.pageContent
+        .map((content) => content.split(' '))
+        .flat()
+        .map((text) => ({ content: text, documentName: doc.name }))
+    );
   };
   const embedding = {
     embed: (text: string) => {
