@@ -18,7 +18,7 @@ function App() {
 console.log(await AI.createRenderContext().render(<App />));
 ```
 
-This produces no logging.
+This uses default logging, which will write logs to a file similar to below.
 
 ## File Logging
 
@@ -95,6 +95,12 @@ To view this in a nicer way, run `npx pino-pretty < ai-jsx.log`:
 `pino-pretty` has a number of [options](https://github.com/pinojs/pino-pretty#cli-arguments) you can use to further configure how you view the logs.
 
 You can use `grep` to filter the log to just the events or loglevels you care about.
+
+:::note NextJS
+
+When used with NextJS, AI.JSX components will have logging disabled by default to ensure that no unexpected files are written when your binary is deployed on a server. Instead of overriding this as described above, you can pass a `LoggingImplementation` to the props of your `<AI.JSX>` tag.
+
+:::
 
 ## Custom Pino Logging
 
