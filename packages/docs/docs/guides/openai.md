@@ -6,11 +6,15 @@ To use OpenAI, do one of the following:
 
 **When to do this:** your AI.JSX program runs in a controlled environment (e.g. a server), or you're comfortable sharing your API key with the client (e.g. you're doing a hackathon or building an internal tool).
 
+You may do this with any of the [Architecture Patterns](./architecture.mdx).
+
 **How to do this:** Set the `OPENAI_API_KEY` env var. (You can get this key from the [OpenAI API dashboard](https://platform.openai.com/account/api-keys))
 
 ## Set a proxy env var
 
 **When to do this:** you have a proxy server that you'd like to use for OpenAI calls.
+
+You would do this with the [UI + AI.JSX on the client; API calls on the server](./architecture.mdx#ui--aijsx-on-the-client-api-calls-on-the-server) architecture pattern. (Nothing stops you from doing it for the other patterns, but this is the one for which it's most likely to be useful.)
 
 **How to do this:** Set the `OPENAI_API_BASE` env var. This value will be passed directly to the `openai` client lib ([source code](https://github.com/openai/openai-node/blob/dc821be3018c832650e21285bade265099f99efb/base.ts#L22)). The default value is `https://api.openai.com/v1`.
 
@@ -24,7 +28,7 @@ OPENAI_API_BASE=https://my-proxy-server/api
 OPENAI_API_BASE=/openai-proxy
 ```
 
-## Set a model provider in your JSX:
+## Set a model provider in your JSX
 
 :::caution
 This is only needed in rare cases.
@@ -48,6 +52,7 @@ const client = new OpenAIApi(
 
 function App() {
   return (
+    // Explicitly provide the client and model to use.
     // highlight-next-line
     <OpenAI client={client} chatModel="gpt-3.5-turbo">
       <ChatCompletion>
