@@ -24,7 +24,9 @@
 import * as AI from 'ai-jsx';
 import { Completion } from 'ai-jsx/core/completion';
 import { Inline } from 'ai-jsx/core/inline';
-import { WeightsAndBiasesTracer, wandb } from 'ai-jsx/batteries/logging-integrations';
+import { wandb } from '@wandb/sdk';
+
+import { WeightsAndBiasesTracer } from 'ai-jsx/batteries/logging-integrations';
 
 function CharacterGenerator() {
   const inlineCompletion = (prompt: AI.Node) => (
@@ -45,9 +47,11 @@ function CharacterGenerator() {
   );
 }
 
+await wandb.init();
+
 console.log(
   await AI.createRenderContext().render(
-    <WeightsAndBiasesTracer>
+    <WeightsAndBiasesTracer log={wandb.log}>
       <CharacterGenerator />
     </WeightsAndBiasesTracer>
   )

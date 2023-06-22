@@ -3835,7 +3835,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nick.heiner/wandb-fork@npm:0.5.2-5, @nick.heiner/wandb-fork@npm:^0.5.2-5":
+"@nick.heiner/wandb-fork@npm:^0.5.2-5":
   version: 0.5.2-5
   resolution: "@nick.heiner/wandb-fork@npm:0.5.2-5"
   dependencies:
@@ -7016,6 +7016,22 @@ __metadata:
     "@typescript-eslint/types": 5.60.0
     eslint-visitor-keys: ^3.3.0
   checksum: d39b2485d030f9755820d0f6f3748a8ec44e1ca23cb36ddcba67a9eb1f258c8ec83c61fc015c50e8f4a00d05df62d719dbda445625e3e71a64a659f1d248157e
+  languageName: node
+  linkType: hard
+
+"@wandb/sdk@npm:^0.5.1":
+  version: 0.5.1
+  resolution: "@wandb/sdk@npm:0.5.1"
+  dependencies:
+    cross-fetch: ^3.1.5
+    graphql-request: ^5.2.0
+  peerDependencies:
+    graphql: 14 - 16
+    langchain: ">=0.0.75"
+  peerDependenciesMeta:
+    langchain:
+      optional: true
+  checksum: ca7f4a2c7ea7473e893d7a812157573ab7de00a37ac3b646c922560de19b20f511cacafe469a3596eaa4a1fb2b7ea7283aaff4b93648a7c5214e061aaf19a58a
   languageName: node
   linkType: hard
 
@@ -11861,7 +11877,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "examples@workspace:packages/examples"
   dependencies:
-    "@nick.heiner/wandb-fork": 0.5.2-5
     "@opentelemetry/api": ^1.4.1
     "@opentelemetry/auto-instrumentations-node": ^0.37.0
     "@opentelemetry/context-async-hooks": ^1.14.0
@@ -11875,6 +11890,7 @@ __metadata:
     "@types/uuid": ^9.0.2
     "@typescript-eslint/eslint-plugin": ^5.59.6
     "@typescript-eslint/parser": ^5.59.6
+    "@wandb/sdk": ^0.5.1
     ai-jsx: ^0.5.1
     axios: ^1.4.0
     csv-stringify: ^6.4.0
