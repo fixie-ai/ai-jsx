@@ -78,7 +78,7 @@ export function Banner({ children }: { children: string }) {
 }
 
 export default function RecipeWrapper() {
-  const [query, setQuery] = useState('beans');
+  const [query, setQuery] = useState('braised lamb stew');
 
   const recipe = memo(
     <ChatCompletion temperature={1}>
@@ -119,9 +119,9 @@ export default function RecipeWrapper() {
           >
             {recipe}
             {'\n'}
-            Now here's a link to the banner URL for the recipe:{' '}
-            <ImageGen>
-              Generate an image for a recipe name
+            Banner URL:{' '}
+            <ImageGen size="256x256">
+              Generate an image for the following dish:
               <ChatCompletion>
                 <UserMessage>
                   In two to three sentences, describe how the following recipe would look like when prepared by a chef:
