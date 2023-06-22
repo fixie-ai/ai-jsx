@@ -27,10 +27,11 @@ export const Highlight = ({ children, color, textColor }) => (
 
 AI.JSX runs in both NodeJS and the browser, so you can choose an architecture that meets your needs. Here are some options, listed in order of most to least client logic:
 
-1. [Run entirely on the client](#run-entirely-on-the-client)
+1. [Run entirely on the client](#run-entirely-on-the-client) <Highlight color="rgb(230, 246, 230)" textColor="rgb(0, 49, 0)">Great for Hackathons</Highlight>
 1. [UI + AI.JSX on the client; API calls on the server](#ui--aijsx-on-the-client-api-calls-on-the-server)
 1. [UI on the client; AI.JSX on the server](#ui-on-the-client-aijsx-on-the-server) <Highlight color="#4cb3d4">Recommended</Highlight>
 1. [Run entirely on the server](#run-entirely-on-the-server) <Highlight color="#DDD" textColor="#000">In Progress</Highlight>
+1. [Headless AI (no UI)](#headless-ai)
 
 The key tradeoffs are:
 
@@ -238,3 +239,9 @@ sequenceDiagram
     participant APIs
     end
 ```
+
+## Headless AI
+
+With this pattern, your AI does not directly feed any UI. Instead of acting in response to user actions, it may run offline as part of a batch process. Your app may be triggered by [a cron service](https://render.com/docs/cronjobs), [task queue](https://www.inngest.com/), or some other kind of [background job](https://www.defer.run/).
+
+Instead of UI, the output of your app may be writing to a data store, the file system, etc.
