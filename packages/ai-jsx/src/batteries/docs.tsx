@@ -13,6 +13,7 @@ import { similarity } from 'ml-distance';
 import { Jsonifiable } from 'type-fest';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
 import { Node } from '../index.js';
+import { getEnvVar } from '../lib/util.js';
 
 /**
  * A raw document loaded from an arbitrary source that has not yet been parsed.
@@ -322,10 +323,8 @@ export class LangChainEmbeddingWrapper implements Embedding {
 
 /** A default embedding useful for DocsQA. Note that this requires `OPENAI_API_KEY` to be set. */
 function defaultEmbedding() {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY not set');
-  }
-  return new LangChainEmbeddingWrapper(new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY }));
+  const apiKey = getEnvVar('OPENAI_API_KEY');
+  return new LangChainEmbeddingWrapper(new OpenAIEmbeddings({ openAIApiKey: apiKey }));
 }
 
 /**

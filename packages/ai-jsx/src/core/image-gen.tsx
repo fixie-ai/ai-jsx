@@ -6,6 +6,7 @@
 import * as AI from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
 import { DalleImageGen } from '../lib/openai.js';
+import { getEnvVar } from '../lib/util.js';
 
 /**
  * Represents properties passed to the {@link ImageGen} component.
@@ -29,7 +30,7 @@ export type ImageGenComponent<T extends ImageGenPropsWithChildren> = Component<T
  * This is internal and users should not need to access this directly.
  */
 function AutomaticImageGenModel({ children, ...props }: ImageGenPropsWithChildren) {
-  if (process.env.OPENAI_API_KEY) {
+  if (getEnvVar('OPENAI_API_KEY', false) || getEnvVar('OPENAI_API_BASE', false)) {
     return <DalleImageGen {...props}>{children}</DalleImageGen>;
   }
 

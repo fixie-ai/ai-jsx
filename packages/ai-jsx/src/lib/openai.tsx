@@ -35,6 +35,7 @@ import { Merge } from 'type-fest';
 import { Logger } from '../core/log.js';
 import { HttpError } from '../core/errors.js';
 import _ from 'lodash';
+import { getEnvVar } from './util.js';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -55,9 +56,12 @@ const decoder = new TextDecoder();
 function createOpenAIClient() {
   return new OpenAIApi(
     new Configuration({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: getEnvVar('OPENAI_API_KEY', false),
     }),
-    process.env.OPENAI_API_BASE,
+    // We actually want the nullish coalescing behavior in this case,
+    // because if the env var is '', we want to pass `undefined` instead.
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+    getEnvVar('OPENAI_API_BASE', false) || undefined,
     // TODO: Figure out a better way to work around NextJS fetch blocking streaming
     (globalThis as any)._nextOriginalFetch ?? globalThis.fetch
   );

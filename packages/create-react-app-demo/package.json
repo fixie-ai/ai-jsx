@@ -75,9 +75,9 @@
   "type": "module",
   "scripts": {
     "start:backend": "rm -rf backend/dist && tsc -p backend/tsconfig.json && node backend/dist/index.js",
-    "start:arch-2": "concurrently \"yarn run start\" \"yarn run start:backend\"",
-    "start": "node scripts/start.cjs",
-    "build": "node scripts/build.cjs",
+    "start:arch-2": "concurrently \"REACT_APP_OPENAI_API_BASE=${OPENAI_API_BASE:-\"\"} yarn run start\" \"yarn run start:backend\"",
+    "start": "REACT_APP_OPENAI_API_KEY=${OPENAI_API_KEY:-\"\"} node scripts/start.cjs",
+    "build": "REACT_APP_OPENAI_API_KEY=${OPENAI_API_KEY:-\"\"}REACT_APP_OPENAI_API_BASE=${OPENAI_API_BASE:-\"\"} node scripts/build.cjs node scripts/build.cjs",
     "test": "yarn run lint; yarn run typecheck",
     "dev": "bash ./scripts/pick-start-version.bash",
     "lint": "eslint src --max-warnings 0",
