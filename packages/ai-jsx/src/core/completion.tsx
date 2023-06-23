@@ -3,6 +3,7 @@
  * @packageDocumentation
  */
 
+import { ChatCompletionResponseMessage } from 'openai';
 import * as AI from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
@@ -192,6 +193,20 @@ export function UserMessage({ children }: { name?: string; children: Node }) {
  */
 export function AssistantMessage({ children }: { children: Node }) {
   return children;
+}
+
+export function ConversationHistory({ messages }: { messages: ChatCompletionResponseMessage[] }) {
+  return messages.map((message) => {
+    if (message.role === 'assistant') {
+      return <AssistantMessage>{message.content}</AssistantMessage>;
+    }
+    if (message.role === 'user') {
+      return <UserMessage>{message.content}</UserMessage>;
+    }
+    if (message.role === 'function') {
+      return <FunctionCall name={message.function_call!.name!} args={JSON.parse(message.function_call!.arguments!)} />;
+    }
+  });
 }
 
 /**
