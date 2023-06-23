@@ -69,16 +69,6 @@
         "default": "./dist/cjs/batteries/use-tools.cjs"
       }
     },
-    "./batteries/langchain-wrapper": {
-      "import": {
-        "types": "./dist/esm/batteries/langchain-wrapper.d.ts",
-        "default": "./dist/esm/batteries/langchain-wrapper.js"
-      },
-      "require": {
-        "types": "./dist/cjs/batteries/langchain-wrapper.d.cts",
-        "default": "./dist/cjs/batteries/langchain-wrapper.cjs"
-      }
-    },
     "./core/completion": {
       "import": {
         "types": "./dist/esm/core/completion.d.ts",
