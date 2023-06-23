@@ -69,6 +69,16 @@
         "default": "./dist/cjs/batteries/use-tools.cjs"
       }
     },
+    "./batteries/logging-integrations": {
+      "import": {
+        "types": "./dist/esm/batteries/logging-integrations.d.ts",
+        "default": "./dist/esm/batteries/logging-integrations.js"
+      },
+      "require": {
+        "types": "./dist/cjs/batteries/logging-integrations.d.cts",
+        "default": "./dist/cjs/batteries/logging-integrations.cjs"
+      }
+    },
     "./core/completion": {
       "import": {
         "types": "./dist/esm/core/completion.d.ts",
@@ -301,6 +311,7 @@
   },
   "dependencies": {
     "@nick.heiner/openai-edge": "1.0.1-7",
+    "@nick.heiner/wandb-fork": "^0.5.2-5",
     "axios": "^1.4.0",
     "cli-highlight": "^2.1.11",
     "cli-spinners": "^2.9.0",

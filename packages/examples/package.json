@@ -50,13 +50,13 @@
     "build": "yarn run typecheck"
   },
   "dependencies": {
-    "@nick.heiner/wandb-fork": "0.5.2-5",
     "@opentelemetry/api": "^1.4.1",
     "@opentelemetry/auto-instrumentations-node": "^0.37.0",
     "@opentelemetry/context-async-hooks": "^1.14.0",
     "@opentelemetry/exporter-trace-otlp-proto": "^0.40.0",
     "@opentelemetry/sdk-metrics": "^1.13.0",
     "@opentelemetry/sdk-node": "^0.39.1",
+    "@wandb/sdk": "^0.5.1",
     "ai-jsx": "^0.5.1",
     "axios": "^1.4.0",
     "csv-stringify": "^6.4.0",
