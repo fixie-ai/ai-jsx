@@ -60,25 +60,49 @@ for (const [exportKey, exportValue] of Object.entries(packageJson.exports)) {
     }
   }
   const tsSourceFile = ts.createSourceFile(importObj.types, typeFileContents!, ts.ScriptTarget.Latest, true);
-  const exportedIdentifiers: string[] = [];
-  
-  const visit = (node: ts.Node) => {
-    if (ts.isExportDeclaration(node) && node.exportClause && ts.isNamedExports(node.exportClause)) {
-      node.exportClause.elements.forEach((element) => {
-        exportedIdentifiers.push(element.name.getText());
-      });
-    }
-    ts.forEachChild(node, visit);
-  };
-  
-  visit(tsSourceFile);
 
-  if (!exportedIdentifiers.length) {
+  const program = ts.createProgram({
+    rootNames: [importObj.types],
+    options: {
+      module: ts.ModuleKind.ESNext,
+    }
+  })
+  const checker = program.getTypeChecker();
+  // Get the SourceFile object for the target file
+  const sourceFile = program.getSourceFile(importObj.types);
+  if (!sourceFile) {
+    throw new Error(`Failed to find source file: ${importObj.types}`);
+  }
+
+  // Get the module symbol and its exports
+  const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
+  if (!moduleSymbol) {
+    throw new Error(`Failed to find module symbol for file: ${importObj.types}`);
+  }
+
+  const exports = checker.getExportsOfModule(moduleSymbol);
+
+  const namedExports: string[] = [];
+  let hasDefaultExport = false;
+
+  // Iterate over exports and detect named and default exports
+  for (const exp of exports) {
+    if (exp.escapedName === "default") {
+      hasDefaultExport = true;
+    } else {
+      namedExports.push(exp.escapedName as string);
+    }
+  }
+
+  const foundAnyExport = hasDefaultExport || namedExports.length;
+
+  if (!foundAnyExport) {
     throw new Error(`Could not find any exports for file ${importObj.types}`);
   }
 
-  const typeFileDestContents = `import { ${exportedIdentifiers.join(', ')} } from './${getPathToDest(importObj.types)}';
-  export { ${exportedIdentifiers.join(', ')} };
+  // export { ${namedExports.join(', ')} };
+
+  const typeFileDestContents = `export { ${namedExports.join(', ')} } from '${getPathToDest(importObj.types)}';
   `;
 
   await writeFile(`${filePath}.js`, `export * from '${getPathToDest(importObj.default)}'`);
