@@ -298,6 +298,7 @@
   "type": "module",
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json && node scripts/move-cjs-to-dist.js",
+    "prepack": "yarn build",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "test": "jest",
