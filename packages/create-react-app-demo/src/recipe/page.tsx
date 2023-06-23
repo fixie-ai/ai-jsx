@@ -73,10 +73,6 @@ export function RecipeInstructionListItem({ children }: { children: ReactNode })
   return <li data-test="recipe-instruction-list-item">{children}</li>;
 }
 
-export function Banner({ children }: { children: string }) {
-  return <img src={children} data-test="recipe-image" />;
-}
-
 export default function RecipeWrapper() {
   const [query, setQuery] = useState('braised lamb stew');
 
@@ -97,10 +93,18 @@ export default function RecipeWrapper() {
       </ResultContainer>
       <ResultContainer title={`AI comes up with a recipe for "${query}"`}>
         <AI.jsx>
+          <ImageGen size="256x256">
+            Generate an image for the following dish:
+            <ChatCompletion>
+              <UserMessage>
+                In two to three sentences, describe how the following recipe would look like when prepared by a chef:
+                {recipe}
+              </UserMessage>
+            </ChatCompletion>
+          </ImageGen>
           <UICompletion
             example={
               <Recipe>
-                <Banner>https://...</Banner>
                 <RecipeTitle>Crème Chantilly</RecipeTitle>
                 <RecipeIngredientList>
                   <RecipeIngredientListItem>2 cups heavy cream</RecipeIngredientListItem>
@@ -118,17 +122,6 @@ export default function RecipeWrapper() {
             }
           >
             {recipe}
-            {'\n'}
-            Banner URL:{' '}
-            <ImageGen size="256x256">
-              Generate an image for the following dish:
-              <ChatCompletion>
-                <UserMessage>
-                  In two to three sentences, describe how the following recipe would look like when prepared by a chef:
-                  {recipe}
-                </UserMessage>
-              </ChatCompletion>
-            </ImageGen>
           </UICompletion>
         </AI.jsx>
       </ResultContainer>
