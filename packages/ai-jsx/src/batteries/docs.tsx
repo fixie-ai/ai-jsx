@@ -620,7 +620,7 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.fixie_api_key}`,
+        Authorization: `Bearer ${this.fixie_api_key}`,
       },
       body: JSON.stringify({ query_string: query, chunk_limit: params?.limit }),
     });
