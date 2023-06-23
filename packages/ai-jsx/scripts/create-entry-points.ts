@@ -61,12 +61,17 @@ for (const [exportKey, exportValue] of Object.entries(packageJson.exports)) {
   }
   const tsSourceFile = ts.createSourceFile(importObj.types, typeFileContents!, ts.ScriptTarget.Latest, true);
   const exportedIdentifiers: string[] = [];
-  tsSourceFile.forEachChild((node) => {
-    console.log('node', node);
-    if (ts.isExportAssignment(node)) {
-      exportedIdentifiers.push(node.expression.getText());
+  
+  const visit = (node: ts.Node) => {
+    if (ts.isExportDeclaration(node) && node.exportClause && ts.isNamedExports(node.exportClause)) {
+      node.exportClause.elements.forEach((element) => {
+        exportedIdentifiers.push(element.name.getText());
+      });
     }
-  });
+    ts.forEachChild(node, visit);
+  };
+  
+  visit(tsSourceFile);
 
   if (!exportedIdentifiers.length) {
     throw new Error(`Could not find any exports for file ${importObj.types}`);
