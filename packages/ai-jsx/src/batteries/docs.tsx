@@ -600,6 +600,48 @@ export class LocalCorpus<
   }
 }
 
+/** A fully mananged {@link Corpus} served by Fixie. */
+export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implements Corpus<ChunkMetadata> {
+  private static readonly DEFAULT_FIXIE_API_URL = 'https://app.fixie.ai/api';
+
+  private readonly fixieApiUrl: string;
+
+  constructor(private readonly corpusId: string, private readonly fixieApiKey?: string) {
+    if (!fixieApiKey) {
+      this.fixieApiKey = getEnvVar('FIXIE_API_KEY', false);
+      if (!this.fixieApiKey) {
+        throw new Error(
+          'You must provide a Fixie API key to access Fixie corpora. Find yours at https://app.fixie.ai/profile.'
+        );
+      }
+    }
+    this.fixieApiUrl = getEnvVar('FIXIE_API_URL', false) ?? FixieCorpus.DEFAULT_FIXIE_API_URL;
+  }
+
+  async search(query: string, params?: { limit?: number }): Promise<ScoredChunk<ChunkMetadata>[]> {
+    const response = await fetch(`${this.fixieApiUrl}/corpora/${this.corpusId}:query`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.fixieApiKey}`,
+      },
+      body: JSON.stringify({ query_string: query, chunk_limit: params?.limit }),
+    });
+    if (response.status !== 200) {
+      throw new Error(`Fixie API returned status ${response.status}: ${await response.text()}`);
+    }
+    const apiResults = await response.json();
+    return apiResults.chunks.map((result: any) => ({
+      chunk: {
+        content: result.content,
+        metadata: result.metadata,
+        documentName: result.document_name,
+      },
+      score: result.score,
+    }));
+  }
+}
+
 /** A {@link Corpus} backed by a LangChain {@link VectorStore}. */
 export class LangchainCorpus<ChunkMetadata extends Jsonifiable & Record<string, any> = Record<string, any>>
   implements Corpus<ChunkMetadata>
