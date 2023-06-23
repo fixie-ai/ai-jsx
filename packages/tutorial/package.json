@@ -24,6 +24,7 @@
     "part2": "yarn build && node dist/part2.js",
     "part3": "yarn build && node dist/part3.js",
     "part4": "yarn build && node dist/part4.js",
+    "part6": "yarn build && node dist/part6.js",
     "view-logs": "cat ai-jsx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
@@ -33,6 +34,7 @@
   "dependencies": {
     "ai-jsx": "0.5.5",
     "axios": "^1.4.0",
+    "enquirer": "^2.3.6",
     "node-fetch": "^3.3.1",
     "pino": "^8.14.1",
     "pino-pretty": "^10.0.0",
