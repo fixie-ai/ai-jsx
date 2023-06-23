@@ -1,7 +1,6 @@
 import * as AI from 'ai-jsx';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { Route, NaturalLanguageRouter } from 'ai-jsx/batteries/natural-language-router';
-import { showInspector } from 'ai-jsx/core/inspector';
 import enquirer from 'enquirer';
 
 const { prompt } = enquirer;
