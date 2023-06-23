@@ -13,7 +13,7 @@ async function getQuestion(questionNumber: number, maxQuestions: number) {
     name: 'question',
     message: `[Question ${questionNumber + 1}/${maxQuestions}] Your question`,
   });
-  // @ts-ignore
+  // @ts-expect-error
   const { question } = response;
   return question;
 }
