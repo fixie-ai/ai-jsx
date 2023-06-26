@@ -298,6 +298,7 @@
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "test": "jest",
+    "unit": "yarn build && jest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "view-logs": "cat ai-jsx.log | pino-pretty"
   },
