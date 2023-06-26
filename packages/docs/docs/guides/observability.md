@@ -54,7 +54,7 @@ console.log(
 
 Now, when you run, you'll see something like this on the console:
 
-```json file="logfile.log"
+```json
 {
   "level": 20,
   "time": 1686758739756,
