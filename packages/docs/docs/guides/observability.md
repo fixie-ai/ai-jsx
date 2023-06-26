@@ -75,7 +75,7 @@ Now, when you run, you'll see something like this on the console:
 }
 ```
 
-To view this in a nicer way, pipe stdout a file and run `npx pino-pretty < logfile.log`:
+To view this in a nicer way, pipe the console output to `pino-pretty`: `node ./my-ai-jsx-program.tsx | npx pino-pretty`:
 
 ```
 [12:05:39.756] DEBUG (ai-jsx/57473): Calling createChatCompletion
