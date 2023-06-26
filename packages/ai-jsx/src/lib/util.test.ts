@@ -1,4 +1,3 @@
-import { expect, test } from '@jest/globals';
 import { getEnvVar } from './util';
 
 process.env.EXISTS = 'exists';

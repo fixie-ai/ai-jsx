@@ -4,7 +4,7 @@ module.exports = {
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/strict', 'nth'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: [path.join(__dirname, 'tsconfig.json'), path.join(__dirname, 'scripts', 'tsconfig.json')],
+    project: [path.join(__dirname, 'tsconfig.json'), path.join(__dirname, 'scripts', 'tsconfig.json'), path.join(__dirname, 'tsconfig-test.json')],
   },
   plugins: ['@typescript-eslint'],
   root: true,
@@ -52,4 +52,9 @@ module.exports = {
     '@typescript-eslint/no-base-to-string': 'error',
     '@typescript-eslint/no-unnecessary-condition': ['warn', { allowConstantLoopConditions: true }],
   },
+
+  overrides: [{
+    files: ['*.test.ts', '*.test.tsx'],
+    plugins: ['jest'],
+  }]
 };
