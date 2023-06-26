@@ -15,7 +15,6 @@
         "default": "./dist/esm/index.js"
       },
       "require": {
-        "types": "./dist/cjs/index.d.cts",
         "default": "./dist/cjs/index.cjs"
       }
     },
@@ -25,7 +24,6 @@
         "default": "./dist/esm/jsx-runtime.js"
       },
       "require": {
-        "types": "./dist/cjs/jsx-runtime.d.cts",
         "default": "./dist/cjs/jsx-runtime.cjs"
       }
     },
@@ -35,7 +33,6 @@
         "default": "./dist/esm/jsx-runtime.js"
       },
       "require": {
-        "types": "./dist/cjs/jsx-runtime.d.cts",
         "default": "./dist/cjs/jsx-runtime.cjs"
       }
     },
@@ -45,7 +42,6 @@
         "default": "./dist/esm/batteries/docs.js"
       },
       "require": {
-        "types": "./dist/cjs/batteries/docs.d.cts",
         "default": "./dist/cjs/batteries/docs.cjs"
       }
     },
@@ -55,7 +51,6 @@
         "default": "./dist/esm/batteries/natural-language-router.js"
       },
       "require": {
-        "types": "./dist/cjs/batteries/natural-language-router.d.cts",
         "default": "./dist/cjs/batteries/natural-language-router.cjs"
       }
     },
@@ -65,7 +60,6 @@
         "default": "./dist/esm/batteries/use-tools.js"
       },
       "require": {
-        "types": "./dist/cjs/batteries/use-tools.d.cts",
         "default": "./dist/cjs/batteries/use-tools.cjs"
       }
     },
@@ -75,7 +69,6 @@
         "default": "./dist/esm/batteries/logging-integrations.js"
       },
       "require": {
-        "types": "./dist/cjs/batteries/logging-integrations.d.cts",
         "default": "./dist/cjs/batteries/logging-integrations.cjs"
       }
     },
@@ -85,7 +78,6 @@
         "default": "./dist/esm/core/completion.js"
       },
       "require": {
-        "types": "./dist/cjs/core/completion.d.cts",
         "default": "./dist/cjs/core/completion.cjs"
       }
     },
@@ -95,8 +87,7 @@
         "default": "./dist/esm/core/image-gen.js"
       },
       "require": {
-        "types": "./dist/cjs/core/image-gend.cts",
-        "default": "./dist/cjs/core/image-gen.js"
+        "default": "./dist/cjs/core/image-gen.cjs"
       }
     },
     "./core/debug": {
@@ -105,7 +96,6 @@
         "default": "./dist/esm/core/debug.js"
       },
       "require": {
-        "types": "./dist/cjs/core/debug.d.cts",
         "default": "./dist/cjs/core/debug.cjs"
       }
     },
@@ -115,7 +105,6 @@
         "default": "./dist/esm/core/error-boundary.js"
       },
       "require": {
-        "types": "./dist/cjs/core/error-boundary.d.cts",
         "default": "./dist/cjs/core/error-boundary.cjs"
       }
     },
@@ -125,7 +114,6 @@
         "default": "./dist/esm/core/inline.js"
       },
       "require": {
-        "types": "./dist/cjs/core/inline.d.cts",
         "default": "./dist/cjs/core/inline.cjs"
       }
     },
@@ -135,7 +123,6 @@
         "default": "./dist/esm/core/log.js"
       },
       "require": {
-        "types": "./dist/cjs/core/log.d.cts",
         "default": "./dist/cjs/core/log.cjs"
       }
     },
@@ -145,7 +132,6 @@
         "default": "./dist/esm/core/memoize.js"
       },
       "require": {
-        "types": "./dist/cjs/core/memoize.d.cts",
         "default": "./dist/cjs/core/memoize.cjs"
       }
     },
@@ -155,7 +141,6 @@
         "default": "./dist/esm/inspector/console.js"
       },
       "require": {
-        "types": "./dist/cjs/inspector/console.d.cts",
         "default": "./dist/cjs/inspector/console.cjs"
       }
     },
@@ -165,7 +150,6 @@
         "default": "./dist/esm/core/errors.js"
       },
       "require": {
-        "types": "./dist/cjs/core/errors.d.cts",
         "default": "./dist/cjs/core/errors.cjs"
       }
     },
@@ -175,7 +159,6 @@
         "default": "./dist/esm/batteries/prompts.js"
       },
       "require": {
-        "types": "./dist/cjs/batteries/promptsd.cts",
         "default": "./dist/cjs/batteries/prompts.js"
       }
     },
@@ -185,7 +168,6 @@
         "default": "./dist/esm/batteries/constrained-output.js"
       },
       "require": {
-        "types": "./dist/cjs/batteries/constrained-outputd.cts",
         "default": "./dist/cjs/batteries/constrained-output.js"
       }
     },
@@ -195,7 +177,6 @@
         "default": "./dist/esm/lib/openai.js"
       },
       "require": {
-        "types": "./dist/cjs/lib/openai.d.cts",
         "default": "./dist/cjs/lib/openai.cjs"
       }
     },
@@ -205,7 +186,6 @@
         "default": "./dist/esm/react/index.js"
       },
       "require": {
-        "types": "./dist/cjs/react/index.d.cts",
         "default": "./dist/cjs/react/index.cjs"
       }
     },
@@ -215,7 +195,6 @@
         "default": "./dist/esm/react/jsx-runtime.js"
       },
       "require": {
-        "types": "./dist/cjs/react/jsx-runtime.d.cts",
         "default": "./dist/cjs/react/jsx-runtime.cjs"
       }
     },
@@ -225,7 +204,6 @@
         "default": "./dist/esm/react/jsx-runtime.js"
       },
       "require": {
-        "types": "./dist/cjs/react/jsx-runtime.d.cts",
         "default": "./dist/cjs/react/jsx-runtime.cjs"
       }
     },
@@ -235,7 +213,6 @@
         "default": "./dist/esm/react/completion.js"
       },
       "require": {
-        "types": "./dist/cjs/react/completion.d.cts",
         "default": "./dist/cjs/react/completion.cjs"
       }
     },
@@ -245,7 +222,6 @@
         "default": "./dist/esm/experimental/next/index.js"
       },
       "require": {
-        "types": "./dist/cjs/experimental/next/index.d.cts",
         "default": "./dist/cjs/experimental/next/index.cjs"
       }
     },
@@ -255,7 +231,6 @@
         "default": "./dist/esm/stream/index.js"
       },
       "require": {
-        "types": "./dist/cjs/stream/index.d.cts",
         "default": "./dist/cjs/stream/index.cjs"
       }
     }
