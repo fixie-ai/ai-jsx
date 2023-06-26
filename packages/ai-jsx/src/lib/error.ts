@@ -34,11 +34,11 @@ export class AIJSXError extends Error {
   }
 
   private formattedMessage() {
-    return `${_.dropRight(this.message, 1).join('')}${this.message.endsWith('.') ? '' : '.'}`;
+    return _.last(this.message) === '.' ? this.message : `${this.message}.`;
   }
 
   toString() {
-    return `AI.JSX(${this.code}): ${this.formattedMessage()}.
+    return `AI.JSX(${this.code}): ${this.formattedMessage()}
 
 ${this.messageOfErrorKind()}
     
