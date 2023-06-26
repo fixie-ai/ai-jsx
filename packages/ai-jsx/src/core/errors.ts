@@ -1,4 +1,4 @@
-import { AIJSXError } from "../lib/error.js";
+import { AIJSXError } from '../lib/error.js';
 
 /**
  * Represents an error that occurs while invoking an HTTP request to a Large Language Model.
