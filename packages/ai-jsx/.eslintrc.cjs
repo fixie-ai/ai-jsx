@@ -4,7 +4,7 @@ module.exports = {
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/strict', 'nth'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: [path.join(__dirname, 'tsconfig.json'), path.join(__dirname, 'scripts', 'tsconfig.json'), path.join(__dirname, 'tsconfig-test.json')],
+    project: [path.join(__dirname, 'tsconfig.json'), path.join(__dirname, 'scripts', 'tsconfig.json'), path.join(__dirname, 'test', 'tsconfig.json')],
   },
   plugins: ['@typescript-eslint'],
   root: true,
