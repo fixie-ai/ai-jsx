@@ -60,4 +60,4 @@ $ yarn workspace create-react-app-demo start
 ## Next Steps
 
 Now that you have some basic examples working, learn more about AI.JSX development
-by following the [tutorial](./tutorial/part1).
+by following the [tutorial](./tutorial/part1-completion.md).

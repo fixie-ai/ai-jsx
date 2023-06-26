@@ -1,4 +1,3 @@
-import { describe, expect, test } from '@jest/globals';
 import { Embeddings } from 'langchain/embeddings/base';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
 import {
@@ -57,14 +56,13 @@ describe('corpus loading and search', () => {
     { name: 'doc5.txt', pageContent: ['Hello world5!'] },
   ];
   const loader = staticLoader(docs, 2);
-  const chunker = (doc: Document) => {
-    return Promise.resolve(
+  const chunker = (doc: Document) =>
+    Promise.resolve(
       doc.pageContent
         .map((content) => content.split(' '))
         .flat()
         .map((text) => ({ content: text, documentName: doc.name }))
     );
-  };
   const embedding = {
     embed: (text: string) => {
       switch (text) {
@@ -83,9 +81,7 @@ describe('corpus loading and search', () => {
       }
       throw new Error(`Unexpected text chunk: ${text}`);
     },
-    embedBatch: async (texts: Array<string>) => {
-      return Promise.all(texts.map((text) => embedding.embed(text)));
-    },
+    embedBatch: (texts: string[]) => Promise.all(texts.map((text) => embedding.embed(text))),
   };
 
   test('LocalCorpus', async () => {
@@ -108,10 +104,10 @@ describe('corpus loading and search', () => {
 
   test('LangChainCorpus', async () => {
     class FakeEmbeddings extends Embeddings {
-      async embedQuery(text: string): Promise<number[]> {
+      embedQuery(text: string): Promise<number[]> {
         return embedding.embed(text);
       }
-      async embedDocuments(texts: string[]): Promise<number[][]> {
+      embedDocuments(texts: string[]): Promise<number[][]> {
         return embedding.embedBatch(texts);
       }
     }
