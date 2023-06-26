@@ -6,6 +6,7 @@
   },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.1",
+    "@types/asciichart": "^1.5.6",
     "@types/lodash": "^4.14.195",
     "@types/node": "^20.3.1",
     "@types/prompt-sync": "^4.2.0",
@@ -25,6 +26,7 @@
     "part3": "yarn build && node dist/part3.js",
     "part4": "yarn build && node dist/part4.js",
     "part6": "yarn build && node dist/part6.js",
+    "part7": "yarn build && node dist/tools.js",
     "view-logs": "cat ai-jsx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
@@ -33,12 +35,15 @@
   },
   "dependencies": {
     "ai-jsx": "0.5.5",
+    "asciichart": "^1.5.25",
     "axios": "^1.4.0",
     "enquirer": "^2.3.6",
     "node-fetch": "^3.3.1",
     "pino": "^8.14.1",
     "pino-pretty": "^10.0.0",
     "prompt-sync": "^4.2.0",
-    "turndown": "^7.1.2"
+    "turndown": "^7.1.2",
+    "yahoo-finance2": "^2.4.1",
+    "zod": "^3.21.4"
   }
 }

@@ -6034,6 +6034,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/asciichart@npm:^1.5.6":
+  version: 1.5.6
+  resolution: "@types/asciichart@npm:1.5.6"
+  checksum: bcb95d68a758eb7d1b09f9ce52b96ebf030931661ef5ba06fc2a80d33a4a8352264594426237e96f8988ff41da6745749aab3e902ad7103b2b01cf40dccd86e9
+  languageName: node
+  linkType: hard
+
 "@types/aws-lambda@npm:8.10.81":
   version: 8.10.81
   resolution: "@types/aws-lambda@npm:8.10.81"
@@ -6825,6 +6832,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/tough-cookie@npm:^4.0.2":
+  version: 4.0.2
+  resolution: "@types/tough-cookie@npm:4.0.2"
+  checksum: e055556ffdaa39ad85ede0af192c93f93f986f4bd9e9426efdc2948e3e2632db3a4a584d4937dbf6d7620527419bc99e6182d3daf2b08685e710f2eda5291905
+  languageName: node
+  linkType: hard
+
 "@types/trusted-types@npm:^2.0.2":
   version: 2.0.3
   resolution: "@types/trusted-types@npm:2.0.3"
@@ -7453,7 +7467,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ajv-formats@npm:^2.1.1":
+"ajv-formats@npm:2.1.1, ajv-formats@npm:^2.1.1":
   version: 2.1.1
   resolution: "ajv-formats@npm:2.1.1"
   dependencies:
@@ -7484,6 +7498,18 @@ __metadata:
   peerDependencies:
     ajv: ^8.8.2
   checksum: c35193940b853119242c6757787f09ecf89a2c19bcd36d03ed1a615e710d19d450cb448bfda407b939aba54b002368c8bff30529cc50a0536a8e10bcce300421
+  languageName: node
+  linkType: hard
+
+"ajv@npm:8.10.0":
+  version: 8.10.0
+  resolution: "ajv@npm:8.10.0"
+  dependencies:
+    fast-deep-equal: ^3.1.1
+    json-schema-traverse: ^1.0.0
+    require-from-string: ^2.0.2
+    uri-js: ^4.2.2
+  checksum: 3594728ef1e31219ef97bfacb203d0d72db8ad5c35d6d0578e38ee453e4537c2bf927dad144bb84b0c893f661d71b58337d4643e8ee2f2a6e1d63b041c92fe82
   languageName: node
   linkType: hard
 
@@ -7841,6 +7867,13 @@ __metadata:
   version: 2.0.6
   resolution: "asap@npm:2.0.6"
   checksum: b296c92c4b969e973260e47523207cd5769abd27c245a68c26dc7a0fe8053c55bb04360237cb51cab1df52be939da77150ace99ad331fb7fb13b3423ed73ff3d
+  languageName: node
+  linkType: hard
+
+"asciichart@npm:^1.5.25":
+  version: 1.5.25
+  resolution: "asciichart@npm:1.5.25"
+  checksum: 71da36e632e6376c321003bf3811e44b7136129d7f4ba097570ed6ad0a528857e1d359d639838b476aea81f13b19c9243a9ea3c247794490a9968ff559a78917
   languageName: node
   linkType: hard
 
@@ -17190,7 +17223,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-fetch@npm:^2.6.11, node-fetch@npm:^2.6.7":
+"node-fetch@npm:^2.6.1, node-fetch@npm:^2.6.11, node-fetch@npm:^2.6.7":
   version: 2.6.11
   resolution: "node-fetch@npm:2.6.11"
   dependencies:
@@ -22013,7 +22046,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tough-cookie@npm:^4.0.0":
+"tough-cookie@npm:^4.0.0, tough-cookie@npm:^4.1.2":
   version: 4.1.3
   resolution: "tough-cookie@npm:4.1.3"
   dependencies:
@@ -22343,6 +22376,7 @@ __metadata:
   resolution: "tutorial@workspace:packages/tutorial"
   dependencies:
     "@tsconfig/node18": ^2.0.1
+    "@types/asciichart": ^1.5.6
     "@types/lodash": ^4.14.195
     "@types/node": ^20.3.1
     "@types/prompt-sync": ^4.2.0
@@ -22351,6 +22385,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.60.0
     "@typescript-eslint/parser": ^5.60.0
     ai-jsx: 0.5.5
+    asciichart: ^1.5.25
     axios: ^1.4.0
     enquirer: ^2.3.6
     eslint: ^8.40.0
@@ -22361,6 +22396,8 @@ __metadata:
     prompt-sync: ^4.2.0
     turndown: ^7.1.2
     typescript: ^5.1.3
+    yahoo-finance2: ^2.4.1
+    zod: ^3.21.4
   languageName: unknown
   linkType: soft
 
@@ -23862,6 +23899,21 @@ __metadata:
   version: 5.0.8
   resolution: "y18n@npm:5.0.8"
   checksum: 54f0fb95621ee60898a38c572c515659e51cc9d9f787fb109cef6fde4befbe1c4602dc999d30110feee37456ad0f1660fa2edcfde6a9a740f86a290999550d30
+  languageName: node
+  linkType: hard
+
+"yahoo-finance2@npm:^2.4.1":
+  version: 2.4.1
+  resolution: "yahoo-finance2@npm:2.4.1"
+  dependencies:
+    "@types/tough-cookie": ^4.0.2
+    ajv: 8.10.0
+    ajv-formats: 2.1.1
+    node-fetch: ^2.6.1
+    tough-cookie: ^4.1.2
+  bin:
+    yahoo-finance: bin/yahoo-finance.js
+  checksum: b6309824845195295ae3a0cffef842c4f2d4e87cf5184ad8c26116d84ae166d81fbe81bfe0dab74d91e84d6cad4ae1f8fd76b0991e3a498888a291e5ecda570f
   languageName: node
   linkType: hard
 

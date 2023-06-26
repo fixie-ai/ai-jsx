@@ -135,10 +135,10 @@ export interface UseToolsProps {
  *
  * @example
  * ```tsx
- *  async function turnLightsOn() {}
- *  async function turnLightsOff() {}
+ *  async function turnLightsOn() { ... Code to turn lights on ... }
+ *  async function turnLightsOff() { ... Code to turn lights off ... }
  *  // Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".
- *  async function activeScene(sceneName: string) {}
+ *  async function activeScene(sceneName: string) { ... Code to activate a scene ... }
  *
  *  import z from 'zod';
  *  const tools: Record<string, Tool> = {
@@ -154,14 +154,16 @@ export interface UseToolsProps {
  *    },
  *    activeScene: {
  *      description: `Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".`,
- *      parameters: z.tuple([z.string()]),
+ *      parameters: z.string(),
  *      func: activeScene,
  *    },
  *  };
  *
- * <UseTools tools={tools} fallback="Politely explain you aren't able to help with that request.">
- *    You control a home automation system. The user has requested you take some action in their home: "{userRequest}". Take
- *    an action, then generate a response telling the user what you're doing.
+ * <UseTools
+ *    tools={tools}
+ *    fallback="Politely explain you aren't able to help with that request."
+ *    query={ "You control a home automation system. The user has requested you take some
+ *       action in their home: " + userRequest }
  * </UseTools>;
  * ```
  *
