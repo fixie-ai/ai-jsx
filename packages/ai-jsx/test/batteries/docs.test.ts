@@ -8,7 +8,7 @@ import {
   RawLoader,
   staticLoader,
   toLoader,
-} from '../dist/cjs/batteries/docs.cjs';
+} from '../../dist/cjs/batteries/docs.cjs';
 
 test('defaultParser handles simple text', async () => {
   const rawDoc = {
