@@ -11,7 +11,7 @@ using the LLM.
 
 Here's an example of how this will look in your app:
 
-```tsx filename="packages/tutorial/src/part4.tsx"
+```tsx filename="packages/tutorial/src/docsqa.tsx"
 <DocsQA question="When did the storm occur?" corpus={corpus} chunkLimit={5} chunkFormatter={GetChunk} />
 ```
 
@@ -49,7 +49,7 @@ The first step is to create a corpus that you want the LLM to answer questions a
 In this example, we'll create a corpus that consists of a single
 Wikipedia article, one about [Hurricane Katrina](https://en.wikipedia.org/wiki/Hurricane_Katrina).
 
-```tsx filename="packages/tutorial/src/part4.tsx"
+```tsx filename="packages/tutorial/src/docsqa.tsx"
 // Fetch the HTML for the Wikipedia article.
 const URL = 'https://en.wikipedia.org/wiki/Hurricane_Katrina';
 const html = await fetch(URL).then((response) => response.text());
@@ -81,7 +81,7 @@ can take a while, but for this demo we `await` the result.
 
 Once we have a corpus, we use the `<DocsQA>` component to query it:
 
-```tsx filename="packages/tutorial/src/part4.tsx"
+```tsx filename="packages/tutorial/src/docsqa.tsx"
 function GetChunk({ chunk }: { chunk: ScoredChunk }) {
   return chunk.chunk.content;
 }
