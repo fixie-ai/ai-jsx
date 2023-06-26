@@ -245,4 +245,44 @@ function MyTracer(props: { children: AI.Node }, { wrapRender }: AI.ComponentCont
 
 This technique uses the [context affordance](./rules-of-jsx.md#context).
 
-<!-- TODO: move `WeightsAndBiasesTracer and OpenTelemetryTracer into batteries and document them here. -->
+### Weights & Biases Tracer Integration
+
+[W&B Prompts](https://docs.wandb.ai/guides/prompts/quickstart) provides a visual trace table that can be very useful
+for debugging.
+You can use W&B Prompts by wrapping your top-level component in a
+[`<WeightsAndBiasesTracer>`](../api/modules/batteries_logging_integrations#weightsandbiasestracer)
+as follows:
+
+```tsx
+import { wandb } from '@wandb/sdk';
+
+await wandb.init();
+
+console.log(
+  await AI.createRenderContext().render(
+    <WeightsAndBiasesTracer log={wandb.log}>
+      <App />
+    </WeightsAndBiasesTracer>
+  )
+);
+
+await wandb.finish();
+```
+
+There are multiple things happening, so let's break them down:
+
+1. Make sure to call `wandb.init()` and `wandb.finish()` before and after rendering the tracer;
+1. The whole `<App />` is wrapped with a `<WeightsAndBiasesTracer>` to which we pass the `wandb.log` function;
+1. By using `await`, we make sure that `wandb.init` is run first, and then the app render finishes before calling `wandb.finish`.
+
+**Note:** Be sure to set `WANDB_API_KEY`: as an env variable for Node.js apps and via `sessionStorage.getItem("WANDB_API_KEY")` for browser apps. See https://docs.wandb.ai/ref/js/ for more info.
+
+An example is also available at [`packages/examples/src/wandb.tsx`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/wandb.tsx), which you can run via:
+
+```bash
+yarn workspace examples demo:wandb
+```
+
+![W&B Trace Timeline](wandb-tracer.png)
+
+<!-- TODO: move `OpenTelemetryTracer` into batteries and document them here. -->

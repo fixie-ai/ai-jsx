@@ -54,3 +54,13 @@ Follow these steps to make a new demo.
 
    yarn workspace examples run demo:your-demo
    ```
+
+## Publishing
+
+To publish:
+
+1. Make sure the `version` field in `packages/ai-jsx/package.json` has been incremented in accordance with [semver](https://semver.org/).
+1. `cd packages/ai-jsx`
+1. `npm publish`
+
+This will create a bunch of temp files in your current working directory. To remove them, run `git clean -fd`.

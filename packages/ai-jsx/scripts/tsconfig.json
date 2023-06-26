@@ -1,0 +1,10 @@
+{
+  "extends": "@tsconfig/node18",
+  "include": ["**/*.ts"],
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "module": "ESNext"
+  }
+}

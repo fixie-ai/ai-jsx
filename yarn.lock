@@ -3835,7 +3835,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nick.heiner/wandb-fork@npm:0.5.2-5":
+"@nick.heiner/wandb-fork@npm:^0.5.2-5":
   version: 0.5.2-5
   resolution: "@nick.heiner/wandb-fork@npm:0.5.2-5"
   dependencies:
@@ -6887,7 +6887,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/eslint-plugin@npm:^5.5.0, @typescript-eslint/eslint-plugin@npm:^5.59.11, @typescript-eslint/eslint-plugin@npm:^5.59.6, @typescript-eslint/eslint-plugin@npm:^5.59.9":
+"@typescript-eslint/eslint-plugin@npm:^5.5.0, @typescript-eslint/eslint-plugin@npm:^5.59.11, @typescript-eslint/eslint-plugin@npm:^5.59.9, @typescript-eslint/eslint-plugin@npm:^5.60.0":
   version: 5.60.0
   resolution: "@typescript-eslint/eslint-plugin@npm:5.60.0"
   dependencies:
@@ -6922,7 +6922,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript-eslint/parser@npm:^5.42.0, @typescript-eslint/parser@npm:^5.5.0, @typescript-eslint/parser@npm:^5.59.11, @typescript-eslint/parser@npm:^5.59.6, @typescript-eslint/parser@npm:^5.59.9":
+"@typescript-eslint/parser@npm:^5.42.0, @typescript-eslint/parser@npm:^5.5.0, @typescript-eslint/parser@npm:^5.59.11, @typescript-eslint/parser@npm:^5.59.9, @typescript-eslint/parser@npm:^5.60.0":
   version: 5.60.0
   resolution: "@typescript-eslint/parser@npm:5.60.0"
   dependencies:
@@ -7016,6 +7016,22 @@ __metadata:
     "@typescript-eslint/types": 5.60.0
     eslint-visitor-keys: ^3.3.0
   checksum: d39b2485d030f9755820d0f6f3748a8ec44e1ca23cb36ddcba67a9eb1f258c8ec83c61fc015c50e8f4a00d05df62d719dbda445625e3e71a64a659f1d248157e
+  languageName: node
+  linkType: hard
+
+"@wandb/sdk@npm:^0.5.1":
+  version: 0.5.1
+  resolution: "@wandb/sdk@npm:0.5.1"
+  dependencies:
+    cross-fetch: ^3.1.5
+    graphql-request: ^5.2.0
+  peerDependencies:
+    graphql: 14 - 16
+    langchain: ">=0.0.75"
+  peerDependenciesMeta:
+    langchain:
+      optional: true
+  checksum: ca7f4a2c7ea7473e893d7a812157573ab7de00a37ac3b646c922560de19b20f511cacafe469a3596eaa4a1fb2b7ea7283aaff4b93648a7c5214e061aaf19a58a
   languageName: node
   linkType: hard
 
@@ -7337,7 +7353,7 @@ __metadata:
   dependencies:
     "@tsconfig/node18": ^2.0.1
     "@types/node": ^20.3.1
-    ai-jsx: ^0.5.1
+    ai-jsx: 0.5.5
     pino: ^8.14.1
     pino-pretty: ^10.0.0
     tsx: ^3.12.7
@@ -7360,12 +7376,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"ai-jsx@^0.5.1, ai-jsx@workspace:packages/ai-jsx":
+"ai-jsx@0.5.5, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
     "@jest/globals": ^29.5.0
     "@nick.heiner/openai-edge": 1.0.1-7
+    "@nick.heiner/wandb-fork": ^0.5.2-5
     "@tsconfig/node16": ^1.0.4
     "@tsconfig/node18": ^2.0.1
     "@types/eslint": ^8
@@ -7375,8 +7392,8 @@ __metadata:
     "@types/node": ^20.2.1
     "@types/react": ^18.2.7
     "@types/uuid": ^9
-    "@typescript-eslint/eslint-plugin": ^5.59.6
-    "@typescript-eslint/parser": ^5.59.6
+    "@typescript-eslint/eslint-plugin": ^5.60.0
+    "@typescript-eslint/parser": ^5.60.0
     axios: ^1.4.0
     cheerio: ^1.0.0-rc.12
     cli-highlight: ^2.1.11
@@ -7390,6 +7407,7 @@ __metadata:
     jest: ^29.5.0
     js-yaml: ^4.1.0
     langchain: ^0.0.81
+    load-json-file: ^7.0.1
     lodash: ^4.17.21
     ml-distance: ^4.0.1
     node-fetch: ^3.3.1
@@ -7400,7 +7418,6 @@ __metadata:
     server-only: ^0.0.1
     ts-jest: ^29.1.0
     ts-node: ^10.9.1
-    tsx: ^3.12.7
     type-fest: ^3.10.0
     typescript: ^5.1.3
     uuid: ^9.0.0
@@ -9412,7 +9429,7 @@ __metadata:
     "@types/react-dom": ^18.2.5
     "@typescript-eslint/eslint-plugin": ^5.59.11
     "@typescript-eslint/parser": ^5.59.11
-    ai-jsx: ^0.5.1
+    ai-jsx: 0.5.5
     babel-jest: ^27.4.2
     babel-loader: ^8.2.3
     babel-plugin-named-asset-import: ^0.3.8
@@ -11860,7 +11877,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "examples@workspace:packages/examples"
   dependencies:
-    "@nick.heiner/wandb-fork": 0.5.2-5
     "@opentelemetry/api": ^1.4.1
     "@opentelemetry/auto-instrumentations-node": ^0.37.0
     "@opentelemetry/context-async-hooks": ^1.14.0
@@ -11872,9 +11888,10 @@ __metadata:
     "@types/node": ^20.3.1
     "@types/prompt-sync": ^4.2.0
     "@types/uuid": ^9.0.2
-    "@typescript-eslint/eslint-plugin": ^5.59.6
-    "@typescript-eslint/parser": ^5.59.6
-    ai-jsx: ^0.5.1
+    "@typescript-eslint/eslint-plugin": ^5.60.0
+    "@typescript-eslint/parser": ^5.60.0
+    "@wandb/sdk": ^0.5.1
+    ai-jsx: 0.5.5
     axios: ^1.4.0
     csv-stringify: ^6.4.0
     eslint: ^8.40.0
@@ -17085,7 +17102,7 @@ __metadata:
     "@types/react-dom": 18.2.4
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
-    ai-jsx: ^0.5.1
+    ai-jsx: 0.5.5
     autoprefixer: 10.4.14
     classnames: ^2.3.2
     eslint: 8.42.0
@@ -17115,7 +17132,7 @@ __metadata:
     "@types/react-dom": 18.2.4
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
-    ai-jsx: ^0.5.1
+    ai-jsx: 0.5.5
     autoprefixer: 10.4.14
     classnames: ^2.3.2
     eslint: 8.42.0
@@ -22294,7 +22311,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
     ai: ^2.1.3
-    ai-jsx: ^0.5.1
+    ai-jsx: 0.5.5
     eslint: 8.43.0
     eslint-config-next: 13.4.6
     eslint-config-nth: ^2.0.1
@@ -22315,9 +22332,9 @@ __metadata:
     "@types/prompt-sync": ^4.2.0
     "@types/turndown": ^5.0.1
     "@types/uuid": ^9.0.2
-    "@typescript-eslint/eslint-plugin": ^5.59.6
-    "@typescript-eslint/parser": ^5.59.6
-    ai-jsx: ^0.5.1
+    "@typescript-eslint/eslint-plugin": ^5.60.0
+    "@typescript-eslint/parser": ^5.60.0
+    ai-jsx: 0.5.5
     axios: ^1.4.0
     eslint: ^8.40.0
     eslint-config-nth: ^2.0.1
