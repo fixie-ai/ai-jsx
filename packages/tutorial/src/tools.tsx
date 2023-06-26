@@ -44,21 +44,19 @@ function StockAgent(props: { query: string }) {
     <UseTools
       tools={tools}
       fallback="Politely explain that you cannot help."
-      query={'You are an agent that can answer questions about stocks.' + props.query}
+      query={`You are an agent that can answer questions about stocks. ${props.query}`}
     />
   );
 }
 
 const renderContext = AI.createRenderContext();
 
-while (true) {
-  const response = await prompt({
-    type: 'input',
-    name: 'query',
-    message: 'Ask me a question about a stock (Ctrl-C to quit): ',
-  });
-  // @ts-expect-error
-  const { query } = response;
-  const answer = await renderContext.render(<StockAgent query={query} />);
-  console.log(answer);
-}
+const response = await prompt({
+  type: 'input',
+  name: 'query',
+  message: 'Ask me a question about a stock: ',
+});
+// @ts-expect-error
+const { query } = response;
+const answer = await renderContext.render(<StockAgent query={query} />);
+console.log(answer);
