@@ -2,7 +2,7 @@ import * as ReactModule from 'react';
 import * as AI from './core.js';
 import { asJsxBoundary } from './jsx-boundary.js';
 import { fromStreamResponse } from '../stream/index.js';
-import { AIJSXError } from '../lib/error.js';
+import { AIJSXError } from '../core/errors.js';
 export * from './core.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {

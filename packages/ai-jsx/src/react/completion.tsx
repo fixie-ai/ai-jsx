@@ -4,7 +4,7 @@ import React from 'react';
 import { SystemMessage, UserMessage } from '../core/completion.js';
 import { JsonChatCompletion } from '../batteries/constrained-output.js';
 import { isJsxBoundary } from './jsx-boundary.js';
-import { AIJSXError } from '../lib/error.js';
+import { AIJSXError } from '../core/errors.js';
 
 function reactComponentName(component: React.JSXElementConstructor<any> | string) {
   return typeof component === 'string' ? component : component.name;

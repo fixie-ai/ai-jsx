@@ -1,4 +1,4 @@
-import { AIJSXError } from './error.js';
+import { AIJSXError } from '../core/errors.js';
 
 /** @hidden */
 export function getEnvVar(name: string, shouldThrow: boolean = true) {

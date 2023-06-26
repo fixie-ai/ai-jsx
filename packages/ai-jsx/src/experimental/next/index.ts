@@ -3,7 +3,7 @@ import 'server-only';
 import { LogImplementation } from '../../core/log.js';
 import * as AI from '../../react/core.js';
 import { asJsxBoundary } from '../../react/jsx-boundary.js';
-import { AIJSXError } from '../../lib/error.js';
+import { AIJSXError } from '../../core/errors.js';
 export * from '../../react/core.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {

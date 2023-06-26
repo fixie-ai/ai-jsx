@@ -8,7 +8,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { BoundLogger, NoOpLogImplementation, LogImplementation, Logger, PinoLogger } from './log.js';
-import { AIJSXError } from '../lib/error.js';
+import { AIJSXError } from '../core/errors.js';
 
 /** A context that is used to render an AI.JSX component. */
 export interface ComponentContext extends RenderContext {

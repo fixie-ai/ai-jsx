@@ -14,7 +14,7 @@ import { Jsonifiable } from 'type-fest';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
 import { Node } from '../index.js';
 import { getEnvVar } from '../lib/util.js';
-import { AIJSXError } from '../lib/error.js';
+import { AIJSXError } from '../core/errors.js';
 
 /**
  * A raw document loaded from an arbitrary source that has not yet been parsed.

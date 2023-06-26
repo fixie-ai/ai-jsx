@@ -33,10 +33,9 @@ import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import { Merge } from 'type-fest';
 import { Logger } from '../core/log.js';
-import { HttpError } from '../core/errors.js';
+import { HttpError, AIJSXError } from '../core/errors.js';
 import _ from 'lodash';
 import { getEnvVar } from './util.js';
-import { AIJSXError } from './error.js';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =

@@ -5,7 +5,7 @@
 
 import * as AI from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
-import { AIJSXError } from '../lib/error.js';
+import { AIJSXError } from '../core/errors.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
 

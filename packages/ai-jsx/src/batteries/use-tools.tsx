@@ -8,7 +8,7 @@ import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.j
 import { Node, RenderContext } from '../index.js';
 import z, { ZodTypeAny } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { AIJSXError } from '../lib/error.js';
+import { AIJSXError } from '../core/errors.js';
 
 const toolChoiceSchema = z.object({
   nameOfTool: z.string(),

@@ -7,7 +7,7 @@
 import * as AI from '../index.js';
 import { ChatCompletion, SystemMessage, AssistantMessage, UserMessage } from '../core/completion.js';
 import yaml from 'js-yaml';
-import { AIJSXError } from '../lib/error.js';
+import { AIJSXError } from '../core/errors.js';
 
 interface ValidationResult {
   success: boolean;
