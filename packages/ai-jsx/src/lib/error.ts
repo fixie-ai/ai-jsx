@@ -1,3 +1,5 @@
+import { Jsonifiable } from 'type-fest';
+
 export type ErrorKind =
   /** An error that is expected to occur, like a network failure. */
   | 'runtime'
@@ -10,14 +12,19 @@ export type ErrorKind =
  * A generic error thrown by AI.JSX. It could be a user error, runtime error, or internal error.
  */
 export class AIJSXError extends Error {
-  constructor(message: string, public readonly code: number, public readonly kind: ErrorKind) {
+  constructor(
+    message: string,
+    public readonly code: number,
+    public readonly kind: ErrorKind,
+    public readonly metadata: Jsonifiable = {}
+  ) {
     super(message);
   }
 
   private messageOfErrorKind() {
     switch (this.kind) {
       case 'runtime':
-        return "This is a runtime error that's expected to occur with some frequency. It may go away on retry.";
+        return "This is a runtime error that's expected to occur with some frequency. It may go away on retry. It may be made more likely by errors in your code, or in AI.JSX.";
       case 'user':
         return 'This may be due to a mistake in your code.';
       case 'internal':

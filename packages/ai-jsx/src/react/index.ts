@@ -2,13 +2,14 @@ import * as ReactModule from 'react';
 import * as AI from './core.js';
 import { asJsxBoundary } from './jsx-boundary.js';
 import { fromStreamResponse } from '../stream/index.js';
+import { AIJSXError } from '../lib/error.js';
 export * from './core.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
   if (AI.isElement(partiallyRendered)) {
     // This should be an AI.React element.
     if (partiallyRendered.tag !== AI.React) {
-      throw new Error('unwrapReact only expects to see AI.React elements or strings.');
+      throw new AIJSXError('unwrapReact only expects to see AI.React elements or strings.', 1018, 'internal');
     }
 
     return partiallyRendered.props.children;
@@ -149,10 +150,14 @@ export function useAIStream(options: UseAIStreamOpts = {}): UseAIStreamResult {
       fetch(...fetchArguments)
         .then(async (response) => {
           if (!response.ok) {
-            throw new Error((await response.text()) || `fetch failed with status ${response.status}`);
+            throw new AIJSXError(
+              (await response.text()) || `fetch failed with status ${response.status}`,
+              1019,
+              'runtime'
+            );
           }
           if (!response.body) {
-            throw new Error('The response body is empty.');
+            throw new AIJSXError('The response body is empty.', 1020, 'runtime');
           }
 
           setCurrentStream(fromStreamResponse(response.body) as ReadableStream<ReactModule.ReactNode>);

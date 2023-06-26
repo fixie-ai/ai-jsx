@@ -3,13 +3,14 @@ import 'server-only';
 import { LogImplementation } from '../../core/log.js';
 import * as AI from '../../react/core.js';
 import { asJsxBoundary } from '../../react/jsx-boundary.js';
+import { AIJSXError } from '../../lib/error.js';
 export * from '../../react/core.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
   if (AI.isElement(partiallyRendered)) {
     // This should be an AI.React element.
     if (partiallyRendered.tag !== AI.React) {
-      throw new Error('AI.jsx internal error: unwrapReact only expects to see AI.React elements or strings.');
+      throw new AIJSXError('unwrapReact only expects to see AI.React elements or strings.', 1013, 'internal');
     }
 
     return partiallyRendered.props.children;

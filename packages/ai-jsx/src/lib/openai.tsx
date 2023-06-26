@@ -36,6 +36,7 @@ import { Logger } from '../core/log.js';
 import { HttpError } from '../core/errors.js';
 import _ from 'lodash';
 import { getEnvVar } from './util.js';
+import { AIJSXError } from './error.js';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -151,8 +152,10 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
     Object.entries(tokens).map(([token, bias]) => {
       const encoded = tokenizer.encode(token) as { bpe: number[]; text: string[] };
       if (encoded.bpe.length > 1) {
-        throw new Error(
-          `You can only set logit_bias for a single token, but "${bias}" is ${encoded.bpe.length} tokens.`
+        throw new AIJSXError(
+          `You can only set logit_bias for a single token, but "${bias}" is ${encoded.bpe.length} tokens.`,
+          1014,
+          'user'
         );
       }
       return [encoded.bpe[0], bias];
@@ -309,8 +312,10 @@ export async function* OpenAIChatModel(
             content: await render(message.props.children),
           };
         default:
-          throw new Error(
-            `ChatCompletion's prompts must be SystemMessage, UserMessage, or AssistantMessage, but this child was ${message.tag.name}`
+          throw new AIJSXError(
+            `ChatCompletion's prompts must be SystemMessage, UserMessage, or AssistantMessage, but this child was ${message.tag.name}`,
+            1015,
+            'user'
           );
       }
     })
@@ -435,7 +440,7 @@ export async function DalleImageGen(
       sizeEnum = CreateImageRequestSizeEnum._1024x1024;
       break;
     default:
-      throw new Error(`Invalid size ${size}. Dalle only supports 256x256, 512x512, and 1024x1024`);
+      throw new AIJSXError(`Invalid size ${size}. Dalle only supports 256x256, 512x512, and 1024x1024`, 1016, 'user');
   }
 
   const imageRequest = {
