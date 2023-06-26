@@ -293,7 +293,7 @@
   "type": "module",
   "scripts": {
     "create-entry-points": "git clean -fd && rm -rf scripts/dist && tsc -p scripts && yarn build && node scripts/dist/create-entry-points.js",
-    "build": "rm -rf dist && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json && node scripts/move-cjs-to-dist.js",
+    "build": "rm -rf dist && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json && node scripts/move-cjs-to-dist.js && tsc -p test/tsconfig.json",
     "prepack": "yarn create-entry-points",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",

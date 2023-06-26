@@ -1,7 +1,8 @@
 {
-  "extends": "./tsconfig-base.json",
-  "include": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+  "extends": "../tsconfig-base.json",
+  "include": ["*.ts", "*.tsx", "**/*.ts", "**/*.tsx"],
   "compilerOptions": {
-    "types": ["jest"]
-  }
+    "types": ["jest", "node"],
+    "noEmit": true
+  },
 }

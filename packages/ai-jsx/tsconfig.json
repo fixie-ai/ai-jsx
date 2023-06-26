@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig-base.json",
-  "include": ["src/**/*", ".eslintrc.cjs", "test/docs.test.ts", "test/util.test.ts"],
-  "exclude": ["src/**/*.test.ts"],
+  "include": ["src/**/*", ".eslintrc.cjs"],
   "compilerOptions": {
     "outDir": "dist/esm"
   },

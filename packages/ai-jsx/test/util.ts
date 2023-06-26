@@ -1,4 +1,4 @@
-import { getEnvVar } from '../src/lib/util';
+import { getEnvVar } from '../src/lib/util.js';
 
 process.env.EXISTS = 'exists';
 process.env.REACT_APP_ONLY = 'react-value';
