@@ -313,13 +313,21 @@ export async function* OpenAIChatModel(
           };
         default:
           throw new AIJSXError(
-            `ChatCompletion's prompts must be SystemMessage, UserMessage, or AssistantMessage, but this child was ${message.tag.name}`,
+            `ChatCompletion's prompts must be SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse but this child was ${message.tag.name}`,
             1015,
             'user'
           );
       }
     })
   );
+
+  if (!messages.length) {
+    throw new AIJSXError(
+      "ChatCompletion must have at least child that's a SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse, but no such children were found.",
+      1021,
+      'user'
+    );
+  }
 
   const openaiFunctions: ChatCompletionFunctions[] | undefined = props.functionDefinitions?.map(
     (functionDefinition) => ({

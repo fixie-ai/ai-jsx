@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { Jsonifiable } from 'type-fest';
 
 export type ErrorKind =
@@ -32,8 +33,12 @@ export class AIJSXError extends Error {
     }
   }
 
+  private formattedMessage() {
+    return `${_.dropRight(this.message, 1).join('')}${this.message.endsWith('.') ? '' : '.'}`;
+  }
+
   toString() {
-    return `AI.JSX(${this.code}): ${this.message}.
+    return `AI.JSX(${this.code}): ${this.formattedMessage()}.
 
 ${this.messageOfErrorKind()}
     
