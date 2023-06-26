@@ -420,9 +420,9 @@ export interface CorpusStats {
   loadingError?: Error;
 }
 
-class CorpusNotReadyError extends Error {
+class CorpusNotReadyError extends AIJSXError {
   constructor(state: CorpusLoadingState) {
-    super(`Corpus is not ready. It's in state ${state}. Call load() to load documents.`);
+    super(`Corpus is not ready. It's in state ${state}. Call load() to load documents.`, 1022, 'user', {state});
   }
 }
 

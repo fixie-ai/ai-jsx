@@ -171,7 +171,7 @@ type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
 export class OpenAIError<M extends OpenAIMethod> extends HttpError {
   readonly errorResponse: Record<string, any> | null;
 
-  constructor(response: Response, method: M, responseText: string) {
+  constructor(response: Response, method: M, responseText: string, errorCode: number) {
     let errorResponse = null as Record<string, any> | null;
     let responseSuffix = '';
     try {
@@ -188,6 +188,7 @@ export class OpenAIError<M extends OpenAIMethod> extends HttpError {
     super(
       `OpenAI ${method} request failed with status code ${response.status}${responseSuffix}\n\nFor more information, see https://platform.openai.com/docs/guides/error-codes/api-errors`,
       response.status,
+      errorCode,
       responseText,
       Object.fromEntries(response.headers.entries())
     );
@@ -210,7 +211,7 @@ async function* asyncIteratorOfFetchStream(reader: ReturnType<NonNullable<Respon
 
 async function checkOpenAIResponse<M extends OpenAIMethod>(response: Response, logger: Logger, method: M) {
   if (response.status < 200 || response.status >= 300 || !response.body) {
-    throw new OpenAIError(response, method, await response.text());
+    throw new OpenAIError(response, method, await response.text(), 1023);
   } else {
     logger.debug({ statusCode: response.status, headers: response.headers }, `${method} succeeded`);
   }
@@ -463,7 +464,7 @@ export async function DalleImageGen(
   const response = await openai.createImage(imageRequest);
 
   if (response.status < 200 || response.status >= 300) {
-    throw new OpenAIError(response, 'createImage', await response.text());
+    throw new OpenAIError(response, 'createImage', await response.text(), 1024);
   } else {
     logger.debug({ statusCode: response.status, headers: response.headers }, 'createImage succeeded');
   }
