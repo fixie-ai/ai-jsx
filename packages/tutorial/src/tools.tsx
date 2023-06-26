@@ -55,11 +55,10 @@ while (true) {
   const response = await prompt({
     type: 'input',
     name: 'query',
-    message: "Ask me a question about a stock (Ctrl-C to quit): ",
+    message: 'Ask me a question about a stock (Ctrl-C to quit): ',
   });
   // @ts-expect-error
   const { query } = response;
   const answer = await renderContext.render(<StockAgent query={query} />);
   console.log(answer);
 }
-
