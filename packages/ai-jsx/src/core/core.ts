@@ -365,7 +365,7 @@ async function* renderStream(
     throw new AIJSXError(
       `Unexpected renderable type: ${JSON.stringify(renderable)}`,
       ErrorCode.UnrenderableType,
-      'internal'
+      'ambiguous'
     );
   }
   // N.B. Because RenderResults are both AsyncIterable _and_ PromiseLikes, this means that an async component that returns the result
@@ -430,7 +430,7 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
               throw new AIJSXError(
                 "The RenderResult's generator must be fully exhausted before you can await the final result.",
                 ErrorCode.GeneratorMustBeExhausted,
-                'internal'
+                'ambiguous'
               );
             }
 
@@ -454,13 +454,13 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
             throw new AIJSXError(
               "The RenderResult's generator was already returned and cannot be returned again.",
               ErrorCode.GeneratorCannotBeUsedTwice,
-              'internal'
+              'ambiguous'
             );
           } else if (promiseResult !== null) {
             throw new AIJSXError(
               'The RenderResult was already awaited and can no longer be used as an iterable.',
               ErrorCode.GeneratorCannotBeUsedAsIterableAfterAwaiting,
-              'internal'
+              'ambiguous'
             );
           }
 
