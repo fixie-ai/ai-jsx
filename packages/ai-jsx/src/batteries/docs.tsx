@@ -14,7 +14,7 @@ import { Jsonifiable } from 'type-fest';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
 import { Node } from '../index.js';
 import { getEnvVar } from '../lib/util.js';
-import { AIJSXError } from '../core/errors.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 
 /**
  * A raw document loaded from an arbitrary source that has not yet been parsed.
@@ -71,7 +71,7 @@ function defaultParser<DocumentMetadata extends Jsonifiable = Jsonifiable>(
     return Promise.resolve({ pageContent: [content], name: raw.name });
     // TODO: Add support for other mime types.
   }
-  throw new AIJSXError(`Unsupported mime type: ${raw.mimeType}`, 1001, 'user', _.pick(raw, ['mimeType']));
+  throw new AIJSXError(`Unsupported mime type: ${raw.mimeType}`, ErrorCode.UnsupportedMimeType, 'user', _.pick(raw, ['mimeType']));
 }
 
 /** A non-overlapping subdivision of a corpus' documents used for loading. */
@@ -422,7 +422,7 @@ export interface CorpusStats {
 
 class CorpusNotReadyError extends AIJSXError {
   constructor(state: CorpusLoadingState) {
-    super(`Corpus is not ready. It's in state ${state}. Call load() to load documents.`, 1022, 'user', { state });
+    super(`Corpus is not ready. It's in state ${state}. Call load() to load documents.`, ErrorCode.CorpusNotReady, 'user', { state });
   }
 }
 
@@ -613,7 +613,7 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
       if (!this.fixieApiKey) {
         throw new AIJSXError(
           'You must provide a Fixie API key to access Fixie corpora. Find yours at https://app.fixie.ai/profile.',
-          1002,
+          ErrorCode.MissingFixieAPIKey,
           'user'
         );
       }
@@ -631,7 +631,7 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
       body: JSON.stringify({ query_string: query, chunk_limit: params?.limit }),
     });
     if (response.status !== 200) {
-      throw new AIJSXError(`Fixie API returned status ${response.status}: ${await response.text()}`, 1003, 'runtime');
+      throw new AIJSXError(`Fixie API returned status ${response.status}: ${await response.text()}`, ErrorCode.FixieStatusNotOk, 'runtime');
     }
     const apiResults = await response.json();
     return apiResults.chunks.map((result: any) => ({

@@ -4,7 +4,7 @@ import React from 'react';
 import { SystemMessage, UserMessage } from '../core/completion.js';
 import { JsonChatCompletion } from '../batteries/constrained-output.js';
 import { isJsxBoundary } from './jsx-boundary.js';
-import { AIJSXError } from '../core/errors.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 
 function reactComponentName(component: React.JSXElementConstructor<any> | string) {
   return typeof component === 'string' ? component : component.name;
@@ -88,7 +88,7 @@ export async function UICompletion(
     if (!('children' in serializedComponent)) {
       throw new AIJSXError(
         `JSON produced by the model did not fit the required schema: ${JSON.stringify(serializedComponent)}`,
-        1017,
+        ErrorCode.ModelOutputDidNotMatchUIShape,
         'runtime'
       );
     }

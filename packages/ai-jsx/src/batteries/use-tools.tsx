@@ -8,7 +8,7 @@ import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.j
 import { Node, RenderContext } from '../index.js';
 import z, { ZodTypeAny } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { AIJSXError } from '../core/errors.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 
 const toolChoiceSchema = z.object({
   nameOfTool: z.string(),
@@ -57,7 +57,7 @@ async function InvokeTool(
   } catch (e: any) {
     const error = new AIJSXError(
       `Failed to parse LLM output into a tool choice: ${e.message}. Output: ${toolChoiceLLMOutput}`,
-      1004,
+      ErrorCode.ModelOutputCouldNotBeParsedForTool,
       'runtime',
       { toolChoiceLLMOutput }
     );
@@ -66,7 +66,7 @@ async function InvokeTool(
   if (!(toolChoiceResult.nameOfTool in props.tools)) {
     throw new AIJSXError(
       `LLM hallucinated a tool that does not exist: ${toolChoiceResult.nameOfTool}.`,
-      1005,
+      ErrorCode.ModelHallucinatedTool,
       'runtime',
       { toolChoiceResult }
     );

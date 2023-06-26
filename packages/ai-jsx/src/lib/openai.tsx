@@ -33,7 +33,7 @@ import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import { Merge } from 'type-fest';
 import { Logger } from '../core/log.js';
-import { HttpError, AIJSXError } from '../core/errors.js';
+import { HttpError, AIJSXError, ErrorCode } from '../core/errors.js';
 import _ from 'lodash';
 import { getEnvVar } from './util.js';
 
@@ -153,7 +153,7 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
       if (encoded.bpe.length > 1) {
         throw new AIJSXError(
           `You can only set logit_bias for a single token, but "${bias}" is ${encoded.bpe.length} tokens.`,
-          1014,
+          ErrorCode.LogitBiasBadInput,
           'user'
         );
       }
@@ -314,8 +314,8 @@ export async function* OpenAIChatModel(
         default:
           throw new AIJSXError(
             `ChatCompletion's prompts must be SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse but this child was ${message.tag.name}`,
-            1015,
-            'user'
+            ErrorCode.ChatCompletionUnexpectedChild,
+            'internal'
           );
       }
     })
@@ -324,7 +324,7 @@ export async function* OpenAIChatModel(
   if (!messages.length) {
     throw new AIJSXError(
       "ChatCompletion must have at least child that's a SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse, but no such children were found.",
-      1021,
+      ErrorCode.ChatCompletionMissingChildren,
       'user'
     );
   }
@@ -448,7 +448,7 @@ export async function DalleImageGen(
       sizeEnum = CreateImageRequestSizeEnum._1024x1024;
       break;
     default:
-      throw new AIJSXError(`Invalid size ${size}. Dalle only supports 256x256, 512x512, and 1024x1024`, 1016, 'user');
+      throw new AIJSXError(`Invalid size ${size}. Dalle only supports 256x256, 512x512, and 1024x1024`, ErrorCode.ImageBadDimensions, 'user');
   }
 
   const imageRequest = {

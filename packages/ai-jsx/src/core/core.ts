@@ -8,7 +8,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { BoundLogger, NoOpLogImplementation, LogImplementation, Logger, PinoLogger } from './log.js';
-import { AIJSXError } from '../core/errors.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 
 /** A context that is used to render an AI.JSX component. */
 export interface ComponentContext extends RenderContext {
@@ -362,7 +362,7 @@ async function* renderStream(
   }
 
   if (!('then' in renderable)) {
-    throw new AIJSXError(`Unexpected renderable type: ${JSON.stringify(renderable)}`, 1007, 'internal');
+    throw new AIJSXError(`Unexpected renderable type: ${JSON.stringify(renderable)}`, ErrorCode.UnrenderableType, 'internal');
   }
   // N.B. Because RenderResults are both AsyncIterable _and_ PromiseLikes, this means that an async component that returns the result
   // of a render call will not stream; it will effectively be `await`ed by default.
@@ -425,7 +425,7 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
             if (hasReturnedGenerator) {
               throw new AIJSXError(
                 "The RenderResult's generator must be fully exhausted before you can await the final result.",
-                1008,
+                ErrorCode.GeneratorMustBeExhausted,
                 'internal'
               );
             }
@@ -449,13 +449,13 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
           if (hasReturnedGenerator) {
             throw new AIJSXError(
               "The RenderResult's generator was already returned and cannot be returned again.",
-              1009,
+              ErrorCode.GeneratorCannotBeUsedTwice,
               'internal'
             );
           } else if (promiseResult !== null) {
             throw new AIJSXError(
               'The RenderResult was already awaited and can no longer be used as an iterable.',
-              1010,
+              ErrorCode.GeneratorCannotBeUsedAsIterableAfterAwaiting,
               'internal'
             );
           }

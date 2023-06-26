@@ -5,7 +5,7 @@
 
 import * as AI from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
-import { AIJSXError } from '../core/errors.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
 
@@ -71,7 +71,7 @@ function AutomaticCompletionModel({ children, ...props }: ModelPropsWithChildren
 1. Set the OPENAI_API_KEY or REACT_APP_OPENAI_API_KEY environment variable.
 2. Set the OPENAI_API_BASE or REACT_APP_OPENAI_API_BASE environment variable.
 3. use an explicit CompletionProvider component.`,
-    1006,
+    ErrorCode.MissingCompletionModel,
     'user'
   );
 }
@@ -95,7 +95,7 @@ function AutomaticChatModel({ children, ...props }: ModelPropsWithChildren) {
 1. Set the OPENAI_API_KEY or REACT_APP_OPENAI_API_KEY environment variable.
 2. Set the OPENAI_API_BASE or REACT_APP_OPENAI_API_BASE environment variable.
 3. use an explicit ChatProvider component.`,
-    1007,
+    ErrorCode.MissingChatModel,
     'user'
   );
 }

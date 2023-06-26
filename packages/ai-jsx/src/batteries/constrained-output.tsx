@@ -7,7 +7,7 @@
 import * as AI from '../index.js';
 import { ChatCompletion, SystemMessage, AssistantMessage, UserMessage } from '../core/completion.js';
 import yaml from 'js-yaml';
-import { AIJSXError } from '../core/errors.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 
 interface ValidationResult {
   success: boolean;
@@ -144,7 +144,7 @@ async function ObjectFormatChatCompletion(
 
   throw new AIJSXError(
     `The model did not produce a valid ${typeName} object, even after ${retries} attempts.`,
-    1011,
+    ErrorCode.ModelOutputDidNotMatchConstraint,
     'runtime',
     {
       typeName,
