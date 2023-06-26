@@ -9,10 +9,10 @@ export enum ErrorCode {
   GeneratorMustBeExhausted = 1004,
   GeneratorCannotBeUsedTwice = 1005,
   GeneratorCannotBeUsedAsIterableAfterAwaiting = 1006,
-  UnexpectedRenderType = 1007, 
-  LogitBiasBadInput = 1008, 
-  ChatCompletionMissingChildren = 1009, 
-  ChatCompletionUnexpectedChild = 1010, 
+  UnexpectedRenderType = 1007,
+  LogitBiasBadInput = 1008,
+  ChatCompletionMissingChildren = 1009,
+  ChatCompletionUnexpectedChild = 1010,
   ImageBadDimensions = 1011,
   ModelOutputDidNotMatchUIShape = 1012,
   AIJSXEndpointFailed = 1013,
@@ -81,7 +81,6 @@ Need help?
   }
 }
 
-
 /**
  * Represents an error that occurs while invoking an HTTP request to a Large Language Model.
  */
@@ -96,4 +95,3 @@ export class HttpError extends AIJSXError {
     super(message || `HTTP request failed with status code ${statusCode}`, errorCode, 'runtime');
   }
 }
-

@@ -448,7 +448,11 @@ export async function DalleImageGen(
       sizeEnum = CreateImageRequestSizeEnum._1024x1024;
       break;
     default:
-      throw new AIJSXError(`Invalid size ${size}. Dalle only supports 256x256, 512x512, and 1024x1024`, ErrorCode.ImageBadDimensions, 'user');
+      throw new AIJSXError(
+        `Invalid size ${size}. Dalle only supports 256x256, 512x512, and 1024x1024`,
+        ErrorCode.ImageBadDimensions,
+        'user'
+      );
   }
 
   const imageRequest = {

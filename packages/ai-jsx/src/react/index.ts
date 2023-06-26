@@ -9,7 +9,11 @@ function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.React
   if (AI.isElement(partiallyRendered)) {
     // This should be an AI.React element.
     if (partiallyRendered.tag !== AI.React) {
-      throw new AIJSXError('unwrapReact only expects to see AI.React elements or strings.', ErrorCode.UnexpectedRenderType, 'internal');
+      throw new AIJSXError(
+        'unwrapReact only expects to see AI.React elements or strings.',
+        ErrorCode.UnexpectedRenderType,
+        'internal'
+      );
     }
 
     return partiallyRendered.props.children;

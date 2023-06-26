@@ -362,7 +362,11 @@ async function* renderStream(
   }
 
   if (!('then' in renderable)) {
-    throw new AIJSXError(`Unexpected renderable type: ${JSON.stringify(renderable)}`, ErrorCode.UnrenderableType, 'internal');
+    throw new AIJSXError(
+      `Unexpected renderable type: ${JSON.stringify(renderable)}`,
+      ErrorCode.UnrenderableType,
+      'internal'
+    );
   }
   // N.B. Because RenderResults are both AsyncIterable _and_ PromiseLikes, this means that an async component that returns the result
   // of a render call will not stream; it will effectively be `await`ed by default.
