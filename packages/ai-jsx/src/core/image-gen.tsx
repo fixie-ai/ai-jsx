@@ -3,7 +3,9 @@
  * @packageDocumentation
  */
 
+import * as ReactModule from 'react';
 import * as AI from '../index.js';
+import * as AIR from '../react/core.js';
 import { Node, Component, RenderContext } from '../index.js';
 import { DalleImageGen } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
@@ -68,7 +70,7 @@ export function ImageGenProvider<T extends ImageGenPropsWithChildren>(
 /**
  * This component can be used to perform an [image generation](https://platform.openai.com/docs/guides/images/introduction).
  *
- * @returns URL(s) to the generated image, wrapped in {@link Image} component(s).
+ * @returns URL(s) to the generated image(s).
  *
  * @example
  * ```tsx
@@ -77,10 +79,7 @@ export function ImageGenProvider<T extends ImageGenPropsWithChildren>(
  *    </ImageGen>
  * ```
  */
-export function ImageGen(
-  { children, ...props }: ImageGenPropsWithChildren & Record<string, unknown>,
-  { getContext }: RenderContext
-) {
+export function ImageGen({ children, ...props }: ImageGenPropsWithChildren, { getContext }: RenderContext) {
   const [ImageGenComponent, defaultProps] = getContext(imageGenContext);
   return (
     <ImageGenComponent {...defaultProps} {...props}>
@@ -90,30 +89,36 @@ export function ImageGen(
 }
 
 /**
- * This component describes an image to be shown.
- * It is a wrapper for the output of {@link ImageGen} to allow for first-class support of images.
+ * A wrapper around {@link ImageGen} that renders the generated image(s) as an HTML "img" tag.
+ * To be used only in the browser, not the CLI.
  *
- * The rendering of this component depends on the environment:
- * - In terminal-based environments, this component will be rendered as a URL.
- * - In browser-based environments, this component will be rendered as an `img` tag.
+ * @returns HTML "img" tag(s) with the generated image(s).
  */
-export function Image({
-  /** The URL of the image. */
-  src,
-  /** The width of the image. */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  width = undefined,
-  /** The height of the image. */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  height = undefined,
-  /** Alternative text when image is not loaded. This is currently not used. */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  alt = undefined,
-}: {
-  src: string;
-  width?: number;
-  height?: number;
-  alt?: string;
-}) {
-  return src;
+export async function ImageGenHTML(
+  {
+    children,
+    width = undefined,
+    height = undefined,
+    alt = undefined,
+    ...props
+  }: ImageGenPropsWithChildren & {
+    /** Width for the HTML image tag. */ width?: string;
+    /** Height for the HTML image tag. */ height?: string;
+    /** Alternative text for the HTML image tag.  */ alt?: string;
+  },
+  { render }: RenderContext
+) {
+  const urls = await render(<ImageGen {...props}>{children}</ImageGen>);
+  return (
+    <AIR.React>
+      {urls.split('\n').map((url) =>
+        ReactModule.createElement('img', {
+          src: url,
+          alt: alt ?? 'Generated image',
+          width: width ?? (props.size ? props.size.split('x')[0] : undefined),
+          height: height ?? (props.size ? props.size.split('x')[1] : undefined),
+        })
+      )}
+    </AIR.React>
+  );
 }

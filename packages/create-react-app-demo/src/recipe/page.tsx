@@ -5,7 +5,7 @@ import { useState, ReactNode } from 'react';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 import { memo } from 'ai-jsx/core/memoize';
 import { Prompt } from 'ai-jsx/batteries/prompts';
-import { ImageGen } from 'ai-jsx/core/image-gen';
+import { ImageGenHTML } from 'ai-jsx/core/image-gen';
 import ResultContainer from '../ResultContainer.tsx';
 import InputPrompt from '../InputPrompt.tsx';
 import { atom, useAtom } from 'jotai';
@@ -93,15 +93,14 @@ export default function RecipeWrapper() {
       </ResultContainer>
       <ResultContainer title={`AI comes up with a recipe for "${query}"`}>
         <AI.jsx>
-          <ImageGen size="256x256">
-            Generate an image for the following dish:
+          <ImageGenHTML size="256x256">
             <ChatCompletion>
               <UserMessage>
                 In two to three sentences, describe how the following recipe would look like when prepared by a chef:
                 {recipe}
               </UserMessage>
             </ChatCompletion>
-          </ImageGen>
+          </ImageGenHTML>
           <UICompletion
             example={
               <Recipe>

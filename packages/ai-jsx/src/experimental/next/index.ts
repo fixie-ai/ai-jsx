@@ -2,20 +2,12 @@ import * as ReactModule from 'react';
 import 'server-only';
 import { LogImplementation } from '../../core/log.js';
 import * as AI from '../../react/core.js';
-import { Image as AIImage } from '../../core/image-gen.js';
 import { asJsxBoundary } from '../../react/jsx-boundary.js';
 export * from '../../react/core.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
   if (AI.isElement(partiallyRendered)) {
-    // This should be either an AI.React element or an Image.
-    if (partiallyRendered.tag === AIImage) {
-      return ReactModule.createElement('img', {
-        src: partiallyRendered.props.src,
-        width: partiallyRendered.props.width,
-        height: partiallyRendered.props.height,
-      });
-    }
+    // This should be an AI.React element.
     if (partiallyRendered.tag !== AI.React) {
       throw new Error('AI.jsx internal error: unwrapReact only expects to see AI.React elements or strings.');
     }
@@ -74,7 +66,7 @@ export const jsx = asJsxBoundary(function jsx(
   }
 
   const renderResult = AI.createRenderContext(props ?? {}).render(children, {
-    stop: (e) => e.tag === AI.React || e.tag === AIImage,
+    stop: (e) => e.tag === AI.React,
     map: (frame) => frame.map(unwrapReact),
   });
   const asyncIterator = renderResult[Symbol.asyncIterator]();
