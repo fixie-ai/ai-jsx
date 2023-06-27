@@ -4,7 +4,7 @@ import React, { Suspense } from 'react';
 import { UICompletion } from 'ai-jsx/react/completion';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 import { memo } from 'ai-jsx/core/memoize';
-import { ImageGenHTML } from 'ai-jsx/core/image-gen';
+import { ImageGen } from 'ai-jsx/core/image-gen';
 import { Prompt } from 'ai-jsx/batteries/prompts';
 import ResultContainer from '@/components/ResultContainer';
 import InputPrompt from '@/components/InputPrompt';
@@ -85,7 +85,7 @@ export default function RecipeWrapper({ searchParams }: { searchParams: any }) {
       <ResultContainer title={`AI comes up with a recipe for "${query}"`}>
         <Suspense fallback={'Loading...'}>
           <AI.jsx>
-            <ImageGenHTML size="256x256">
+            <ImageGen size="256x256">
               Generate an image for the following dish:
               <ChatCompletion>
                 <UserMessage>
@@ -93,7 +93,7 @@ export default function RecipeWrapper({ searchParams }: { searchParams: any }) {
                   {recipe}
                 </UserMessage>
               </ChatCompletion>
-            </ImageGenHTML>
+            </ImageGen>
             <UICompletion
               example={
                 <Recipe>

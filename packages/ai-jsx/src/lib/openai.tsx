@@ -15,7 +15,7 @@ import {
   FunctionCall,
   FunctionResponse,
 } from '../core/completion.js';
-import { ImageGenPropsWithChildren } from '../core/image-gen.js';
+import { Image, ImageGenPropsWithChildren } from '../core/image-gen.js';
 // openai-edge hasn't updated its types to support the new function types yet,
 // so we'll import the types from openai until it does.
 import { ChatCompletionFunctions, ChatCompletionResponseMessage, ChatCompletionRequestMessage } from 'openai';
@@ -457,6 +457,5 @@ export async function DalleImageGen(
 
   // return all image URLs as a newline-separated string
   const responseJson = (await response.json()) as ResponseTypes['createImage'];
-  const urls = _.map(responseJson.data, 'url');
-  return urls.join('\n');
+  return responseJson.data.flatMap((image) => (image.url ? [<Image url={image.url} />] : []));
 }

@@ -4,15 +4,23 @@ import { LogImplementation } from '../../core/log.js';
 import * as AI from '../../react/core.js';
 import { asJsxBoundary } from '../../react/jsx-boundary.js';
 export * from '../../react/core.js';
+import { Image } from '../../core/image-gen.js';
+import _ from 'lodash';
+
+const specialReactElements = [
+  { tag: AI.React, unwrap: (element: AI.Element<any>) => element.props.children },
+  { tag: Image, unwrap: (element: AI.Element<any>) => ReactModule.createElement('img', element.props) },
+];
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
   if (AI.isElement(partiallyRendered)) {
-    // This should be an AI.React element.
-    if (partiallyRendered.tag !== AI.React) {
-      throw new Error('AI.jsx internal error: unwrapReact only expects to see AI.React elements or strings.');
+    for (const { tag, unwrap } of specialReactElements) {
+      if (partiallyRendered.tag === tag) {
+        return unwrap(partiallyRendered);
+      }
     }
-
-    return partiallyRendered.props.children;
+    const expectedElements = _.map(specialReactElements, 'tag').join(', ');
+    throw new Error(`AI.jsx internal error: unwrapReact only expects to see ${expectedElements} or strings.`);
   }
 
   return partiallyRendered;
@@ -66,7 +74,7 @@ export const jsx = asJsxBoundary(function jsx(
   }
 
   const renderResult = AI.createRenderContext(props ?? {}).render(children, {
-    stop: (e) => e.tag === AI.React,
+    stop: (e) => specialReactElements.some((special) => special.tag === e.tag),
     map: (frame) => frame.map(unwrapReact),
   });
   const asyncIterator = renderResult[Symbol.asyncIterator]();

@@ -89,36 +89,13 @@ export function ImageGen({ children, ...props }: ImageGenPropsWithChildren, { ge
 }
 
 /**
- * A wrapper around {@link ImageGen} that renders the generated image(s) as an HTML "img" tag.
- * To be used only in the browser, not the CLI.
+ * This component represents an image via a single `url` prop.
+ * It is a wrapper for the output of {@link ImageGen} to allow for first-class support of images.
  *
- * @returns HTML "img" tag(s) with the generated image(s).
+ * The rendering of this component depends on the environment:
+ * - In terminal-based environments, this component will be rendered as a URL.
+ * - In browser-based environments, this component will be rendered as an `img` tag.
  */
-export async function ImageGenHTML(
-  {
-    children,
-    width = undefined,
-    height = undefined,
-    alt = undefined,
-    ...props
-  }: ImageGenPropsWithChildren & {
-    /** Width for the HTML image tag. */ width?: string;
-    /** Height for the HTML image tag. */ height?: string;
-    /** Alternative text for the HTML image tag.  */ alt?: string;
-  },
-  { render }: RenderContext
-) {
-  const urls = await render(<ImageGen {...props}>{children}</ImageGen>);
-  return (
-    <AIR.React>
-      {urls.split('\n').map((url) =>
-        ReactModule.createElement('img', {
-          src: url,
-          alt: alt ?? 'Generated image',
-          width: width ?? (props.size ? props.size.split('x')[0] : undefined),
-          height: height ?? (props.size ? props.size.split('x')[1] : undefined),
-        })
-      )}
-    </AIR.React>
-  );
+export function Image({ url }: { url: string }) {
+  return url;
 }
