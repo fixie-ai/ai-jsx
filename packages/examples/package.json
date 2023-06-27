@@ -19,6 +19,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "demo:append-only": "yarn build && node dist/append-only.js",
     "demo:debate": "yarn build && node dist/debate.js",
     "demo:errors": "yarn build && node dist/errors.js",
     "demo:logger": "yarn build && node dist/logger.js",
