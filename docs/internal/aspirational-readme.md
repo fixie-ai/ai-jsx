@@ -876,23 +876,29 @@ async function turnLightsOff() {}
 /**
  * Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".
  */
-async function activateScene(sceneName: string) {}
+async function activateScene({ sceneName }: { sceneName: string }) {}
 
 import z from 'zod';
 const tools: Record<string, Tool> = {
   turnLightsOn: {
     description: "Turn the lights on in the user's home",
-    parameters: z.tuple([]),
+    parameters: {},
     func: turnLightsOn,
   },
   turnLightsOff: {
     description: "Turn the lights off in the user's home",
-    parameters: z.tuple([]),
+    parameters: {},
     func: turnLightsOff,
   },
   activateScene: {
     description: `Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".`,
-    parameters: z.tuple([z.string()]),
+    parameters: {
+      sceneName: {
+        description: 'The scene to activate the lighting in.',
+        type: 'string',
+        required: true,
+      },
+    },
     func: activateScene,
   },
 };
@@ -910,7 +916,7 @@ interface Tool {
   /**
    * A function implementing the tool.
    */
-  func: (...args: any[]) => any;
+  func: (args: Record<string, any>) => any;
 }
 
 // Provide the tools to the agent
