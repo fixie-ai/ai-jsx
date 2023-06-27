@@ -9,19 +9,23 @@ import { Jsonifiable } from 'type-fest';
 import { ComponentMap } from './map.js';
 export * from './core.js';
 
-const specialReactElements = [
-  { tag: AI.React, unwrap: (element: AI.Element<any>) => element.props.children },
-  { tag: Image, unwrap: (element: AI.Element<any>) => ReactModule.createElement('img', element.props) },
+/**
+ * The {@link jsx} component will render its children until it gets to boundary elements.
+ * This object defines how the boundary elements are handled.
+ */
+const boundaryElements = [
+  { tag: AI.React, unwrap: (e: AI.Element<any>) => e.props.children },
+  { tag: Image, unwrap: (e: AI.Element<any>) => ReactModule.createElement('img', { src: e.props.url }) },
 ];
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
   if (AI.isElement(partiallyRendered)) {
-    for (const { tag, unwrap } of specialReactElements) {
+    for (const { tag, unwrap } of boundaryElements) {
       if (partiallyRendered.tag === tag) {
         return unwrap(partiallyRendered);
       }
     }
-    const expectedElements = _.map(specialReactElements, 'tag').join(' or ');
+    const expectedElements = _.map(boundaryElements, 'tag').join(' or ');
     throw new AIJSXError(
       `unwrapReact only expects to see ${expectedElements} elements or strings.`,
       ErrorCode.UnexpectedRenderType,
@@ -49,7 +53,7 @@ export function useAI(children: AI.Node, onStreamStart?: () => void, onStreamEnd
 
       // TODO: add a way for a render context to be aborted
       const renderResult = AI.createRenderContext().render(children, {
-        stop: (e) => specialReactElements.some((special) => special.tag === e.tag),
+        stop: (e) => boundaryElements.some((special) => special.tag === e.tag),
         map: (frame) => frame.map(unwrapReact),
       });
       for await (const reactFrame of renderResult) {
