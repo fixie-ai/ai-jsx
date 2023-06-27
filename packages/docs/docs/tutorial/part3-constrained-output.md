@@ -17,7 +17,7 @@ JSON or YAML.
 Let's start with a component called `<CharacterGenerator>` that will generate a list of
 fields
 
-```tsx filename="packages/tutorial/src/part3.tsx"
+```tsx filename="packages/tutorial/src/constrained-output.tsx"
 function CharacterGenerator() {
   return (
     <>
@@ -51,7 +51,7 @@ where each field is generated in parallel by a component called `<CharacterField
 
 ## Generating one field of the character sheet
 
-```tsx filename="packages/tutorial/src/part3.tsx"
+```tsx filename="packages/tutorial/src/constrained-output.tsx"
 function CharacterField(props: { fieldName: string }) {
   return (
     <>
@@ -79,7 +79,7 @@ field in the character sheet.
 Now, we're going to use two new components -- [`<JsonChatCompletion>`](../api/modules/batteries_constrained_output#jsonchatcompletion) and [`<YamlChatCompletion>`](../api/modules/batteries_constrained_output#yamlchatcompletion) --
 to take the plain-text output of `<CharacterGenerator>` and format it as JSON and YAML.
 
-```tsx filename="packages/tutorial/src/part3.tsx"
+```tsx filename="packages/tutorial/src/constrained-output.tsx"
 const app = (
   <Inline>
     <CharacterGenerator />

@@ -1,5 +1,4 @@
-import { expect, test } from '@jest/globals';
-import { getEnvVar } from './util';
+import { getEnvVar } from '../../dist/cjs/lib/util.cjs';
 
 process.env.EXISTS = 'exists';
 process.env.REACT_APP_ONLY = 'react-value';

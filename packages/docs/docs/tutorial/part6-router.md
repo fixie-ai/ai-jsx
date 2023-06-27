@@ -15,7 +15,7 @@ The [`<NaturalLanguageRouter>`](/api/modules/batteries_natural_language_router#n
 component allows you to route to different components based on the LLM's interpretation of
 a given query string. Here's a simple example:
 
-```tsx filename="packages/tutorial/src/part6.tsx"
+```tsx filename="packages/tutorial/src/router.tsx"
 function QuestionFilter(props: { children: AI.Node; question: string }) {
   return (
     <NaturalLanguageRouter query={props.question}>
@@ -50,7 +50,7 @@ a simple guessing game, in which the AI thinks of an unusual animal, and the use
 up to 20 yes/no questions to determine what it is. You can run this example with:
 
 ```
-$ yarn workspace tutorial run tutorial-part6
+$ yarn workspace tutorial run router
 ```
 
 from the top of the `ai-jsx` tree.
@@ -59,7 +59,7 @@ from the top of the `ai-jsx` tree.
 
 First, let's use the LLM to come up with the name of an unusual animal:
 
-```tsx filename="packages/tutorial/src/part6.tsx"
+```tsx filename="packages/tutorial/src/router.tsx"
 function ThinkOfAnAnimal() {
   return (
     <ChatCompletion temperature={1.5}>
@@ -83,7 +83,7 @@ This is just using the `<ChatCompletion>` component as we have seen previously.
 Since this is a command line app, we're using the [Enquirer](https://www.npmjs.com/package/enquirer)
 package to prompt the user for their individual questions:
 
-```tsx filename="packages/tutorial/src/part6.tsx"
+```tsx filename="packages/tutorial/src/router.tsx"
 import enquirer from 'enquirer';
 const { prompt } = enquirer;
 
@@ -105,7 +105,7 @@ an animal. Otherwise the user could ask things like "what is the animal you're t
 "what is the capital of France?". To do this, we'll use the
 `<QuestionFilter>` component we defined earlier:
 
-```tsx filename="packages/tutorial/src/part6.tsx"
+```tsx filename="packages/tutorial/src/router.tsx"
 function AnimalGame({ question, animal }: { question: string; animal: string }) {
   return (
     <QuestionFilter question={question}>
@@ -127,7 +127,7 @@ Next, we want to answer the user's questions. We'll use `<NaturalLanguageRouter>
 this time asking it to determine if the user's question should have the answer "yes" or "no"
 with respect to the animal in question, or whether the user has correctly guessed the animal.
 
-```tsx filename="packages/tutorial/src/part6.tsx"
+```tsx filename="packages/tutorial/src/router.tsx"
 function AnswerQuestion({ question, animal }: { question: string; animal: string }) {
   const exactRoute = `The user asks if the animal is ${animal}.`;
   const correctRoute = `The user's query is true for ${animal}`;
@@ -184,7 +184,7 @@ Here's an example run of the game. Note that it prints out the animal it's think
 at the top, so the game isn't that hard, but it's useful for testing things out.
 
 ```
-$  yarn workspace ai-jsx run build && yarn workspace tutorial run part6
+$ yarn workspace ai-jsx run build && yarn workspace tutorial run part6
 I am thinking of: quokka
 
 ✔ [Question 1/20] Your question · Is it an insect?

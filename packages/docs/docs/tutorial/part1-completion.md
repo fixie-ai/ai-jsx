@@ -13,7 +13,7 @@ which invokes a Large Language Model with a fixed prompt, and
 prints the result to the console. Here is the complete
 application:
 
-```tsx filename="packages/tutorial/src/part1.tsx"
+```tsx filename="packages/tutorial/src/completion.tsx"
 import * as AI from 'ai-jsx';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 
