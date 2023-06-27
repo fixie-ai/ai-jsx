@@ -118,9 +118,6 @@ export interface UseAIStreamResult {
 
 function createDeserializer(componentMap?: ComponentMap) {
   return (parsed: Jsonifiable): Deserialized<ReactModule.ReactNode> => {
-    if (Array.isArray(parsed) || typeof parsed === 'string') {
-      return parsed;
-    }
     if (typeof parsed !== 'object' || parsed === null) {
       return undefined;
     }

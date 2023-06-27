@@ -195,7 +195,7 @@ function streamResponseParser<T>(deserializer: ElementDeserializer<T>) {
           continue;
         }
         const text = event.slice(SSE_PREFIX.length);
-        controller.enqueue(JSON.parse(text, (key: string, value: Jsonifiable) => deserializer(value)));
+        controller.enqueue(JSON.parse(text, (key: string, value: Jsonifiable) => deserializer(value) || value));
       }
     },
   });
