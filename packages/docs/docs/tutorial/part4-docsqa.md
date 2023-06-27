@@ -26,7 +26,7 @@ that are individually processed by the LLM. Each chunk is passed into the LLM,
 and the _text embedding_ representing the chunk is computed. (For more details on text
 embeddings, check out the [OpenAI text embeddings API docs](https://platform.openai.com/docs/guides/embeddings).) The text embedding is a multidimensional vector, calculated by the LLM,
 representing the semantic content of the chunk. A _corpus_ consists of a set of document chunks and their corresponding embedding vectors.
-For a more detailed explanation of how a corpus is prepared and used, see the guide [DocsQA: Grounding Answers with a Source of Truth](https://docs.ai-jsx.com/guides/docsqa#overview).
+For a more detailed explanation of how a corpus is prepared and used, see the guide [DocsQA: Grounding Answers with a Source of Truth](../guides/docsqa.md#overview).
 
 When a question is posed to the corpus, we first pass the question to the LLM and extract
 its own embedding vector. The chunks with the highest cosine similarity to the question
@@ -112,9 +112,9 @@ processing them, we could have done so.
 
 ## Using a Pinecone database
 
-Until now, we have been using an in-memory Corpus, which is good for a demo, but in practice you might want to use a vector database like [Pinecone](https://www.pinecone.io/) or [Chroma](https://www.trychroma.com/) instead.
+Until now, we have been using an in-memory Corpus, which is good for a demo, but in practice you might want to use a vector database like [Pinecone](https://www.pinecone.io/) or [Chroma](https://www.trychroma.com/) instead. A vector database allows you to scale to much larger datasets.
 
-To do so, you can use [LangchainCorpus](../api/classes/batteries_docs.LangChainCorpus) to integrate with any [VectorStore from LangChain.js](https://js.langchain.com/docs/modules/indexes/vector_stores/integrations/) like so:
+To do so, you can use [`LangchainCorpus`](../api/classes/batteries_docs.LangChainCorpus) to integrate with any [VectorStore from LangChain.js](https://js.langchain.com/docs/modules/indexes/vector_stores/integrations/):
 
 ```tsx
 const corpus = new LangchainCorpus(await getVectorStore());
@@ -123,32 +123,34 @@ const corpus = new LangchainCorpus(await getVectorStore());
 Here is an example where we build a DocsQA component from an existing Pinecone index:
 
 ```tsx
-async function getVectorStore(): Promise<VectorStore> {
-  const client = new PineconeClient();
-  await client.init({
-    apiKey: process.env.PINECONE_API_KEY,
-    environment: process.env.PINECONE_ENVIRONMENT,
-  });
+import { PineconeClient } from '@pinecone-database/pinecone';
+import { PineconeStore } from 'langchain/vectorstores/pinecone';
+import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 
-  const vectorStore = await PineconeStore.fromExistingIndex(new OpenAIEmbeddings(), {
-    pineconeIndex: client.Index(process.env.PINECONE_INDEX);,
-    namespace: process.env.PINECONE_NAMESPACE,
-  });
-  return vectorStore;
-}
+const client = new PineconeClient();
+await client.init({
+  apiKey: process.env.PINECONE_API_KEY,
+  environment: process.env.PINECONE_ENVIRONMENT,
+});
+
+const vectorStore = await PineconeStore.fromExistingIndex(new OpenAIEmbeddings(), {
+  pineconeIndex: client.Index(process.env.PINECONE_INDEX);,
+  namespace: process.env.PINECONE_NAMESPACE,
+});
 ```
 
-Once we have a `VectorStore` object, we wrap it with a `LangChainCorpus`:
+Once we have a [`VectorStore`](https://js.langchain.com/docs/modules/indexes/vector_stores/) object, we wrap it with a [`LangchainCorpus`](../api/classes/batteries_docs.LangChainCorpus):
 
 ```tsx
-const corpus = new LangchainCorpus(await getVectorStore());
+const corpus = new LangchainCorpus(vectorStore);
 ```
 
-The above assumes that the vector store is already populated, but you can also use the same syntax as before to add documents to it:
+The above assumes that the vector store is already populated.
+To load documents, you can use a [`LoadableLangchainCorpus`](../api/classes/batteries_docs.LoadableLangchainCorpus):
 
 ```tsx
-// or use a loadable corpus
-const corpus = new LoadableLangchainCorpus(await getVectorStore(), staticLoader(docs), makeChunker(600, 100));
+const corpus = new LoadableLangchainCorpus(vectorStore, staticLoader(docs), makeChunker(600, 100));
+// Loading docs into the Piencone database.
 await corpus.load();
 ```
 

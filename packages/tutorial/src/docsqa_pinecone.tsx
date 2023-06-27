@@ -1,7 +1,7 @@
 /**
  * This example shows how to use the PineconeStore with a LangChainCorpus for DocsQA.
- * This is a more advanced version of `docsqa.tsx`, which uses a {@link LocalCorpus} so
- * make sure to check that out first.
+ * This is a more advanced version of `docsqa.tsx`, which uses a {@link LocalCorpus},
+ * so make sure to check that out first.
  *
  * Since a Pinecone database is used, you need to make sure you have a Pinecone account,
  * and an index created before running it. Check out the `pineconeConfig` object below which
@@ -37,7 +37,7 @@ function GetChunk({ doc }: { doc: ScoredChunk }) {
 
 /**
  * Creates a PineconeStore from the ai-jsx docs.
- * If the namespace exists however, it will not re-index the documents.
+ * If the namespace exists, it will not re-index the documents for efficiency.
  *
  * Note: make sure to set the environment variables for the Pinecone API key,
  * environment, and index name first.
@@ -81,7 +81,7 @@ async function getVectorStore(): Promise<VectorStore> {
     return vectorStore;
   }
 
-  console.log("Namespace exists. Loading it's index ...");
+  console.log('Namespace exists. Loading its index ...');
   const vectorStore = await PineconeStore.fromExistingIndex(embedder, {
     pineconeIndex,
     namespace: pineconeConfig.namespace,
