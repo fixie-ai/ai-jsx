@@ -24,15 +24,16 @@ console.log(await AI.createRenderContext().render(<App />));
 
 This produces no logging.
 
-## File Logging
+## Console Logging of LLM Calls
 
-To log to a file:
+To log to console:
 
 ```tsx file="index.tsx"
 import * as AI from 'ai-jsx';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 // highlight-next-line
 import { PinoLogger } from 'ai-jsx/core/log';
+import pino from 'pino';
 
 function App() {
   return (
@@ -46,14 +47,14 @@ function App() {
 console.log(
   await AI.createRenderContext({
     // highlight-next-line
-    logger: new PinoLogger(),
+    logger: new PinoLogger(pino({ level: 'debug' })), //default level is 'info'
   }).render(<App />)
 );
 ```
 
-Now, when you run, you'll see a file created called `ai-jsx.log`. This file will have a bunch of lines in it like:
+Now, when you run, you'll see something like this on the console:
 
-```json file="ai-jsx.log"
+```json
 {
   "level": 20,
   "time": 1686758739756,
@@ -74,7 +75,7 @@ Now, when you run, you'll see a file created called `ai-jsx.log`. This file will
 }
 ```
 
-To view this in a nicer way, run `npx pino-pretty < ai-jsx.log`:
+To view this in a nicer way, pipe the console output to `pino-pretty`: `node ./my-ai-jsx-program.tsx | npx pino-pretty`:
 
 ```
 [12:05:39.756] DEBUG (ai-jsx/57473): Calling createChatCompletion
