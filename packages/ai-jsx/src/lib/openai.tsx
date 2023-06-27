@@ -380,12 +380,10 @@ export async function* OpenAIChatModel(
   >;
 
   const currentMessage = { content: undefined, function_call: undefined } as Partial<ChatCompletionResponseMessage>;
-  let finishReason: string | undefined = undefined;
   for await (const deltaMessage of openAiEventsToJson<ChatCompletionDelta>(
     asyncIteratorOfFetchStream(chatResponse.body!.getReader())
   )) {
     logger.trace({ deltaMessage }, 'Got delta message');
-    finishReason = finishReason ?? deltaMessage.choices[0].finish_reason;
     const delta = deltaMessage.choices[0].delta;
     if (delta.role) {
       currentMessage.role = deltaMessage.choices[0].delta.role;
