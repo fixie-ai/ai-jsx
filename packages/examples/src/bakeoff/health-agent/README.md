@@ -98,17 +98,29 @@ const tools: Record<string, Tool> = {
   generateChartFromTimeSeries: {
     description: 'Generate a bar chart from a time series, given x labels and y values.',
     // Tell the user how to
-    parameters: z.object({
-      xLabels: z.array(z.string()),
-      yValues: z.array(z.number()),
-    }),
+    parameters: {
+      xLabels: {
+        description: "A comma separated list of x-axis labels.",
+        type: "string",
+        required: true,
+      },
+      yValues: {
+        description: "A comma separated list of y-axis values.",
+        type: "string",
+        required: "bool", 
+      },
+    },
     func: generateChartFromTimeSeries,
   },
   generateHistogram: {
     description: 'Generate a histogram from a list of values.',
-    parameters: z.object({
-      values: z.array(z.number()),
-    }),
+    parameters: {
+      values: {
+        description: "A comma separated list of x-axis labels.",
+        type: "string",
+        required: true,
+      },
+    },
     func: generateHistogram,
   },
 };
