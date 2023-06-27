@@ -32,7 +32,7 @@
     "build": "yarn run typecheck"
   },
   "dependencies": {
-    "ai-jsx": "0.5.5",
+    "ai-jsx": "0.5.6",
     "axios": "^1.4.0",
     "enquirer": "^2.3.6",
     "node-fetch": "^3.3.1",

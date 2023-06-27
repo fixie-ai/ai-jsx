@@ -5,6 +5,7 @@
 
 import * as AI from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
 
@@ -64,11 +65,15 @@ function AutomaticCompletionModel({ children, ...props }: ModelPropsWithChildren
     );
   }
 
-  throw new Error(`No completion model was specified. To fix this, do one of the following:
+  throw new AIJSXError(
+    `No completion model was specified. To fix this, do one of the following:
     
 1. Set the OPENAI_API_KEY or REACT_APP_OPENAI_API_KEY environment variable.
 2. Set the OPENAI_API_BASE or REACT_APP_OPENAI_API_BASE environment variable.
-3. use an explicit CompletionProvider component.`);
+3. use an explicit CompletionProvider component.`,
+    ErrorCode.MissingCompletionModel,
+    'user'
+  );
 }
 
 /**
@@ -84,11 +89,15 @@ function AutomaticChatModel({ children, ...props }: ModelPropsWithChildren) {
       </OpenAIChatModel>
     );
   }
-  throw new Error(`No chat model was specified. To fix this, do one of the following:
+  throw new AIJSXError(
+    `No chat model was specified. To fix this, do one of the following:
     
 1. Set the OPENAI_API_KEY or REACT_APP_OPENAI_API_KEY environment variable.
 2. Set the OPENAI_API_BASE or REACT_APP_OPENAI_API_BASE environment variable.
-3. use an explicit ChatProvider component.`);
+3. use an explicit ChatProvider component.`,
+    ErrorCode.MissingChatModel,
+    'user'
+  );
 }
 
 /** The default context used by {@link CompletionProvider}. */
