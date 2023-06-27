@@ -64,7 +64,6 @@ export function RecipeInstructionListItem({ children }: { children: React.ReactN
 }
 
 export function RecipeGenerator({ topic }: { topic: string }) {
-  const [activeTopic, setActiveTopic] = useState(null as string | null);
   const [isLoading, setIsLoading] = useState(false);
   const { current, fetchAI } = useAIStream({
     componentMap: RecipeMap,
@@ -75,7 +74,6 @@ export function RecipeGenerator({ topic }: { topic: string }) {
   });
 
   useEffect(() => {
-    setActiveTopic(topic);
     setIsLoading(true);
     fetchAI('/recipe/api', {
       method: 'POST',
