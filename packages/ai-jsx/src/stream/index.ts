@@ -1,5 +1,5 @@
 import {
-  isElement,
+  isElement as isAIElement,
   Element,
   PartiallyRendered,
   RenderResult,
@@ -10,6 +10,7 @@ import {
 } from '../index.js';
 import { Jsonifiable } from 'type-fest';
 
+/** @hidden */
 export type StreamEvent<T> =
   | {
       type: 'all';
@@ -20,10 +21,13 @@ export type StreamEvent<T> =
   | { type: 'append'; index: number; content: T }
   | { type: 'complete' };
 
+/** @hidden */
 export type ElementSerializer = (element: Element<any>) => Jsonifiable;
 
+/** @hidden */
 export type Deserialized<T> = string | T | Deserialized<T>[];
 
+/** @hidden */
 export type ElementDeserializer<T> = (parsed: Jsonifiable) => T;
 
 /**
@@ -74,6 +78,14 @@ async function* renderToJsonEvents(
   return { type: 'complete' };
 }
 
+/**
+ * Constructs a JSON replacer from an {@link ElementSerializer}. The serializer
+ * will only be invoked for AI.JSX Elements. More generally, values with
+ * AI.JSX projections (such as combined AI.JSX/React elements) will not be
+ * serialized -- only their AI.JSX projections will be.
+ * @param serializer A function that can serialize an AI.JSX element.
+ * @returns A replacer function that can be passed to JSON.stringify.
+ */
 function jsonReplacerFromSerializer(serializer: ElementSerializer) {
   return (key: string, value: unknown) => {
     let currentValue: unknown = value;
@@ -83,17 +95,13 @@ function jsonReplacerFromSerializer(serializer: ElementSerializer) {
         currentValue = getReferencedNode(currentValue);
       }
 
-      if (isElement(currentValue)) {
+      if (isAIElement(currentValue)) {
         return serializer(currentValue);
       }
     }
 
     return currentValue;
   };
-}
-
-function jsonReviverFromDeserializer<T>(deserializer: ElementDeserializer<T>) {
-  return (key: string, value: Jsonifiable) => deserializer(value) || value;
 }
 
 /**
@@ -168,7 +176,6 @@ export function toSerializedStreamResponse(
 }
 
 function streamResponseParser<T>(deserializer: ElementDeserializer<T>) {
-  const reviver = jsonReviverFromDeserializer(deserializer);
   const SSE_PREFIX = 'data: ';
   const SSE_TERMINATOR = '\n\n';
 
@@ -188,7 +195,7 @@ function streamResponseParser<T>(deserializer: ElementDeserializer<T>) {
           continue;
         }
         const text = event.slice(SSE_PREFIX.length);
-        controller.enqueue(JSON.parse(text, reviver));
+        controller.enqueue(JSON.parse(text, (key: string, value: Jsonifiable) => deserializer(value)));
       }
     },
   });

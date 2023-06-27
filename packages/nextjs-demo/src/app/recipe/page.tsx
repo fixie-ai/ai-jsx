@@ -2,7 +2,7 @@ import InputPrompt from '@/components/InputPrompt';
 import ResultContainer from '@/components/ResultContainer';
 import { RecipeGenerator } from '@/components/Recipe';
 
-export default function BasicCompletion({ searchParams }: { searchParams: any }) {
+export default function RecipeExample({ searchParams }: { searchParams: any }) {
   const defaultValue = 'beans';
   const query = searchParams.q ?? defaultValue;
   return (

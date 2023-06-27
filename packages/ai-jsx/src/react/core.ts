@@ -4,6 +4,7 @@ import { Serialize } from './serialize.js';
 import { isJsxBoundary } from './jsx-boundary.js';
 import { ElementSerializer } from '../stream/index.js';
 import { ComponentMap } from './map.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 export * from '../index.js';
 
 /**
@@ -45,7 +46,11 @@ export function React(
 export function createElementSerializer(map: ComponentMap<any>): ElementSerializer {
   return (element: AI.Element<any>) => {
     if (isJsxBoundary(element.tag)) {
-      throw new Error('Serializing AI.JSX components within React components is not yet supported.');
+      throw new AIJSXError(
+        'Serializing AI.JSX components within React components is not yet supported.',
+        ErrorCode.NestedAIUIStreamsAreNotSupported,
+        'internal'
+      );
     }
 
     return {

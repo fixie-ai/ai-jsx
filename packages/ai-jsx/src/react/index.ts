@@ -89,8 +89,9 @@ export interface UseAIStreamOpts {
   onError?: (error: Error) => void;
 
   /**
-   * A map of component names to React components. This is used to deserialize
-   * the stream.
+   * A map between React components and serialized IDs. React components can be serialized
+   * by the server and rehydrated on the client, but doing so requires using a shared
+   * ComponentMap between the server and client.
    */
   componentMap?: ComponentMap<any>;
 }
@@ -116,7 +117,10 @@ export interface UseAIStreamResult {
 }
 
 function createDeserializer(componentMap?: ComponentMap) {
-  return (parsed: Jsonifiable): Deserialized<ReactModule.ReactNode> | undefined => {
+  return (parsed: Jsonifiable): Deserialized<ReactModule.ReactNode> => {
+    if (Array.isArray(parsed) || typeof parsed === 'string') {
+      return parsed;
+    }
     if (typeof parsed !== 'object' || parsed === null) {
       return undefined;
     }
@@ -134,12 +138,22 @@ function createDeserializer(componentMap?: ComponentMap) {
         const id = (parsed.$$component as Record<string, any>).id;
         const component = componentMap?.idToComponent.get(id);
         if (component === undefined) {
-          throw new Error(`Unknown component ${id}`);
+          throw new AIJSXError(
+            `Unknown UI component ${id}. Serialized React components must be referenced from a ComponentMap shared between the client and server.`,
+            ErrorCode.UnknownUIComponentId,
+            'user',
+            {
+              unknownComponentId: id,
+              knownComponentIds: Array.from(componentMap?.idToComponent.keys() ?? []),
+            }
+          );
         }
         return ReactModule.createElement(component as any, parsed.props);
       }
 
-      throw new Error('Unknown component type');
+      throw new AIJSXError('Unknown serialized component type', ErrorCode.UnknownSerializedComponentType, 'internal', {
+        value: parsed,
+      });
     }
 
     return undefined;

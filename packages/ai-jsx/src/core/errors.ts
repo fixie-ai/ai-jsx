@@ -17,6 +17,9 @@ export enum ErrorCode {
   ModelOutputDidNotMatchUIShape = 1012,
   AIJSXEndpointFailed = 1013,
   AIJSXEndpointHadEmptyResponse = 1014,
+  NestedAIUIStreamsAreNotSupported = 1015,
+  UnknownUIComponentId = 1016,
+  UnknownSerializedComponentType = 1017,
 
   ModelOutputDidNotMatchConstraint = 2000,
 
