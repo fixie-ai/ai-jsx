@@ -14,6 +14,7 @@ import { Jsonifiable } from 'type-fest';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
 import { Node } from '../index.js';
 import { getEnvVar } from '../lib/util.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 
 /**
  * A raw document loaded from an arbitrary source that has not yet been parsed.
@@ -70,7 +71,12 @@ function defaultParser<DocumentMetadata extends Jsonifiable = Jsonifiable>(
     return Promise.resolve({ pageContent: [content], name: raw.name });
     // TODO: Add support for other mime types.
   }
-  throw new Error(`Unsupported mime type: ${raw.mimeType}`);
+  throw new AIJSXError(
+    `Unsupported mime type: ${raw.mimeType}`,
+    ErrorCode.UnsupportedMimeType,
+    'user',
+    _.pick(raw, ['mimeType'])
+  );
 }
 
 /** A non-overlapping subdivision of a corpus' documents used for loading. */
@@ -419,9 +425,14 @@ export interface CorpusStats {
   loadingError?: Error;
 }
 
-class CorpusNotReadyError extends Error {
+class CorpusNotReadyError extends AIJSXError {
   constructor(state: CorpusLoadingState) {
-    super(`Corpus is not ready. It's in state ${state}. Call load() to load documents.`);
+    super(
+      `Corpus is not ready. It's in state ${state}. Call load() to load documents.`,
+      ErrorCode.CorpusNotReady,
+      'user',
+      { state }
+    );
   }
 }
 
@@ -597,6 +608,54 @@ export class LocalCorpus<
       .filter((chunk) => chunk.score >= (params?.score_threshold ?? Number.MIN_VALUE))
       .sort((a, b) => b.score - a.score)
       .slice(0, params?.limit ?? 10);
+  }
+}
+
+/** A fully mananged {@link Corpus} served by Fixie. */
+export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implements Corpus<ChunkMetadata> {
+  private static readonly DEFAULT_FIXIE_API_URL = 'https://app.fixie.ai/api';
+
+  private readonly fixieApiUrl: string;
+
+  constructor(private readonly corpusId: string, private readonly fixieApiKey?: string) {
+    if (!fixieApiKey) {
+      this.fixieApiKey = getEnvVar('FIXIE_API_KEY', false);
+      if (!this.fixieApiKey) {
+        throw new AIJSXError(
+          'You must provide a Fixie API key to access Fixie corpora. Find yours at https://app.fixie.ai/profile.',
+          ErrorCode.MissingFixieAPIKey,
+          'user'
+        );
+      }
+    }
+    this.fixieApiUrl = getEnvVar('FIXIE_API_URL', false) ?? FixieCorpus.DEFAULT_FIXIE_API_URL;
+  }
+
+  async search(query: string, params?: { limit?: number }): Promise<ScoredChunk<ChunkMetadata>[]> {
+    const response = await fetch(`${this.fixieApiUrl}/corpora/${this.corpusId}:query`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${this.fixieApiKey}`,
+      },
+      body: JSON.stringify({ query_string: query, chunk_limit: params?.limit }),
+    });
+    if (response.status !== 200) {
+      throw new AIJSXError(
+        `Fixie API returned status ${response.status}: ${await response.text()}`,
+        ErrorCode.FixieStatusNotOk,
+        'runtime'
+      );
+    }
+    const apiResults = await response.json();
+    return apiResults.chunks.map((result: any) => ({
+      chunk: {
+        content: result.content,
+        metadata: result.metadata,
+        documentName: result.document_name,
+      },
+      score: result.score,
+    }));
   }
 }
 

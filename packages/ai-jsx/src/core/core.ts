@@ -8,6 +8,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { BoundLogger, NoOpLogImplementation, LogImplementation, Logger, PinoLogger } from './log.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 
 /** A context that is used to render an AI.JSX component. */
 export interface ComponentContext extends RenderContext {
@@ -361,7 +362,11 @@ async function* renderStream(
   }
 
   if (!('then' in renderable)) {
-    throw new Error(`AI.JSX bug: unexpected renderable type: ${JSON.stringify(renderable)}`);
+    throw new AIJSXError(
+      `Unexpected renderable type: ${JSON.stringify(renderable)}`,
+      ErrorCode.UnrenderableType,
+      'ambiguous'
+    );
   }
   // N.B. Because RenderResults are both AsyncIterable _and_ PromiseLikes, this means that an async component that returns the result
   // of a render call will not stream; it will effectively be `await`ed by default.
@@ -422,8 +427,10 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
         then: (onFulfilled?, onRejected?) => {
           if (promiseResult === null) {
             if (hasReturnedGenerator) {
-              throw new Error(
-                "The RenderResult's generator must be fully exhausted before you can await the final result."
+              throw new AIJSXError(
+                "The RenderResult's generator must be fully exhausted before you can await the final result.",
+                ErrorCode.GeneratorMustBeExhausted,
+                'ambiguous'
               );
             }
 
@@ -444,9 +451,17 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
 
         [Symbol.asyncIterator]: () => {
           if (hasReturnedGenerator) {
-            throw new Error("The RenderResult's generator was already returned and cannot be returned again.");
+            throw new AIJSXError(
+              "The RenderResult's generator was already returned and cannot be returned again.",
+              ErrorCode.GeneratorCannotBeUsedTwice,
+              'ambiguous'
+            );
           } else if (promiseResult !== null) {
-            throw new Error('The RenderResult was already awaited and can no longer be used as an iterable.');
+            throw new AIJSXError(
+              'The RenderResult was already awaited and can no longer be used as an iterable.',
+              ErrorCode.GeneratorCannotBeUsedAsIterableAfterAwaiting,
+              'ambiguous'
+            );
           }
 
           hasReturnedGenerator = true;

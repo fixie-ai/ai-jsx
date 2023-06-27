@@ -1,3 +1,5 @@
+import { AIJSXError } from '../core/errors.js';
+
 /** @hidden */
 export function getEnvVar(name: string, shouldThrow: boolean = true) {
   const reactAppName = `REACT_APP_${name}`;
@@ -6,7 +8,9 @@ export function getEnvVar(name: string, shouldThrow: boolean = true) {
   // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
   const result = process.env[name] || process.env[reactAppName];
   if (result === undefined && shouldThrow) {
-    throw new Error(`Please specify env var '${name}' or '${reactAppName}'.`);
+    throw new AIJSXError(`Please specify env var '${name}' or '${reactAppName}'.`, 1000, 'user', {
+      checkedNames: [name, reactAppName],
+    });
   }
   return result;
 }

@@ -27,7 +27,7 @@ const noMatch = 'None of the routes match what the user said.';
  *      <Route when='the user would like to upgrade'>
  *        <Upgrade />
  *      </Route>
- *      <Route noMatch>
+ *      <Route unmatched>
  *       I'm sorry, but I can't help with that.
  *      </Route>
  *    </NaturalLanguageRouter>
@@ -72,8 +72,12 @@ export async function* NaturalLanguageRouter(props: { children: Node; query: Nod
       .filter(({ tag }) => tag === Route)
       .map(({ props }: { props: AI.PropsOfComponent<typeof Route> }) => props.when)
   );
+  const anyChildrenUnmatched = renderedChildren.some((e) => AI.isElement(e) && e.tag === Route && e.props.unmatched);
 
-  const whenOptions = [noMatch, ...whenOptionsFromThisRenderedChildren];
+  let whenOptions = whenOptionsFromThisRenderedChildren;
+  if (anyChildrenUnmatched) {
+    whenOptions = [...whenOptions, noMatch];
+  }
 
   // This will need to be tweaked when `i` is more than one token.
   const logitBiases = Object.fromEntries(_.range(whenOptions.length + 1).map((i) => [i.toString(), 100]));
@@ -84,14 +88,16 @@ export async function* NaturalLanguageRouter(props: { children: Node; query: Nod
   const choice = await render(
     <ChatCompletion maxTokens={1} logitBias={logitBiases}>
       <SystemMessage>
-        You are an expert routing agent.
+        You are an expert text query matching agent. Your job is to match the user's query against one of the following
+        choices. Pick the choice that best describes the user's query. The available choices are:{'\n\n'}
         {whenOptions.map((when, index) => (
           <>
             {index}: {when}{' '}
           </>
         ))}
-        When the user gives you a query, respond with the number of the route that best fits their query. Do not respond
-        with any other text.
+        {'\n\n'}
+        When the user gives you a query, respond with the number of the choice that best fits their query. Do not
+        respond with any other text.
       </SystemMessage>
       <UserMessage>{props.query}</UserMessage>
     </ChatCompletion>
