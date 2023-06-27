@@ -47,7 +47,7 @@ function App() {
 console.log(
   await AI.createRenderContext({
     // highlight-next-line
-    logger: new PinoLogger(pino({ level: 'debug' })),  //default level is 'info'
+    logger: new PinoLogger(pino({ level: 'debug' })), //default level is 'info'
   }).render(<App />)
 );
 ```
