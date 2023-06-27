@@ -74,7 +74,7 @@ async function getVectorStore(): Promise<VectorStore> {
     });
     const docs = await loader.loadAndSplit(splitter);
 
-    const vectorStore: VectorStore = await PineconeStore.fromDocuments(docs, embedder, {
+    const vectorStore = await PineconeStore.fromDocuments(docs, embedder, {
       pineconeIndex,
       namespace: pineconeConfig.namespace,
     });
@@ -82,7 +82,7 @@ async function getVectorStore(): Promise<VectorStore> {
   }
 
   console.log("Namespace exists. Loading it's index ...");
-  const vectorStore: VectorStore = await PineconeStore.fromExistingIndex(embedder, {
+  const vectorStore = await PineconeStore.fromExistingIndex(embedder, {
     pineconeIndex,
     namespace: pineconeConfig.namespace,
   });

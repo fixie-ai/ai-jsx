@@ -120,48 +120,47 @@ To do so, you can use [LangchainCorpus](../api/classes/batteries_docs.LangChainC
 const corpus = new LangchainCorpus(await getVectorStore());
 ```
 
-Here is an example where we build a DocsQA component from AI.JSX documentation using Pinecone:
+Here is an example where we build a DocsQA component from an existing Pinecone index:
 
 ```tsx
 async function getVectorStore(): Promise<VectorStore> {
   const client = new PineconeClient();
   await client.init({
-    apiKey: pineconeConfig.apiKey,
-    environment: pineconeConfig.environment,
-  });
-  const pineconeIndex = client.Index(pineconeConfig.index);
-
-  // For this example, we will index the ai-jsx docs.
-  const loader = new DirectoryLoader('../../packages/docs/docs/', {
-    '.md': (path) => new TextLoader(path),
+    apiKey: process.env.PINECONE_API_KEY,
+    environment: process.env.PINECONE_ENVIRONMENT,
   });
 
-  const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 100 });
-  const docs = await loader.loadAndSplit(splitter);
-
-  const vectorStore = await PineconeStore.fromDocuments(docs, new OpenAIEmbeddings(), {
-    pineconeIndex,
-    namespace: pineconeConfig.namespace,
+  const vectorStore = await PineconeStore.fromExistingIndex(new OpenAIEmbeddings(), {
+    pineconeIndex: client.Index(process.env.PINECONE_INDEX);,
+    namespace: process.env.PINECONE_NAMESPACE,
   });
+  return vectorStore;
 }
 ```
 
-Once we have a `VectorStore` object, we wrap it with a `LangChainCorpus` and we can use it as we did before:
+Once we have a `VectorStore` object, we wrap it with a `LangChainCorpus`:
 
 ```tsx
 const corpus = new LangchainCorpus(await getVectorStore());
+```
 
+The above assumes that the vector store is already populated, but you can also use the same syntax as before to add documents to it:
+
+```tsx
+// or use a loadable corpus
+const corpus = new LoadableLangchainCorpus(await getVectorStore(), staticLoader(docs), makeChunker(600, 100));
+await corpus.load();
+```
+
+Once you have the `corpus` object, you can ask questions from it just as before:
+
+```tsx
 function App() {
   return (
     <>
-      <DocsQA
-        question="What is the advantage of using JIT UI?"
-        corpus={corpus}
-        chunkLimit={4}
-        chunkFormatter={GetChunk}
-      />
+      <DocsQA question="What was Hurricane Katrina?" corpus={corpus} chunkLimit={5} chunkFormatter={GetChunk} />
       {'\n\n'}
-      <DocsQA question="How can I contribute to AI.JSX?" corpus={corpus} chunkLimit={4} chunkFormatter={GetChunk} />
+      <DocsQA question="Which dates did the storm occur?" corpus={corpus} chunkLimit={5} chunkFormatter={GetChunk} />
     </>
   );
 }
