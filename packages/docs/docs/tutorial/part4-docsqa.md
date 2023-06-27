@@ -26,6 +26,7 @@ that are individually processed by the LLM. Each chunk is passed into the LLM,
 and the _text embedding_ representing the chunk is computed. (For more details on text
 embeddings, check out the [OpenAI text embeddings API docs](https://platform.openai.com/docs/guides/embeddings).) The text embedding is a multidimensional vector, calculated by the LLM,
 representing the semantic content of the chunk. A _corpus_ consists of a set of document chunks and their corresponding embedding vectors.
+For a more detailed explanation of how a corpus is prepared and used, see the guide [DocsQA: Grounding Answers with a Source of Truth](https://docs.ai-jsx.com/guides/docsqa#overview).
 
 When a question is posed to the corpus, we first pass the question to the LLM and extract
 its own embedding vector. The chunks with the highest cosine similarity to the question
@@ -108,3 +109,62 @@ The `<GetChunk>` component is used to format each document chunk as it is presen
 to the LLM. In this case, we just return the raw text of the chunk, but if we wanted
 to include some additional metadata, or transformed the chunks in some way before
 processing them, we could have done so.
+
+## Using a Pinecone database
+
+Until now, we have been using an in-memory Corpus, which is good for a demo, but in practice you might want to use a vector database like [Pinecone](https://www.pinecone.io/) or [Chroma](https://www.trychroma.com/) instead.
+
+To do so, you can use [LangchainCorpus](../api/classes/batteries_docs.LangChainCorpus) to integrate with any [VectorStore from LangChain.js](https://js.langchain.com/docs/modules/indexes/vector_stores/integrations/) like so:
+
+```tsx
+const corpus = new LangchainCorpus(await getVectorStore());
+```
+
+Here is an example where we build a DocsQA component from AI.JSX documentation using Pinecone:
+
+```tsx
+async function getVectorStore(): Promise<VectorStore> {
+  const client = new PineconeClient();
+  await client.init({
+    apiKey: pineconeConfig.apiKey,
+    environment: pineconeConfig.environment,
+  });
+  const pineconeIndex = client.Index(pineconeConfig.index);
+
+  // For this example, we will index the ai-jsx docs.
+  const loader = new DirectoryLoader('../../packages/docs/docs/', {
+    '.md': (path) => new TextLoader(path),
+  });
+
+  const splitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 100 });
+  const docs = await loader.loadAndSplit(splitter);
+
+  const vectorStore = await PineconeStore.fromDocuments(docs, new OpenAIEmbeddings(), {
+    pineconeIndex,
+    namespace: pineconeConfig.namespace,
+  });
+}
+```
+
+Once we have a `VectorStore` object, we wrap it with a `LangChainCorpus` and we can use it as we did before:
+
+```tsx
+const corpus = new LangchainCorpus(await getVectorStore());
+
+function App() {
+  return (
+    <>
+      <DocsQA
+        question="What is the advantage of using JIT UI?"
+        corpus={corpus}
+        chunkLimit={4}
+        chunkFormatter={GetChunk}
+      />
+      {'\n\n'}
+      <DocsQA question="How can I contribute to AI.JSX?" corpus={corpus} chunkLimit={4} chunkFormatter={GetChunk} />
+    </>
+  );
+}
+```
+
+<!-- Alternatively, [Fixie](https://www.fixie.ai) also provides a fully-managed Corpus solution you could drop in instead. -->
