@@ -1,8 +1,7 @@
 /** @jsxImportSource ai-jsx/react */
 import * as AI from './core.js';
 import React from 'react';
-import { SystemMessage, UserMessage } from '../core/completion.js';
-import { JsonChatCompletion } from '../batteries/constrained-output.js';
+import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
 import { isJsxBoundary } from './jsx-boundary.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 
@@ -42,7 +41,7 @@ export async function UICompletion(
   collectComponents(example, true);
 
   const modelResult = await render(
-    <JsonChatCompletion>
+    <ChatCompletion>
       <SystemMessage>
         You are an AI who is an expert UI designer. The user will provide content in the form of text and you will
         respond using a set of React components to create a UI for the content. Here are the only available React
@@ -60,7 +59,7 @@ export async function UICompletion(
         explanatory prose. Do not use any elements (including HTML elements) other than the ones above.
       </SystemMessage>
       <UserMessage>{children}</UserMessage>
-    </JsonChatCompletion>
+    </ChatCompletion>
   );
 
   const validComponents = Object.fromEntries(Array.from(reactComponents).map((c) => [reactComponentName(c), c]));
@@ -97,12 +96,8 @@ export async function UICompletion(
     const children =
       typeof serializedComponent.children === 'string' ? [serializedComponent.children] : serializedComponent.children;
 
-    return (
-      <AI.React>
-        <Component>{children.map(toComponent)}</Component>
-      </AI.React>
-    );
+    return <Component>{children.map(toComponent)}</Component>;
   }
 
-  return toComponent(JSON.parse(modelResult));
+  return <AI.React>{toComponent(JSON.parse(modelResult))}</AI.React>;
 }

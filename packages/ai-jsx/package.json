@@ -229,6 +229,16 @@
         "default": "./dist/cjs/react/jsx-runtime.cjs"
       }
     },
+    "./react/map": {
+      "import": {
+        "types": "./dist/esm/react/map.d.ts",
+        "default": "./dist/esm/react/map.js"
+      },
+      "require": {
+        "types": "./dist/cjs/react/map.d.cts",
+        "default": "./dist/cjs/react/map.cjs"
+      }
+    },
     "./react/completion": {
       "import": {
         "types": "./dist/esm/react/completion.d.ts",

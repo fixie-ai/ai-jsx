@@ -1,8 +1,10 @@
-import * as ReactModule from 'react';
+import React, * as ReactModule from 'react';
 import * as AI from './core.js';
 import { asJsxBoundary } from './jsx-boundary.js';
-import { fromStreamResponse } from '../stream/index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
+import { Deserialized, fromStreamResponse } from '../stream/index.js';
+import { Jsonifiable } from 'type-fest';
+import { ComponentMap } from './map.js';
 export * from './core.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
@@ -85,6 +87,13 @@ export interface UseAIStreamOpts {
    * An event handler that runs when the request fails.
    */
   onError?: (error: Error) => void;
+
+  /**
+   * A map between React components and serialized IDs. React components can be serialized
+   * by the server and rehydrated on the client, but doing so requires using a shared
+   * ComponentMap between the server and client.
+   */
+  componentMap?: ComponentMap<any>;
 }
 
 /**
@@ -105,6 +114,47 @@ export interface UseAIStreamResult {
    * A wrapper around `fetch` to invoke an API that will return an AI.JSX stream.
    */
   fetchAI: (...fetchArguments: Parameters<typeof fetch>) => void;
+}
+
+function createDeserializer(componentMap?: ComponentMap) {
+  return (parsed: Jsonifiable): Deserialized<ReactModule.ReactNode> => {
+    if (typeof parsed !== 'object' || parsed === null) {
+      return undefined;
+    }
+
+    if ('$$type' in parsed && parsed.$$type === 'element') {
+      if (parsed.$$component === null) {
+        return ReactModule.createElement(ReactModule.Fragment, parsed.props as any);
+      }
+
+      if (typeof parsed.$$component === 'string') {
+        return ReactModule.createElement(parsed.$$component, parsed.props);
+      }
+
+      if (typeof parsed.$$component === 'object') {
+        const id = (parsed.$$component as Record<string, any>).id;
+        const component = componentMap?.idToComponent.get(id);
+        if (component === undefined) {
+          throw new AIJSXError(
+            `Unknown UI component ${id}. Serialized React components must be referenced from a ComponentMap shared between the client and server.`,
+            ErrorCode.UnknownUIComponentId,
+            'user',
+            {
+              unknownComponentId: id,
+              knownComponentIds: Array.from(componentMap?.idToComponent.keys() ?? []),
+            }
+          );
+        }
+        return ReactModule.createElement(component as any, parsed.props);
+      }
+
+      throw new AIJSXError('Unknown serialized component type', ErrorCode.UnknownSerializedComponentType, 'internal', {
+        value: parsed,
+      });
+    }
+
+    return undefined;
+  };
 }
 
 /**
@@ -164,7 +214,7 @@ export function useAIStream(options: UseAIStreamOpts = {}): UseAIStreamResult {
             throw new AIJSXError('The response body is empty.', ErrorCode.AIJSXEndpointHadEmptyResponse, 'runtime');
           }
 
-          setCurrentStream(fromStreamResponse(response.body) as ReadableStream<ReactModule.ReactNode>);
+          setCurrentStream(fromStreamResponse(response.body, createDeserializer(options.componentMap)));
           setError(null);
         })
         .catch((error) => {
