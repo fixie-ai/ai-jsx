@@ -65,10 +65,18 @@ export function RecipeInstructionListItem({ children }: { children: React.ReactN
 
 export function RecipeGenerator({ topic }: { topic: string }) {
   const [activeTopic, setActiveTopic] = useState(null as string | null);
-  const { current, fetchAI } = useAIStream({ componentMap: RecipeMap });
+  const [isLoading, setIsLoading] = useState(false);
+  const { current, fetchAI } = useAIStream({
+    componentMap: RecipeMap,
+    onComplete: (x) => {
+      setIsLoading(false);
+      return x;
+    },
+  });
 
   if (activeTopic !== topic) {
     setActiveTopic(topic);
+    setIsLoading(true);
     fetchAI('/recipe/api', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -76,5 +84,5 @@ export function RecipeGenerator({ topic }: { topic: string }) {
     });
   }
 
-  return <div className="whitespace-pre-line">{current}</div>;
+  return <div className="whitespace-pre-line">{isLoading ? 'Loading...' : current}</div>;
 }

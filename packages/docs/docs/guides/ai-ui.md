@@ -4,10 +4,6 @@ sidebar_position: 4
 
 # AI + UI
 
-:::note AI + UI Support
-Right now, AI and UI component integration is only supported when running [completely client-side](./architecture.mdx#run-entirely-on-the-client) or [UI + AI.JSX on the client; API calls on the server](./architecture.mdx/#ui--aijsx-on-the-client-api-calls-on-the-server). Support for other [architectures](./architecture.mdx) coming soon. ([File an issue](https://github.com/fixie-ai/ai-jsx/issues) if you'd like to vote on what we support. :smile:)
-:::
-
 We're very excited about AI.JSX's capability to seamless integrate UI and AI logic:
 
 ```tsx
@@ -60,7 +56,7 @@ In this example, we create a set of React components, then provide them to the m
 
 ## Getting Started
 
-The fastest way to get started is to start from the [Creat React App demo](https://github.com/fixie-ai/ai-jsx/tree/main/packages/create-react-app-demo). Or, you can follow these steps:
+The fastest way to get started is to start from the [Create React App demo](https://github.com/fixie-ai/ai-jsx/tree/main/packages/create-react-app-demo). Or, you can follow these steps:
 
 1. Install:
    ```console
