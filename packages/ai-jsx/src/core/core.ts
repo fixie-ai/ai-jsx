@@ -316,20 +316,20 @@ async function* renderStream(
     });
 
     const currentValue = () => {
-      if (!appendOnly) {
-        return inProgressRenders.flatMap((r) => r.currentValue);
-      }
-
-      let currentValue = [] as PartiallyRendered[];
-      for (const inProgressRender of inProgressRenders) {
-        currentValue = currentValue.concat(inProgressRender.currentValue);
-        if (inProgressRender.currentPromise !== null) {
-          // This node is still rendering, so we can't include any ones beyond it.
-          break;
+      if (appendOnly) {
+        let currentValue = [] as PartiallyRendered[];
+        for (const inProgressRender of inProgressRenders) {
+          currentValue = currentValue.concat(inProgressRender.currentValue);
+          if (inProgressRender.currentPromise !== null) {
+            // This node is still rendering, so we can't include any ones beyond it.
+            break;
+          }
         }
+
+        return currentValue;
       }
 
-      return currentValue;
+      return inProgressRenders.flatMap((r) => r.currentValue);
     };
     const remainingPromises = () => inProgressRenders.flatMap((r) => (r.currentPromise ? [r.currentPromise] : []));
 

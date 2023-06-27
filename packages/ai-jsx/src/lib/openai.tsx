@@ -409,7 +409,7 @@ export async function* OpenAIChatModel(
   logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
 
   if (currentMessage.function_call) {
-    return (
+    yield (
       <FunctionCall
         name={currentMessage.function_call.name ?? ''}
         args={JSON.parse(currentMessage.function_call.arguments ?? '{}')}

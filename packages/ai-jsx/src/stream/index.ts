@@ -101,7 +101,9 @@ export function toStreamResponse(renderable: Renderable): Response {
 
 /**
  * Converts a {@link Renderable} to a {@link ReadableStream} that will stream the rendered
- * content as UTF-8 encoded text.
+ * content as an append-only UTF-8 encoded text stream. Compared to {@link toStreamResponse},
+ * this allows the response to be easily consumed by other frameworks (such as https://sdk.vercel.ai/)
+ * but does not support UI components or concurrently streaming multiple parts of the tree.
  */
 export function toTextStream(renderable: Renderable): ReadableStream<Uint8Array> {
   let previousValue = '';
