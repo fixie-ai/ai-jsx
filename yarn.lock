@@ -5356,6 +5356,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@pinecone-database/pinecone@npm:^0.1.6":
+  version: 0.1.6
+  resolution: "@pinecone-database/pinecone@npm:0.1.6"
+  dependencies:
+    cross-fetch: ^3.1.5
+  checksum: 26f1a40b0353c3dabd9f8824ac0db4d9089fd8ea9e92f01f7c6650e7a21c7e25415bed396010b013d0fe1956c88d57fa1f01f3fb3fc64f06708dce518517ea38
+  languageName: node
+  linkType: hard
+
 "@pkgjs/parseargs@npm:^0.11.0":
   version: 0.11.0
   resolution: "@pkgjs/parseargs@npm:0.11.0"
@@ -22572,6 +22581,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "tutorial@workspace:packages/tutorial"
   dependencies:
+    "@pinecone-database/pinecone": ^0.1.6
     "@tsconfig/node18": ^2.0.1
     "@types/asciichart": ^1.5.6
     "@types/lodash": ^4.14.195
@@ -22587,6 +22597,7 @@ __metadata:
     enquirer: ^2.3.6
     eslint: ^8.40.0
     eslint-config-nth: ^2.0.1
+    langchain: ^0.0.81
     node-fetch: ^3.3.1
     pino: ^8.14.1
     pino-pretty: ^10.0.0

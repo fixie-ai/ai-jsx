@@ -25,6 +25,7 @@
     "part2": "yarn build && node dist/inline.js",
     "part3": "yarn build && node dist/constrained-output.js",
     "part4": "yarn build && node dist/docsqa.js",
+    "part4_pinecone": "yarn build && node dist/docsqa_pinecone.js",
     "part6": "yarn build && node dist/router.js",
     "part7": "yarn build && node dist/tools.js",
     "view-logs": "cat ai-jsx.log | pino-pretty",
@@ -34,10 +35,12 @@
     "build": "yarn run typecheck"
   },
   "dependencies": {
+    "@pinecone-database/pinecone": "^0.1.6",
     "ai-jsx": "0.5.6",
     "asciichart": "^1.5.25",
     "axios": "^1.4.0",
     "enquirer": "^2.3.6",
+    "langchain": "^0.0.81",
     "node-fetch": "^3.3.1",
     "pino": "^8.14.1",
     "pino-pretty": "^10.0.0",

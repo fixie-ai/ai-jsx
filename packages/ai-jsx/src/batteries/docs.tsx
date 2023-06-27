@@ -705,11 +705,9 @@ async function searchVectorStore<ChunkMetadata extends Jsonifiable = Jsonifiable
   query: string,
   params?: { limit?: number; score_threshold?: number }
 ): Promise<ScoredChunk<ChunkMetadata>[]> {
-  const scoredLcDocs = await vectorStore.similaritySearchWithScore(
-    query,
-    params?.limit ?? defaultLangchainChunkLimit,
-    params
-  );
+  const k = params?.limit ?? defaultLangchainChunkLimit;
+  delete params?.limit;
+  const scoredLcDocs = await vectorStore.similaritySearchWithScore(query, k, params);
   return scoredLcDocs.map((lcDocAndScore) => {
     const lcDoc = lcDocAndScore[0];
     return {
