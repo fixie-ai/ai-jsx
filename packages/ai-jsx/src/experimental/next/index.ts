@@ -3,6 +3,7 @@ import 'server-only';
 import { LogImplementation } from '../../core/log.js';
 import * as AI from '../../react/core.js';
 import { asJsxBoundary } from '../../react/jsx-boundary.js';
+import { AIJSXError, ErrorCode } from '../../core/errors.js';
 import { toSerializedStreamResponse } from '../../stream/index.js';
 import { ComponentMap } from '../../react/map.js';
 export * from '../../react/core.js';
@@ -11,7 +12,11 @@ function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.React
   if (AI.isElement(partiallyRendered)) {
     // This should be an AI.React element.
     if (partiallyRendered.tag !== AI.React) {
-      throw new Error('AI.jsx internal error: unwrapReact only expects to see AI.React elements or strings.');
+      throw new AIJSXError(
+        'unwrapReact only expects to see AI.React elements or strings.',
+        ErrorCode.UnexpectedRenderType,
+        'internal'
+      );
     }
 
     return partiallyRendered.props.children;

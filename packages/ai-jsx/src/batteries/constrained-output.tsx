@@ -7,6 +7,7 @@
 import * as AI from '../index.js';
 import { ChatCompletion, SystemMessage, AssistantMessage, UserMessage } from '../core/completion.js';
 import yaml from 'js-yaml';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 
 interface ValidationResult {
   success: boolean;
@@ -141,7 +142,16 @@ async function ObjectFormatChatCompletion(
     );
   }
 
-  throw new Error(`The model did not produce a valid ${typeName} object, even after ${retries} attempts.`);
+  throw new AIJSXError(
+    `The model did not produce a valid ${typeName} object, even after ${retries} attempts.`,
+    ErrorCode.ModelOutputDidNotMatchConstraint,
+    'runtime',
+    {
+      typeName,
+      retries,
+      output,
+    }
+  );
 }
 
 function isJsonString(str: string): ValidationResult {

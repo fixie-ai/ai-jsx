@@ -8,6 +8,7 @@ import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.j
 import { Node, RenderContext } from '../index.js';
 import z, { ZodTypeAny } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 
 const toolChoiceSchema = z.object({
   nameOfTool: z.string(),
@@ -54,13 +55,21 @@ async function InvokeTool(
     }
     toolChoiceResult = toolChoiceSchema.parse(parsedJson);
   } catch (e: any) {
-    const error = new Error(
-      `Failed to parse LLM output into a tool choice: ${e.message}. Output: ${toolChoiceLLMOutput}`
+    const error = new AIJSXError(
+      `Failed to parse LLM output into a tool choice: ${e.message}. Output: ${toolChoiceLLMOutput}`,
+      ErrorCode.ModelOutputCouldNotBeParsedForTool,
+      'runtime',
+      { toolChoiceLLMOutput }
     );
     throw error;
   }
   if (!(toolChoiceResult.nameOfTool in props.tools)) {
-    throw new Error(`LLM hallucinated a tool that does not exist: ${toolChoiceResult.nameOfTool}.`);
+    throw new AIJSXError(
+      `LLM hallucinated a tool that does not exist: ${toolChoiceResult.nameOfTool}.`,
+      ErrorCode.ModelHallucinatedTool,
+      'runtime',
+      { toolChoiceResult }
+    );
   }
   const tool = props.tools[toolChoiceResult.nameOfTool];
   const toolResult = await tool.func(...toolChoiceResult.parameters);
@@ -135,10 +144,10 @@ export interface UseToolsProps {
  *
  * @example
  * ```tsx
- *  async function turnLightsOn() {}
- *  async function turnLightsOff() {}
+ *  async function turnLightsOn() { ... Code to turn lights on ... }
+ *  async function turnLightsOff() { ... Code to turn lights off ... }
  *  // Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".
- *  async function activeScene(sceneName: string) {}
+ *  async function activeScene(sceneName: string) { ... Code to activate a scene ... }
  *
  *  import z from 'zod';
  *  const tools: Record<string, Tool> = {
@@ -154,14 +163,16 @@ export interface UseToolsProps {
  *    },
  *    activeScene: {
  *      description: `Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".`,
- *      parameters: z.tuple([z.string()]),
+ *      parameters: z.string(),
  *      func: activeScene,
  *    },
  *  };
  *
- * <UseTools tools={tools} fallback="Politely explain you aren't able to help with that request.">
- *    You control a home automation system. The user has requested you take some action in their home: "{userRequest}". Take
- *    an action, then generate a response telling the user what you're doing.
+ * <UseTools
+ *    tools={tools}
+ *    fallback="Politely explain you aren't able to help with that request."
+ *    query={ "You control a home automation system. The user has requested you take some
+ *       action in their home: " + userRequest }
  * </UseTools>;
  * ```
  *
