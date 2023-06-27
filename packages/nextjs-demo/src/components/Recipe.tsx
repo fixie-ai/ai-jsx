@@ -1,7 +1,7 @@
 'use client';
 
 import { useAIStream } from 'ai-jsx/react';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import RecipeMap from '@/components/Recipe.map';
 
 export function Recipe({ children }: { children: React.ReactNode }) {
@@ -74,7 +74,7 @@ export function RecipeGenerator({ topic }: { topic: string }) {
     },
   });
 
-  if (activeTopic !== topic) {
+  useEffect(() => {
     setActiveTopic(topic);
     setIsLoading(true);
     fetchAI('/recipe/api', {
@@ -82,7 +82,7 @@ export function RecipeGenerator({ topic }: { topic: string }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ topic }),
     });
-  }
+  }, [topic]);
 
   return <div className="whitespace-pre-line">{isLoading ? 'Loading...' : current}</div>;
 }

@@ -1,20 +1,4 @@
 import { makeComponentMap } from 'ai-jsx/react/map';
-import {
-  Recipe,
-  RecipeIngredientList,
-  RecipeIngredientListItem,
-  RecipeInstructionList,
-  RecipeInstructionListItem,
-  RecipeTitle,
-  SelectIngredientsButton,
-} from './Recipe';
+import * as RecipeComponents from './Recipe';
 
-export default makeComponentMap({
-  Recipe,
-  RecipeTitle,
-  RecipeInstructionList,
-  RecipeIngredientList,
-  SelectIngredientsButton,
-  RecipeIngredientListItem,
-  RecipeInstructionListItem,
-});
+export default makeComponentMap(RecipeComponents);
