@@ -3,6 +3,8 @@ import 'server-only';
 import { LogImplementation } from '../../core/log.js';
 import * as AI from '../../react/core.js';
 import { asJsxBoundary } from '../../react/jsx-boundary.js';
+import { toSerializedStreamResponse } from '../../stream/index.js';
+import { ComponentMap } from '../../react/map.js';
 export * from '../../react/core.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
@@ -140,3 +142,8 @@ export const jsx = asJsxBoundary(function jsx(
   }) as JSX.Element;
 });
 export const JSX = jsx;
+
+export function toReactStream(componentMap: ComponentMap<any>, renderable: AI.Renderable): Response {
+  const renderResult = AI.createRenderContext().render(renderable, { stop: (e) => e.tag == AI.React, map: (x) => x });
+  return toSerializedStreamResponse(renderResult, AI.createElementSerializer(componentMap));
+}

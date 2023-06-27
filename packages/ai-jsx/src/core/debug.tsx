@@ -18,6 +18,10 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
   const previouslyMemoizedIds = new Set();
 
   function debugRec(value: unknown, indent: string, context: 'code' | 'children' | 'props'): string {
+    if (AI.isIndirectNode(value)) {
+      return debugRec(AI.getReferencedNode(value), indent, context);
+    }
+
     if (typeof value === 'string') {
       let jsonified = JSON.stringify(value);
       if (jsonified.length > maxStringLength) {
@@ -47,7 +51,7 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
           return '{null}';
       }
     } else if (AI.isElement(value)) {
-      const tag = value.tag === AI.Fragment ? '' : value.tag.name;
+      const tag = value.tag === AI.Fragment ? '' : typeof value.tag === 'string' ? value.tag : value.tag.name;
       const childIndent = `${indent}  `;
 
       const isMemoized = isMemoizedSymbol in value.props;

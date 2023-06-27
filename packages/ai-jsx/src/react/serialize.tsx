@@ -20,7 +20,7 @@ export function Serialize({ children }: { children: React.ReactNode }): AI.Rende
     const typeName = reactComponentName(child.type);
     // TODO: support prop serialization
     if (typeof child.props === 'object' && child.props && 'children' in child.props) {
-      return [`<${typeName}>`, <Serialize>{child.props.children}</Serialize>, `</${typeName}`];
+      return [`<${typeName}>`, <Serialize>{child.props.children}</Serialize>, `</${typeName}>`];
     }
 
     return `<${typeName}/>`;

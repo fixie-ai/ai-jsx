@@ -1,6 +1,9 @@
 import * as ReactModule from 'react';
 import * as AI from '../index.js';
 import { Serialize } from './serialize.js';
+import { isJsxBoundary } from './jsx-boundary.js';
+import { ElementSerializer } from '../stream/index.js';
+import { ComponentMap } from './map.js';
 export * from '../index.js';
 
 /**
@@ -34,4 +37,26 @@ export function React(
   }
 
   return children;
+}
+
+/**
+ * Creates a seralizer function serializes React components.
+ */
+export function createElementSerializer(map: ComponentMap<any>): ElementSerializer {
+  return (element: AI.Element<any>) => {
+    if (isJsxBoundary(element.tag)) {
+      throw new Error('Serializing AI.JSX components within React components is not yet supported.');
+    }
+
+    return {
+      $$type: 'element',
+      $$component:
+        typeof element.tag === 'string'
+          ? element.tag
+          : element.tag === React || element.tag === AI.Fragment || !map.componentToId.has(element.tag)
+          ? null
+          : { id: map.componentToId.get(element.tag) },
+      props: element.props,
+    };
+  };
 }

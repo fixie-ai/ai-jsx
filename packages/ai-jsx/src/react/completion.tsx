@@ -94,12 +94,8 @@ export async function UICompletion(
     const children =
       typeof serializedComponent.children === 'string' ? [serializedComponent.children] : serializedComponent.children;
 
-    return (
-      <AI.React>
-        <Component>{children.map(toComponent)}</Component>
-      </AI.React>
-    );
+    return <Component>{children.map(toComponent)}</Component>;
   }
 
-  return toComponent(JSON.parse(modelResult));
+  return <AI.React>{toComponent(JSON.parse(modelResult))}</AI.React>;
 }
