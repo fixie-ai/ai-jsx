@@ -8,12 +8,12 @@ import enquirer from 'enquirer';
 const { prompt } = enquirer;
 
 function StockAgent(props: { query: string }) {
-  async function checkStockPrice({symbol}: {symbol: string}) {
+  async function checkStockPrice({ symbol }: { symbol: string }) {
     const quote = await yahooFinance.quote(symbol);
     return quote.regularMarketPrice ?? 'Unknown';
   }
 
-  async function getHistoricalPrices({symbol}: {symbol: string}) {
+  async function getHistoricalPrices({ symbol }: { symbol: string }) {
     const endTime = new Date();
     const startTime = new Date();
     startTime.setMonth(endTime.getMonth() - 1);

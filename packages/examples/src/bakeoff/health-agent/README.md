@@ -100,14 +100,14 @@ const tools: Record<string, Tool> = {
     // Tell the user how to
     parameters: {
       xLabels: {
-        description: "A comma separated list of x-axis labels.",
-        type: "string",
+        description: 'A comma separated list of x-axis labels.',
+        type: 'string',
         required: true,
       },
       yValues: {
-        description: "A comma separated list of y-axis values.",
-        type: "string",
-        required: "bool", 
+        description: 'A comma separated list of y-axis values.',
+        type: 'string',
+        required: 'bool',
       },
     },
     func: generateChartFromTimeSeries,
@@ -116,8 +116,8 @@ const tools: Record<string, Tool> = {
     description: 'Generate a histogram from a list of values.',
     parameters: {
       values: {
-        description: "A comma separated list of x-axis labels.",
-        type: "string",
+        description: 'A comma separated list of x-axis labels.',
+        type: 'string',
         required: true,
       },
     },

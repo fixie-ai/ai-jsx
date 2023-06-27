@@ -22,8 +22,8 @@ const tools = {
     description: 'Check the price of a stock.',
     parameters: {
       symbol: {
-        description: "The symbol of the stock to get price for.",
-        type: "string",
+        description: 'The symbol of the stock to get price for.',
+        type: 'string',
         required: true,
       },
     },
@@ -33,8 +33,8 @@ const tools = {
     description: 'Return historical prices for a stock.',
     parameters: {
       symbol: {
-        description: "The symbol of the stock to get price for.",
-        type: "string",
+        description: 'The symbol of the stock to get price for.',
+        type: 'string',
         required: true,
       },
     },
@@ -73,7 +73,7 @@ return a static string. Here's the `checkStockPrice` function:
 ```tsx filename="packages/tutorial/src/tools.tsx"
 import yahooFinance from 'yahoo-finance2';
 
-async function checkStockPrice({symbol}: {symbol: string}) {
+async function checkStockPrice({ symbol }: { symbol: string }) {
   const quote = await yahooFinance.quote(symbol);
   return quote.regularMarketPrice ?? 'Unknown';
 }
@@ -97,7 +97,7 @@ fetches a list of prices and generates a graph:
 ```tsx filename="packages/tutorial/src/tools.tsx"
 import asciichart from 'asciichart';
 
-async function getHistoricalPrices({symbol}: {symbol: string}) {
+async function getHistoricalPrices({ symbol }: { symbol: string }) {
   const endTime = new Date();
   const startTime = new Date();
   startTime.setMonth(endTime.getMonth() - 1);

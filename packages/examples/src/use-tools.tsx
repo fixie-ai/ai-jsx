@@ -3,11 +3,9 @@ import { z } from 'zod';
 import { UseTools, Tool } from 'ai-jsx/batteries/use-tools';
 import { showInspector } from 'ai-jsx/core/inspector';
 
-
 function evaluate({ expression }: { expression: string }) {
   return math.evaluate(expression);
 }
-
 
 function App({ query }: { query: string }) {
   const tools: Record<string, Tool> = {
