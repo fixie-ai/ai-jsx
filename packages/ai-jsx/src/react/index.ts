@@ -5,10 +5,15 @@ import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { Deserialized, fromStreamResponse } from '../stream/index.js';
 import { Jsonifiable } from 'type-fest';
 import { ComponentMap } from './map.js';
+import { Image } from '../core/image-gen.js';
 export * from './core.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
   if (AI.isElement(partiallyRendered)) {
+    if (partiallyRendered.tag === Image) {
+      return ReactModule.createElement('img', { src: partiallyRendered.props.url });
+    }
+
     // This should be an AI.React element.
     if (partiallyRendered.tag !== AI.React) {
       throw new AIJSXError(
@@ -41,7 +46,7 @@ export function useAI(children: AI.Node, onStreamStart?: () => void, onStreamEnd
 
       // TODO: add a way for a render context to be aborted
       const renderResult = AI.createRenderContext().render(children, {
-        stop: (e) => e.tag == AI.React,
+        stop: (e) => e.tag == AI.React || e.tag == Image,
         map: (frame) => frame.map(unwrapReact),
       });
       for await (const reactFrame of renderResult) {

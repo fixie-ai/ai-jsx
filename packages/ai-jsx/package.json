@@ -96,7 +96,7 @@
       },
       "require": {
         "types": "./dist/cjs/core/image-gend.cts",
-        "default": "./dist/cjs/core/image-gen.js"
+        "default": "./dist/cjs/core/image-gen.cjs"
       }
     },
     "./core/debug": {

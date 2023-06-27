@@ -10,6 +10,13 @@ import { DalleImageGen } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
 
 /**
+ * Represents an image via a single `url` prop.
+ */
+export function Image({ url }: { url: string }) {
+  return url;
+}
+
+/**
  * Represents properties passed to the {@link ImageGen} component.
  */
 export interface ImageGenProps {

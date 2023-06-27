@@ -6,10 +6,15 @@ import { asJsxBoundary } from '../../react/jsx-boundary.js';
 import { AIJSXError, ErrorCode } from '../../core/errors.js';
 import { toSerializedStreamResponse } from '../../stream/index.js';
 import { ComponentMap } from '../../react/map.js';
+import { Image } from '../../core/image-gen.js';
 export * from '../../react/core.js';
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
   if (AI.isElement(partiallyRendered)) {
+    if (partiallyRendered.tag === Image) {
+      return ReactModule.createElement('img', { src: partiallyRendered.props.url });
+    }
+
     // This should be an AI.React element.
     if (partiallyRendered.tag !== AI.React) {
       throw new AIJSXError(
@@ -73,7 +78,7 @@ export const jsx = asJsxBoundary(function jsx(
   }
 
   const renderResult = AI.createRenderContext(props ?? {}).render(children, {
-    stop: (e) => e.tag === AI.React,
+    stop: (e) => e.tag === AI.React || e.tag === Image,
     map: (frame) => frame.map(unwrapReact),
   });
   const asyncIterator = renderResult[Symbol.asyncIterator]();
@@ -149,6 +154,9 @@ export const jsx = asJsxBoundary(function jsx(
 export const JSX = jsx;
 
 export function toReactStream(componentMap: ComponentMap<any>, renderable: AI.Renderable): Response {
-  const renderResult = AI.createRenderContext().render(renderable, { stop: (e) => e.tag == AI.React, map: (x) => x });
+  const renderResult = AI.createRenderContext().render(renderable, {
+    stop: (e) => e.tag == AI.React || e.tag === Image,
+    map: (x) => x,
+  });
   return toSerializedStreamResponse(renderResult, AI.createElementSerializer(componentMap));
 }
