@@ -214,7 +214,9 @@ export function ConversationHistory({ messages }: { messages: ChatCompletionResp
       case 'assistant':
         return <AssistantMessage>{message.content}</AssistantMessage>;
       case 'function':
-        return <FunctionCall name={message.function_call!.name!} args={JSON.parse(message.function_call!.arguments!)} />;
+        return (
+          <FunctionCall name={message.function_call!.name!} args={JSON.parse(message.function_call!.arguments!)} />
+        );
     }
   });
 }
