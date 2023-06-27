@@ -99,6 +99,27 @@ export function toStreamResponse(renderable: Renderable): Response {
   );
 }
 
+/**
+ * Converts a {@link Renderable} to a {@link ReadableStream} that will stream the rendered
+ * content as UTF-8 encoded text.
+ */
+export function toTextStream(renderable: Renderable): ReadableStream<Uint8Array> {
+  let previousValue = '';
+  const generator = createRenderContext().render(renderable, { appendOnly: true })[Symbol.asyncIterator]();
+  return new ReadableStream({
+    async pull(controller) {
+      const next = await generator.next();
+      const delta = next.value.slice(previousValue.length);
+      controller.enqueue(delta);
+      previousValue = next.value;
+
+      if (next.done) {
+        controller.close();
+      }
+    },
+  }).pipeThrough(new TextEncoderStream());
+}
+
 function streamResponseParser() {
   const SSE_PREFIX = 'data: ';
   const SSE_TERMINATOR = '\n\n';

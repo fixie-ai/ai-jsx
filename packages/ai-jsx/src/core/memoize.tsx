@@ -94,12 +94,15 @@ export function memo(renderable: Renderable): Node {
     // It's an async iterable (which might be mutable). We set up some machinery to buffer the
     // results so that we can create memoized iterators as necessary.
     const generator = renderable[Symbol.asyncIterator]();
-    const sink: Renderable[] = [];
-    let finalResult: Renderable = null;
+    const sink: (Renderable | typeof AI.AppendOnlyStream)[] = [];
+    let finalResult: Renderable | typeof AI.AppendOnlyStream = null;
     let completed = false;
     let nextPromise: Promise<void> | null = null;
 
-    const MemoizedGenerator = async function* (): AsyncGenerator<Renderable, Renderable> {
+    const MemoizedGenerator = async function* (): AsyncGenerator<
+      Renderable | typeof AI.AppendOnlyStream,
+      Renderable | typeof AI.AppendOnlyStream
+    > {
       let index = 0;
       while (true) {
         if (index < sink.length) {
@@ -109,11 +112,12 @@ export function memo(renderable: Renderable): Node {
           return finalResult;
         } else if (nextPromise == null) {
           nextPromise = generator.next().then((result) => {
+            const memoized = result.value === AI.AppendOnlyStream ? result.value : memo(result.value);
             if (result.done) {
               completed = true;
-              finalResult = memo(result.value);
+              finalResult = memoized;
             } else {
-              sink.push(memo(result.value));
+              sink.push(memoized);
             }
             nextPromise = null;
           });
