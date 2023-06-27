@@ -3,8 +3,10 @@
  * @packageDocumentation
  */
 
+import { ChatCompletionResponseMessage } from 'openai';
 import * as AI from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
 
@@ -64,11 +66,15 @@ function AutomaticCompletionModel({ children, ...props }: ModelPropsWithChildren
     );
   }
 
-  throw new Error(`No completion model was specified. To fix this, do one of the following:
+  throw new AIJSXError(
+    `No completion model was specified. To fix this, do one of the following:
     
 1. Set the OPENAI_API_KEY or REACT_APP_OPENAI_API_KEY environment variable.
 2. Set the OPENAI_API_BASE or REACT_APP_OPENAI_API_BASE environment variable.
-3. use an explicit CompletionProvider component.`);
+3. use an explicit CompletionProvider component.`,
+    ErrorCode.MissingCompletionModel,
+    'user'
+  );
 }
 
 /**
@@ -84,11 +90,15 @@ function AutomaticChatModel({ children, ...props }: ModelPropsWithChildren) {
       </OpenAIChatModel>
     );
   }
-  throw new Error(`No chat model was specified. To fix this, do one of the following:
+  throw new AIJSXError(
+    `No chat model was specified. To fix this, do one of the following:
     
 1. Set the OPENAI_API_KEY or REACT_APP_OPENAI_API_KEY environment variable.
 2. Set the OPENAI_API_BASE or REACT_APP_OPENAI_API_BASE environment variable.
-3. use an explicit ChatProvider component.`);
+3. use an explicit ChatProvider component.`,
+    ErrorCode.MissingChatModel,
+    'user'
+  );
 }
 
 /** The default context used by {@link CompletionProvider}. */
@@ -192,6 +202,23 @@ export function UserMessage({ children }: { name?: string; children: Node }) {
  */
 export function AssistantMessage({ children }: { children: Node }) {
   return children;
+}
+
+export function ConversationHistory({ messages }: { messages: ChatCompletionResponseMessage[] }) {
+  return messages.map((message) => {
+    switch (message.role) {
+      case 'system':
+        return <SystemMessage>{message.content}</SystemMessage>;
+      case 'user':
+        return <UserMessage>{message.content}</UserMessage>;
+      case 'assistant':
+        return <AssistantMessage>{message.content}</AssistantMessage>;
+      case 'function':
+        return (
+          <FunctionCall name={message.function_call!.name!} args={JSON.parse(message.function_call!.arguments!)} />
+        );
+    }
+  });
 }
 
 /**

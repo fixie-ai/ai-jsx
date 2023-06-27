@@ -33,7 +33,7 @@ import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import { Merge } from 'type-fest';
 import { Logger } from '../core/log.js';
-import { HttpError } from '../core/errors.js';
+import { HttpError, AIJSXError, ErrorCode } from '../core/errors.js';
 import _ from 'lodash';
 import { getEnvVar } from './util.js';
 
@@ -151,8 +151,10 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
     Object.entries(tokens).map(([token, bias]) => {
       const encoded = tokenizer.encode(token) as { bpe: number[]; text: string[] };
       if (encoded.bpe.length > 1) {
-        throw new Error(
-          `You can only set logit_bias for a single token, but "${bias}" is ${encoded.bpe.length} tokens.`
+        throw new AIJSXError(
+          `You can only set logit_bias for a single token, but "${bias}" is ${encoded.bpe.length} tokens.`,
+          ErrorCode.LogitBiasBadInput,
+          'user'
         );
       }
       return [encoded.bpe[0], bias];
@@ -168,7 +170,7 @@ type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
 export class OpenAIError<M extends OpenAIMethod> extends HttpError {
   readonly errorResponse: Record<string, any> | null;
 
-  constructor(response: Response, method: M, responseText: string) {
+  constructor(response: Response, method: M, responseText: string, errorCode: number) {
     let errorResponse = null as Record<string, any> | null;
     let responseSuffix = '';
     try {
@@ -185,6 +187,7 @@ export class OpenAIError<M extends OpenAIMethod> extends HttpError {
     super(
       `OpenAI ${method} request failed with status code ${response.status}${responseSuffix}\n\nFor more information, see https://platform.openai.com/docs/guides/error-codes/api-errors`,
       response.status,
+      errorCode,
       responseText,
       Object.fromEntries(response.headers.entries())
     );
@@ -207,7 +210,7 @@ async function* asyncIteratorOfFetchStream(reader: ReturnType<NonNullable<Respon
 
 async function checkOpenAIResponse<M extends OpenAIMethod>(response: Response, logger: Logger, method: M) {
   if (response.status < 200 || response.status >= 300 || !response.body) {
-    throw new OpenAIError(response, method, await response.text());
+    throw new OpenAIError(response, method, await response.text(), 1023);
   } else {
     logger.debug({ statusCode: response.status, headers: response.headers }, `${method} succeeded`);
   }
@@ -309,12 +312,22 @@ export async function* OpenAIChatModel(
             content: await render(message.props.children),
           };
         default:
-          throw new Error(
-            `ChatCompletion's prompts must be SystemMessage, UserMessage, or AssistantMessage, but this child was ${message.tag.name}`
+          throw new AIJSXError(
+            `ChatCompletion's prompts must be SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse but this child was ${message.tag.name}`,
+            ErrorCode.ChatCompletionUnexpectedChild,
+            'internal'
           );
       }
     })
   );
+
+  if (!messages.length) {
+    throw new AIJSXError(
+      "ChatCompletion must have at least child that's a SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse, but no such children were found.",
+      ErrorCode.ChatCompletionMissingChildren,
+      'user'
+    );
+  }
 
   const openaiFunctions: ChatCompletionFunctions[] | undefined = props.functionDefinitions?.map(
     (functionDefinition) => ({
@@ -435,7 +448,11 @@ export async function DalleImageGen(
       sizeEnum = CreateImageRequestSizeEnum._1024x1024;
       break;
     default:
-      throw new Error(`Invalid size ${size}. Dalle only supports 256x256, 512x512, and 1024x1024`);
+      throw new AIJSXError(
+        `Invalid size ${size}. Dalle only supports 256x256, 512x512, and 1024x1024`,
+        ErrorCode.ImageBadDimensions,
+        'user'
+      );
   }
 
   const imageRequest = {
@@ -450,7 +467,7 @@ export async function DalleImageGen(
   const response = await openai.createImage(imageRequest);
 
   if (response.status < 200 || response.status >= 300) {
-    throw new OpenAIError(response, 'createImage', await response.text());
+    throw new OpenAIError(response, 'createImage', await response.text(), 1024);
   } else {
     logger.debug({ statusCode: response.status, headers: response.headers }, 'createImage succeeded');
   }
