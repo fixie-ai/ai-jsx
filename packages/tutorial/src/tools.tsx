@@ -1,6 +1,5 @@
 import * as AI from 'ai-jsx';
 import { UseTools } from 'ai-jsx/batteries/use-tools';
-import z from 'zod';
 import yahooFinance from 'yahoo-finance2';
 import asciichart from 'asciichart';
 import enquirer from 'enquirer';
@@ -8,12 +7,12 @@ import enquirer from 'enquirer';
 const { prompt } = enquirer;
 
 function StockAgent(props: { query: string }) {
-  async function checkStockPrice(symbol: string) {
+  async function checkStockPrice({ symbol }: { symbol: string }) {
     const quote = await yahooFinance.quote(symbol);
     return quote.regularMarketPrice ?? 'Unknown';
   }
 
-  async function getHistoricalPrices(symbol: string) {
+  async function getHistoricalPrices({ symbol }: { symbol: string }) {
     const endTime = new Date();
     const startTime = new Date();
     startTime.setMonth(endTime.getMonth() - 1);
@@ -30,12 +29,24 @@ function StockAgent(props: { query: string }) {
   const tools = {
     checkStockPrice: {
       description: 'Check the price of a stock.',
-      parameters: z.string(),
+      parameters: {
+        symbol: {
+          description: 'The stock symbol to check the price of.',
+          type: 'string',
+          required: true,
+        },
+      },
       func: checkStockPrice,
     },
     getHistoricalPrices: {
       description: 'Return historical prices for a stock.',
-      parameters: z.string(),
+      parameters: {
+        symbol: {
+          description: 'The stock symbol to get historical prices for.',
+          type: 'string',
+          required: true,
+        },
+      },
       func: getHistoricalPrices,
     },
   };

@@ -20,12 +20,24 @@ invoked to perform some external action.
 const tools = {
   checkStockPrice: {
     description: 'Check the price of a stock.',
-    parameters: z.string(),
+    parameters: {
+      symbol: {
+        description: 'The symbol of the stock to get price for.',
+        type: 'string',
+        required: true,
+      },
+    },
     func: checkStockPrice,
   },
   getHistoricalPrices: {
     description: 'Return historical prices for a stock.',
-    parameters: z.string(),
+    parameters: {
+      symbol: {
+        description: 'The symbol of the stock to get price for.',
+        type: 'string',
+        required: true,
+      },
+    },
     func: getHistoricalPrices,
   },
 };
@@ -61,7 +73,7 @@ return a static string. Here's the `checkStockPrice` function:
 ```tsx filename="packages/tutorial/src/tools.tsx"
 import yahooFinance from 'yahoo-finance2';
 
-async function checkStockPrice(symbol: string) {
+async function checkStockPrice({ symbol }: { symbol: string }) {
   const quote = await yahooFinance.quote(symbol);
   return quote.regularMarketPrice ?? 'Unknown';
 }
@@ -85,7 +97,7 @@ fetches a list of prices and generates a graph:
 ```tsx filename="packages/tutorial/src/tools.tsx"
 import asciichart from 'asciichart';
 
-async function getHistoricalPrices(symbol: string) {
+async function getHistoricalPrices({ symbol }: { symbol: string }) {
   const endTime = new Date();
   const startTime = new Date();
   startTime.setMonth(endTime.getMonth() - 1);
