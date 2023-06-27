@@ -94,7 +94,6 @@ export function toStreamResponse(renderable: Renderable): Response {
       status: 200,
       headers: {
         'Content-Type': 'text/event-stream',
-        'x-powered-by': 'ai-jsx',
       },
     }
   );
