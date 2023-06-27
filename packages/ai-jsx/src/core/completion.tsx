@@ -3,6 +3,7 @@
  * @packageDocumentation
  */
 
+import { ChatCompletionResponseMessage } from 'openai';
 import * as AI from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
@@ -201,6 +202,23 @@ export function UserMessage({ children }: { name?: string; children: Node }) {
  */
 export function AssistantMessage({ children }: { children: Node }) {
   return children;
+}
+
+export function ConversationHistory({ messages }: { messages: ChatCompletionResponseMessage[] }) {
+  return messages.map((message) => {
+    switch (message.role) {
+      case 'system':
+        return <SystemMessage>{message.content}</SystemMessage>;
+      case 'user':
+        return <UserMessage>{message.content}</UserMessage>;
+      case 'assistant':
+        return <AssistantMessage>{message.content}</AssistantMessage>;
+      case 'function':
+        return (
+          <FunctionCall name={message.function_call!.name!} args={JSON.parse(message.function_call!.arguments!)} />
+        );
+    }
+  });
 }
 
 /**
