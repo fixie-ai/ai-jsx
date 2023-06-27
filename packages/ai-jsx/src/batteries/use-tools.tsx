@@ -6,7 +6,7 @@
 
 import { ChatCompletion, FunctionParameter, SystemMessage, UserMessage } from '../core/completion.js';
 import { Node, RenderContext } from '../index.js';
-import z, { ZodTypeAny } from 'zod';
+import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 

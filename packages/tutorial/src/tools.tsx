@@ -1,6 +1,5 @@
 import * as AI from 'ai-jsx';
 import { UseTools } from 'ai-jsx/batteries/use-tools';
-import z from 'zod';
 import yahooFinance from 'yahoo-finance2';
 import asciichart from 'asciichart';
 import enquirer from 'enquirer';

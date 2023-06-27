@@ -1,5 +1,4 @@
 import * as math from 'mathjs';
-import { z } from 'zod';
 import { UseTools, Tool } from 'ai-jsx/batteries/use-tools';
 import { showInspector } from 'ai-jsx/core/inspector';
 
