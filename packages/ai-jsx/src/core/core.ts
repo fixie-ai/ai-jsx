@@ -8,6 +8,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { BoundLogger, NoOpLogImplementation, LogImplementation, Logger, PinoLogger } from './log.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 
 /** A context that is used to render an AI.JSX component. */
 export interface ComponentContext extends RenderContext {
@@ -21,6 +22,12 @@ export type Component<P> = (props: P, context: ComponentContext) => Renderable;
  * A Literal represents a literal value.
  */
 export type Literal = string | number | null | undefined | boolean;
+
+/**
+ * A value that can be yielded by a component to indicate that each yielded value should
+ * be appended to, rather than replace, the previously yielded values.
+ */
+export const AppendOnlyStream = Symbol('AI.appendOnlyStream');
 
 const attachedContext = Symbol('AI.attachedContext');
 /**
@@ -54,7 +61,10 @@ export type Node = Element<any> | Literal | Node[] | IndirectNode;
  * A RenderableStream represents an async iterable that yields {@link Renderable}s.
  */
 export interface RenderableStream {
-  [Symbol.asyncIterator]: () => AsyncIterator<Renderable, Renderable>;
+  [Symbol.asyncIterator]: () => AsyncIterator<
+    Renderable | typeof AppendOnlyStream,
+    Renderable | typeof AppendOnlyStream
+  >;
 }
 
 /**
@@ -75,7 +85,8 @@ export type PartiallyRendered = string | Element<any>;
 export type StreamRenderer = (
   renderContext: RenderContext,
   renderable: Renderable,
-  shouldStop: ElementPredicate
+  shouldStop: ElementPredicate,
+  appendOnly: boolean
 ) => AsyncGenerator<PartiallyRendered[], PartiallyRendered[]>;
 
 const contextKey = Symbol('AI.contextKey');
@@ -100,6 +111,11 @@ interface RenderOpts<TIntermediate = string, TFinal = string> {
    * @returns The value to yield.
    */
   map?: (frame: TFinal) => TIntermediate;
+
+  /**
+   * Indicates that the stream should be append-only.
+   */
+  appendOnly?: boolean;
 }
 
 /**
@@ -243,12 +259,14 @@ export const LoggerContext = createContext<LogImplementation>(new NoOpLogImpleme
 async function* renderStream(
   context: RenderContext,
   renderable: Renderable,
-  shouldStop: ElementPredicate
+  shouldStop: ElementPredicate,
+  appendOnly: boolean
 ): AsyncGenerator<PartiallyRendered[], PartiallyRendered[]> {
   // If we recurse, propagate the stop function but ensure that intermediate values are preserved.
   const recursiveRenderOpts: RenderOpts<PartiallyRendered[], PartiallyRendered[]> = {
     stop: shouldStop,
     map: (frame) => frame,
+    appendOnly,
   };
 
   if (typeof renderable === 'string') {
@@ -297,7 +315,22 @@ async function* renderStream(
       return inProgressRender;
     });
 
-    const currentValue = () => inProgressRenders.flatMap((r) => r.currentValue);
+    const currentValue = () => {
+      if (appendOnly) {
+        let currentValue = [] as PartiallyRendered[];
+        for (const inProgressRender of inProgressRenders) {
+          currentValue = currentValue.concat(inProgressRender.currentValue);
+          if (inProgressRender.currentPromise !== null) {
+            // This node is still rendering, so we can't include any ones beyond it.
+            break;
+          }
+        }
+
+        return currentValue;
+      }
+
+      return inProgressRenders.flatMap((r) => r.currentValue);
+    };
     const remainingPromises = () => inProgressRenders.flatMap((r) => (r.currentPromise ? [r.currentPromise] : []));
 
     // Wait for each sub-generator to yield once.
@@ -336,10 +369,7 @@ async function* renderStream(
     try {
       return yield* renderingContext.render(
         renderable.render(renderingContext, new BoundLogger(logImpl, renderId, renderable)),
-        {
-          stop: shouldStop,
-          map: (frame) => frame,
-        }
+        recursiveRenderOpts
       );
     } catch (ex) {
       logImpl.logException(renderable, renderId, ex);
@@ -350,18 +380,35 @@ async function* renderStream(
   if (Symbol.asyncIterator in renderable) {
     // Exhaust the iterator.
     const iterator = renderable[Symbol.asyncIterator]();
+    let lastValue = [] as PartiallyRendered[];
+    let isAppendOnlyStream = false;
     while (true) {
       const next = await iterator.next();
-      const frameValue = yield* context.render(next.value, recursiveRenderOpts);
-      if (next.done) {
-        return frameValue;
+      if (next.value === AppendOnlyStream) {
+        isAppendOnlyStream = true;
+      } else if (isAppendOnlyStream) {
+        const renderResult = context.render(next.value, recursiveRenderOpts);
+        for await (const frame of renderResult) {
+          yield lastValue.concat(frame);
+        }
+        lastValue = lastValue.concat(await renderResult);
+      } else {
+        lastValue = yield* context.render(next.value, recursiveRenderOpts);
       }
-      yield frameValue;
+
+      if (next.done) {
+        return lastValue;
+      }
+      yield lastValue;
     }
   }
 
   if (!('then' in renderable)) {
-    throw new Error(`AI.JSX bug: unexpected renderable type: ${JSON.stringify(renderable)}`);
+    throw new AIJSXError(
+      `Unexpected renderable type: ${JSON.stringify(renderable)}`,
+      ErrorCode.UnrenderableType,
+      'ambiguous'
+    );
   }
   // N.B. Because RenderResults are both AsyncIterable _and_ PromiseLikes, this means that an async component that returns the result
   // of a render call will not stream; it will effectively be `await`ed by default.
@@ -394,7 +441,7 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
       const generator = (async function* () {
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         const shouldStop = (opts?.stop || (() => false)) as ElementPredicate;
-        const generatorToWrap = render(context, renderable, shouldStop);
+        const generatorToWrap = render(context, renderable, shouldStop, Boolean(opts?.appendOnly));
         while (true) {
           const next = await generatorToWrap.next();
           const value = opts?.stop ? (next.value as TFinal) : (next.value.join('') as TFinal);
@@ -422,8 +469,10 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
         then: (onFulfilled?, onRejected?) => {
           if (promiseResult === null) {
             if (hasReturnedGenerator) {
-              throw new Error(
-                "The RenderResult's generator must be fully exhausted before you can await the final result."
+              throw new AIJSXError(
+                "The RenderResult's generator must be fully exhausted before you can await the final result.",
+                ErrorCode.GeneratorMustBeExhausted,
+                'ambiguous'
               );
             }
 
@@ -444,9 +493,17 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
 
         [Symbol.asyncIterator]: () => {
           if (hasReturnedGenerator) {
-            throw new Error("The RenderResult's generator was already returned and cannot be returned again.");
+            throw new AIJSXError(
+              "The RenderResult's generator was already returned and cannot be returned again.",
+              ErrorCode.GeneratorCannotBeUsedTwice,
+              'ambiguous'
+            );
           } else if (promiseResult !== null) {
-            throw new Error('The RenderResult was already awaited and can no longer be used as an iterable.');
+            throw new AIJSXError(
+              'The RenderResult was already awaited and can no longer be used as an iterable.',
+              ErrorCode.GeneratorCannotBeUsedAsIterableAfterAwaiting,
+              'ambiguous'
+            );
           }
 
           hasReturnedGenerator = true;

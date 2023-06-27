@@ -75,9 +75,9 @@ export function WeightsAndBiasesTracer(
 
   return AI.withContext(
     <>{children}</>,
-    wrapRender((r) => (renderContext, renderable, shouldStop) => {
+    wrapRender((r) => (renderContext, renderable, shouldStop, appendOnly) => {
       if (!AI.isElement(renderable)) {
-        return r(renderContext, renderable, shouldStop);
+        return r(renderContext, renderable, shouldStop, appendOnly);
       }
 
       const newSpan = {
@@ -105,7 +105,7 @@ export function WeightsAndBiasesTracer(
         async function* gen() {
           const currentSpan = currentSpanStorage.getStore();
           try {
-            const result = yield* r(renderContext, renderable, shouldStop);
+            const result = yield* r(renderContext, renderable, shouldStop, appendOnly);
             if (currentSpan) {
               currentSpan.status_code = StatusCode.SUCCESS;
             }

@@ -4,7 +4,7 @@
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://ai-jsx.com",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "volta": {
     "extends": "../../package.json"
   },
@@ -207,6 +207,16 @@
         "default": "./dist/cjs/react/jsx-runtime.cjs"
       }
     },
+    "./react/map": {
+      "import": {
+        "types": "./dist/esm/react/map.d.ts",
+        "default": "./dist/esm/react/map.js"
+      },
+      "require": {
+        "types": "./dist/cjs/react/map.d.cts",
+        "default": "./dist/cjs/react/map.cjs"
+      }
+    },
     "./react/completion": {
       "import": {
         "types": "./dist/esm/react/completion.d.ts",
@@ -252,6 +262,7 @@
     "csv-stringify": "^6.4.0",
     "eslint": "^8.40.0",
     "eslint-config-nth": "^2.0.1",
+    "eslint-plugin-jest": "^27.2.2",
     "globby": "^13.1.4",
     "jest": "^29.5.0",
     "load-json-file": "^7.0.1",
@@ -267,11 +278,12 @@
   "type": "module",
   "scripts": {
     "create-entry-points": "git clean -fd && rm -rf scripts/dist && tsc -p scripts && yarn build && node scripts/dist/create-entry-points.js",
-    "build": "rm -rf dist && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json && node scripts/move-cjs-to-dist.js",
+    "build": "rm -rf dist && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json && node scripts/move-cjs-to-dist.js && tsc -p test/tsconfig.json",
     "prepack": "yarn create-entry-points",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "test": "jest",
+    "unit": "yarn build && jest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "view-logs": "cat ai-jsx.log | pino-pretty"
   },

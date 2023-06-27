@@ -30,7 +30,7 @@ function OpenTelemetryTracer(props: { children: AI.Node }, { wrapRender }: AI.Co
     <>{props.children}</>,
     wrapRender((r) => {
       const tracer = opentelemetry.trace.getTracer('ai.jsx');
-      return (renderContext, renderable, shouldStop) =>
+      return (renderContext, renderable, shouldStop, appendOnly) =>
         AI.isElement(renderable)
           ? tracer.startActiveSpan(
               `<${renderable.tag.name}>`,
@@ -38,7 +38,7 @@ function OpenTelemetryTracer(props: { children: AI.Node }, { wrapRender }: AI.Co
               (span: opentelemetry.Span) => {
                 async function* gen() {
                   try {
-                    return yield* r(renderContext, renderable, shouldStop);
+                    return yield* r(renderContext, renderable, shouldStop, appendOnly);
                   } finally {
                     span.end();
                   }
@@ -47,7 +47,7 @@ function OpenTelemetryTracer(props: { children: AI.Node }, { wrapRender }: AI.Co
                 return bindAsyncGenerator(gen());
               }
             )
-          : r(renderContext, renderable, shouldStop);
+          : r(renderContext, renderable, shouldStop, appendOnly);
     })
   );
 }

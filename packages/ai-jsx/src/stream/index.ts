@@ -1,27 +1,47 @@
-import { PartiallyRendered, Renderable, createRenderContext } from '../index.js';
+import {
+  isElement as isAIElement,
+  Element,
+  PartiallyRendered,
+  RenderResult,
+  Renderable,
+  isIndirectNode,
+  getReferencedNode,
+  createRenderContext,
+} from '../index.js';
+import { Jsonifiable } from 'type-fest';
 
-export type StreamEvent =
+/** @hidden */
+export type StreamEvent<T> =
   | {
       type: 'all';
-      content: PartiallyRendered[];
+      content: T[];
     }
-  | { type: 'replace'; index: number; content: PartiallyRendered }
-  | { type: 'multiple'; events: StreamEvent[] }
-  | { type: 'append'; index: number; content: string }
+  | { type: 'replace'; index: number; content: T }
+  | { type: 'multiple'; events: StreamEvent<T>[] }
+  | { type: 'append'; index: number; content: T }
   | { type: 'complete' };
+
+/** @hidden */
+export type ElementSerializer = (element: Element<any>) => Jsonifiable;
+
+/** @hidden */
+export type Deserialized<T> = string | T | Deserialized<T>[];
+
+/** @hidden */
+export type ElementDeserializer<T> = (parsed: Jsonifiable) => T;
 
 /**
  * Render a {@link Renderable} to a stream of {@link StreamEvent}s.
  */
-async function* renderToJsonEvents(renderable: Renderable): AsyncGenerator<StreamEvent, StreamEvent> {
-  const renderContext = createRenderContext();
-  const renderResult = renderContext.render(renderable, { map: (x) => x, stop: () => false });
+async function* renderToJsonEvents(
+  renderResult: RenderResult<PartiallyRendered[], PartiallyRendered[]>
+): AsyncGenerator<StreamEvent<PartiallyRendered>, StreamEvent<PartiallyRendered>> {
   const asyncIterator = renderResult[Symbol.asyncIterator]();
   let lastFrame = null as PartiallyRendered[] | null;
   while (true) {
     const { done, value: frame } = await asyncIterator.next();
     if (lastFrame !== null && lastFrame.length === frame.length) {
-      const deltas = [] as StreamEvent[];
+      const deltas = [] as StreamEvent<PartiallyRendered>[];
       for (let i = 0; i < frame.length; ++i) {
         const previous = lastFrame[i];
         const current = frame[i];
@@ -37,7 +57,6 @@ async function* renderToJsonEvents(renderable: Renderable): AsyncGenerator<Strea
           continue;
         }
 
-        // Replace the index.
         deltas.push({ type: 'replace', index: i, content: current });
       }
 
@@ -47,7 +66,7 @@ async function* renderToJsonEvents(renderable: Renderable): AsyncGenerator<Strea
         yield { type: 'multiple', events: deltas };
       }
     } else {
-      yield { type: 'all', content: frame } as StreamEvent;
+      yield { type: 'all', content: frame };
     }
 
     lastFrame = frame;
@@ -56,14 +75,42 @@ async function* renderToJsonEvents(renderable: Renderable): AsyncGenerator<Strea
     }
   }
 
-  return { type: 'complete' } as StreamEvent;
+  return { type: 'complete' };
 }
 
 /**
- * Generate a stream of SSE events from a {@link Renderable}.
+ * Constructs a JSON replacer from an {@link ElementSerializer}. The serializer
+ * will only be invoked for AI.JSX Elements. More generally, values with
+ * AI.JSX projections (such as combined AI.JSX/React elements) will not be
+ * serialized -- only their AI.JSX projections will be.
+ * @param serializer A function that can serialize an AI.JSX element.
+ * @returns A replacer function that can be passed to JSON.stringify.
  */
-export function toEventStream(renderable: Renderable): ReadableStream<StreamEvent> {
-  const generator = renderToJsonEvents(renderable);
+function jsonReplacerFromSerializer(serializer: ElementSerializer) {
+  return (key: string, value: unknown) => {
+    let currentValue: unknown = value;
+
+    if (currentValue !== null && typeof currentValue === 'object') {
+      while (isIndirectNode(currentValue)) {
+        currentValue = getReferencedNode(currentValue);
+      }
+
+      if (isAIElement(currentValue)) {
+        return serializer(currentValue);
+      }
+    }
+
+    return currentValue;
+  };
+}
+
+/**
+ * Generate a stream of JSON-serialized events from a {@link RenderResult}.
+ */
+export function toEventStream(
+  renderResult: RenderResult<PartiallyRendered[], PartiallyRendered[]>
+): ReadableStream<StreamEvent<PartiallyRendered>> {
+  const generator = renderToJsonEvents(renderResult);
   return new ReadableStream({
     async pull(controller) {
       const next = await generator.next();
@@ -80,10 +127,11 @@ export function toEventStream(renderable: Renderable): ReadableStream<StreamEven
  * content as SSE events.
  */
 export function toStreamResponse(renderable: Renderable): Response {
+  const renderResult = createRenderContext().render(renderable, { stop: () => false, map: (x) => x });
   return new Response(
-    toEventStream(renderable)
+    toEventStream(renderResult)
       .pipeThrough(
-        new TransformStream<StreamEvent, string>({
+        new TransformStream<StreamEvent<PartiallyRendered>, string>({
           transform(streamEvent, controller) {
             controller.enqueue(`data: ${JSON.stringify(streamEvent)}\n\n`);
           },
@@ -99,13 +147,61 @@ export function toStreamResponse(renderable: Renderable): Response {
   );
 }
 
-function streamResponseParser() {
+/** @hidden */
+export function toSerializedStreamResponse(
+  renderResult: RenderResult<PartiallyRendered[], PartiallyRendered[]>,
+  serializer: ElementSerializer
+): Response {
+  const jsonReplacer = jsonReplacerFromSerializer(serializer);
+  return new Response(
+    toEventStream(renderResult)
+      .pipeThrough(
+        new TransformStream<StreamEvent<PartiallyRendered>, string>({
+          transform(streamEvent, controller) {
+            controller.enqueue(`data: ${JSON.stringify(streamEvent, jsonReplacer)}\n\n`);
+          },
+        })
+      )
+      .pipeThrough(new TextEncoderStream()),
+    {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/event-stream',
+      },
+    }
+  );
+}
+
+/**
+ * Converts a {@link Renderable} to a {@link ReadableStream} that will stream the rendered
+ * content as an append-only UTF-8 encoded text stream. Compared to {@link toStreamResponse},
+ * this allows the response to be easily consumed by other frameworks (such as https://sdk.vercel.ai/)
+ * but does not support UI components or concurrently streaming multiple parts of the tree.
+ */
+export function toTextStream(renderable: Renderable): ReadableStream<Uint8Array> {
+  let previousValue = '';
+  const generator = createRenderContext().render(renderable, { appendOnly: true })[Symbol.asyncIterator]();
+  return new ReadableStream({
+    async pull(controller) {
+      const next = await generator.next();
+      const delta = next.value.slice(previousValue.length);
+      controller.enqueue(delta);
+      previousValue = next.value;
+
+      if (next.done) {
+        controller.close();
+      }
+    },
+  }).pipeThrough(new TextEncoderStream());
+}
+
+function streamResponseParser<T>(deserializer: ElementDeserializer<T>) {
   const SSE_PREFIX = 'data: ';
   const SSE_TERMINATOR = '\n\n';
 
   let bufferedContent = '';
 
-  return new TransformStream<string, StreamEvent>({
+  return new TransformStream<string, StreamEvent<T>>({
     transform(chunk, controller) {
       const textToParse = bufferedContent + chunk;
       const eventsWithExtra = textToParse.split(SSE_TERMINATOR);
@@ -119,17 +215,17 @@ function streamResponseParser() {
           continue;
         }
         const text = event.slice(SSE_PREFIX.length);
-        controller.enqueue(JSON.parse(text));
+        controller.enqueue(JSON.parse(text, (key: string, value: Jsonifiable) => deserializer(value) || value));
       }
     },
   });
 }
 
-function assembleFromStreamEvents() {
-  let previousFrame = [] as PartiallyRendered[];
+function assembleFromStreamEvents<T>() {
+  let previousFrame = [] as (T | string)[];
 
   // Applies the delta event to the previous frame to update it.
-  function applyEvent(event: StreamEvent): boolean {
+  function applyEvent(event: StreamEvent<T | string>): boolean {
     switch (event.type) {
       case 'all':
         previousFrame = event.content;
@@ -147,7 +243,7 @@ function assembleFromStreamEvents() {
     }
   }
 
-  return new TransformStream<StreamEvent, PartiallyRendered[]>({
+  return new TransformStream<StreamEvent<T>, Deserialized<T>>({
     transform(event, controller) {
       if (applyEvent(event)) {
         controller.enqueue(previousFrame.slice());
@@ -162,9 +258,12 @@ function assembleFromStreamEvents() {
  * @param stream The SSE response stream of bytes.
  * @returns A stream of AI.JSX frames.
  */
-export function fromStreamResponse(stream: ReadableStream<Uint8Array>): ReadableStream<PartiallyRendered[]> {
+export function fromStreamResponse<T>(
+  stream: ReadableStream<Uint8Array>,
+  deserializer: ElementDeserializer<T>
+): ReadableStream<Deserialized<T>> {
   return stream
     .pipeThrough(new TextDecoderStream())
-    .pipeThrough(streamResponseParser())
+    .pipeThrough(streamResponseParser(deserializer))
     .pipeThrough(assembleFromStreamEvents());
 }

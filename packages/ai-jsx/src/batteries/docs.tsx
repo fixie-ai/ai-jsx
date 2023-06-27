@@ -14,6 +14,7 @@ import { Jsonifiable } from 'type-fest';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
 import { Node } from '../index.js';
 import { getEnvVar } from '../lib/util.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 
 /**
  * A raw document loaded from an arbitrary source that has not yet been parsed.
@@ -70,7 +71,12 @@ function defaultParser<DocumentMetadata extends Jsonifiable = Jsonifiable>(
     return Promise.resolve({ pageContent: [content], name: raw.name });
     // TODO: Add support for other mime types.
   }
-  throw new Error(`Unsupported mime type: ${raw.mimeType}`);
+  throw new AIJSXError(
+    `Unsupported mime type: ${raw.mimeType}`,
+    ErrorCode.UnsupportedMimeType,
+    'user',
+    _.pick(raw, ['mimeType'])
+  );
 }
 
 /** A non-overlapping subdivision of a corpus' documents used for loading. */
@@ -419,9 +425,14 @@ export interface CorpusStats {
   loadingError?: Error;
 }
 
-class CorpusNotReadyError extends Error {
+class CorpusNotReadyError extends AIJSXError {
   constructor(state: CorpusLoadingState) {
-    super(`Corpus is not ready. It's in state ${state}. Call load() to load documents.`);
+    super(
+      `Corpus is not ready. It's in state ${state}. Call load() to load documents.`,
+      ErrorCode.CorpusNotReady,
+      'user',
+      { state }
+    );
   }
 }
 
@@ -610,8 +621,10 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
     if (!fixieApiKey) {
       this.fixieApiKey = getEnvVar('FIXIE_API_KEY', false);
       if (!this.fixieApiKey) {
-        throw new Error(
-          'You must provide a Fixie API key to access Fixie corpora. Find yours at https://app.fixie.ai/profile.'
+        throw new AIJSXError(
+          'You must provide a Fixie API key to access Fixie corpora. Find yours at https://app.fixie.ai/profile.',
+          ErrorCode.MissingFixieAPIKey,
+          'user'
         );
       }
     }
@@ -628,7 +641,11 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
       body: JSON.stringify({ query_string: query, chunk_limit: params?.limit }),
     });
     if (response.status !== 200) {
-      throw new Error(`Fixie API returned status ${response.status}: ${await response.text()}`);
+      throw new AIJSXError(
+        `Fixie API returned status ${response.status}: ${await response.text()}`,
+        ErrorCode.FixieStatusNotOk,
+        'runtime'
+      );
     }
     const apiResults = await response.json();
     return apiResults.chunks.map((result: any) => ({
@@ -688,11 +705,8 @@ async function searchVectorStore<ChunkMetadata extends Jsonifiable = Jsonifiable
   query: string,
   params?: { limit?: number; score_threshold?: number }
 ): Promise<ScoredChunk<ChunkMetadata>[]> {
-  const scoredLcDocs = await vectorStore.similaritySearchWithScore(
-    query,
-    params?.limit ?? defaultLangchainChunkLimit,
-    params
-  );
+  const k = params?.limit ?? defaultLangchainChunkLimit;
+  const scoredLcDocs = await vectorStore.similaritySearchWithScore(query, k, _.omit(params, 'limit'));
   return scoredLcDocs.map((lcDocAndScore) => {
     const lcDoc = lcDocAndScore[0];
     return {

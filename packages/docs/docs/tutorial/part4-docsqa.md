@@ -11,7 +11,7 @@ using the LLM.
 
 Here's an example of how this will look in your app:
 
-```tsx filename="packages/tutorial/src/part4.tsx"
+```tsx filename="packages/tutorial/src/docsqa.tsx"
 <DocsQA question="When did the storm occur?" corpus={corpus} chunkLimit={5} chunkFormatter={GetChunk} />
 ```
 
@@ -26,6 +26,7 @@ that are individually processed by the LLM. Each chunk is passed into the LLM,
 and the _text embedding_ representing the chunk is computed. (For more details on text
 embeddings, check out the [OpenAI text embeddings API docs](https://platform.openai.com/docs/guides/embeddings).) The text embedding is a multidimensional vector, calculated by the LLM,
 representing the semantic content of the chunk. A _corpus_ consists of a set of document chunks and their corresponding embedding vectors.
+For a more detailed explanation of how a corpus is prepared and used, see the guide [DocsQA: Grounding Answers with a Source of Truth](../guides/docsqa.md#overview).
 
 When a question is posed to the corpus, we first pass the question to the LLM and extract
 its own embedding vector. The chunks with the highest cosine similarity to the question
@@ -49,7 +50,7 @@ The first step is to create a corpus that you want the LLM to answer questions a
 In this example, we'll create a corpus that consists of a single
 Wikipedia article, one about [Hurricane Katrina](https://en.wikipedia.org/wiki/Hurricane_Katrina).
 
-```tsx filename="packages/tutorial/src/part4.tsx"
+```tsx filename="packages/tutorial/src/docsqa.tsx"
 // Fetch the HTML for the Wikipedia article.
 const URL = 'https://en.wikipedia.org/wiki/Hurricane_Katrina';
 const html = await fetch(URL).then((response) => response.text());
@@ -81,7 +82,7 @@ can take a while, but for this demo we `await` the result.
 
 Once we have a corpus, we use the `<DocsQA>` component to query it:
 
-```tsx filename="packages/tutorial/src/part4.tsx"
+```tsx filename="packages/tutorial/src/docsqa.tsx"
 function GetChunk({ chunk }: { chunk: ScoredChunk }) {
   return chunk.chunk.content;
 }
@@ -108,3 +109,63 @@ The `<GetChunk>` component is used to format each document chunk as it is presen
 to the LLM. In this case, we just return the raw text of the chunk, but if we wanted
 to include some additional metadata, or transformed the chunks in some way before
 processing them, we could have done so.
+
+## Using a Pinecone database
+
+Until now, we have been using an in-memory Corpus, which is good for a demo, but in practice you might want to use a vector database like [Pinecone](https://www.pinecone.io/) or [Chroma](https://www.trychroma.com/) instead. A vector database allows you to scale to much larger datasets.
+
+To do so, you can use [`LangchainCorpus`](../api/classes/batteries_docs.LangChainCorpus) to integrate with any [VectorStore from LangChain.js](https://js.langchain.com/docs/modules/indexes/vector_stores/integrations/):
+
+```tsx
+const corpus = new LangchainCorpus(await getVectorStore());
+```
+
+Here is an example where we build a DocsQA component from an existing Pinecone index:
+
+```tsx
+import { PineconeClient } from '@pinecone-database/pinecone';
+import { PineconeStore } from 'langchain/vectorstores/pinecone';
+import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
+
+const client = new PineconeClient();
+await client.init({
+  apiKey: process.env.PINECONE_API_KEY,
+  environment: process.env.PINECONE_ENVIRONMENT,
+});
+
+const vectorStore = await PineconeStore.fromExistingIndex(new OpenAIEmbeddings(), {
+  pineconeIndex: client.Index(process.env.PINECONE_INDEX);,
+  namespace: process.env.PINECONE_NAMESPACE,
+});
+```
+
+Once we have a [`VectorStore`](https://js.langchain.com/docs/modules/indexes/vector_stores/) object, we wrap it with a [`LangchainCorpus`](../api/classes/batteries_docs.LangChainCorpus):
+
+```tsx
+const corpus = new LangchainCorpus(vectorStore);
+```
+
+The above assumes that the vector store is already populated.
+To load documents, you can use a [`LoadableLangchainCorpus`](../api/classes/batteries_docs.LoadableLangchainCorpus):
+
+```tsx
+const corpus = new LoadableLangchainCorpus(vectorStore, staticLoader(docs), makeChunker(600, 100));
+// Loading docs into the Piencone database.
+await corpus.load();
+```
+
+Once you have the `corpus` object, you can ask questions from it just as before:
+
+```tsx
+function App() {
+  return (
+    <>
+      <DocsQA question="What was Hurricane Katrina?" corpus={corpus} chunkLimit={5} chunkFormatter={GetChunk} />
+      {'\n\n'}
+      <DocsQA question="Which dates did the storm occur?" corpus={corpus} chunkLimit={5} chunkFormatter={GetChunk} />
+    </>
+  );
+}
+```
+
+<!-- Alternatively, [Fixie](https://www.fixie.ai) also provides a fully-managed Corpus solution you could drop in instead. -->

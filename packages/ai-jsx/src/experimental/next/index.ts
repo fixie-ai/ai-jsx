@@ -3,6 +3,9 @@ import 'server-only';
 import { LogImplementation } from '../../core/log.js';
 import * as AI from '../../react/core.js';
 import { asJsxBoundary } from '../../react/jsx-boundary.js';
+import { AIJSXError, ErrorCode } from '../../core/errors.js';
+import { toSerializedStreamResponse } from '../../stream/index.js';
+import { ComponentMap } from '../../react/map.js';
 export * from '../../react/core.js';
 import { Image } from '../../core/image-gen.js';
 import _ from 'lodash';
@@ -19,8 +22,12 @@ function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.React
         return unwrap(partiallyRendered);
       }
     }
-    const expectedElements = _.map(specialReactElements, 'tag').join(', ');
-    throw new Error(`AI.jsx internal error: unwrapReact only expects to see ${expectedElements} or strings.`);
+    const expectedElements = _.map(specialReactElements, 'tag').join(' or ');
+    throw new AIJSXError(
+      `unwrapReact only expects to see ${expectedElements} elements or strings.`,
+      ErrorCode.UnexpectedRenderType,
+      'internal'
+    );
   }
 
   return partiallyRendered;
@@ -148,3 +155,8 @@ export const jsx = asJsxBoundary(function jsx(
   }) as JSX.Element;
 });
 export const JSX = jsx;
+
+export function toReactStream(componentMap: ComponentMap<any>, renderable: AI.Renderable): Response {
+  const renderResult = AI.createRenderContext().render(renderable, { stop: (e) => e.tag == AI.React, map: (x) => x });
+  return toSerializedStreamResponse(renderResult, AI.createElementSerializer(componentMap));
+}

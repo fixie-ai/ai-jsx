@@ -97,14 +97,20 @@ In AI.JSX, this looks like:
 /**
  * Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".
  */
-async function activateScene(sceneName: string) {}
+async function activateScene({sceneName}: {sceneName: string}) {}
 
 // Describe to the LLM what's available
 import z from 'zod';
 const tools: Record<string, Tool> = {
   activateScene: {
     description: `Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".`,
-    parameters: z.tuple([z.string()]),
+    parameters: parameters: {
+      sceneName: {
+        description: "The scene to activate the lighting in.",
+        type: "string",
+        required: true,
+      },
+    },
     func: activateScene,
   },
 };

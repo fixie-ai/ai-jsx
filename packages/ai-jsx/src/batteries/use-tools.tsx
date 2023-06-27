@@ -4,14 +4,15 @@
  * @packageDocumentation
  */
 
-import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
+import { ChatCompletion, FunctionParameter, SystemMessage, UserMessage } from '../core/completion.js';
 import { Node, RenderContext } from '../index.js';
-import z, { ZodTypeAny } from 'zod';
+import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 
 const toolChoiceSchema = z.object({
   nameOfTool: z.string(),
-  parameters: z.array(z.any()),
+  parameters: z.record(z.string(), z.any()),
   responseToUser: z.string(),
 });
 export type ToolChoice = z.infer<typeof toolChoiceSchema> | null;
@@ -23,7 +24,7 @@ function ChooseTools(props: Pick<UseToolsProps, 'tools' | 'userData' | 'query'>)
         You are an expert agent who knows how to use tools. You can use the following tools:
         {Object.entries(props.tools).map(([toolName, tool]) => (
           <>
-            {toolName}: Description: {tool.description}. Schema: {JSON.stringify(zodToJsonSchema(tool.parameters))}.
+            {toolName}: Description: {tool.description}. Schema: {JSON.stringify(tool.parameters)}.
           </>
         ))}
         The user will ask you a question. Pick the tool that best addresses what they're looking for. Which tool do you
@@ -54,16 +55,24 @@ async function InvokeTool(
     }
     toolChoiceResult = toolChoiceSchema.parse(parsedJson);
   } catch (e: any) {
-    const error = new Error(
-      `Failed to parse LLM output into a tool choice: ${e.message}. Output: ${toolChoiceLLMOutput}`
+    const error = new AIJSXError(
+      `Failed to parse LLM output into a tool choice: ${e.message}. Output: ${toolChoiceLLMOutput}`,
+      ErrorCode.ModelOutputCouldNotBeParsedForTool,
+      'runtime',
+      { toolChoiceLLMOutput }
     );
     throw error;
   }
   if (!(toolChoiceResult.nameOfTool in props.tools)) {
-    throw new Error(`LLM hallucinated a tool that does not exist: ${toolChoiceResult.nameOfTool}.`);
+    throw new AIJSXError(
+      `LLM hallucinated a tool that does not exist: ${toolChoiceResult.nameOfTool}.`,
+      ErrorCode.ModelHallucinatedTool,
+      'runtime',
+      { toolChoiceResult }
+    );
   }
   const tool = props.tools[toolChoiceResult.nameOfTool];
-  const toolResult = await tool.func(...toolChoiceResult.parameters);
+  const toolResult = await tool.func(toolChoiceResult.parameters);
 
   // TDOO: Restore this once we have the logger attached to the render context.
   // log.info({ toolChoice: toolChoiceResult }, 'Invoking tool');
@@ -90,9 +99,9 @@ export interface Tool {
   description: string;
 
   /**
-   * A Zod schema describing the parameters the tool takes.
+   * A map of parameter names to their description and type.
    */
-  parameters: ZodTypeAny;
+  parameters: Record<string, FunctionParameter>;
 
   /**
    * A function to invoke the tool.
@@ -135,33 +144,41 @@ export interface UseToolsProps {
  *
  * @example
  * ```tsx
- *  async function turnLightsOn() {}
- *  async function turnLightsOff() {}
+ *  async function turnLightsOn() { ... Code to turn lights on ... }
+ *  async function turnLightsOff() { ... Code to turn lights off ... }
  *  // Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".
- *  async function activeScene(sceneName: string) {}
+ *  async function activeScene({sceneName}: {sceneName: string}) { ... Code to activate a scene ... }
  *
  *  import z from 'zod';
  *  const tools: Record<string, Tool> = {
  *    turnLightsOn: {
  *      description: "Turn the lights on in the user's home",
- *      parameters: z.tuple([]),
+ *      parameters: {},
  *      func: turnLightsOn,
  *    },
  *    turnLightsOff: {
  *      description: "Turn the lights off in the user's home",
- *      parameters: z.tuple([]),
+ *      parameters: {},
  *      func: turnLightsOff,
  *    },
  *    activeScene: {
  *      description: `Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".`,
- *      parameters: z.tuple([z.string()]),
+ *      parameters: {
+ *        sceneName: {
+ *          description: "The scene to activate the lighting in.",
+ *          type: "string",
+ *          required: true,
+ *        },
+ *      },
  *      func: activeScene,
  *    },
  *  };
  *
- * <UseTools tools={tools} fallback="Politely explain you aren't able to help with that request.">
- *    You control a home automation system. The user has requested you take some action in their home: "{userRequest}". Take
- *    an action, then generate a response telling the user what you're doing.
+ * <UseTools
+ *    tools={tools}
+ *    fallback="Politely explain you aren't able to help with that request."
+ *    query={ "You control a home automation system. The user has requested you take some
+ *       action in their home: " + userRequest }
  * </UseTools>;
  * ```
  *

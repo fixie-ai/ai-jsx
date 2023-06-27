@@ -7,6 +7,7 @@ import * as ReactModule from 'react';
 import * as AI from '../index.js';
 import * as AIR from '../react/core.js';
 import { Node, Component, RenderContext } from '../index.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { DalleImageGen } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
 
@@ -36,8 +37,10 @@ function AutomaticImageGenModel({ children, ...props }: ImageGenPropsWithChildre
     return <DalleImageGen {...props}>{children}</DalleImageGen>;
   }
 
-  throw new Error(
-    'No image generation model was specified. Set the OPENAI_API_KEY environment variable to use OpenAI or use an explicit ImageGenProvider.'
+  throw new AIJSXError(
+    'No image generation model was specified. Set the OPENAI_API_KEY environment variable to use OpenAI or use an explicit ImageGenProvider.',
+    ErrorCode.MissingImageModel,
+    'user'
   );
 }
 
