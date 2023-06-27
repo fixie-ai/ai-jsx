@@ -222,8 +222,8 @@ async function checkOpenAIResponse<M extends OpenAIMethod>(response: Response, l
 export async function* OpenAICompletionModel(
   props: ModelPropsWithChildren & { model: ValidCompletionModel; logitBias?: Record<string, number> },
   { render, getContext, logger }: AI.ComponentContext
-) {
-  yield '';
+): AI.RenderableStream {
+  yield AI.AppendOnlyStream;
 
   const openai = getContext(openAiClientContext);
   const completionRequest = {
@@ -248,13 +248,13 @@ export async function* OpenAICompletionModel(
 
   for await (const event of openAiEventsToJson<CreateCompletionResponse>(responseIterator)) {
     logger.trace({ event }, 'Got createCompletion event');
+    yield event.choices[0].text;
     resultSoFar += event.choices[0].text;
-    yield resultSoFar;
   }
 
   logger.debug({ completion: resultSoFar }, 'Finished createCompletion');
 
-  return resultSoFar;
+  return AI.AppendOnlyStream;
 }
 
 /**
@@ -267,7 +267,7 @@ export async function* OpenAIChatModel(
     functionDefinitions?: FunctionDefinition[];
   },
   { render, getContext, logger }: AI.ComponentContext
-) {
+): AI.RenderableStream {
   const messageElements = await render(props.children, {
     stop: (e) =>
       e.tag == SystemMessage ||
@@ -276,7 +276,7 @@ export async function* OpenAIChatModel(
       e.tag == FunctionCall ||
       e.tag == FunctionResponse,
   });
-  yield '';
+  yield AI.AppendOnlyStream;
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
     messageElements.filter(AI.isElement).map(async (message) => {
       switch (message.tag) {
@@ -393,7 +393,7 @@ export async function* OpenAIChatModel(
     if (delta.content) {
       currentMessage.content = currentMessage.content ?? '';
       currentMessage.content += delta.content;
-      yield currentMessage.content;
+      yield delta.content;
     }
     if (delta.function_call) {
       currentMessage.function_call = currentMessage.function_call ?? { name: '', arguments: '' };
@@ -409,14 +409,14 @@ export async function* OpenAIChatModel(
   logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
 
   if (currentMessage.function_call) {
-    return (
+    yield (
       <FunctionCall
         name={currentMessage.function_call.name ?? ''}
         args={JSON.parse(currentMessage.function_call.arguments ?? '{}')}
       />
     );
   }
-  return currentMessage.content ?? '';
+  return AI.AppendOnlyStream;
 }
 
 /**
