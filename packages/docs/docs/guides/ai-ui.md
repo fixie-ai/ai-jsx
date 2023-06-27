@@ -99,105 +99,105 @@ export function RecipeGenerator({ topic }: { topic: string }) {
    ```
 1. Create your component map. This is the set of all components the AI can use to build your UI:
 
-```tsx filename=components/Recipe.tsx
-// components/Recipe.tsx
+   ```tsx filename=components/Recipe.tsx
+   // components/Recipe.tsx
 
-export function Recipe() {
-  /* ... */
-}
-export function RecipeTitle() {
-  /* ... */
-}
-export function RecipeInstructionList() {
-  /* ... */
-}
-/* ... */
-```
+   export function Recipe() {
+     /* ... */
+   }
+   export function RecipeTitle() {
+     /* ... */
+   }
+   export function RecipeInstructionList() {
+     /* ... */
+   }
+   /* ... */
+   ```
 
-```tsx filename=components/Recipe.map.tsx
-// components/Recipe.map.tsx
+   ```tsx filename=components/Recipe.map.tsx
+   // components/Recipe.map.tsx
 
-import { makeComponentMap } from 'ai-jsx/react/map';
-import * as RecipeComponents from './Recipe';
+   import { makeComponentMap } from 'ai-jsx/react/map';
+   import * as RecipeComponents from './Recipe';
 
-export default makeComponentMap(RecipeComponents);
-```
+   export default makeComponentMap(RecipeComponents);
+   ```
 
 1. Create your API endpoint. If you're using a Vercel Serverless Function, this would look like:
 
-```tsx
-/** @jsxImportSource ai-jsx/react */
-import * as AI from 'ai-jsx/experimental/next';
-import { NextRequest } from 'next/server';
-import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
-import { UICompletion } from 'ai-jsx/react/completion';
-// highlight-next-line
-import RecipeMap from '@/components/Recipe.map';
-const {
-  Recipe,
-  RecipeTitle,
-  /* ... */
-} = RecipeMap;
+   ```tsx
+   /** @jsxImportSource ai-jsx/react */
+   import * as AI from 'ai-jsx/experimental/next';
+   import { NextRequest } from 'next/server';
+   import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+   import { UICompletion } from 'ai-jsx/react/completion';
+   // highlight-next-line
+   import RecipeMap from '@/components/Recipe.map';
+   const {
+     Recipe,
+     RecipeTitle,
+     /* ... */
+   } = RecipeMap;
 
-export async function POST(request: NextRequest) {
-  const { topic } = await request.json();
+   export async function POST(request: NextRequest) {
+     const { topic } = await request.json();
 
-  // Use `AI.toReactStream` to convert your AI.JSX output
-  // to something that can be streamed to the client.
-  // highlight-next-line
-  return AI.toReactStream(
+     // Use `AI.toReactStream` to convert your AI.JSX output
+     // to something that can be streamed to the client.
+     // highlight-next-line
+     return AI.toReactStream(
 
-    // Pass the RecipeMap so the AI knows what components are available.
-    RecipeMap,
+       // Pass the RecipeMap so the AI knows what components are available.
+       RecipeMap,
 
-    <UICompletion
-      {/* Provide an example of how you'd like the components to be used */}
-      example={
-        <Recipe>
-          <RecipeTitle>Crème Chantilly</RecipeTitle>
-          {/* ... */}
-        </Recipe>
-      }
-    >
-      {/* Provide an input prompt so the AI knows what to build UI for.
-          In this case, we're making a separate AI call to generate a recipe. */}
-      <ChatCompletion temperature={1}>
-        <SystemMessage>You are an expert chef.</SystemMessage>
-        <UserMessage>Give me a recipe for {topic}.</UserMessage>
-      </ChatCompletion>
-    </UICompletion>
-  );
-}
-```
+       <UICompletion
+         {/* Provide an example of how you'd like the components to be used */}
+         example={
+           <Recipe>
+             <RecipeTitle>Crème Chantilly</RecipeTitle>
+             {/* ... */}
+           </Recipe>
+         }
+       >
+         {/* Provide an input prompt so the AI knows what to build UI for.
+             In this case, we're making a separate AI call to generate a recipe. */}
+         <ChatCompletion temperature={1}>
+           <SystemMessage>You are an expert chef.</SystemMessage>
+           <UserMessage>Give me a recipe for {topic}.</UserMessage>
+         </ChatCompletion>
+       </UICompletion>
+     );
+   }
+   ```
 
 1. On the client, use the `useAIStream` hook to fetch results from your API endpoint and stream them into your UI:
 
-```tsx
-import { useAIStream } from 'ai-jsx/react';
-import RecipeMap from '@/components/Recipe.map';
+   ```tsx
+   import { useAIStream } from 'ai-jsx/react';
+   import RecipeMap from '@/components/Recipe.map';
 
-export function RecipeGenerator({ topic }: { topic: string }) {
-  const {
-    // highlight-start
-    /** the current value of the stream. It will be updated as new results stream in. */
-    current,
+   export function RecipeGenerator({ topic }: { topic: string }) {
+     const {
+       // highlight-start
+       /** the current value of the stream. It will be updated as new results stream in. */
+       current,
 
-    /** a fetch function you use to call your endpoint */
-    fetchAI,
-  } = useAIStream({ componentMap: RecipeMap });
-  // highlight-end
+       /** a fetch function you use to call your endpoint */
+       fetchAI,
+     } = useAIStream({ componentMap: RecipeMap });
+     // highlight-end
 
-  useEffect(() => {
-    fetchAI('/recipe/api', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ topic }),
-    });
-  }, [topic]);
+     useEffect(() => {
+       fetchAI('/recipe/api', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ topic }),
+       });
+     }, [topic]);
 
-  return <div className="whitespace-pre-line">{current}</div>;
-}
-```
+     return <div className="whitespace-pre-line">{current}</div>;
+   }
+   ```
 
 ## Clientside AI + UI Integration
 
@@ -206,7 +206,8 @@ This applies to the following architectures:
 
 - [Run entirely on the client](./architecture.mdx#run-entirely-on-the-client)
 - [UI + AI.JSX on the client; API calls on the server](./architecture.mdx#ui--aijsx-on-the-client-api-calls-on-the-server)
-  :::
+
+:::
 
 ## Getting Started
 
