@@ -3,6 +3,9 @@ import * as AI from 'ai-jsx/react';
 import { UICompletion } from 'ai-jsx/react/completion';
 import { useState, ReactNode } from 'react';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
+import { memo } from 'ai-jsx/core/memoize';
+import { Prompt } from 'ai-jsx/batteries/prompts';
+import { ImageGen } from 'ai-jsx/core/image-gen';
 import ResultContainer from '../ResultContainer.tsx';
 import InputPrompt from '../InputPrompt.tsx';
 import { atom, useAtom } from 'jotai';
@@ -71,7 +74,14 @@ export function RecipeInstructionListItem({ children }: { children: ReactNode })
 }
 
 export default function RecipeWrapper() {
-  const [query, setQuery] = useState('beans');
+  const [query, setQuery] = useState('braised lamb stew');
+
+  const recipe = memo(
+    <ChatCompletion temperature={1}>
+      <Prompt persona="a Michelin Star Head Chef" />
+      <UserMessage>Give me a recipe for {query}.</UserMessage>
+    </ChatCompletion>
+  );
 
   return (
     <>
@@ -83,6 +93,14 @@ export default function RecipeWrapper() {
       </ResultContainer>
       <ResultContainer title={`AI comes up with a recipe for "${query}"`}>
         <AI.jsx>
+          <ImageGen size="256x256">
+            <ChatCompletion>
+              <UserMessage>
+                In two to three sentences, describe how the following recipe would look like when prepared by a chef:
+                {recipe}
+              </UserMessage>
+            </ChatCompletion>
+          </ImageGen>
           <UICompletion
             example={
               <Recipe>
@@ -102,9 +120,7 @@ export default function RecipeWrapper() {
               </Recipe>
             }
           >
-            <ChatCompletion>
-              <UserMessage>Give me a recipe for {query}.</UserMessage>
-            </ChatCompletion>
+            {recipe}
           </UICompletion>
         </AI.jsx>
       </ResultContainer>
