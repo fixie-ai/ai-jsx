@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { getEnvVar } from './util.js';
 import * as AI from '../index.js';
-import {Node} from '../index.js';
+import { Node } from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
 import {
   AssistantMessage,

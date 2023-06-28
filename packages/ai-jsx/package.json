@@ -199,6 +199,16 @@
         "default": "./dist/cjs/lib/openai.cjs"
       }
     },
+    "./lib/anthropic": {
+      "import": {
+        "types": "./dist/esm/lib/anthropic.d.ts",
+        "default": "./dist/esm/lib/anthropic.js"
+      },
+      "require": {
+        "types": "./dist/cjs/lib/anthropic.d.cts",
+        "default": "./dist/cjs/lib/anthropic.cjs"
+      }
+    },
     "./react": {
       "import": {
         "types": "./dist/esm/react/index.d.ts",
