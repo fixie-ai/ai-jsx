@@ -1,7 +1,6 @@
-import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
+import { ChatProvider, ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 import { OpenAIChatModel } from 'ai-jsx/lib/openai';
 import { AnthropicChatModel } from 'ai-jsx/lib/anthropic';
-import { ChatProvider } from 'ai-jsx/core/completion';
 import * as AI from 'ai-jsx';
 import { pino } from 'pino';
 import { PinoLogger } from 'ai-jsx/core/log';
