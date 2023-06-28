@@ -52,17 +52,19 @@ type OpenAIModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompl
 
 const decoder = new TextDecoder();
 
-export const openAiClientContext = AI.createContext<OpenAIApi>(new OpenAIApi(
-  new Configuration({
-    apiKey: getEnvVar('OPENAI_API_KEY', false),
-  }),
-  // We actually want the nullish coalescing behavior in this case,
-  // because if the env var is '', we want to pass `undefined` instead.
-  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-  getEnvVar('OPENAI_API_BASE', false) || undefined,
-  // TODO: Figure out a better way to work around NextJS fetch blocking streaming
-  (globalThis as any)._nextOriginalFetch ?? globalThis.fetch
-));
+export const openAiClientContext = AI.createContext<OpenAIApi>(
+  new OpenAIApi(
+    new Configuration({
+      apiKey: getEnvVar('OPENAI_API_KEY', false),
+    }),
+    // We actually want the nullish coalescing behavior in this case,
+    // because if the env var is '', we want to pass `undefined` instead.
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+    getEnvVar('OPENAI_API_BASE', false) || undefined,
+    // TODO: Figure out a better way to work around NextJS fetch blocking streaming
+    (globalThis as any)._nextOriginalFetch ?? globalThis.fetch
+  )
+);
 
 /**
  * An AI.JSX component that invokes an OpenAI Large Language Model.

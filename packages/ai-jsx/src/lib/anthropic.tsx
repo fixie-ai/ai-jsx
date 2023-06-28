@@ -2,31 +2,42 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getEnvVar } from './util.js';
 import * as AI from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
-import { AssistantMessage, ChatProvider, FunctionCall, FunctionResponse, ModelProps, SystemMessage, UserMessage, ModelPropsWithChildren } from '../core/completion.js';
+import {
+  AssistantMessage,
+  ChatProvider,
+  FunctionCall,
+  FunctionResponse,
+  ModelProps,
+  SystemMessage,
+  UserMessage,
+  ModelPropsWithChildren,
+} from '../core/completion.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 
-export const anthropicClientContext = AI.createContext<Anthropic>(new Anthropic({
-  apiKey: getEnvVar('ANTHROPIC_API_KEY', false),
-}));
+export const anthropicClientContext = AI.createContext<Anthropic>(
+  new Anthropic({
+    apiKey: getEnvVar('ANTHROPIC_API_KEY', false),
+  })
+);
 
 type ValidCompletionModel = never;
 /**
  * The set of valid Claude models.
- * 
+ *
  * @see https://docs.anthropic.com/claude/reference/complete_post.
  */
-type ValidChatModel = 
-| 'claude-1'
-| 'claude-1-100k'
-| 'claude-instant-1'
-| 'claude-instant-1-100k'
-| 'claude-1.3'
-| 'claude-1.3-100k'
-| 'claude-1.2'
-| 'claude-1.0'
-| 'claude-instant-1.1'
-| 'claude-instant-1.1-100k'
-| 'claude-instant-1.0';
+type ValidChatModel =
+  | 'claude-1'
+  | 'claude-1-100k'
+  | 'claude-instant-1'
+  | 'claude-instant-1-100k'
+  | 'claude-1.3'
+  | 'claude-1.3-100k'
+  | 'claude-1.2'
+  | 'claude-1.0'
+  | 'claude-instant-1.1'
+  | 'claude-instant-1.1-100k'
+  | 'claude-instant-1.0';
 
 type AnthropicModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
 
@@ -61,7 +72,11 @@ export function OpenAI({
   // TS is correct that this should never happen, but we'll check for it anyway.
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (completionModel) {
-    throw new AIJSXError('Completion models are not supported by Anthropic', ErrorCode.AnthropicDoesNotSupportCompletionModels, 'user');
+    throw new AIJSXError(
+      'Completion models are not supported by Anthropic',
+      ErrorCode.AnthropicDoesNotSupportCompletionModels,
+      'user'
+    );
   }
 
   return result;
@@ -70,7 +85,10 @@ export function OpenAI({
 interface AnthropicChatModelProps extends ModelPropsWithChildren {
   model: ValidChatModel;
 }
-export async function* AnthropicChatModel(props: AnthropicChatModelProps, {render, getContext, logger}: AI.ComponentContext) {
+export async function* AnthropicChatModel(
+  props: AnthropicChatModelProps,
+  { render, getContext, logger }: AI.ComponentContext
+) {
   const messageElements = await render(props.children, {
     stop: (e) =>
       e.tag == SystemMessage ||
@@ -84,14 +102,22 @@ export async function* AnthropicChatModel(props: AnthropicChatModelProps, {rende
     messageElements.filter(AI.isElement).map(async (message) => {
       switch (message.tag) {
         case UserMessage:
-          return `${Anthropic.HUMAN_PROMPT}: ${await render(message)}`
-          case AssistantMessage:
-          return `${Anthropic.AI_PROMPT}: ${await render(message)}`
+          return `${Anthropic.HUMAN_PROMPT}: ${await render(message)}`;
+        case AssistantMessage:
+          return `${Anthropic.AI_PROMPT}: ${await render(message)}`;
         case SystemMessage:
-          throw new AIJSXError('Anthropic models do not support SystemMessage. Change your user message to instruct the model what to do.', ErrorCode.AnthropicDoesNotSupportSystemMessage, 'user')
+          throw new AIJSXError(
+            'Anthropic models do not support SystemMessage. Change your user message to instruct the model what to do.',
+            ErrorCode.AnthropicDoesNotSupportSystemMessage,
+            'user'
+          );
         case FunctionCall:
         case FunctionResponse:
-          throw new AIJSXError('Anthropic models do not support functions.', ErrorCode.AnthropicDoesNotSupportFunctions, 'user')
+          throw new AIJSXError(
+            'Anthropic models do not support functions.',
+            ErrorCode.AnthropicDoesNotSupportFunctions,
+            'user'
+          );
         default:
           throw new AIJSXError(
             `ChatCompletion's prompts must be UserMessage or AssistantMessage, but this child was ${message.tag.name}`,
@@ -120,9 +146,32 @@ export async function* AnthropicChatModel(props: AnthropicChatModelProps, {rende
     model: props.model,
     stop_sequences: props.stop,
     stream: true,
-  }
+  };
 
   logger.debug({ anthropicCompletionRequest }, 'Calling createCompletion');
 
-  const response = await anthropic.completions.create(anthropicCompletionRequest);
+  let response: Awaited<ReturnType<typeof anthropic.completions.create>>;
+  try {
+    response = await anthropic.completions.create(anthropicCompletionRequest);
+  } catch (err) {
+    if (err instanceof Anthropic.APIError) {
+      throw new AIJSXError(
+        err.message,
+        ErrorCode.AnthropicAPIError,
+        'runtime',
+        Object.fromEntries(Object.entries(err))
+      );
+    }
+    throw err;
+  }
+  let resultSoFar = '';
+  for await (const completion of response) {
+    resultSoFar += completion.completion;
+    logger.trace({ completion }, 'Got Anthropic stream event');
+    yield completion.completion;
+  }
+
+  logger.debug({ completion: resultSoFar }, 'Anthropic completion finished');
+
+  return AI.AppendOnlyStream;
 }
