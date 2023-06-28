@@ -3,7 +3,7 @@ import ResultContainer from '@/components/ResultContainer';
 import { RecipeGenerator } from '@/components/Recipe';
 
 export default function RecipeExample({ searchParams }: { searchParams: any }) {
-  const defaultValue = 'beans';
+  const defaultValue = 'Chicken Tikka Masala';
   const query = searchParams.q ?? defaultValue;
   return (
     <>
