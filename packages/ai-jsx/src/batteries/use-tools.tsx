@@ -203,7 +203,7 @@ export async function* UseTools(props: UseToolsProps, { render }: RenderContext)
 }
 
 /**
- * An implementation of <UseTools/> that uses a {@link ChatCompletion}'s {@link FunctionDefinition} capability to call
+ * An implementation of <UseTools/> that uses {@link ChatCompletion}'s {@link FunctionDefinition} capability to call
  * functions. The chat model in scope must support Function Calls for this component.
  */
 export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: RenderContext) {
