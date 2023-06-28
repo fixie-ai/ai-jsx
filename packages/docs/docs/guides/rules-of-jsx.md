@@ -66,35 +66,7 @@ Components take props as the first argument and [`ComponentContext`](../api/inte
 function MyComponent(props, componentContext) {}
 ```
 
-`componentContext` contains a [`render`](../api/interfaces/core_core.ComponentContext#render) method, which you can use to render other JSX components. One reason you would want to do this is to take action based on what a component renders to, like validating that it's well-formed JSON:
-
-```tsx
-function App() {
-  return (
-    <ValidateJsonOutput>
-      <ChatCompletion>
-        <UserMessage>Give me a JSON object representing a character in a fantasy game.</UserMessage>
-      </ChatCompletion>
-    </ValidateJsonOutput>
-  );
-}
-
-/**
- * Ensure the model's response is JSON.
- */
-function ValidateJsonOutput({ children }, { render }): string {
-  // highlight-next-line
-  const rendered = await render(children);
-  try {
-    JSON.parse(rendered);
-    return rendered;
-  } catch (e) {
-    throw new Error(`Could not parse model response as JSON: ${rendered}`);
-  }
-}
-```
-
-In this example, `ValidateJsonOutput` takes in a child, and returns a JSON result. To do that, it needs to know what the child renders to, so it uses `render`.
+`componentContext` contains a [`render`](../api/interfaces/core_core.ComponentContext#render) method, which you can use to [render other JSX components](./rendering.md#rendering-from-a-component). 
 
 ### Intermediate Results
 
