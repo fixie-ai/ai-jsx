@@ -2,7 +2,10 @@
 import * as AI from 'ai-jsx/experimental/next';
 import React, { Suspense } from 'react';
 import { UICompletion } from 'ai-jsx/react/completion';
-import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
+import { memo } from 'ai-jsx/core/memoize';
+import { ImageGen } from 'ai-jsx/core/image-gen';
+import { Prompt } from 'ai-jsx/batteries/prompts';
 import ResultContainer from '@/components/ResultContainer';
 import InputPrompt from '@/components/InputPrompt';
 
@@ -65,8 +68,15 @@ export function RecipeInstructionListItem({ children }: { children: React.ReactN
 }
 
 export default function RecipeWrapper({ searchParams }: { searchParams: any }) {
-  const defaultValue = 'beans';
+  const defaultValue = 'braised lamb stew';
   const query = searchParams.q ?? defaultValue;
+
+  const recipe = memo(
+    <ChatCompletion temperature={1}>
+      <Prompt persona="a Michelin Star Head Chef" />
+      <UserMessage>Give me a recipe for {query}.</UserMessage>
+    </ChatCompletion>
+  );
 
   return (
     <>
@@ -75,6 +85,15 @@ export default function RecipeWrapper({ searchParams }: { searchParams: any }) {
       <ResultContainer title={`AI comes up with a recipe for "${query}"`}>
         <Suspense fallback={'Loading...'}>
           <AI.jsx>
+            <ImageGen size="256x256">
+              Generate an image for the following dish:
+              <ChatCompletion>
+                <UserMessage>
+                  In two to three sentences, describe how the following recipe would look like when prepared by a chef:
+                  {recipe}
+                </UserMessage>
+              </ChatCompletion>
+            </ImageGen>
             <UICompletion
               example={
                 <Recipe>
@@ -96,10 +115,7 @@ export default function RecipeWrapper({ searchParams }: { searchParams: any }) {
                 </Recipe>
               }
             >
-              <ChatCompletion temperature={1}>
-                <SystemMessage>You are an expert chef.</SystemMessage>
-                <UserMessage>Give me a recipe for {query}.</UserMessage>
-              </ChatCompletion>
+              {recipe}
             </UICompletion>
           </AI.jsx>
         </Suspense>

@@ -15,7 +15,7 @@ import {
   FunctionCall,
   FunctionResponse,
 } from '../core/completion.js';
-import { ImageGenPropsWithChildren } from '../core/image-gen.js';
+import { Image, ImageGenPropsWithChildren } from '../core/image-gen.js';
 // openai-edge hasn't updated its types to support the new function types yet,
 // so we'll import the types from openai until it does.
 import { ChatCompletionFunctions, ChatCompletionResponseMessage, ChatCompletionRequestMessage } from 'openai';
@@ -34,7 +34,6 @@ import GPT3Tokenizer from 'gpt3-tokenizer';
 import { Merge } from 'type-fest';
 import { Logger } from '../core/log.js';
 import { HttpError, AIJSXError, ErrorCode } from '../core/errors.js';
-import _ from 'lodash';
 import { getEnvVar } from './util.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
 
@@ -422,8 +421,7 @@ export async function* OpenAIChatModel(
  *
  * @param numSamples The number of images to generate. Defaults to 1.
  * @param size The size of the image to generate. Defaults to `512x512`.
- * @returns The URL of the generated image.
- *          If numSamples is greater than 1, URLs are separated by newlines.
+ * @returns URL(s) to the generated image, wrapped in {@link Image} component(s).
  */
 export async function DalleImageGen(
   { numSamples = 1, size = '512x512', children }: ImageGenPropsWithChildren,
@@ -469,7 +467,9 @@ export async function DalleImageGen(
     logger.debug({ statusCode: response.status, headers: response.headers }, 'createImage succeeded');
   }
 
-  // return all image URLs as a newline-separated string
+  // return all image URLs as {@link Image} components.
   const responseJson = (await response.json()) as ResponseTypes['createImage'];
-  return _.map(responseJson.data, 'url').join('\n');
+  return responseJson.data.flatMap((image) =>
+    image.url ? [<Image url={image.url} prompt={prompt} modelName="Dalle" />] : []
+  );
 }
