@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.5.9
+
 - Add Anthropic support.
 
 ## [0.5.8](https://github.com/fixie-ai/ai-jsx/commit/89c87a8ed6d394ce443ad074ae38152f54c7bddc)
