@@ -3,7 +3,7 @@ import ResultContainer from '@/components/ResultContainer';
 import { PoemAndFacts } from '@/components/PoemAndFacts';
 
 export default function BasicCompletion({ searchParams }: { searchParams: any }) {
-  const defaultValue = 'wild weasels';
+  const defaultValue = 'A fox who likes to program in JavaScript';
   const query = searchParams.q ?? defaultValue;
   return (
     <>
