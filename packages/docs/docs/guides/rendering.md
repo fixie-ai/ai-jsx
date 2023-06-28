@@ -150,7 +150,7 @@ In most cases, the above patterns are all you'll need. The rest of this doc will
 
 ### Rendering From a Component
 
-When you render on the top level, you use `AI.createRenderContext()` to create a [`renderContext`](../api/interfaces/RenderContext.md). When you're already within a component, the `renderContext` is passed as an argument to the component, as part of the [`componentContext`](../api/interfaces/ComponentContext.md).
+When you render on the top level, you use `AI.createRenderContext()` to create a `renderContext`. When you're already within a component, the `renderContext` is passed as an argument to the component, as part of the [`componentContext`](../api/interfaces/ComponentContext.md).
 
 One reason you would want to render from within a component is to take action based on what a component renders to, like validating that it's well-formed JSON:
 
