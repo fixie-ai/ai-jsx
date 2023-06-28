@@ -20,6 +20,7 @@ export enum ErrorCode {
   NestedAIUIStreamsAreNotSupported = 1015,
   UnknownUIComponentId = 1016,
   UnknownSerializedComponentType = 1017,
+  ChatModelDoesntSupportFunctions = 1018,
 
   ModelOutputDidNotMatchConstraint = 2000,
 

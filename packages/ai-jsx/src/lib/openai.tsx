@@ -45,7 +45,15 @@ type ValidCompletionModel =
   | 'text-babbage-001'
   | 'text-ada-001';
 
-type ValidChatModel = 'gpt-4' | 'gpt-4-0314' | 'gpt-4-32k' | 'gpt-4-32k-0314' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-0301';
+type ValidChatModel =
+  | 'gpt-4'
+  | 'gpt-4-0314'
+  | 'gpt-4-0613'
+  | 'gpt-4-32k'
+  | 'gpt-4-32k-0314'
+  | 'gpt-3.5-turbo'
+  | 'gpt-3.5-turbo-0301'
+  | 'gpt-3.5-turbo-0613';
 
 type ChatOrCompletionModelOrBoth =
   | { chatModel: ValidChatModel; completionModel?: ValidCompletionModel }
@@ -162,6 +170,15 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
   );
 }
 
+/**
+ * Returns true if the given model supports function calling.
+ * @param model The model to check.
+ * @returns True if the model supports function calling, false otherwise.
+ */
+function chatModelSupportsFunctions(model: ValidChatModel) {
+  return ['gpt-4', 'gpt-3.5-turbo', 'gpt-4-0613', 'gpt-3.5-turbo-0613'].includes(model);
+}
+
 type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
 
 /**
@@ -268,6 +285,14 @@ export async function* OpenAIChatModel(
   },
   { render, getContext, logger }: AI.ComponentContext
 ): AI.RenderableStream {
+  if (props.functionDefinitions && !chatModelSupportsFunctions(props.model)) {
+    throw new AIJSXError(
+      `The ${props.model} model does not support function calling, but function definitions were provided.`,
+      ErrorCode.ChatModelDoesntSupportFunctions,
+      'user'
+    );
+  }
+
   const messageElements = await render(props.children, {
     stop: (e) =>
       e.tag == SystemMessage ||
