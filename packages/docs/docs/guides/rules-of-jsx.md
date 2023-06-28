@@ -58,6 +58,39 @@ function* OrgData() {
 }
 ```
 
+### Append-only generators
+
+If your component is a generator, the default behavior is that each `yield`ed value replaces the previous value. For instance, imagine you have an image generation API like Midjourney that returns a series of image URLs showing the image render in progress:
+
+```tsx
+function* GenerateImage() {
+  yield lowResUrl;
+  /* ... */
+  yield medResUrl;
+  /* ... */
+  yield highResUrl;
+  /* ... */
+  yield finalResUrl;
+}
+```
+
+AI.JSX will interpret each `yield`ed value as a new value which should totally overwrite the previously-yielded values, so the caller would see a progression of increasingly high-quality images.
+
+However, sometimes your data source will give you deltas, so replacing the previous contents doesn't make much sense. In this case, `yield` the [`AppendOnlyStream`](../api/modules/core_core.md#appendonlystream) symbol to indicate that `yield`ed results should be interpreted as deltas:
+
+```tsx
+import * as AI from 'ai-jsx';
+
+function* GenerateText() {
+  yield AI.AppendOnlyStream;
+  yield 'first c';
+  yield 'hunk of te';
+  yield 'xt that will';
+  yield 'be combined';
+  yield 'into a final output';
+}
+```
+
 ## Component API
 
 Components take props as the first argument and [`ComponentContext`](../api/interfaces/core_core.ComponentContext) as the second:
