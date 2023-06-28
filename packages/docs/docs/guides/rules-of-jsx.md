@@ -66,69 +66,7 @@ Components take props as the first argument and [`ComponentContext`](../api/inte
 function MyComponent(props, componentContext) {}
 ```
 
-`componentContext` contains a [`render`](../api/interfaces/core_core.ComponentContext#render) method, which you can use to [render other JSX components](./rendering.md#rendering-from-a-component). 
-
-### Intermediate Results
-
-If you'd like to see intermediate results of the render, you can pass a `map` param to the `render` method:
-
-```tsx
-let frameCount = 0;
-await render(<Component />, {
-  map: (frame) => console.log('got frame', frameCount++, frame);
-})
-```
-
-If `Component` ultimately resolved to `hello world`, then the `map` function might be called with:
-
-```
-got frame 0 h
-got frame 1 hell
-got frame 2 hello w
-got frame 3 hello wor
-got frame 4 hello world
-```
-
-(The exact chunking you'll get depends on the chunks emitted by the component you're rendering.)
-
-You can also use the `map` function to map the results as they're streaming.
-
-### Partial Rendering
-
-By default, `render` will render the entire tree down to a string. However, you can use partial rendering if you'd like to only render some of it.
-
-The main reason you'd want to do this is when you're writing a parent component that has knowledge of its children. For example:
-
-- [`ChatCompletion`](../api/modules/core_completion#chatcompletion) needs all its children to ultimately be a `SystemMessage`, `UserMessage,` or `AssistantMessage`. To find those children, it uses partial rendering.
-- [`NaturalLanguageRouter`](../api/modules/batteries_natural_language_router#naturallanguagerouter) needs to know what all the `Route`s are, so it uses partial rendering to find them.
-
-To do partial rendering, pass a `stop` argument to `render`:
-
-```tsx
-const messageChildren = await render(children, {
-  stop: (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage,
-});
-```
-
-This approach means we can write the following, and `ChatCompletion` will be able to find all the nested `*Message` children:
-
-```tsx
-function MyUserMessages() {
-  return (
-    <>
-      <UserMessage>first</UserMessage>
-      <UserMessage>second</UserMessage>
-    </>
-  );
-}
-
-<ChatCompletion>
-  <MyUserMessages />
-  <>
-    <UserMessage>third</UserMessage>
-  </>
-</ChatCompletion>;
-```
+`componentContext` contains a [`render`](../api/interfaces/core_core.ComponentContext#render) method, which you can use to [render other JSX components](./rendering.md#rendering-from-a-component).
 
 ### Context
 
@@ -180,7 +118,7 @@ Use an [`ErrorBoundary`](../api/modules/core_error_boundary) to provide fallback
 </ErrorBoundary>
 ```
 
-Error boundary example ([`packages/examples/src/errors.tsx`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/errors.tsx)).
+Error boundary example: ([`packages/examples/src/errors.tsx`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/errors.tsx)).
 
 ## Memoization
 
@@ -204,7 +142,7 @@ const catName = (
 
 In this case, `catName` will result in two separate model calls, so you'll get two different cat names.
 
-If this is not desired, you can wrap the component in `memo`:
+If this is not desired, you can wrap the component in [`memo`](../api/modules/core_memoize):
 
 ```tsx
 const catName = memo(
@@ -221,8 +159,7 @@ const catName = memo(
 
 Now, `catName` will result in a single model call, and its value will be reused everywhere that component appears in the tree.
 
-- API ([`packages/ai-jsx/src/core/memoize.tsx`](../api/modules/core_memoize))
-
 # See Also
 
+- [Rendering](./rendering.md)
 - [JSX Build System Considerations](./jsx.md)
