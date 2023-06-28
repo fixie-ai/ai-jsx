@@ -1,12 +1,12 @@
 import React, * as ReactModule from 'react';
 import * as AI from './core.js';
 import { asJsxBoundary } from './jsx-boundary.js';
-import { Image } from '../core/image-gen.js';
-import _ from 'lodash';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { Deserialized, fromStreamResponse } from '../stream/index.js';
 import { Jsonifiable } from 'type-fest';
 import { ComponentMap } from './map.js';
+import { Image } from '../core/image-gen.js';
+import _ from 'lodash';
 export * from './core.js';
 
 /**

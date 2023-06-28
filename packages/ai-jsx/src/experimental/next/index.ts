@@ -161,6 +161,9 @@ export const jsx = asJsxBoundary(function jsx(
 export const JSX = jsx;
 
 export function toReactStream(componentMap: ComponentMap<any>, renderable: AI.Renderable): Response {
-  const renderResult = AI.createRenderContext().render(renderable, { stop: (e) => e.tag == AI.React, map: (x) => x });
+  const renderResult = AI.createRenderContext().render(renderable, {
+    stop: (e) => boundaryElements.some((special) => special.tag === e.tag),
+    map: (x) => x,
+  });
   return toSerializedStreamResponse(renderResult, AI.createElementSerializer(componentMap));
 }
