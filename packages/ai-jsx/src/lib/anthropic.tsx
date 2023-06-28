@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { getEnvVar } from './util.js';
 import * as AI from '../index.js';
+import {Node} from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
 import {
   AssistantMessage,
@@ -88,7 +89,7 @@ interface AnthropicChatModelProps extends ModelPropsWithChildren {
 export async function* AnthropicChatModel(
   props: AnthropicChatModelProps,
   { render, getContext, logger }: AI.ComponentContext
-) {
+): AI.RenderableStream {
   const messageElements = await render(props.children, {
     stop: (e) =>
       e.tag == SystemMessage ||
