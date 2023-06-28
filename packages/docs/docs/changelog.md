@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.8
+- Add Anthropic support.
+
 ## [0.5.7](https://github.com/fixie-ai/ai-jsx/commit/8c29bb65fa2d4d26893eabebf5aa63f1506703e7)
 
 - Add ability to stream UI components in the [UI on the client; AI.JSX on the server](./guides/architecture.mdx#ui-on-the-client-aijsx-on-the-server) architecture pattern.
