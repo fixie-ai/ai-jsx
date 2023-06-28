@@ -109,3 +109,5 @@ If you have multiple layers of nesting, the closest parent wins:
 ```
 
 If there is no `ChatProvider` or `CompletionProvider` parent, [the default model provider](#choosing-a-model) will be used.
+
+For an example, see [multi-model-chat](https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/multi-model-chat.tsx).
