@@ -5,7 +5,6 @@
  */
 
 import {
-  AssistantMessage,
   ChatCompletion,
   FunctionCall,
   FunctionParameter,
@@ -13,11 +12,10 @@ import {
   SystemMessage,
   UserMessage,
 } from '../core/completion.js';
-import { Node, PartiallyRendered, RenderContext, isElement } from '../index.js';
+import { Node, RenderContext, isElement } from '../index.js';
 import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
-import { nextTick } from 'process';
 
 const toolChoiceSchema = z.object({
   nameOfTool: z.string(),
@@ -116,7 +114,7 @@ export interface Tool {
    * A function to invoke the tool.
    */
   // Can we use Zod to do better than any[]?
-  func: (...args: any[]) => string | number | boolean | null | undefined;
+  func: (...args: any[]) => string | number | boolean | null | undefined | Promise<string | number | boolean | null>;
 }
 
 /**
@@ -199,9 +197,8 @@ export async function* UseTools(props: UseToolsProps, { render }: RenderContext)
   } catch (e: any) {
     if (e.code === ErrorCode.ChatModelDoesntSupportFunctions) {
       return <UseToolsPromptEngineered {...props} />;
-    } else {
-      throw e;
     }
+    throw e;
   }
 }
 
@@ -210,7 +207,7 @@ export async function* UseTools(props: UseToolsProps, { render }: RenderContext)
  * functions. The chat model in scope must support Function Calls for this component.
  */
 export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: RenderContext) {
-  var messages = [
+  const messages = [
     <SystemMessage>You are a smart agent that may use functions to answer a user question.</SystemMessage>,
   ];
   if (props.fallback) {
@@ -239,7 +236,7 @@ export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: Re
       // Model has generated a <FunctionCall/> element.
       if (renderResult.length > 1 || renderResult[0].tag != FunctionCall) {
         throw new AIJSXError(
-          'Unexpected result from render ' + renderResult.join(', '),
+          `Unexpected result from render ${renderResult.join(', ')}`,
           ErrorCode.ModelOutputCouldNotBeParsedForTool,
           'runtime'
         );
@@ -253,7 +250,7 @@ export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: Re
       let response;
       try {
         const callable = props.tools[functionCall.props.name].func;
-        response = callable(functionCall.props.args);
+        response = await callable(functionCall.props.args);
       } catch (e: any) {
         response = `Function called failed with error: ${e.message}.`;
       } finally {
