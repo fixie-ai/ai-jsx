@@ -368,13 +368,10 @@ async function* renderStream(
     const renderId = uuidv4();
     try {
       logImpl.log('warn', renderable, renderId, 'Start element');
-      const gen = renderingContext.render(
+      const finalResult = yield* renderingContext.render(
         renderable.render(renderingContext, new BoundLogger(logImpl, renderId, renderable)),
         recursiveRenderOpts
       );
-      // @ts-ignore
-      gen.whence = 'asdfasdf';
-      const finalResult = yield* gen;
       logImpl.log('warn', renderable, renderId, {finalResult}, 'Rendered element');
       return finalResult;
     } catch (ex) {
@@ -384,12 +381,8 @@ async function* renderStream(
   }
 
   if (Symbol.asyncIterator in renderable) {
-    // @ts-ignore
-    console.log(renderable.whence);
     // Exhaust the iterator.
     const iterator = renderable[Symbol.asyncIterator]();
-    // @ts-ignore
-    console.log(iterator.whence);
     let lastValue = [] as PartiallyRendered[];
     let isAppendOnlyStream = false;
     while (true) {
@@ -477,18 +470,7 @@ function createRenderContextInternal(renderStream: StreamRenderer, userContext: 
         }
       })() as AsyncGenerator<TIntermediate, TFinal>;
 
-
-      // @ts-ignore
-      generator.whence = 'fak';
-
-      if (isElement(renderable)) {
-        // @ts-ignore
-        generator.whence = renderable.tag.name;
-      }
-
       return {
-        // @ts-ignore
-        whence: isElement(renderable) && renderable.tag.name,
         then: (onFulfilled?, onRejected?) => {
           if (promiseResult === null) {
             if (hasReturnedGenerator) {
