@@ -388,8 +388,8 @@ async function* renderStream(
     while (true) {
       const next = await iterator.next();
       if (next.value === AppendOnlyStream) {
-        // console.log('stream is append-only', next.value);
-        // context.getContext(LoggerContext).log('info', renderable, 'fak', 'Stream is append-only.')
+        // TODO: I'd like to emit a log here indicating that an element has chosen to AppendOnlyStream, 
+        // but I'm not sure what the best way is to know which element/renderId produced `renderable`.
         isAppendOnlyStream = true;
       } else if (isAppendOnlyStream) {
         const renderResult = context.render(next.value, recursiveRenderOpts);
