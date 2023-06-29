@@ -1,3 +1,6 @@
+/**
+ * To make this demo work, comment out the `import 'server-only'` line in `ai-jsx/experimental/next`.
+ */
 
 /** @jsxImportSource ai-jsx/react */
 import * as AI from 'ai-jsx/experimental/next';
@@ -21,6 +24,11 @@ function App() {
 }
 
 async function Slow({delay}: {delay: number}) {
+
+  // By default, this demo will show that the tree stream waits for `Slow` to complete before rendering anything.
+  // If we `yield ''`, the problem is solved.
+
+  // yield ''
   await new Promise(resolve => setTimeout(resolve, delay));
   return ` returned after ${delay}`;
 }
@@ -46,7 +54,6 @@ const reader = body.getReader();
 // eslint-disable-next-line no-constant-condition
 while (true) {
   const {done, value} = await reader.read();
-  // console.log(next);
   if (done) {
     break;
   }
