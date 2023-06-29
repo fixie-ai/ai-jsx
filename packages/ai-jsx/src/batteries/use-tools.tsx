@@ -219,7 +219,7 @@ export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: Re
 
     const renderResult = yield* render(modelResponse, { stop: (el) => el.tag == FunctionCall });
 
-    let stringResponses: String[] = [];
+    const stringResponses: String[] = [];
     let functionCallElement: Element<any> | null = null;
 
     for (const element of renderResult) {
