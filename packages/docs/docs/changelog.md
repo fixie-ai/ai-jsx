@@ -1,8 +1,8 @@
 # Changelog
 
-## 0.5.9
+## [0.5.9](https://github.com/fixie-ai/ai-jsx/commit/92b6e0f28580fbd9b8fb62072d8c13e28b14d9fe)
 
-- Add Anthropic support.
+- [Add Anthropic support.](./guides/models.md).
 
 ## [0.5.8](https://github.com/fixie-ai/ai-jsx/commit/89c87a8ed6d394ce443ad074ae38152f54c7bddc)
 
