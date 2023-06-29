@@ -11,26 +11,23 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ModelProducesFunctionCall({ query }: { query: string }) {
   return (
-    <ChatProvider model="gpt-4-0613">
-      <ChatCompletion
-        functionDefinitions={[
-          {
-            name: 'evaluate_expression',
-            description: 'Evaluates a mathematical expression',
-            parameters: {
-              expression: {
-                description: 'The mathematical expression to be evaluated.',
-                type: 'string',
-                required: true,
-              },
+    <ChatCompletion
+      functionDefinitions={{
+        evaluate_expression: {
+          description: 'Evaluates a mathematical expression',
+          parameters: {
+            expression: {
+              description: 'The mathematical expression to be evaluated.',
+              type: 'string',
+              required: true,
             },
           },
-        ]}
-      >
-        <SystemMessage>You are a tool that may use functions to answer a user question.</SystemMessage>
-        <UserMessage>{query}</UserMessage>
-      </ChatCompletion>
-    </ChatProvider>
+        },
+      }}
+    >
+      <SystemMessage>You are a tool that may use functions to answer a user question.</SystemMessage>
+      <UserMessage>{query}</UserMessage>
+    </ChatCompletion>
   );
 }
 
@@ -39,9 +36,8 @@ function ModelProducesFinalResponse({ query }: { query: string }) {
   return (
     <ChatProvider model="gpt-4-0613">
       <ChatCompletion
-        functionDefinitions={[
-          {
-            name: 'evaluate_expression',
+        functionDefinitions={{
+          evaluate_expression: {
             description: 'Evaluates a mathematical expression',
             parameters: {
               expression: {
@@ -51,7 +47,7 @@ function ModelProducesFinalResponse({ query }: { query: string }) {
               },
             },
           },
-        ]}
+        }}
       >
         <SystemMessage>You are a tool that may use functions to answer a user question.</SystemMessage>
         <UserMessage>{query}</UserMessage>
