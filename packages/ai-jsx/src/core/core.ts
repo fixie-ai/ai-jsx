@@ -367,10 +367,13 @@ async function* renderStream(
     const logImpl = renderingContext.getContext(LoggerContext);
     const renderId = uuidv4();
     try {
-      return yield* renderingContext.render(
+      logImpl.log('warn', renderable, renderId, 'Start element');
+      const finalResult = yield* renderingContext.render(
         renderable.render(renderingContext, new BoundLogger(logImpl, renderId, renderable)),
         recursiveRenderOpts
       );
+      logImpl.log('warn', renderable, renderId, {finalResult}, 'Rendered element');
+      return finalResult;
     } catch (ex) {
       logImpl.logException(renderable, renderId, ex);
       throw ex;
@@ -385,6 +388,8 @@ async function* renderStream(
     while (true) {
       const next = await iterator.next();
       if (next.value === AppendOnlyStream) {
+        // console.log('stream is append-only', next.value);
+        // context.getContext(LoggerContext).log('info', renderable, 'fak', 'Stream is append-only.')
         isAppendOnlyStream = true;
       } else if (isAppendOnlyStream) {
         const renderResult = context.render(next.value, recursiveRenderOpts);
@@ -439,9 +444,6 @@ function createRenderContextInternal(renderStream: StreamRenderer, userContext: 
 
       // Construct the generator that handles the provided options
       const generator = (async function* () {
-        if (isElement(renderable)) {
-          userContext[LoggerContext[contextKey].userContextSymbol].log('warn', renderable, 'fake-render-id', 'Starting render');
-        }
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         const shouldStop = (opts?.stop || (() => false)) as ElementPredicate;
         const generatorToWrap = renderStream(context, renderable, shouldStop, Boolean(opts?.appendOnly));
@@ -451,9 +453,6 @@ function createRenderContextInternal(renderStream: StreamRenderer, userContext: 
           if (next.done) {
             if (promiseResult === null) {
               promiseResult = Promise.resolve(value);
-            }
-            if (isElement(renderable)) {
-              userContext[LoggerContext[contextKey].userContextSymbol].log('warn', renderable, 'fake-render-id', {value}, 'Ending render');
             }
             return value;
           }
