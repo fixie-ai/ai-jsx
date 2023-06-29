@@ -423,10 +423,11 @@ export async function* OpenAIChatModel(
  * @param size The size of the image to generate. Defaults to `512x512`.
  * @returns URL(s) to the generated image, wrapped in {@link Image} component(s).
  */
-export async function DalleImageGen(
+export async function* DalleImageGen(
   { numSamples = 1, size = '512x512', children }: ImageGenPropsWithChildren,
   { render, getContext, logger }: AI.ComponentContext
 ) {
+  yield '';
   const prompt = await render(children);
 
   const openai = getContext(openAiClientContext);

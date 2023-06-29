@@ -9,10 +9,11 @@ function reactComponentName(component: React.JSXElementConstructor<any> | string
   return typeof component === 'string' ? component : component.name;
 }
 
-export async function UICompletion(
+export async function* UICompletion(
   { example, children }: { example: React.ReactNode; children: AI.Node },
   { render, logger }: AI.ComponentContext
 ) {
+  yield '';
   const reactComponents = new Set<React.JSXElementConstructor<any> | string>();
   function collectComponents(node: React.ReactNode | AI.Node, inReact: boolean) {
     if (Array.isArray(node)) {
