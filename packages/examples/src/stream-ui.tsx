@@ -2,7 +2,7 @@
 /** @jsxImportSource ai-jsx/react */
 import * as AI from 'ai-jsx/experimental/next';
 import { memo } from 'ai-jsx/core/memoize';
-import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 import { makeComponentMap } from 'ai-jsx/react/map';
 import { pino } from 'pino';
 import { PinoLogger } from 'ai-jsx/core/log';
@@ -16,8 +16,13 @@ function App() {
   
   return <>
     {chatCompletion}
-    {chatCompletion}
+    <Slow delay={2000} />
   </>;
+}
+
+async function Slow({delay}: {delay: number}) {
+  await new Promise(resolve => setTimeout(resolve, delay));
+  return ` returned after ${delay}`;
 }
 
 const pinoStdoutLogger = pino({

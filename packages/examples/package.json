@@ -29,6 +29,7 @@
     "demo:wandb": "yarn build && node dist/wandb.js",
     "demo:helloworld": "yarn build && node dist/helloworld.js",
     "demo:inline-chat": "yarn build && node dist/inline-chat.js",
+    "demo:stream-ui": "yarn build && node dist/stream-ui.js",
     "demo:inline-completion": "yarn build && node dist/inline-completion.js",
     "demo:simple-chat": "yarn build && node dist/simple-chat.js",
     "demo:multi-model-chat": "yarn build && node dist/multi-model-chat.js",
