@@ -16,20 +16,21 @@ function App() {
       <UserMessage>List five dog names</UserMessage>
     </ChatCompletion>
   );
-  
-  return <>
-    {chatCompletion}
-    <Slow delay={2000} />
-  </>;
+
+  return (
+    <>
+      {chatCompletion}
+      <Slow delay={2000} />
+    </>
+  );
 }
 
-async function Slow({delay}: {delay: number}) {
-
+async function Slow({ delay }: { delay: number }) {
   // By default, this demo will show that the tree stream waits for `Slow` to complete before rendering anything.
   // If we `yield ''`, the problem is solved.
 
   // yield ''
-  await new Promise(resolve => setTimeout(resolve, delay));
+  await new Promise((resolve) => setTimeout(resolve, delay));
   return ` returned after ${delay}`;
 }
 
@@ -47,13 +48,13 @@ const pinoStdoutLogger = pino({
 const decoder = new TextDecoder();
 
 const response = await AI.toReactStream(makeComponentMap({}), <App />, {
-  logger: new PinoLogger(pinoStdoutLogger)
-})
+  logger: new PinoLogger(pinoStdoutLogger),
+});
 const body = await response.body;
 const reader = body.getReader();
 // eslint-disable-next-line no-constant-condition
 while (true) {
-  const {done, value} = await reader.read();
+  const { done, value } = await reader.read();
   if (done) {
     break;
   }

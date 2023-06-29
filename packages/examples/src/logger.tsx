@@ -20,10 +20,10 @@ class ConsoleLogger extends LogImplementation {
   }
 }
 
-async function* Slow({delay}: {delay: number}): AI.RenderableStream {
+async function* Slow({ delay }: { delay: number }): AI.RenderableStream {
   yield AI.AppendOnlyStream;
   yield `first ${delay}`;
-  await new Promise(resolve => setTimeout(resolve, delay));
+  await new Promise((resolve) => setTimeout(resolve, delay));
   return ` second ${delay}`;
 }
 

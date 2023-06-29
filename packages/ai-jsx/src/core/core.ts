@@ -372,7 +372,7 @@ async function* renderStream(
         renderable.render(renderingContext, new BoundLogger(logImpl, renderId, renderable)),
         recursiveRenderOpts
       );
-      logImpl.log('debug', renderable, renderId, {finalResult}, 'Rendered element');
+      logImpl.log('debug', renderable, renderId, { finalResult }, 'Rendered element');
       return finalResult;
     } catch (ex) {
       logImpl.logException(renderable, renderId, ex);
@@ -388,7 +388,7 @@ async function* renderStream(
     while (true) {
       const next = await iterator.next();
       if (next.value === AppendOnlyStream) {
-        // TODO: I'd like to emit a log here indicating that an element has chosen to AppendOnlyStream, 
+        // TODO: I'd like to emit a log here indicating that an element has chosen to AppendOnlyStream,
         // but I'm not sure what the best way is to know which element/renderId produced `renderable`.
         isAppendOnlyStream = true;
       } else if (isAppendOnlyStream) {
@@ -528,7 +528,10 @@ function createRenderContextInternal(renderStream: StreamRenderer, userContext: 
     wrapRender: (getRenderStream) => createRenderContextInternal(getRenderStream(renderStream), userContext),
 
     [pushContextSymbol]: (contextReference, value) =>
-      createRenderContextInternal(renderStream, { ...userContext, [contextReference[contextKey].userContextSymbol]: value }),
+      createRenderContextInternal(renderStream, {
+        ...userContext,
+        [contextReference[contextKey].userContextSymbol]: value,
+      }),
   };
 
   return context;

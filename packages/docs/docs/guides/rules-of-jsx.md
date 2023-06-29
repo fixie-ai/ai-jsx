@@ -57,7 +57,7 @@ Imagine you have an slow async component, which is used as a sibling of faster c
 
 ```tsx
 async function Slow() {
-  await new Promise(resolve => setTimeout(resolve, 4000))
+  await new Promise((resolve) => setTimeout(resolve, 4000));
   return 'slow result';
 }
 
@@ -66,10 +66,12 @@ async function Fast() {
   return 'fast result';
 }
 
-const app = <>
-  <Fast />
-  <Slow />
-</>
+const app = (
+  <>
+    <Fast />
+    <Slow />
+  </>
+);
 ```
 
 Surprisingly, you won't get any results streamed out of `Fast` until `Slow` completes.
@@ -81,7 +83,7 @@ async function* Slow() {
   // highlight-next-line
   yield '';
 
-  await new Promise(resolve => setTimeout(resolve, 4000))
+  await new Promise((resolve) => setTimeout(resolve, 4000));
   return 'slow result';
 }
 ```
