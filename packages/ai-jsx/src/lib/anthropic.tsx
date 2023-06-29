@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import AnthropicSDK from '@anthropic-ai/sdk';
 import { getEnvVar } from './util.js';
 import * as AI from '../index.js';
 import { Node } from '../index.js';
@@ -15,8 +15,8 @@ import {
 } from '../core/completion.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 
-export const anthropicClientContext = AI.createContext<Anthropic>(
-  new Anthropic({
+export const anthropicClientContext = AI.createContext<AnthropicSDK>(
+  new AnthropicSDK({
     apiKey: getEnvVar('ANTHROPIC_API_KEY', false),
   })
 );
@@ -43,19 +43,24 @@ type ValidChatModel =
 type AnthropicModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
 
 /**
+ * If you use an Anthropic model without specifying the max tokens for the completion, this value will be used as the default.
+ */
+export const defaultMaxTokens = 1000;
+
+/**
  * An AI.JSX component that invokes an Anthropic Large Language Model.
  * @param children The children to render.
  * @param chatModel The chat model to use.
  * @param completionModel The completion model to use.
- * @param client The OpenAI client.
+ * @param client The Anthropic client.
  */
-export function OpenAI({
+export function Anthropic({
   children,
   chatModel,
   completionModel,
   client,
   ...defaults
-}: { children: Node; client?: Anthropic } & AnthropicModelChoices & ModelProps) {
+}: { children: Node; client?: AnthropicSDK } & AnthropicModelChoices & ModelProps) {
   let result = children;
 
   if (client) {
@@ -103,9 +108,9 @@ export async function* AnthropicChatModel(
     messageElements.filter(AI.isElement).map(async (message) => {
       switch (message.tag) {
         case UserMessage:
-          return `${Anthropic.HUMAN_PROMPT}: ${await render(message)}`;
+          return `${AnthropicSDK.HUMAN_PROMPT}: ${await render(message)}`;
         case AssistantMessage:
-          return `${Anthropic.AI_PROMPT}: ${await render(message)}`;
+          return `${AnthropicSDK.AI_PROMPT}: ${await render(message)}`;
         case SystemMessage:
           throw new AIJSXError(
             'Anthropic models do not support SystemMessage. Change your user message to instruct the model what to do.',
@@ -131,18 +136,18 @@ export async function* AnthropicChatModel(
 
   if (!messages.length) {
     throw new AIJSXError(
-      "ChatCompletion must have at least child that's a SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse, but no such children were found.",
+      "ChatCompletion must have at least one child that's UserMessage or AssistantMessage, but no such children were found.",
       ErrorCode.ChatCompletionMissingChildren,
       'user'
     );
   }
 
-  messages.push(Anthropic.AI_PROMPT);
+  messages.push(AnthropicSDK.AI_PROMPT);
 
   const anthropic = getContext(anthropicClientContext);
-  const anthropicCompletionRequest: Anthropic.CompletionCreateParams = {
+  const anthropicCompletionRequest: AnthropicSDK.CompletionCreateParams = {
     prompt: messages.join('\n\n'),
-    max_tokens_to_sample: props.maxTokens ?? 1000,
+    max_tokens_to_sample: props.maxTokens ?? defaultMaxTokens,
     temperature: props.temperature,
     model: props.model,
     stop_sequences: props.stop,
@@ -155,7 +160,7 @@ export async function* AnthropicChatModel(
   try {
     response = await anthropic.completions.create(anthropicCompletionRequest);
   } catch (err) {
-    if (err instanceof Anthropic.APIError) {
+    if (err instanceof AnthropicSDK.APIError) {
       throw new AIJSXError(
         err.message,
         ErrorCode.AnthropicAPIError,

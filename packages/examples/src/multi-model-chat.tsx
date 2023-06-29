@@ -59,3 +59,14 @@ logger.info('Using Anthropic');
 process.env.ANTHROPIC_API_KEY = originalAnthropicKey;
 delete process.env.OPENAI_API_KEY;
 console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
+
+logger.info('Streaming Anthropic');
+const rendering = AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />);
+let lastValue = '';
+for await (const frame of rendering) {
+  process.stdout.write(frame.slice(lastValue.length));
+  lastValue = frame;
+}
+
+const finalResult = await rendering;
+process.stdout.write(finalResult.slice(lastValue.length));
