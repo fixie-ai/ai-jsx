@@ -20,6 +20,13 @@ class ConsoleLogger extends LogImplementation {
   }
 }
 
+async function* Slow({delay}: {delay: number}): AI.RenderableStream {
+  yield AI.AppendOnlyStream;
+  yield `first ${delay}`;
+  await new Promise(resolve => setTimeout(resolve, delay));
+  return ` second ${delay}`;
+}
+
 function CharacterGenerator() {
   const inlineCompletion = (prompt: AI.Node) => (
     <Completion stop={['"']} temperature={1.0}>
@@ -28,14 +35,18 @@ function CharacterGenerator() {
   );
 
   return (
-    <Inline>
-      The following is a character profile for an RPG game in JSON format:{'\n'}
-      {'{'}
-      {'\n  '}"class": "{inlineCompletion}",
-      {'\n  '}"name": "{inlineCompletion}",
-      {'\n  '}"mantra": "{inlineCompletion}"{'\n'}
-      {'}'}
-    </Inline>
+    <>
+      <Slow delay={1000} />
+      <Slow delay={2000} />
+      <Inline>
+        The following is a character profile for an RPG game in JSON format:{'\n'}
+        {'{'}
+        {'\n  '}"class": "{inlineCompletion}",
+        {'\n  '}"name": "{inlineCompletion}",
+        {'\n  '}"mantra": "{inlineCompletion}"{'\n'}
+        {'}'}
+      </Inline>
+    </>
   );
 }
 
