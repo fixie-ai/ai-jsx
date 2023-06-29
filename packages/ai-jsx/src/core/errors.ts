@@ -24,7 +24,6 @@ export enum ErrorCode {
   AnthropicDoesNotSupportSystemMessage = 1019,
   AnthropicDoesNotSupportFunctions = 1020,
   AnthropicAPIError = 1021,
-  ChatModelDoesNotSupportFunctions = 1022,
 
   ModelOutputDidNotMatchConstraint = 2000,
 
