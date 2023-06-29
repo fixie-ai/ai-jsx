@@ -439,6 +439,9 @@ function createRenderContextInternal(renderStream: StreamRenderer, userContext: 
 
       // Construct the generator that handles the provided options
       const generator = (async function* () {
+        if (isElement(renderable)) {
+          userContext[LoggerContext[contextKey].userContextSymbol].log('warn', renderable, 'fake-render-id', 'Starting render');
+        }
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         const shouldStop = (opts?.stop || (() => false)) as ElementPredicate;
         const generatorToWrap = renderStream(context, renderable, shouldStop, Boolean(opts?.appendOnly));
@@ -448,6 +451,9 @@ function createRenderContextInternal(renderStream: StreamRenderer, userContext: 
           if (next.done) {
             if (promiseResult === null) {
               promiseResult = Promise.resolve(value);
+            }
+            if (isElement(renderable)) {
+              userContext[LoggerContext[contextKey].userContextSymbol].log('warn', renderable, 'fake-render-id', {value}, 'Ending render');
             }
             return value;
           }
