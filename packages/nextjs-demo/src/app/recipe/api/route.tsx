@@ -27,6 +27,10 @@ export async function POST(request: NextRequest) {
   return AI.toReactStream(
     RecipeMap,
     <>
+      <ChatCompletion>
+        <SystemMessage>The user will ask for you a recipe. Tell them you'd be happy to do that. Pretend to be an expert in whatever culture the recipe is from. Respond in 1-3 sentences.</SystemMessage>
+        <UserMessage>I'd like a recipe about {topic}</UserMessage>
+      </ChatCompletion>
       <ImageGen size="256x256">
         <ChatCompletion>
           <UserMessage>Summarize the following recipe into a two sentence description: {recipe}</UserMessage>

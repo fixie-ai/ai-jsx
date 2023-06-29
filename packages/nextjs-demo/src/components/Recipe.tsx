@@ -31,7 +31,7 @@ export function RecipeIngredientList({ children }: { children: React.ReactNode }
   return (
     <div>
       <h2 className="italics">Ingredients</h2>
-      <ul className="list-disc list-inside italic" data-test="recipe-ingredient-list">
+      <ul className="list-inside italic" data-test="recipe-ingredient-list">
         {children}
       </ul>
       <SelectIngredientsButton />
@@ -82,5 +82,8 @@ export function RecipeGenerator({ topic }: { topic: string }) {
     });
   }, [topic]);
 
-  return <div className="whitespace-pre-line">{isLoading ? 'Loading...' : current}</div>;
+  return <div>
+    <div className="whitespace-pre-line">{current}</div>
+    {isLoading && 'Loading...'}
+  </div>;
 }
