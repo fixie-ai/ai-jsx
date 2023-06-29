@@ -281,7 +281,7 @@ export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & {
     model: ValidChatModel;
     logitBias?: Record<string, number>;
-    functionDefinitions?: FunctionDefinition[];
+    functionDefinitions?: Record<string, FunctionDefinition>;
   },
   { render, getContext, logger }: AI.ComponentContext
 ): AI.RenderableStream {
@@ -354,27 +354,27 @@ export async function* OpenAIChatModel(
     );
   }
 
-  const openaiFunctions: ChatCompletionFunctions[] | undefined = props.functionDefinitions?.map(
-    (functionDefinition) => ({
-      name: functionDefinition.name,
-      description: functionDefinition.description,
-      parameters: {
-        type: 'object',
-        required: Object.keys(functionDefinition.parameters).filter(
-          (name) => functionDefinition.parameters[name].required
-        ),
-        properties: Object.keys(functionDefinition.parameters).reduce(
-          (map: Record<string, any>, paramName) => ({
-            ...map,
-            [paramName]: {
-              type: functionDefinition.parameters[paramName].type,
-            },
-          }),
-          {}
-        ),
-      },
-    })
-  );
+  const openaiFunctions: ChatCompletionFunctions[] | null = !props.functionDefinitions
+    ? null
+    : Object.entries(props.functionDefinitions).map(([functionName, functionDefinition]) => ({
+        name: functionName,
+        description: functionDefinition.description,
+        parameters: {
+          type: 'object',
+          required: Object.keys(functionDefinition.parameters).filter(
+            (name) => functionDefinition.parameters[name].required
+          ),
+          properties: Object.keys(functionDefinition.parameters).reduce(
+            (map: Record<string, any>, paramName) => ({
+              ...map,
+              [paramName]: {
+                type: functionDefinition.parameters[paramName].type,
+              },
+            }),
+            {}
+          ),
+        },
+      }));
 
   const openai = getContext(openAiClientContext);
   const chatCompletionRequest = {

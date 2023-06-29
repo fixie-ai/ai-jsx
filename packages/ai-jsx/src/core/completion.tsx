@@ -38,7 +38,6 @@ export type ModelComponent<T extends ModelPropsWithChildren> = Component<T>;
  * Represents a function definition that can be invoked using the {@link FunctionCall} component.
  */
 export interface FunctionDefinition {
-  name: string;
   description?: string;
   parameters: Record<string, FunctionParameter>;
 }
