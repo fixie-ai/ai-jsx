@@ -218,7 +218,7 @@ export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: Re
   messages.push(<UserMessage>{props.query}</UserMessage>);
 
   do {
-    const model_response = (
+    const modelResponse = (
       <ChatCompletion
         functionDefinitions={Object.entries(props.tools).map(([toolName, tool]) => ({
           name: toolName,
