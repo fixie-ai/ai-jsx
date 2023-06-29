@@ -367,12 +367,12 @@ async function* renderStream(
     const logImpl = renderingContext.getContext(LoggerContext);
     const renderId = uuidv4();
     try {
-      logImpl.log('debug', renderable, renderId, 'Start element');
+      logImpl.log('debug', renderable, renderId, 'Start rendering element');
       const finalResult = yield* renderingContext.render(
         renderable.render(renderingContext, new BoundLogger(logImpl, renderId, renderable)),
         recursiveRenderOpts
       );
-      logImpl.log('debug', renderable, renderId, { finalResult }, 'Rendered element');
+      logImpl.log('debug', renderable, renderId, { finalResult }, 'Finished rendering element');
       return finalResult;
     } catch (ex) {
       logImpl.logException(renderable, renderId, ex);
