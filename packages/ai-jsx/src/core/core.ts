@@ -428,7 +428,7 @@ export function createRenderContext(opts?: { logger?: LogImplementation }) {
   });
 }
 
-function createRenderContextInternal(render: StreamRenderer, userContext: Record<symbol, any>): RenderContext {
+function createRenderContextInternal(renderStream: StreamRenderer, userContext: Record<symbol, any>): RenderContext {
   const context: RenderContext = {
     render: <TFinal extends string | PartiallyRendered[], TIntermediate>(
       renderable: Renderable,
@@ -441,7 +441,7 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
       const generator = (async function* () {
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         const shouldStop = (opts?.stop || (() => false)) as ElementPredicate;
-        const generatorToWrap = render(context, renderable, shouldStop, Boolean(opts?.appendOnly));
+        const generatorToWrap = renderStream(context, renderable, shouldStop, Boolean(opts?.appendOnly));
         while (true) {
           const next = await generatorToWrap.next();
           const value = opts?.stop ? (next.value as TFinal) : (next.value.join('') as TFinal);
@@ -520,10 +520,10 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
       return defaultValue;
     },
 
-    wrapRender: (getRender) => createRenderContextInternal(getRender(render), userContext),
+    wrapRender: (getRenderStream) => createRenderContextInternal(getRenderStream(renderStream), userContext),
 
     [pushContextSymbol]: (contextReference, value) =>
-      createRenderContextInternal(render, { ...userContext, [contextReference[contextKey].userContextSymbol]: value }),
+      createRenderContextInternal(renderStream, { ...userContext, [contextReference[contextKey].userContextSymbol]: value }),
   };
 
   return context;
