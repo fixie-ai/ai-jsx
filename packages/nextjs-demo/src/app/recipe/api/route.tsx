@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     RecipeMap,
     <>
       <ChatCompletion>
-        <SystemMessage>The user will ask for you a recipe. Tell them you'd be happy to do that. Pretend to be an expert in whatever culture the recipe is from. Respond in 1-3 sentences.</SystemMessage>
+        <SystemMessage>The user will ask for you a recipe. Tell them you'd be happy to do that. Pretend to be an expert in whatever culture the recipe is from. Respond in 1-3 sentences. Do not ask a question.</SystemMessage>
         <UserMessage>I'd like a recipe about {topic}</UserMessage>
       </ChatCompletion>
       <ImageGen size="256x256">

@@ -3,6 +3,7 @@
 import { useAIStream } from 'ai-jsx/react';
 import React, { useState, useEffect } from 'react';
 import RecipeMap from '@/components/Recipe.map';
+import Image from 'next/image'
 
 export function Recipe({ children }: { children: React.ReactNode }) {
   return <div data-test="recipe">{children}</div>;
@@ -84,6 +85,6 @@ export function RecipeGenerator({ topic }: { topic: string }) {
 
   return <div>
     <div className="whitespace-pre-line">{current}</div>
-    {isLoading && 'Loading...'}
+    <div className="mt-4">{isLoading && <Image src='/loading.gif' alt='loading spiner' width={20} height={20} />}</div>
   </div>;
 }
