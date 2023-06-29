@@ -180,6 +180,16 @@
         "default": "./dist/cjs/lib/openai.cjs"
       }
     },
+    "./lib/anthropic": {
+      "import": {
+        "types": "./dist/esm/lib/anthropic.d.ts",
+        "default": "./dist/esm/lib/anthropic.js"
+      },
+      "require": {
+        "types": "./dist/cjs/lib/anthropic.d.cts",
+        "default": "./dist/cjs/lib/anthropic.cjs"
+      }
+    },
     "./react": {
       "import": {
         "types": "./dist/esm/react/index.d.ts",
@@ -291,6 +301,7 @@
     "react": "^16.8.0  || ^17.0.0 || ^18.0.0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.5.0",
     "@nick.heiner/openai-edge": "1.0.1-7",
     "@nick.heiner/wandb-fork": "^0.5.2-5",
     "axios": "^1.4.0",

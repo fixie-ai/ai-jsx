@@ -35,6 +35,7 @@ import { Merge } from 'type-fest';
 import { Logger } from '../core/log.js';
 import { HttpError, AIJSXError, ErrorCode } from '../core/errors.js';
 import { getEnvVar } from './util.js';
+import { ChatOrCompletionModelOrBoth } from './model.js';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -46,14 +47,12 @@ type ValidCompletionModel =
 
 type ValidChatModel = 'gpt-4' | 'gpt-4-0314' | 'gpt-4-32k' | 'gpt-4-32k-0314' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-0301';
 
-type ChatOrCompletionModelOrBoth =
-  | { chatModel: ValidChatModel; completionModel?: ValidCompletionModel }
-  | { chatModel?: ValidChatModel; completionModel: ValidCompletionModel };
+type OpenAIModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
 
 const decoder = new TextDecoder();
 
-function createOpenAIClient() {
-  return new OpenAIApi(
+export const openAiClientContext = AI.createContext<OpenAIApi>(
+  new OpenAIApi(
     new Configuration({
       apiKey: getEnvVar('OPENAI_API_KEY', false),
     }),
@@ -63,10 +62,8 @@ function createOpenAIClient() {
     getEnvVar('OPENAI_API_BASE', false) || undefined,
     // TODO: Figure out a better way to work around NextJS fetch blocking streaming
     (globalThis as any)._nextOriginalFetch ?? globalThis.fetch
-  );
-}
-
-export const openAiClientContext = AI.createContext<OpenAIApi>(createOpenAIClient());
+  )
+);
 
 /**
  * An AI.JSX component that invokes an OpenAI Large Language Model.
@@ -81,7 +78,7 @@ export function OpenAI({
   completionModel,
   client,
   ...defaults
-}: { children: Node; client?: OpenAIApi } & ChatOrCompletionModelOrBoth & ModelProps) {
+}: { children: Node; client?: OpenAIApi } & OpenAIModelChoices & ModelProps) {
   let result = children;
 
   if (client) {
