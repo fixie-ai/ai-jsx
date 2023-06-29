@@ -160,8 +160,8 @@ export const jsx = asJsxBoundary(function jsx(
 });
 export const JSX = jsx;
 
-export function toReactStream(componentMap: ComponentMap<any>, renderable: AI.Renderable): Response {
-  const renderResult = AI.createRenderContext().render(renderable, {
+export function toReactStream(componentMap: ComponentMap<any>, renderable: AI.Renderable, renderContextOpts?: Parameters<typeof AI.createRenderContext>[0]): Response {
+  const renderResult = AI.createRenderContext(renderContextOpts).render(renderable, {
     stop: (e) => boundaryElements.some((special) => special.tag === e.tag),
     map: (x) => x,
   });
