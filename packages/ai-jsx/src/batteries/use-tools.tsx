@@ -195,17 +195,14 @@ export async function* UseTools(props: UseToolsProps, { render }: RenderContext)
     const rendered = yield* render(<UseToolsFunctionCall {...props} />);
     return rendered;
   } catch (e: any) {
-    if (e.code === ErrorCode.ChatModelDoesntSupportFunctions) {
+    if (e.code === ErrorCode.ChatModelDoesNotSupportFunctions) {
       return <UseToolsPromptEngineered {...props} />;
     }
     throw e;
   }
 }
 
-/**
- * An implementation of <UseTools/> that uses {@link ChatCompletion}'s {@link FunctionDefinition} capability to call
- * functions. The chat model in scope must support Function Calls for this component.
- */
+/** @hidden */
 export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: RenderContext) {
   const messages = [
     <SystemMessage>You are a smart agent that may use functions to answer a user question.</SystemMessage>,
@@ -230,7 +227,7 @@ export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: Re
       </ChatCompletion>
     );
 
-    const renderResult = yield* render(model_response, { stop: (el) => el.tag == FunctionCall });
+    const renderResult = yield* render(modelResponse, { stop: (el) => el.tag == FunctionCall });
 
     if (isElement(renderResult[0])) {
       // Model has generated a <FunctionCall/> element.
@@ -265,10 +262,7 @@ export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: Re
   } while (true);
 }
 
-/**
- * An implementation of <UseTools/> that uses plain prompt engineering to choose a tool to be called.
- * This implementation does not need the underlying chat model to support Function Calls.
- */
+/** @hidden */
 export function UseToolsPromptEngineered(props: UseToolsProps) {
   return <InvokeTool tools={props.tools} toolChoice={<ChooseTools {...props} />} fallback={props.fallback} />;
 }

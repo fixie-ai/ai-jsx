@@ -288,7 +288,7 @@ export async function* OpenAIChatModel(
   if (props.functionDefinitions && !chatModelSupportsFunctions(props.model)) {
     throw new AIJSXError(
       `The ${props.model} model does not support function calling, but function definitions were provided.`,
-      ErrorCode.ChatModelDoesntSupportFunctions,
+      ErrorCode.ChatModelDoesNotSupportFunctions,
       'user'
     );
   }
