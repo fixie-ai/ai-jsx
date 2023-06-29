@@ -5,20 +5,32 @@ import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { Deserialized, fromStreamResponse } from '../stream/index.js';
 import { Jsonifiable } from 'type-fest';
 import { ComponentMap } from './map.js';
+import { Image } from '../core/image-gen.js';
+import _ from 'lodash';
 export * from './core.js';
+
+/**
+ * The {@link jsx} component will render its children until it gets to boundary elements.
+ * This object defines how the boundary elements are handled.
+ */
+const boundaryElements = [
+  { tag: AI.React, unwrap: (e: AI.Element<any>) => e.props.children },
+  { tag: Image, unwrap: (e: AI.Element<any>) => ReactModule.createElement('img', { src: e.props.url }) },
+];
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
   if (AI.isElement(partiallyRendered)) {
-    // This should be an AI.React element.
-    if (partiallyRendered.tag !== AI.React) {
-      throw new AIJSXError(
-        'unwrapReact only expects to see AI.React elements or strings.',
-        ErrorCode.UnexpectedRenderType,
-        'internal'
-      );
+    for (const { tag, unwrap } of boundaryElements) {
+      if (partiallyRendered.tag === tag) {
+        return unwrap(partiallyRendered);
+      }
     }
-
-    return partiallyRendered.props.children;
+    const expectedElements = _.map(boundaryElements, 'tag').join(' or ');
+    throw new AIJSXError(
+      `unwrapReact only expects to see ${expectedElements} elements or strings.`,
+      ErrorCode.UnexpectedRenderType,
+      'internal'
+    );
   }
 
   return partiallyRendered;
@@ -41,7 +53,7 @@ export function useAI(children: AI.Node, onStreamStart?: () => void, onStreamEnd
 
       // TODO: add a way for a render context to be aborted
       const renderResult = AI.createRenderContext().render(children, {
-        stop: (e) => e.tag == AI.React,
+        stop: (e) => boundaryElements.some((special) => special.tag === e.tag),
         map: (frame) => frame.map(unwrapReact),
       });
       for await (const reactFrame of renderResult) {

@@ -9,6 +9,7 @@ import { Node, Component, RenderContext } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
+import { AnthropicChatModel } from '../lib/anthropic.js';
 
 /**
  * Represents properties passed to a given Large Language Model.
@@ -89,12 +90,22 @@ function AutomaticChatModel({ children, ...props }: ModelPropsWithChildren) {
       </OpenAIChatModel>
     );
   }
+
+  if (getEnvVar('ANTHROPIC_API_KEY', false)) {
+    return (
+      <AnthropicChatModel model="claude-instant-1" {...props}>
+        {children}
+      </AnthropicChatModel>
+    );
+  }
+
   throw new AIJSXError(
     `No chat model was specified. To fix this, do one of the following:
     
 1. Set the OPENAI_API_KEY or REACT_APP_OPENAI_API_KEY environment variable.
 2. Set the OPENAI_API_BASE or REACT_APP_OPENAI_API_BASE environment variable.
-3. use an explicit ChatProvider component.`,
+3. Set the ANTHROPIC_API_KEY or REACT_APP_ANTHROPIC_API_KEY environment variable.
+4. use an explicit ChatProvider component.`,
     ErrorCode.MissingChatModel,
     'user'
   );

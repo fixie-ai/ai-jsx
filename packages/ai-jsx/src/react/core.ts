@@ -5,6 +5,7 @@ import { isJsxBoundary } from './jsx-boundary.js';
 import { ElementSerializer } from '../stream/index.js';
 import { ComponentMap } from './map.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
+import { Image } from '../core/image-gen.js';
 export * from '../index.js';
 
 /**
@@ -51,6 +52,14 @@ export function createElementSerializer(map: ComponentMap<any>): ElementSerializ
         ErrorCode.NestedAIUIStreamsAreNotSupported,
         'internal'
       );
+    }
+
+    if (element.tag === Image) {
+      return {
+        $$type: 'element',
+        $$component: 'img',
+        props: { src: element.props.url },
+      };
     }
 
     return {
