@@ -15,11 +15,18 @@ import fs from 'fs/promises';
  * Run `yarn workspace examples demo:repo-qa:etl` before running this demo.
  */
 
+/**
+ * This demo hangs. I don't know why. There's nothing in the logging that provides an immediate clue. 
+ */
+
 type Files = Record<string, string>;
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
-async function RepoFiles({ repoFileFilter, question }: { question: string; repoFileFilter: RegExp[] }, { logger }: AI.ComponentContext) {
+async function RepoFiles(
+  { repoFileFilter, question }: { question: string; repoFileFilter: RegExp[] },
+  { logger }: AI.ComponentContext
+) {
   const files = await loadJsonFile<Files>(path.join(dirname, 'repo-files.json'));
   const filteredFiles = Object.entries(files).filter(([path]) => repoFileFilter.some((regex) => regex.test(path)));
 
@@ -96,10 +103,13 @@ function App() {
 }
 
 await fs.unlink('./ai-jsx.log');
-const pinoLogger = pino({
-  name: 'ai-jsx',
-  level: process.env.loglevel ?? 'trace',
-}, pino.destination('./ai-jsx.log'));
+const pinoLogger = pino(
+  {
+    name: 'ai-jsx',
+    level: process.env.loglevel ?? 'trace',
+  },
+  pino.destination('./ai-jsx.log')
+);
 console.log('Writing logs to', path.join(process.cwd(), 'ai-jsx.log'));
 let lastValue = '';
 const rendering = AI.createRenderContext({ logger: new PinoLogger(pinoLogger) }).render(<App />);
