@@ -4,17 +4,51 @@ import { useAIStream } from 'ai-jsx/react';
 import React, { useState, useEffect } from 'react';
 import RecipeMap from '@/components/Recipe.map';
 import Image from 'next/image';
+import _ from 'lodash';
+import { BookmarkIcon, ShareIcon } from '@heroicons/react/20/solid';
 
 export function Recipe({ children }: { children: React.ReactNode }) {
-  return <div data-test="recipe">{children}</div>;
+  const [title, notTitle] = _.partition(
+    React.Children.toArray(children),
+    (child) =>
+      typeof child === 'object' &&
+      'type' in child &&
+      typeof child.type !== 'string' &&
+      child.type.name === 'RecipeTitle'
+  );
+
+  const cardHeading = (
+    <div className="-ml-4 -mt-2 flex flex-wrap items-center justify-between sm:flex-nowrap">
+      <div className="ml-4 mt-2">{title[0]}</div>
+      <div className="ml-4 mt-4 flex flex-shrink-0">
+        <button
+          type="button"
+          className="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+        >
+          <BookmarkIcon className="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400" aria-hidden="true" />
+          <span>Save</span>
+        </button>
+        <button
+          type="button"
+          className="relative ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+        >
+          <ShareIcon className="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400" aria-hidden="true" />
+          <span>Share</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow">
+      <div className="px-4 py-5 sm:px-6">{cardHeading}</div>
+      <div className="px-4 py-5 sm:p-6">{notTitle}</div>
+    </div>
+  );
 }
 
 export function RecipeTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="text-xl font-bold" data-test="recipe-title">
-      {children}
-    </h2>
-  );
+  return <h3 className="text-base font-semibold leading-6 text-gray-900">{children}</h3>;
 }
 
 export function RecipeInstructionList({ children }: { children: React.ReactNode }) {

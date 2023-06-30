@@ -30,12 +30,14 @@ export async function POST(request: NextRequest) {
 
   const textEncoder = new TextEncoder();
   const fakeStream = fs.readFileSync(path.join(process.cwd(), 'src', 'app', 'recipe', 'api', 'fixture.txt'), 'utf-8');
-  return new Response(new ReadableStream({
-    start(controller) {
-      controller.enqueue(textEncoder.encode(fakeStream));
-      controller.close();
-    }
-  }))
+  return new Response(
+    new ReadableStream({
+      start(controller) {
+        controller.enqueue(textEncoder.encode(fakeStream));
+        controller.close();
+      },
+    })
+  );
 
   // return AI.toReactStream(
   //   RecipeMap,
