@@ -6,7 +6,6 @@ import { UICompletion } from 'ai-jsx/react/completion';
 import RecipeMap from '@/components/Recipe.map';
 import { memo } from 'ai-jsx/core/memoize';
 import { ImageGen } from 'ai-jsx/core/image-gen';
-import { fileURLToPath } from 'node:url';
 const {
   Recipe,
   RecipeIngredientList,
@@ -18,6 +17,7 @@ const {
 import fs from 'fs';
 import path from 'path';
 
+// Flip this flag to use a fixture response. This makes it easier to iterate on the UI.
 const useFixture = false;
 
 export async function POST(request: NextRequest) {
@@ -30,6 +30,8 @@ export async function POST(request: NextRequest) {
     </ChatCompletion>
   );
 
+  // This is an intentional constant flag.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (useFixture) {
     const textEncoder = new TextEncoder();
     const fakeStream = fs.readFileSync(path.join(process.cwd(), 'src', 'app', 'recipe', 'api', 'fixture.txt'), 'utf-8');
