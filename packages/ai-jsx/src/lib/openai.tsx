@@ -45,7 +45,15 @@ type ValidCompletionModel =
   | 'text-babbage-001'
   | 'text-ada-001';
 
-type ValidChatModel = 'gpt-4' | 'gpt-4-0314' | 'gpt-4-32k' | 'gpt-4-32k-0314' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-0301';
+type ValidChatModel =
+  | 'gpt-4'
+  | 'gpt-4-0314'
+  | 'gpt-4-0613'
+  | 'gpt-4-32k'
+  | 'gpt-4-32k-0314'
+  | 'gpt-3.5-turbo'
+  | 'gpt-3.5-turbo-0301'
+  | 'gpt-3.5-turbo-0613';
 
 type OpenAIModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
 
@@ -158,6 +166,15 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
   );
 }
 
+/**
+ * Returns true if the given model supports function calling.
+ * @param model The model to check.
+ * @returns True if the model supports function calling, false otherwise.
+ */
+function chatModelSupportsFunctions(model: ValidChatModel) {
+  return ['gpt-4', 'gpt-3.5-turbo', 'gpt-4-0613', 'gpt-3.5-turbo-0613'].includes(model);
+}
+
 type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
 
 /**
@@ -260,10 +277,18 @@ export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & {
     model: ValidChatModel;
     logitBias?: Record<string, number>;
-    functionDefinitions?: FunctionDefinition[];
+    functionDefinitions?: Record<string, FunctionDefinition>;
   },
   { render, getContext, logger }: AI.ComponentContext
 ): AI.RenderableStream {
+  if (props.functionDefinitions && !chatModelSupportsFunctions(props.model)) {
+    throw new AIJSXError(
+      `The ${props.model} model does not support function calling, but function definitions were provided.`,
+      ErrorCode.ChatModelDoesNotSupportFunctions,
+      'user'
+    );
+  }
+
   const messageElements = await render(props.children, {
     stop: (e) =>
       e.tag == SystemMessage ||
@@ -325,27 +350,27 @@ export async function* OpenAIChatModel(
     );
   }
 
-  const openaiFunctions: ChatCompletionFunctions[] | undefined = props.functionDefinitions?.map(
-    (functionDefinition) => ({
-      name: functionDefinition.name,
-      description: functionDefinition.description,
-      parameters: {
-        type: 'object',
-        required: Object.keys(functionDefinition.parameters).filter(
-          (name) => functionDefinition.parameters[name].required
-        ),
-        properties: Object.keys(functionDefinition.parameters).reduce(
-          (map: Record<string, any>, paramName) => ({
-            ...map,
-            [paramName]: {
-              type: functionDefinition.parameters[paramName].type,
-            },
-          }),
-          {}
-        ),
-      },
-    })
-  );
+  const openaiFunctions: ChatCompletionFunctions[] | undefined = !props.functionDefinitions
+    ? undefined
+    : Object.entries(props.functionDefinitions).map(([functionName, functionDefinition]) => ({
+        name: functionName,
+        description: functionDefinition.description,
+        parameters: {
+          type: 'object',
+          required: Object.keys(functionDefinition.parameters).filter(
+            (name) => functionDefinition.parameters[name].required
+          ),
+          properties: Object.keys(functionDefinition.parameters).reduce(
+            (map: Record<string, any>, paramName) => ({
+              ...map,
+              [paramName]: {
+                type: functionDefinition.parameters[paramName].type,
+              },
+            }),
+            {}
+          ),
+        },
+      }));
 
   const openai = getContext(openAiClientContext);
   const chatCompletionRequest = {

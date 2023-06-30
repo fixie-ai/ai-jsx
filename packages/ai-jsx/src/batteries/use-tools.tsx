@@ -4,8 +4,15 @@
  * @packageDocumentation
  */
 
-import { ChatCompletion, FunctionParameter, SystemMessage, UserMessage } from '../core/completion.js';
-import { Node, RenderContext } from '../index.js';
+import {
+  ChatCompletion,
+  FunctionCall,
+  FunctionParameter,
+  FunctionResponse,
+  SystemMessage,
+  UserMessage,
+} from '../core/completion.js';
+import { Node, RenderContext, isElement, Element } from '../index.js';
 import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
@@ -107,7 +114,7 @@ export interface Tool {
    * A function to invoke the tool.
    */
   // Can we use Zod to do better than any[]?
-  func: (...args: any[]) => unknown;
+  func: (...args: any[]) => string | number | boolean | null | undefined | Promise<string | number | boolean | null>;
 }
 
 /**
@@ -183,6 +190,84 @@ export interface UseToolsProps {
  * ```
  *
  */
-export function UseTools(props: UseToolsProps) {
+export async function* UseTools(props: UseToolsProps, { render }: RenderContext) {
+  try {
+    const rendered = yield* render(<UseToolsFunctionCall {...props} />);
+    return rendered;
+  } catch (e: any) {
+    if (e.code === ErrorCode.ChatModelDoesNotSupportFunctions) {
+      return <UseToolsPromptEngineered {...props} />;
+    }
+    throw e;
+  }
+}
+
+/** @hidden */
+export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: RenderContext) {
+  const messages = [
+    <SystemMessage>You are a smart agent that may use functions to answer a user question.</SystemMessage>,
+  ];
+  if (props.fallback) {
+    messages.push(
+      <SystemMessage>Here's the fallback strategy/message if something failed: {props.fallback}</SystemMessage>
+    );
+  }
+  messages.push(<UserMessage>{props.query}</UserMessage>);
+
+  do {
+    const modelResponse = <ChatCompletion functionDefinitions={props.tools}>{messages}</ChatCompletion>;
+
+    const renderResult = yield* render(modelResponse, { stop: (el) => el.tag == FunctionCall });
+
+    const stringResponses: String[] = [];
+    let functionCallElement: Element<any> | null = null;
+
+    for (const element of renderResult) {
+      if (typeof element === 'string') {
+        // Model has generated a string response. Record it.
+        stringResponses.push(element);
+      } else if (isElement(element)) {
+        // Model has generated a function call.
+        if (functionCallElement) {
+          throw new AIJSXError(
+            `ChatCompletion returned 2 function calls at the same time ${renderResult.join(', ')}`,
+            ErrorCode.ModelOutputCouldNotBeParsedForTool,
+            'runtime'
+          );
+        }
+        functionCallElement = element;
+      } else {
+        throw new AIJSXError(
+          `Unexpected result from render ${renderResult.join(', ')}`,
+          ErrorCode.ModelOutputCouldNotBeParsedForTool,
+          'runtime'
+        );
+      }
+    }
+
+    if (functionCallElement) {
+      messages.push(functionCallElement);
+      yield functionCallElement;
+      // Call the selected function and append the result to the messages.
+      let response;
+      try {
+        const callable = props.tools[functionCallElement.props.name].func;
+        response = await callable(functionCallElement.props.args);
+      } catch (e: any) {
+        response = `Function called failed with error: ${e.message}.`;
+      } finally {
+        const functionResponse = <FunctionResponse name={functionCallElement.props.name}>{response}</FunctionResponse>;
+        yield functionResponse;
+        messages.push(functionResponse);
+      }
+    } else {
+      // Model did not generate any function call. Return the string responses.
+      return stringResponses.join('');
+    }
+  } while (true);
+}
+
+/** @hidden */
+export function UseToolsPromptEngineered(props: UseToolsProps) {
   return <InvokeTool tools={props.tools} toolChoice={<ChooseTools {...props} />} fallback={props.fallback} />;
 }
