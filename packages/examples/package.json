@@ -19,6 +19,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "demo:repo-qa:etl": "yarn build && node dist/repo-qa/etl.js",
+    "demo:repo-qa": "yarn build && node dist/repo-qa/index.js",
     "demo:append-only": "yarn build && node dist/append-only.js",
     "demo:debate": "yarn build && node dist/debate.js",
     "demo:errors": "yarn build && node dist/errors.js",
