@@ -4,7 +4,6 @@ import { useAIStream } from 'ai-jsx/react';
 import React, { useState, useEffect, SetStateAction, Dispatch } from 'react';
 import RecipeMap from '@/components/Recipe.map';
 import Image from 'next/image';
-import _ from 'lodash';
 import { BookmarkIcon, ShareIcon } from '@heroicons/react/20/solid';
 // @ts-ignore
 import { Tab } from '@headlessui/react';
