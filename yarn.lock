@@ -3102,6 +3102,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@headlessui/react@npm:^1.7.15":
+  version: 1.7.15
+  resolution: "@headlessui/react@npm:1.7.15"
+  dependencies:
+    client-only: ^0.0.1
+  peerDependencies:
+    react: ^16 || ^17 || ^18
+    react-dom: ^16 || ^17 || ^18
+  checksum: f2d11d58499ddf1362a40d84d92b7db932adaccc3596f44f1eead642258280f124497f2b329cee6e04801818bb2e66c42d752ee05f40f8b5239c2f692128e568
+  languageName: node
+  linkType: hard
+
+"@heroicons/react@npm:^2.0.18":
+  version: 2.0.18
+  resolution: "@heroicons/react@npm:2.0.18"
+  peerDependencies:
+    react: ">= 16"
+  checksum: 597e8668818623d568a302e343ef06b69f62ce297c14b88c2ebbfed0c0f00cd85ec44fae33ec8a249931b4e7dcf145743ae3198095a9f4682108de5155f5f4c3
+  languageName: node
+  linkType: hard
+
 "@humanwhocodes/config-array@npm:^0.11.10":
   version: 0.11.10
   resolution: "@humanwhocodes/config-array@npm:0.11.10"
@@ -6003,6 +6024,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tailwindcss/forms@npm:^0.5.3":
+  version: 0.5.3
+  resolution: "@tailwindcss/forms@npm:0.5.3"
+  dependencies:
+    mini-svg-data-uri: ^1.2.3
+  peerDependencies:
+    tailwindcss: ">=3.0.0 || >= 3.0.0-alpha.1"
+  checksum: 9eddb4dbd06d01b1068138ff52a54ed0e35a28e7bfd3c72e226fc28658ecd92a9c078c4abe9c83db090984672040644d7ae2e035933fb619dd703df1d87aa275
+  languageName: node
+  linkType: hard
+
 "@testing-library/dom@npm:^8.5.0":
   version: 8.20.1
   resolution: "@testing-library/dom@npm:8.20.1"
@@ -7498,7 +7530,7 @@ __metadata:
   dependencies:
     "@tsconfig/node18": ^2.0.1
     "@types/node": ^20.3.1
-    ai-jsx: 0.5.9
+    ai-jsx: 0.5.10
     pino: ^8.14.1
     pino-pretty: ^10.0.0
     tsx: ^3.12.7
@@ -7521,7 +7553,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"ai-jsx@0.5.9, ai-jsx@workspace:packages/ai-jsx":
+"ai-jsx@0.5.10, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
@@ -9085,7 +9117,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"client-only@npm:0.0.1":
+"client-only@npm:0.0.1, client-only@npm:^0.0.1":
   version: 0.0.1
   resolution: "client-only@npm:0.0.1"
   checksum: 0c16bf660dadb90610553c1d8946a7fdfb81d624adea073b8440b7d795d5b5b08beb3c950c6a2cf16279365a3265158a236876d92bce16423c485c322d7dfaf8
@@ -9616,7 +9648,7 @@ __metadata:
     "@types/react-dom": ^18.2.5
     "@typescript-eslint/eslint-plugin": ^5.59.11
     "@typescript-eslint/parser": ^5.59.11
-    ai-jsx: 0.5.9
+    ai-jsx: 0.5.10
     babel-jest: ^27.4.2
     babel-loader: ^8.2.3
     babel-plugin-named-asset-import: ^0.3.8
@@ -12147,7 +12179,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.60.0
     "@typescript-eslint/parser": ^5.60.0
     "@wandb/sdk": ^0.5.1
-    ai-jsx: 0.5.9
+    ai-jsx: 0.5.10
     axios: ^1.4.0
     csv-stringify: ^6.4.0
     eslint: ^8.40.0
@@ -17015,6 +17047,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mini-svg-data-uri@npm:^1.2.3":
+  version: 1.4.4
+  resolution: "mini-svg-data-uri@npm:1.4.4"
+  bin:
+    mini-svg-data-uri: cli.js
+  checksum: 997f1fbd8d59a70f03761e18626d335197a3479cb9d1ff75678e4b64b864d32a0b8fc18115eabde035e5299b8b4a354a78e57dd6ac10f9d604162a6170898d09
+  languageName: node
+  linkType: hard
+
 "minimalistic-assert@npm:^1.0.0":
   version: 1.0.1
   resolution: "minimalistic-assert@npm:1.0.1"
@@ -17451,8 +17492,11 @@ __metadata:
   dependencies:
     "@babel/core": ^7.22.5
     "@babel/plugin-transform-react-jsx": ^7.22.5
+    "@headlessui/react": ^1.7.15
+    "@heroicons/react": ^2.0.18
     "@next/eslint-plugin-next": ^13.4.6
     "@octokit/graphql": ^5.0.6
+    "@tailwindcss/forms": ^0.5.3
     "@types/lodash": ^4.14.195
     "@types/node": 20.2.5
     "@types/react": 18.2.8
@@ -17460,7 +17504,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
     ai: ^2.1.8
-    ai-jsx: 0.5.9
+    ai-jsx: 0.5.10
     autoprefixer: 10.4.14
     classnames: ^2.3.2
     eslint: 8.42.0
@@ -17490,7 +17534,7 @@ __metadata:
     "@types/react-dom": 18.2.4
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
-    ai-jsx: 0.5.9
+    ai-jsx: 0.5.10
     autoprefixer: 10.4.14
     classnames: ^2.3.2
     eslint: 8.42.0
@@ -22678,7 +22722,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
     ai: ^2.1.3
-    ai-jsx: 0.5.9
+    ai-jsx: 0.5.10
     eslint: 8.43.0
     eslint-config-next: 13.4.6
     eslint-config-nth: ^2.0.1
@@ -22703,7 +22747,7 @@ __metadata:
     "@types/uuid": ^9.0.2
     "@typescript-eslint/eslint-plugin": ^5.60.0
     "@typescript-eslint/parser": ^5.60.0
-    ai-jsx: 0.5.9
+    ai-jsx: 0.5.10
     asciichart: ^1.5.25
     axios: ^1.4.0
     enquirer: ^2.3.6

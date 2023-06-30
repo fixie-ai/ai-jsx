@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@pinecone-database/pinecone": "^0.1.6",
-    "ai-jsx": "0.5.9",
+    "ai-jsx": "0.5.10",
     "asciichart": "^1.5.25",
     "axios": "^1.4.0",
     "enquirer": "^2.3.6",

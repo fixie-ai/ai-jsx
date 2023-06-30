@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.10
+
+- Update logging to log the output of every component.
+- Update [`UseTools`](./api/modules/batteries_use_tools.md) to use [OpenAI function calls](https://openai.com/blog/function-calling-and-other-api-updates) if you're using a model that supports them.
+
 ## [0.5.9](https://github.com/fixie-ai/ai-jsx/commit/92b6e0f28580fbd9b8fb62072d8c13e28b14d9fe)
 
 - [Add Anthropic support.](./guides/models.md).

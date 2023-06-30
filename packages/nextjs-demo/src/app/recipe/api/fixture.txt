@@ -1,0 +1,154 @@
+data: {"type":"all","content":["",""]}
+
+data: {"type":"all","content":["I","",""]}
+
+data: {"type":"all","content":["I","'d","",""]}
+
+data: {"type":"all","content":["I","'d"," be","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",",","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",",","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",",","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors",".","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served"," with","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served"," with"," fluffy","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served"," with"," fluffy"," bas","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served"," with"," fluffy"," bas","mat","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served"," with"," fluffy"," bas","mat","i","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served"," with"," fluffy"," bas","mat","i"," rice","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served"," with"," fluffy"," bas","mat","i"," rice"," and","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served"," with"," fluffy"," bas","mat","i"," rice"," and"," warm","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served"," with"," fluffy"," bas","mat","i"," rice"," and"," warm"," na","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served"," with"," fluffy"," bas","mat","i"," rice"," and"," warm"," na","an","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served"," with"," fluffy"," bas","mat","i"," rice"," and"," warm"," na","an"," bread","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served"," with"," fluffy"," bas","mat","i"," rice"," and"," warm"," na","an"," bread",".","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served"," with"," fluffy"," bas","mat","i"," rice"," and"," warm"," na","an"," bread","."," Enjoy","",""]}
+
+data: {"type":"all","content":["I","'d"," be"," happy"," to"," share"," a"," recipe"," for"," Chicken"," Tik","ka"," Mas","ala","!"," This"," classic"," Indian"," dish"," features"," tender"," chicken"," mar","inated"," in"," aromatic"," spices",","," grilled"," to"," perfection",","," and"," then"," simmer","ed"," in"," a"," rich"," and"," creamy"," tomato","-based"," sauce",","," resulting"," in"," a"," de","lect","able"," combination"," of"," flavors","."," It","'s"," best"," served"," with"," fluffy"," bas","mat","i"," rice"," and"," warm"," na","an"," bread","."," Enjoy","!","",""]}
+
+data: {"type":"replace","index":73,"content":{"$$type":"element","$$component":"img","props":{"src":"https://oaidalleapiprodscus.blob.core.windows.net/private/org-om1NsPYwZBBiNRoN36vWDTrC/user-hhDguoYwTmJRmy96tUPki4kb/img-K8ryra11mTcFPxc9lANyGCbz.png?st=2023-06-30T02%3A33%3A30Z&se=2023-06-30T04%3A33%3A30Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-06-29T20%3A52%3A08Z&ske=2023-06-30T20%3A52%3A08Z&sks=b&skv=2021-08-06&sig=3N1T5UQ2bp16GfrvBXGjnfQ%2BwgO05%2BKvxyZ7jxkle2s%3D"}}}
+
+data: {"type":"replace","index":74,"content":{"$$type":"element","$$component":null,"props":{"children":{"$$type":"element","$$component":{"id":"Recipe"},"props":{"children":[{"$$type":"element","$$component":{"id":"RecipeTitle"},"props":{"children":"Chicken Tikka Masala"}},{"$$type":"element","$$component":{"id":"RecipeIngredientList"},"props":{"children":[{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"1.5 lbs (700g) boneless, skinless chicken breasts, cut into bite-sized pieces"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"1 cup plain yogurt"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"4 cloves of garlic, minced"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"1 tablespoon ginger, grated"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"2 teaspoons ground cumin"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"2 teaspoons ground coriander"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"1 teaspoon ground turmeric"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"1 teaspoon paprika"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"1/2 teaspoon chili powder (adjust to taste)"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"1/2 teaspoon ground cinnamon"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"1/2 teaspoon salt"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"1/4 teaspoon ground black pepper"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"2 tablespoons vegetable oil"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"1 onion, finely chopped"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"1 can (14 oz/400g) crushed tomatoes"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"1 cup heavy cream"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"1/4 cup chopped fresh cilantro (coriander leaves) for garnish"}},{"$$type":"element","$$component":{"id":"RecipeIngredientListItem"},"props":{"children":"Cooked basmati rice or naan bread for serving"}}]}},{"$$type":"element","$$component":{"id":"RecipeInstructionList"},"props":{"children":[{"$$type":"element","$$component":{"id":"RecipeInstructionListItem"},"props":{"children":"In a bowl, mix together yogurt, minced garlic, grated ginger, cumin, coriander, turmeric, paprika, chili powder, cinnamon, salt, and pepper. Add the chicken pieces to the bowl and coat them in the marinade. Let the chicken marinate for at least 1 hour, or overnight in the refrigerator for best results."}},{"$$type":"element","$$component":{"id":"RecipeInstructionListItem"},"props":{"children":"Preheat your grill or broiler. Place the marinated chicken pieces on skewers and grill for about 6-8 minutes on each side, until they are cooked through and slightly charred. Alternatively, you can cook the chicken in a preheated oven at 425Â°F (220Â°C) for about 20-25 minutes. Set aside."}},{"$$type":"element","$$component":{"id":"RecipeInstructionListItem"},"props":{"children":"In a large skillet, heat the vegetable oil over medium heat. Add the chopped onion and sautÃ© until it becomes soft and translucent, about 5 minutes."}},{"$$type":"element","$$component":{"id":"RecipeInstructionListItem"},"props":{"children":"Add the crushed tomatoes to the skillet and cook for 3-4 minutes, stirring occasionally, until the sauce starts to thicken slightly."}},{"$$type":"element","$$component":{"id":"RecipeInstructionListItem"},"props":{"children":"Reduce the heat to low and stir in the heavy cream. Simmer for 5 minutes, allowing the flavors to meld together."}},{"$$type":"element","$$component":{"id":"RecipeInstructionListItem"},"props":{"children":"Add the grilled chicken tikka pieces to the skillet and stir well, ensuring the chicken is coated in the sauce. Cook for another 5 minutes to allow the flavors to combine."}},{"$$type":"element","$$component":{"id":"RecipeInstructionListItem"},"props":{"children":"Sprinkle the chopped cilantro over the top as a garnish."}},{"$$type":"element","$$component":{"id":"RecipeInstructionListItem"},"props":{"children":"Serve the Chicken Tikka Masala hot with basmati rice or naan bread. Enjoy!"}}]}}]}}}}}
+
+data: {"type":"complete"}
+

@@ -10,7 +10,7 @@
     "start": "npm run test && tsx index.tsx"
   },
   "dependencies": {
-    "ai-jsx": "0.5.9",
+    "ai-jsx": "0.5.10",
     "pino": "^8.14.1",
     "pino-pretty": "^10.0.0"
   },

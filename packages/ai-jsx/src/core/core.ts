@@ -367,10 +367,20 @@ async function* renderStream(
     const logImpl = renderingContext.getContext(LoggerContext);
     const renderId = uuidv4();
     try {
-      return yield* renderingContext.render(
+      /**
+       * This approach is pretty noisy because there are many internal components about which the users don't care.
+       * For instance, if the user writes <ChatCompletion>, that'll generate a bunch of internal helpers to
+       * locate + call the model provider, etc.
+       *
+       * To get around this, maybe we want components to be able to choose the loglevel used for their rendering.
+       */
+      logImpl.log('debug', renderable, renderId, 'Start rendering element');
+      const finalResult = yield* renderingContext.render(
         renderable.render(renderingContext, new BoundLogger(logImpl, renderId, renderable)),
         recursiveRenderOpts
       );
+      logImpl.log('debug', renderable, renderId, { finalResult }, 'Finished rendering element');
+      return finalResult;
     } catch (ex) {
       logImpl.logException(renderable, renderId, ex);
       throw ex;
@@ -385,6 +395,8 @@ async function* renderStream(
     while (true) {
       const next = await iterator.next();
       if (next.value === AppendOnlyStream) {
+        // TODO: I'd like to emit a log here indicating that an element has chosen to AppendOnlyStream,
+        // but I'm not sure what the best way is to know which element/renderId produced `renderable`.
         isAppendOnlyStream = true;
       } else if (isAppendOnlyStream) {
         const renderResult = context.render(next.value, recursiveRenderOpts);
@@ -428,7 +440,7 @@ export function createRenderContext(opts?: { logger?: LogImplementation }) {
   });
 }
 
-function createRenderContextInternal(render: StreamRenderer, userContext: Record<symbol, any>): RenderContext {
+function createRenderContextInternal(renderStream: StreamRenderer, userContext: Record<symbol, any>): RenderContext {
   const context: RenderContext = {
     render: <TFinal extends string | PartiallyRendered[], TIntermediate>(
       renderable: Renderable,
@@ -441,7 +453,7 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
       const generator = (async function* () {
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         const shouldStop = (opts?.stop || (() => false)) as ElementPredicate;
-        const generatorToWrap = render(context, renderable, shouldStop, Boolean(opts?.appendOnly));
+        const generatorToWrap = renderStream(context, renderable, shouldStop, Boolean(opts?.appendOnly));
         while (true) {
           const next = await generatorToWrap.next();
           const value = opts?.stop ? (next.value as TFinal) : (next.value.join('') as TFinal);
@@ -520,10 +532,13 @@ function createRenderContextInternal(render: StreamRenderer, userContext: Record
       return defaultValue;
     },
 
-    wrapRender: (getRender) => createRenderContextInternal(getRender(render), userContext),
+    wrapRender: (getRenderStream) => createRenderContextInternal(getRenderStream(renderStream), userContext),
 
     [pushContextSymbol]: (contextReference, value) =>
-      createRenderContextInternal(render, { ...userContext, [contextReference[contextKey].userContextSymbol]: value }),
+      createRenderContextInternal(renderStream, {
+        ...userContext,
+        [contextReference[contextKey].userContextSymbol]: value,
+      }),
   };
 
   return context;

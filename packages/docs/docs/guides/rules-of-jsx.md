@@ -39,7 +39,6 @@ function App({ query }) {
     <ChatCompletion>
       <SystemMessage>
         Answer customer questions based on their data: <CustomerData />
-        Here's data about our company: <OrgData />
       </SystemMessage>
       <UserMessage>{query}</UserMessage>
     </ChatCompletion>
@@ -50,13 +49,47 @@ async function CustomerData() {
   const accountId = await getCustomerAccount();
   return isLegacyAccount(accountId) ? fetchLegacy() : fetchModern();
 }
+```
 
-function* OrgData() {
-  yield firstData;
-  yield secondData;
-  yield thirdData;
+:::caution Edge case
+
+Imagine you have an slow async component, which is used as a sibling of faster components:
+
+```tsx
+async function Slow() {
+  await new Promise((resolve) => setTimeout(resolve, 4000));
+  return 'slow result';
+}
+
+async function Fast() {
+  await Promise.resolve();
+  return 'fast result';
+}
+
+const app = (
+  <>
+    <Fast />
+    <Slow />
+  </>
+);
+```
+
+Surprisingly, you won't get any results streamed out of `Fast` until `Slow` completes.
+
+To solve this, return an intermediate value from `Slow`:
+
+```tsx
+async function* Slow() {
+  // highlight-next-line
+  yield '';
+
+  await new Promise((resolve) => setTimeout(resolve, 4000));
+  return 'slow result';
 }
 ```
+
+This is not ideal and we plan to improve it in the future.
+:::
 
 ### Append-only generators
 
