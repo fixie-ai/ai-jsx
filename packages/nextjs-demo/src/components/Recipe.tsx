@@ -29,9 +29,10 @@ function TabItem({ children }: { children: React.ReactNode }) {
 
 export function Recipe({ children }: { children: React.ReactNode }) {
   function findChildWithType(type: string) {
-    return React.Children.toArray(children).find((child) => {
-      return typeof child === 'object' && 'type' in child && typeof child.type !== 'string' && child.type.name === type;
-    });
+    return React.Children.toArray(children).find(
+      (child) =>
+        typeof child === 'object' && 'type' in child && typeof child.type !== 'string' && child.type.name === type
+    );
   }
 
   const title = findChildWithType('RecipeTitle');
@@ -61,7 +62,7 @@ export function Recipe({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow">
+    <div className="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow-2xl mt-4">
       <div className="px-4 py-5 sm:px-6">{cardHeading}</div>
       <div className="px-4 py-5 sm:p-6">
         <Tab.Group>

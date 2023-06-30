@@ -427,12 +427,6 @@ export async function* DalleImageGen(
   { numSamples = 1, size = '512x512', children }: ImageGenPropsWithChildren,
   { render, getContext, logger }: AI.ComponentContext
 ) {
-  // Consider emitting http://via.placeholder.com/256x256 instead.
-  yield '';
-  const prompt = await render(children);
-
-  const openai = getContext(openAiClientContext);
-
   let sizeEnum;
   switch (size) {
     case '256x256':
@@ -451,6 +445,19 @@ export async function* DalleImageGen(
         'user'
       );
   }
+
+  // Consider emitting http://via.placeholder.com/256x256 instead.
+  yield (
+    <Image
+      url={`http://via.placeholder.com/${size}`}
+      prompt="placeholder while real results renderes"
+      modelName="placeholder.com"
+    />
+  );
+
+  const prompt = await render(children);
+
+  const openai = getContext(openAiClientContext);
 
   const imageRequest = {
     prompt,

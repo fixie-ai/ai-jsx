@@ -28,53 +28,54 @@ export async function POST(request: NextRequest) {
     </ChatCompletion>
   );
 
-  const textEncoder = new TextEncoder();
-  const fakeStream = fs.readFileSync(path.join(process.cwd(), 'src', 'app', 'recipe', 'api', 'fixture.txt'), 'utf-8');
-  return new Response(
-    new ReadableStream({
-      start(controller) {
-        controller.enqueue(textEncoder.encode(fakeStream));
-        controller.close();
-      },
-    })
-  );
-
-  // return AI.toReactStream(
-  //   RecipeMap,
-  //   <>
-  //     <ChatCompletion>
-  //       <SystemMessage>
-  //         The user will ask for you a recipe. Tell them you'd be happy to do that. Pretend to be an expert in whatever
-  //         culture the recipe is from. Respond in 1-3 sentences. Do not ask a question.
-  //       </SystemMessage>
-  //       <UserMessage>I'd like a recipe about {topic}</UserMessage>
-  //     </ChatCompletion>
-  //     <ImageGen size="256x256">
-  //       <ChatCompletion>
-  //         <UserMessage>Summarize the following recipe into a two sentence description: {recipe}</UserMessage>
-  //       </ChatCompletion>
-  //     </ImageGen>
-  //     <UICompletion
-  //       example={
-  //         <Recipe>
-  //           <RecipeTitle>Crème Chantilly</RecipeTitle>
-  //           <RecipeIngredientList>
-  //             <RecipeIngredientListItem>2 cups heavy cream</RecipeIngredientListItem>
-  //             <RecipeIngredientListItem>2 tablespoons granulated sugar</RecipeIngredientListItem>
-  //             <RecipeIngredientListItem>1 teaspoon vanilla extract</RecipeIngredientListItem>
-  //           </RecipeIngredientList>
-  //           <RecipeInstructionList>
-  //             <RecipeInstructionListItem>Combine the ingredients in a large mixing bowl.</RecipeInstructionListItem>
-  //             <RecipeInstructionListItem>
-  //               Beat the contents on high speed until soft peaks form.
-  //             </RecipeInstructionListItem>
-  //             <RecipeIngredientListItem>Keep chilled until serving.</RecipeIngredientListItem>
-  //           </RecipeInstructionList>
-  //         </Recipe>
-  //       }
-  //     >
-  //       {recipe}
-  //     </UICompletion>
-  //   </>
+  // const textEncoder = new TextEncoder();
+  // const fakeStream = fs.readFileSync(path.join(process.cwd(), 'src', 'app', 'recipe', 'api', 'fixture.txt'), 'utf-8');
+  // return new Response(
+  //   new ReadableStream({
+  //     start(controller) {
+  //       controller.enqueue(textEncoder.encode(fakeStream));
+  //       controller.close();
+  //     },
+  //   })
   // );
+
+  return AI.toReactStream(
+    RecipeMap,
+    <>
+      <ChatCompletion>
+        <SystemMessage>
+          The user will ask for you a recipe. Tell them you'd be happy to do that. Respond in 1-3 sentences. Do not ask
+          a question. Do not give any specific details about the type of recipe you'll return, aside from mentioning the
+          user's topic.
+        </SystemMessage>
+        <UserMessage>I'd like a recipe about {topic}</UserMessage>
+      </ChatCompletion>
+      <ImageGen size="256x256">
+        <ChatCompletion>
+          <UserMessage>Summarize the following recipe into a two sentence description: {recipe}</UserMessage>
+        </ChatCompletion>
+      </ImageGen>
+      <UICompletion
+        example={
+          <Recipe>
+            <RecipeTitle>Crème Chantilly</RecipeTitle>
+            <RecipeIngredientList>
+              <RecipeIngredientListItem>2 cups heavy cream</RecipeIngredientListItem>
+              <RecipeIngredientListItem>2 tablespoons granulated sugar</RecipeIngredientListItem>
+              <RecipeIngredientListItem>1 teaspoon vanilla extract</RecipeIngredientListItem>
+            </RecipeIngredientList>
+            <RecipeInstructionList>
+              <RecipeInstructionListItem>Combine the ingredients in a large mixing bowl.</RecipeInstructionListItem>
+              <RecipeInstructionListItem>
+                Beat the contents on high speed until soft peaks form.
+              </RecipeInstructionListItem>
+              <RecipeIngredientListItem>Keep chilled until serving.</RecipeIngredientListItem>
+            </RecipeInstructionList>
+          </Recipe>
+        }
+      >
+        {recipe}
+      </UICompletion>
+    </>
+  );
 }
