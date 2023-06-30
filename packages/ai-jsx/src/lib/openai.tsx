@@ -350,8 +350,8 @@ export async function* OpenAIChatModel(
     );
   }
 
-  const openaiFunctions: ChatCompletionFunctions[] | null = !props.functionDefinitions
-    ? null
+  const openaiFunctions: ChatCompletionFunctions[] | undefined = !props.functionDefinitions
+    ? undefined
     : Object.entries(props.functionDefinitions).map(([functionName, functionDefinition]) => ({
         name: functionName,
         description: functionDefinition.description,
