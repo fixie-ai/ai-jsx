@@ -427,6 +427,7 @@ export async function* DalleImageGen(
   { numSamples = 1, size = '512x512', children }: ImageGenPropsWithChildren,
   { render, getContext, logger }: AI.ComponentContext
 ) {
+  // Consider emitting http://via.placeholder.com/256x256 instead.
   yield '';
   const prompt = await render(children);
 
