@@ -32,7 +32,7 @@
     "demo:stream-ui": "yarn build && node dist/stream-ui.js",
     "demo:inline-completion": "yarn build && node dist/inline-completion.js",
     "demo:simple-chat": "yarn build && node dist/simple-chat.js",
-    "demo:multi-model-chat": "yarn build && node dist/multi-model-chat.js",
+    "demo:multi-model-provider": "yarn build && node dist/multi-model-provider.js",
     "demo:simple-completion": "yarn build && node dist/simple-completion.js",
     "demo:getting-started": "yarn build && cp src/getting-started/data.json dist/getting-started/ && node dist/getting-started/index.js",
     "demo:inspector": "yarn build && node dist/inspector.js",
