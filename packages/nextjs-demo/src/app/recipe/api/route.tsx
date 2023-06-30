@@ -18,6 +18,8 @@ const {
 import fs from 'fs';
 import path from 'path';
 
+const useFixture = false;
+
 export async function POST(request: NextRequest) {
   const { topic } = await request.json();
 
@@ -28,16 +30,18 @@ export async function POST(request: NextRequest) {
     </ChatCompletion>
   );
 
-  // const textEncoder = new TextEncoder();
-  // const fakeStream = fs.readFileSync(path.join(process.cwd(), 'src', 'app', 'recipe', 'api', 'fixture.txt'), 'utf-8');
-  // return new Response(
-  //   new ReadableStream({
-  //     start(controller) {
-  //       controller.enqueue(textEncoder.encode(fakeStream));
-  //       controller.close();
-  //     },
-  //   })
-  // );
+  if (useFixture) {
+    const textEncoder = new TextEncoder();
+    const fakeStream = fs.readFileSync(path.join(process.cwd(), 'src', 'app', 'recipe', 'api', 'fixture.txt'), 'utf-8');
+    return new Response(
+      new ReadableStream({
+        start(controller) {
+          controller.enqueue(textEncoder.encode(fakeStream));
+          controller.close();
+        },
+      })
+    );
+  }
 
   return AI.toReactStream(
     RecipeMap,
