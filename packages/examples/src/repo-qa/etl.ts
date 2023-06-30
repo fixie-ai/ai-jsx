@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
-import {writeJsonFile} from 'write-json-file';
+import { writeJsonFile } from 'write-json-file';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -17,7 +17,7 @@ function gitLsTree(ignoreRegexList?: RegExp[]): Record<string, string> {
     if (f.trim() === '') {
       return false;
     }
-    return !ignoreRegexList?.some(regex => regex.test(f));
+    return !ignoreRegexList?.some((regex) => regex.test(f));
   });
 
   const result: Record<string, string> = {};
@@ -32,10 +32,10 @@ function gitLsTree(ignoreRegexList?: RegExp[]): Record<string, string> {
 
     filesRead++;
     if (!(filesRead % 50)) {
-      console.log(`Read ${filesRead} files`)
+      console.log(`Read ${filesRead} files`);
     }
   }
-  console.log(`Read ${filesRead} files`)
+  console.log(`Read ${filesRead} files`);
 
   return result;
 }

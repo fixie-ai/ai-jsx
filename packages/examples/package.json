@@ -66,6 +66,7 @@
     "axios": "^1.4.0",
     "csv-stringify": "^6.4.0",
     "globby": "^13.1.4",
+    "gpt3-tokenizer": "^1.1.5",
     "graphql": "^16.6.0",
     "ink": "^4.2.0",
     "langchain": "^0.0.95",
