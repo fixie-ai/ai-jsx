@@ -16,10 +16,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {/* This is intentionally a constant value. */}
         {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
-        {!isScreenshare && <>
-          <NavBar />
-          <About />
-        </>}
+        {!isScreenshare && (
+          <>
+            <NavBar />
+            <About />
+          </>
+        )}
         <main className="flex min-h-screen flex-col items-start px-24 py-6">{children}</main>
         <div className="hidden">
           <h1 className="text-2xl"></h1>
