@@ -1,9 +1,11 @@
 /** @jsxImportSource ai-jsx/react */
 import * as AI from './core.js';
 import React from 'react';
-import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
+import { SystemMessage, UserMessage } from '../core/completion.js';
+import { JsonChatCompletion } from '../batteries/constrained-output.js';
 import { isJsxBoundary } from './jsx-boundary.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
+import z from 'zod';
 
 function reactComponentName(component: React.JSXElementConstructor<any> | string) {
   return typeof component === 'string' ? component : component.name;
@@ -40,28 +42,6 @@ export async function* UICompletion(
   }
 
   collectComponents(example, true);
-
-  const modelResult = await render(
-    <ChatCompletion>
-      <SystemMessage>
-        You are an AI who is an expert UI designer. The user will provide content in the form of text and you will
-        respond using a set of React components to create a UI for the content. Here are the only available React
-        components and how they should be used:
-        {'\n'}
-        <AI.React>{example}</AI.React>
-        {'\n'}
-        Respond with a JSON object that encodes your UI. The JSON object should match this TypeScript interface:
-        interface Element {'{'}
-        name: string; children: (string | Element)[]
-        {'}'}
-        For example:{'\n'}
-        {'<'}SomeComponent /{'>'}
-        Becomes: {'{'} "name": "SomeComponent", "children": []{'}'}. Respond with only the JSON. Do not include any
-        explanatory prose. Do not use any elements (including HTML elements) other than the ones above.
-      </SystemMessage>
-      <UserMessage>{children}</UserMessage>
-    </ChatCompletion>
-  );
 
   const validComponents = Object.fromEntries(Array.from(reactComponents).map((c) => [reactComponentName(c), c]));
 
@@ -100,5 +80,35 @@ export async function* UICompletion(
     return <Component>{children.map(toComponent)}</Component>;
   }
 
-  return <AI.React>{toComponent(JSON.parse(modelResult))}</AI.React>;
+  const Element: z.Schema = z.object({
+    name: z.string(),
+    children: z.array(z.union([z.string(), z.lazy(() => Element)])),
+  });
+
+  const modelRenderGenerator = render(
+    <JsonChatCompletion
+      schema={Element}
+      example={'<SomeComponent /> becomes: { "name": "SomeComponent", "children": [] }'}
+    >
+      <SystemMessage>
+        You are an AI who is an expert UI designer. The user will provide content in the form of text and you will
+        respond using a set of React components to create a UI for the content. Here are the only available React
+        components and how they should be used:
+        {'\n'}
+        <AI.React>{example}</AI.React>
+        {'\n'}
+        Do not use any elements (including HTML elements) other than the ones above.
+      </SystemMessage>
+      <UserMessage>{children}</UserMessage>
+    </JsonChatCompletion>
+  )[Symbol.asyncIterator]();
+
+  while (true) {
+    const modelResult = await modelRenderGenerator.next();
+    const component = <AI.React>{toComponent(JSON.parse(modelResult.value))}</AI.React>;
+    if (modelResult.done) {
+      return component;
+    }
+    yield component;
+  }
 }
