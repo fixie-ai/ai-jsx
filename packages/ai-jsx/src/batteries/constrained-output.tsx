@@ -79,9 +79,19 @@ export type TypedObjectCompletionWithRetry = TypedObjectCompletion & { retries?:
  *    Intermediate results that are valid, are also yielded.
  */
 export async function* JsonChatCompletion(
-  props: Omit<TypedObjectCompletionWithRetry, 'typeName' | 'parser' | 'partialResultCleaner'>,
+  { schema, ...props }: Omit<TypedObjectCompletionWithRetry, 'typeName' | 'parser' | 'partialResultCleaner'>,
   { render }: AI.ComponentContext
 ) {
+  if (schema) {
+    try {
+      // TODO: do not merge with this. This screws up progressive loading.
+      return yield* render(<JsonChatCompletionFunctionCall schema={schema} {...props} />);
+    } catch (e: any) {
+      if (e.code !== ErrorCode.ChatModelDoesNotSupportFunctions) {
+        throw e;
+      }
+    }
+  }
   return yield* render(
     <ObjectCompletionWithRetry
       {...props}
