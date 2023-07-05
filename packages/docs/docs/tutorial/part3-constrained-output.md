@@ -123,3 +123,25 @@ For example, the `<JsonChatCompletion>` component will emit:
 Internally, the `<JsonChatCompletion>` and `<YamlChatCompletion>` components prompt the
 LLM to take the input data, format it as JSON or YAML, and check that the resulting objects
 correctly parse in the target format.
+
+You can even enforce an _object Schema_ to make sure the output matches the format you want:
+
+```tsx filename="packages/tutorial/src/constrained-output.tsx"
+import z from 'zod';
+
+const characterSchema = z.object({
+  name: z.string(),
+  class: z.string(),
+  race: z.string(),
+  weapons: z.array(z.string()),
+  spells: z.array(z.string()),
+});
+
+const app = (
+  // ...
+  <JsonChatCompletion schema={characterSchema}>
+    <UserMessage>{conversation}</UserMessage>
+  </JsonChatCompletion>
+  // ...
+);
+```

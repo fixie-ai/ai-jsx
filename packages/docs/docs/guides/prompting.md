@@ -86,5 +86,27 @@ function App() {
 }
 ```
 
+You can also enforce a certain _Schema_ so that the output matches the format you want:
+
+```tsx
+// We use `zod` library to create and enforce the schema
+import z from 'zod';
+
+const FamilyTree: z.Schema = z.array(
+  z.object({
+    name: z.string(),
+    children: z.lazy(() => FamilyTree).optional(),
+  })
+);
+
+function App() {
+  return (
+    <JsonChatCompletion schema={FamilyTree}>
+      <UserMessage>Create a nested family tree with names and ages. It should include a total of 5 people</UserMessage>
+    </JsonChatCompletion>
+  );
+}
+```
+
 Under the hood, this model will use a combination of prompting, validating the output, and asking them the model to retry
 if the validation fails (refer to [`ai-jsx/batteries/constrained-output`](../api/modules/batteries_constrained_output)).

@@ -81,7 +81,9 @@ export async function* UICompletion(
   }
 
   const Element: z.Schema = z.object({
-    name: z.string(),
+    name: z.string().refine((c) => Boolean(validComponents[c]), {
+      message: `Unknown component "name". Supported components: ${Object.keys(validComponents)}`,
+    }),
     children: z.array(z.union([z.string(), z.lazy(() => Element)])),
   });
 
