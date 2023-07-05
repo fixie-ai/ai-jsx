@@ -82,7 +82,7 @@ export async function* JsonChatCompletion(
   { render }: AI.ComponentContext
 ) {
   return yield* render(
-    <ObjectCOmpletionWithRetry
+    <ObjectCompletionWithRetry
       {...props}
       typeName="JSON"
       parser={JSON.parse}
@@ -125,7 +125,7 @@ export async function* YamlChatCompletion(
   { render }: AI.ComponentContext
 ) {
   return yield* render(
-    <ObjectCOmpletionWithRetry {...props} typeName="YAML" parser={yaml.load as (str: string) => object} />
+    <ObjectCompletionWithRetry {...props} typeName="YAML" parser={yaml.load as (str: string) => object} />
   );
 }
 
@@ -200,7 +200,7 @@ async function* OneShotObjectCompletion(
  * @returns A string that validates as the given type or throws an error after `retries` attempts
  *    Intermediate results that are valid, are also yielded.
  */
-async function* ObjectCOmpletionWithRetry(
+async function* ObjectCompletionWithRetry(
   { children, retries = 3, ...props }: TypedObjectCompletionWithRetry,
   { render, logger }: AI.ComponentContext
 ) {
