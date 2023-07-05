@@ -10,6 +10,7 @@ import {
   SystemMessage,
   AssistantMessage,
   UserMessage,
+  FunctionCall,
   ModelPropsWithChildren,
 } from '../core/completion.js';
 import yaml from 'js-yaml';
@@ -256,4 +257,48 @@ async function* ObjectCompletionWithRetry(
       output,
     }
   );
+}
+
+/**
+ * A {@link ChatCompletion} component that constrains the output to be a valid JSON string.
+ * It (ab)uses OpenAI function calls to generate the JSON string.
+ *
+ * @returns A string that is a valid JSON or throws an error.
+ */
+export async function JsonChatCompletionFunctionCall(
+  { schema, children, ...props }: ModelPropsWithChildren & { schema: z.Schema },
+  { render }: AI.ComponentContext
+) {
+  const childrenWithCompletion = (
+    <ChatCompletion
+      {...props}
+      functionDefinitions={{
+        print: {
+          description: 'Prints the response in a human readable format.',
+          parameters: schema,
+        },
+      }}
+    >
+      {children}
+      <SystemMessage>
+        Your response must use the `print` function that is provided. No other explanation needed.
+      </SystemMessage>
+    </ChatCompletion>
+  );
+
+  const output = await render(childrenWithCompletion, { stop: (e) => e.tag == FunctionCall });
+
+  // TODO: can we make this work with progressive loading? This will require changes to core/completion.
+
+  const lastYield = output[output.length - 1];
+  if (AI.isElement(lastYield) && lastYield.tag == FunctionCall) {
+    console.log('args', lastYield.props.args);
+    // TODO: is validation necessary? If yes, how to handle errors?
+    schema.parse(lastYield.props.args);
+    return JSON.stringify(lastYield.props.args);
+  }
+  // TODO: retry maybe?
+  throw new AIJSXError('Expected a function call to `print`.', ErrorCode.ModelOutputDidNotMatchConstraint, 'runtime', {
+    output: JSON.stringify(output),
+  });
 }

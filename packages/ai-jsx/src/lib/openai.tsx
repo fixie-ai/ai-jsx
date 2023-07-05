@@ -14,6 +14,7 @@ import {
   FunctionDefinition,
   FunctionCall,
   FunctionResponse,
+  getParametersSchema,
 } from '../core/completion.js';
 import { Image, ImageGenPropsWithChildren } from '../core/image-gen.js';
 import {
@@ -355,21 +356,7 @@ export async function* OpenAIChatModel(
     : Object.entries(props.functionDefinitions).map(([functionName, functionDefinition]) => ({
         name: functionName,
         description: functionDefinition.description,
-        parameters: {
-          type: 'object',
-          required: Object.keys(functionDefinition.parameters).filter(
-            (name) => functionDefinition.parameters[name].required
-          ),
-          properties: Object.keys(functionDefinition.parameters).reduce(
-            (map: Record<string, any>, paramName) => ({
-              ...map,
-              [paramName]: {
-                type: functionDefinition.parameters[paramName].type,
-              },
-            }),
-            {}
-          ),
-        },
+        parameters: getParametersSchema(functionDefinition.parameters),
       }));
 
   const openai = getContext(openAiClientContext);
@@ -423,7 +410,7 @@ export async function* OpenAIChatModel(
     }
   }
 
-  logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
+  logger.info({ message: currentMessage }, 'Finished createChatCompletion');
 
   if (currentMessage.function_call) {
     yield (
