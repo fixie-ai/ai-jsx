@@ -410,7 +410,7 @@ export async function* OpenAIChatModel(
     }
   }
 
-  logger.info({ message: currentMessage }, 'Finished createChatCompletion');
+  logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
 
   if (currentMessage.function_call) {
     yield (
