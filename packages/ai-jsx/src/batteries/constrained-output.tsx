@@ -22,7 +22,7 @@ export type ObjectCompletion = ModelPropsWithChildren & {
   /** Validators are used to ensure that the final object looks as expected. */
   validators?: ((obj: object) => void)[];
   /**
-   * The object Schema that is required. This is a type of validator with the excpetion
+   * The object Schema that is required. This is a type of validator with the exception
    * that the schema description is also provided to the model.
    */
   schema?: z.Schema;
@@ -42,7 +42,7 @@ export type TypedObjectCompletion = ObjectCompletion & {
   /**
    * The intermediate results that get yielded might be incomplete and as such
    * a cleaning/healing/untruncating step might be required.
-   * For example, see the `untrunctate-json` package.
+   * For example, see the `untruncate-json` package.
    */
   partialResultCleaner?: (str: string) => string;
 };
@@ -241,7 +241,7 @@ async function* ObjectCompletionWithRetry(
     }
 
     logger.debug(
-      { atempt: retryIndex + 1, expectedFormat: props.typeName, output },
+      { attempt: retryIndex + 1, expectedFormat: props.typeName, output },
       `Output did not validate to ${props.typeName}.`
     );
   }
