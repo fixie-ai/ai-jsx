@@ -316,6 +316,7 @@
     "openai": "^3.3.0",
     "pino": "^8.14.1",
     "server-only": "^0.0.1",
+    "untruncate-json": "^0.0.1",
     "uuid": "^9.0.0",
     "zod": "^3.21.4",
     "zod-to-json-schema": "^3.21.1"

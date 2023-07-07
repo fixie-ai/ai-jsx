@@ -5,39 +5,90 @@
  */
 
 import * as AI from '../index.js';
-import { ChatCompletion, SystemMessage, AssistantMessage, UserMessage } from '../core/completion.js';
+import {
+  ChatCompletion,
+  SystemMessage,
+  AssistantMessage,
+  UserMessage,
+  ModelPropsWithChildren,
+} from '../core/completion.js';
 import yaml from 'js-yaml';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
+import z from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
+import untruncateJson from 'untruncate-json';
 
-interface ValidationResult {
-  success: boolean;
-  error: string;
-}
+export type ObjectCompletion = ModelPropsWithChildren & {
+  /** Validators are used to ensure that the final object looks as expected. */
+  validators?: ((obj: object) => void)[];
+  /**
+   * The object Schema that is required. This is a type of validator with the exception
+   * that the schema description is also provided to the model.
+   */
+  schema?: z.Schema;
+  /** Any output example to be shown to the model. */
+  example?: string;
+  // TODO (@farzad): better name/framing for example.
+};
 
-// TODO: schema
+export type TypedObjectCompletion = ObjectCompletion & {
+  /** Human-readable name of the type, e.g. JSON or YAML. */
+  typeName: string;
+  /**
+   * Object parser: creates the object to be evaluated given the string.
+   * Note: the parser is only used for validation. The final output is still a string.
+   */
+  parser: (str: string) => object;
+  /**
+   * The intermediate results that get yielded might be incomplete and as such
+   * a cleaning/healing/untruncating step might be required.
+   * For example, see the `untruncate-json` package.
+   */
+  partialResultCleaner?: (str: string) => string;
+};
+
+export type TypedObjectCompletionWithRetry = TypedObjectCompletion & { retries?: number };
+
 /**
  * A {@link ChatCompletion} component that constrains the output to be a valid JSON string.
  * It uses a combination of prompt engineering and validation with retries to ensure that the output is valid.
  *
+ * Though not required, you can provide a Zod schema to validate the output against. This is useful for
+ * ensuring that the output is of the expected type.
+ *
  * @example
  * ```tsx
+ * const FamilyTree: z.Schema = z.array(
+ *   z.object({
+ *     name: z.string(),
+ *     children: z.lazy(() => FamilyTree).optional(),
+ *   })
+ * );
+ *
+ * return (
  *    <JsonChatCompletion>
  *     <UserMessage>
  *      Create a nested family tree with names and ages.
  *      It should include a total of 5 people.
  *     </UserMessage>
  *    </JsonChatCompletion>
+ * );
  * ```
- *
- * @param retries The maximum number of times to retry the completion if the output is invalid.
- * @param children The children to render.
  * @returns A string that is a valid JSON or throws an error after `retries` attempts.
+ *    Intermediate results that are valid, are also yielded.
  */
-export function JsonChatCompletion({ children, ...props }: { children: AI.Node }) {
-  return (
-    <ObjectFormatChatCompletion typeName="JSON" validator={isJsonString} {...{ ...props }}>
-      {children}
-    </ObjectFormatChatCompletion>
+export async function* JsonChatCompletion(
+  props: Omit<TypedObjectCompletionWithRetry, 'typeName' | 'parser' | 'partialResultCleaner'>,
+  { render }: AI.ComponentContext
+) {
+  return yield* render(
+    <ObjectCompletionWithRetry
+      {...props}
+      typeName="JSON"
+      parser={JSON.parse}
+      // TODO: can we remove .default?
+      partialResultCleaner={untruncateJson.default}
+    />
   );
 }
 
@@ -45,129 +96,164 @@ export function JsonChatCompletion({ children, ...props }: { children: AI.Node }
  * A {@link ChatCompletion} component that constrains the output to be a valid YAML string.
  * It uses a combination of prompt engineering and validation with retries to ensure that the output is valid.
  *
- *  @example
+ * Though not required, you can provide a Zod schema to validate the output against. This is useful for
+ * ensuring that the output is of the expected type.
+ *
+ * @example
  * ```tsx
+ * const FamilyTree: z.Schema = z.array(
+ *   z.object({
+ *     name: z.string(),
+ *     children: z.lazy(() => FamilyTree).optional(),
+ *   })
+ * );
+ *
+ * return (
  *    <YamlChatCompletion>
  *     <UserMessage>
  *      Create a nested family tree with names and ages.
  *      It should include a total of 5 people.
  *     </UserMessage>
  *    </YamlChatCompletion>
+ * );
  * ```
- *
- * @param retries The maximum number of times to retry the completion if the output is invalid.
- * @param children The children to render.
  * @returns A string that is a valid YAML or throws an error after `retries` attempts.
+ *    Intermediate results that are valid, are also yielded.
  */
-export function YamlChatCompletion({ children, ...props }: { children: AI.Node }) {
-  return (
-    <ObjectFormatChatCompletion typeName="YAML" validator={isYamlString} {...{ ...props }}>
-      {children}
-    </ObjectFormatChatCompletion>
+export async function* YamlChatCompletion(
+  props: Omit<TypedObjectCompletionWithRetry, 'typeName' | 'parser'>,
+  { render }: AI.ComponentContext
+) {
+  return yield* render(
+    <ObjectCompletionWithRetry {...props} typeName="YAML" parser={yaml.load as (str: string) => object} />
   );
 }
 
 /**
  * A {@link ChatCompletion} component that constrains the output to be a valid object format (e.g. JSON/YAML).
  *
- * @param retries The maximum number of times to retry the completion if the output is invalid.
- * @param validator A function that returns a {@link ValidationResult} for a given string.
- * @param typeName The name of the type, to be used in the prompt.
- * @param children The children to render.
- * @returns A string that validates as the given type or throws an error after `retries` attempts
+ * Though not required, you can provide a Zod schema to validate the output against. This is useful for
+ * ensuring that the output is of the expected type.
+ *
+ * @returns A string that validates as the given type or throws an error.
+ *    Intermediate results that are valid, are also yielded.
  */
-async function ObjectFormatChatCompletion(
-  {
-    retries = 3,
-    validator,
-    typeName,
-    children,
-    ...props
-  }: {
-    validator: (str: string) => ValidationResult;
-    /** function that succeeds if output string is of the expected format */
-    typeName: string;
-    /** name of the type, to be used in the prompt */
-    retries?: number;
-    /** retries if output fails validation, how many times should we retry.
-     * Note: you can have `1 + retries` LLM calls in total. */
-    children: AI.Node;
-  },
+async function* OneShotObjectCompletion(
+  { children, typeName, validators, example, schema, parser, partialResultCleaner, ...props }: TypedObjectCompletion,
   { render, logger }: AI.ComponentContext
 ) {
+  // If a schema is provided, it is added to the list of validators as well as the prompt.
+  const validatorsAndSchema = schema ? [schema.parse, ...(validators ?? [])] : validators ?? [];
+
   const childrenWithCompletion = (
     <ChatCompletion {...props}>
       {children}
       <SystemMessage>
-        Your response must be a valid {typeName}. Do not include ```{typeName.toLowerCase()} ``` code blocks.
+        Respond with a {typeName} object that encodes your response.
+        {schema
+          ? `The ${typeName} object should match this JSON Schema: ${JSON.stringify(zodToJsonSchema(schema))}`
+          : ''}
+        {example ? `For example: \n${example}` : ''}
+        Respond with only the {typeName} object. Do not include any explanatory prose. Do not include ```
+        {typeName.toLowerCase()} ``` code blocks.
       </SystemMessage>
     </ChatCompletion>
   );
+  const renderGenerator = render(childrenWithCompletion)[Symbol.asyncIterator]();
 
-  let output = await render(childrenWithCompletion);
-  let valiationResults = validator(output);
-  if (valiationResults.success) {
-    return output;
+  // TODO: we can possibly add a timelimit here so we don't emit too many times.
+  let lastYieldedLen = 0;
+  while (true) {
+    const partial = await renderGenerator.next();
+    const str = partialResultCleaner ? partialResultCleaner(partial.value) : partial.value;
+    try {
+      const object = parser(str);
+      for (const validator of validatorsAndSchema) {
+        validator(object);
+      }
+    } catch (e: any) {
+      if (partial.done) {
+        logger.warn(
+          { output: partial.value, cleaned: partialResultCleaner ? str : undefined, errorMessage: e.message },
+          "ObjectCompletion failed. The final result either didn't parse or didn't validate."
+        );
+        throw e;
+      }
+      continue;
+    }
+    if (partial.done) {
+      return str;
+    }
+    if (str.length > lastYieldedLen) {
+      lastYieldedLen = str.length;
+      yield str;
+    }
   }
 
-  logger.debug({ atempt: 1, expectedFormat: typeName, output }, `Output did not validate to ${typeName}.`);
+  // TODO: return an AIJSXError instead? The issue is I want to get the original (unmodified) error message somehow.
+}
+
+/**
+ * A {@link ChatCompletion} component that constrains the output to be a valid object format (e.g. JSON/YAML).
+ * If the first attempt fails, it will retry with a new prompt up to `retries` times.
+ *
+ * @returns A string that validates as the given type or throws an error after `retries` attempts
+ *    Intermediate results that are valid, are also yielded.
+ */
+async function* ObjectCompletionWithRetry(
+  { children, retries = 3, ...props }: TypedObjectCompletionWithRetry,
+  { render, logger }: AI.ComponentContext
+) {
+  const childrenWithCompletion = <OneShotObjectCompletion {...props}>{children}</OneShotObjectCompletion>;
+
+  let output;
+  let validationError: string;
+  try {
+    output = yield* render(childrenWithCompletion);
+    return output;
+  } catch (e: any) {
+    validationError = e.message;
+  }
+
+  logger.debug({ atempt: 1, expectedFormat: props.typeName, output }, `Output did not validate to ${props.typeName}.`);
 
   for (let retryIndex = 1; retryIndex < retries; retryIndex++) {
     const completionRetry = (
-      <ChatCompletion {...props}>
+      <OneShotObjectCompletion {...props}>
         <SystemMessage>
-          You are a {typeName} object generator. Create a {typeName} object (context redacted).
+          You are a {props.typeName} object generator. Create a {props.typeName} object (context redacted).
         </SystemMessage>
         <AssistantMessage>{output}</AssistantMessage>
         <UserMessage>
-          Try again. Here's the validation error when trying to parse the output as {typeName}:{'\n'}
-          {valiationResults.error}
+          Try again. Here's the validation error when trying to parse the output as {props.typeName}:{'\n'}
+          {validationError}
           {'\n'}
-          You must reformat the string to be a valid {typeName} object, but you must keep the same data. Do not explain
-          the issue, just return a string that can be parsed as {typeName} as-is. Do not include ```
-          {typeName.toLocaleLowerCase()} ``` code blocks.
+          You must reformat the string to be a valid {props.typeName} object, but you must keep the same data.
         </UserMessage>
-      </ChatCompletion>
+      </OneShotObjectCompletion>
     );
 
-    output = await render(completionRetry);
-    valiationResults = validator(output);
-    if (valiationResults.success) {
+    try {
+      output = yield* render(completionRetry);
       return output;
+    } catch (e: any) {
+      validationError = e.message;
     }
 
     logger.debug(
-      { atempt: retryIndex + 1, expectedFormat: typeName, output },
-      `Output did not validate to ${typeName}.`
+      { attempt: retryIndex + 1, expectedFormat: props.typeName, output },
+      `Output did not validate to ${props.typeName}.`
     );
   }
 
   throw new AIJSXError(
-    `The model did not produce a valid ${typeName} object, even after ${retries} attempts.`,
+    `The model did not produce a valid ${props.typeName} object, even after ${retries} attempts.`,
     ErrorCode.ModelOutputDidNotMatchConstraint,
     'runtime',
     {
-      typeName,
+      typeName: props.typeName,
       retries,
       output,
     }
   );
-}
-
-function isJsonString(str: string): ValidationResult {
-  try {
-    JSON.parse(str);
-    return { success: true, error: '' };
-  } catch (e: any) {
-    return { success: false, error: e.message };
-  }
-}
-
-function isYamlString(str: string): ValidationResult {
-  try {
-    yaml.load(str);
-    return { success: true, error: '' } as ValidationResult;
-  } catch (e: any) {
-    return { success: false, error: e.message } as ValidationResult;
-  }
 }
