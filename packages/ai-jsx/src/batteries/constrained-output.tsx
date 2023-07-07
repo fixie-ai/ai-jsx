@@ -171,10 +171,10 @@ async function* OneShotObjectCompletion(
       for (const validator of validatorsAndSchema) {
         validator(object);
       }
-    } catch (e) {
+    } catch (e: any) {
       if (partial.done) {
         logger.warn(
-          { output: partial.value, cleaned: partialResultCleaner ? str : undefined },
+          { output: partial.value, cleaned: partialResultCleaner ? str : undefined, errorMessage: e.message },
           "ObjectCompletion failed. The final result either didn't parse or didn't validate."
         );
         throw e;
