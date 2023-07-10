@@ -302,7 +302,6 @@ export async function JsonChatCompletionFunctionCall(
 
   const lastYield = output[output.length - 1];
   if (AI.isElement(lastYield) && lastYield.tag == FunctionCall) {
-    console.log('args', lastYield.props.args);
     // TODO: is validation necessary? If yes, how to handle errors?
     schema.parse(lastYield.props.args);
     return JSON.stringify(lastYield.props.args);
