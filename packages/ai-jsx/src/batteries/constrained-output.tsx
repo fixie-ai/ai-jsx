@@ -82,13 +82,14 @@ export async function* JsonChatCompletion(
   props: Omit<TypedObjectCompletionWithRetry, 'typeName' | 'parser' | 'partialResultCleaner'>,
   { render }: AI.ComponentContext
 ) {
+  const partialResultCleaner = 'default' in untruncateJson ? untruncateJson.default : untruncateJson;
   return yield* render(
     <ObjectCompletionWithRetry
       {...props}
       typeName="JSON"
       parser={JSON.parse}
       // TODO: can we remove .default?
-      partialResultCleaner={untruncateJson.default}
+      partialResultCleaner={partialResultCleaner}
     />
   );
 }

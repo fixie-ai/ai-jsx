@@ -4,11 +4,42 @@ import React from 'react';
 import { SystemMessage, UserMessage } from '../core/completion.js';
 import { JsonChatCompletion } from '../batteries/constrained-output.js';
 import { isJsxBoundary } from './jsx-boundary.js';
+import { memo } from '../core/memoize.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import z from 'zod';
+import * as CryptoJS from 'crypto-js';
 
 function reactComponentName(component: AI.Component<any> | React.JSXElementConstructor<any> | string) {
   return typeof component === 'string' ? component : component.name;
+}
+
+interface SerializedComponent {
+  name: string;
+  children: (string | SerializedComponent)[];
+  possiblyIncomplete?: boolean;
+}
+
+/**
+ * As the JSON is being built, the last element might be incomplete. This is fine for React components
+ * but not for AI components. This function marks the last element as incomplete so as to not trigger
+ * an API call with an incomplete value.
+ *
+ * This function has side-effects and mutates @serializedComponent
+ */
+function markLastElementIncomplete(
+  serializedComponent: SerializedComponent[] | SerializedComponent | string | undefined | null
+): void {
+  if (serializedComponent === undefined || serializedComponent === null || typeof serializedComponent === 'string') {
+    return;
+  }
+  if (Array.isArray(serializedComponent)) {
+    markLastElementIncomplete(serializedComponent[serializedComponent.length - 1]);
+    return;
+  }
+
+  Object.assign(serializedComponent, { possiblyIncomplete: true });
+
+  markLastElementIncomplete(serializedComponent.children[serializedComponent.children.length - 1]);
 }
 
 export async function* UICompletion(
@@ -16,15 +47,17 @@ export async function* UICompletion(
     example,
     aiComponents,
     children,
-  }: { example: React.ReactNode; aiComponents: AI.Component<any>[]; children: AI.Node },
+  }: { example: React.ReactNode; aiComponents?: AI.Component<any>[]; children: AI.Node },
   { render, logger }: AI.ComponentContext
 ) {
   yield '';
   const reactComponents = new Set<AI.Component<any> | React.JSXElementConstructor<any> | string>();
-  const validAIComponents = Object.fromEntries(aiComponents.map((c) => [reactComponentName(c), c]));
-  for (const component of aiComponents) {
+
+  const validAIComponents = Object.fromEntries((aiComponents ?? []).map((c) => [reactComponentName(c), c]));
+  for (const component of aiComponents ?? []) {
     reactComponents.add(component);
   }
+
   function collectComponents(node: React.ReactNode | AI.Node, inReact: boolean) {
     if (Array.isArray(node)) {
       node.forEach((node) => collectComponents(node, inReact));
@@ -53,9 +86,14 @@ export async function* UICompletion(
 
   const validComponents = Object.fromEntries(Array.from(reactComponents).map((c) => [reactComponentName(c), c]));
 
-  interface SerializedComponent {
-    name: string;
-    children: (string | SerializedComponent)[];
+  const memoizedComponents = new Map<string, AI.Node>();
+
+  function getOrCreateMemo(serializedComponent: SerializedComponent, nonMemoized: AI.Node): AI.Node {
+    const hash = CryptoJS.SHA256(JSON.stringify(serializedComponent)).toString();
+    if (!memoizedComponents.has(hash)) {
+      memoizedComponents.set(hash, memo(nonMemoized));
+    }
+    return memoizedComponents.get(hash);
   }
 
   function toComponent(serializedComponent: SerializedComponent[] | SerializedComponent | string) {
@@ -88,13 +126,12 @@ export async function* UICompletion(
     const children =
       typeof serializedComponent.children === 'string' ? [serializedComponent.children] : serializedComponent.children;
 
-    console.log('toComponent', serializedComponent.name, 'is AI?', serializedComponent.name in validAIComponents);
-
     if (serializedComponent.name in validAIComponents) {
+      if (serializedComponent.possiblyIncomplete) {
+        return `Loading ${serializedComponent.name} ...`;
+      }
       return (
-        <AI.jsx>
-          <Component>{children.map(toComponent)}</Component>
-        </AI.jsx>
+        <AI.jsx>{getOrCreateMemo(serializedComponent, <Component>{children.map(toComponent)}</Component>)}</AI.jsx>
       );
     }
     return (
@@ -114,6 +151,7 @@ export async function* UICompletion(
   const modelRenderGenerator = render(
     <JsonChatCompletion
       schema={Element}
+      retries={1}
       example={'<SomeComponent /> becomes: { "name": "SomeComponent", "children": [] }'}
     >
       <SystemMessage>
@@ -137,11 +175,14 @@ export async function* UICompletion(
 
   while (true) {
     const modelResult = await modelRenderGenerator.next();
-    const component = toComponent(JSON.parse(modelResult.value));
+    const object = JSON.parse(modelResult.value);
+    if (!modelResult.done) {
+      markLastElementIncomplete(object);
+    }
+    const component = toComponent(object);
     if (modelResult.done) {
       return component;
     }
-    // TODO: fix & enable progressive loading
-    // yield component;
+    yield component;
   }
 }

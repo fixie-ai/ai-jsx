@@ -9,6 +9,7 @@ export default function NavBar() {
     'Docs Chat': '/docs-chat',
     'Choose Your Own Adventure': '/choose-yor-own-adventure',
     'Recipe JIT UI': '/recipe',
+    'Story Teller': '/story-teller',
   };
 
   return (
