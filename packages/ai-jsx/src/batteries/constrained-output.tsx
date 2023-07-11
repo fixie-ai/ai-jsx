@@ -13,7 +13,8 @@ import {
   ModelPropsWithChildren,
 } from '../core/completion.js';
 import yaml from 'js-yaml';
-import { AIJSXError, ErrorCode } from '../core/errors.js';
+import { AIJSXError, ErrorCode, ErrorBlame } from '../core/errors.js';
+import { Jsonifiable } from 'type-fest';
 import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import untruncateJson from 'untruncate-json';
@@ -129,6 +130,17 @@ export async function* YamlChatCompletion(
   );
 }
 
+export class CompletionError extends AIJSXError {
+  constructor(
+    message: string,
+    public readonly code: ErrorCode,
+    public readonly blame: ErrorBlame,
+    public readonly metadata: Jsonifiable & { output: string; validationError: string }
+  ) {
+    super(message, code, blame, metadata);
+  }
+}
+
 /**
  * A {@link ChatCompletion} component that constrains the output to be a valid object format (e.g. JSON/YAML).
  *
@@ -151,9 +163,9 @@ async function* OneShotObjectCompletion(
       <SystemMessage>
         Respond with a {typeName} object that encodes your response.
         {schema
-          ? `The ${typeName} object should match this JSON Schema: ${JSON.stringify(zodToJsonSchema(schema))}`
+          ? `The ${typeName} object should match this JSON Schema: ${JSON.stringify(zodToJsonSchema(schema))}\n`
           : ''}
-        {example ? `For example: \n${example}` : ''}
+        {example ? `For example: ${example}\n` : ''}
         Respond with only the {typeName} object. Do not include any explanatory prose. Do not include ```
         {typeName.toLowerCase()} ``` code blocks.
       </SystemMessage>
@@ -173,11 +185,21 @@ async function* OneShotObjectCompletion(
       }
     } catch (e: any) {
       if (partial.done) {
-        logger.warn(
-          { output: partial.value, cleaned: partialResultCleaner ? str : undefined, errorMessage: e.message },
-          "ObjectCompletion failed. The final result either didn't parse or didn't validate."
+        // logger.warn(
+        //   { output: partial.value, cleaned: partialResultCleaner ? str : undefined, errorMessage: e.message },
+        //   "ObjectCompletion failed. The final result either didn't parse or didn't validate."
+        // );
+        console.log('bad output:', partial.value);
+        throw new AIJSXError(
+          `The model did not produce a valid ${typeName} object`,
+          ErrorCode.ModelOutputDidNotMatchConstraint,
+          'runtime',
+          {
+            typeName,
+            output: partial.value,
+            validationError: e.message,
+          }
         );
-        throw e;
       }
       continue;
     }
@@ -212,7 +234,8 @@ async function* ObjectCompletionWithRetry(
     output = yield* render(childrenWithCompletion);
     return output;
   } catch (e: any) {
-    validationError = e.message;
+    validationError = e.metadata.validationError;
+    output = e.metadata.output;
   }
 
   logger.debug({ atempt: 1, expectedFormat: props.typeName, output }, `Output did not validate to ${props.typeName}.`);
@@ -226,9 +249,12 @@ async function* ObjectCompletionWithRetry(
         <AssistantMessage>{output}</AssistantMessage>
         <UserMessage>
           Try again. Here's the validation error when trying to parse the output as {props.typeName}:{'\n'}
+          ```log filename="error.log"{'\n'}
           {validationError}
           {'\n'}
-          You must reformat the string to be a valid {props.typeName} object, but you must keep the same data.
+          ```
+          {'\n'}
+          You must reformat your previous output to be a valid {props.typeName} object, but you must keep the same data.
         </UserMessage>
       </OneShotObjectCompletion>
     );
@@ -237,7 +263,8 @@ async function* ObjectCompletionWithRetry(
       output = yield* render(completionRetry);
       return output;
     } catch (e: any) {
-      validationError = e.message;
+      validationError = e.metadata.validationError;
+      output = e.metadata.output;
     }
 
     logger.debug(

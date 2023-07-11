@@ -1,5 +1,5 @@
 /** @jsxImportSource ai-jsx/react */
-import * as AI from './core.js';
+import * as AI from './index.js';
 import React from 'react';
 import { SystemMessage, UserMessage } from '../core/completion.js';
 import { JsonChatCompletion } from '../batteries/constrained-output.js';
@@ -7,16 +7,24 @@ import { isJsxBoundary } from './jsx-boundary.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import z from 'zod';
 
-function reactComponentName(component: React.JSXElementConstructor<any> | string) {
+function reactComponentName(component: AI.Component<any> | React.JSXElementConstructor<any> | string) {
   return typeof component === 'string' ? component : component.name;
 }
 
 export async function* UICompletion(
-  { example, children }: { example: React.ReactNode; children: AI.Node },
+  {
+    example,
+    aiComponents,
+    children,
+  }: { example: React.ReactNode; aiComponents: AI.Component<any>[]; children: AI.Node },
   { render, logger }: AI.ComponentContext
 ) {
   yield '';
-  const reactComponents = new Set<React.JSXElementConstructor<any> | string>();
+  const reactComponents = new Set<AI.Component<any> | React.JSXElementConstructor<any> | string>();
+  const validAIComponents = Object.fromEntries(aiComponents.map((c) => [reactComponentName(c), c]));
+  for (const component of aiComponents) {
+    reactComponents.add(component);
+  }
   function collectComponents(node: React.ReactNode | AI.Node, inReact: boolean) {
     if (Array.isArray(node)) {
       node.forEach((node) => collectComponents(node, inReact));
@@ -50,7 +58,10 @@ export async function* UICompletion(
     children: (string | SerializedComponent)[];
   }
 
-  function toComponent(serializedComponent: SerializedComponent | string) {
+  function toComponent(serializedComponent: SerializedComponent[] | SerializedComponent | string) {
+    if (Array.isArray(serializedComponent)) {
+      return <AI.Fragment>{serializedComponent.map(toComponent)}</AI.Fragment>;
+    }
     if (!serializedComponent || typeof serializedComponent === 'string') {
       return serializedComponent;
     }
@@ -77,7 +88,20 @@ export async function* UICompletion(
     const children =
       typeof serializedComponent.children === 'string' ? [serializedComponent.children] : serializedComponent.children;
 
-    return <Component>{children.map(toComponent)}</Component>;
+    console.log('toComponent', serializedComponent.name, 'is AI?', serializedComponent.name in validAIComponents);
+
+    if (serializedComponent.name in validAIComponents) {
+      return (
+        <AI.jsx>
+          <Component>{children.map(toComponent)}</Component>
+        </AI.jsx>
+      );
+    }
+    return (
+      <AI.React>
+        <Component>{children.map(toComponent)}</Component>
+      </AI.React>
+    );
   }
 
   const Element: z.Schema = z.object({
@@ -95,11 +119,17 @@ export async function* UICompletion(
       <SystemMessage>
         You are an AI who is an expert UI designer. The user will provide content in the form of text and you will
         respond using a set of React components to create a UI for the content. Here are the only available React
-        components and how they should be used:
+        components with an example of how they should be used:
         {'\n'}
+        ```tsx filename="example.tsx"{'\n'}
         <AI.React>{example}</AI.React>
         {'\n'}
+        ```
+        {'\n'}
         Do not use any elements (including HTML elements) other than the ones above.
+        {'\n'}
+        Note that {'ImageGen'} is a special component that will generate an image for you. Its children should describe
+        the image you want to generate.
       </SystemMessage>
       <UserMessage>{children}</UserMessage>
     </JsonChatCompletion>
@@ -107,10 +137,11 @@ export async function* UICompletion(
 
   while (true) {
     const modelResult = await modelRenderGenerator.next();
-    const component = <AI.React>{toComponent(JSON.parse(modelResult.value))}</AI.React>;
+    const component = toComponent(JSON.parse(modelResult.value));
     if (modelResult.done) {
       return component;
     }
-    yield component;
+    // TODO: fix & enable progressive loading
+    // yield component;
   }
 }
