@@ -4,6 +4,7 @@ import RootLayout from './layout.tsx';
 import BasicCompletion from './basic-completion/index.tsx';
 import { ChooseYourOwnAdventure } from './choose-your-adventure/index.tsx';
 import RecipeWrapper from './recipe/page.tsx';
+import StoryTellerWrapper from './story-teller/page.tsx';
 import { BasicChat } from './basic-chat/index.tsx';
 import { DocsChat } from './docs-chat/index.tsx';
 
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
       {
         path: '/recipe',
         element: <RecipeWrapper />,
+      },
+      {
+        path: '/story-teller',
+        element: <StoryTellerWrapper />,
       },
     ],
   },
