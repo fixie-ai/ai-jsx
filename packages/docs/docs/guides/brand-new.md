@@ -13,16 +13,18 @@ Just like in other types of programming, you can often get by with a simple solu
 LLMs are magical when you use them for things they're good at. However, they can be really frustrating when you try to ask them to do something they're not well-equipped to handle.
 
 ### LLM Strengths 💪🏽
+
 LLMs are great at understanding and generating natural language and code.
 
 They are strong at tasks like:
 
-- **Layout:**  Given a set of React components and a data object, arrange the React components in a visually-pleasing way.
-- **Summarization**:  Read documents and summarize them.
-- **Style Cloning**:  Read a lot of your writing, then generate more writing in your voice.
-- **Code Generation**:  Look at API documentation, then write code to use it.
+- **Layout:** Given a set of React components and a data object, arrange the React components in a visually-pleasing way.
+- **Summarization**: Read documents and summarize them.
+- **Style Cloning**: Read a lot of your writing, then generate more writing in your voice.
+- **Code Generation**: Look at API documentation, then write code to use it.
 
 ### LLM Frustration 😖
+
 LLMs, by themselves, aren't great at:
 
 - Complex deterministic logic (e.g. math or code execution)
@@ -33,6 +35,7 @@ LLMs, by themselves, aren't great at:
 Fortunately, the community has developed many approaches to address the above shortcomings. The LLM ends up being just one piece of the bigger application.
 
 ### LLMs Have Context and Work Best with Help
+
 To build an intuition for what the LLM is good for, think of it kind of like a person. A person who can pass the [LSAT](https://en.wikipedia.org/wiki/Law_School_Admission_Test) but who also sometimes makes silly reasoning mistakes. People can do multiplication but we wouldn't expect someone to be great at 5-digit multiplication unless we give them some help (e.g. a calculator). And if we asked someone a question about the French Revolution, we'd feel much more confident in the answers if we gave them access to Wikipedia.
 
 Models are also limited by the companies that own and operate them (e.g. for safety and to limit liability on behalf of the operating company). For instance, if you ask OpenAI's models how to make anthrax, it'll refuse to tell you. ([Unless you're clever](https://www.jailbreakchat.com/)).
@@ -56,6 +59,7 @@ As models improve, prompt engineering will become less necessary, because the mo
 ### Feedback Loop
 
 Imagine you have a workflow with two steps:
+
 1. Tweaking a prompt
 2. Re-running your program to check the results
 
@@ -67,7 +71,7 @@ So how do we figure out if our prompt changes are having an impact? One thing th
 
 Each model API has a context window that it supports. For instance, [GPT-4 Standard](https://platform.openai.com/docs/models/gpt-4) is 8,192 tokens. (A [token](https://platform.openai.com/tokenizer) is a common grouping of characters.)
 
-The context window is the combined length of the prompt and the model's response. Effectively this means we have a budget (i.e. the size of thecontext window) that is shared between the input and the output. As we increase the length of the prompt to the model, we decrease the potential length of the response from the model. 
+The context window is the combined length of the prompt and the model's response. Effectively this means we have a budget (i.e. the size of thecontext window) that is shared between the input and the output. As we increase the length of the prompt to the model, we decrease the potential length of the response from the model.
 
 Intuitively, think about the context window as the model's working memory. When you think about a problem, you're able to hold some of the relevant information in your head at one time. When the problem gets too complicated, you rely on external aids (like written notes). The context window is similar – it's what the model has access to at once. (But, unlike humans, the model has perfect recall of everything in its window.)
 
@@ -85,6 +89,7 @@ So, as you're setting up your prompts, it's best to get the model to show its wo
 When you need robust tools, you may wish to use something like [HumanLoop](https://humanloop.com/) to A/B test different prompts in production.
 
 ## Additional Concepts
+
 So far we've covered what LLMs are good/bad at and how to think a bit about constructing prompts for the model. What follows are some other concepts that we think will be useful as you build AI-powered applications.
 
 ### Using Tools
@@ -134,7 +139,7 @@ More detail: [`UseTools` API docs](../api/modules/batteries_use_tools#usetools).
 
 ### Accessing Knowledge (AKA "Docs QA")
 
-LLMs have "soft knowledge" of the world, but if you just ask a question without providing any context, they're prone to [hallucination](https://en.wikipedia.org/wiki/Hallucination_(artificial_intelligence)). Additionally, because LLMs are only trained on public data, they don't have context on private data your or your app may care about.
+LLMs have "soft knowledge" of the world, but if you just ask a question without providing any context, they're prone to [hallucination](<https://en.wikipedia.org/wiki/Hallucination_(artificial_intelligence)>). Additionally, because LLMs are only trained on public data, they don't have context on private data your or your app may care about.
 
 To address this, the community has developed a variety of techniques known collectively as "Document Q&A" (DocsQA). DocsQA enables your application to provide the LLM with a set of content/documents that serve as the source of truth. This avoids hallucination and enables the model to provide better responses.
 
