@@ -1,5 +1,5 @@
 ---
-sidebar_position: 3
+sidebar_position: 2
 ---
 
 # Rules of AI.JSX
@@ -7,6 +7,8 @@ sidebar_position: 3
 AI.JSX uses the familiar JSX syntax, but [it's not React](../is-it-react.md).
 
 When you write an AI.JSX expression, you're declaratively specifying the shape of the string you want to be returned to the caller. The AI.JSX engine then evaluates your expression in parallel and streams the results.
+
+## AI.JSX Example
 
 ```tsx
 function App() {
@@ -53,7 +55,7 @@ async function CustomerData() {
 
 :::caution Edge case
 
-Imagine you have an slow async component, which is used as a sibling of faster components:
+Imagine you have a slow async component, which is used as a sibling of faster components:
 
 ```tsx
 async function Slow() {
@@ -91,7 +93,7 @@ async function* Slow() {
 This is not ideal and we plan to improve it in the future.
 :::
 
-### Append-only generators
+### Append-Only Generators
 
 If your component is a generator, the default behavior is that each `yield`ed value replaces the previous value. For instance, imagine you have an image generation API like Midjourney that returns a series of image URLs showing the image render in progress:
 
