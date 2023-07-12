@@ -20,7 +20,7 @@ export interface ImageGenProps {
 }
 
 export type ImageGenPropsWithChildren = ImageGenProps & {
-  children: Node;
+  children?: Node;
 };
 
 export type ImageGenComponent<T extends ImageGenPropsWithChildren> = Component<T>;

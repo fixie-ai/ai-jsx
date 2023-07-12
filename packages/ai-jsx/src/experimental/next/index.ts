@@ -16,7 +16,11 @@ import _ from 'lodash';
  */
 const boundaryElements = [
   { tag: AI.React, unwrap: (e: AI.Element<any>) => e.props.children },
-  { tag: Image, unwrap: (e: AI.Element<any>) => ReactModule.createElement('img', { src: e.props.url }) },
+  {
+    tag: Image,
+    unwrap: (e: AI.Element<any>) =>
+      ReactModule.createElement('img', { src: e.props.url, alt: `Image generated from the prompt: ${e.props.prompt}` }),
+  },
 ];
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
