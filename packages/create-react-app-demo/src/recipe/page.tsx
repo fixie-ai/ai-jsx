@@ -2,21 +2,19 @@
 import * as AI from 'ai-jsx/react';
 import { UICompletion } from 'ai-jsx/react/completion';
 import { useState, ReactNode } from 'react';
-import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
-import { memo } from 'ai-jsx/core/memoize';
 import { Prompt } from 'ai-jsx/batteries/prompts';
-import { ImageGen } from 'ai-jsx/core/image-gen';
+import { ImageGen as BaseImageGen, ImageGenPropsWithChildren } from 'ai-jsx/core/image-gen';
 import ResultContainer from '../ResultContainer.tsx';
 import InputPrompt from '../InputPrompt.tsx';
 import { atom, useAtom } from 'jotai';
 
 const selectedIngredientsAtom = atom(new Set<any>());
 
-export function Recipe({ children }: { children: ReactNode }) {
+export function Recipe({ children }: { children?: ReactNode }) {
   return <div data-test="recipe">{children}</div>;
 }
 
-export function RecipeTitle({ children }: { children: ReactNode }) {
+export function RecipeTitle({ children }: { children?: ReactNode }) {
   return (
     <h2 className="text-xl font-bold" data-test="recipe-title">
       {children}
@@ -24,7 +22,7 @@ export function RecipeTitle({ children }: { children: ReactNode }) {
   );
 }
 
-export function RecipeInstructionList({ children }: { children: ReactNode }) {
+export function RecipeInstructionList({ children }: { children?: ReactNode }) {
   return (
     <div className="mt-4">
       <h2 className="font-bold">Instructions</h2>
@@ -35,7 +33,7 @@ export function RecipeInstructionList({ children }: { children: ReactNode }) {
   );
 }
 
-export function RecipeIngredientList({ children }: { children: ReactNode }) {
+export function RecipeIngredientList({ children }: { children?: ReactNode }) {
   const [selectedIngredients] = useAtom(selectedIngredientsAtom);
   return (
     <div>
@@ -48,7 +46,7 @@ export function RecipeIngredientList({ children }: { children: ReactNode }) {
   );
 }
 
-export function RecipeIngredientListItem({ children }: { children: ReactNode }) {
+export function RecipeIngredientListItem({ children }: { children?: ReactNode }) {
   const [, setSelectedIngredients] = useAtom(selectedIngredientsAtom);
 
   function toggleItemSelected() {
@@ -69,19 +67,16 @@ export function RecipeIngredientListItem({ children }: { children: ReactNode }) 
     </li>
   );
 }
-export function RecipeInstructionListItem({ children }: { children: ReactNode }) {
+export function RecipeInstructionListItem({ children }: { children?: ReactNode }) {
   return <li data-test="recipe-instruction-list-item">{children}</li>;
+}
+
+export function ImageGen(props: ImageGenPropsWithChildren) {
+  return <BaseImageGen size="256x256" {...props} />;
 }
 
 export default function RecipeWrapper() {
   const [query, setQuery] = useState('braised lamb stew');
-
-  const recipe = memo(
-    <ChatCompletion temperature={1}>
-      <Prompt persona="a Michelin Star Head Chef" />
-      <UserMessage>Give me a recipe for {query}.</UserMessage>
-    </ChatCompletion>
-  );
 
   return (
     <>
@@ -93,34 +88,36 @@ export default function RecipeWrapper() {
       </ResultContainer>
       <ResultContainer title={`AI comes up with a recipe for "${query}"`}>
         <AI.jsx>
-          <ImageGen size="256x256">
-            <ChatCompletion>
-              <UserMessage>
-                In two to three sentences, describe how the following recipe would look like when prepared by a chef:
-                {recipe}
-              </UserMessage>
-            </ChatCompletion>
-          </ImageGen>
           <UICompletion
-            example={
-              <Recipe>
-                <RecipeTitle>Crème Chantilly</RecipeTitle>
-                <RecipeIngredientList>
-                  <RecipeIngredientListItem>2 cups heavy cream</RecipeIngredientListItem>
-                  <RecipeIngredientListItem>2 tablespoons granulated sugar</RecipeIngredientListItem>
-                  <RecipeIngredientListItem>1 teaspoon vanilla extract</RecipeIngredientListItem>
-                </RecipeIngredientList>
-                <RecipeInstructionList>
-                  <RecipeInstructionListItem>Combine the ingredients in a large mixing bowl.</RecipeInstructionListItem>
-                  <RecipeInstructionListItem>
-                    Beat the contents on high speed until soft peaks form.
-                  </RecipeInstructionListItem>
-                  <RecipeIngredientListItem>Keep chilled until serving.</RecipeIngredientListItem>
-                </RecipeInstructionList>
-              </Recipe>
+            reactComponentsDoc={
+              <>
+                <Recipe />: The container component for all other elements of the recipe.
+                {'\n'}
+                <RecipeTitle />: The title of the recipe.
+                {'\n'}
+                <RecipeIngredientList />: The list of ingredients. It should contain a list of RecipeIngredientListItem
+                elements.
+                {'\n'}
+                <RecipeIngredientListItem />: An item in the list of ingredients
+                {'\n'}
+                <RecipeInstructionList />: The list of instructions. It should contain a list of
+                RecipeInstructionListItem elements.
+                {'\n'}
+                <RecipeInstructionListItem />: An item in the list of instructions.
+                {'\n'}
+              </>
+            }
+            aiComponentsDoc={
+              <>
+                <ImageGen />: A special component that will generate an image for you. All you need to do is to provide
+                a prompt that describes the image you want. The prompt should be descriptive enough to generate an image
+                that is relevant to the recipe.
+              </>
             }
           >
-            {recipe}
+            <Prompt persona="a Michelin Star Head Chef" />
+            Give me a recipe for {query}.{'\n'}
+            Make sure to include an image of the dish at the top.
           </UICompletion>
         </AI.jsx>
       </ResultContainer>
