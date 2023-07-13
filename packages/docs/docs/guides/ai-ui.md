@@ -4,11 +4,13 @@ sidebar_position: 4
 
 # AI + UI
 
-In traditional UI development, human engineers write deterministic code to handle every possible UI state. With JIT UI, human engineers produce building block components, then hand those to an AI to use in its response.
+In traditional UI development, human engineers write deterministic code to handle every possible UI state. With "Just in Time" UI (JIT UI), human engineers produce building block components, then hand those to an AI to use in its response.
 
-JIT UI has the advantage of being very flexible with a minimum amount of human-maintained code. However, it's also slower and more error prone than fully deterministic code. (We expect both these concerns to recede over time as models continue to improve.)
+JIT UI has the advantage of being very flexible with a minimum amount of human-maintained code. However, it is slower and more error prone than fully deterministic code. We expect both these concerns to diminish and even go away completely over time as models continue to improve.
 
-So, JIT UI excels in applications like business intelligence tools for internal users. Because the users are internal, you can be more tolerant of errors / slower performance. And you benefit greatly from being able to flexibly render whatever BI query the user produces.
+For now, we think JIT UI can be beneficial for line of business (LOB) and other internal applications. These are a good fit because the tradeoffs make sense: there isn't always enough time allocated to the creation and maintenance of these apps and because the apps have an internal audience there is more tolerance for errors and performance issues. There is tremendous benefit from being able to have the custom UI flexibily rendered based on what the user needs.
+
+## Example: JIT UI
 
 For example, imagine we have a recipe app, where we want the AI to construct the UI for us:
 
@@ -44,15 +46,12 @@ For example, imagine we have a recipe app, where we want the AI to construct the
 
 In this example, we create a set of React components, then provide them to the model along with a prompt. The model decides how to use the React components to structure its result, and AI.JSX renders those components into the tree.
 
-There are two ways to do this: [serverside](#serverside-ai--ui) and [clientside](#clientside-ai--ui-integration).
+There are two ways to do this: [Server-Side](#server-side-ai--ui) and [Client-Side](#client-side-ai--ui-integration).
 
-## Serverside AI + UI
+## Server-Side AI + UI
 
-:::note Architecture
-This applies to the following architectures:
-
-- [UI on the client; AI.JSX on the server](./architecture.mdx#ui-on-the-client-aijsx-on-the-server)
-
+:::note Architecture Note
+Applies to the [UI on the client; AI.JSX on the server](./architecture.mdx#ui-on-the-client-aijsx-on-the-server) architecture.
 :::
 
 With this pattern, you run AI.JSX on the server. AI.JSX generates a set of UI components, and renders them back into the page for you.
@@ -191,10 +190,10 @@ export function RecipeGenerator({ topic }: { topic: string }) {
    }
    ```
 
-## Clientside AI + UI Integration
+## Client-Side AI + UI Integration
 
-:::note Architecture
-This applies to the following architectures:
+:::note Architecture Note
+Applies to the following architectures:
 
 - [Run entirely on the client](./architecture.mdx#run-entirely-on-the-client)
 - [UI + AI.JSX on the client; API calls on the server](./architecture.mdx#ui--aijsx-on-the-client-api-calls-on-the-server)
@@ -265,7 +264,7 @@ For an example of this, see: [create-react-app-demo](https://github.com/fixie-ai
 
 ### Directly Generating Strings
 
-The above examples generate UI components. Howeer, if all you want to do is generate a string, that works too:
+The above examples generate UI components. However, if all you want to do is generate a string, that works too:
 
 ```tsx
 /* react component */
