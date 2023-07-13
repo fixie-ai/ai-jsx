@@ -1,7 +1,9 @@
 import { createRenderContext } from 'ai-jsx';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 
-function App() {
+async function* App() {
+  yield 'This intermediate text will not be shown because this is not an append-only component.';
+
   return (
     <>
       This example renders an AI.JSX tree in append-only mode, where rendering guarantees that each frame will append to

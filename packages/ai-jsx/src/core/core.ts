@@ -404,6 +404,11 @@ async function* renderStream(
           yield lastValue.concat(frame);
         }
         lastValue = lastValue.concat(await renderResult);
+      } else if (appendOnly && !next.done) {
+        // Subsequently yielded values might not be append-only, so we can't yield them. (But
+        // if this iterator is `done` then we rely on the recursive call to decide when it's safe
+        // to yield.)
+        lastValue = await context.render(next.value, recursiveRenderOpts);
       } else {
         lastValue = yield* context.render(next.value, recursiveRenderOpts);
       }
@@ -411,7 +416,11 @@ async function* renderStream(
       if (next.done) {
         return lastValue;
       }
-      yield lastValue;
+
+      // Only append-only streams can yield for an append-only render.
+      if (!appendOnly || isAppendOnlyStream) {
+        yield lastValue;
+      }
     }
   }
 
