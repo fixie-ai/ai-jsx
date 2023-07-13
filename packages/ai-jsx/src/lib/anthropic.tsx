@@ -113,9 +113,9 @@ export async function* AnthropicChatModel(
             <UserMessage>For subsequent replies you will adhere to the following instructions: {message}</UserMessage>,
             <AssistantMessage>Okay, I will do that.</AssistantMessage>,
           ];
-        } else {
-          return message;
         }
+
+        return message;
       })
       .map(async (message) => {
         switch (message.tag) {
@@ -190,7 +190,7 @@ export async function* AnthropicChatModel(
     let text = completion.completion;
     if (isFirstResponse && text.length > 0) {
       isFirstResponse = false;
-      if (text[0] === ' ') {
+      if (text.startsWith(' ')) {
         text = text.slice(1);
       }
     }
