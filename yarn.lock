@@ -7523,7 +7523,7 @@ __metadata:
   dependencies:
     "@tsconfig/node18": ^2.0.1
     "@types/node": ^20.3.1
-    ai-jsx: 0.5.10
+    ai-jsx: 0.5.11
     pino: ^8.14.1
     pino-pretty: ^10.0.0
     tsx: ^3.12.7
@@ -7546,34 +7546,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"ai-jsx@npm:0.5.10":
-  version: 0.5.10
-  resolution: "ai-jsx@npm:0.5.10"
-  dependencies:
-    "@anthropic-ai/sdk": ^0.5.0
-    "@nick.heiner/wandb-fork": ^0.5.2-5
-    axios: ^1.4.0
-    cli-highlight: ^2.1.11
-    cli-spinners: ^2.9.0
-    gpt3-tokenizer: ^1.1.5
-    ink: ^4.2.0
-    js-yaml: ^4.1.0
-    langchain: ^0.0.81
-    lodash: ^4.17.21
-    ml-distance: ^4.0.1
-    openai: ^3.3.0
-    pino: ^8.14.1
-    server-only: ^0.0.1
-    uuid: ^9.0.0
-    zod: ^3.21.4
-    zod-to-json-schema: ^3.21.1
-  peerDependencies:
-    react: ^16.8.0  || ^17.0.0 || ^18.0.0
-  checksum: 509a0aa56458e4ecbdc0517b67280acec62361533e1e34b9509501c28579ec2775fefc8f66283f92726b132d25528ddef03a916d1d78a29bd3c035d39e34727b
-  languageName: node
-  linkType: hard
-
-"ai-jsx@workspace:packages/ai-jsx":
+"ai-jsx@0.5.11, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
@@ -9669,7 +9642,7 @@ __metadata:
     "@types/react-dom": ^18.2.5
     "@typescript-eslint/eslint-plugin": ^5.59.11
     "@typescript-eslint/parser": ^5.59.11
-    ai-jsx: 0.5.10
+    ai-jsx: 0.5.11
     babel-jest: ^27.4.2
     babel-loader: ^8.2.3
     babel-plugin-named-asset-import: ^0.3.8
@@ -12200,7 +12173,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.60.0
     "@typescript-eslint/parser": ^5.60.0
     "@wandb/sdk": ^0.5.1
-    ai-jsx: 0.5.10
+    ai-jsx: 0.5.11
     axios: ^1.4.0
     csv-stringify: ^6.4.0
     eslint: ^8.40.0
@@ -17525,7 +17498,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
     ai: ^2.1.8
-    ai-jsx: 0.5.10
+    ai-jsx: 0.5.11
     autoprefixer: 10.4.14
     classnames: ^2.3.2
     eslint: 8.42.0
@@ -17555,7 +17528,7 @@ __metadata:
     "@types/react-dom": 18.2.4
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
-    ai-jsx: 0.5.10
+    ai-jsx: 0.5.11
     autoprefixer: 10.4.14
     classnames: ^2.3.2
     eslint: 8.42.0
@@ -22749,7 +22722,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
     ai: ^2.1.3
-    ai-jsx: 0.5.10
+    ai-jsx: 0.5.11
     eslint: 8.43.0
     eslint-config-next: 13.4.6
     eslint-config-nth: ^2.0.1
@@ -22775,7 +22748,7 @@ __metadata:
     "@types/uuid": ^9.0.2
     "@typescript-eslint/eslint-plugin": ^5.60.0
     "@typescript-eslint/parser": ^5.60.0
-    ai-jsx: 0.5.10
+    ai-jsx: 0.5.11
     asciichart: ^1.5.25
     axios: ^1.4.0
     enquirer: ^2.3.6
