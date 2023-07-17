@@ -3946,13 +3946,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nick.heiner/openai-edge@npm:1.0.1-7":
-  version: 1.0.1-7
-  resolution: "@nick.heiner/openai-edge@npm:1.0.1-7"
-  checksum: f53e39082901018113353c1c4b8ecddc1465a4355b7c8721a309d9243d58310c78c86af11c30c1ae2a767b6636f2e02cdc78d00144fefa81d7818916253637a1
-  languageName: node
-  linkType: hard
-
 "@nick.heiner/wandb-fork@npm:^0.5.2-5":
   version: 0.5.2-5
   resolution: "@nick.heiner/wandb-fork@npm:0.5.2-5"
@@ -7530,7 +7523,7 @@ __metadata:
   dependencies:
     "@tsconfig/node18": ^2.0.1
     "@types/node": ^20.3.1
-    ai-jsx: 0.5.10
+    ai-jsx: "workspace:*"
     pino: ^8.14.1
     pino-pretty: ^10.0.0
     tsx: ^3.12.7
@@ -7553,13 +7546,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"ai-jsx@0.5.10, ai-jsx@workspace:packages/ai-jsx":
+"ai-jsx@workspace:*, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
     "@anthropic-ai/sdk": ^0.5.0
     "@jest/globals": ^29.5.0
-    "@nick.heiner/openai-edge": 1.0.1-7
     "@nick.heiner/wandb-fork": ^0.5.2-5
     "@tsconfig/node16": ^1.0.4
     "@tsconfig/node18": ^2.0.1
@@ -7591,6 +7583,7 @@ __metadata:
     ml-distance: ^4.0.1
     node-fetch: ^3.3.1
     openai: ^3.3.0
+    openai-edge: ^1.2.0
     pino: ^8.14.1
     pino-pretty: ^10.0.0
     react: ^18.2.0
@@ -9649,7 +9642,7 @@ __metadata:
     "@types/react-dom": ^18.2.5
     "@typescript-eslint/eslint-plugin": ^5.59.11
     "@typescript-eslint/parser": ^5.59.11
-    ai-jsx: 0.5.10
+    ai-jsx: "workspace:*"
     babel-jest: ^27.4.2
     babel-loader: ^8.2.3
     babel-plugin-named-asset-import: ^0.3.8
@@ -12180,7 +12173,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.60.0
     "@typescript-eslint/parser": ^5.60.0
     "@wandb/sdk": ^0.5.1
-    ai-jsx: 0.5.10
+    ai-jsx: "workspace:*"
     axios: ^1.4.0
     csv-stringify: ^6.4.0
     eslint: ^8.40.0
@@ -17505,7 +17498,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
     ai: ^2.1.8
-    ai-jsx: 0.5.10
+    ai-jsx: "workspace:*"
     autoprefixer: 10.4.14
     classnames: ^2.3.2
     eslint: 8.42.0
@@ -17535,7 +17528,7 @@ __metadata:
     "@types/react-dom": 18.2.4
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
-    ai-jsx: 0.5.10
+    ai-jsx: "workspace:*"
     autoprefixer: 10.4.14
     classnames: ^2.3.2
     eslint: 8.42.0
@@ -17942,6 +17935,13 @@ __metadata:
     is-inside-container: ^1.0.0
     is-wsl: ^2.2.0
   checksum: 3993c0f61d51fed8ac290e99c9c3cf45d3b6cfb3e2aa2b74cafd312c3486c22fd81df16ac8f3ab91dd8a4e3e729a16fc2480cfc406c4833416cf908acf1ae7c9
+  languageName: node
+  linkType: hard
+
+"openai-edge@npm:1.2.0, openai-edge@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "openai-edge@npm:1.2.0"
+  checksum: 5fa7962527b4001fe3beb29cb983014b1f7a1051199b4b1df60dc5638b8d31d9f8f8924b7795b997f609cc15cd19f93a64d5e55cd99e5d52a9970acd267e97c9
   languageName: node
   linkType: hard
 
@@ -22716,18 +22716,18 @@ __metadata:
     "@babel/core": ^7.22.5
     "@babel/plugin-transform-react-jsx": ^7.22.5
     "@next/eslint-plugin-next": ^13.4.6
-    "@nick.heiner/openai-edge": 1.0.1-7
     "@types/node": 20.3.1
     "@types/react": 18.2.12
     "@types/react-dom": 18.2.5
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
     ai: ^2.1.3
-    ai-jsx: 0.5.10
+    ai-jsx: "workspace:*"
     eslint: 8.43.0
     eslint-config-next: 13.4.6
     eslint-config-nth: ^2.0.1
     next: 13.4.6
+    openai-edge: 1.2.0
     react: 18.2.0
     react-dom: 18.2.0
     typescript: 5.1.3
@@ -22748,7 +22748,7 @@ __metadata:
     "@types/uuid": ^9.0.2
     "@typescript-eslint/eslint-plugin": ^5.60.0
     "@typescript-eslint/parser": ^5.60.0
-    ai-jsx: 0.5.10
+    ai-jsx: "workspace:*"
     asciichart: ^1.5.25
     axios: ^1.4.0
     enquirer: ^2.3.6
