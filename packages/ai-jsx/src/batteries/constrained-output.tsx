@@ -225,7 +225,7 @@ async function* ObjectCompletionWithRetry(
     validationError = e.message;
   }
 
-  logger.debug({ atempt: 1, expectedFormat: props.typeName, output }, `Output did not validate to ${props.typeName}.`);
+  logger.debug({ attempt: 1, expectedFormat: props.typeName, output }, `Output did not validate to ${props.typeName}.`);
 
   for (let retryIndex = 1; retryIndex < retries; retryIndex++) {
     const completionRetry = (
