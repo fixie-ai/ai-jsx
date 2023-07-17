@@ -71,7 +71,7 @@ So how do we figure out if our prompt changes are having an impact? One thing th
 
 Each model API has a context window that it supports. For instance, [GPT-4 Standard](https://platform.openai.com/docs/models/gpt-4) is 8,192 tokens. (A [token](https://platform.openai.com/tokenizer) is a common grouping of characters.)
 
-The context window is the combined length of the prompt and the model's response. Effectively this means we have a budget (i.e. the size of thecontext window) that is shared between the input and the output. As we increase the length of the prompt to the model, we decrease the potential length of the response from the model.
+The context window is the combined length of the prompt and the model's response. Effectively this means we have a budget (i.e. the size of the context window) that is shared between the input and the output. As we increase the length of the prompt to the model, we decrease the potential length of the response from the model.
 
 Intuitively, think about the context window as the model's working memory. When you think about a problem, you're able to hold some of the relevant information in your head at one time. When the problem gets too complicated, you rely on external aids (like written notes). The context window is similar – it's what the model has access to at once. (But, unlike humans, the model has perfect recall of everything in its window.)
 
