@@ -46,6 +46,7 @@
     "demo:reddit": "yarn build && node dist/bakeoff/reddit-qa/ai-jsx.js",
     "demo:reddit:lc": "yarn build && node dist/bakeoff/reddit-qa/langchain.mjs",
     "demo:prompting-basics": "yarn build && node dist/prompting-basics.js",
+    "demo:jit-ui-building-blocks": "yarn build && node dist/jit-ui-building-blocks.js",
     "demo:validated-generation": "yarn build && node dist/validated-generation.js",
     "demo:image-generation": "yarn build && node dist/image-generation.js",
     "view-logs": "cat ai-jsx.log | pino-pretty",
