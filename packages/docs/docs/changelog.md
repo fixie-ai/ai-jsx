@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.5.11
+
 - Make JIT UI stream rather than appear all at once.
 - Use `openai-edge` instead of `@nick.heiner/openai-edge`
 
