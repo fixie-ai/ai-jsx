@@ -16,7 +16,6 @@ $ yarn tsx packages/examples/src/bakeoff/reddit-qa/load-articles.mts
 
 $ yarn tsx packages/examples/src/bakeoff/reddit-qa/langchain.mts
 $ yarn tsx packages/examples/src/bakeoff/reddit-qa/ai-jsx.tsx
-$ yarn tsx packages/examples/src/bakeoff/reddit-qa/ai-jsx-imperative.ts
 ```
 
 ## Caveats
