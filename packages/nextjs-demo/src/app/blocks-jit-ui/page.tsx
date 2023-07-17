@@ -1,4 +1,16 @@
-import { Badge, Button, ButtonGroup, Card, IconButton, CardList } from '@/components/BuildingBlocks';
+import {
+  Badge,
+  Button,
+  ButtonGroup,
+  Card,
+  IconButton,
+  CardList,
+  StackedForm,
+  InputWithLabel,
+  TextAreaInput,
+  SimpleRadioGroup,
+  Toggle,
+} from '@/components/BuildingBlocks';
 import { CheckCircleIcon, PlusIcon } from '@heroicons/react/20/solid';
 
 export default function RecipeExample() {
@@ -34,6 +46,30 @@ export default function RecipeExample() {
           <p>item 2</p>
           <p>item 3</p>
         </CardList>
+      </div>
+      <div className="gap-1.5 flex">
+        <Card>
+          {/* <StackedForm title="Form Title" subtitle="Extended form subtitle" /> */}
+
+          <InputWithLabel label="Label" type="text" id="id" placeholder="placeholder" />
+          <InputWithLabel
+            label="Email"
+            type="email"
+            id="email"
+            placeholder="foo@gmail.com"
+            helpText="We'll only use this for spam"
+          />
+          <TextAreaInput label="Comment" id="comment" defaultValue="This is a comment" />
+          <SimpleRadioGroup
+            choices={[
+              { id: 'email', title: 'Email' },
+              { id: 'sms', title: 'Phone (SMS)' },
+              { id: 'push', title: 'Push notification' },
+            ]}
+          />
+          <Toggle title="Annual billing" subtitle="(Save 10%)" />
+          <Toggle title="Turbo speed" />
+        </Card>
       </div>
     </div>
   );
