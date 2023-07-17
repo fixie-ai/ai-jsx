@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.5.10
+## 0.5.11
+- Make JIT UI stream rather than appear all at once.
+- Use `openai-edge` instead of `@nick.heiner/openai-edge`
+
+## [0.5.10](https://github.com/fixie-ai/ai-jsx/commit/e2735fde8c33e3019a074c29824206d9725eed64)
 
 - Update logging to log the output of every component.
 - Update [`UseTools`](./api/modules/batteries_use_tools.md) to use [OpenAI function calls](https://openai.com/blog/function-calling-and-other-api-updates) if you're using a model that supports them.
