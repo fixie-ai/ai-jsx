@@ -16,18 +16,18 @@ import {
   FunctionResponse,
 } from '../core/completion.js';
 import { Image, ImageGenPropsWithChildren } from '../core/image-gen.js';
-// openai-edge hasn't updated its types to support the new function types yet,
-// so we'll import the types from openai until it does.
-import { ChatCompletionFunctions, ChatCompletionResponseMessage, ChatCompletionRequestMessage } from 'openai';
 import {
   Configuration,
   CreateChatCompletionResponse,
   CreateCompletionResponse,
   OpenAIApi,
+  ChatCompletionFunctions,
+  ChatCompletionResponseMessage,
+  ChatCompletionRequestMessage,
   CreateImageRequestSizeEnum,
   CreateImageRequestResponseFormatEnum,
   ResponseTypes,
-} from '@nick.heiner/openai-edge';
+} from 'openai-edge';
 import * as AI from '../index.js';
 import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
@@ -385,11 +385,7 @@ export async function* OpenAIChatModel(
   };
 
   logger.debug({ chatCompletionRequest }, 'Calling createChatCompletion');
-  const chatResponse = await openai.createChatCompletion(
-    // We can remove this once openai-edge updates to reflect the new chat function types.
-    // @ts-expect-error
-    chatCompletionRequest
-  );
+  const chatResponse = await openai.createChatCompletion(chatCompletionRequest);
 
   await checkOpenAIResponse(chatResponse, logger, 'createChatCompletion');
 

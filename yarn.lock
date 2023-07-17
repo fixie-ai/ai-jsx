@@ -3946,13 +3946,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nick.heiner/openai-edge@npm:1.0.1-7":
-  version: 1.0.1-7
-  resolution: "@nick.heiner/openai-edge@npm:1.0.1-7"
-  checksum: f53e39082901018113353c1c4b8ecddc1465a4355b7c8721a309d9243d58310c78c86af11c30c1ae2a767b6636f2e02cdc78d00144fefa81d7818916253637a1
-  languageName: node
-  linkType: hard
-
 "@nick.heiner/wandb-fork@npm:^0.5.2-5":
   version: 0.5.2-5
   resolution: "@nick.heiner/wandb-fork@npm:0.5.2-5"
@@ -7559,7 +7552,6 @@ __metadata:
   dependencies:
     "@anthropic-ai/sdk": ^0.5.0
     "@jest/globals": ^29.5.0
-    "@nick.heiner/openai-edge": 1.0.1-7
     "@nick.heiner/wandb-fork": ^0.5.2-5
     "@tsconfig/node16": ^1.0.4
     "@tsconfig/node18": ^2.0.1
@@ -7591,6 +7583,7 @@ __metadata:
     ml-distance: ^4.0.1
     node-fetch: ^3.3.1
     openai: ^3.3.0
+    openai-edge: ^1.2.0
     pino: ^8.14.1
     pino-pretty: ^10.0.0
     react: ^18.2.0
@@ -17945,7 +17938,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai-edge@npm:1.2.0":
+"openai-edge@npm:1.2.0, openai-edge@npm:^1.2.0":
   version: 1.2.0
   resolution: "openai-edge@npm:1.2.0"
   checksum: 5fa7962527b4001fe3beb29cb983014b1f7a1051199b4b1df60dc5638b8d31d9f8f8924b7795b997f609cc15cd19f93a64d5e55cd99e5d52a9970acd267e97c9
