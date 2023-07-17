@@ -18,10 +18,10 @@ AI programming brings a new set of performance considerations. The fundamental d
 The key performance strategies are:
 
 1. [Streaming Responses](#strategy-1--streaming-responses)
-2. [Minimizing Output Length](#strategy-2--minimizing-output-length)
-3. [Avoiding Waterfalls + Roundtrips](#strategy-3--avoiding-waterfalls--roundtrips)
-4. [Deferring Execution](#strategy-4--deferring-execution)
-5. [Using a Faster Model](#strategy-5--using-a-faster-model)
+1. [Minimizing Output Length](#strategy-2--minimizing-output-length)
+1. [Avoiding Waterfalls + Roundtrips](#strategy-3--avoiding-waterfalls--roundtrips)
+1. [Deferring Execution](#strategy-4--deferring-execution)
+1. [Using a Faster Model](#strategy-5--using-a-faster-model)
 
 :::note Performance vs. Reliability
 Aside from "streaming responses", all these strategies make a trade-off between performance vs. the reliability of correctness. You'll have to find the trade-offs that make sense for your application. In general, we recommend starting with correctness, then making trade-offs for performance while keeping correctness at or above an acceptable threshold. No one cares how fast your app is if the results are bad. :smile:
