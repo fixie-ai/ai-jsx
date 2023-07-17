@@ -1,4 +1,4 @@
-import { Badge, Button, IconButton } from '@/components/BuildingBlocks';
+import { Badge, Button, ButtonGroup, Card, IconButton } from '@/components/BuildingBlocks';
 import { CheckCircleIcon, PlusIcon } from '@heroicons/react/20/solid';
 
 export default function RecipeExample() {
@@ -13,11 +13,20 @@ export default function RecipeExample() {
         <IconButton>
           <PlusIcon className="h-5 w-5" aria-hidden="true" />
         </IconButton>
+        <ButtonGroup labels={['first', 'middle 1', 'middle 2', 'last']} />
       </div>
       <div className="gap-1.5 flex">
         <Badge color="red">foo</Badge>
         <Badge color="green">foo</Badge>
         <Badge color="indigo">foo</Badge>
+      </div>
+      <div className="gap-1.5 flex">
+        <Card>my card content</Card>
+        <Card header={<h1>my header</h1>}>my card content</Card>
+        <Card footer={<p>my footer</p>}>my card content</Card>
+        <Card header={<h1>my header</h1>} footer={<p>my footer</p>}>
+          my card content
+        </Card>
       </div>
     </div>
   );

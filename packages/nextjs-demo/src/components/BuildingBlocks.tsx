@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import classNames from 'classnames';
+import _ from 'lodash';
 
 export function Button({ children, primary }: { children: ReactNode; primary?: boolean }) {
   return (
@@ -61,6 +62,53 @@ export function Badge({ children, color }: { children: ReactNode; color: Backgro
     >
       {children}
     </span>
+  );
+}
+
+export function ButtonGroup({ labels }: { labels: string[] }) {
+  return (
+    <span className="isolate inline-flex rounded-md shadow-sm">
+      <button
+        type="button"
+        className="relative inline-flex items-center rounded-l-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-10"
+      >
+        {labels[0]}
+      </button>
+      {labels.length > 2 &&
+        labels.slice(1, -1).map((label) => (
+          <button
+            type="button"
+            className="relative -ml-px inline-flex items-center bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-10"
+          >
+            {label}
+          </button>
+        ))}
+
+      <button
+        type="button"
+        className="relative -ml-px inline-flex items-center rounded-r-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-10"
+      >
+        {_.last(labels)}
+      </button>
+    </span>
+  );
+}
+
+export function Card({ children, header, footer }: { children: ReactNode; header?: ReactNode; footer?: ReactNode }) {
+  if (header || footer) {
+    return (
+      <div className="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow">
+        {header && <div className="px-4 py-5 sm:px-6">{header}</div>}
+
+        <div className="px-4 py-5 sm:p-6">{children}</div>
+        {footer && <div className="px-4 py-4 sm:px-6">{footer}</div>}
+      </div>
+    );
+  }
+  return (
+    <div className="overflow-hidden rounded-lg bg-white shadow">
+      <div className="px-4 py-5 sm:p-6">{children}</div>
+    </div>
   );
 }
 
