@@ -139,7 +139,7 @@ More detail: [`UseTools` API docs](../api/modules/batteries_use_tools#usetools).
 
 ### Accessing Knowledge (AKA "Docs QA")
 
-LLMs have "soft knowledge" of the world, but if you just ask a question without providing any context, they're prone to [hallucination](https://en.wikipedia.org/wiki/Hallucination_(artificial_intelligence)). Additionally, because LLMs are only trained on public data, they don't have context on private data your or your app may care about.
+LLMs have "soft knowledge" of the world, but if you just ask a question without providing any context, they're prone to [hallucination](<https://en.wikipedia.org/wiki/Hallucination_(artificial_intelligence)>). Additionally, because LLMs are only trained on public data, they don't have context on private data your or your app may care about.
 
 To address this, the community has developed a variety of techniques known collectively as "Document Q&A" (DocsQA). DocsQA enables your application to provide the LLM with a set of content/documents that serve as the source of truth. This avoids hallucination and enables the model to provide better responses.
 
