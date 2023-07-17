@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import React from 'react';
 import classNames from 'classnames';
 import _ from 'lodash';
 
@@ -109,6 +110,18 @@ export function Card({ children, header, footer }: { children: ReactNode; header
     <div className="overflow-hidden rounded-lg bg-white shadow">
       <div className="px-4 py-5 sm:p-6">{children}</div>
     </div>
+  );
+}
+
+export function CardList({ children }: { children: ReactNode[] }) {
+  return (
+    <ul role="list" className="space-y-3">
+      {React.Children.map(children, (child, index) => (
+        <li key={index} className="overflow-hidden rounded-md bg-white px-6 py-4 shadow">
+          {child}
+        </li>
+      ))}
+    </ul>
   );
 }
 

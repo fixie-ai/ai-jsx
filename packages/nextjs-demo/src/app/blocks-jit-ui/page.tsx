@@ -1,4 +1,4 @@
-import { Badge, Button, ButtonGroup, Card, IconButton } from '@/components/BuildingBlocks';
+import { Badge, Button, ButtonGroup, Card, IconButton, CardList } from '@/components/BuildingBlocks';
 import { CheckCircleIcon, PlusIcon } from '@heroicons/react/20/solid';
 
 export default function RecipeExample() {
@@ -27,6 +27,13 @@ export default function RecipeExample() {
         <Card header={<h1>my header</h1>} footer={<p>my footer</p>}>
           my card content
         </Card>
+      </div>
+      <div className="gap-1.5 flex">
+        <CardList>
+          <p>item 1</p>
+          <p>item 2</p>
+          <p>item 3</p>
+        </CardList>
       </div>
     </div>
   );
