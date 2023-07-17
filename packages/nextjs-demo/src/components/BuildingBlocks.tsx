@@ -3,6 +3,7 @@
 import React, { ReactNode, Children, useState } from 'react';
 import classNames from 'classnames';
 import _ from 'lodash';
+// @ts-expect-error
 import { Switch } from '@headlessui/react';
 
 export function Button({ children, primary }: { children: ReactNode; primary?: boolean }) {
