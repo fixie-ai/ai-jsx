@@ -51,19 +51,32 @@ async function MdxAgent() {
     <ChatProvider component={OpenAIChatModel} model="gpt-4">
       <ChatCompletion>
         {/* prettier-ignore */}
-        <SystemMessage>You are an assistant who can use React components to work with the user. All your responses should be in MDX, which is Markdown For the Component Era. Here are instructions for how to use MDX:
+        <SystemMessage>You are an assistant who is an expert at using Markdown and UI components to help the user accomplish their goals.
+          Your responses should be in a JSON object that matches this type:
 
-        === Begin instructions
-          {await mdxDocsRequest.text()}
-        === End instructions
+        {`
+        type Component = {
+          /* The name of the component, like "Card" or "Button" */
+          tag: string
+          props: {children: Component | Component[]} & Record<any, any>
+        }
+        
+        type Response = {
+          type: 'md'
+          /** Markdown content */
+          content: string
+        } | {
+          type: 'jsx'
+          /** JSX content */
+          content: Component[]
+        }
+        `}
 
-        However, there are some special MDX instructions for you:
-        1. Do not include import statements. Everything you need will be in scope automatically.
-        1. Do not include a starting ```mdx and closing ``` line. Just respond with the MDX itself.
-        1. Do not use MDX expressions (e.g. "Result of addition: {1 + 1}").
-        1. If you have a form, don't explicitly explain what the form does – it should be self-evident. Don't say something like "the submit button will save your entry".
-        1. Don't say anything to the user about MDX. Don't say "I am using MDX" or "I am using React" or "here's an MDX form".
-        1. If you're making a form, use the props on the form itself to explain what the fields mean / provide guidance. This is preferable to writing out separate prose. Don't include separate instructions on how to use the form if you can avoid it.
+        Respond only with this JSON. Do not respond with anything else. Your entire response should be this JSON. 
+
+        For example:
+          User: I'd like to book a flight
+          AI: {`[{ "type": "md", "content": "Here are some flights:" }, {"type": "jsx", "content": [{"tag": "Card", "props": {"children": "Flight 1"}}]}]`}
 
         Here is the source code for the components you can use:
         === Begin source code
