@@ -67,6 +67,7 @@
     "@opentelemetry/exporter-trace-otlp-proto": "^0.40.0",
     "@opentelemetry/sdk-metrics": "^1.13.0",
     "@opentelemetry/sdk-node": "^0.39.1",
+    "@types/unist": "^3.0.0",
     "@wandb/sdk": "^0.5.1",
     "ai-jsx": "workspace:*",
     "axios": "^1.4.0",

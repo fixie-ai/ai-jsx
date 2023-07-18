@@ -12572,6 +12572,7 @@ __metadata:
     "@types/lodash": ^4.14.195
     "@types/node": ^20.3.1
     "@types/prompt-sync": ^4.2.0
+    "@types/unist": ^3.0.0
     "@types/uuid": ^9.0.2
     "@typescript-eslint/eslint-plugin": ^5.60.0
     "@typescript-eslint/parser": ^5.60.0
