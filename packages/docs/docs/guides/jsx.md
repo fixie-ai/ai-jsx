@@ -1,10 +1,10 @@
 # JSX: Build System Considerations
 
-:::tip
-Understanding these details is for power users. If you just want to get started quickly, clone [the template repo](https://github.com/fixie-ai/ai-jsx-template).
+:::caution Power User Content
+Understanding these details is for power users. If you just want to get started quickly, clone [the template repo](https://github.com/fixie-ai/ai-jsx-template) and start experimenting.
 :::
 
-Using JSX requires a build system. Since most projects use TypeScript, the easiest way to do this is via the TS compiler. To enable this, set the following `compilerOptions`:
+Using JSX requires a build system. Since most projects use TypeScript, the easiest way to do this is via the TS compiler. To enable this, set the following `compilerOptions` in your `tsconfig.json`:
 
 ```json file="tsconfig.json"
 "compilerOptions": {
@@ -29,4 +29,4 @@ We also recommend putting the following in your `tsconfig.json`:
 }
 ```
 
-However, this may vary based on your project's other ESM settings.
+However, this may vary based on your project's other ESM settings. For more information on TSConfig options, check out the [TypeScript docs](https://www.typescriptlang.org/tsconfig).
