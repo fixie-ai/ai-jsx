@@ -20,9 +20,6 @@ flowchart LR
   Load -->|bytes| Parse -->|Document| Chunk -->|Text chunks| Embed -->|vectors| vdb[(Vector DB)]
 ```
 
-
-
-
 If you already have a populated corpus available, you can use that (for example with `LangchainCorpus`).
 Otherwise we need to populate a corpus before we can search it. We do that via the following steps:
 
