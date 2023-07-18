@@ -10,12 +10,17 @@ import * as AI from 'ai-jsx';
 const currentPath = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(currentPath, '..', '..', '..');
 
-// I'm not sure this is necessary. Sometimes the model obeys the instruction to omit the ```mdx and ``` lines.
+function removeMdxCodeBlockBoundaries(markdown: string): string {
+  const mdxBlockPattern = /```mdx([\s\S]*?)```/g;
+  return markdown.replace(mdxBlockPattern, '$1');
+}
+
+// // I'm not sure this is necessary. Sometimes the model obeys the instruction to omit the ```mdx and ``` lines.
 async function* RemoveMDXLines({ children }: { children: AI.Node }, { render }: AI.ComponentContext) {
   yield '';
   const frames = render(children);
   for await (const frame of frames) {
-    yield frame.replaceAll(/```mdx/g, '\n');
+    yield removeMdxCodeBlockBoundaries(frame);
   }
   // const finalResult = await frames;
   // return finalResult.replace(/```mdx | ```/g, '\n');
