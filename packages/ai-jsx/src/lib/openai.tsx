@@ -32,11 +32,12 @@ import {
 import * as AI from '../index.js';
 import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
-import { Merge } from 'type-fest';
+import { Merge, MergeExclusive } from 'type-fest';
 import { Logger } from '../core/log.js';
 import { HttpError, AIJSXError, ErrorCode } from '../core/errors.js';
 import { getEnvVar } from './util.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
+import untruncateJson from 'untruncate-json';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -278,14 +279,36 @@ export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & {
     model: ValidChatModel;
     logitBias?: Record<string, number>;
-    functionDefinitions?: Record<string, FunctionDefinition>;
-  },
+  } & MergeExclusive<
+      {
+        functionDefinitions: Record<string, FunctionDefinition>;
+
+        /**
+         * Internal only.
+         *
+         * If this flag is passed, this component will stream only the model Function Call. This is useful if the only thing you want is the function call, such as if you're using the function call to force the model to output JSON matching a schema.
+         */
+        experimental_streamFunctionCallOnly: boolean;
+      },
+      {
+        functionDefinitions?: never;
+        experimental_streamFunctionCallOnly?: never;
+      }
+    >,
   { render, getContext, logger }: AI.ComponentContext
 ): AI.RenderableStream {
-  if (props.functionDefinitions && !chatModelSupportsFunctions(props.model)) {
+  if (props.functionDefinitions) {
+    if (!chatModelSupportsFunctions(props.model)) {
+      throw new AIJSXError(
+        `The ${props.model} model does not support function calling, but function definitions were provided.`,
+        ErrorCode.ChatModelDoesNotSupportFunctions,
+        'user'
+      );
+    }
+  } else if (props.experimental_streamFunctionCallOnly) {
     throw new AIJSXError(
-      `The ${props.model} model does not support function calling, but function definitions were provided.`,
-      ErrorCode.ChatModelDoesNotSupportFunctions,
+      'The experimental_streamFunctionCallOnly flag can only be passed when function definitions are also passed.',
+      ErrorCode.ChatCompletionBadInput,
       'user'
     );
   }
@@ -298,7 +321,9 @@ export async function* OpenAIChatModel(
       e.tag == FunctionCall ||
       e.tag == FunctionResponse,
   });
-  yield AI.AppendOnlyStream;
+  if (!props.experimental_streamFunctionCallOnly) {
+    yield AI.AppendOnlyStream;
+  }
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
     messageElements.filter(AI.isElement).map(async (message) => {
       switch (message.tag) {
@@ -407,11 +432,20 @@ export async function* OpenAIChatModel(
       if (delta.function_call.arguments) {
         currentMessage.function_call.arguments += delta.function_call.arguments;
       }
+      if (props.experimental_streamFunctionCallOnly) {
+        yield JSON.stringify({
+          ...currentMessage.function_call,
+          arguments: untruncateJson.default(currentMessage.function_call.arguments ?? '{}'),
+        });
+      }
     }
   }
 
   logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
 
+  if (props.experimental_streamFunctionCallOnly) {
+    return JSON.stringify(currentMessage.function_call);
+  }
   if (currentMessage.function_call) {
     yield (
       <FunctionCall

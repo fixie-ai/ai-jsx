@@ -84,7 +84,6 @@ export async function* JsonChatCompletion(
 ) {
   if (schema) {
     try {
-      // TODO: do not merge with this. This screws up progressive loading.
       return yield* render(<JsonChatCompletionFunctionCall schema={schema} {...props} />);
     } catch (e: any) {
       if (e.code !== ErrorCode.ChatModelDoesNotSupportFunctions) {
@@ -275,12 +274,13 @@ async function* ObjectCompletionWithRetry(
  *
  * @returns A string that is a valid JSON or throws an error.
  */
-export async function JsonChatCompletionFunctionCall(
+export async function* JsonChatCompletionFunctionCall(
   { schema, children, ...props }: ModelPropsWithChildren & { schema: z.Schema },
   { render }: AI.ComponentContext
 ) {
   const childrenWithCompletion = (
     <ChatCompletion
+      experimental_streamFunctionCallOnly
       {...props}
       functionDefinitions={{
         print: {
@@ -291,23 +291,15 @@ export async function JsonChatCompletionFunctionCall(
     >
       {children}
       <SystemMessage>
-        Your response must use the `print` function that is provided. No other explanation needed.
+        Your response must use the `print` function that is provided. No other explanation needed. do not respond with
+        an assistant message. Just call the function.
       </SystemMessage>
     </ChatCompletion>
   );
 
-  const output = await render(childrenWithCompletion, { stop: (e) => e.tag == FunctionCall });
-
-  // TODO: can we make this work with progressive loading? This will require changes to core/completion.
-
-  const lastYield = output[output.length - 1];
-  if (AI.isElement(lastYield) && lastYield.tag == FunctionCall) {
-    // TODO: is validation necessary? If yes, how to handle errors?
-    schema.parse(lastYield.props.args);
-    return JSON.stringify(lastYield.props.args);
+  const frames = render(childrenWithCompletion);
+  for await (const frame of frames) {
+    yield JSON.stringify(JSON.parse(frame).arguments);
   }
-  // TODO: retry maybe?
-  throw new AIJSXError('Expected a function call to `print`.', ErrorCode.ModelOutputDidNotMatchConstraint, 'runtime', {
-    output: JSON.stringify(output),
-  });
+  return JSON.stringify(JSON.parse(await frames).arguments);
 }

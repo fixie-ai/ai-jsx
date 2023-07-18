@@ -49,7 +49,13 @@ export function getParametersSchema(parameters: FunctionParameters) {
   if (parameters instanceof z.Schema) {
     const jsonSchema = zodToJsonSchema(parameters);
     if (!('type' in jsonSchema) || jsonSchema.type !== 'object') {
-      throw new Error('Function parameters must be an object');
+      throw new AIJSXError(
+        `Function parameters param must be an object, but was: ${JSON.stringify(jsonSchema, null, 2)}`,
+        ErrorCode.InvalidParamSchemaType,
+        'ambiguous',
+        // @ts-expect-error
+        { jsonSchema }
+      );
     }
     return jsonSchema;
   }
