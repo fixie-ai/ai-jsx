@@ -19,10 +19,7 @@ function rehypePlugin() {
   };
 }
 
-await compile(
-  {
-    path: '/Users/nth/code/ai-jsx/packages/examples/src/sample.mdx',
-    value: `
+const fullMarkdown = `
 import YouTube from "./YouTube";
 
 # Welcome
@@ -30,9 +27,32 @@ import YouTube from "./YouTube";
 <YouTube id="123" />
 
 <A d='asdf'><B c /></A>
-`,
+`;
+
+/**
+ * The input `<A><B c ` will emit the compiler error:
+ *    Expected a closing tag for `</B>`
+ * 
+ * Clearly this is a bug.
+ */
+
+const partialMarkdown = `this is valid <A><B c /></A>`;
+
+function remarkPlugin() {
+  return (tree: any) => {
+    // console.log('tree', JSON.stringify(tree, null, 2))
+    return tree;
+  }
+};
+
+await compile(
+  {
+    path: '/Users/nth/code/ai-jsx/packages/examples/src/sample.mdx',
+    // value: partialMarkdown,
+    value: fullMarkdown,
   },
   {
+    remarkPlugins: [[remarkPlugin, { throwOnError: true, strict: true }]],
     rehypePlugins: [[rehypePlugin, { throwOnError: true, strict: true }]],
   }
 );
@@ -89,6 +109,7 @@ function convertAstToComponent(ast: Node): SerializedComponent | null {
     }
     case 'text': {
       if (ast.value === '\n') {
+        // return <br />
         return { $$type: 'element', $$component: 'br', props: {} };
       }
       return { $$type: 'element', $$component: 'p', props: { children: ast.value } };
