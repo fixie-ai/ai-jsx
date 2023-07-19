@@ -29,7 +29,7 @@ For more details on how AI.JSX works with React in general, see our [AI+UI guide
 
 ## Examples
 
-You can play with live demos on our [live demo app](https://ai-jsx-nextjs-demo.vercel.app/) (source is available [here](./packages/nextjs-demo/)).
+You can play with live demos on our [live demo app](https://ai-jsx-nextjs-demo.vercel.app/) or view [the source code](./packages/nextjs-demo/).
 
 Here is a simple example using AI.JSX to generate an AI response to a prompt:
 
