@@ -7,14 +7,18 @@ import { ImageGen as BaseImageGen, ImageGenPropsWithChildren } from 'ai-jsx/core
 import ResultContainer from '../ResultContainer.tsx';
 import InputPrompt from '../InputPrompt.tsx';
 
-export function Header({ children }: { children?: ReactNode }) {
-  return <h1 className="text-base font-semibold">{children}</h1>;
-}
-export function Paragraph({ children }: { children?: ReactNode }) {
-  return <p className="text-base">{children}</p>;
-}
+// export function Header({ children }: { children?: ReactNode }) {
+//   return <h1 className="text-base font-semibold">{children}</h1>;
+// }
+// export function Paragraph({ children }: { children?: ReactNode }) {
+//   return <p className="text-base">{children}</p>;
+// }
 
-export function Container({ children }: { children?: ReactNode }) {
+// export function Container({ children }: { children?: ReactNode }) {
+//   return <div className="container">{children}</div>;
+// }
+
+export function Markdown({ children }: { children?: ReactNode }) {
   return <div className="container">{children}</div>;
 }
 
@@ -42,11 +46,13 @@ export default function StoryTellerWrapper() {
           <UICompletion
             reactComponentsDoc={
               <>
-                <Header />: A header component.
+                {/* <Header />: A header component.
                 {'\n'}
                 <Paragraph />: A paragraph.
                 {'\n'}
-                <Container />: A container component. All other components must be enclosed with a top-level Container.
+                <Container />: A container component. All other components must be enclosed with a top-level Container. */}
+
+                <Markdown># my markdown content</Markdown> – a markdown component that will render markdown content.
               </>
             }
             aiComponentsDoc={

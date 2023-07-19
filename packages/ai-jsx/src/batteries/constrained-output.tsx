@@ -263,6 +263,7 @@ async function* ObjectCompletionWithRetry(
     {
       typeName: props.typeName,
       retries,
+      validationError,
       output,
     }
   );

@@ -102,7 +102,7 @@ export async function* UICompletion(
 
   const Element: z.Schema = z.object({
     tag: z.string().refine((c) => Boolean(validComponentsMap[c]), {
-      message: `Unknown component "tag". Supported components: ${Object.keys(validComponentsMap)}`,
+      message: `Field "tag" must. Supported components: ${Object.keys(validComponentsMap)}`,
     }),
     children: z.union([z.string(), z.array(z.union([z.string(), z.lazy(() => Element)]))]),
   });
