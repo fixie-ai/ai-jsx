@@ -88,7 +88,7 @@ export default function RecipeWrapper() {
       </ResultContainer>
       <ResultContainer title={`AI comes up with a recipe for "${query}"`}>
         <AI.jsx>
-          <UICompletion
+          {/* <UICompletion
             reactComponentsDoc={
               <>
                 <Recipe />: The container component for all other elements of the recipe.
@@ -118,7 +118,7 @@ export default function RecipeWrapper() {
             <Prompt persona="a Michelin Star Head Chef" />
             Give me a recipe for {query}.{'\n'}
             Make sure to include an image of the dish at the top.
-          </UICompletion>
+          </UICompletion> */}
         </AI.jsx>
       </ResultContainer>
     </>

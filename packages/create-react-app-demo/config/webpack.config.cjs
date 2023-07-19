@@ -387,17 +387,6 @@ module.exports = function (webpackEnv) {
             // The preset includes JSX, Flow, TypeScript, and some ESnext features.
             {
               test: /\.(js|mjs|jsx|ts|tsx)$/,
-
-              /**
-               * UICompletion uses raw-loader to fetch the source code of the components
-               * to give to the model. We want the actual source code, and not compiled output.
-               * (The compiled output is way longer and probably less comprehensible for the model.)
-               * 
-               * Of course, we need a better way to do this rather than hacking the config. I feel
-               * like webpack should provide a way to exclude all files loaded by raw-loader.
-               */
-              exclude: path.resolve('src/story-teller/BuildingBlocks.tsx'),
-
               include: paths.appSrc,
               loader: require.resolve('babel-loader'),
               options: {

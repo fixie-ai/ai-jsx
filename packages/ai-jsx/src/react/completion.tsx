@@ -30,22 +30,23 @@ export async function* UICompletion(
   {
     reactComponentsDoc,
     aiComponentsDoc,
+    reactComponents,
+    aiComponents,
     children,
   }: {
-    reactComponentsDoc?: React.ReactNode;
-    aiComponentsDoc?: React.ReactNode;
+    reactComponentsDoc?: string;
+    aiComponentsDoc?: string;
+    aiComponents: Record<string, AI.Component<any>>;
+    reactComponents: Record<string, React.JSXElementConstructor<any>>;
     children: AI.Node;
   },
   { render, logger }: AI.ComponentContext
 ) {
   yield '';
 
-  // TODO: what does the inReact flag do?
-  const aiComponents = collectComponents(aiComponentsDoc, true);
-  const validAIComponentsMap = Object.fromEntries(Array.from(aiComponents).map((c) => [reactComponentName(c), c]));
+  const validAIComponentsMap = aiComponents;
 
-  const reactComponents = collectComponents(reactComponentsDoc, true);
-
+  // @ts-expect-error
   const allComponents = [...Array.from(reactComponents), ...Array.from(aiComponents)];
   const validComponentsMap = Object.fromEntries(allComponents.map((c) => [reactComponentName(c), c]));
 
