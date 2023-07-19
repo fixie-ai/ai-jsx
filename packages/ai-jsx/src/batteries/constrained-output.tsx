@@ -10,7 +10,6 @@ import {
   SystemMessage,
   AssistantMessage,
   UserMessage,
-  FunctionCall,
   ModelPropsWithChildren,
 } from '../core/completion.js';
 import yaml from 'js-yaml';
@@ -25,8 +24,11 @@ export type ObjectCompletion = ModelPropsWithChildren & {
   /**
    * The object Schema that is required. This is a type of validator with the exception
    * that the schema description is also provided to the model.
+   *
+   * @note To match OpenAI function definition specs, the schema must be a Zod object.
+   * Arrays and other types should be wrapped in a top-level object in order to be used.
    */
-  schema?: z.Schema;
+  schema?: z.ZodObject<any>;
   /** Any output example to be shown to the model. */
   example?: string;
   // TODO (@farzad): better name/framing for example.
@@ -66,8 +68,12 @@ export type TypedObjectCompletionWithRetry = TypedObjectCompletion & { retries?:
  *   })
  * );
  *
+ * const RootFamilyTree: z.ZodObject<any> = z.object({
+ *   tree: FamilyTree,
+ * });
+ *
  * return (
- *    <JsonChatCompletion schema={FamilyTree}>
+ *    <JsonChatCompletion schema={RootFamilyTree}>
  *     <UserMessage>
  *      Create a nested family tree with names and ages.
  *      It should include a total of 5 people.
@@ -117,9 +123,12 @@ export async function* JsonChatCompletion(
  *     children: z.lazy(() => FamilyTree).optional(),
  *   })
  * );
+ * const RootFamilyTree: z.ZodObject<any> = z.object({
+ *   tree: FamilyTree,
+ * });
  *
  * return (
- *    <YamlChatCompletion schema={FamilyTree}>
+ *    <YamlChatCompletion schema={RootFamilyTree}>
  *     <UserMessage>
  *      Create a nested family tree with names and ages.
  *      It should include a total of 5 people.

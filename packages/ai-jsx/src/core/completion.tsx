@@ -45,19 +45,17 @@ export interface FunctionDefinition {
   parameters: FunctionParameters;
 }
 
+/**
+ * This function creates a [JSON Schema](https://json-schema.org/) object to describe
+ * parameters for a {@link FunctionDefinition}.
+ * The parameters can be described either using a record of parameter names to
+ * {@link PlainFunctionParameter} objects, or using a {@link z.ZodObject} schema object.
+ *
+ * @note If using a Zod schema, the top-level schema must be an object as per OpenAI specifications.
+ */
 export function getParametersSchema(parameters: FunctionParameters) {
-  if (parameters instanceof z.Schema) {
-    const jsonSchema = zodToJsonSchema(parameters);
-    if (!('type' in jsonSchema) || jsonSchema.type !== 'object') {
-      throw new AIJSXError(
-        `Function parameters param must be an object, but was: ${JSON.stringify(jsonSchema, null, 2)}`,
-        ErrorCode.InvalidParamSchemaType,
-        'ambiguous',
-        // @ts-expect-error
-        { jsonSchema }
-      );
-    }
-    return jsonSchema;
+  if (parameters instanceof z.ZodObject) {
+    return zodToJsonSchema(parameters);
   }
   return {
     type: 'object',
@@ -88,9 +86,12 @@ export interface PlainFunctionParameter {
  *
  * This type allows two ways for specifying parameters:
  * - For simple use cases, a record of parameter names to {@link PlainFunctionParameter} objects.
- * - For more complex use cases, a {@link z.Schema} object (`zod` is a standard runtime type definition & checking library).
+ * - For more complex use cases, a {@link z.ZodObject} schema object (`zod` is a standard runtime type definition & checking library).
+ *
+ * @note If using a Zod schema, the top-level schema must be an object as per OpenAI specifications:
+ * https://platform.openai.com/docs/api-reference/chat/create#chat/create-parameters
  */
-export type FunctionParameters = Record<string, PlainFunctionParameter> | z.Schema;
+export type FunctionParameters = Record<string, PlainFunctionParameter> | z.ZodObject<any>;
 
 /**
  * If env var `OPENAI_API_KEY` is defined, use Open AI as the completion model provider.

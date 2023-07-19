@@ -11,7 +11,7 @@ const FamilyTree: z.Schema = z.array(
   })
 );
 
-const RootFamilyTree: z.Schema = z.object({
+const RootFamilyTree: z.ZodObject<any> = z.object({
   tree: FamilyTree,
 });
 

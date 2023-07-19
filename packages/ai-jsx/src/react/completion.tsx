@@ -80,7 +80,7 @@ export async function* UICompletion(
     return <Component>{children.map(toComponent)}</Component>;
   }
 
-  const Element: z.Schema = z.object({
+  const Element: z.ZodObject<any> = z.object({
     name: z.string().refine((c) => Boolean(validComponents[c]), {
       message: `Unknown component "name". Supported components: ${Object.keys(validComponents)}`,
     }),
