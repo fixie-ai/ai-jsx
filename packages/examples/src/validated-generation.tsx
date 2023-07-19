@@ -19,9 +19,9 @@ function App() {
   return (
     <>
       JSON generation example:{'\n'}
-        <JsonChatCompletion schema={RootFamilyTree}>
-          <UserMessage>{query}</UserMessage>
-        </JsonChatCompletion>
+      <JsonChatCompletion schema={RootFamilyTree}>
+        <UserMessage>{query}</UserMessage>
+      </JsonChatCompletion>
       {'\n\n'}
       YAML generation example:{'\n'}
       <YamlChatCompletion schema={FamilyTree}>
