@@ -19,10 +19,9 @@ export const Highlight = ({ children, color, textColor }) => (
 );
 
 :::note See Also
-
 - [Performance](./performance.md) - Discusses trade-offs between performance and correctness. Presents five strategies for improving performance in your AI-powered apps.
 - [AI+UI](./ai-ui.md) - Covers how AI.JSX enables dynamically created UI ("Just in Time" UI) and the approaches that can be used.
-  :::
+:::
 
 AI.JSX runs in both NodeJS and the browser. It can fit in no matter how you are deploying your application. This guide covers the five architectural approaches we expect most AI-apps to use and also discusses the key trade-offs and considerations for each one.
 
@@ -32,12 +31,12 @@ The five architectural approaches (listed in order from most client-side logic t
 
 1. [Client-Side Only](#architecture-1-client-side-only) <Highlight color="rgb(230, 246, 230)" textColor="rgb(0, 49, 0)">Great for Hackathons</Highlight>
 1. [API Proxy](#architecture-2-api-proxy)
-1. [AI.JSX Server-Side + Client UI](#architecture-3-aijsx-server-side--client-ui) <Highlight color="#4cb3d4">Recommended</Highlight>
+1. [Server-Side AI.JSX + Client UI](#architecture-3-server-side-aijsx--client-ui) <Highlight color="#4cb3d4">Recommended</Highlight>
 1. [Server-Side Only (SSR)](#architecture-4-server-side-only-ssr) <Highlight color="#DDD" textColor="#000">In Progress</Highlight>
 1. [Headless AI](#architecture-5-headless-ai)
 
 :::tip Recommendation/TL;DR
-For new projects we recommend using the [AI.JSX Server-Side + Client UI](#architecture-3-aijsx-server-side--client-ui) pattern with [NextJS](https://nextjs.org/).
+For new projects we recommend using the [Server-Side AI.JSX + Client UI](#architecture-3-server-side-aijsx--client-ui) pattern with [NextJS](https://nextjs.org/).
 :::
 
 ## Key Trade-Offs
@@ -103,13 +102,13 @@ sequenceDiagram
 
 **Pros:**
 
-- **Easy** -> Easy to get started and simple to implement.
-- **Simplicity** -> The serialization boundary is at the API layer. The only way to access these APIs is through a serialization boundary and this pattern isn't adding any new boundaries.
+- **Easy** → Easy to get started and simple to implement.
+- **Simplicity** → The serialization boundary is at the API layer. The only way to access these APIs is through a serialization boundary and this pattern isn't adding any new boundaries.
 
 **Cons:**
 
-- **Insecure Keys** -> Your API keys are exposed to the client. (Not recommended for public apps.)
-- **Potential for Performance Issues** -> Performance will suffer if you need to do many roundtrips.
+- **Insecure Keys** → Your API keys are exposed to the client. (Not recommended for public apps.)
+- **Potential for Performance Issues** → Performance will suffer if you need to do many roundtrips.
 
 :::info Runnable Example
 In the [ai-jsx monorepo](https://github.com/fixie-ai/ai-jsx), run the following command from the repo root for a demo of this architecture:
@@ -143,13 +142,13 @@ sequenceDiagram
 
 **Pros:**
 
-- **Simplicity** -> There is still only one serialization boundary.
-- **Secure Keys** -> API keys are secured by the proxy and no longer visible in the client-side code.
+- **Simplicity** → There is still only one serialization boundary.
+- **Secure Keys** → API keys are secured by the proxy and no longer visible in the client-side code.
 
 **Cons:**
 
-- **Complexity** -> The addition of the proxy adds some complexity over having everything client-side only.
-- **Potential for Performance Issues** -> Performance will suffer if you need to do many roundtrips.
+- **Complexity** → The addition of the proxy adds some complexity over having everything client-side only.
+- **Potential for Performance Issues** → Performance will suffer if you need to do many roundtrips.
 
 :::info Runnable Example
 In the [ai-jsx monorepo](https://github.com/fixie-ai/ai-jsx), run the following command from the repo root for a demo of this architecture:
@@ -163,10 +162,10 @@ See `packages/create-react-app-demo/backend/index.ts` for a sample proxy server.
 Alternatively, use [this template repo](https://github.com/fixie-ai/ai-jsx-template-cra-with-vercel-proxy) for an example that uses a [Vercel edge function](https://vercel.com/docs/concepts/functions/edge-functions).
 :::
 
-## Architecture #3: AI.JSX Server-Side + Client UI
+## Architecture #3: Server-Side AI.JSX + Client UI
 
 :::tip Recommendation
-This is the most stable way to run and deploy an AI.JSX powered app at the moment.
+This is the most stable way to run and deploy an AI.JSX powered app. Check out [this project](https://github.com/fixie-ai/template-vercel-ai-chatbot-ai-jsx) for an example of how to use AI.JSX with React Server Components and the Vercel AI SDK.
 :::
 
 In this approach, your AI.JSX logic runs entirely in your backend environment.
@@ -190,13 +189,13 @@ sequenceDiagram
 
 **Pros:**
 
-- **Flexibility** -> Your AI.JSX logic can be access from multiple clients (web app, native app, etc.).
-- **Secure Keys** -> API keys are secured by the proxy and no longer visible in the client-side code.
-- **Performance** -> Performance will be less sensitive to rountrips between AI.JSX and external APIs.
+- **Flexibility** → Your AI.JSX logic can be access from multiple clients (web app, native app, etc.).
+- **Secure Keys** → API keys are secured by the proxy and no longer visible in the client-side code.
+- **Performance** → Performance will be less sensitive to rountrips between AI.JSX and external APIs.
 
 **Cons:**
 
-- **Fragmentation** -> Introduces a new serialization boundary between the UI and your AI.JSX code. This means the integration of the UI and AI won't be as seamless.
+- **Fragmentation** → Introduces a new serialization boundary between the UI and your AI.JSX code. This means the integration of the UI and AI won't be as seamless.
 
 ## Architecture #4: Server-Side Only (SSR)
 
@@ -251,12 +250,12 @@ sequenceDiagram
 
 **Pros:**
 
-- **Secure Keys** -> API keys are secured by the proxy and no longer visible in the client-side code.
-- **Performance** -> Server-side rendering (SSR) is [often a performance win](https://nextjs.org/docs/getting-started/react-essentials).
+- **Secure Keys** → API keys are secured by the proxy and no longer visible in the client-side code.
+- **Performance** → Server-side rendering (SSR) is [often a performance win](https://nextjs.org/docs/getting-started/react-essentials).
 
 **Cons:**
 
-- **Complexity** -> Requires the use of a framework like [NextJS](https://nextjs.org/) to get the full benefits. Adoption of a new framework can have a learning curve or may not be feasible in an existing code base.
+- **Complexity** → Requires the use of a framework like [NextJS](https://nextjs.org/) to get the full benefits. Adoption of a new framework can have a learning curve or may not be feasible in an existing code base.
 
 ## Architecture #5: Headless AI
 
