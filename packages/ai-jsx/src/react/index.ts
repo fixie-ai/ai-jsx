@@ -42,7 +42,7 @@ function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.React
 }
 
 class ConsoleLogger extends LogImplementation {
-  log = console.log
+  log = console.log;
 }
 
 /**
@@ -62,7 +62,7 @@ export function useAI(children: AI.Node, onStreamStart?: () => void, onStreamEnd
 
       // TODO: add a way for a render context to be aborted
       const renderResult = AI.createRenderContext({
-        logger: new ConsoleLogger()
+        logger: new ConsoleLogger(),
       }).render(children, {
         stop: (e) => boundaryElements.some((special) => special.tag === e.tag),
         map: (frame) => frame.map(unwrapReact),

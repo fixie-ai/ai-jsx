@@ -10,12 +10,12 @@ import z from 'zod';
 import * as CryptoJS from 'crypto-js';
 
 function reactComponentName(component: AI.Component<any> | React.JSXElementConstructor<any> | string) {
-  return typeof component === 'string' ? 
-    component : 
-    typeof component === 'symbol' ? 
-      // @ts-expect-error
-      component.description : 
-      component.name;
+  return typeof component === 'string'
+    ? component
+    : typeof component === 'symbol'
+    ? // @ts-expect-error
+      component.description
+    : component.name;
 }
 
 interface SerializedComponent {
@@ -113,7 +113,7 @@ export async function* UICompletion(
     children: z.union([z.string(), z.array(z.union([z.string(), z.lazy(() => Element)]))]),
   });
   const Elements = z.union([Element, z.array(Element)]);
-  const elementsWrapper = z.object({root: Elements });
+  const elementsWrapper = z.object({ root: Elements });
 
   const modelRenderGenerator = render(
     <JsonChatCompletion schema={elementsWrapper} retries={1}>
@@ -142,8 +142,8 @@ export async function* UICompletion(
 
   while (true) {
     const modelResult = await modelRenderGenerator.next();
-    logger.trace({modelResult}, 'Got (possibly-intermediate) model result');
-    yield modelResult.value
+    logger.trace({ modelResult }, 'Got (possibly-intermediate) model result');
+    yield modelResult.value;
     if (modelResult.done) {
       return modelResult.value;
     }
