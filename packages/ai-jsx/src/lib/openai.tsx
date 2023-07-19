@@ -435,9 +435,11 @@ export async function* OpenAIChatModel(
         currentMessage.function_call.arguments += delta.function_call.arguments;
       }
       if (props.experimental_streamFunctionCallOnly) {
+        const partialResultCleaner = 'default' in untruncateJson ? untruncateJson.default : untruncateJson;
+
         yield JSON.stringify({
           ...currentMessage.function_call,
-          arguments: untruncateJson.default(currentMessage.function_call.arguments ?? '{}'),
+          arguments: partialResultCleaner(currentMessage.function_call.arguments ?? '{}'),
         });
       }
     }

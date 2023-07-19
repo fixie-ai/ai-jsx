@@ -91,13 +91,13 @@ export async function* JsonChatCompletion(
       }
     }
   }
+  const partialResultCleaner = 'default' in untruncateJson ? untruncateJson.default : untruncateJson;
   return yield* render(
     <ObjectCompletionWithRetry
       {...props}
       typeName="JSON"
       parser={JSON.parse}
-      // TODO: can we remove .default?
-      partialResultCleaner={untruncateJson.default}
+      partialResultCleaner={partialResultCleaner}
     />
   );
 }

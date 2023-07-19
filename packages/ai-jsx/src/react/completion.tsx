@@ -107,9 +107,10 @@ export async function* UICompletion(
     children: z.union([z.string(), z.array(z.union([z.string(), z.lazy(() => Element)]))]),
   });
   const Elements = z.union([Element, z.array(Element)]);
+  const elementsWrapper = z.object({root: Elements });
 
   const modelRenderGenerator = render(
-    <JsonChatCompletion schema={Elements} retries={1}>
+    <JsonChatCompletion schema={elementsWrapper} retries={1}>
       <SystemMessage>
         You are an AI who is an expert UI designer. You can describe the UI as a nested JSON object. The JSON will be
         used to create a React/HTML UI tree. Each component is described using a "tag" name and a list of "children".
@@ -135,7 +136,7 @@ export async function* UICompletion(
 
   while (true) {
     const modelResult = await modelRenderGenerator.next();
-    const object = JSON.parse(modelResult.value);
+    const object = JSON.parse(modelResult.value).root;
     if (!modelResult.done) {
       markLastElementIncomplete(object);
     }
