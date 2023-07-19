@@ -10,7 +10,7 @@ Don't worry if this doesn't all make sense yet...keep on reading!
 
 ## Preparing a Corpus
 
-A collection of docs is called a "corpus" (plural "corpora"). Often corpora are backed by a "vector database" that allows for searching over knowledge in a semantically grounded vector space. Once we have this set-up, we can then make queries against the vector DB and make magic happen with an LLM (see [Handling a Query](#handling-a-query) below).
+A collection of docs is called a "corpus" (plural "corpora"). Often corpora are backed by a "vector database" that allows for searching over knowledge in a semantically grounded vector space. Once we have this set-up, we can then make queries against the vector DB to provide docs to an LLM (see [Handling a Query](#handling-a-query) below).
 
 ```mermaid
 ---
