@@ -14,14 +14,16 @@ const RootFamilyTree: z.Schema = z.object({
   tree: FamilyTree,
 });
 
-function App() {
+async function App(props: any, {render}: any) {
   const query = 'Create a nested family tree with names and ages. It should include a total of 5 people.';
+  const json = await render(<JsonChatCompletion schema={RootFamilyTree}>
+    <UserMessage>{query}</UserMessage>
+  </JsonChatCompletion>);
   return (
     <>
       JSON generation example:{'\n'}
-      <JsonChatCompletion schema={RootFamilyTree}>
-        <UserMessage>{query}</UserMessage>
-      </JsonChatCompletion>
+      {JSON.parse(json)}
+      {json}
       {'\n\n'}
       YAML generation example:{'\n'}
       <YamlChatCompletion schema={FamilyTree}>

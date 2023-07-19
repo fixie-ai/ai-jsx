@@ -10,7 +10,12 @@ import z from 'zod';
 import * as CryptoJS from 'crypto-js';
 
 function reactComponentName(component: AI.Component<any> | React.JSXElementConstructor<any> | string) {
-  return typeof component === 'string' ? component : component.name;
+  return typeof component === 'string' ? 
+    component : 
+    typeof component === 'symbol' ? 
+      // @ts-expect-error
+      component.description : 
+      component.name;
 }
 
 interface SerializedComponent {
@@ -82,6 +87,7 @@ export async function* UICompletion(
     }
 
     // Sometimes the model returns a singleton string instead of an array.
+    // (Is this still true even with the OpenAI function
     const children =
       typeof serializedComponent.children === 'string' ? [serializedComponent.children] : serializedComponent.children;
 
@@ -102,7 +108,7 @@ export async function* UICompletion(
 
   const Element: z.Schema = z.object({
     tag: z.string().refine((c) => Boolean(validComponentsMap[c]), {
-      message: `Field "tag" must. Supported components: ${Object.keys(validComponentsMap)}`,
+      message: `Unknown component "tag". Supported components: ${Object.keys(validComponentsMap)}`,
     }),
     children: z.union([z.string(), z.array(z.union([z.string(), z.lazy(() => Element)]))]),
   });
@@ -136,6 +142,7 @@ export async function* UICompletion(
 
   while (true) {
     const modelResult = await modelRenderGenerator.next();
+    logger.trace({modelResult}, 'Got (possibly-intermediate) model result');
     const object = JSON.parse(modelResult.value).root;
     if (!modelResult.done) {
       markLastElementIncomplete(object);

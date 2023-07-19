@@ -7,6 +7,7 @@ import { Jsonifiable } from 'type-fest';
 import { ComponentMap } from './map.js';
 import { Image } from '../core/image-gen.js';
 import _ from 'lodash';
+import { LogImplementation, LogLevel } from '../core/log.js';
 export * from './core.js';
 
 /**
@@ -40,6 +41,10 @@ function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.React
   return partiallyRendered;
 }
 
+class ConsoleLogger extends LogImplementation {
+  log = console.log
+}
+
 /**
  * Renders an AI.jsx component into React. Used by the <AI.jsx> element internally but
  * can be used directly an entrypoint into AI.jsx.
@@ -56,7 +61,9 @@ export function useAI(children: AI.Node, onStreamStart?: () => void, onStreamEnd
       setIsDone(false);
 
       // TODO: add a way for a render context to be aborted
-      const renderResult = AI.createRenderContext().render(children, {
+      const renderResult = AI.createRenderContext({
+        logger: new ConsoleLogger()
+      }).render(children, {
         stop: (e) => boundaryElements.some((special) => special.tag === e.tag),
         map: (frame) => frame.map(unwrapReact),
       });

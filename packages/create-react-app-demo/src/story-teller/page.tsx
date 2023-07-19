@@ -18,7 +18,7 @@ import InputPrompt from '../InputPrompt.tsx';
 //   return <div className="container">{children}</div>;
 // }
 
-export function Markdown({ children }: { children?: ReactNode }) {
+export function MarkdownWithoutImages({ children }: { children?: ReactNode }) {
   return <div className="container">{children}</div>;
 }
 
@@ -52,12 +52,13 @@ export default function StoryTellerWrapper() {
                 {'\n'}
                 <Container />: A container component. All other components must be enclosed with a top-level Container. */}
 
-                <Markdown># my markdown content</Markdown> – a markdown component that will render markdown content.
+                <MarkdownWithoutImages># my markdown content</MarkdownWithoutImages> – a markdown component that will render markdown content, but no images. Do not give it images.
+                {/* Sometimes the model hallucinates markdown images anyway. */}
               </>
             }
             aiComponentsDoc={
               <>
-                <ImageGen />: A special component that will generate an image for you. All you need to do is to provide
+                <ImageGen>a detailed prompt for the image</ImageGen>: A special component that will generate an image for you. All you need to do is to provide
                 a prompt that describes the image you want. The prompt should be descriptive enough to generate an image
                 that is relevant to the story.
               </>
