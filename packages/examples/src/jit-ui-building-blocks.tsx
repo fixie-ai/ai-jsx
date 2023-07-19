@@ -29,18 +29,99 @@ async function* RemoveMDXLines({ children }: { children: AI.Node }, { render }: 
 }
 
 function App() {
+  /* prettier-ignore */
   return (<>
-    {/* @ts-expect-error */}
+    {/* 
+        This creates a good output, but it'll only work with streaming if we come up with a way 
+        to heal/"untruncate" the partial MDX, which could be a bit tricky.
+    */}
+    ==================== MDX Agent ===================={'\n'}
     <RemoveMDXLines>
-      <JsonAgent />
-      {/* If we just have a raw string, the entire program outputs the empty string. I'm not sure why. */}
-      {/* prefix
-    ```mdx foo bar ```
-    suffix */}
+      <MdxAgent />
     </RemoveMDXLines>
 
+    {/* 
+        This creates bad output. The model disregards the instruction to only emit JSON. It emits a mixture of JSON and markdown that looks like:
+
+            For the JSON shape of a character in a fantasy game, we can consider including information like the character's name, race, class, level, and attributes like strength, dexterity, constitution, intelligence, wisdom, and charisma.
+
+            Here is an example JSON for such a character:
+
+            ```json
+            {
+              "name": "Gandalf",
+              "race": "Maia",
+            }
+            ```
+
+            And here is a form to create your own character:
+
+            ```json
+            {
+                "type": "jsx",
+                "content": [
+                    {
+                        "tag": "StackedForm",
+                        "props": {
+                            "children": [
+                                {
+                                    "tag": "InputWithLabel",
+    */}
+    ==================== JSON Agent (self-prompted) ===================={'\n'}
+    <JsonAgent />
+
+    {/*
+      This creates bad output. It emits short output: 
+
+          "{\n  \"response\": {\n    \"type\": \"md\",\n    \"content\": \"Here is an example JSON for a character in a fantasy game:\"\n  }\n}
+
+      Sometimes, I'll see it include prose and say "now, let's give you a form to edit this character", but then it stops output before actually producing the form.
+    */}
+    ==================== JSON Agent (using JsonChatCompletion) ===================={'\n'}
     <JsonChatCompletionAgent />
   </>
+  );
+}
+
+async function MdxAgent() {
+  const buildingBlocksContent = fs.readFile(
+    path.join(packageRoot, 'packages/nextjs-demo/src/components/BuildingBlocks.tsx'),
+    'utf-8'
+  );
+  const mdxDocsRequest = await fetch(
+    'https://raw.githubusercontent.com/mdx-js/mdx/main/docs/docs/what-is-mdx.server.mdx'
+  );
+  return (
+    <ChatProvider component={OpenAIChatModel} model="gpt-4">
+      <ChatCompletion>
+        {/* prettier-ignore */}
+        <SystemMessage>You are an assistant who can use React components to work with the user. All your responses should be in MDX, which is Markdown For the Component Era. Here are instructions for how to use MDX:
+
+        === Begin instructions
+          {await mdxDocsRequest.text()}
+        === End instructions
+
+        However, there are some special MDX instructions for you:
+        1. Do not include import statements. Everything you need will be in scope automatically.
+        1. Do not include a starting ```mdx and closing ``` line. Just respond with the MDX itself.
+        1. Do not use MDX expressions (e.g. "Result of addition: {1 + 1}").
+        1. If you have a form, don't explicitly explain what the form does – it should be self-evident. Don't say something like "the submit button will save your entry".
+        1. Don't say anything to the user about MDX. Don't say "I am using MDX" or "I am using React" or "here's an MDX form".
+        1. If you're making a form, use the props on the form itself to explain what the fields mean / provide guidance. This is preferable to writing out separate prose. Don't include separate instructions on how to use the form if you can avoid it.
+
+        Here is the source code for the components you can use:
+        === Begin source code
+        {await buildingBlocksContent}
+        === End source code
+
+        For example, to display data for an entity, use a Card component.
+      </SystemMessage>
+        <UserMessage>
+          Invent a short JSON shape for a character in a fantasy game. First, show me an example (as raw JSON). Next,
+          show me a form that I can use to make my own instance of this JSON.
+        </UserMessage>
+      </ChatCompletion>
+    </ChatProvider>
   );
 }
 
@@ -102,9 +183,6 @@ async function JsonAgent() {
   const buildingBlocksContent = fs.readFile(
     path.join(packageRoot, 'packages/nextjs-demo/src/components/BuildingBlocks.tsx'),
     'utf-8'
-  );
-  const mdxDocsRequest = await fetch(
-    'https://raw.githubusercontent.com/mdx-js/mdx/main/docs/docs/what-is-mdx.server.mdx'
   );
   return (
     <ChatProvider component={OpenAIChatModel} model="gpt-4">

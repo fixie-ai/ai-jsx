@@ -32,7 +32,7 @@ import YouTube from "./YouTube";
 /**
  * The input `<A><B c ` will emit the compiler error:
  *    Expected a closing tag for `</B>`
- * 
+ *
  * Clearly this is a bug.
  */
 
@@ -42,8 +42,8 @@ function remarkPlugin() {
   return (tree: any) => {
     // console.log('tree', JSON.stringify(tree, null, 2))
     return tree;
-  }
-};
+  };
+}
 
 await compile(
   {
