@@ -35,14 +35,18 @@ export default function StoryTellerWrapper() {
       <ResultContainer title={`AI comes up with a story for "${query}"`}>
         <AI.jsx>
           <OpenAI chatModel="gpt-4">
-            <UICompletion reactComponentsDoc={buildingBlockContents} aiComponentsDoc={aiBuildingBlockContents} reactComponents={BuildingBlocks} aiComponents={AIBuildingBlocks}>
+            <UICompletion
+              reactComponentsDoc={buildingBlockContents}
+              aiComponentsDoc={aiBuildingBlockContents}
+              reactComponents={BuildingBlocks}
+              aiComponents={AIBuildingBlocks}
+            >
               <Prompt persona="a fantasy fiction writer" />
               Give me a story about {query}. Make sure to give it an interesting title. The story should have 3-5
               chapters.
               {'\n'}
-              Make sure to generate an image for each chapter to make it more interesting.
-              In each chapter, use buttons to let the user flag inappropriate content.
-              At the end, show a form to collect the user's feedback.
+              Make sure to generate an image for each chapter to make it more interesting. In each chapter, use buttons
+              to let the user flag inappropriate content. At the end, show a form to collect the user's feedback.
             </UICompletion>
           </OpenAI>
         </AI.jsx>

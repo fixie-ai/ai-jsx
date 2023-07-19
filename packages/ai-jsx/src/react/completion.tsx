@@ -8,6 +8,7 @@ import { memo } from '../core/memoize.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import z from 'zod';
 import * as CryptoJS from 'crypto-js';
+import _ from 'lodash';
 
 function reactComponentName(component: AI.Component<any> | React.JSXElementConstructor<any> | string) {
   return typeof component === 'string'
@@ -18,11 +19,13 @@ function reactComponentName(component: AI.Component<any> | React.JSXElementConst
     : component.name;
 }
 
-interface SerializedComponent {
+// This needs to be partial to reflect the fact that we accept partially-streamed results,
+// so any field could be missing.
+type SerializedComponent = Partial<{
   tag: string;
   children: string | (string | SerializedComponent)[];
   possiblyIncomplete?: boolean;
-}
+}>;
 
 type ComponentType = AI.Component<any> | React.JSXElementConstructor<any> | string;
 
@@ -36,6 +39,9 @@ export async function* UICompletion(
   }: {
     reactComponentsDoc?: string;
     aiComponentsDoc?: string;
+    // TODO: This is not the right type for `import * as Components from './my-components'`.
+    // `Components` in that example will be a Module, which is not the same as a Record.
+    // But I'm not sure what type TS offers for this.
     aiComponents: Record<string, AI.Component<any>>;
     reactComponents: Record<string, React.JSXElementConstructor<any>>;
     children: AI.Node;
@@ -46,8 +52,8 @@ export async function* UICompletion(
 
   const validAIComponentsMap = aiComponents;
 
-  // @ts-expect-error
-  const allComponents = [...Array.from(reactComponents), ...Array.from(aiComponents)];
+  const allComponents = [...Object.values(reactComponents), ...Object.values(aiComponents)];
+  // To make `reactComponentName` more robust, we can use the keys of `reactComponents` and `aiComponents`. In fact, maybe that's all we should be using.
   const validComponentsMap = Object.fromEntries(allComponents.map((c) => [reactComponentName(c), c]));
 
   const memoizedComponents = new Map<string, AI.Node>();
@@ -68,18 +74,13 @@ export async function* UICompletion(
     if (Array.isArray(serializedComponent)) {
       return <AI.Fragment>{serializedComponent.map(toComponent)}</AI.Fragment>;
     }
-
-    const Component = validComponentsMap[serializedComponent.tag];
-    if (!Component) {
-      logger.warn(
-        { serializedComponent },
-        `Ignoring component "${serializedComponent.tag}" that wasn't present in the example. ` +
-          'You may need to adjust the prompt or include an example of this component.'
-      );
-      return null;
+    // TODO: do we need a better abstraction for handling a partial output? I feel like
+    // our handling logic is too spread out / error prone right now.
+    if (_.isEmpty(serializedComponent) || !serializedComponent.tag) {
+      return;
     }
 
-    if (!('children' in serializedComponent)) {
+    if (!serializedComponent.possiblyIncomplete && !('children' in serializedComponent)) {
       throw new AIJSXError(
         `JSON produced by the model did not fit the required schema: ${JSON.stringify(serializedComponent)}`,
         ErrorCode.ModelOutputDidNotMatchUIShape,
@@ -88,21 +89,31 @@ export async function* UICompletion(
     }
 
     // Sometimes the model returns a singleton string instead of an array.
-    // (Is this still true even with the OpenAI function
+    // (Is this still true even with the OpenAI function?)
     const children =
       typeof serializedComponent.children === 'string' ? [serializedComponent.children] : serializedComponent.children;
+
+    const Component = validComponentsMap[serializedComponent.tag];
+    if (!Component) {
+      logger.warn(
+        { serializedComponent },
+        `Ignoring component "${serializedComponent.tag}" that wasn't present in the example. ` +
+          'You may need to adjust the prompt or include an example of this component.'
+      );
+      return <AI.Fragment>{children?.map(toComponent)}</AI.Fragment>;
+    }
 
     if (serializedComponent.tag in validAIComponentsMap) {
       if (serializedComponent.possiblyIncomplete) {
         return `Loading ${serializedComponent.tag} ...`;
       }
       return (
-        <AI.jsx>{getOrCreateMemo(serializedComponent, <Component>{children.map(toComponent)}</Component>)}</AI.jsx>
+        <AI.jsx>{getOrCreateMemo(serializedComponent, <Component>{children?.map(toComponent)}</Component>)}</AI.jsx>
       );
     }
     return (
       <AI.React>
-        <Component>{children.map(toComponent)}</Component>
+        <Component>{children?.map(toComponent)}</Component>
       </AI.React>
     );
   }
@@ -148,53 +159,16 @@ export async function* UICompletion(
     // if (modelResult.done) {
     //   return modelResult.value;
     // }
-    const object = JSON.parse(modelResult.value).root;
+    const generatedUI = JSON.parse(modelResult.value).root;
     if (!modelResult.done) {
-      markLastElementIncomplete(object);
+      markLastElementIncomplete(generatedUI);
     }
-    const component = toComponent(object);
+    const component = toComponent(generatedUI);
     if (modelResult.done) {
       return component;
     }
     yield component;
   }
-}
-
-/**
- * Given a node, it will recursively traverse the tree and collect all the components that are used.
- * This is used to create a list of available components for the LLM to use.
- */
-function collectComponents(
-  node: React.ReactNode | AI.Node | undefined,
-  inReact: boolean,
-  componentsList: Set<ComponentType> = new Set<ComponentType>()
-): Set<ComponentType> {
-  if (!node) {
-    return componentsList;
-  }
-  if (Array.isArray(node)) {
-    node.forEach((node) => collectComponents(node, inReact, componentsList));
-  }
-
-  if (React.isValidElement(node)) {
-    if (inReact) {
-      componentsList.add(node.type);
-    }
-
-    const childrenAreReact = (inReact || node.type === AI.React) && !isJsxBoundary(node.type);
-    if ('children' in node.props) {
-      collectComponents(node.props.children, childrenAreReact, componentsList);
-    }
-  }
-
-  if (AI.isElement(node)) {
-    const childrenAreReact = (inReact || node.tag === AI.React) && !isJsxBoundary(node.tag);
-    if ('children' in node.props) {
-      collectComponents(node.props.children, childrenAreReact, componentsList);
-    }
-  }
-
-  return componentsList;
 }
 
 /**
@@ -207,7 +181,7 @@ function collectComponents(
 function markLastElementIncomplete(
   serializedComponent: SerializedComponent[] | SerializedComponent | string | undefined | null
 ): void {
-  if (serializedComponent === undefined || serializedComponent === null || typeof serializedComponent === 'string') {
+  if (typeof serializedComponent === 'string' || _.isEmpty(serializedComponent)) {
     return;
   }
   if (Array.isArray(serializedComponent)) {
@@ -217,5 +191,7 @@ function markLastElementIncomplete(
 
   Object.assign(serializedComponent, { possiblyIncomplete: true });
 
-  markLastElementIncomplete(serializedComponent.children[serializedComponent.children.length - 1]);
+  if (serializedComponent.children) {
+    markLastElementIncomplete(serializedComponent.children[serializedComponent.children.length - 1]);
+  }
 }
