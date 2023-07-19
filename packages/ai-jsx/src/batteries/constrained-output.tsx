@@ -273,8 +273,10 @@ async function* ObjectCompletionWithRetry(
  * It (ab)uses OpenAI function calls to generate the JSON string.
  *
  * @returns A string that is a valid JSON or throws an error.
+ * 
+ * @hidden
  */
-export async function* JsonChatCompletionFunctionCall(
+async function* JsonChatCompletionFunctionCall(
   { schema, children, ...props }: ModelPropsWithChildren & { schema: z.Schema },
   { render }: AI.ComponentContext
 ) {

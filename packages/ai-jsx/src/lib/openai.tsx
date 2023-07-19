@@ -422,7 +422,9 @@ export async function* OpenAIChatModel(
     if (delta.content) {
       currentMessage.content = currentMessage.content ?? '';
       currentMessage.content += delta.content;
-      yield delta.content;
+      if (!props.experimental_streamFunctionCallOnly) {
+        yield delta.content;
+      }
     }
     if (delta.function_call) {
       currentMessage.function_call = currentMessage.function_call ?? { name: '', arguments: '' };
