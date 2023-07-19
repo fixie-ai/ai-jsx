@@ -32,5 +32,4 @@ function App() {
   );
 }
 
-// showInspector(<App />);
-console.log(await AI.createRenderContext().render(<App />));
+showInspector(<App />);

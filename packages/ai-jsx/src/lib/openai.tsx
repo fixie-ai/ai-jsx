@@ -35,9 +35,8 @@ import GPT3Tokenizer from 'gpt3-tokenizer';
 import { Merge, MergeExclusive } from 'type-fest';
 import { Logger } from '../core/log.js';
 import { HttpError, AIJSXError, ErrorCode } from '../core/errors.js';
-import { getEnvVar } from './util.js';
+import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
-import untruncateJson from 'untruncate-json';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -437,7 +436,7 @@ export async function* OpenAIChatModel(
       if (props.experimental_streamFunctionCallOnly) {
         yield JSON.stringify({
           ...currentMessage.function_call,
-          arguments: JSON.parse(untruncateJson.default(currentMessage.function_call.arguments || '{}')),
+          arguments: JSON.parse(patchedUntruncateJson(currentMessage.function_call.arguments || '{}')),
         });
       }
     }

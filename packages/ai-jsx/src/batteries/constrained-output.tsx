@@ -13,10 +13,11 @@ import {
   ModelPropsWithChildren,
 } from '../core/completion.js';
 import yaml from 'js-yaml';
-import { AIJSXError, ErrorCode } from '../core/errors.js';
+import { AIJSXError, ErrorCode, ErrorBlame } from '../core/errors.js';
+import { Jsonifiable } from 'type-fest';
 import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import untruncateJson from 'untruncate-json';
+import { patchedUntruncateJson } from '../lib/util.js';
 
 export type ObjectCompletion = ModelPropsWithChildren & {
   /** Validators are used to ensure that the final object looks as expected. */
@@ -27,6 +28,12 @@ export type ObjectCompletion = ModelPropsWithChildren & {
    *
    * @note To match OpenAI function definition specs, the schema must be a Zod object.
    * Arrays and other types should be wrapped in a top-level object in order to be used.
+   *
+   * For example, to describe a list of strings, the following is not accepted:
+   * `const schema: z.Schema = z.array(z.string())`
+   *
+   * Instead, you can wrap it in an object like so:
+   * `const schema: z.ZodObject = z.object({ arr: z.array(z.string()) })`
    */
   schema?: z.ZodObject<any>;
   /** Any output example to be shown to the model. */
@@ -88,13 +95,11 @@ export async function* JsonChatCompletion(
   { schema, ...props }: Omit<TypedObjectCompletionWithRetry, 'typeName' | 'parser' | 'partialResultCleaner'>,
   { render }: AI.ComponentContext
 ) {
-  if (schema) {
-    try {
-      return yield* render(<JsonChatCompletionFunctionCall schema={schema} {...props} />);
-    } catch (e: any) {
-      if (e.code !== ErrorCode.ChatModelDoesNotSupportFunctions) {
-        throw e;
-      }
+  try {
+    return yield* render(<JsonChatCompletionFunctionCall schema={schema ?? z.object({}).nonstrict()} {...props} />);
+  } catch (e: any) {
+    if (e.code !== ErrorCode.ChatModelDoesNotSupportFunctions) {
+      throw e;
     }
   }
   return yield* render(
@@ -102,8 +107,7 @@ export async function* JsonChatCompletion(
       {...props}
       typeName="JSON"
       parser={JSON.parse}
-      // TODO: can we remove .default?
-      partialResultCleaner={untruncateJson.default}
+      partialResultCleaner={patchedUntruncateJson}
     />
   );
 }
@@ -148,6 +152,16 @@ export async function* YamlChatCompletion(
   );
 }
 
+export class CompletionError extends AIJSXError {
+  constructor(
+    message: string,
+    public readonly blame: ErrorBlame,
+    public readonly metadata: Jsonifiable & { output: string; validationError: string }
+  ) {
+    super(message, ErrorCode.ModelOutputDidNotMatchConstraint, blame, metadata);
+  }
+}
+
 /**
  * A {@link ChatCompletion} component that constrains the output to be a valid object format (e.g. JSON/YAML).
  *
@@ -159,7 +173,7 @@ export async function* YamlChatCompletion(
  */
 async function* OneShotObjectCompletion(
   { children, typeName, validators, example, schema, parser, partialResultCleaner, ...props }: TypedObjectCompletion,
-  { render, logger }: AI.ComponentContext
+  { render }: AI.ComponentContext
 ) {
   // If a schema is provided, it is added to the list of validators as well as the prompt.
   const validatorsAndSchema = schema ? [schema.parse, ...(validators ?? [])] : validators ?? [];
@@ -170,9 +184,9 @@ async function* OneShotObjectCompletion(
       <SystemMessage>
         Respond with a {typeName} object that encodes your response.
         {schema
-          ? `The ${typeName} object should match this JSON Schema: ${JSON.stringify(zodToJsonSchema(schema))}`
+          ? `The ${typeName} object should match this JSON Schema: ${JSON.stringify(zodToJsonSchema(schema))}\n`
           : ''}
-        {example ? `For example: \n${example}` : ''}
+        {example ? `For example: ${example}\n` : ''}
         Respond with only the {typeName} object. Do not include any explanatory prose. Do not include ```
         {typeName.toLowerCase()} ``` code blocks.
       </SystemMessage>
@@ -191,11 +205,11 @@ async function* OneShotObjectCompletion(
       }
     } catch (e: any) {
       if (partial.done) {
-        logger.warn(
-          { output: partial.value, cleaned: partialResultCleaner ? str : undefined, errorMessage: e.message },
-          "ObjectCompletion failed. The final result either didn't parse or didn't validate."
-        );
-        throw e;
+        throw new CompletionError(`The model did not produce a valid ${typeName} object`, 'runtime', {
+          typeName,
+          output: partial.value,
+          validationError: e.message,
+        });
       }
       continue;
     }
@@ -230,7 +244,8 @@ async function* ObjectCompletionWithRetry(
     output = yield* render(childrenWithCompletion);
     return output;
   } catch (e: any) {
-    validationError = e.message;
+    validationError = e.metadata.validationError;
+    output = e.metadata.output;
   }
 
   logger.debug({ atempt: 1, expectedFormat: props.typeName, output }, `Output did not validate to ${props.typeName}.`);
@@ -244,9 +259,10 @@ async function* ObjectCompletionWithRetry(
         <AssistantMessage>{output}</AssistantMessage>
         <UserMessage>
           Try again. Here's the validation error when trying to parse the output as {props.typeName}:{'\n'}
+          ```log filename="error.log"{'\n'}
           {validationError}
-          {'\n'}
-          You must reformat the string to be a valid {props.typeName} object, but you must keep the same data.
+          {'\n```\n'}
+          You must reformat your previous output to be a valid {props.typeName} object, but you must keep the same data.
         </UserMessage>
       </OneShotObjectCompletion>
     );
@@ -255,7 +271,8 @@ async function* ObjectCompletionWithRetry(
       output = yield* render(completionRetry);
       return output;
     } catch (e: any) {
-      validationError = e.message;
+      validationError = e.metadata.validationError;
+      output = e.metadata.output;
     }
 
     logger.debug(
@@ -264,14 +281,14 @@ async function* ObjectCompletionWithRetry(
     );
   }
 
-  throw new AIJSXError(
+  throw new CompletionError(
     `The model did not produce a valid ${props.typeName} object, even after ${retries} attempts.`,
-    ErrorCode.ModelOutputDidNotMatchConstraint,
     'runtime',
     {
       typeName: props.typeName,
       retries,
       output,
+      validationError,
     }
   );
 }

@@ -48,10 +48,8 @@ export interface FunctionDefinition {
 /**
  * This function creates a [JSON Schema](https://json-schema.org/) object to describe
  * parameters for a {@link FunctionDefinition}.
- * The parameters can be described either using a record of parameter names to
- * {@link PlainFunctionParameter} objects, or using a {@link z.ZodObject} schema object.
  *
- * @note If using a Zod schema, the top-level schema must be an object as per OpenAI specifications.
+ * See {@link FunctionParameters} for more information on what parameters are supported.
  */
 export function getParametersSchema(parameters: FunctionParameters) {
   if (parameters instanceof z.ZodObject) {
@@ -90,6 +88,12 @@ export interface PlainFunctionParameter {
  *
  * @note If using a Zod schema, the top-level schema must be an object as per OpenAI specifications:
  * https://platform.openai.com/docs/api-reference/chat/create#chat/create-parameters
+ *
+ * For example, to describe a list of strings, the following is not accepted:
+ * `const schema: z.Schema = z.array(z.string())`
+ *
+ * Instead, you can wrap it in an object like so:
+ * `const schema: z.ZodObject = z.object({ arr: z.array(z.string()) })`
  */
 export type FunctionParameters = Record<string, PlainFunctionParameter> | z.ZodObject<any>;
 

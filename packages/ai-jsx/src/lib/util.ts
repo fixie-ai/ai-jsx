@@ -1,3 +1,4 @@
+import untruncateJson from 'untruncate-json';
 import { AIJSXError } from '../core/errors.js';
 
 /** @hidden */
@@ -14,3 +15,9 @@ export function getEnvVar(name: string, shouldThrow: boolean = true) {
   }
   return result;
 }
+
+/**
+ * There's an ESM issue with untruncate-json, so we need to do this to support running on both client & server.
+ */
+/** @hidden */
+export const patchedUntruncateJson = 'default' in untruncateJson ? untruncateJson.default : untruncateJson;
