@@ -1,4 +1,5 @@
 import { ChatCompletion, ChatProvider, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { JsonChatCompletion } from 'ai-jsx/batteries/constrained-output';
 import { showInspector } from 'ai-jsx/core/inspector';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -6,6 +7,7 @@ import fetch from 'node-fetch';
 import { fileURLToPath } from 'node:url';
 import { OpenAIChatModel } from 'ai-jsx/lib/openai';
 import * as AI from 'ai-jsx';
+import { z } from 'zod';
 
 const currentPath = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(currentPath, '..', '..', '..');
@@ -15,31 +17,88 @@ function removeMdxCodeBlockBoundaries(markdown: string): string {
   return markdown.replace(mdxBlockPattern, '$1');
 }
 
-// // I'm not sure this is necessary. Sometimes the model obeys the instruction to omit the ```mdx and ``` lines.
+// // I'm not sure this is necessary. Sometimes the model obeys the instruction to omit the ```mdx and ``` lines. Also I don't think this works with the append only mode.
 async function* RemoveMDXLines({ children }: { children: AI.Node }, { render }: AI.ComponentContext) {
   yield '';
   const frames = render(children);
   for await (const frame of frames) {
     yield removeMdxCodeBlockBoundaries(frame);
   }
-  // const finalResult = await frames;
-  // return finalResult.replace(/```mdx | ```/g, '\n');
+  const finalResult = await frames;
+  return removeMdxCodeBlockBoundaries(finalResult);
 }
 
 function App() {
-  return (
-    // @ts-expect-error
+  return (<>
+    {/* @ts-expect-error */}
     <RemoveMDXLines>
-      <MdxAgent />
+      <JsonAgent />
       {/* If we just have a raw string, the entire program outputs the empty string. I'm not sure why. */}
       {/* prefix
     ```mdx foo bar ```
     suffix */}
     </RemoveMDXLines>
+
+    <JsonChatCompletionAgent />
+  </>
   );
 }
 
-async function MdxAgent() {
+async function JsonChatCompletionAgent() {
+  const buildingBlocksContent = fs.readFile(
+    path.join(packageRoot, 'packages/nextjs-demo/src/components/BuildingBlocks.tsx'),
+    'utf-8'
+  );
+  const componentSchema: any = z.object({
+    tag: z.string(),
+    props: z.intersection(
+      z.record(z.any()),
+      z.lazy(() => z.object({ children: z.array(componentSchema).or(componentSchema) }))
+    ),
+  });
+
+  const responseSchema = z.union([
+    z.object({
+      type: z.literal('md'),
+      content: z.string(),
+    }),
+    z.object({
+      type: z.literal('jsx'),
+      content: z.array(componentSchema),
+    }),
+  ]);
+
+  const rootSchema = z.object({
+    response: responseSchema,
+  });
+
+  return (
+    <ChatProvider component={OpenAIChatModel} model="gpt-4">
+      <JsonChatCompletion schema={rootSchema}>
+        {/* prettier-ignore */}
+        <SystemMessage>You are an assistant who is an expert at using Markdown and UI components to help the user accomplish their goals.
+
+        For example:
+          User: I'd like to book a flight
+          AI: {`[{ "type": "md", "content": "Here are some flights:" }, {"type": "jsx", "content": [{"tag": "Card", "props": {"children": "Flight 1"}}]}]`}
+
+        Here is the source code for the components you can use:
+        === Begin source code
+        {await buildingBlocksContent}
+        === End source code
+
+        For example, to display data for an entity, use a Card component.
+      </SystemMessage>
+        <UserMessage>
+          Invent a short JSON shape for a character in a fantasy game. First, show me an example (as raw JSON). Next,
+          show me a form that I can use to make my own instance of this JSON.
+        </UserMessage>
+      </JsonChatCompletion>
+    </ChatProvider>
+  );
+}
+
+async function JsonAgent() {
   const buildingBlocksContent = fs.readFile(
     path.join(packageRoot, 'packages/nextjs-demo/src/components/BuildingBlocks.tsx'),
     'utf-8'
@@ -98,7 +157,7 @@ const useInspector = false;
 
 // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 if (useInspector) {
-  showInspector(<MdxAgent />);
+  showInspector(<JsonAgent />);
 } else {
   let lastValue = '';
   const rendering = AI.createRenderContext().render(<App />, { appendOnly: true });
