@@ -4,7 +4,9 @@
 [![Discord Follow](https://dcbadge.vercel.app/api/server/MsKAeKF8kU?style=flat)](https://discord.gg/MsKAeKF8kU)
 [![Twitter Follow](https://img.shields.io/twitter/follow/fixieai?style=social)](https://twitter.com/fixieai)
 
-[<img src="../docs/static/img/loom.png" alt="Image description" width="50%">](https://www.loom.com/share/c13b0c73f8d34f9f962048b39a4794f6?sid=a693f220-ccb1-4e70-913a-c2eda86dd0ce)
+## AI.JSX in Two Minutes
+
+https://github.com/fixie-ai/ai-jsx/assets/476553/301b79e4-7023-4adc-a3a5-72d5b7af0cde
 
 AI.JSX is a framework for building AI applications using Javascript and [JSX](https://react.dev/learn/writing-markup-with-jsx). While AI.JSX [is not React](https://docs.ai-jsx.com/is-it-react), it's designed to look and feel very similar while also integrating seamlessly with React-based projects. With AI.JSX, you don't just use JSX to describe what your UI should look like, you also use it to describe how **Large Language Models**, such as ChatGPT, should integrate into the rest of your application. The end result is a powerful combination where _intelligence_ can be deeply embedded into the application stack.
 
@@ -13,7 +15,7 @@ AI.JSX is designed to give you two important capabilities out of the box:
 1. An intuitive mechanism for orchestrating multiple LLM calls expressed as modular, re-usable components.
 1. The ability to seamlessly interweave UI components with your AI components. This means you can rely on the LLM to construct your UI dynamically from a set of provided React components.
 
-AI.JSX can be used to create standalone LLM applications that can be deployed anywhere Node.JS is supported, or it can be used as part of a larger React application. For an example of how to integrate AI.JSX into a React project, see the [NextJS demo package](/packages/nextjs-demo/) or [follow the tutorial](https://docs.ai-jsx.com/tutorial/part5). For an overview of all deployment architectures, see the [architecture overview](https://docs.ai-jsx.com/guides/architecture).
+AI.JSX can be used to create standalone LLM applications that can be deployed anywhere Node.JS is supported, or it can be used as part of a larger React application. For an example of how to integrate AI.JSX into a React project, see the [NextJS demo package](/packages/nextjs-demo/) or [follow the tutorial](https://docs.ai-jsx.com/category/tutorial). For an overview of all deployment architectures, see the [architecture overview](https://docs.ai-jsx.com/guides/architecture).
 
 For more details on how AI.JSX works with React in general, see our [AI+UI guide](https://docs.ai-jsx.com/guides/ai-ui).
 
@@ -27,7 +29,7 @@ For more details on how AI.JSX works with React in general, see our [AI+UI guide
 
 ## Examples
 
-You can play with live demos on our [live demo app](https://ai-jsx-nextjs-demo.vercel.app/) ([source](../nextjs-demo/)).
+You can play with live demos on our [live demo app](https://ai-jsx-nextjs-demo.vercel.app/) (source is available [here](./packages/nextjs-demo/)).
 
 Here is a simple example using AI.JSX to generate an AI response to a prompt:
 
@@ -85,4 +87,4 @@ For a full set of examples, see [the examples package](https://github.com/fixie-
 
 ## Contributing
 
-We welcome contributions! See [Contributing](../docs/docs/contributing/index.md) for how to get started.
+We welcome contributions! See [Contributing](packages/docs/docs/contributing/index.md) for how to get started.

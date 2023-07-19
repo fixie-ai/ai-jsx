@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.12
+
+- Updated `readme.md` in the `ai-jsx` package to fix bugs on the npm landing page.
+
 ## 0.5.11
 
 - Make JIT UI stream rather than appear all at once.
