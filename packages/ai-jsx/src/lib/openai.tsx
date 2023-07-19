@@ -304,12 +304,6 @@ export async function* OpenAIChatModel(
         'user'
       );
     }
-  } else if (props.experimental_streamFunctionCallOnly) {
-    throw new AIJSXError(
-      'The experimental_streamFunctionCallOnly flag can only be passed when function definitions are also passed.',
-      ErrorCode.ChatCompletionBadInput,
-      'user'
-    );
   }
 
   const messageElements = await render(props.children, {
@@ -436,6 +430,8 @@ export async function* OpenAIChatModel(
       if (props.experimental_streamFunctionCallOnly) {
         yield JSON.stringify({
           ...currentMessage.function_call,
+          // We actually want the argument to be '{}' if it's empty, not '""'.
+          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
           arguments: JSON.parse(patchedUntruncateJson(currentMessage.function_call.arguments || '{}')),
         });
       }
@@ -454,7 +450,7 @@ export async function* OpenAIChatModel(
     yield (
       <FunctionCall
         name={currentMessage.function_call.name ?? ''}
-        args={JSON.parse(currentMessage.function_call.arguments || '{}')}
+        args={JSON.parse(currentMessage.function_call.arguments ?? '{}')}
       />
     );
   }
