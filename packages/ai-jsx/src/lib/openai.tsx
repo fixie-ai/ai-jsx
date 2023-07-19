@@ -14,6 +14,7 @@ import {
   FunctionDefinition,
   FunctionCall,
   FunctionResponse,
+  getParametersSchema,
 } from '../core/completion.js';
 import { Image, ImageGenPropsWithChildren } from '../core/image-gen.js';
 import {
@@ -31,10 +32,10 @@ import {
 import * as AI from '../index.js';
 import { PropsOfComponent, Node } from '../index.js';
 import GPT3Tokenizer from 'gpt3-tokenizer';
-import { Merge } from 'type-fest';
+import { Merge, MergeExclusive } from 'type-fest';
 import { Logger } from '../core/log.js';
 import { HttpError, AIJSXError, ErrorCode } from '../core/errors.js';
-import { getEnvVar } from './util.js';
+import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
@@ -277,16 +278,32 @@ export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & {
     model: ValidChatModel;
     logitBias?: Record<string, number>;
-    functionDefinitions?: Record<string, FunctionDefinition>;
-  },
+  } & MergeExclusive<
+      {
+        functionDefinitions: Record<string, FunctionDefinition>;
+
+        /**
+         * Internal only.
+         *
+         * If this flag is passed, this component will stream only the model Function Call. This is useful if the only thing you want is the function call, such as if you're using the function call to force the model to output JSON matching a schema.
+         */
+        experimental_streamFunctionCallOnly: boolean;
+      },
+      {
+        functionDefinitions?: never;
+        experimental_streamFunctionCallOnly?: never;
+      }
+    >,
   { render, getContext, logger }: AI.ComponentContext
 ): AI.RenderableStream {
-  if (props.functionDefinitions && !chatModelSupportsFunctions(props.model)) {
-    throw new AIJSXError(
-      `The ${props.model} model does not support function calling, but function definitions were provided.`,
-      ErrorCode.ChatModelDoesNotSupportFunctions,
-      'user'
-    );
+  if (props.functionDefinitions) {
+    if (!chatModelSupportsFunctions(props.model)) {
+      throw new AIJSXError(
+        `The ${props.model} model does not support function calling, but function definitions were provided.`,
+        ErrorCode.ChatModelDoesNotSupportFunctions,
+        'user'
+      );
+    }
   }
 
   const messageElements = await render(props.children, {
@@ -297,7 +314,9 @@ export async function* OpenAIChatModel(
       e.tag == FunctionCall ||
       e.tag == FunctionResponse,
   });
-  yield AI.AppendOnlyStream;
+  if (!props.experimental_streamFunctionCallOnly) {
+    yield AI.AppendOnlyStream;
+  }
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
     messageElements.filter(AI.isElement).map(async (message) => {
       switch (message.tag) {
@@ -355,21 +374,7 @@ export async function* OpenAIChatModel(
     : Object.entries(props.functionDefinitions).map(([functionName, functionDefinition]) => ({
         name: functionName,
         description: functionDefinition.description,
-        parameters: {
-          type: 'object',
-          required: Object.keys(functionDefinition.parameters).filter(
-            (name) => functionDefinition.parameters[name].required
-          ),
-          properties: Object.keys(functionDefinition.parameters).reduce(
-            (map: Record<string, any>, paramName) => ({
-              ...map,
-              [paramName]: {
-                type: functionDefinition.parameters[paramName].type,
-              },
-            }),
-            {}
-          ),
-        },
+        parameters: getParametersSchema(functionDefinition.parameters),
       }));
 
   const openai = getContext(openAiClientContext);
@@ -410,7 +415,9 @@ export async function* OpenAIChatModel(
     if (delta.content) {
       currentMessage.content = currentMessage.content ?? '';
       currentMessage.content += delta.content;
-      yield delta.content;
+      if (!props.experimental_streamFunctionCallOnly) {
+        yield delta.content;
+      }
     }
     if (delta.function_call) {
       currentMessage.function_call = currentMessage.function_call ?? { name: '', arguments: '' };
@@ -420,11 +427,25 @@ export async function* OpenAIChatModel(
       if (delta.function_call.arguments) {
         currentMessage.function_call.arguments += delta.function_call.arguments;
       }
+      if (props.experimental_streamFunctionCallOnly) {
+        yield JSON.stringify({
+          ...currentMessage.function_call,
+          // We actually want the argument to be '{}' if it's empty, not '""'.
+          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+          arguments: JSON.parse(patchedUntruncateJson(currentMessage.function_call.arguments || '{}')),
+        });
+      }
     }
   }
 
   logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
 
+  if (props.experimental_streamFunctionCallOnly) {
+    return JSON.stringify({
+      ...currentMessage.function_call,
+      arguments: JSON.parse(currentMessage.function_call?.arguments ?? '{}'),
+    });
+  }
   if (currentMessage.function_call) {
     yield (
       <FunctionCall

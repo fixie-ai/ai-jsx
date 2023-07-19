@@ -7,7 +7,7 @@
 import {
   ChatCompletion,
   FunctionCall,
-  FunctionParameter,
+  FunctionParameters,
   FunctionResponse,
   SystemMessage,
   UserMessage,
@@ -108,7 +108,7 @@ export interface Tool {
   /**
    * A map of parameter names to their description and type.
    */
-  parameters: Record<string, FunctionParameter>;
+  parameters: FunctionParameters;
 
   /**
    * A function to invoke the tool.
