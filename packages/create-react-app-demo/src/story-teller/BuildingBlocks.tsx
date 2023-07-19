@@ -57,10 +57,11 @@ export function Badge({ children, color }: { children: ReactNode; color: Backgro
         return 'bg-purple-100 text-purple-800 ring-purple-600/20';
       case 'pink':
         return 'bg-pink-100 text-pink-800 ring-pink-600/20';
+      // Rather than throwing an error in the default case, we return gray.
+      // This helps for JIT UI streaming, where the props may not be finished streaming in yet.
+      default:
       case 'gray':
         return 'bg-gray-100 text-gray-800 ring-gray-600/20';
-      default:
-        throw new Error(`Unrecognized color: ${color}`);
     }
   }
   return (

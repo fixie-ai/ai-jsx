@@ -20,14 +20,13 @@ function reactComponentName(component: AI.Component<any> | React.JSXElementConst
 }
 
 // This needs to be partial to reflect the fact that we accept partially-streamed results,
-// so any field could be missing.
+// so any field could be missing. Also, should this type be the same as the Element zod schema?
 type SerializedComponent = Partial<{
   tag: string;
   children: string | (string | SerializedComponent)[];
   possiblyIncomplete?: boolean;
+  props: Record<string, any>;
 }>;
-
-type ComponentType = AI.Component<any> | React.JSXElementConstructor<any> | string;
 
 export async function* UICompletion(
   {
@@ -95,6 +94,14 @@ export async function* UICompletion(
 
     const Component = validComponentsMap[serializedComponent.tag];
     if (!Component) {
+
+      const tagIsPrefixOfAnyKey = Object.keys(validComponentsMap).some((k) => k.startsWith(serializedComponent.tag ?? ''));
+
+      // The result could still be partially rendering.
+      if (tagIsPrefixOfAnyKey) {
+        return null;
+      }
+
       logger.warn(
         { serializedComponent },
         `Ignoring component "${serializedComponent.tag}" that wasn't present in the example. ` +
@@ -103,17 +110,19 @@ export async function* UICompletion(
       return <AI.Fragment>{children?.map(toComponent)}</AI.Fragment>;
     }
 
+    const props = serializedComponent.props ?? {};
+
     if (serializedComponent.tag in validAIComponentsMap) {
       if (serializedComponent.possiblyIncomplete) {
         return `Loading ${serializedComponent.tag} ...`;
       }
       return (
-        <AI.jsx>{getOrCreateMemo(serializedComponent, <Component>{children?.map(toComponent)}</Component>)}</AI.jsx>
+        <AI.jsx>{getOrCreateMemo(serializedComponent, <Component {...props}>{children?.map(toComponent)}</Component>)}</AI.jsx>
       );
     }
     return (
       <AI.React>
-        <Component>{children?.map(toComponent)}</Component>
+        <Component {...props}>{children?.map(toComponent)}</Component>
       </AI.React>
     );
   }
@@ -122,6 +131,8 @@ export async function* UICompletion(
     tag: z.string().refine((c) => Boolean(validComponentsMap[c]), {
       message: `Unknown component "tag". Supported components: ${Object.keys(validComponentsMap)}`,
     }),
+    // The results will look better in the UI if the AI gives `props` back before `children`.
+    props: z.record(z.any()),
     children: z.union([z.string(), z.array(z.union([z.string(), z.lazy(() => Element)]))]),
   });
   const Elements = z.union([Element, z.array(Element)]);
@@ -163,7 +174,14 @@ export async function* UICompletion(
     if (!modelResult.done) {
       markLastElementIncomplete(generatedUI);
     }
-    const component = toComponent(generatedUI);
+    let component;
+    try {
+      component = toComponent(generatedUI);
+    } catch (e) {
+      debugger;
+      throw e;
+    }
+    // Also log if toComponent returns null
     if (modelResult.done) {
       return component;
     }
