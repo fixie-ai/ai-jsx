@@ -302,7 +302,7 @@ async function* JsonChatCompletionFunctionCall(
 
   const frames = render(childrenWithCompletion);
   for await (const frame of frames) {
-    yield JSON.parse(frame).arguments;
+    yield JSON.stringify(JSON.parse(frame).arguments);
   }
-  return JSON.parse(await frames).arguments;
+  return JSON.stringify(JSON.parse(await frames).arguments);
 }
