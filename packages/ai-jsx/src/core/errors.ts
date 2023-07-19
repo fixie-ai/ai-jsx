@@ -1,6 +1,11 @@
 import _ from 'lodash';
 import { Jsonifiable } from 'type-fest';
 
+/**
+ * Never remove entries from this list. We want old error codes to work permanently,
+ * even if we no longer emit them. (If we remove an entry from this list, we might assign
+ * a new meaning to the old error code, which would be confusing for googling.)
+ */
 export enum ErrorCode {
   MissingCompletionModel = 1000,
   MissingChatModel = 1001,

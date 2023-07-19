@@ -77,6 +77,9 @@ export function Badge({ children, color }: { children: ReactNode; color: Backgro
 }
 
 export function ButtonGroup({ labels }: { labels: string[] }) {
+  // Handle partial rendering
+  if (!labels) { return; }
+  
   return (
     <span className="isolate inline-flex rounded-md shadow-sm">
       <button

@@ -79,17 +79,9 @@ export async function* UICompletion(
       return;
     }
 
-    if (!serializedComponent.possiblyIncomplete && !('children' in serializedComponent)) {
-      throw new AIJSXError(
-        `JSON produced by the model did not fit the required schema: ${JSON.stringify(serializedComponent)}`,
-        ErrorCode.ModelOutputDidNotMatchUIShape,
-        'runtime'
-      );
-    }
-
     // Sometimes the model returns a singleton string instead of an array.
     // (Is this still true even with the OpenAI function?)
-    const children =
+    const children = !serializedComponent.children ? [] :
       typeof serializedComponent.children === 'string' ? [serializedComponent.children] : serializedComponent.children;
 
     const Component = validComponentsMap[serializedComponent.tag];
@@ -111,6 +103,9 @@ export async function* UICompletion(
     }
 
     const props = serializedComponent.props ?? {};
+    if (Object.values(props).some((v) => _.isEqual(v, {}))) {
+      return null;
+    }
 
     if (serializedComponent.tag in validAIComponentsMap) {
       if (serializedComponent.possiblyIncomplete) {
@@ -128,10 +123,12 @@ export async function* UICompletion(
   }
 
   const Element: z.Schema = z.object({
+    // Can we not make a union of all Object.keys(validComponentMap) here?
     tag: z.string().refine((c) => Boolean(validComponentsMap[c]), {
       message: `Unknown component "tag". Supported components: ${Object.keys(validComponentsMap)}`,
     }),
     // The results will look better in the UI if the AI gives `props` back before `children`.
+    // Also, make props optional.
     props: z.record(z.any()),
     children: z.union([z.string(), z.array(z.union([z.string(), z.lazy(() => Element)]))]),
   });
@@ -144,7 +141,7 @@ export async function* UICompletion(
         You are an AI who is an expert UI designer. You can describe the UI as a nested JSON object. The JSON will be
         used to create a React/HTML UI tree. Each component is described using a "tag" name and a list of "children".
         Each child can be either a string or another component.
-        {'For example <SomeComponent /> becomes { "tag": "SomeComponent", "children": [] }'}
+        {'For example <SomeComponent a="b" /> becomes { "tag": "SomeComponent", "props": {"a": "b"}, "children": [] }, and <Foo /> becomes {"tag": Foo", "children": []}'}
         {'\n'}
         The user will ask you a question and your job is to use the set of React components below to create a UI that
         the query asks for.
@@ -155,14 +152,18 @@ export async function* UICompletion(
         {'\n'}
         <AI.React>{aiComponentsDoc}</AI.React>
         {'\n```\n'}
+
+        {/* These instructions are not consistently followed. */}
         Do not use any elements (including HTML elements) other than the ones above. As such, the "tag" name of the
         component can only be one of the following: {Object.keys(validComponentsMap).join(', ')}. Nothing else is
         permitted.
+
       </SystemMessage>
       <UserMessage>{children}</UserMessage>
     </JsonChatCompletion>
   )[Symbol.asyncIterator]();
 
+  let prevComponent = null;
   while (true) {
     const modelResult = await modelRenderGenerator.next();
     logger.trace({ modelResult }, 'Got (possibly-intermediate) model result');
@@ -174,17 +175,13 @@ export async function* UICompletion(
     if (!modelResult.done) {
       markLastElementIncomplete(generatedUI);
     }
-    let component;
-    try {
-      component = toComponent(generatedUI);
-    } catch (e) {
-      debugger;
-      throw e;
-    }
+    const component = toComponent(generatedUI);
+    
     // Also log if toComponent returns null
     if (modelResult.done) {
-      return component;
+      return component || prevComponent;
     }
+    prevComponent = component;
     yield component;
   }
 }
