@@ -439,7 +439,7 @@ export async function* OpenAIChatModel(
 
         yield JSON.stringify({
           ...currentMessage.function_call,
-          arguments: partialResultCleaner(currentMessage.function_call.arguments ?? '{}'),
+          arguments: JSON.parse(partialResultCleaner(currentMessage.function_call.arguments || '{}')),
         });
       }
     }

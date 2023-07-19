@@ -144,19 +144,19 @@ export async function* UICompletion(
   while (true) {
     const modelResult = await modelRenderGenerator.next();
     logger.trace({ modelResult }, 'Got (possibly-intermediate) model result');
-    yield modelResult.value;
-    if (modelResult.done) {
-      return modelResult.value;
-    }
-    // const object = JSON.parse(modelResult.value).root;
-    // if (!modelResult.done) {
-    //   markLastElementIncomplete(object);
-    // }
-    // const component = toComponent(object);
+    // yield modelResult.value;
     // if (modelResult.done) {
-    //   return component;
+    //   return modelResult.value;
     // }
-    // yield component;
+    const object = JSON.parse(modelResult.value).root;
+    if (!modelResult.done) {
+      markLastElementIncomplete(object);
+    }
+    const component = toComponent(object);
+    if (modelResult.done) {
+      return component;
+    }
+    yield component;
   }
 }
 
