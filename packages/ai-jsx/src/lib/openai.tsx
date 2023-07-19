@@ -437,7 +437,7 @@ export async function* OpenAIChatModel(
       if (props.experimental_streamFunctionCallOnly) {
         yield JSON.stringify({
           ...currentMessage.function_call,
-          arguments: untruncateJson.default(currentMessage.function_call.arguments ?? '{}'),
+          arguments: JSON.parse(untruncateJson.default(currentMessage.function_call.arguments || '{}')),
         });
       }
     }
@@ -446,13 +446,16 @@ export async function* OpenAIChatModel(
   logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
 
   if (props.experimental_streamFunctionCallOnly) {
-    return JSON.stringify(currentMessage.function_call);
+    return JSON.stringify({
+      ...currentMessage.function_call,
+      arguments: JSON.parse(currentMessage.function_call?.arguments ?? '{}'),
+    });
   }
   if (currentMessage.function_call) {
     yield (
       <FunctionCall
         name={currentMessage.function_call.name ?? ''}
-        args={JSON.parse(currentMessage.function_call.arguments ?? '{}')}
+        args={JSON.parse(currentMessage.function_call.arguments || '{}')}
       />
     );
   }

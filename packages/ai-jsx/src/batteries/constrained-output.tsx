@@ -67,7 +67,7 @@ export type TypedObjectCompletionWithRetry = TypedObjectCompletion & { retries?:
  * );
  *
  * return (
- *    <JsonChatCompletion>
+ *    <JsonChatCompletion schema={FamilyTree}>
  *     <UserMessage>
  *      Create a nested family tree with names and ages.
  *      It should include a total of 5 people.
@@ -119,7 +119,7 @@ export async function* JsonChatCompletion(
  * );
  *
  * return (
- *    <YamlChatCompletion>
+ *    <YamlChatCompletion schema={FamilyTree}>
  *     <UserMessage>
  *      Create a nested family tree with names and ages.
  *      It should include a total of 5 people.
@@ -171,7 +171,6 @@ async function* OneShotObjectCompletion(
   );
   const renderGenerator = render(childrenWithCompletion)[Symbol.asyncIterator]();
 
-  // TODO: we can possibly add a timelimit here so we don't emit too many times.
   let lastYieldedLen = 0;
   while (true) {
     const partial = await renderGenerator.next();
@@ -276,7 +275,7 @@ async function* ObjectCompletionWithRetry(
  *
  * @hidden
  */
-async function* JsonChatCompletionFunctionCall(
+export async function* JsonChatCompletionFunctionCall(
   { schema, children, ...props }: ModelPropsWithChildren & { schema: z.Schema },
   { render }: AI.ComponentContext
 ) {

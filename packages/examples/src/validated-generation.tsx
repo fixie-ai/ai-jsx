@@ -1,3 +1,4 @@
+import * as AI from 'ai-jsx';
 import { UserMessage } from 'ai-jsx/core/completion';
 import { JsonChatCompletion, YamlChatCompletion } from 'ai-jsx/batteries/constrained-output';
 import { showInspector } from 'ai-jsx/core/inspector';
@@ -24,11 +25,12 @@ function App() {
       </JsonChatCompletion>
       {'\n\n'}
       YAML generation example:{'\n'}
-      <YamlChatCompletion schema={FamilyTree}>
+      <YamlChatCompletion schema={RootFamilyTree}>
         <UserMessage>{query}</UserMessage>
       </YamlChatCompletion>
     </>
   );
 }
 
-showInspector(<App />);
+// showInspector(<App />);
+console.log(await AI.createRenderContext().render(<App />));
