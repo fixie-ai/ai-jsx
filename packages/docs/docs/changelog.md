@@ -4,7 +4,7 @@
 
 - Updated `readme.md` in the `ai-jsx` package to fix bugs on the npm landing page.
 
-## 0.5.11
+## [0.5.11](https://github.com/fixie-ai/ai-jsx/commit/7d5c0fca9c9e1088be7fa0c8a2c74a7db2745e9d)
 
 - Make JIT UI stream rather than appear all at once.
 - Use `openai-edge` instead of `@nick.heiner/openai-edge`
