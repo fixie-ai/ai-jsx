@@ -305,6 +305,14 @@ export async function* OpenAIChatModel(
       );
     }
   }
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  else if (props.experimental_streamFunctionCallOnly) {
+    throw new AIJSXError(
+      'The experimental_streamFunctionCallOnly flag can only be passed when function definitions are also passed.',
+      ErrorCode.ChatCompletionBadInput,
+      'user'
+    );
+  }
 
   const messageElements = await render(props.children, {
     stop: (e) =>
