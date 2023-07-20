@@ -11,10 +11,12 @@ import { VectorStore } from 'langchain/vectorstores';
 import _ from 'lodash';
 import { similarity } from 'ml-distance';
 import { Jsonifiable } from 'type-fest';
+import z from 'zod';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { Node } from '../index.js';
 import { getEnvVar } from '../lib/util.js';
-import { AIJSXError, ErrorCode } from '../core/errors.js';
+import { JsonChatCompletion } from './constrained-output.js';
 
 /**
  * A raw document loaded from an arbitrary source that has not yet been parsed.
@@ -787,5 +789,31 @@ export async function DocsQA<ChunkMetadata extends Jsonifiable = Jsonifiable>(pr
       </SystemMessage>
       <UserMessage>{props.question}</UserMessage>
     </ChatCompletion>
+  );
+}
+
+/**
+ * Similar to {@link DocsQA}, but encourages the LLM to return sources for its answer.
+ */
+export async function DocsQAWithSources<ChunkMetadata extends Jsonifiable = Jsonifiable>(props: DocsQAProps<ChunkMetadata>) {
+  const chunks = await props.corpus.search(props.question, { limit: props.chunkLimit });
+  const chunkFormatter: (props: { doc: ScoredChunk<ChunkMetadata> }) => Node = props.chunkFormatter ?? DefaultFormatter;
+
+  const resultSchema: z.ZodObject<any> = z.object({
+    answer: z.string().describe("The answer to the user's question"),
+    sources: z.array(z.string()).describe('The title or URL of each document used to answer the question'),
+  }).required({answer: true});
+
+  return (
+    <JsonChatCompletion schema={resultSchema}>
+      <SystemMessage>
+        You are a trained question answerer. Answer questions truthfully, using only the document excerpts below. Do not
+        use any other knowledge you have about the world. If you don't know how to answer the question, just say "I
+        don't know." Here are the relevant document excerpts you have been given:
+        {chunks.map((chunk) => chunkFormatter({ doc: chunk }))}
+        And here is the question you must answer:
+      </SystemMessage>
+      <UserMessage>{props.question}</UserMessage>
+    </JsonChatCompletion>
   );
 }
