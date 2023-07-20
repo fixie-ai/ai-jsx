@@ -48,13 +48,16 @@ type ValidCompletionModel =
 
 type ValidChatModel =
   | 'gpt-4'
-  | 'gpt-4-0314'
+  | 'gpt-4-0314' // discontinue on 06/13/2024
   | 'gpt-4-0613'
   | 'gpt-4-32k'
-  | 'gpt-4-32k-0314'
+  | 'gpt-4-32k-0314' // discontinue on 06/13/2024
+  | 'gpt-4-32k-0613'
   | 'gpt-3.5-turbo'
-  | 'gpt-3.5-turbo-0301'
-  | 'gpt-3.5-turbo-0613';
+  | 'gpt-3.5-turbo-0301' // discontinue on 06/13/2024
+  | 'gpt-3.5-turbo-0613'
+  | 'gpt-3.5-turbo-16k'
+  | 'gpt-3.5-turbo-16k-0613';
 
 type OpenAIModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
 
@@ -173,7 +176,15 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
  * @returns True if the model supports function calling, false otherwise.
  */
 function chatModelSupportsFunctions(model: ValidChatModel) {
-  return ['gpt-4', 'gpt-3.5-turbo', 'gpt-4-0613', 'gpt-3.5-turbo-0613'].includes(model);
+  return [
+    'gpt-4',
+    'gpt-3.5-turbo',
+    'gpt-4-0613',
+    'gpt-4-32k-0613',
+    'gpt-3.5-turbo-0613',
+    'gpt-3.5-turbo-16k',
+    'gpt-3.5-turbo-16k-0613',
+  ].includes(model);
 }
 
 type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
