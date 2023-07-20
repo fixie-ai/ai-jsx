@@ -1,12 +1,12 @@
 import * as AI from '../core.js';
-import { ChatCompletion, SystemMessage, UserMessage } from '../../core/completion.js';
+import { ChatCompletion, SystemMessage } from '../../core/completion.js';
 import React from 'react';
 import { collectComponents } from '../completion.js';
 
 /**
  * Use GPT-4 with this.
  */
-export function MdxCompletion({ children, usageExamples }: { children: AI.Node; usageExamples: React.ReactNode }) {
+export function MdxChatCompletion({ children, usageExamples }: { children: AI.Node; usageExamples: React.ReactNode }) {
   const components = collectComponents(usageExamples);
   /* prettier-ignore */
   return <ChatCompletion>

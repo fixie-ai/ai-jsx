@@ -3,7 +3,7 @@ import * as AI from 'ai-jsx';
 import { SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { showInspector } from 'ai-jsx/core/inspector';
 import { memo } from 'ai-jsx/core/memoize';
-import { MdxCompletion } from 'ai-jsx/react/jit-ui/mdx';
+import { MdxChatCompletion } from 'ai-jsx/react/jit-ui/mdx';
 import { pino } from 'pino';
 import { PinoLogger } from 'ai-jsx/core/log';
 import { JsonChatCompletion } from 'ai-jsx/batteries/constrained-output';
@@ -112,9 +112,9 @@ function QuestionAndAnswer({ children }: { children: AI.Node }) {
       Q: {memoChildren}{'\n'}
       A:{' '}
       <OpenAI chatModel="gpt-4">
-        <MdxCompletion usageExamples={usageExample}>
+        <MdxChatCompletion usageExamples={usageExample}>
           {memoChildren}
-        </MdxCompletion>
+        </MdxChatCompletion>
       </OpenAI>
       {'\n\n'}
     </>
