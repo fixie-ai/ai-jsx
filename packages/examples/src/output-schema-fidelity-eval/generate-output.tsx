@@ -166,23 +166,28 @@ const simpleReactComponentsDoc = fs.readFile(
   'utf-8'
 );
 
-function StoryPrompt({useSimpleComponents}: {useSimpleComponents?: boolean}) {
-return <UserMessage>
-    <Prompt persona="a fantasy fiction writer" />
-    Give me a story about dogs on the moon. Make sure to give it an interesting title. The story should have 3-5
-    chapters.
-    {'\n'}
-    {!useSimpleComponents && <>
-      Make sure to generate an image for each chapter to make it more interesting. In each chapter, use buttons to let the
-      user flag inappropriate content. At the end, show a form to collect the user's feedback.
-    </>}
-  </UserMessage>
+function StoryPrompt({ useSimpleComponents }: { useSimpleComponents?: boolean }) {
+  return (
+    <UserMessage>
+      <Prompt persona="a fantasy fiction writer" />
+      Give me a story about dogs on the moon. Make sure to give it an interesting title. The story should have 3-5
+      chapters.
+      {'\n'}
+      {!useSimpleComponents && (
+        <>
+          Make sure to generate an image for each chapter to make it more interesting. In each chapter, use buttons to
+          let the user flag inappropriate content. At the end, show a form to collect the user's feedback.
+        </>
+      )}
+    </UserMessage>
+  );
 }
 
 async function JsonAgent({ useSimpleComponents }: { useSimpleComponents?: boolean }) {
   const componentNames = useSimpleComponents ? simpleComponentNames : allComponentNames;
 
-  return <JsonChatCompletion schema={getSchema(componentNames)}>
+  return (
+    <JsonChatCompletion schema={getSchema(componentNames)}>
       {/* prettier-ignore */}
       <SystemMessage>
       You are an AI who is an expert UI designer. You can describe the UI as a nested JSON object. The JSON will be
@@ -207,6 +212,7 @@ async function JsonAgent({ useSimpleComponents }: { useSimpleComponents?: boolea
       </SystemMessage>
       <StoryPrompt useSimpleComponents={useSimpleComponents} />
     </JsonChatCompletion>
+  );
 }
 
 const uiTestCase: TestCase = {
@@ -241,7 +247,13 @@ const mdxDocsContent = await mdxDocsRequest.text();
 /**
  * This produces a mixture of HTML and MDX, which is not what we want.
  */
-async function MdxAgent({ useSimpleComponents, useFewShots }: { useSimpleComponents?: boolean, useFewShots?: boolean }) {
+async function MdxAgent({
+  useSimpleComponents,
+  useFewShots,
+}: {
+  useSimpleComponents?: boolean;
+  useFewShots?: boolean;
+}) {
   const componentNames = useSimpleComponents ? simpleComponentNames : allComponentNames;
   return (
     <ChatCompletion>

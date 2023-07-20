@@ -78,8 +78,10 @@ export function Badge({ children, color }: { children: ReactNode; color: Backgro
 
 export function ButtonGroup({ labels }: { labels: string[] }) {
   // Handle partial rendering
-  if (!labels) { return; }
-  
+  if (!labels) {
+    return;
+  }
+
   return (
     <span className="isolate inline-flex rounded-md shadow-sm">
       <button
@@ -375,6 +377,5 @@ export function StackedForm({
     </form>
   );
 }
-
 
 // TODO: What's the best way to give the UI icons? Maybe stick to emojis for now?

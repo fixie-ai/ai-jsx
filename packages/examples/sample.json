@@ -13,9 +13,7 @@
               "code": "invalid_type",
               "expected": "object",
               "received": "undefined",
-              "path": [
-                "root"
-              ],
+              "path": ["root"],
               "message": "Required"
             }
           ],
@@ -27,18 +25,14 @@
               "code": "invalid_type",
               "expected": "array",
               "received": "undefined",
-              "path": [
-                "root"
-              ],
+              "path": ["root"],
               "message": "Required"
             }
           ],
           "name": "ZodError"
         }
       ],
-      "path": [
-        "root"
-      ],
+      "path": ["root"],
       "message": "Invalid input"
     }
   ],

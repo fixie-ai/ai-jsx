@@ -102,7 +102,7 @@ function calculateSummary(rows: ResultFileRow[]) {
     runtimeError: errorCount,
     validOutput: countRowsWithCorrectOutput,
     invalidOutput: countInvalidRows,
-  }
+  };
 
   const validationResultCounts = _.countBy(validationResultLabels);
 
@@ -115,8 +115,8 @@ function calculateSummary(rows: ResultFileRow[]) {
     },
     timings,
     prettyTimings: _.mapValues(timings, (v) => prettyMs(v)),
-    outcomeCounts, 
-    outcomePortions: _.mapValues(outcomeCounts, count => count / rows.length),
+    outcomeCounts,
+    outcomePortions: _.mapValues(outcomeCounts, (count) => count / rows.length),
     validationResultCounts,
     validationResultPortions: _.mapValues(validationResultCounts, (count) => count / countInvalidRows),
   };
