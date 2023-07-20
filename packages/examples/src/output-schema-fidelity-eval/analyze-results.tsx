@@ -124,5 +124,15 @@ function calculateSummary(rows: ResultFileRow[]) {
 
 const filePath = 'output-schema-fidelity-eval.jsonl';
 const rows = parseJsonlFile(filePath);
-const summary = calculateSummary(rows);
-console.log(summary);
+const summaries = _(rows)
+  .groupBy('testCase')
+  .mapValues((rowsForTestCase) => calculateSummary(rowsForTestCase))
+  .value();
+
+console.log(summaries);
+
+rows.forEach((row) => {
+  console.log(`==== ${row.testCase}:${row.index}`);
+  console.log(row.generatedOutput);
+  console.log();
+});

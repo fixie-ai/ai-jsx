@@ -13,6 +13,24 @@ export function StoryChapter({ chapterTitle, children }: { chapterTitle: string;
   );
 }
 
+export function Card({ children, header, footer }: { children: ReactNode; header?: ReactNode; footer?: ReactNode }) {
+  if (header || footer) {
+    return (
+      <div className="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow">
+        {header && <div className="px-4 py-5 sm:px-6">{header}</div>}
+
+        <div className="px-4 py-5 sm:p-6">{children}</div>
+        {footer && <div className="px-4 py-4 sm:px-6">{footer}</div>}
+      </div>
+    );
+  }
+  return (
+    <div className="overflow-hidden rounded-lg bg-white shadow">
+      <div className="px-4 py-5 sm:p-6">{children}</div>
+    </div>
+  );
+}
+
 export function FeedbackForm() {
   return (
     <StackedForm cancelLabel="Cancel" submitLabel="Submit">

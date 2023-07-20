@@ -63,8 +63,8 @@ import { compileSync } from '@mdx-js/mdx';
  * Note: parts of this should be replaced with an integration with https://www.promptfoo.dev/.
  */
 
-const testCaseCount = 1_000;
-const concurrencyLimit = 3;
+const testCaseCount = 10;
+const concurrencyLimit = 2;
 const limit = pLimit(concurrencyLimit);
 
 const outputFile = 'output-schema-fidelity-eval.jsonl';
@@ -165,6 +165,11 @@ const simpleReactComponentsDoc = fs.readFile(
   path.join(packageRoot, 'packages/create-react-app-demo/src/story-teller/BuildingBlocksSimple.tsx'),
   'utf-8'
 );
+const zachComponentNames = ['Card', 'ButtonGroup'];
+const zachReactComponentsDoc = fs.readFile(
+  path.join(packageRoot, 'packages/create-react-app-demo/src/story-teller/BuildingBlocksZach.tsx'),
+  'utf-8'
+);
 
 function StoryPrompt({ useSimpleComponents }: { useSimpleComponents?: boolean }) {
   return (
@@ -244,6 +249,95 @@ const mdxDocsRequest = await fetch(
   'https://raw.githubusercontent.com/mdx-js/mdx/main/docs/docs/what-is-mdx.server.mdx'
 );
 const mdxDocsContent = await mdxDocsRequest.text();
+
+function MDXInstructions({ componentNames, componentDoc }: { componentNames: string[]; componentDoc: string }) {
+  {/* prettier-ignore */}
+  return (
+    <SystemMessage>
+      You are an assistant who can use React components to work with the user. By default, you use markdown. However, if
+      it's useful, you can also mix in the following React components: {componentNames.join(', ')}. All your responses
+      should be in MDX, which is Markdown For the Component Era. Here are instructions for how to use MDX: === Begin
+      instructions
+      {mdxDocsContent}
+      === End instructions However, there are some special MDX instructions for you: 1. Do not include import
+      statements. Everything you need will be in scope automatically. 1. Do not include a starting ```mdx and closing
+      ``` line. Just respond with the MDX itself. 1. Do not use MDX expressions (e.g. "Result of addition: {1 + 1}"). 1.
+      If you have a form, don't explicitly explain what the form does – it should be self-evident. Don't say something
+      like "the submit button will save your entry". 1. Don't say anything to the user about MDX. Don't say "I am using
+      MDX" or "I am using React" or "here's an MDX form". 1. If you're making a form, use the props on the form itself
+      to explain what the fields mean / provide guidance. This is preferable to writing out separate prose. Don't
+      include separate instructions on how to use the form if you can avoid it. 1. Do not include any HTML elements.
+      Only use the following React components: {componentNames.join(', ')}. 1. Do not includes newlines unless strictly
+      necessary for the markdown interpretation. For example, do not include newlines within a React component. Here is
+      the source code for the components you can use: === Begin source code
+      {componentDoc}
+      === End source code Example output:
+      {`
+    # My MDX document
+    <Card header='My card header content' footer='my footer content'>
+      * List item 1
+      * List item 2
+      * List item 3
+       
+      \`\`\`
+      // Code block
+      foo.bar(); 
+      \`\`\`
+    </Card>
+
+    Here is a paragraph <Badge color='blue'>with a badge</Badge> in it.
+  `}
+    </SystemMessage>
+  );
+}
+
+async function ZachMDX({ questionKind }: { questionKind: 'book-flight' | 'tell-story' | 'generate-recipe' }) {
+  let question;
+  switch (questionKind) {
+    case 'book-flight':
+      question = (
+        <>
+          <SystemMessage>Here are flight options: Delta 123, United 456, American 789.</SystemMessage>
+          <UserMessage>Book a flight to NYC.</UserMessage>
+        </>
+      );
+      break;
+    case 'tell-story':
+      question = <UserMessage>Tell me a children's story</UserMessage>;
+      break;
+    case 'generate-recipe':
+      question = <UserMessage>generate a recipe</UserMessage>;
+      break;
+  }
+
+  return (
+    <ChatCompletion>
+      <MDXInstructions componentNames={zachComponentNames} componentDoc={await zachReactComponentsDoc} />
+      <SystemMessage>
+        If the user asks for some data you don't have access to, just make something up. For example, if the user asks
+        about their hotel reservation, just make up a hotel name and reservation number.
+      </SystemMessage>
+      <UserMessage>{question}</UserMessage>
+    </ChatCompletion>
+  );
+}
+
+const zachTestCaseStory: TestCase = {
+  name: 'zach-mdx-story',
+  component: <ZachMDX questionKind="tell-story" />,
+  validate: validateMdx,
+};
+const zachTestCaseRecipe: TestCase = {
+  name: 'zach-mdx-recipe',
+  component: <ZachMDX questionKind="generate-recipe" />,
+  validate: validateMdx,
+};
+const zachTestCaseFlight: TestCase = {
+  name: 'zach-mdx-flight',
+  component: <ZachMDX questionKind="book-flight" />,
+  validate: validateMdx,
+};
+
 /**
  * This produces a mixture of HTML and MDX, which is not what we want.
  */
@@ -258,55 +352,21 @@ async function MdxAgent({
   return (
     <ChatCompletion>
       {/* prettier-ignore */}
-      <SystemMessage>You are an assistant who can use React components to work with the user. All your responses should be in MDX, which is Markdown For the Component Era. Here are instructions for how to use MDX:
-
-        === Begin instructions
-        {mdxDocsContent}
-        === End instructions
-
-        However, there are some special MDX instructions for you:
-        1. Do not include import statements. Everything you need will be in scope automatically.
-        1. Do not include a starting ```mdx and closing ``` line. Just respond with the MDX itself.
-        1. Do not use MDX expressions (e.g. "Result of addition: {1 + 1}").
-        1. If you have a form, don't explicitly explain what the form does – it should be self-evident. Don't say something like "the submit button will save your entry".
-        1. Don't say anything to the user about MDX. Don't say "I am using MDX" or "I am using React" or "here's an MDX form".
-        1. If you're making a form, use the props on the form itself to explain what the fields mean / provide guidance. This is preferable to writing out separate prose. Don't include separate instructions on how to use the form if you can avoid it.
-        1. Do not include any HTML elements. Only use the following React components: {componentNames.join(', ')}.
-        1. Do not includes newlines unless strictly necessary for the markdown interpretation. For example, do not include newlines within a React component.
-
-        Here is the source code for the components you can use:
-        === Begin source code
-        { useSimpleComponents ?
+      <MDXInstructions componentNames={componentNames} componentDoc={ useSimpleComponents ?
           await simpleReactComponentsDoc :
           /* Problem: this includes the markdownWithoutImages component, which is not what we want for MDX. */
-          await reactComponentsDoc}
-        === End source code
-
-        Example output:
-        {`
-          # My MDX document
-          <Card header='My card header content' footer='my footer content'>
-            * List item 1
-            * List item 2
-            * List item 3
-             
-            \`\`\`
-            // Code block
-            foo.bar(); 
-            \`\`\`
-          </Card>
-
-          Here is a paragraph <Badge color='blue'>with a badge</Badge> in it.
-        `}
-
-        {useFewShots && <>
-          Here is an example of what you might generate:
-          {useSimpleComponents ? <>
-              # MoonBound Hounds: Chronicles of the Lunar Canines
-
-              In a time where humanity had just begun its exploration of our lunar neighbor, a team of gifted scientists had a fascinating, if somewhat whimsical, idea. They wanted to test how terrestrial lifeforms would adapt to a new celestial body. This led to the creation of Cavendish’s Canines, a group of exploration-loving dogs trained to survive on the Moon.
-
-              {`
+          await reactComponentsDoc} />
+      <SystemMessage>
+        {useFewShots && (
+          <>
+            Here is an example of what you might generate:
+            {useSimpleComponents ? (
+              <>
+                # MoonBound Hounds: Chronicles of the Lunar Canines In a time where humanity had just begun its
+                exploration of our lunar neighbor, a team of gifted scientists had a fascinating, if somewhat whimsical,
+                idea. They wanted to test how terrestrial lifeforms would adapt to a new celestial body. This led to the
+                creation of Cavendish’s Canines, a group of exploration-loving dogs trained to survive on the Moon.
+                {`
                 <StoryChapter chapterTitle='Chapter 1: The Launch'>
                 The mission started on a sunny Tuesday morning. Next to the grand rocket, four brave dogs awaited their trip to the Moon. There was Max, the German Shepherd who was always alert and aware; Daisy, the Beagle with a keen sense of smell; and the daring dachshund duo, Sausage and Beans. The world watched with anticipation as these four brave canines embarked on their lunar adventure.
                 </StoryChapter>
@@ -319,21 +379,29 @@ async function MdxAgent({
                 The scent turned out to be a new type of moon rock, rich in minerals, that humanity had not discovered yet. This would not only advance human understanding of the Moon's composition but could also provide resources for future lunar colonies. Through their unexpected discovery, the dogs have braved the lunar landscape and inscribed their paw-prints in history.
                 </StoryChapter>
               `}
-          </> : <>
-            # MoonBound Hounds: Chronicles of the Lunar Canines
-
-            In a time where humanity had just begun its exploration of our lunar neighbor, a team of gifted scientists had a fascinating, if somewhat whimsical, idea. They wanted to test how terrestrial lifeforms would adapt to a new celestial body. This led to the creation of Cavendish’s Canines, a group of exploration-loving dogs trained to survive on the Moon.
-
-            {`
+              </>
+            ) : (
+              <>
+                # MoonBound Hounds: Chronicles of the Lunar Canines In a time where humanity had just begun its
+                exploration of our lunar neighbor, a team of gifted scientists had a fascinating, if somewhat whimsical,
+                idea. They wanted to test how terrestrial lifeforms would adapt to a new celestial body. This led to the
+                creation of Cavendish’s Canines, a group of exploration-loving dogs trained to survive on the Moon.
+                {`
             <CardList>
               <Card header='Chapter 1: The Launch'>
                 The mission started on a sunny Tuesday morning. Next to the grand rocket, four brave dogs awaited their trip to the Moon. There was Max, the German Shepherd who was always alert and aware; Daisy, the Beagle with a keen sense of smell; and the daring dachshund duo, Sausage and Beans. The world watched with anticipation as these four brave canines embarked on their lunar adventure.
                 <Button>Flag inappropriate</Button>
               </Card>
+              <Card header='Chapter 2: Moonwalk'>
+              Once on the moon, the dogs adapted quickly. Their training had prepared them well, and they moved confidently across the surface, following signals from their handlers and discovering strange new smells and sights. It was Daisy who first picked up the unique, sharp scent. It was a discovery that would change their mission, and perhaps the whole world's understanding of the Moon...
+                <Button>Flag inappropriate</Button>
+              </Card>
             </CardList>
-            `}</>
-          }</>}
-
+            `}
+              </>
+            )}
+          </>
+        )}
       </SystemMessage>
       <StoryPrompt useSimpleComponents={useSimpleComponents} />
     </ChatCompletion>
@@ -341,20 +409,21 @@ async function MdxAgent({
 }
 
 // TODO: validate that the MDX doesn't have any HTML elements in it.
+function validateMdx(output: string) {
+  try {
+    compileSync({
+      path: 'test.mdx',
+      value: output,
+    });
+  } catch (e: any) {
+    return e.message;
+  }
+}
 
 const mdxTestCase: TestCase = {
   name: 'mdx',
   component: <MdxAgent />,
-  validate: (output) => {
-    try {
-      compileSync({
-        path: 'test.mdx',
-        value: output,
-      });
-    } catch (e: any) {
-      return e.message;
-    }
-  },
+  validate: validateMdx,
 };
 
 const mdxTestCaseSimple: TestCase = {
@@ -390,8 +459,12 @@ const mdxTestCaseSimpleFewShots: TestCase = {
 const testCases: TestCase[] = [
   // simpleJson,
   // uiTestCase,
-  uiTestCaseSimpleComponents,
+  // uiTestCaseSimpleComponents,
   // mdxTestCase,
+
+  zachTestCaseStory,
+  zachTestCaseRecipe,
+  zachTestCaseFlight,
 ];
 
 const logger = pino({
