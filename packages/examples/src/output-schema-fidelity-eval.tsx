@@ -98,8 +98,8 @@ function RunTestCase({ testCase }: { testCase: TestCase }) {
   return (
     <>
       <OpenAI chatModel="gpt-4">{testCaseComponents}</OpenAI>
-      <OpenAI chatModel="gpt-3.5-turbo">{testCaseComponents}</OpenAI>
-      <Anthropic chatModel="claude-1.3">{testCaseComponents}</Anthropic>
+      {/* <OpenAI chatModel="gpt-3.5-turbo">{testCaseComponents}</OpenAI> */}
+      {/* <Anthropic chatModel="claude-1.3">{testCaseComponents}</Anthropic> */}
     </>
   );
 }

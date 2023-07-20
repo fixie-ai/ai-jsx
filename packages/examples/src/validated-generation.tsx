@@ -2,6 +2,7 @@ import { UserMessage } from 'ai-jsx/core/completion';
 import { JsonChatCompletion, YamlChatCompletion } from 'ai-jsx/batteries/constrained-output';
 import { showInspector } from 'ai-jsx/core/inspector';
 import z from 'zod';
+import { Anthropic } from 'ai-jsx/lib/anthropic';
 
 const FamilyTree: z.Schema = z.array(
   z.object({
@@ -19,9 +20,11 @@ function App() {
   return (
     <>
       JSON generation example:{'\n'}
-      <JsonChatCompletion schema={RootFamilyTree}>
-        <UserMessage>{query}</UserMessage>
-      </JsonChatCompletion>
+      <Anthropic chatModel="claude-1.3">
+        <JsonChatCompletion schema={RootFamilyTree}>
+          <UserMessage>{query}</UserMessage>
+        </JsonChatCompletion>
+      </Anthropic>
       {'\n\n'}
       YAML generation example:{'\n'}
       <YamlChatCompletion schema={RootFamilyTree}>
