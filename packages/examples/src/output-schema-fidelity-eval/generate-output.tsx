@@ -15,9 +15,53 @@ import { fileURLToPath } from 'node:url';
 import { Prompt } from 'ai-jsx/batteries/prompts';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import fetch from 'node-fetch';
-import { compile } from '@mdx-js/mdx';
+import { compileSync } from '@mdx-js/mdx';
 
-const testCaseCount = 2;
+/**
+ * This is a mini-tool to help you evaluate whether a model is producing good output.
+ *
+ * For example, you might want to use this when you're trying to get the model to emit JSON matching a particular
+ * schema. Given an AI.JSX component, you can run this test harness to analyze:
+ *    * How often the output is valid
+ *    * How long the generation takes
+ *    * How many tokens the model produces
+ *
+ * Steps to use this:
+ *
+ * 1. Define your component:
+ *    const myComponent = <JsonChatCompletion>Produce any JSON object</JsonChatCompletion>
+ *
+ * 2. Define a test case:
+ *    const myTestCase: TestCase = {
+ *      name: 'my-test-case',
+ *      component: myComponent,
+ *      validate: (output) => {
+ *        try {
+ *          JSON.parse(output)
+ *        } catch (e: any) {
+ *          return e.message;
+ *        }
+ *      }
+ *    }
+ *
+ *  (You can perform as much logic as you want in validate() to ensure that the output is what you want, including
+ *    using a JSON schema library like zod, or doing more model calls to ask a model to validate the output.)
+ *
+ * 3. Add your test case to the list of test cases:
+ *    const testCases: TestCase[] = [myTestCase]
+ *
+ * 4. Generate the results:
+ *    loglevel=info yarn workspace examples demo:output-schema-fidelity-eval:generate
+ *
+ * 4a. Optionally, change `testCaseCount` and `concurrencyLimit` variables in this script.
+ *
+ * This will create an output file in the current working directory called `output-schema-fidelity-eval.jsonl`.
+ *
+ * 5. Finally, analyze the results:
+ *    loglevel=info yarn workspace examples demo:output-schema-fidelity-eval:analyze
+ */
+
+const testCaseCount = 25;
 const concurrencyLimit = 3;
 const limit = pLimit(concurrencyLimit);
 
@@ -32,9 +76,25 @@ try {
 const resultFileHandle = await fs.open(outputFile, 'a');
 
 interface TestCase {
+  /** The name of the test case */
   name: string;
+
+  /** This component generates the output you're testing. */
   component: AI.Element<any>;
+
+  /**
+   * A function to validate your output. If it returns `undefined` or `null`, then the output is considered valid.
+   * Any value the function returns will be written to the output file as a validation error.
+   */
   validate: (output: string) => Jsonifiable;
+
+  /**
+   * A function to format your output for the results file. For instance, if your model returns a JSON string,
+   * you may want to JSON.parse here so the output in the results file is more readable.
+   *
+   * If this function throws an error, the error will be logged and the raw output will be written to the result file
+   * instead.
+   */
   formatOutput?: (rawOutput: string) => Jsonifiable;
 }
 
@@ -101,14 +161,16 @@ const aiComponentsDoc = fs.readFile(
   'utf-8'
 );
 
-const storyPrompt =       <UserMessage>
-<Prompt persona="a fantasy fiction writer" />
-Give me a story about dogs on the moon. Make sure to give it an interesting title. The story should have 3-5
-chapters.
-{'\n'}
-Make sure to generate an image for each chapter to make it more interesting. In each chapter, use buttons to let
-the user flag inappropriate content. At the end, show a form to collect the user's feedback.
-</UserMessage>
+const storyPrompt = (
+  <UserMessage>
+    <Prompt persona="a fantasy fiction writer" />
+    Give me a story about dogs on the moon. Make sure to give it an interesting title. The story should have 3-5
+    chapters.
+    {'\n'}
+    Make sure to generate an image for each chapter to make it more interesting. In each chapter, use buttons to let the
+    user flag inappropriate content. At the end, show a form to collect the user's feedback.
+  </UserMessage>
+);
 
 const uiTestCase: TestCase = {
   name: 'ui-split-props',
@@ -153,6 +215,9 @@ const mdxDocsRequest = await fetch(
   'https://raw.githubusercontent.com/mdx-js/mdx/main/docs/docs/what-is-mdx.server.mdx'
 );
 const mdxDocsContent = await mdxDocsRequest.text();
+/**
+ * This produces a mixture of HTML and MDX, which is not what we want.
+ */
 async function MdxAgent() {
   return (
     <ChatCompletion>
@@ -170,14 +235,31 @@ async function MdxAgent() {
         1. If you have a form, don't explicitly explain what the form does – it should be self-evident. Don't say something like "the submit button will save your entry".
         1. Don't say anything to the user about MDX. Don't say "I am using MDX" or "I am using React" or "here's an MDX form".
         1. If you're making a form, use the props on the form itself to explain what the fields mean / provide guidance. This is preferable to writing out separate prose. Don't include separate instructions on how to use the form if you can avoid it.
-        1. Do not include any HTML elements. Only use the provided React components:
+        1. Do not include any HTML elements. Only use the following React components: {allComponentNames.join(', ')}.
+        1. Do not includes newlines unless strictly necessary for the markdown interpretation. For example, do not include newlines within a React component.
 
         Here is the source code for the components you can use:
         === Begin source code
+        {/* Problem: this includes the markdownWithoutImages component, which is not what we want for MDX. */}
         {await reactComponentsDoc}
         === End source code
 
-        For example, to display data for an entity, use a Card component.
+        Example output:
+        {`
+          # My MDX document
+          <Card header='My card header content' footer='my footer content'>
+            * List item 1
+            * List item 2
+            * List item 3
+             
+            \`\`\`
+            // Code block
+            foo.bar(); 
+            \`\`\`
+          </Card>
+
+          Here is a paragraph <Badge color='blue'>with a badge</Badge> in it.
+        `}
       </SystemMessage>
       {storyPrompt}
     </ChatCompletion>
@@ -189,7 +271,7 @@ const mdxTestCase: TestCase = {
   component: <MdxAgent />,
   validate: (output) => {
     try {
-      compile({
+      compileSync({
         path: 'test.mdx',
         value: output,
       });
