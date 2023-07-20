@@ -105,33 +105,41 @@ export async function* AnthropicChatModel(
   });
   yield AI.AppendOnlyStream;
   const messages = await Promise.all(
-    messageElements.filter(AI.isElement).map(async (message) => {
-      switch (message.tag) {
-        case UserMessage:
-          return `${AnthropicSDK.HUMAN_PROMPT}: ${await render(message)}`;
-        case AssistantMessage:
-          return `${AnthropicSDK.AI_PROMPT}: ${await render(message)}`;
-        case SystemMessage:
-          throw new AIJSXError(
-            'Anthropic models do not support SystemMessage. Change your user message to instruct the model what to do.',
-            ErrorCode.AnthropicDoesNotSupportSystemMessage,
-            'user'
-          );
-        case FunctionCall:
-        case FunctionResponse:
-          throw new AIJSXError(
-            'Anthropic models do not support functions.',
-            ErrorCode.AnthropicDoesNotSupportFunctions,
-            'user'
-          );
-        default:
-          throw new AIJSXError(
-            `ChatCompletion's prompts must be UserMessage or AssistantMessage, but this child was ${message.tag.name}`,
-            ErrorCode.ChatCompletionUnexpectedChild,
-            'internal'
-          );
-      }
-    })
+    messageElements
+      .filter(AI.isElement)
+      .flatMap((message) => {
+        if (message.tag === SystemMessage) {
+          return [
+            <UserMessage>For subsequent replies you will adhere to the following instructions: {message}</UserMessage>,
+            <AssistantMessage>Okay, I will do that.</AssistantMessage>,
+          ];
+        }
+
+        return message;
+      })
+      .map(async (message) => {
+        switch (message.tag) {
+          case UserMessage:
+            return `${AnthropicSDK.HUMAN_PROMPT}:${message.props.name ? ` (${message.props.name})` : ''} ${await render(
+              message
+            )}`;
+          case AssistantMessage:
+            return `${AnthropicSDK.AI_PROMPT}: ${await render(message)}`;
+          case FunctionCall:
+          case FunctionResponse:
+            throw new AIJSXError(
+              'Anthropic models do not support functions.',
+              ErrorCode.AnthropicDoesNotSupportFunctions,
+              'user'
+            );
+          default:
+            throw new AIJSXError(
+              `ChatCompletion's prompts must be UserMessage or AssistantMessage, but this child was ${message.tag.name}`,
+              ErrorCode.ChatCompletionUnexpectedChild,
+              'internal'
+            );
+        }
+      })
   );
 
   if (!messages.length) {
@@ -171,10 +179,18 @@ export async function* AnthropicChatModel(
     throw err;
   }
   let resultSoFar = '';
+  let isFirstResponse = true;
   for await (const completion of response) {
-    resultSoFar += completion.completion;
+    let text = completion.completion;
+    if (isFirstResponse && text.length > 0) {
+      isFirstResponse = false;
+      if (text.startsWith(' ')) {
+        text = text.slice(1);
+      }
+    }
+    resultSoFar += text;
     logger.trace({ completion }, 'Got Anthropic stream event');
-    yield completion.completion;
+    yield text;
   }
 
   logger.debug({ completion: resultSoFar }, 'Anthropic completion finished');
