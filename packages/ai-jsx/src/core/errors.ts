@@ -28,6 +28,7 @@ export enum ErrorCode {
   ChatCompletionBadInput = 1023,
 
   ModelOutputDidNotMatchConstraint = 2000,
+  ModelOutputBadJson = 2007,
 
   UnsupportedMimeType = 2001,
   MissingFixieAPIKey = 2002,

@@ -271,6 +271,19 @@ export async function* OpenAICompletionModel(
   return AI.AppendOnlyStream;
 }
 
+function parseJsonWithErrorWrapping(json: string) {
+  try {
+    return JSON.parse(json);
+  } catch (e: any) {
+    throw new AIJSXError(
+      `The JSON response from the model was invalid JSON: ${json}`,
+      ErrorCode.ModelOutputBadJson,
+      'runtime',
+      { error: e, modelOutput: json }
+    );
+  }
+}
+
 /**
  * Represents an OpenAI text chat model (e.g., `gpt-4`).
  */
@@ -440,7 +453,7 @@ export async function* OpenAIChatModel(
           ...currentMessage.function_call,
           // We actually want the argument to be '{}' if it's empty, not '""'.
           // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-          arguments: JSON.parse(patchedUntruncateJson(currentMessage.function_call.arguments || '{}')),
+          arguments: parseJsonWithErrorWrapping(patchedUntruncateJson(currentMessage.function_call.arguments || '{}')),
         });
       }
     }
@@ -451,14 +464,14 @@ export async function* OpenAIChatModel(
   if (props.experimental_streamFunctionCallOnly) {
     return JSON.stringify({
       ...currentMessage.function_call,
-      arguments: JSON.parse(currentMessage.function_call?.arguments ?? '{}'),
+      arguments: parseJsonWithErrorWrapping(currentMessage.function_call?.arguments ?? '{}'),
     });
   }
   if (currentMessage.function_call) {
     yield (
       <FunctionCall
         name={currentMessage.function_call.name ?? ''}
-        args={JSON.parse(currentMessage.function_call.arguments ?? '{}')}
+        args={parseJsonWithErrorWrapping(currentMessage.function_call.arguments ?? '{}')}
       />
     );
   }
