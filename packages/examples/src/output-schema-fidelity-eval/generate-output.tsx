@@ -101,6 +101,15 @@ const aiComponentsDoc = fs.readFile(
   'utf-8'
 );
 
+const storyPrompt =       <UserMessage>
+<Prompt persona="a fantasy fiction writer" />
+Give me a story about dogs on the moon. Make sure to give it an interesting title. The story should have 3-5
+chapters.
+{'\n'}
+Make sure to generate an image for each chapter to make it more interesting. In each chapter, use buttons to let
+the user flag inappropriate content. At the end, show a form to collect the user's feedback.
+</UserMessage>
+
 const uiTestCase: TestCase = {
   name: 'ui-split-props',
   component: (
@@ -127,14 +136,7 @@ const uiTestCase: TestCase = {
         component can only be one of the following: {allComponentNames.join(', ')}. Nothing else is
         permitted.
       </SystemMessage>
-      <UserMessage>
-        <Prompt persona="a fantasy fiction writer" />
-        Give me a story about dogs on the moon. Make sure to give it an interesting title. The story should have 3-5
-        chapters.
-        {'\n'}
-        Make sure to generate an image for each chapter to make it more interesting. In each chapter, use buttons to let
-        the user flag inappropriate content. At the end, show a form to collect the user's feedback.
-      </UserMessage>
+      {storyPrompt}
     </JsonChatCompletion>
   ),
   validate: (output) => {
@@ -168,6 +170,7 @@ async function MdxAgent() {
         1. If you have a form, don't explicitly explain what the form does – it should be self-evident. Don't say something like "the submit button will save your entry".
         1. Don't say anything to the user about MDX. Don't say "I am using MDX" or "I am using React" or "here's an MDX form".
         1. If you're making a form, use the props on the form itself to explain what the fields mean / provide guidance. This is preferable to writing out separate prose. Don't include separate instructions on how to use the form if you can avoid it.
+        1. Do not include any HTML elements. Only use the provided React components:
 
         Here is the source code for the components you can use:
         === Begin source code
@@ -176,10 +179,7 @@ async function MdxAgent() {
 
         For example, to display data for an entity, use a Card component.
       </SystemMessage>
-      <UserMessage>
-        Invent a short JSON shape for a character in a fantasy game. First, show me an example (as raw JSON). Next, show
-        me a form that I can use to make my own instance of this JSON.
-      </UserMessage>
+      {storyPrompt}
     </ChatCompletion>
   );
 }
