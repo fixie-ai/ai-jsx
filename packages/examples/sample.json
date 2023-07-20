@@ -11,10 +11,7 @@
               "code": "invalid_type",
               "expected": "object",
               "received": "undefined",
-              "path": [
-                "root",
-                "props"
-              ],
+              "path": ["root", "props"],
               "message": "Required"
             },
             {
@@ -26,10 +23,7 @@
                       "code": "invalid_type",
                       "expected": "string",
                       "received": "array",
-                      "path": [
-                        "root",
-                        "children"
-                      ],
+                      "path": ["root", "children"],
                       "message": "Expected string, received array"
                     }
                   ],
@@ -46,11 +40,7 @@
                               "code": "invalid_type",
                               "expected": "string",
                               "received": "object",
-                              "path": [
-                                "root",
-                                "children",
-                                0
-                              ],
+                              "path": ["root", "children", 0],
                               "message": "Expected string, received object"
                             }
                           ],
@@ -61,34 +51,20 @@
                             {
                               "code": "custom",
                               "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
-                              "path": [
-                                "root",
-                                "children",
-                                0,
-                                "tag"
-                              ]
+                              "path": ["root", "children", 0, "tag"]
                             },
                             {
                               "code": "invalid_type",
                               "expected": "object",
                               "received": "undefined",
-                              "path": [
-                                "root",
-                                "children",
-                                0,
-                                "props"
-                              ],
+                              "path": ["root", "children", 0, "props"],
                               "message": "Required"
                             }
                           ],
                           "name": "ZodError"
                         }
                       ],
-                      "path": [
-                        "root",
-                        "children",
-                        0
-                      ],
+                      "path": ["root", "children", 0],
                       "message": "Invalid input"
                     },
                     {
@@ -100,11 +76,7 @@
                               "code": "invalid_type",
                               "expected": "string",
                               "received": "object",
-                              "path": [
-                                "root",
-                                "children",
-                                1
-                              ],
+                              "path": ["root", "children", 1],
                               "message": "Expected string, received object"
                             }
                           ],
@@ -115,23 +87,13 @@
                             {
                               "code": "custom",
                               "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
-                              "path": [
-                                "root",
-                                "children",
-                                1,
-                                "tag"
-                              ]
+                              "path": ["root", "children", 1, "tag"]
                             },
                             {
                               "code": "invalid_type",
                               "expected": "object",
                               "received": "undefined",
-                              "path": [
-                                "root",
-                                "children",
-                                1,
-                                "props"
-                              ],
+                              "path": ["root", "children", 1, "props"],
                               "message": "Required"
                             },
                             {
@@ -143,12 +105,7 @@
                                       "code": "invalid_type",
                                       "expected": "string",
                                       "received": "array",
-                                      "path": [
-                                        "root",
-                                        "children",
-                                        1,
-                                        "children"
-                                      ],
+                                      "path": ["root", "children", 1, "children"],
                                       "message": "Expected string, received array"
                                     }
                                   ],
@@ -165,13 +122,7 @@
                                               "code": "invalid_type",
                                               "expected": "string",
                                               "received": "object",
-                                              "path": [
-                                                "root",
-                                                "children",
-                                                1,
-                                                "children",
-                                                0
-                                              ],
+                                              "path": ["root", "children", 1, "children", 0],
                                               "message": "Expected string, received object"
                                             }
                                           ],
@@ -183,14 +134,7 @@
                                               "code": "invalid_type",
                                               "expected": "object",
                                               "received": "undefined",
-                                              "path": [
-                                                "root",
-                                                "children",
-                                                1,
-                                                "children",
-                                                0,
-                                                "props"
-                                              ],
+                                              "path": ["root", "children", 1, "children", 0, "props"],
                                               "message": "Required"
                                             },
                                             {
@@ -202,14 +146,7 @@
                                                       "code": "invalid_type",
                                                       "expected": "string",
                                                       "received": "array",
-                                                      "path": [
-                                                        "root",
-                                                        "children",
-                                                        1,
-                                                        "children",
-                                                        0,
-                                                        "children"
-                                                      ],
+                                                      "path": ["root", "children", 1, "children", 0, "children"],
                                                       "message": "Expected string, received array"
                                                     }
                                                   ],
@@ -276,15 +213,7 @@
                                                           "name": "ZodError"
                                                         }
                                                       ],
-                                                      "path": [
-                                                        "root",
-                                                        "children",
-                                                        1,
-                                                        "children",
-                                                        0,
-                                                        "children",
-                                                        0
-                                                      ],
+                                                      "path": ["root", "children", 1, "children", 0, "children", 0],
                                                       "message": "Invalid input"
                                                     },
                                                     {
@@ -346,15 +275,7 @@
                                                           "name": "ZodError"
                                                         }
                                                       ],
-                                                      "path": [
-                                                        "root",
-                                                        "children",
-                                                        1,
-                                                        "children",
-                                                        0,
-                                                        "children",
-                                                        1
-                                                      ],
+                                                      "path": ["root", "children", 1, "children", 0, "children", 1],
                                                       "message": "Invalid input"
                                                     },
                                                     {
@@ -375,27 +296,14 @@
                                                   "name": "ZodError"
                                                 }
                                               ],
-                                              "path": [
-                                                "root",
-                                                "children",
-                                                1,
-                                                "children",
-                                                0,
-                                                "children"
-                                              ],
+                                              "path": ["root", "children", 1, "children", 0, "children"],
                                               "message": "Invalid input"
                                             }
                                           ],
                                           "name": "ZodError"
                                         }
                                       ],
-                                      "path": [
-                                        "root",
-                                        "children",
-                                        1,
-                                        "children",
-                                        0
-                                      ],
+                                      "path": ["root", "children", 1, "children", 0],
                                       "message": "Invalid input"
                                     },
                                     {
@@ -407,13 +315,7 @@
                                               "code": "invalid_type",
                                               "expected": "string",
                                               "received": "object",
-                                              "path": [
-                                                "root",
-                                                "children",
-                                                1,
-                                                "children",
-                                                1
-                                              ],
+                                              "path": ["root", "children", 1, "children", 1],
                                               "message": "Expected string, received object"
                                             }
                                           ],
@@ -425,14 +327,7 @@
                                               "code": "invalid_type",
                                               "expected": "object",
                                               "received": "undefined",
-                                              "path": [
-                                                "root",
-                                                "children",
-                                                1,
-                                                "children",
-                                                1,
-                                                "props"
-                                              ],
+                                              "path": ["root", "children", 1, "children", 1, "props"],
                                               "message": "Required"
                                             },
                                             {
@@ -444,14 +339,7 @@
                                                       "code": "invalid_type",
                                                       "expected": "string",
                                                       "received": "array",
-                                                      "path": [
-                                                        "root",
-                                                        "children",
-                                                        1,
-                                                        "children",
-                                                        1,
-                                                        "children"
-                                                      ],
+                                                      "path": ["root", "children", 1, "children", 1, "children"],
                                                       "message": "Expected string, received array"
                                                     }
                                                   ],
@@ -518,15 +406,7 @@
                                                           "name": "ZodError"
                                                         }
                                                       ],
-                                                      "path": [
-                                                        "root",
-                                                        "children",
-                                                        1,
-                                                        "children",
-                                                        1,
-                                                        "children",
-                                                        0
-                                                      ],
+                                                      "path": ["root", "children", 1, "children", 1, "children", 0],
                                                       "message": "Invalid input"
                                                     },
                                                     {
@@ -588,15 +468,7 @@
                                                           "name": "ZodError"
                                                         }
                                                       ],
-                                                      "path": [
-                                                        "root",
-                                                        "children",
-                                                        1,
-                                                        "children",
-                                                        1,
-                                                        "children",
-                                                        1
-                                                      ],
+                                                      "path": ["root", "children", 1, "children", 1, "children", 1],
                                                       "message": "Invalid input"
                                                     },
                                                     {
@@ -617,27 +489,14 @@
                                                   "name": "ZodError"
                                                 }
                                               ],
-                                              "path": [
-                                                "root",
-                                                "children",
-                                                1,
-                                                "children",
-                                                1,
-                                                "children"
-                                              ],
+                                              "path": ["root", "children", 1, "children", 1, "children"],
                                               "message": "Invalid input"
                                             }
                                           ],
                                           "name": "ZodError"
                                         }
                                       ],
-                                      "path": [
-                                        "root",
-                                        "children",
-                                        1,
-                                        "children",
-                                        1
-                                      ],
+                                      "path": ["root", "children", 1, "children", 1],
                                       "message": "Invalid input"
                                     },
                                     {
@@ -649,13 +508,7 @@
                                               "code": "invalid_type",
                                               "expected": "string",
                                               "received": "object",
-                                              "path": [
-                                                "root",
-                                                "children",
-                                                1,
-                                                "children",
-                                                2
-                                              ],
+                                              "path": ["root", "children", 1, "children", 2],
                                               "message": "Expected string, received object"
                                             }
                                           ],
@@ -667,14 +520,7 @@
                                               "code": "invalid_type",
                                               "expected": "object",
                                               "received": "undefined",
-                                              "path": [
-                                                "root",
-                                                "children",
-                                                1,
-                                                "children",
-                                                2,
-                                                "props"
-                                              ],
+                                              "path": ["root", "children", 1, "children", 2, "props"],
                                               "message": "Required"
                                             },
                                             {
@@ -686,14 +532,7 @@
                                                       "code": "invalid_type",
                                                       "expected": "string",
                                                       "received": "array",
-                                                      "path": [
-                                                        "root",
-                                                        "children",
-                                                        1,
-                                                        "children",
-                                                        2,
-                                                        "children"
-                                                      ],
+                                                      "path": ["root", "children", 1, "children", 2, "children"],
                                                       "message": "Expected string, received array"
                                                     }
                                                   ],
@@ -760,15 +599,7 @@
                                                           "name": "ZodError"
                                                         }
                                                       ],
-                                                      "path": [
-                                                        "root",
-                                                        "children",
-                                                        1,
-                                                        "children",
-                                                        2,
-                                                        "children",
-                                                        0
-                                                      ],
+                                                      "path": ["root", "children", 1, "children", 2, "children", 0],
                                                       "message": "Invalid input"
                                                     },
                                                     {
@@ -830,15 +661,7 @@
                                                           "name": "ZodError"
                                                         }
                                                       ],
-                                                      "path": [
-                                                        "root",
-                                                        "children",
-                                                        1,
-                                                        "children",
-                                                        2,
-                                                        "children",
-                                                        1
-                                                      ],
+                                                      "path": ["root", "children", 1, "children", 2, "children", 1],
                                                       "message": "Invalid input"
                                                     },
                                                     {
@@ -859,50 +682,28 @@
                                                   "name": "ZodError"
                                                 }
                                               ],
-                                              "path": [
-                                                "root",
-                                                "children",
-                                                1,
-                                                "children",
-                                                2,
-                                                "children"
-                                              ],
+                                              "path": ["root", "children", 1, "children", 2, "children"],
                                               "message": "Invalid input"
                                             }
                                           ],
                                           "name": "ZodError"
                                         }
                                       ],
-                                      "path": [
-                                        "root",
-                                        "children",
-                                        1,
-                                        "children",
-                                        2
-                                      ],
+                                      "path": ["root", "children", 1, "children", 2],
                                       "message": "Invalid input"
                                     }
                                   ],
                                   "name": "ZodError"
                                 }
                               ],
-                              "path": [
-                                "root",
-                                "children",
-                                1,
-                                "children"
-                              ],
+                              "path": ["root", "children", 1, "children"],
                               "message": "Invalid input"
                             }
                           ],
                           "name": "ZodError"
                         }
                       ],
-                      "path": [
-                        "root",
-                        "children",
-                        1
-                      ],
+                      "path": ["root", "children", 1],
                       "message": "Invalid input"
                     },
                     {
@@ -914,11 +715,7 @@
                               "code": "invalid_type",
                               "expected": "string",
                               "received": "object",
-                              "path": [
-                                "root",
-                                "children",
-                                2
-                              ],
+                              "path": ["root", "children", 2],
                               "message": "Expected string, received object"
                             }
                           ],
@@ -929,12 +726,7 @@
                             {
                               "code": "custom",
                               "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
-                              "path": [
-                                "root",
-                                "children",
-                                2,
-                                "tag"
-                              ]
+                              "path": ["root", "children", 2, "tag"]
                             },
                             {
                               "code": "invalid_union",
@@ -945,12 +737,7 @@
                                       "code": "invalid_type",
                                       "expected": "string",
                                       "received": "array",
-                                      "path": [
-                                        "root",
-                                        "children",
-                                        2,
-                                        "children"
-                                      ],
+                                      "path": ["root", "children", 2, "children"],
                                       "message": "Expected string, received array"
                                     }
                                   ],
@@ -967,13 +754,7 @@
                                               "code": "invalid_type",
                                               "expected": "string",
                                               "received": "object",
-                                              "path": [
-                                                "root",
-                                                "children",
-                                                2,
-                                                "children",
-                                                0
-                                              ],
+                                              "path": ["root", "children", 2, "children", 0],
                                               "message": "Expected string, received object"
                                             }
                                           ],
@@ -984,14 +765,7 @@
                                             {
                                               "code": "custom",
                                               "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
-                                              "path": [
-                                                "root",
-                                                "children",
-                                                2,
-                                                "children",
-                                                0,
-                                                "tag"
-                                              ]
+                                              "path": ["root", "children", 2, "children", 0, "tag"]
                                             },
                                             {
                                               "code": "invalid_union",
@@ -1002,14 +776,7 @@
                                                       "code": "invalid_type",
                                                       "expected": "string",
                                                       "received": "undefined",
-                                                      "path": [
-                                                        "root",
-                                                        "children",
-                                                        2,
-                                                        "children",
-                                                        0,
-                                                        "children"
-                                                      ],
+                                                      "path": ["root", "children", 2, "children", 0, "children"],
                                                       "message": "Required"
                                                     }
                                                   ],
@@ -1021,74 +788,42 @@
                                                       "code": "invalid_type",
                                                       "expected": "array",
                                                       "received": "undefined",
-                                                      "path": [
-                                                        "root",
-                                                        "children",
-                                                        2,
-                                                        "children",
-                                                        0,
-                                                        "children"
-                                                      ],
+                                                      "path": ["root", "children", 2, "children", 0, "children"],
                                                       "message": "Required"
                                                     }
                                                   ],
                                                   "name": "ZodError"
                                                 }
                                               ],
-                                              "path": [
-                                                "root",
-                                                "children",
-                                                2,
-                                                "children",
-                                                0,
-                                                "children"
-                                              ],
+                                              "path": ["root", "children", 2, "children", 0, "children"],
                                               "message": "Invalid input"
                                             }
                                           ],
                                           "name": "ZodError"
                                         }
                                       ],
-                                      "path": [
-                                        "root",
-                                        "children",
-                                        2,
-                                        "children",
-                                        0
-                                      ],
+                                      "path": ["root", "children", 2, "children", 0],
                                       "message": "Invalid input"
                                     }
                                   ],
                                   "name": "ZodError"
                                 }
                               ],
-                              "path": [
-                                "root",
-                                "children",
-                                2,
-                                "children"
-                              ],
+                              "path": ["root", "children", 2, "children"],
                               "message": "Invalid input"
                             }
                           ],
                           "name": "ZodError"
                         }
                       ],
-                      "path": [
-                        "root",
-                        "children",
-                        2
-                      ],
+                      "path": ["root", "children", 2],
                       "message": "Invalid input"
                     }
                   ],
                   "name": "ZodError"
                 }
               ],
-              "path": [
-                "root",
-                "children"
-              ],
+              "path": ["root", "children"],
               "message": "Invalid input"
             }
           ],
@@ -1100,18 +835,14 @@
               "code": "invalid_type",
               "expected": "array",
               "received": "object",
-              "path": [
-                "root"
-              ],
+              "path": ["root"],
               "message": "Expected array, received object"
             }
           ],
           "name": "ZodError"
         }
       ],
-      "path": [
-        "root"
-      ],
+      "path": ["root"],
       "message": "Invalid input"
     }
   ],
@@ -1121,9 +852,7 @@
       "children": [
         {
           "tag": "MarkdownWithoutImages",
-          "children": [
-            "# The Lunar Canine Chronicles"
-          ]
+          "children": ["# The Lunar Canine Chronicles"]
         },
         {
           "tag": "CardList",
@@ -1133,24 +862,18 @@
               "children": [
                 {
                   "tag": "ImageGen",
-                  "children": [
-                    "An astronaut dog gazing at the Earth from the Moon"
-                  ]
+                  "children": ["An astronaut dog gazing at the Earth from the Moon"]
                 },
                 {
                   "tag": "MarkdownWithoutImages",
-                  "children": [
-                    "## Chapter 1: One Small Step for Dogkind"
-                  ]
+                  "children": ["## Chapter 1: One Small Step for Dogkind"]
                 },
                 {
                   "tag": "Button",
                   "props": {
                     "primary": true
                   },
-                  "children": [
-                    "Flag Inappropriate Content"
-                  ]
+                  "children": ["Flag Inappropriate Content"]
                 }
               ]
             },
@@ -1159,24 +882,18 @@
               "children": [
                 {
                   "tag": "ImageGen",
-                  "children": [
-                    "Dogs playing with a Moon rock"
-                  ]
+                  "children": ["Dogs playing with a Moon rock"]
                 },
                 {
                   "tag": "MarkdownWithoutImages",
-                  "children": [
-                    "## Chapter 2: Lunar Fetch"
-                  ]
+                  "children": ["## Chapter 2: Lunar Fetch"]
                 },
                 {
                   "tag": "Button",
                   "props": {
                     "primary": true
                   },
-                  "children": [
-                    "Flag Inappropriate Content"
-                  ]
+                  "children": ["Flag Inappropriate Content"]
                 }
               ]
             },
@@ -1185,24 +902,18 @@
               "children": [
                 {
                   "tag": "ImageGen",
-                  "children": [
-                    "Dogs howling at the Earth from the Moon"
-                  ]
+                  "children": ["Dogs howling at the Earth from the Moon"]
                 },
                 {
                   "tag": "MarkdownWithoutImages",
-                  "children": [
-                    "## Chapter 3: Earthset Howl"
-                  ]
+                  "children": ["## Chapter 3: Earthset Howl"]
                 },
                 {
                   "tag": "Button",
                   "props": {
                     "primary": true
                   },
-                  "children": [
-                    "Flag Inappropriate Content"
-                  ]
+                  "children": ["Flag Inappropriate Content"]
                 }
               ]
             }

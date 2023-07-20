@@ -9,13 +9,16 @@ type ResultFileRow = {
   testCase: string;
   index: number;
   durationMs: number;
-} & MergeExclusive<{
-  validationResult: Jsonifiable;
-  generatedOutput: Jsonifiable;
-  originalOutputLength: number;
-}, {
-  error: string;
-}>
+} & MergeExclusive<
+  {
+    validationResult: Jsonifiable;
+    generatedOutput: Jsonifiable;
+    originalOutputTokenCount: number;
+  },
+  {
+    error: string;
+  }
+>;
 function parseJsonlFile(filePath: string): ResultFileRow[] {
   const content = fs.readFileSync(filePath, 'utf-8');
   const lines = _.compact(content.split('\n'));
@@ -29,19 +32,17 @@ function calculateSummary(rows: ResultFileRow[]) {
     return sortedDurations[index];
   };
 
-  const sortedLengths = rows
-    .filter((row) => row.originalOutputLength !== undefined)
-    .map((row) => row.originalOutputLength)
+  const sortedOutputTokenCounts = rows
+    .filter((row) => row.originalOutputTokenCount !== undefined)
+    .map((row) => row.originalOutputTokenCount)
     .sort((a, b) => a! - b!);
-  const lengthPercentile = (p: number) => {
-    const index = Math.floor(sortedLengths.length * p);
-    return sortedLengths[index];
+  const outputTokenCountPercentile = (p: number) => {
+    const index = Math.floor(sortedOutputTokenCounts.length * p);
+    return sortedOutputTokenCounts[index];
   };
 
   const errorCount = rows.filter((row) => row.error !== undefined).length;
-  const countRowsWithCorrectOutput = rows.filter(
-    (row) => row.validationResult === null
-  ).length;
+  const countRowsWithCorrectOutput = rows.filter((row) => row.validationResult === null).length;
 
   const timings = {
     median: durationPercentile(0.5),
@@ -51,10 +52,10 @@ function calculateSummary(rows: ResultFileRow[]) {
 
   return {
     rowCount: rows.length,
-    generatedOutputLengths: {
-      median: lengthPercentile(0.5),
-      p90: lengthPercentile(0.9),
-      p99: lengthPercentile(0.99),
+    generatedOutputTokenCounts: {
+      median: outputTokenCountPercentile(0.5),
+      p90: outputTokenCountPercentile(0.9),
+      p99: outputTokenCountPercentile(0.99),
     },
     timings,
     prettyTimings: _.mapValues(timings, (v) => prettyMs(v)),
@@ -62,7 +63,7 @@ function calculateSummary(rows: ResultFileRow[]) {
       runtimeError: errorCount / rows.length,
       validOutput: countRowsWithCorrectOutput / rows.length,
       invalidOutput: (rows.length - countRowsWithCorrectOutput) / rows.length,
-    }
+    },
   };
 }
 

@@ -9,12 +9,13 @@ import { SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import _ from 'lodash';
 import { pino } from 'pino';
 import { PinoLogger } from 'ai-jsx/core/log';
-import { Jsonifiable, MergeExclusive } from 'type-fest';
+import { Jsonifiable } from 'type-fest';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Prompt } from 'ai-jsx/batteries/prompts';
+import GPT3Tokenizer from 'gpt3-tokenizer';
 
-const testCaseCount = 4;
+const testCaseCount = 25;
 const concurrencyLimit = 3;
 const limit = pLimit(concurrencyLimit);
 
@@ -58,7 +59,23 @@ const simpleJson: TestCase = {
 };
 
 // Hardcoded to match the exports of the building block files.
-const allComponentNames = ['Button', 'MarkdownWithoutImages', 'IconButton', 'Badge', 'Card', 'CardList', 'InputWithLabel', 'TextAreaInput', 'SimpleRadioGroup', 'Toggle', 'CheckboxList', 'ActionPanel', 'StackedFormSection', 'StackedForm', 'ImageGen'];
+const allComponentNames = [
+  'Button',
+  'MarkdownWithoutImages',
+  'IconButton',
+  'Badge',
+  'Card',
+  'CardList',
+  'InputWithLabel',
+  'TextAreaInput',
+  'SimpleRadioGroup',
+  'Toggle',
+  'CheckboxList',
+  'ActionPanel',
+  'StackedFormSection',
+  'StackedForm',
+  'ImageGen',
+];
 const Element: z.Schema = z.object({
   tag: z.string().refine((c) => allComponentNames.includes(c), {
     message: `Unknown component "tag". Supported components: ${allComponentNames}`,
@@ -167,6 +184,11 @@ async function RunSingleTrial(
       const outputLine = JSON.stringify({
         testCase: testCase.name,
         index,
+        /**
+         * This timing measurement is a little noisy because JS is async, so we don't know how much time was actually
+         * spent processing this case versus waiting for CPU etc. However, I think this noise will be immaterial
+         * because the model latency is a much bigger factor.
+         */
         durationMs: performance.now() - startTime,
         ...row,
       });
@@ -181,7 +203,7 @@ async function RunSingleTrial(
 
       const validatedOutput = testCase.validate(output);
       await writeOutput({
-        originalOutputLength: output.length,
+        originalOutputTokenCount: new GPT3Tokenizer.default({ type: 'gpt3' }).encode(output).bpe.length,
         validationResult: validatedOutput,
         generatedOutput: getFormattedOutput(output),
       });
