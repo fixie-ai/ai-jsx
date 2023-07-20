@@ -1,0 +1,1231 @@
+{
+  "testCase": "ui-split-props",
+  "index": 0,
+  "validationResult": [
+    {
+      "code": "invalid_union",
+      "unionErrors": [
+        {
+          "issues": [
+            {
+              "code": "invalid_type",
+              "expected": "object",
+              "received": "undefined",
+              "path": [
+                "root",
+                "props"
+              ],
+              "message": "Required"
+            },
+            {
+              "code": "invalid_union",
+              "unionErrors": [
+                {
+                  "issues": [
+                    {
+                      "code": "invalid_type",
+                      "expected": "string",
+                      "received": "array",
+                      "path": [
+                        "root",
+                        "children"
+                      ],
+                      "message": "Expected string, received array"
+                    }
+                  ],
+                  "name": "ZodError"
+                },
+                {
+                  "issues": [
+                    {
+                      "code": "invalid_union",
+                      "unionErrors": [
+                        {
+                          "issues": [
+                            {
+                              "code": "invalid_type",
+                              "expected": "string",
+                              "received": "object",
+                              "path": [
+                                "root",
+                                "children",
+                                0
+                              ],
+                              "message": "Expected string, received object"
+                            }
+                          ],
+                          "name": "ZodError"
+                        },
+                        {
+                          "issues": [
+                            {
+                              "code": "custom",
+                              "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
+                              "path": [
+                                "root",
+                                "children",
+                                0,
+                                "tag"
+                              ]
+                            },
+                            {
+                              "code": "invalid_type",
+                              "expected": "object",
+                              "received": "undefined",
+                              "path": [
+                                "root",
+                                "children",
+                                0,
+                                "props"
+                              ],
+                              "message": "Required"
+                            }
+                          ],
+                          "name": "ZodError"
+                        }
+                      ],
+                      "path": [
+                        "root",
+                        "children",
+                        0
+                      ],
+                      "message": "Invalid input"
+                    },
+                    {
+                      "code": "invalid_union",
+                      "unionErrors": [
+                        {
+                          "issues": [
+                            {
+                              "code": "invalid_type",
+                              "expected": "string",
+                              "received": "object",
+                              "path": [
+                                "root",
+                                "children",
+                                1
+                              ],
+                              "message": "Expected string, received object"
+                            }
+                          ],
+                          "name": "ZodError"
+                        },
+                        {
+                          "issues": [
+                            {
+                              "code": "custom",
+                              "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
+                              "path": [
+                                "root",
+                                "children",
+                                1,
+                                "tag"
+                              ]
+                            },
+                            {
+                              "code": "invalid_type",
+                              "expected": "object",
+                              "received": "undefined",
+                              "path": [
+                                "root",
+                                "children",
+                                1,
+                                "props"
+                              ],
+                              "message": "Required"
+                            },
+                            {
+                              "code": "invalid_union",
+                              "unionErrors": [
+                                {
+                                  "issues": [
+                                    {
+                                      "code": "invalid_type",
+                                      "expected": "string",
+                                      "received": "array",
+                                      "path": [
+                                        "root",
+                                        "children",
+                                        1,
+                                        "children"
+                                      ],
+                                      "message": "Expected string, received array"
+                                    }
+                                  ],
+                                  "name": "ZodError"
+                                },
+                                {
+                                  "issues": [
+                                    {
+                                      "code": "invalid_union",
+                                      "unionErrors": [
+                                        {
+                                          "issues": [
+                                            {
+                                              "code": "invalid_type",
+                                              "expected": "string",
+                                              "received": "object",
+                                              "path": [
+                                                "root",
+                                                "children",
+                                                1,
+                                                "children",
+                                                0
+                                              ],
+                                              "message": "Expected string, received object"
+                                            }
+                                          ],
+                                          "name": "ZodError"
+                                        },
+                                        {
+                                          "issues": [
+                                            {
+                                              "code": "invalid_type",
+                                              "expected": "object",
+                                              "received": "undefined",
+                                              "path": [
+                                                "root",
+                                                "children",
+                                                1,
+                                                "children",
+                                                0,
+                                                "props"
+                                              ],
+                                              "message": "Required"
+                                            },
+                                            {
+                                              "code": "invalid_union",
+                                              "unionErrors": [
+                                                {
+                                                  "issues": [
+                                                    {
+                                                      "code": "invalid_type",
+                                                      "expected": "string",
+                                                      "received": "array",
+                                                      "path": [
+                                                        "root",
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        0,
+                                                        "children"
+                                                      ],
+                                                      "message": "Expected string, received array"
+                                                    }
+                                                  ],
+                                                  "name": "ZodError"
+                                                },
+                                                {
+                                                  "issues": [
+                                                    {
+                                                      "code": "invalid_union",
+                                                      "unionErrors": [
+                                                        {
+                                                          "issues": [
+                                                            {
+                                                              "code": "invalid_type",
+                                                              "expected": "string",
+                                                              "received": "object",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                0,
+                                                                "children",
+                                                                0
+                                                              ],
+                                                              "message": "Expected string, received object"
+                                                            }
+                                                          ],
+                                                          "name": "ZodError"
+                                                        },
+                                                        {
+                                                          "issues": [
+                                                            {
+                                                              "code": "custom",
+                                                              "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                0,
+                                                                "children",
+                                                                0,
+                                                                "tag"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "code": "invalid_type",
+                                                              "expected": "object",
+                                                              "received": "undefined",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                0,
+                                                                "children",
+                                                                0,
+                                                                "props"
+                                                              ],
+                                                              "message": "Required"
+                                                            }
+                                                          ],
+                                                          "name": "ZodError"
+                                                        }
+                                                      ],
+                                                      "path": [
+                                                        "root",
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        0,
+                                                        "children",
+                                                        0
+                                                      ],
+                                                      "message": "Invalid input"
+                                                    },
+                                                    {
+                                                      "code": "invalid_union",
+                                                      "unionErrors": [
+                                                        {
+                                                          "issues": [
+                                                            {
+                                                              "code": "invalid_type",
+                                                              "expected": "string",
+                                                              "received": "object",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                0,
+                                                                "children",
+                                                                1
+                                                              ],
+                                                              "message": "Expected string, received object"
+                                                            }
+                                                          ],
+                                                          "name": "ZodError"
+                                                        },
+                                                        {
+                                                          "issues": [
+                                                            {
+                                                              "code": "custom",
+                                                              "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                0,
+                                                                "children",
+                                                                1,
+                                                                "tag"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "code": "invalid_type",
+                                                              "expected": "object",
+                                                              "received": "undefined",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                0,
+                                                                "children",
+                                                                1,
+                                                                "props"
+                                                              ],
+                                                              "message": "Required"
+                                                            }
+                                                          ],
+                                                          "name": "ZodError"
+                                                        }
+                                                      ],
+                                                      "path": [
+                                                        "root",
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        0,
+                                                        "children",
+                                                        1
+                                                      ],
+                                                      "message": "Invalid input"
+                                                    },
+                                                    {
+                                                      "code": "custom",
+                                                      "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
+                                                      "path": [
+                                                        "root",
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        0,
+                                                        "children",
+                                                        2,
+                                                        "tag"
+                                                      ]
+                                                    }
+                                                  ],
+                                                  "name": "ZodError"
+                                                }
+                                              ],
+                                              "path": [
+                                                "root",
+                                                "children",
+                                                1,
+                                                "children",
+                                                0,
+                                                "children"
+                                              ],
+                                              "message": "Invalid input"
+                                            }
+                                          ],
+                                          "name": "ZodError"
+                                        }
+                                      ],
+                                      "path": [
+                                        "root",
+                                        "children",
+                                        1,
+                                        "children",
+                                        0
+                                      ],
+                                      "message": "Invalid input"
+                                    },
+                                    {
+                                      "code": "invalid_union",
+                                      "unionErrors": [
+                                        {
+                                          "issues": [
+                                            {
+                                              "code": "invalid_type",
+                                              "expected": "string",
+                                              "received": "object",
+                                              "path": [
+                                                "root",
+                                                "children",
+                                                1,
+                                                "children",
+                                                1
+                                              ],
+                                              "message": "Expected string, received object"
+                                            }
+                                          ],
+                                          "name": "ZodError"
+                                        },
+                                        {
+                                          "issues": [
+                                            {
+                                              "code": "invalid_type",
+                                              "expected": "object",
+                                              "received": "undefined",
+                                              "path": [
+                                                "root",
+                                                "children",
+                                                1,
+                                                "children",
+                                                1,
+                                                "props"
+                                              ],
+                                              "message": "Required"
+                                            },
+                                            {
+                                              "code": "invalid_union",
+                                              "unionErrors": [
+                                                {
+                                                  "issues": [
+                                                    {
+                                                      "code": "invalid_type",
+                                                      "expected": "string",
+                                                      "received": "array",
+                                                      "path": [
+                                                        "root",
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        1,
+                                                        "children"
+                                                      ],
+                                                      "message": "Expected string, received array"
+                                                    }
+                                                  ],
+                                                  "name": "ZodError"
+                                                },
+                                                {
+                                                  "issues": [
+                                                    {
+                                                      "code": "invalid_union",
+                                                      "unionErrors": [
+                                                        {
+                                                          "issues": [
+                                                            {
+                                                              "code": "invalid_type",
+                                                              "expected": "string",
+                                                              "received": "object",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                0
+                                                              ],
+                                                              "message": "Expected string, received object"
+                                                            }
+                                                          ],
+                                                          "name": "ZodError"
+                                                        },
+                                                        {
+                                                          "issues": [
+                                                            {
+                                                              "code": "custom",
+                                                              "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                0,
+                                                                "tag"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "code": "invalid_type",
+                                                              "expected": "object",
+                                                              "received": "undefined",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                0,
+                                                                "props"
+                                                              ],
+                                                              "message": "Required"
+                                                            }
+                                                          ],
+                                                          "name": "ZodError"
+                                                        }
+                                                      ],
+                                                      "path": [
+                                                        "root",
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        0
+                                                      ],
+                                                      "message": "Invalid input"
+                                                    },
+                                                    {
+                                                      "code": "invalid_union",
+                                                      "unionErrors": [
+                                                        {
+                                                          "issues": [
+                                                            {
+                                                              "code": "invalid_type",
+                                                              "expected": "string",
+                                                              "received": "object",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                1
+                                                              ],
+                                                              "message": "Expected string, received object"
+                                                            }
+                                                          ],
+                                                          "name": "ZodError"
+                                                        },
+                                                        {
+                                                          "issues": [
+                                                            {
+                                                              "code": "custom",
+                                                              "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                1,
+                                                                "tag"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "code": "invalid_type",
+                                                              "expected": "object",
+                                                              "received": "undefined",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                1,
+                                                                "props"
+                                                              ],
+                                                              "message": "Required"
+                                                            }
+                                                          ],
+                                                          "name": "ZodError"
+                                                        }
+                                                      ],
+                                                      "path": [
+                                                        "root",
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        1
+                                                      ],
+                                                      "message": "Invalid input"
+                                                    },
+                                                    {
+                                                      "code": "custom",
+                                                      "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
+                                                      "path": [
+                                                        "root",
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        2,
+                                                        "tag"
+                                                      ]
+                                                    }
+                                                  ],
+                                                  "name": "ZodError"
+                                                }
+                                              ],
+                                              "path": [
+                                                "root",
+                                                "children",
+                                                1,
+                                                "children",
+                                                1,
+                                                "children"
+                                              ],
+                                              "message": "Invalid input"
+                                            }
+                                          ],
+                                          "name": "ZodError"
+                                        }
+                                      ],
+                                      "path": [
+                                        "root",
+                                        "children",
+                                        1,
+                                        "children",
+                                        1
+                                      ],
+                                      "message": "Invalid input"
+                                    },
+                                    {
+                                      "code": "invalid_union",
+                                      "unionErrors": [
+                                        {
+                                          "issues": [
+                                            {
+                                              "code": "invalid_type",
+                                              "expected": "string",
+                                              "received": "object",
+                                              "path": [
+                                                "root",
+                                                "children",
+                                                1,
+                                                "children",
+                                                2
+                                              ],
+                                              "message": "Expected string, received object"
+                                            }
+                                          ],
+                                          "name": "ZodError"
+                                        },
+                                        {
+                                          "issues": [
+                                            {
+                                              "code": "invalid_type",
+                                              "expected": "object",
+                                              "received": "undefined",
+                                              "path": [
+                                                "root",
+                                                "children",
+                                                1,
+                                                "children",
+                                                2,
+                                                "props"
+                                              ],
+                                              "message": "Required"
+                                            },
+                                            {
+                                              "code": "invalid_union",
+                                              "unionErrors": [
+                                                {
+                                                  "issues": [
+                                                    {
+                                                      "code": "invalid_type",
+                                                      "expected": "string",
+                                                      "received": "array",
+                                                      "path": [
+                                                        "root",
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        2,
+                                                        "children"
+                                                      ],
+                                                      "message": "Expected string, received array"
+                                                    }
+                                                  ],
+                                                  "name": "ZodError"
+                                                },
+                                                {
+                                                  "issues": [
+                                                    {
+                                                      "code": "invalid_union",
+                                                      "unionErrors": [
+                                                        {
+                                                          "issues": [
+                                                            {
+                                                              "code": "invalid_type",
+                                                              "expected": "string",
+                                                              "received": "object",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                2,
+                                                                "children",
+                                                                0
+                                                              ],
+                                                              "message": "Expected string, received object"
+                                                            }
+                                                          ],
+                                                          "name": "ZodError"
+                                                        },
+                                                        {
+                                                          "issues": [
+                                                            {
+                                                              "code": "custom",
+                                                              "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                2,
+                                                                "children",
+                                                                0,
+                                                                "tag"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "code": "invalid_type",
+                                                              "expected": "object",
+                                                              "received": "undefined",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                2,
+                                                                "children",
+                                                                0,
+                                                                "props"
+                                                              ],
+                                                              "message": "Required"
+                                                            }
+                                                          ],
+                                                          "name": "ZodError"
+                                                        }
+                                                      ],
+                                                      "path": [
+                                                        "root",
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        2,
+                                                        "children",
+                                                        0
+                                                      ],
+                                                      "message": "Invalid input"
+                                                    },
+                                                    {
+                                                      "code": "invalid_union",
+                                                      "unionErrors": [
+                                                        {
+                                                          "issues": [
+                                                            {
+                                                              "code": "invalid_type",
+                                                              "expected": "string",
+                                                              "received": "object",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                2,
+                                                                "children",
+                                                                1
+                                                              ],
+                                                              "message": "Expected string, received object"
+                                                            }
+                                                          ],
+                                                          "name": "ZodError"
+                                                        },
+                                                        {
+                                                          "issues": [
+                                                            {
+                                                              "code": "custom",
+                                                              "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                2,
+                                                                "children",
+                                                                1,
+                                                                "tag"
+                                                              ]
+                                                            },
+                                                            {
+                                                              "code": "invalid_type",
+                                                              "expected": "object",
+                                                              "received": "undefined",
+                                                              "path": [
+                                                                "root",
+                                                                "children",
+                                                                1,
+                                                                "children",
+                                                                2,
+                                                                "children",
+                                                                1,
+                                                                "props"
+                                                              ],
+                                                              "message": "Required"
+                                                            }
+                                                          ],
+                                                          "name": "ZodError"
+                                                        }
+                                                      ],
+                                                      "path": [
+                                                        "root",
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        2,
+                                                        "children",
+                                                        1
+                                                      ],
+                                                      "message": "Invalid input"
+                                                    },
+                                                    {
+                                                      "code": "custom",
+                                                      "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
+                                                      "path": [
+                                                        "root",
+                                                        "children",
+                                                        1,
+                                                        "children",
+                                                        2,
+                                                        "children",
+                                                        2,
+                                                        "tag"
+                                                      ]
+                                                    }
+                                                  ],
+                                                  "name": "ZodError"
+                                                }
+                                              ],
+                                              "path": [
+                                                "root",
+                                                "children",
+                                                1,
+                                                "children",
+                                                2,
+                                                "children"
+                                              ],
+                                              "message": "Invalid input"
+                                            }
+                                          ],
+                                          "name": "ZodError"
+                                        }
+                                      ],
+                                      "path": [
+                                        "root",
+                                        "children",
+                                        1,
+                                        "children",
+                                        2
+                                      ],
+                                      "message": "Invalid input"
+                                    }
+                                  ],
+                                  "name": "ZodError"
+                                }
+                              ],
+                              "path": [
+                                "root",
+                                "children",
+                                1,
+                                "children"
+                              ],
+                              "message": "Invalid input"
+                            }
+                          ],
+                          "name": "ZodError"
+                        }
+                      ],
+                      "path": [
+                        "root",
+                        "children",
+                        1
+                      ],
+                      "message": "Invalid input"
+                    },
+                    {
+                      "code": "invalid_union",
+                      "unionErrors": [
+                        {
+                          "issues": [
+                            {
+                              "code": "invalid_type",
+                              "expected": "string",
+                              "received": "object",
+                              "path": [
+                                "root",
+                                "children",
+                                2
+                              ],
+                              "message": "Expected string, received object"
+                            }
+                          ],
+                          "name": "ZodError"
+                        },
+                        {
+                          "issues": [
+                            {
+                              "code": "custom",
+                              "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
+                              "path": [
+                                "root",
+                                "children",
+                                2,
+                                "tag"
+                              ]
+                            },
+                            {
+                              "code": "invalid_union",
+                              "unionErrors": [
+                                {
+                                  "issues": [
+                                    {
+                                      "code": "invalid_type",
+                                      "expected": "string",
+                                      "received": "array",
+                                      "path": [
+                                        "root",
+                                        "children",
+                                        2,
+                                        "children"
+                                      ],
+                                      "message": "Expected string, received array"
+                                    }
+                                  ],
+                                  "name": "ZodError"
+                                },
+                                {
+                                  "issues": [
+                                    {
+                                      "code": "invalid_union",
+                                      "unionErrors": [
+                                        {
+                                          "issues": [
+                                            {
+                                              "code": "invalid_type",
+                                              "expected": "string",
+                                              "received": "object",
+                                              "path": [
+                                                "root",
+                                                "children",
+                                                2,
+                                                "children",
+                                                0
+                                              ],
+                                              "message": "Expected string, received object"
+                                            }
+                                          ],
+                                          "name": "ZodError"
+                                        },
+                                        {
+                                          "issues": [
+                                            {
+                                              "code": "custom",
+                                              "message": "Unknown component \"tag\". Supported components: Card,List,Table,Header",
+                                              "path": [
+                                                "root",
+                                                "children",
+                                                2,
+                                                "children",
+                                                0,
+                                                "tag"
+                                              ]
+                                            },
+                                            {
+                                              "code": "invalid_union",
+                                              "unionErrors": [
+                                                {
+                                                  "issues": [
+                                                    {
+                                                      "code": "invalid_type",
+                                                      "expected": "string",
+                                                      "received": "undefined",
+                                                      "path": [
+                                                        "root",
+                                                        "children",
+                                                        2,
+                                                        "children",
+                                                        0,
+                                                        "children"
+                                                      ],
+                                                      "message": "Required"
+                                                    }
+                                                  ],
+                                                  "name": "ZodError"
+                                                },
+                                                {
+                                                  "issues": [
+                                                    {
+                                                      "code": "invalid_type",
+                                                      "expected": "array",
+                                                      "received": "undefined",
+                                                      "path": [
+                                                        "root",
+                                                        "children",
+                                                        2,
+                                                        "children",
+                                                        0,
+                                                        "children"
+                                                      ],
+                                                      "message": "Required"
+                                                    }
+                                                  ],
+                                                  "name": "ZodError"
+                                                }
+                                              ],
+                                              "path": [
+                                                "root",
+                                                "children",
+                                                2,
+                                                "children",
+                                                0,
+                                                "children"
+                                              ],
+                                              "message": "Invalid input"
+                                            }
+                                          ],
+                                          "name": "ZodError"
+                                        }
+                                      ],
+                                      "path": [
+                                        "root",
+                                        "children",
+                                        2,
+                                        "children",
+                                        0
+                                      ],
+                                      "message": "Invalid input"
+                                    }
+                                  ],
+                                  "name": "ZodError"
+                                }
+                              ],
+                              "path": [
+                                "root",
+                                "children",
+                                2,
+                                "children"
+                              ],
+                              "message": "Invalid input"
+                            }
+                          ],
+                          "name": "ZodError"
+                        }
+                      ],
+                      "path": [
+                        "root",
+                        "children",
+                        2
+                      ],
+                      "message": "Invalid input"
+                    }
+                  ],
+                  "name": "ZodError"
+                }
+              ],
+              "path": [
+                "root",
+                "children"
+              ],
+              "message": "Invalid input"
+            }
+          ],
+          "name": "ZodError"
+        },
+        {
+          "issues": [
+            {
+              "code": "invalid_type",
+              "expected": "array",
+              "received": "object",
+              "path": [
+                "root"
+              ],
+              "message": "Expected array, received object"
+            }
+          ],
+          "name": "ZodError"
+        }
+      ],
+      "path": [
+        "root"
+      ],
+      "message": "Invalid input"
+    }
+  ],
+  "generatedOutput": {
+    "root": {
+      "tag": "Card",
+      "children": [
+        {
+          "tag": "MarkdownWithoutImages",
+          "children": [
+            "# The Lunar Canine Chronicles"
+          ]
+        },
+        {
+          "tag": "CardList",
+          "children": [
+            {
+              "tag": "Card",
+              "children": [
+                {
+                  "tag": "ImageGen",
+                  "children": [
+                    "An astronaut dog gazing at the Earth from the Moon"
+                  ]
+                },
+                {
+                  "tag": "MarkdownWithoutImages",
+                  "children": [
+                    "## Chapter 1: One Small Step for Dogkind"
+                  ]
+                },
+                {
+                  "tag": "Button",
+                  "props": {
+                    "primary": true
+                  },
+                  "children": [
+                    "Flag Inappropriate Content"
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "Card",
+              "children": [
+                {
+                  "tag": "ImageGen",
+                  "children": [
+                    "Dogs playing with a Moon rock"
+                  ]
+                },
+                {
+                  "tag": "MarkdownWithoutImages",
+                  "children": [
+                    "## Chapter 2: Lunar Fetch"
+                  ]
+                },
+                {
+                  "tag": "Button",
+                  "props": {
+                    "primary": true
+                  },
+                  "children": [
+                    "Flag Inappropriate Content"
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "Card",
+              "children": [
+                {
+                  "tag": "ImageGen",
+                  "children": [
+                    "Dogs howling at the Earth from the Moon"
+                  ]
+                },
+                {
+                  "tag": "MarkdownWithoutImages",
+                  "children": [
+                    "## Chapter 3: Earthset Howl"
+                  ]
+                },
+                {
+                  "tag": "Button",
+                  "props": {
+                    "primary": true
+                  },
+                  "children": [
+                    "Flag Inappropriate Content"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "StackedForm",
+          "props": {
+            "cancelLabel": "Cancel",
+            "submitLabel": "Submit Feedback"
+          },
+          "children": [
+            {
+              "tag": "TextAreaInput",
+              "props": {
+                "label": "Feedback",
+                "id": "user-feedback",
+                "defaultValue": "I really enjoyed the Lunar Canine Chronicles because..."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

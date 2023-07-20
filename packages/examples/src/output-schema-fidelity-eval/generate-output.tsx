@@ -9,13 +9,13 @@ import { SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import _ from 'lodash';
 import { pino } from 'pino';
 import { PinoLogger } from 'ai-jsx/core/log';
-import { Jsonifiable } from 'type-fest';
+import { Jsonifiable, MergeExclusive } from 'type-fest';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Prompt } from 'ai-jsx/batteries/prompts';
 
-const testCaseCount = 1;
-const concurrencyLimit = 10;
+const testCaseCount = 4;
+const concurrencyLimit = 3;
 const limit = pLimit(concurrencyLimit);
 
 const outputFile = 'output-schema-fidelity-eval.jsonl';
@@ -57,7 +57,8 @@ const simpleJson: TestCase = {
   formatOutput: JSON.parse,
 };
 
-const allComponentNames = ['Card', 'List', 'Table', 'Header'];
+// Hardcoded to match the exports of the building block files.
+const allComponentNames = ['Button', 'MarkdownWithoutImages', 'IconButton', 'Badge', 'Card', 'CardList', 'InputWithLabel', 'TextAreaInput', 'SimpleRadioGroup', 'Toggle', 'CheckboxList', 'ActionPanel', 'StackedFormSection', 'StackedForm', 'ImageGen'];
 const Element: z.Schema = z.object({
   tag: z.string().refine((c) => allComponentNames.includes(c), {
     message: `Unknown component "tag". Supported components: ${allComponentNames}`,
@@ -65,13 +66,13 @@ const Element: z.Schema = z.object({
   // The results will look better in the UI if the AI gives `props` back before `children`.
   // Also, make props optional.
   props: z.optional(z.record(z.any())),
-  children: z.union([z.string(), z.array(z.union([z.string(), z.lazy(() => Element)]))]),
+  children: z.optional(z.union([z.string(), z.array(z.union([z.string(), z.lazy(() => Element)]))])),
 });
 const Elements = z.union([Element, z.array(Element)]);
 const elementsWrapper = z.object({ root: Elements });
 
 const currentPath = path.dirname(fileURLToPath(import.meta.url));
-const packageRoot = path.resolve(currentPath, '..', '..', '..');
+const packageRoot = path.resolve(currentPath, '..', '..', '..', '..');
 const reactComponentsDoc = fs.readFile(
   path.join(packageRoot, 'packages/create-react-app-demo/src/story-teller/BuildingBlocks.tsx'),
   'utf-8'
@@ -160,14 +161,17 @@ async function RunSingleTrial(
   await limit(async () => {
     logger.debug({ testCaseIndex: index }, 'Running testCase');
 
+    const startTime = performance.now();
+
     async function writeOutput(row: Record<string, Jsonifiable>) {
       const outputLine = JSON.stringify({
         testCase: testCase.name,
         index,
+        durationMs: performance.now() - startTime,
         ...row,
       });
       await resultFileHandle.write(`${outputLine}\n`);
-      logger.debug({ testCaseIndex: index }, 'Finished');
+      logger.info({ testCaseIndex: index }, 'Finished');
     }
 
     try {
@@ -177,6 +181,7 @@ async function RunSingleTrial(
 
       const validatedOutput = testCase.validate(output);
       await writeOutput({
+        originalOutputLength: output.length,
         validationResult: validatedOutput,
         generatedOutput: getFormattedOutput(output),
       });
