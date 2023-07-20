@@ -1,16 +1,17 @@
 import * as AI from 'ai-jsx';
 import pLimit from 'p-limit';
 import fs from 'node:fs/promises';
-import { ValidChatModel as OpenAIModel } from 'ai-jsx/lib/openai';
-import { ValidChatModel as AnthropicModel } from 'ai-jsx/lib/anthropic';
+import { OpenAI } from 'ai-jsx/lib/openai';
+import { Anthropic } from 'ai-jsx/lib/anthropic';
 import { z } from 'zod';
 import { JsonChatCompletion } from 'ai-jsx/batteries/constrained-output';
 import { UserMessage } from 'ai-jsx/core/completion';
 import _ from 'lodash';
 import { pino } from 'pino';
 import { PinoLogger } from 'ai-jsx/core/log';
+import { Jsonifiable } from 'type-fest';
 
-const trialCount = 10;
+const testCaseCount = 10;
 const concurrencyLimit = 10;
 const limit = pLimit(concurrencyLimit);
 
@@ -24,19 +25,18 @@ try {
 }
 const resultFileHandle = await fs.open(outputFile, 'a');
 
-interface Trial {
+interface TestCase {
   name: string;
   component: AI.Element<any>;
-  validate: (output: string) => string;
+  validate: (output: string) => Jsonifiable;
+  formatOutput?: (rawOutput: string) => Jsonifiable;
 }
-
-// const models = [<OpenAI chatModel="gpt-4" />];
 
 const simpleJsonSchema = z.object({
   name: z.string(),
   age: z.number(),
 });
-const simpleJson: Trial = {
+const simpleJson: TestCase = {
   name: 'simple-json',
   component: (
     <JsonChatCompletion schema={simpleJsonSchema}>
@@ -47,13 +47,14 @@ const simpleJson: Trial = {
     try {
       simpleJsonSchema.parse(JSON.parse(output));
     } catch (e: any) {
-      return e.message;
+      return JSON.parse(e.message);
     }
     return null;
   },
+  formatOutput: JSON.parse,
 };
 
-const trials: Trial[] = [simpleJson];
+const testCases: TestCase[] = [simpleJson];
 
 const logger = pino({
   name: 'ai-jsx',
@@ -66,23 +67,43 @@ const logger = pino({
   },
 });
 
-function promisesForTrial(trial: Trial) {
-  _.range(trialCount).map((index) =>
-    limit(async () => {
-      logger.debug({ trialIndex: index }, 'Running trial');
-      const output = await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(trial.component);
-      const validatedOutput = trial.validate(output);
-      const outputLine = JSON.stringify({
-        trial: trial.name,
-        index,
-        validationResult: validatedOutput,
-        generatedOutput: output,
-      });
-      await resultFileHandle.write(`${outputLine}\n`);
-      logger.debug({ trialIndex: index }, 'Finished');
-    })
+async function RunSingleTrial(
+  { index, testCase }: { index: number; testCase: TestCase },
+  { render, logger }: AI.ComponentContext
+) {
+  await limit(async () => {
+    logger.debug({ testCaseIndex: index }, 'Running testCase');
+    const output = await render(testCase.component);
+    const validatedOutput = testCase.validate(output);
+    const outputLine = JSON.stringify({
+      testCase: testCase.name,
+      index,
+      validationResult: validatedOutput,
+      generatedOutput: testCase.formatOutput ? testCase.formatOutput(output) : output,
+    });
+    await resultFileHandle.write(`${outputLine}\n`);
+    logger.debug({ testCaseIndex: index }, 'Finished');
+  });
+  return '';
+}
+
+function RunTestCase({ testCase }: { testCase: TestCase }) {
+  const testCaseComponents = _.range(testCaseCount).map((index) => (
+    <RunSingleTrial index={index} testCase={testCase} />
+  ));
+
+  return (
+    <>
+      <OpenAI chatModel="gpt-4">{testCaseComponents}</OpenAI>
+      <OpenAI chatModel="gpt-3.5-turbo">{testCaseComponents}</OpenAI>
+      <Anthropic chatModel="claude-1.3">{testCaseComponents}</Anthropic>
+    </>
   );
 }
 
-await Promise.all(trials.flatMap(promisesForTrial));
-logger.info({ trialCount }, 'All trials complete');
+function RunTestCases({ testCases }: { testCases: TestCase[] }) {
+  return testCases.map((testCase) => <RunTestCase testCase={testCase} />);
+}
+
+await AI.createRenderContext({ logger: new PinoLogger() }).render(<RunTestCases testCases={testCases} />);
+logger.info({ testCaseCount }, 'All testCases complete');
