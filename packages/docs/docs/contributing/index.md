@@ -61,7 +61,7 @@ To publish:
 
 1. During your PR:
    1. Make sure the `version` field in `packages/ai-jsx/package.json` has been incremented in accordance with [semver](https://semver.org/).
-   1. Update the [changelog](../changelog.md).
+   1. Update the [changelog](../changelog.md). Make sure to find the commit for the currently published version and add that URL to the version number.
 1. After your PR is merged:
    1. `cd packages/ai-jsx`
    1. `npm publish`
