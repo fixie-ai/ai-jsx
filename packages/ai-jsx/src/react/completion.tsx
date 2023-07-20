@@ -94,18 +94,18 @@ export function collectComponents(node: React.ReactNode | AI.Node) {
     if (Array.isArray(node)) {
       node.forEach((node) => collectComponentsRec(node, inReact));
     }
-  
+
     if (React.isValidElement(node)) {
       if (inReact) {
         reactComponents.add(node.type);
       }
-  
+
       const childrenAreReact = (inReact || node.type === AI.React) && !isJsxBoundary(node.type);
       if ('children' in node.props) {
         collectComponentsRec(node.props.children, childrenAreReact);
       }
     }
-  
+
     if (AI.isElement(node)) {
       const childrenAreReact = (inReact || node.tag === AI.React) && !isJsxBoundary(node.tag);
       if ('children' in node.props) {
@@ -114,5 +114,5 @@ export function collectComponents(node: React.ReactNode | AI.Node) {
     }
   }
   collectComponentsRec(node, true);
-  return Object.fromEntries(Array.from(reactComponents).map((c) => [reactComponentName(c), c]))
+  return Object.fromEntries(Array.from(reactComponents).map((c) => [reactComponentName(c), c]));
 }

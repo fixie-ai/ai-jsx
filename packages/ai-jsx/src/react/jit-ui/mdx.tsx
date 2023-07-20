@@ -1,9 +1,12 @@
-import * as AI from '../../index.js';
-import { ChatCompletion, SystemMessage } from "../../core/completion.js";
+import * as AI from '../core.js';
+import { ChatCompletion, SystemMessage, UserMessage } from '../../core/completion.js';
 import React from 'react';
 import { collectComponents } from '../completion.js';
 
-export function MdxCompletion({children, usageExamples}: {children: AI.Node, usageExamples: React.ReactNode}) {
+/**
+ * Use GPT-4 with this.
+ */
+export function MdxCompletion({ children, usageExamples }: { children: AI.Node; usageExamples: React.ReactNode }) {
   const components = collectComponents(usageExamples);
   /* prettier-ignore */
   return <ChatCompletion>
@@ -45,6 +48,8 @@ export function MdxCompletion({children, usageExamples}: {children: AI.Node, usa
       `}
       === end example
       === end instructions
+
+      Do not include a starting ```mdx and closing ``` line. Just respond with the MDX itself.
 
       This doc tells you the differences between MDX and markdown.
 
@@ -98,6 +103,12 @@ export function MdxCompletion({children, usageExamples}: {children: AI.Node, usa
 
       Whereas all Markdown is valid, incorrect MDX will crash.
       === end doc
+
+      Here are the components you have available, and how to use them:
+
+      === Begin components
+      <AI.React>{usageExamples}</AI.React>
+      === end components
     </SystemMessage>
     {children}
   </ChatCompletion>

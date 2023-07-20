@@ -288,7 +288,11 @@ async function ZachMDX({ questionKind }: { questionKind: 'book-flight' | 'tell-s
       );
       break;
     case 'tell-story':
-      question = <UserMessage>Tell me a children's story, then put a summary of the key plot points or characters at the end.</UserMessage>;
+      question = (
+        <UserMessage>
+          Tell me a children's story, then put a summary of the key plot points or characters at the end.
+        </UserMessage>
+      );
       break;
     case 'generate-recipe':
       question = <UserMessage>generate a recipe</UserMessage>;
