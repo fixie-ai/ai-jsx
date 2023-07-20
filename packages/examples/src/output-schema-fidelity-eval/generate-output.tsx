@@ -63,7 +63,7 @@ import { compileSync } from '@mdx-js/mdx';
  * Note: parts of this should be replaced with an integration with https://www.promptfoo.dev/.
  */
 
-const testCaseCount = 10;
+const testCaseCount = 100;
 const concurrencyLimit = 2;
 const limit = pLimit(concurrencyLimit);
 
@@ -271,22 +271,7 @@ function MDXInstructions({ componentNames, componentDoc }: { componentNames: str
       necessary for the markdown interpretation. For example, do not include newlines within a React component. Here is
       the source code for the components you can use: === Begin source code
       {componentDoc}
-      === End source code Example output:
-      {`
-    # My MDX document
-    <Card header='My card header content' footer='my footer content'>
-      * List item 1
-      * List item 2
-      * List item 3
-       
-      \`\`\`
-      // Code block
-      foo.bar(); 
-      \`\`\`
-    </Card>
-
-    Here is a paragraph <Badge color='blue'>with a badge</Badge> in it.
-  `}
+      === End source code
     </SystemMessage>
   );
 }
@@ -303,7 +288,7 @@ async function ZachMDX({ questionKind }: { questionKind: 'book-flight' | 'tell-s
       );
       break;
     case 'tell-story':
-      question = <UserMessage>Tell me a children's story</UserMessage>;
+      question = <UserMessage>Tell me a children's story, then put a summary of the key plot points or characters at the end.</UserMessage>;
       break;
     case 'generate-recipe':
       question = <UserMessage>generate a recipe</UserMessage>;
@@ -317,7 +302,7 @@ async function ZachMDX({ questionKind }: { questionKind: 'book-flight' | 'tell-s
         If the user asks for some data you don't have access to, just make something up. For example, if the user asks
         about their hotel reservation, just make up a hotel name and reservation number.
       </SystemMessage>
-      <UserMessage>{question}</UserMessage>
+      {question}
     </ChatCompletion>
   );
 }
@@ -408,13 +393,47 @@ async function MdxAgent({
   );
 }
 
+interface MDXNode {
+  type: string;
+  tagName?: string;
+  children?: MDXNode[];
+  name?: string;
+  value?: string;
+  attributes?: { type: string; name: string; value: string }[];
+}
+
+function getAllTagsFromAst(ast: MDXNode): string[] {
+  const { type, children = [], name } = ast;
+  const nameFromThisNode = type === 'mdxJsxFlowElement' ? name! : null;
+  return _.compact([nameFromThisNode, ...children.flatMap(getAllTagsFromAst)]);
+}
+
 // TODO: validate that the MDX doesn't have any HTML elements in it.
 function validateMdx(output: string) {
+  let ast: MDXNode | undefined;
+
+  function rehypePlugin() {
+    return (_ast: MDXNode) => {
+      ast = _ast;
+    };
+  }
+
   try {
-    compileSync({
-      path: 'test.mdx',
-      value: output,
-    });
+    compileSync(
+      {
+        path: 'test.mdx',
+        value: output,
+      },
+      {
+        rehypePlugins: [[rehypePlugin, { throwOnError: true, strict: true }]],
+      }
+    );
+
+    const tags = getAllTagsFromAst(ast!);
+    const hallucinatedTags = tags.filter((tag) => !zachComponentNames.includes(tag));
+    if (hallucinatedTags.length) {
+      throw new Error(`Hallucinated tags: ${hallucinatedTags.join(', ')}`);
+    }
   } catch (e: any) {
     return e.message;
   }

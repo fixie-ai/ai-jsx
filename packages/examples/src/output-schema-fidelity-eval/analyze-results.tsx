@@ -29,39 +29,40 @@ function parseJsonlFile(filePath: string): ResultFileRow[] {
 
 // This should just be moved into the generate side.
 function getValidationResultCategory(row: ResultFileRow) {
-  const { validationResult } = row;
-  // console.log(validationResult);
-  if (!validationResult) {
-    return 'valid';
-  }
-  if (validationResult?.[0]?.message.includes('Unknown component "tag"')) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const allTags = traverse(row.generatedOutput).reduce(function (acc, node) {
-      if (this.key === 'tag') {
-        acc.add(node);
-      }
-      return acc;
-    }, new Set());
+  return 'not implemented';
+  // const { validationResult } = row;
+  // // console.log(validationResult);
+  // if (!validationResult) {
+  //   return 'valid';
+  // }
+  // if (validationResult?.[0]?.message.includes('Unknown component "tag"')) {
+  //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  //   const allTags = traverse(row.generatedOutput).reduce(function (acc, node) {
+  //     if (this.key === 'tag') {
+  //       acc.add(node);
+  //     }
+  //     return acc;
+  //   }, new Set());
 
-    // console.log(allTags);
+  //   // console.log(allTags);
 
-    return 'hallucinated a component';
-  }
-  let invalidChildrenField = false;
-  traverse(row.generatedOutput).forEach(function (node) {
-    if (this.key === 'children' && !(typeof node === 'string' || Array.isArray(node))) {
-      invalidChildrenField = true;
-      this.stop();
-    }
-  });
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (invalidChildrenField) {
-    return 'invalid child field';
-  }
-  if (_.isEqual(row.generatedOutput, {})) {
-    return 'generated empty object';
-  }
-  return 'unknown error type';
+  //   return 'hallucinated a component';
+  // }
+  // let invalidChildrenField = false;
+  // traverse(row.generatedOutput).forEach(function (node) {
+  //   if (this.key === 'children' && !(typeof node === 'string' || Array.isArray(node))) {
+  //     invalidChildrenField = true;
+  //     this.stop();
+  //   }
+  // });
+  // // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  // if (invalidChildrenField) {
+  //   return 'invalid child field';
+  // }
+  // if (_.isEqual(row.generatedOutput, {})) {
+  //   return 'generated empty object';
+  // }
+  // return 'unknown error type';
 }
 
 function calculateSummary(rows: ResultFileRow[]) {
