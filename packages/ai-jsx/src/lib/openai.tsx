@@ -3,40 +3,41 @@
  * @packageDocumentation
  */
 
+import GPT3Tokenizer from 'gpt3-tokenizer';
+import {
+  ChatCompletionFunctions,
+  ChatCompletionRequestMessage,
+  ChatCompletionResponseMessage,
+  Configuration,
+  CreateChatCompletionRequestFunctionCall,
+  CreateChatCompletionResponse,
+  CreateCompletionResponse,
+  CreateImageRequestResponseFormatEnum,
+  CreateImageRequestSizeEnum,
+  OpenAIApi,
+  ResponseTypes,
+} from 'openai-edge';
+import { Merge, MergeExclusive } from 'type-fest';
 import {
   AssistantMessage,
   ChatProvider,
   CompletionProvider,
+  FunctionCall,
+  FunctionDefinition,
+  FunctionResponse,
   ModelProps,
   ModelPropsWithChildren,
   SystemMessage,
   UserMessage,
-  FunctionDefinition,
-  FunctionCall,
-  FunctionResponse,
   getParametersSchema,
 } from '../core/completion.js';
+import { AIJSXError, ErrorCode, HttpError } from '../core/errors.js';
 import { Image, ImageGenPropsWithChildren } from '../core/image-gen.js';
-import {
-  Configuration,
-  CreateChatCompletionResponse,
-  CreateCompletionResponse,
-  OpenAIApi,
-  ChatCompletionFunctions,
-  ChatCompletionResponseMessage,
-  ChatCompletionRequestMessage,
-  CreateImageRequestSizeEnum,
-  CreateImageRequestResponseFormatEnum,
-  ResponseTypes,
-} from 'openai-edge';
-import * as AI from '../index.js';
-import { PropsOfComponent, Node } from '../index.js';
-import GPT3Tokenizer from 'gpt3-tokenizer';
-import { Merge, MergeExclusive } from 'type-fest';
 import { Logger } from '../core/log.js';
-import { HttpError, AIJSXError, ErrorCode } from '../core/errors.js';
-import { getEnvVar, patchedUntruncateJson } from './util.js';
+import * as AI from '../index.js';
+import { Node, PropsOfComponent } from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
+import { getEnvVar, patchedUntruncateJson } from './util.js';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -281,6 +282,7 @@ export async function* OpenAIChatModel(
   } & MergeExclusive<
       {
         functionDefinitions: Record<string, FunctionDefinition>;
+        forcedFunction: string;
 
         /**
          * Internal only.
@@ -291,6 +293,7 @@ export async function* OpenAIChatModel(
       },
       {
         functionDefinitions?: never;
+        forcedFunction?: never;
         experimental_streamFunctionCallOnly?: never;
       }
     >,
@@ -312,6 +315,20 @@ export async function* OpenAIChatModel(
       ErrorCode.ChatCompletionBadInput,
       'user'
     );
+  }
+
+  if (props.forcedFunction) {
+    if (
+      !Object.entries(props.functionDefinitions)
+        .map(([functionName, _]) => functionName)
+        .find((f) => f == props.forcedFunction)
+    ) {
+      throw new AIJSXError(
+        `The function ${props.forcedFunction} was forced, but no function with that name was defined.`,
+        ErrorCode.ChatCompletionBadInput,
+        'user'
+      );
+    }
   }
 
   const messageElements = await render(props.children, {
@@ -384,6 +401,11 @@ export async function* OpenAIChatModel(
         description: functionDefinition.description,
         parameters: getParametersSchema(functionDefinition.parameters),
       }));
+  const openaiFunctionCall: CreateChatCompletionRequestFunctionCall | undefined = !props.forcedFunction
+    ? undefined
+    : {
+        name: props.forcedFunction,
+      };
 
   const openai = getContext(openAiClientContext);
   const chatCompletionRequest = {
@@ -392,6 +414,7 @@ export async function* OpenAIChatModel(
     temperature: props.temperature,
     messages,
     functions: openaiFunctions,
+    function_call: openaiFunctionCall,
     stop: props.stop,
     logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
     stream: true,

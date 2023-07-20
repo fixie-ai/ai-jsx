@@ -4,19 +4,19 @@
  * @packageDocumentation
  */
 
-import * as AI from '../index.js';
-import {
-  ChatCompletion,
-  SystemMessage,
-  AssistantMessage,
-  UserMessage,
-  ModelPropsWithChildren,
-} from '../core/completion.js';
 import yaml from 'js-yaml';
-import { AIJSXError, ErrorCode, ErrorBlame } from '../core/errors.js';
 import { Jsonifiable } from 'type-fest';
 import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import {
+  AssistantMessage,
+  ChatCompletion,
+  ModelPropsWithChildren,
+  SystemMessage,
+  UserMessage,
+} from '../core/completion.js';
+import { AIJSXError, ErrorBlame, ErrorCode } from '../core/errors.js';
+import * as AI from '../index.js';
 import { patchedUntruncateJson } from '../lib/util.js';
 
 export type ObjectCompletion = ModelPropsWithChildren & {
@@ -315,6 +315,7 @@ export async function* JsonChatCompletionFunctionCall(
           parameters: schema,
         },
       }}
+      forcedFunction="print"
     >
       {children}
       <SystemMessage>
