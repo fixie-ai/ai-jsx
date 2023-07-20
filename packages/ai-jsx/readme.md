@@ -4,9 +4,7 @@
 [![Discord Follow](https://dcbadge.vercel.app/api/server/MsKAeKF8kU?style=flat)](https://discord.gg/MsKAeKF8kU)
 [![Twitter Follow](https://img.shields.io/twitter/follow/fixieai?style=social)](https://twitter.com/fixieai)
 
-## AI.JSX in Two Minutes
-
-https://github.com/fixie-ai/ai-jsx/assets/476553/301b79e4-7023-4adc-a3a5-72d5b7af0cde
+## What is AI.JSX?
 
 AI.JSX is a framework for building AI applications using Javascript and [JSX](https://react.dev/learn/writing-markup-with-jsx). While AI.JSX [is not React](https://docs.ai-jsx.com/is-it-react), it's designed to look and feel very similar while also integrating seamlessly with React-based projects. With AI.JSX, you don't just use JSX to describe what your UI should look like, you also use it to describe how **Large Language Models**, such as ChatGPT, should integrate into the rest of your application. The end result is a powerful combination where _intelligence_ can be deeply embedded into the application stack.
 
@@ -18,6 +16,8 @@ AI.JSX is designed to give you two important capabilities out of the box:
 AI.JSX can be used to create standalone LLM applications that can be deployed anywhere Node.JS is supported, or it can be used as part of a larger React application. For an example of how to integrate AI.JSX into a React project, see the [NextJS demo package](/packages/nextjs-demo/) or [follow the tutorial](https://docs.ai-jsx.com/category/tutorial). For an overview of all deployment architectures, see the [architecture overview](https://docs.ai-jsx.com/guides/architecture).
 
 For more details on how AI.JSX works with React in general, see our [AI+UI guide](https://docs.ai-jsx.com/guides/ai-ui).
+
+#### Check-out the 2 minute [intro video](https://github.com/fixie-ai/ai-jsx/assets/476553/301b79e4-7023-4adc-a3a5-72d5b7af0cde).
 
 ## Quickstart
 
