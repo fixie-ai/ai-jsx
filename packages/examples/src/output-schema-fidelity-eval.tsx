@@ -74,6 +74,9 @@ async function RunSingleTrial(
   await limit(async () => {
     logger.debug({ testCaseIndex: index }, 'Running testCase');
     const output = await render(testCase.component);
+    
+    // TODO: how can we figure out which model was used?
+
     const validatedOutput = testCase.validate(output);
     const outputLine = JSON.stringify({
       testCase: testCase.name,
@@ -105,5 +108,5 @@ function RunTestCases({ testCases }: { testCases: TestCase[] }) {
   return testCases.map((testCase) => <RunTestCase testCase={testCase} />);
 }
 
-await AI.createRenderContext({ logger: new PinoLogger() }).render(<RunTestCases testCases={testCases} />);
+await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<RunTestCases testCases={testCases} />);
 logger.info({ testCaseCount }, 'All testCases complete');
