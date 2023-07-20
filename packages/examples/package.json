@@ -57,6 +57,7 @@
     "build": "yarn run typecheck"
   },
   "dependencies": {
+    "@mdx-js/mdx": "^2.3.0",
     "@opentelemetry/api": "^1.4.1",
     "@opentelemetry/auto-instrumentations-node": "^0.37.0",
     "@opentelemetry/context-async-hooks": "^1.14.0",

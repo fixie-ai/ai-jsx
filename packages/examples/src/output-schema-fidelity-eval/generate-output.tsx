@@ -5,7 +5,7 @@ import { OpenAI } from 'ai-jsx/lib/openai';
 // import { Anthropic } from 'ai-jsx/lib/anthropic';
 import { z } from 'zod';
 import { JsonChatCompletion } from 'ai-jsx/batteries/constrained-output';
-import { SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import _ from 'lodash';
 import { pino } from 'pino';
 import { PinoLogger } from 'ai-jsx/core/log';
@@ -14,8 +14,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Prompt } from 'ai-jsx/batteries/prompts';
 import GPT3Tokenizer from 'gpt3-tokenizer';
+import fetch from 'node-fetch';
+import { compile } from '@mdx-js/mdx';
 
-const testCaseCount = 25;
+const testCaseCount = 2;
 const concurrencyLimit = 3;
 const limit = pLimit(concurrencyLimit);
 
@@ -141,12 +143,67 @@ const uiTestCase: TestCase = {
     } catch (e: any) {
       return JSON.parse(e.message);
     }
-    return null;
   },
   formatOutput: JSON.parse,
 };
 
-const testCases: TestCase[] = [uiTestCase];
+const mdxDocsRequest = await fetch(
+  'https://raw.githubusercontent.com/mdx-js/mdx/main/docs/docs/what-is-mdx.server.mdx'
+);
+const mdxDocsContent = await mdxDocsRequest.text();
+async function MdxAgent() {
+  return (
+    <ChatCompletion>
+      {/* prettier-ignore */}
+      <SystemMessage>You are an assistant who can use React components to work with the user. All your responses should be in MDX, which is Markdown For the Component Era. Here are instructions for how to use MDX:
+
+        === Begin instructions
+        {mdxDocsContent}
+        === End instructions
+
+        However, there are some special MDX instructions for you:
+        1. Do not include import statements. Everything you need will be in scope automatically.
+        1. Do not include a starting ```mdx and closing ``` line. Just respond with the MDX itself.
+        1. Do not use MDX expressions (e.g. "Result of addition: {1 + 1}").
+        1. If you have a form, don't explicitly explain what the form does – it should be self-evident. Don't say something like "the submit button will save your entry".
+        1. Don't say anything to the user about MDX. Don't say "I am using MDX" or "I am using React" or "here's an MDX form".
+        1. If you're making a form, use the props on the form itself to explain what the fields mean / provide guidance. This is preferable to writing out separate prose. Don't include separate instructions on how to use the form if you can avoid it.
+
+        Here is the source code for the components you can use:
+        === Begin source code
+        {await reactComponentsDoc}
+        === End source code
+
+        For example, to display data for an entity, use a Card component.
+      </SystemMessage>
+      <UserMessage>
+        Invent a short JSON shape for a character in a fantasy game. First, show me an example (as raw JSON). Next, show
+        me a form that I can use to make my own instance of this JSON.
+      </UserMessage>
+    </ChatCompletion>
+  );
+}
+
+const mdxTestCase: TestCase = {
+  name: 'mdx',
+  component: <MdxAgent />,
+  validate: (output) => {
+    try {
+      compile({
+        path: 'test.mdx',
+        value: output,
+      });
+    } catch (e: any) {
+      return e.message;
+    }
+  },
+};
+
+const testCases: TestCase[] = [
+  // simpleJson,
+  // uiTestCase,
+  mdxTestCase,
+];
 
 const logger = pino({
   name: 'ai-jsx',
@@ -204,7 +261,7 @@ async function RunSingleTrial(
       const validatedOutput = testCase.validate(output);
       await writeOutput({
         originalOutputTokenCount: new GPT3Tokenizer.default({ type: 'gpt3' }).encode(output).bpe.length,
-        validationResult: validatedOutput,
+        validationResult: validatedOutput ?? null,
         generatedOutput: getFormattedOutput(output),
       });
     } catch (e: any) {
