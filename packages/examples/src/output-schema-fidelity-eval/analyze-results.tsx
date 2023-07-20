@@ -2,6 +2,7 @@ import fs from 'fs';
 import { MergeExclusive } from 'type-fest';
 import _ from 'lodash';
 import prettyMs from 'pretty-ms';
+import traverse from 'traverse';
 
 type Jsonifiable = any;
 
@@ -25,6 +26,30 @@ function parseJsonlFile(filePath: string): ResultFileRow[] {
   return lines.map((line) => JSON.parse(line));
 }
 
+// This should just be moved into the generate side.
+function getValidationResultCategory(row: ResultFileRow) {
+  const {validationResult} = row;
+  // console.log(validationResult);
+  if (!validationResult) {
+    return 'valid';
+  }
+  if (validationResult?.[0]?.message.includes('Unknown component "tag"')) {
+    return 'hallucinated a component';
+  }
+  let invalidChildrenField = false;
+  traverse(row.generatedOutput).forEach(function (node) {
+    if (this.key === 'children' && !(typeof node === 'string' || Array.isArray(node))) {
+      invalidChildrenField = true;
+      this.stop();
+    }
+  });
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (invalidChildrenField) {
+    return 'invalid child field';
+  }
+  return 'unknown error type';
+}
+
 function calculateSummary(rows: ResultFileRow[]) {
   const sortedDurations = rows.map((row) => row.durationMs).sort((a, b) => a - b);
   const durationPercentile = (p: number) => {
@@ -44,11 +69,19 @@ function calculateSummary(rows: ResultFileRow[]) {
   const errorCount = rows.filter((row) => row.error !== undefined).length;
   const countRowsWithCorrectOutput = rows.filter((row) => row.validationResult === null).length;
 
+  const validationResultLabels = _(rows)
+    .reject({ validationResult: null })
+    .reject('error')
+    .map((row) => getValidationResultCategory(row))
+    .value();
+
   const timings = {
     median: durationPercentile(0.5),
     p90: durationPercentile(0.9),
     p99: durationPercentile(0.99),
   };
+
+  const countInvalidRows = rows.length - countRowsWithCorrectOutput;
 
   return {
     rowCount: rows.length,
@@ -62,8 +95,9 @@ function calculateSummary(rows: ResultFileRow[]) {
     outcomePortions: {
       runtimeError: errorCount / rows.length,
       validOutput: countRowsWithCorrectOutput / rows.length,
-      invalidOutput: (rows.length - countRowsWithCorrectOutput) / rows.length,
+      invalidOutput: countInvalidRows / rows.length,
     },
+    validationResultPortions: _.mapValues(_.countBy(validationResultLabels), (count) => count / countInvalidRows),
   };
 }
 

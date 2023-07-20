@@ -59,9 +59,11 @@ import { compileSync } from '@mdx-js/mdx';
  *
  * 5. Finally, analyze the results:
  *    loglevel=info yarn workspace examples demo:output-schema-fidelity-eval:analyze
+ *
+ * Note: parts of this should be replaced with an integration with https://www.promptfoo.dev/.
  */
 
-const testCaseCount = 25;
+const testCaseCount = 1_000;
 const concurrencyLimit = 3;
 const limit = pLimit(concurrencyLimit);
 
@@ -283,8 +285,8 @@ const mdxTestCase: TestCase = {
 
 const testCases: TestCase[] = [
   // simpleJson,
-  // uiTestCase,
-  mdxTestCase,
+  uiTestCase,
+  // mdxTestCase,
 ];
 
 const logger = pino({
