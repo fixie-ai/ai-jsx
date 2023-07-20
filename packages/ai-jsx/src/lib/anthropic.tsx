@@ -125,12 +125,6 @@ export async function* AnthropicChatModel(
             )}`;
           case AssistantMessage:
             return `${AnthropicSDK.AI_PROMPT}: ${await render(message)}`;
-          case SystemMessage:
-            throw new AIJSXError(
-              'Anthropic models do not support SystemMessage. Change your user message to instruct the model what to do.',
-              ErrorCode.AnthropicDoesNotSupportSystemMessage,
-              'user'
-            );
           case FunctionCall:
           case FunctionResponse:
             throw new AIJSXError(
