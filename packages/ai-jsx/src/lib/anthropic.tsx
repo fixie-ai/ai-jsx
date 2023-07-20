@@ -27,7 +27,7 @@ type ValidCompletionModel = never;
  *
  * @see https://docs.anthropic.com/claude/reference/complete_post.
  */
-type ValidChatModel =
+export type ValidChatModel =
   | 'claude-1'
   | 'claude-1-100k'
   | 'claude-instant-1'

@@ -46,7 +46,7 @@ type ValidCompletionModel =
   | 'text-babbage-001'
   | 'text-ada-001';
 
-type ValidChatModel =
+export type ValidChatModel =
   | 'gpt-4'
   | 'gpt-4-0314'
   | 'gpt-4-0613'
