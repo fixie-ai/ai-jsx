@@ -303,7 +303,7 @@ async function* ObjectCompletionWithRetry(
  */
 export async function* JsonChatCompletionFunctionCall(
   { schema, children, ...props }: ModelPropsWithChildren & { schema: z.Schema },
-  { render, logger }: AI.ComponentContext
+  { render }: AI.ComponentContext
 ) {
   const childrenWithCompletion = (
     <ChatCompletion
@@ -326,9 +326,6 @@ export async function* JsonChatCompletionFunctionCall(
 
   const frames = render(childrenWithCompletion);
   for await (const frame of frames) {
-    if (!frame) {
-      return JSON.stringify({});
-    }
     yield JSON.stringify(JSON.parse(frame).arguments);
   }
   return JSON.stringify(JSON.parse(await frames).arguments);
