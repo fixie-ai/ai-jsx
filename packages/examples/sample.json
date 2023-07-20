@@ -1,8 +1,8 @@
 {
   "testCase": "ui-split-props",
-  "index": 117,
-  "durationMs": 46822.786042034626,
-  "originalOutputTokenCount": 469,
+  "index": 124,
+  "durationMs": 23132.48720794916,
+  "originalOutputTokenCount": 321,
   "validationResult": [
     {
       "code": "invalid_union",
@@ -10,131 +10,13 @@
         {
           "issues": [
             {
-              "code": "invalid_union",
-              "unionErrors": [
-                {
-                  "issues": [
-                    {
-                      "code": "invalid_type",
-                      "expected": "string",
-                      "received": "array",
-                      "path": ["root", "children"],
-                      "message": "Expected string, received array"
-                    }
-                  ],
-                  "name": "ZodError"
-                },
-                {
-                  "issues": [
-                    {
-                      "code": "invalid_union",
-                      "unionErrors": [
-                        {
-                          "issues": [
-                            {
-                              "code": "invalid_type",
-                              "expected": "string",
-                              "received": "object",
-                              "path": ["root", "children", 2],
-                              "message": "Expected string, received object"
-                            }
-                          ],
-                          "name": "ZodError"
-                        },
-                        {
-                          "issues": [
-                            {
-                              "code": "invalid_union",
-                              "unionErrors": [
-                                {
-                                  "issues": [
-                                    {
-                                      "code": "invalid_type",
-                                      "expected": "string",
-                                      "received": "array",
-                                      "path": ["root", "children", 2, "children"],
-                                      "message": "Expected string, received array"
-                                    }
-                                  ],
-                                  "name": "ZodError"
-                                },
-                                {
-                                  "issues": [
-                                    {
-                                      "code": "invalid_union",
-                                      "unionErrors": [
-                                        {
-                                          "issues": [
-                                            {
-                                              "code": "invalid_type",
-                                              "expected": "string",
-                                              "received": "object",
-                                              "path": ["root", "children", 2, "children", 0],
-                                              "message": "Expected string, received object"
-                                            }
-                                          ],
-                                          "name": "ZodError"
-                                        },
-                                        {
-                                          "issues": [
-                                            {
-                                              "code": "invalid_union",
-                                              "unionErrors": [
-                                                {
-                                                  "issues": [
-                                                    {
-                                                      "code": "invalid_type",
-                                                      "expected": "string",
-                                                      "received": "object",
-                                                      "path": ["root", "children", 2, "children", 0, "children"],
-                                                      "message": "Expected string, received object"
-                                                    }
-                                                  ],
-                                                  "name": "ZodError"
-                                                },
-                                                {
-                                                  "issues": [
-                                                    {
-                                                      "code": "invalid_type",
-                                                      "expected": "array",
-                                                      "received": "object",
-                                                      "path": ["root", "children", 2, "children", 0, "children"],
-                                                      "message": "Expected array, received object"
-                                                    }
-                                                  ],
-                                                  "name": "ZodError"
-                                                }
-                                              ],
-                                              "path": ["root", "children", 2, "children", 0, "children"],
-                                              "message": "Invalid input"
-                                            }
-                                          ],
-                                          "name": "ZodError"
-                                        }
-                                      ],
-                                      "path": ["root", "children", 2, "children", 0],
-                                      "message": "Invalid input"
-                                    }
-                                  ],
-                                  "name": "ZodError"
-                                }
-                              ],
-                              "path": ["root", "children", 2, "children"],
-                              "message": "Invalid input"
-                            }
-                          ],
-                          "name": "ZodError"
-                        }
-                      ],
-                      "path": ["root", "children", 2],
-                      "message": "Invalid input"
-                    }
-                  ],
-                  "name": "ZodError"
-                }
+              "code": "invalid_type",
+              "expected": "object",
+              "received": "undefined",
+              "path": [
+                "root"
               ],
-              "path": ["root", "children"],
-              "message": "Invalid input"
+              "message": "Required"
             }
           ],
           "name": "ZodError"
@@ -144,122 +26,73 @@
             {
               "code": "invalid_type",
               "expected": "array",
-              "received": "object",
-              "path": ["root"],
-              "message": "Expected array, received object"
+              "received": "undefined",
+              "path": [
+                "root"
+              ],
+              "message": "Required"
             }
           ],
           "name": "ZodError"
         }
       ],
-      "path": ["root"],
+      "path": [
+        "root"
+      ],
       "message": "Invalid input"
     }
   ],
   "generatedOutput": {
-    "root": {
-      "tag": "MarkdownWithoutImages",
-      "children": [
-        {
-          "tag": "MarkdownWithoutImages",
-          "children": [
-            "# Moonlight Canines: A Tale of Lunar Dogs",
-            "\nFantasy has always had a place for the improbable, the impossible, and now, for the lunar dogs. Join us as we embark on an epic journey of adventure, friendship and discovery, told for the very first time."
-          ]
+    "tag": "StoryChapter",
+    "props": {
+      "chapterTitle": "Moon Dogs: A Journey to the Crater"
+    },
+    "children": [
+      {
+        "tag": "StoryChapter",
+        "props": {
+          "chapterTitle": "Chapter 1: Lunar Landing"
         },
-        {
-          "tag": "Card",
-          "props": {},
-          "children": [
-            {
-              "tag": "CardList",
-              "props": {},
-              "children": [
-                {
-                  "tag": "Card",
-                  "props": {},
-                  "children": [
-                    {
-                      "tag": "ImageGen",
-                      "children": "a pack of dogs standing proudly on the moon's surface looking at the earth"
-                    },
-                    "## Chapter One - The Arrival",
-                    "\nThe adventure of our lunar dogs begins with their unexpected arrival on the Moon. Stranded and bewildered, they must overcome their initial fear and start to explore this unfamiliar territory.",
-                    {
-                      "tag": "Button",
-                      "props": {
-                        "primary": true
-                      },
-                      "children": "Flag Inappropriate Content"
-                    }
-                  ]
-                },
-                {
-                  "tag": "Card",
-                  "props": {},
-                  "children": [
-                    {
-                      "tag": "ImageGen",
-                      "children": "the dogs discovering a mysterious lunar cavern lit by glowing crystals"
-                    },
-                    "## Chapter Two - The Lunar Cavern",
-                    "\nThe dogs discovered a mysterious lunar cavern, its walls glowing with an otherworldly radiance. Inside, an ancient silence waited to reveal the hidden secrets of the Moon.",
-                    {
-                      "tag": "Button",
-                      "props": {
-                        "primary": true
-                      },
-                      "children": "Flag Inappropriate Content"
-                    }
-                  ]
-                },
-                {
-                  "tag": "Card",
-                  "props": {},
-                  "children": [
-                    {
-                      "tag": "ImageGen",
-                      "children": "the dogs witnessing an Earthrise from the moon's surface"
-                    },
-                    "## Chapter Three - The Earthrise",
-                    "\nOn the horizon, our lunar dogs witnessed a fantastic spectacle - the Earth rising. It was a moment that instilled them with renewed resolve for their unfathomable journey.",
-                    {
-                      "tag": "Button",
-                      "props": {
-                        "primary": true
-                      },
-                      "children": "Flag Inappropriate Content"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+        "children": [
+          "The spaceship door drew open to reveal the moon's gray, untreaded landscape. To the team of space-faring dogs, it was an alien world full of unprecedented wonder and potential discoveries."
+        ]
+      },
+      {
+        "tag": "StoryChapter",
+        "props": {
+          "chapterTitle": "Chapter 2: Adapting to Lunarity"
         },
-        {
-          "tag": "StackedForm",
-          "props": {
-            "cancelLabel": "Cancel",
-            "submitLabel": "Submit"
-          },
-          "children": [
-            {
-              "tag": "StackedFormSection",
-              "props": {
-                "title": "Feedback"
-              },
-              "children": {
-                "tag": "TextAreaInput",
-                "props": {
-                  "label": "What did you think of the story?",
-                  "id": "storyFeedback",
-                  "defaultValue": ""
-                }
-              }
-            }
-          ]
-        }
-      ]
-    }
+        "children": [
+          "Gravity was a fraction of what they were used to. But with perky ears and flapping tails, the dogs soon started bounding around joyfully, making moon dust clouds."
+        ]
+      },
+      {
+        "tag": "StoryChapter",
+        "props": {
+          "chapterTitle": "Chapter 3: The Crater"
+        },
+        "children": [
+          "Their mission was to explore the mystic crater. What lay inside, they wondered as they made their cautious approach, noses twitching with anticipation."
+        ]
+      },
+      {
+        "tag": "StoryChapter",
+        "props": {
+          "chapterTitle": "Chapter 4: A Lonely Ball"
+        },
+        "children": [
+          "In the crater, they found an old tennis ball, perhaps left behind by human astronauts. It was a piece of home in this foreign land, and it brought them a comforting sense of familiarity."
+        ]
+      },
+      {
+        "tag": "StoryChapter",
+        "props": {
+          "chapterTitle": "Chapter 5: Return to Earth"
+        },
+        "children": [
+          "The lunar adventure had been exciting, but home was where their hearts truly belonged. With a spaceship full of moon rock samples and a newfound understanding of the universe, they eagerly embarked on their journey back to Earth."
+        ]
+      }
+    ]
   }
 }

@@ -3,6 +3,7 @@ import { MergeExclusive } from 'type-fest';
 import _ from 'lodash';
 import prettyMs from 'pretty-ms';
 import traverse from 'traverse';
+import { count } from 'console';
 
 type Jsonifiable = any;
 
@@ -28,12 +29,22 @@ function parseJsonlFile(filePath: string): ResultFileRow[] {
 
 // This should just be moved into the generate side.
 function getValidationResultCategory(row: ResultFileRow) {
-  const {validationResult} = row;
+  const { validationResult } = row;
   // console.log(validationResult);
   if (!validationResult) {
     return 'valid';
   }
   if (validationResult?.[0]?.message.includes('Unknown component "tag"')) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const allTags = traverse(row.generatedOutput).reduce(function (acc, node) {
+      if (this.key === 'tag') {
+        acc.add(node);
+      }
+      return acc;
+    }, new Set());
+
+    // console.log(allTags);
+
     return 'hallucinated a component';
   }
   let invalidChildrenField = false;
@@ -46,6 +57,9 @@ function getValidationResultCategory(row: ResultFileRow) {
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (invalidChildrenField) {
     return 'invalid child field';
+  }
+  if (_.isEqual(row.generatedOutput, {})) {
+    return 'generated empty object';
   }
   return 'unknown error type';
 }
@@ -66,12 +80,13 @@ function calculateSummary(rows: ResultFileRow[]) {
     return sortedOutputTokenCounts[index];
   };
 
-  const errorCount = rows.filter((row) => row.error !== undefined).length;
-  const countRowsWithCorrectOutput = rows.filter((row) => row.validationResult === null).length;
+  const [rowsWithErrors, rowsWithoutErrors] = _.partition(rows, 'error');
 
-  const validationResultLabels = _(rows)
+  const errorCount = rowsWithErrors.length;
+  const countRowsWithCorrectOutput = rowsWithoutErrors.filter((row) => row.validationResult === null).length;
+
+  const validationResultLabels = _(rowsWithoutErrors)
     .reject({ validationResult: null })
-    .reject('error')
     .map((row) => getValidationResultCategory(row))
     .value();
 
@@ -81,7 +96,15 @@ function calculateSummary(rows: ResultFileRow[]) {
     p99: durationPercentile(0.99),
   };
 
-  const countInvalidRows = rows.length - countRowsWithCorrectOutput;
+  const countInvalidRows = rowsWithoutErrors.length - countRowsWithCorrectOutput;
+  const outcomeCounts = {
+    noError: rowsWithoutErrors.length,
+    runtimeError: errorCount,
+    validOutput: countRowsWithCorrectOutput,
+    invalidOutput: countInvalidRows,
+  }
+
+  const validationResultCounts = _.countBy(validationResultLabels);
 
   return {
     rowCount: rows.length,
@@ -92,12 +115,10 @@ function calculateSummary(rows: ResultFileRow[]) {
     },
     timings,
     prettyTimings: _.mapValues(timings, (v) => prettyMs(v)),
-    outcomePortions: {
-      runtimeError: errorCount / rows.length,
-      validOutput: countRowsWithCorrectOutput / rows.length,
-      invalidOutput: countInvalidRows / rows.length,
-    },
-    validationResultPortions: _.mapValues(_.countBy(validationResultLabels), (count) => count / countInvalidRows),
+    outcomeCounts, 
+    outcomePortions: _.mapValues(outcomeCounts, count => count / rows.length),
+    validationResultCounts,
+    validationResultPortions: _.mapValues(validationResultCounts, (count) => count / countInvalidRows),
   };
 }
 
