@@ -317,18 +317,12 @@ export async function* OpenAIChatModel(
     );
   }
 
-  if (props.forcedFunction) {
-    if (
-      !Object.entries(props.functionDefinitions)
-        .map(([functionName, _]) => functionName)
-        .find((f) => f == props.forcedFunction)
-    ) {
-      throw new AIJSXError(
-        `The function ${props.forcedFunction} was forced, but no function with that name was defined.`,
-        ErrorCode.ChatCompletionBadInput,
-        'user'
-      );
-    }
+  if (props.forcedFunction && !Object.keys(props.functionDefinitions).includes(props.forcedFunction)) {
+    throw new AIJSXError(
+      `The function ${props.forcedFunction} was forced, but no function with that name was defined.`,
+      ErrorCode.ChatCompletionBadInput,
+      'user'
+    );
   }
 
   const messageElements = await render(props.children, {
@@ -401,11 +395,9 @@ export async function* OpenAIChatModel(
         description: functionDefinition.description,
         parameters: getParametersSchema(functionDefinition.parameters),
       }));
-  const openaiFunctionCall: CreateChatCompletionRequestFunctionCall | undefined = !props.forcedFunction
-    ? undefined
-    : {
-        name: props.forcedFunction,
-      };
+  const openaiFunctionCall: CreateChatCompletionRequestFunctionCall | undefined = props.forcedFunction
+    ? { name: props.forcedFunction }
+    : undefined;
 
   const openai = getContext(openAiClientContext);
   const chatCompletionRequest = {
