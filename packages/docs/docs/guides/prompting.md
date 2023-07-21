@@ -1,12 +1,17 @@
 ---
-sidebar_position: 2
+sidebar_position: 3
 ---
 
 # Prompting in AI.JSX
 
-- Prereqs:
-  - [Basic AI knowledge](brand-new.md)
-  - [Rules of JSX](rules-of-jsx.md)
+## Prerequisites
+
+Before jumping into this guide on prompting, there are a couple of other guides we suggest you read first:
+
+- [Guide for AI Newcomers](brand-new.md) - Good resource if you are new to working with LLMs.
+- [Rules of AI.JSX](rules-of-jsx.md) - How AI.JSX uses JSX, does error handling, and performs memoization.
+
+## The Power of Chat-Based Models
 
 A core part of AI apps is prompting the model and getting a response. To do that in AI.JSX, start with `ChatCompletion`:
 
@@ -24,11 +29,11 @@ function App() {
 
 To configure the output of `ChatCompletion`, use [`ModelProps`](../api/interfaces/core_completion.ModelProps.md). This allows you to do things like making the model more creative or precise, telling the model how long a response you want back, etc. Combined with the natural language of your [prompt](./brand-new.md#prompt-engineering), this is how you control the model's output.
 
-## What about non-chat models?
+## The Problem with Non-Chat Models
 
-Chat models have stronger "instructability", meaning they follow your instructions better.
+Chat models have stronger "instructability". This just means they follow your instructions better.
 
-Conversely, non-chat Completion models are just trained to predict the next token, so you might see output like this:
+Conversely, non-chat completion models are just trained to predict the next token. With a non-chat model, you might see something like this:
 
 ```
 Input:
@@ -40,12 +45,11 @@ Output:
   what is the capital of New York?
 ```
 
-The problem is that the model is predicting that a question about one state is often followed by questions about other states.
+Instead of giving us "Bismarck", the actual capital of North Dakota, the model is predicting that a question about one state is often followed by questions about other states.
 
-## Primitives to get you prompting faster
+## Prompting Primitives Get You Started Faster
 
-We have included a small set of prompts that we found useful via [`<Prompt />`](../api/modules/batteries_prompts#prompt).
-You can use them either as shortcuts, or as a starting point if you are new to prompting:
+We have included a small set of prompts that we found useful via [`<Prompt />`](../api/modules/batteries_prompts#prompt). We think they serve as a great starting point and help provide some productivity shortcuts for you. Here's an example:
 
 ```tsx
 function App() {
@@ -59,10 +63,13 @@ function App() {
 }
 ```
 
-## Getting the AI to say the right thing: constrained output
+## Constrained Output
 
-Sometimes you want the model to respond in a certain format (e.g. JSON or YAML), but doing so reliably can be hard.
-We provide some primitives to help with that:
+Sometimes it's important we get the AI model to respond in a particular way. We want the model to respond with the correct information **and** present the information in a specific way. For example, we might want the response to be formatted as JSON or YAML.
+
+Doing this reliably can be hard which is why AI.JSX provides the "constrained-output" module to help with this type of formatting. Under the hood, the module uses a combination of prompting, validating the output, and retries if the validation fails. See [`ai-jsx/batteries/constrained-output`](../api/modules/batteries_constrained_output) for more information.
+
+### Example: Returning JSON and YAML
 
 ```tsx
 function App() {
@@ -86,5 +93,26 @@ function App() {
 }
 ```
 
-Under the hood, this model will use a combination of prompting, validating the output, and asking them the model to retry
-if the validation fails (refer to [`ai-jsx/batteries/constrained-output`](../api/modules/batteries_constrained_output)).
+### Custom Schema Enforcement
+
+You can also provide your own schema and then have AI.JSX enforce it in the output:
+
+```tsx
+// We use `zod` library to create and enforce the schema
+import z from 'zod';
+
+const FamilyTree: z.Schema = z.array(
+  z.object({
+    name: z.string(),
+    children: z.lazy(() => FamilyTree).optional(),
+  })
+);
+
+function App() {
+  return (
+    <JsonChatCompletion schema={FamilyTree}>
+      <UserMessage>Create a nested family tree with names and ages. It should include a total of 5 people</UserMessage>
+    </JsonChatCompletion>
+  );
+}
+```

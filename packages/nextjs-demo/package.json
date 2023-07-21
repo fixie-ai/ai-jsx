@@ -11,12 +11,15 @@
     "lint:fix": "yarn lint --fix"
   },
   "dependencies": {
+    "@headlessui/react": "^1.7.15",
+    "@heroicons/react": "^2.0.18",
     "@octokit/graphql": "^5.0.6",
+    "@tailwindcss/forms": "^0.5.3",
     "@types/node": "20.2.5",
     "@types/react": "18.2.8",
     "@types/react-dom": "18.2.4",
     "ai": "^2.1.8",
-    "ai-jsx": "0.5.7",
+    "ai-jsx": "workspace:*",
     "autoprefixer": "10.4.14",
     "classnames": "^2.3.2",
     "eslint": "8.42.0",

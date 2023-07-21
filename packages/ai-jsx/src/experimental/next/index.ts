@@ -7,19 +7,31 @@ import { AIJSXError, ErrorCode } from '../../core/errors.js';
 import { toSerializedStreamResponse } from '../../stream/index.js';
 import { ComponentMap } from '../../react/map.js';
 export * from '../../react/core.js';
+import { Image } from '../../core/image-gen.js';
+import _ from 'lodash';
+
+/**
+ * The {@link jsx} component will render its children until it gets to boundary elements.
+ * This object defines how the boundary elements are handled.
+ */
+const boundaryElements = [
+  { tag: AI.React, unwrap: (e: AI.Element<any>) => e.props.children },
+  { tag: Image, unwrap: (e: AI.Element<any>) => ReactModule.createElement('img', { src: e.props.url }) },
+];
 
 function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
   if (AI.isElement(partiallyRendered)) {
-    // This should be an AI.React element.
-    if (partiallyRendered.tag !== AI.React) {
-      throw new AIJSXError(
-        'unwrapReact only expects to see AI.React elements or strings.',
-        ErrorCode.UnexpectedRenderType,
-        'internal'
-      );
+    for (const { tag, unwrap } of boundaryElements) {
+      if (partiallyRendered.tag === tag) {
+        return unwrap(partiallyRendered);
+      }
     }
-
-    return partiallyRendered.props.children;
+    const expectedElements = _.map(boundaryElements, 'tag').join(' or ');
+    throw new AIJSXError(
+      `unwrapReact only expects to see ${expectedElements} elements or strings.`,
+      ErrorCode.UnexpectedRenderType,
+      'internal'
+    );
   }
 
   return partiallyRendered;
@@ -73,7 +85,7 @@ export const jsx = asJsxBoundary(function jsx(
   }
 
   const renderResult = AI.createRenderContext(props ?? {}).render(children, {
-    stop: (e) => e.tag === AI.React,
+    stop: (e) => boundaryElements.some((special) => special.tag === e.tag),
     map: (frame) => frame.map(unwrapReact),
   });
   const asyncIterator = renderResult[Symbol.asyncIterator]();
@@ -148,7 +160,14 @@ export const jsx = asJsxBoundary(function jsx(
 });
 export const JSX = jsx;
 
-export function toReactStream(componentMap: ComponentMap<any>, renderable: AI.Renderable): Response {
-  const renderResult = AI.createRenderContext().render(renderable, { stop: (e) => e.tag == AI.React, map: (x) => x });
+export function toReactStream(
+  componentMap: ComponentMap<any>,
+  renderable: AI.Renderable,
+  renderContextOpts?: Parameters<typeof AI.createRenderContext>[0]
+): Response {
+  const renderResult = AI.createRenderContext(renderContextOpts).render(renderable, {
+    stop: (e) => boundaryElements.some((special) => special.tag === e.tag),
+    map: (x) => x,
+  });
   return toSerializedStreamResponse(renderResult, AI.createElementSerializer(componentMap));
 }

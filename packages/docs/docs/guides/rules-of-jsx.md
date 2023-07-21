@@ -1,5 +1,5 @@
 ---
-sidebar_position: 3
+sidebar_position: 2
 ---
 
 # Rules of AI.JSX
@@ -7,6 +7,8 @@ sidebar_position: 3
 AI.JSX uses the familiar JSX syntax, but [it's not React](../is-it-react.md).
 
 When you write an AI.JSX expression, you're declaratively specifying the shape of the string you want to be returned to the caller. The AI.JSX engine then evaluates your expression in parallel and streams the results.
+
+## AI.JSX Example
 
 ```tsx
 function App() {
@@ -39,7 +41,6 @@ function App({ query }) {
     <ChatCompletion>
       <SystemMessage>
         Answer customer questions based on their data: <CustomerData />
-        Here's data about our company: <OrgData />
       </SystemMessage>
       <UserMessage>{query}</UserMessage>
     </ChatCompletion>
@@ -50,11 +51,78 @@ async function CustomerData() {
   const accountId = await getCustomerAccount();
   return isLegacyAccount(accountId) ? fetchLegacy() : fetchModern();
 }
+```
 
-function* OrgData() {
-  yield firstData;
-  yield secondData;
-  yield thirdData;
+:::caution Edge case
+
+Imagine you have a slow async component, which is used as a sibling of faster components:
+
+```tsx
+async function Slow() {
+  await new Promise((resolve) => setTimeout(resolve, 4000));
+  return 'slow result';
+}
+
+async function Fast() {
+  await Promise.resolve();
+  return 'fast result';
+}
+
+const app = (
+  <>
+    <Fast />
+    <Slow />
+  </>
+);
+```
+
+Surprisingly, you won't get any results streamed out of `Fast` until `Slow` completes.
+
+To solve this, return an intermediate value from `Slow`:
+
+```tsx
+async function* Slow() {
+  // highlight-next-line
+  yield '';
+
+  await new Promise((resolve) => setTimeout(resolve, 4000));
+  return 'slow result';
+}
+```
+
+This is not ideal and we plan to improve it in the future.
+:::
+
+### Append-Only Generators
+
+If your component is a generator, the default behavior is that each `yield`ed value replaces the previous value. For instance, imagine you have an image generation API like Midjourney that returns a series of image URLs showing the image render in progress:
+
+```tsx
+function* GenerateImage() {
+  yield lowResUrl;
+  /* ... */
+  yield medResUrl;
+  /* ... */
+  yield highResUrl;
+  /* ... */
+  yield finalResUrl;
+}
+```
+
+AI.JSX will interpret each `yield`ed value as a new value which should totally overwrite the previously-yielded values, so the caller would see a progression of increasingly high-quality images.
+
+However, sometimes your data source will give you deltas, so replacing the previous contents doesn't make much sense. In this case, `yield` the [`AppendOnlyStream`](../api/modules/core_core.md#appendonlystream) symbol to indicate that `yield`ed results should be interpreted as deltas:
+
+```tsx
+import * as AI from 'ai-jsx';
+
+function* GenerateText() {
+  yield AI.AppendOnlyStream;
+  yield 'first c';
+  yield 'hunk of te';
+  yield 'xt that will';
+  yield 'be combined';
+  yield 'into a final output';
 }
 ```
 
@@ -66,97 +134,7 @@ Components take props as the first argument and [`ComponentContext`](../api/inte
 function MyComponent(props, componentContext) {}
 ```
 
-`componentContext` contains a [`render`](../api/interfaces/core_core.ComponentContext#render) method, which you can use to render other JSX components. One reason you would want to do this is to take action based on what a component renders to, like validating that it's well-formed JSON:
-
-```tsx
-function App() {
-  return (
-    <ValidateJsonOutput>
-      <ChatCompletion>
-        <UserMessage>Give me a JSON object representing a character in a fantasy game.</UserMessage>
-      </ChatCompletion>
-    </ValidateJsonOutput>
-  );
-}
-
-/**
- * Ensure the model's response is JSON.
- */
-function ValidateJsonOutput({ children }, { render }): string {
-  // highlight-next-line
-  const rendered = await render(children);
-  try {
-    JSON.parse(rendered);
-    return rendered;
-  } catch (e) {
-    throw new Error(`Could not parse model response as JSON: ${rendered}`);
-  }
-}
-```
-
-In this example, `ValidateJsonOutput` takes in a child, and returns a JSON result. To do that, it needs to know what the child renders to, so it uses `render`.
-
-### Intermediate Results
-
-If you'd like to see intermediate results of the render, you can pass a `map` param to the `render` method:
-
-```tsx
-let frameCount = 0;
-await render(<Component />, {
-  map: (frame) => console.log('got frame', frameCount++, frame);
-})
-```
-
-If `Component` ultimately resolved to `hello world`, then the `map` function might be called with:
-
-```
-got frame 0 h
-got frame 1 hell
-got frame 2 hello w
-got frame 3 hello wor
-got frame 4 hello world
-```
-
-(The exact chunking you'll get depends on the chunks emitted by the component you're rendering.)
-
-You can also use the `map` function to map the results as they're streaming.
-
-### Partial Rendering
-
-By default, `render` will render the entire tree down to a string. However, you can use partial rendering if you'd like to only render some of it.
-
-The main reason you'd want to do this is when you're writing a parent component that has knowledge of its children. For example:
-
-- [`ChatCompletion`](../api/modules/core_completion#chatcompletion) needs all its children to ultimately be a `SystemMessage`, `UserMessage,` or `AssistantMessage`. To find those children, it uses partial rendering.
-- [`NaturalLanguageRouter`](../api/modules/batteries_natural_language_router#naturallanguagerouter) needs to know what all the `Route`s are, so it uses partial rendering to find them.
-
-To do partial rendering, pass a `stop` argument to `render`:
-
-```tsx
-const messageChildren = await render(children, {
-  stop: (e) => e.tag == SystemMessage || e.tag == UserMessage || e.tag == AssistantMessage,
-});
-```
-
-This approach means we can write the following, and `ChatCompletion` will be able to find all the nested `*Message` children:
-
-```tsx
-function MyUserMessages() {
-  return (
-    <>
-      <UserMessage>first</UserMessage>
-      <UserMessage>second</UserMessage>
-    </>
-  );
-}
-
-<ChatCompletion>
-  <MyUserMessages />
-  <>
-    <UserMessage>third</UserMessage>
-  </>
-</ChatCompletion>;
-```
+`componentContext` contains a [`render`](../api/interfaces/core_core.ComponentContext#render) method, which you can use to [render other JSX components](./rendering.md#rendering-from-a-component).
 
 ### Context
 
@@ -208,7 +186,7 @@ Use an [`ErrorBoundary`](../api/modules/core_error_boundary) to provide fallback
 </ErrorBoundary>
 ```
 
-Error boundary example ([`packages/examples/src/errors.tsx`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/errors.tsx)).
+Error boundary example: ([`packages/examples/src/errors.tsx`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/errors.tsx)).
 
 ## Memoization
 
@@ -232,7 +210,7 @@ const catName = (
 
 In this case, `catName` will result in two separate model calls, so you'll get two different cat names.
 
-If this is not desired, you can wrap the component in `memo`:
+If this is not desired, you can wrap the component in [`memo`](../api/modules/core_memoize):
 
 ```tsx
 const catName = memo(
@@ -249,8 +227,7 @@ const catName = memo(
 
 Now, `catName` will result in a single model call, and its value will be reused everywhere that component appears in the tree.
 
-- API ([`packages/ai-jsx/src/core/memoize.tsx`](../api/modules/core_memoize))
-
 # See Also
 
+- [Rendering](./rendering.md)
 - [JSX Build System Considerations](./jsx.md)

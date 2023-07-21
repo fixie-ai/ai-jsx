@@ -9,6 +9,9 @@ import { Node, Component, RenderContext } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
+import { AnthropicChatModel } from '../lib/anthropic.js';
+import z from 'zod';
+import { zodToJsonSchema } from 'zod-to-json-schema';
 
 /**
  * Represents properties passed to a given Large Language Model.
@@ -38,19 +41,61 @@ export type ModelComponent<T extends ModelPropsWithChildren> = Component<T>;
  * Represents a function definition that can be invoked using the {@link FunctionCall} component.
  */
 export interface FunctionDefinition {
-  name: string;
   description?: string;
-  parameters: Record<string, FunctionParameter>;
+  parameters: FunctionParameters;
+}
+
+/**
+ * This function creates a [JSON Schema](https://json-schema.org/) object to describe
+ * parameters for a {@link FunctionDefinition}.
+ *
+ * See {@link FunctionParameters} for more information on what parameters are supported.
+ */
+export function getParametersSchema(parameters: FunctionParameters) {
+  if (parameters instanceof z.ZodObject) {
+    return zodToJsonSchema(parameters);
+  }
+  return {
+    type: 'object',
+    required: Object.keys(parameters).filter((name) => parameters[name].required),
+    properties: Object.keys(parameters).reduce(
+      (map: Record<string, any>, paramName) => ({
+        ...map,
+        [paramName]: {
+          type: parameters[paramName].type,
+        },
+      }),
+      {}
+    ),
+  };
 }
 
 /**
  * Represents parameters to a {@link FunctionDefinition}.
  */
-export interface FunctionParameter {
+export interface PlainFunctionParameter {
   description?: string;
   type?: string;
   required: boolean;
 }
+
+/**
+ * Represents parameters to a {@link FunctionDefinition}.
+ *
+ * This type allows two ways for specifying parameters:
+ * - For simple use cases, a record of parameter names to {@link PlainFunctionParameter} objects.
+ * - For more complex use cases, a {@link z.ZodObject} schema object (`zod` is a standard runtime type definition & checking library).
+ *
+ * @note If using a Zod schema, the top-level schema must be an object as per OpenAI specifications:
+ * https://platform.openai.com/docs/api-reference/chat/create#chat/create-parameters
+ *
+ * For example, to describe a list of strings, the following is not accepted:
+ * `const schema: z.Schema = z.array(z.string())`
+ *
+ * Instead, you can wrap it in an object like so:
+ * `const schema: z.ZodObject = z.object({ arr: z.array(z.string()) })`
+ */
+export type FunctionParameters = Record<string, PlainFunctionParameter> | z.ZodObject<any>;
 
 /**
  * If env var `OPENAI_API_KEY` is defined, use Open AI as the completion model provider.
@@ -90,12 +135,22 @@ function AutomaticChatModel({ children, ...props }: ModelPropsWithChildren) {
       </OpenAIChatModel>
     );
   }
+
+  if (getEnvVar('ANTHROPIC_API_KEY', false)) {
+    return (
+      <AnthropicChatModel model="claude-instant-1" {...props}>
+        {children}
+      </AnthropicChatModel>
+    );
+  }
+
   throw new AIJSXError(
     `No chat model was specified. To fix this, do one of the following:
     
 1. Set the OPENAI_API_KEY or REACT_APP_OPENAI_API_KEY environment variable.
 2. Set the OPENAI_API_BASE or REACT_APP_OPENAI_API_BASE environment variable.
-3. use an explicit ChatProvider component.`,
+3. Set the ANTHROPIC_API_KEY or REACT_APP_ANTHROPIC_API_KEY environment variable.
+4. use an explicit ChatProvider component.`,
     ErrorCode.MissingChatModel,
     'user'
   );

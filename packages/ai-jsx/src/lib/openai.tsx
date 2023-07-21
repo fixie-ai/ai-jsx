@@ -3,39 +3,41 @@
  * @packageDocumentation
  */
 
+import GPT3Tokenizer from 'gpt3-tokenizer';
+import {
+  ChatCompletionFunctions,
+  ChatCompletionRequestMessage,
+  ChatCompletionResponseMessage,
+  Configuration,
+  CreateChatCompletionRequestFunctionCall,
+  CreateChatCompletionResponse,
+  CreateCompletionResponse,
+  CreateImageRequestResponseFormatEnum,
+  CreateImageRequestSizeEnum,
+  OpenAIApi,
+  ResponseTypes,
+} from 'openai-edge';
+import { Merge, MergeExclusive } from 'type-fest';
 import {
   AssistantMessage,
   ChatProvider,
   CompletionProvider,
+  FunctionCall,
+  FunctionDefinition,
+  FunctionResponse,
   ModelProps,
   ModelPropsWithChildren,
   SystemMessage,
   UserMessage,
-  FunctionDefinition,
-  FunctionCall,
-  FunctionResponse,
+  getParametersSchema,
 } from '../core/completion.js';
-import { ImageGenPropsWithChildren } from '../core/image-gen.js';
-// openai-edge hasn't updated its types to support the new function types yet,
-// so we'll import the types from openai until it does.
-import { ChatCompletionFunctions, ChatCompletionResponseMessage, ChatCompletionRequestMessage } from 'openai';
-import {
-  Configuration,
-  CreateChatCompletionResponse,
-  CreateCompletionResponse,
-  OpenAIApi,
-  CreateImageRequestSizeEnum,
-  CreateImageRequestResponseFormatEnum,
-  ResponseTypes,
-} from '@nick.heiner/openai-edge';
-import * as AI from '../index.js';
-import { PropsOfComponent, Node } from '../index.js';
-import GPT3Tokenizer from 'gpt3-tokenizer';
-import { Merge } from 'type-fest';
+import { AIJSXError, ErrorCode, HttpError } from '../core/errors.js';
+import { Image, ImageGenPropsWithChildren } from '../core/image-gen.js';
 import { Logger } from '../core/log.js';
-import { HttpError, AIJSXError, ErrorCode } from '../core/errors.js';
-import _ from 'lodash';
-import { getEnvVar } from './util.js';
+import * as AI from '../index.js';
+import { Node, PropsOfComponent } from '../index.js';
+import { ChatOrCompletionModelOrBoth } from './model.js';
+import { getEnvVar, patchedUntruncateJson } from './util.js';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -45,16 +47,25 @@ type ValidCompletionModel =
   | 'text-babbage-001'
   | 'text-ada-001';
 
-type ValidChatModel = 'gpt-4' | 'gpt-4-0314' | 'gpt-4-32k' | 'gpt-4-32k-0314' | 'gpt-3.5-turbo' | 'gpt-3.5-turbo-0301';
+type ValidChatModel =
+  | 'gpt-4'
+  | 'gpt-4-0314' // discontinue on 06/13/2024
+  | 'gpt-4-0613'
+  | 'gpt-4-32k'
+  | 'gpt-4-32k-0314' // discontinue on 06/13/2024
+  | 'gpt-4-32k-0613'
+  | 'gpt-3.5-turbo'
+  | 'gpt-3.5-turbo-0301' // discontinue on 06/13/2024
+  | 'gpt-3.5-turbo-0613'
+  | 'gpt-3.5-turbo-16k'
+  | 'gpt-3.5-turbo-16k-0613';
 
-type ChatOrCompletionModelOrBoth =
-  | { chatModel: ValidChatModel; completionModel?: ValidCompletionModel }
-  | { chatModel?: ValidChatModel; completionModel: ValidCompletionModel };
+type OpenAIModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
 
 const decoder = new TextDecoder();
 
-function createOpenAIClient() {
-  return new OpenAIApi(
+export const openAiClientContext = AI.createContext<OpenAIApi>(
+  new OpenAIApi(
     new Configuration({
       apiKey: getEnvVar('OPENAI_API_KEY', false),
     }),
@@ -64,10 +75,8 @@ function createOpenAIClient() {
     getEnvVar('OPENAI_API_BASE', false) || undefined,
     // TODO: Figure out a better way to work around NextJS fetch blocking streaming
     (globalThis as any)._nextOriginalFetch ?? globalThis.fetch
-  );
-}
-
-export const openAiClientContext = AI.createContext<OpenAIApi>(createOpenAIClient());
+  )
+);
 
 /**
  * An AI.JSX component that invokes an OpenAI Large Language Model.
@@ -82,7 +91,7 @@ export function OpenAI({
   completionModel,
   client,
   ...defaults
-}: { children: Node; client?: OpenAIApi } & ChatOrCompletionModelOrBoth & ModelProps) {
+}: { children: Node; client?: OpenAIApi } & OpenAIModelChoices & ModelProps) {
   let result = children;
 
   if (client) {
@@ -160,6 +169,23 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
       return [encoded.bpe[0], bias];
     })
   );
+}
+
+/**
+ * Returns true if the given model supports function calling.
+ * @param model The model to check.
+ * @returns True if the model supports function calling, false otherwise.
+ */
+function chatModelSupportsFunctions(model: ValidChatModel) {
+  return [
+    'gpt-4',
+    'gpt-3.5-turbo',
+    'gpt-4-0613',
+    'gpt-4-32k-0613',
+    'gpt-3.5-turbo-0613',
+    'gpt-3.5-turbo-16k',
+    'gpt-3.5-turbo-16k-0613',
+  ].includes(model);
 }
 
 type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
@@ -264,10 +290,52 @@ export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & {
     model: ValidChatModel;
     logitBias?: Record<string, number>;
-    functionDefinitions?: FunctionDefinition[];
-  },
+  } & MergeExclusive<
+      {
+        functionDefinitions: Record<string, FunctionDefinition>;
+        forcedFunction: string;
+
+        /**
+         * Internal only.
+         *
+         * If this flag is passed, this component will stream only the model Function Call. This is useful if the only thing you want is the function call, such as if you're using the function call to force the model to output JSON matching a schema.
+         */
+        experimental_streamFunctionCallOnly: boolean;
+      },
+      {
+        functionDefinitions?: never;
+        forcedFunction?: never;
+        experimental_streamFunctionCallOnly?: never;
+      }
+    >,
   { render, getContext, logger }: AI.ComponentContext
 ): AI.RenderableStream {
+  if (props.functionDefinitions) {
+    if (!chatModelSupportsFunctions(props.model)) {
+      throw new AIJSXError(
+        `The ${props.model} model does not support function calling, but function definitions were provided.`,
+        ErrorCode.ChatModelDoesNotSupportFunctions,
+        'user'
+      );
+    }
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  else if (props.experimental_streamFunctionCallOnly) {
+    throw new AIJSXError(
+      'The experimental_streamFunctionCallOnly flag can only be passed when function definitions are also passed.',
+      ErrorCode.ChatCompletionBadInput,
+      'user'
+    );
+  }
+
+  if (props.forcedFunction && !Object.keys(props.functionDefinitions).includes(props.forcedFunction)) {
+    throw new AIJSXError(
+      `The function ${props.forcedFunction} was forced, but no function with that name was defined.`,
+      ErrorCode.ChatCompletionBadInput,
+      'user'
+    );
+  }
+
   const messageElements = await render(props.children, {
     stop: (e) =>
       e.tag == SystemMessage ||
@@ -276,7 +344,9 @@ export async function* OpenAIChatModel(
       e.tag == FunctionCall ||
       e.tag == FunctionResponse,
   });
-  yield AI.AppendOnlyStream;
+  if (!props.experimental_streamFunctionCallOnly) {
+    yield AI.AppendOnlyStream;
+  }
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
     messageElements.filter(AI.isElement).map(async (message) => {
       switch (message.tag) {
@@ -329,27 +399,16 @@ export async function* OpenAIChatModel(
     );
   }
 
-  const openaiFunctions: ChatCompletionFunctions[] | undefined = props.functionDefinitions?.map(
-    (functionDefinition) => ({
-      name: functionDefinition.name,
-      description: functionDefinition.description,
-      parameters: {
-        type: 'object',
-        required: Object.keys(functionDefinition.parameters).filter(
-          (name) => functionDefinition.parameters[name].required
-        ),
-        properties: Object.keys(functionDefinition.parameters).reduce(
-          (map: Record<string, any>, paramName) => ({
-            ...map,
-            [paramName]: {
-              type: functionDefinition.parameters[paramName].type,
-            },
-          }),
-          {}
-        ),
-      },
-    })
-  );
+  const openaiFunctions: ChatCompletionFunctions[] | undefined = !props.functionDefinitions
+    ? undefined
+    : Object.entries(props.functionDefinitions).map(([functionName, functionDefinition]) => ({
+        name: functionName,
+        description: functionDefinition.description,
+        parameters: getParametersSchema(functionDefinition.parameters),
+      }));
+  const openaiFunctionCall: CreateChatCompletionRequestFunctionCall | undefined = props.forcedFunction
+    ? { name: props.forcedFunction }
+    : undefined;
 
   const openai = getContext(openAiClientContext);
   const chatCompletionRequest = {
@@ -358,17 +417,14 @@ export async function* OpenAIChatModel(
     temperature: props.temperature,
     messages,
     functions: openaiFunctions,
+    function_call: openaiFunctionCall,
     stop: props.stop,
     logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
     stream: true,
   };
 
   logger.debug({ chatCompletionRequest }, 'Calling createChatCompletion');
-  const chatResponse = await openai.createChatCompletion(
-    // We can remove this once openai-edge updates to reflect the new chat function types.
-    // @ts-expect-error
-    chatCompletionRequest
-  );
+  const chatResponse = await openai.createChatCompletion(chatCompletionRequest);
 
   await checkOpenAIResponse(chatResponse, logger, 'createChatCompletion');
 
@@ -393,7 +449,9 @@ export async function* OpenAIChatModel(
     if (delta.content) {
       currentMessage.content = currentMessage.content ?? '';
       currentMessage.content += delta.content;
-      yield delta.content;
+      if (!props.experimental_streamFunctionCallOnly) {
+        yield delta.content;
+      }
     }
     if (delta.function_call) {
       currentMessage.function_call = currentMessage.function_call ?? { name: '', arguments: '' };
@@ -403,11 +461,25 @@ export async function* OpenAIChatModel(
       if (delta.function_call.arguments) {
         currentMessage.function_call.arguments += delta.function_call.arguments;
       }
+      if (props.experimental_streamFunctionCallOnly) {
+        yield JSON.stringify({
+          ...currentMessage.function_call,
+          // We actually want the argument to be '{}' if it's empty, not '""'.
+          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+          arguments: JSON.parse(patchedUntruncateJson(currentMessage.function_call.arguments || '{}')),
+        });
+      }
     }
   }
 
   logger.debug({ message: currentMessage }, 'Finished createChatCompletion');
 
+  if (props.experimental_streamFunctionCallOnly) {
+    return JSON.stringify({
+      ...currentMessage.function_call,
+      arguments: JSON.parse(currentMessage.function_call?.arguments ?? '{}'),
+    });
+  }
   if (currentMessage.function_call) {
     yield (
       <FunctionCall
@@ -425,17 +497,12 @@ export async function* OpenAIChatModel(
  *
  * @param numSamples The number of images to generate. Defaults to 1.
  * @param size The size of the image to generate. Defaults to `512x512`.
- * @returns The URL of the generated image.
- *          If numSamples is greater than 1, URLs are separated by newlines.
+ * @returns URL(s) to the generated image, wrapped in {@link Image} component(s).
  */
-export async function DalleImageGen(
+export async function* DalleImageGen(
   { numSamples = 1, size = '512x512', children }: ImageGenPropsWithChildren,
   { render, getContext, logger }: AI.ComponentContext
 ) {
-  const prompt = await render(children);
-
-  const openai = getContext(openAiClientContext);
-
   let sizeEnum;
   switch (size) {
     case '256x256':
@@ -455,6 +522,19 @@ export async function DalleImageGen(
       );
   }
 
+  // Consider emitting http://via.placeholder.com/256x256 instead.
+  yield (
+    <Image
+      url={`http://via.placeholder.com/${size}`}
+      prompt="placeholder while real results renderes"
+      modelName="placeholder.com"
+    />
+  );
+
+  const prompt = await render(children);
+
+  const openai = getContext(openAiClientContext);
+
   const imageRequest = {
     prompt,
     n: numSamples,
@@ -472,7 +552,9 @@ export async function DalleImageGen(
     logger.debug({ statusCode: response.status, headers: response.headers }, 'createImage succeeded');
   }
 
-  // return all image URLs as a newline-separated string
+  // return all image URLs as {@link Image} components.
   const responseJson = (await response.json()) as ResponseTypes['createImage'];
-  return _.map(responseJson.data, 'url').join('\n');
+  return responseJson.data.flatMap((image) =>
+    image.url ? [<Image url={image.url} prompt={prompt} modelName="Dalle" />] : []
+  );
 }

@@ -2,6 +2,7 @@ import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completi
 import { Inline } from 'ai-jsx/core/inline';
 import { showInspector } from 'ai-jsx/core/inspector';
 import { JsonChatCompletion, YamlChatCompletion } from 'ai-jsx/batteries/constrained-output';
+import z from 'zod';
 
 function CharacterField(props: { fieldName: string }) {
   return (
@@ -36,20 +37,28 @@ function CharacterGenerator() {
   );
 }
 
+const characterSchema = z.object({
+  name: z.string(),
+  class: z.string(),
+  race: z.string(),
+  weapons: z.array(z.string()),
+  spells: z.array(z.string()),
+});
+
 const app = (
   <Inline>
     <CharacterGenerator />
     {'\n\n'}
     The following is a JSON representation of this character profile:{'\n'}
     {(conversation) => (
-      <JsonChatCompletion>
+      <JsonChatCompletion schema={characterSchema}>
         <UserMessage>{conversation}</UserMessage>
       </JsonChatCompletion>
     )}
     {'\n\n'}
     And here is a YAML representation of this character profile:{'\n'}
     {(conversation) => (
-      <YamlChatCompletion>
+      <YamlChatCompletion schema={characterSchema}>
         <UserMessage>{conversation}</UserMessage>
       </YamlChatCompletion>
     )}

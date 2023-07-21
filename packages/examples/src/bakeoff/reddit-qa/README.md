@@ -12,16 +12,15 @@ Then, in each of LangChain and AI.JSX, we use local ETL and an in-memory vector 
 
 ```
 # From the repo root
-$ yarn tsx packages/examples/src/bakeoff/reddit-qa/load-articles.mts
+$ yarn workspace examples demo:reddit:etl
 
-$ yarn tsx packages/examples/src/bakeoff/reddit-qa/langchain.mts
-$ yarn tsx packages/examples/src/bakeoff/reddit-qa/ai-jsx.tsx
-$ yarn tsx packages/examples/src/bakeoff/reddit-qa/ai-jsx-imperative.ts
+$ yarn workspace examples demo:reddit:lc
+$ yarn workspace examples demo:reddit
 ```
 
 ## Caveats
 
-I implemented the docs part of AI.JSX in [`docs.ts`](../../../lib/docs.ts). It's mostly wrappers around LangChain, with a nicer API. I also created [`docs-components.ts`](../../../lib/docs-components.tsx).
+I implemented the docs part of AI.JSX in [`docs.ts`](../../../../ai-jsx/src/batteries/docs.tsx). It's mostly wrappers around LangChain, with a nicer API.
 
 In the steady state, I expect to see a combination of API shims allowing LangChain interop, as well as AI.JSX native implementations.
 

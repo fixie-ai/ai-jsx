@@ -4,20 +4,26 @@ sidebar_position: 1
 
 # Guide for AI Newcomers
 
-Large Language Models (LLMs) are powerful tools, representing a paradigm shift in how we build and use software. Machines now have the ability to reason and understand natural language as well as source code. We predict over the coming years, incumbents will be either remake themselves, or be disrupted by AI-native products and platforms.
+Large Language Models (LLMs) are powerful tools, representing a paradigm shift in how we build and use software. Machines now have the ability to reason and understand natural language as well as source code. We predict over the coming years, incumbents will either remake themselves, or be disrupted by AI-native products and platforms.
 
 Just like in other types of programming, you can often get by with a simple solution until you need the heavier-duty tools. There are many techniques and concepts in AI programming, but you can make something useful without knowing them all.
 
-## What are LLMs Good For?
+## Using LLMs Wisely
 
-LLMs are magical when you use them for things they're good at and really frustrating when you try to ask them to do something they're not.
+LLMs are magical when you use them for things they're good at. However, they can be really frustrating when you try to ask them to do something they're not well-equipped to handle.
 
-LLMs are great at understanding and generating natural language and code. So they're strong at tasks like:
+### LLM Strengths 💪🏽
 
-- Given React components and a data object, arrange the React components in a visually-pleasing way.
-- Read documents and summarize them.
-- Read a lot of your writing, then generate more writing in your voice.
-- Look at API documentation, then write code to use it.
+LLMs are great at understanding and generating natural language and code.
+
+They are strong at tasks like:
+
+- **Layout:** Given a set of React components and a data object, arrange the React components in a visually-pleasing way.
+- **Summarization**: Read documents and summarize them.
+- **Style Cloning**: Read a lot of your writing, then generate more writing in your voice.
+- **Code Generation**: Look at API documentation, then write code to use it.
+
+### LLM Frustration 😖
 
 LLMs, by themselves, aren't great at:
 
@@ -26,11 +32,13 @@ LLMs, by themselves, aren't great at:
 - Analysis on structured data.
 - Taking actions in the outside world.
 
-Fortunately, the community has developed many approaches to address the above shortcomings. What that ends up meaning is that the LLM is just one piece of the bigger application.
+Fortunately, the community has developed many approaches to address the above shortcomings. The LLM ends up being just one piece of the bigger application.
 
-To build an intuition for what the LLM is good for, think of it kind of like a person. (One who sometimes makes silly reasoning mistakes, but can also pass the LSAT.) We wouldn't expect a person to be great at 5 digit multiplication until we gave them a calculator. And if we asked them a question about the French Revolution, we'd feel much more confident in the answers if we gave them access to Wikipedia.
+### LLMs Have Context and Work Best with Help
 
-Models are also limited by the companies that own and operate them, for safety and also to limit liability on behalf of the operating companies. For instance, if you ask OpenAI's models how to make anthrax, it'll refuse to tell you. ([Unless you're clever](https://www.jailbreakchat.com/)).
+To build an intuition for what the LLM is good for, think of it kind of like a person. A person who can pass the [LSAT](https://en.wikipedia.org/wiki/Law_School_Admission_Test) but who also sometimes makes silly reasoning mistakes. People can do multiplication but we wouldn't expect someone to be great at 5-digit multiplication unless we give them some help (e.g. a calculator). And if we asked someone a question about the French Revolution, we'd feel much more confident in the answers if we gave them access to Wikipedia.
+
+Models are also limited by the companies that own and operate them (e.g. for safety and to limit liability on behalf of the operating company). For instance, if you ask OpenAI's models how to make anthrax, it'll refuse to tell you. ([Unless you're clever](https://www.jailbreakchat.com/)).
 
 With today's level of accuracy, LLMs work best for tasks that are fault-tolerant or have a human in the loop. It's no accident that Microsoft is leaning so hard on the Copilot branding across all its AI integrations. If you have a human in the loop, you can provide a ton of value, even if the model output isn't perfect, because editing a pretty-good response is much easier for a human than generating a response wholesale.
 
@@ -38,7 +46,7 @@ Be wary of the "radio shows on TV" effect, where the first work in a new paradig
 
 ## Prompt Engineering
 
-The interface to the model is the natural language we give it in the prompt. The art of crafting these prompts is called Prompt Engineering. There are many resources about this, including online courses and YouTube videos.
+The interface to the model is the natural language we give it in the prompt. The art of crafting these prompts is called "Prompt Engineering". There are many resources about this, including online courses and YouTube videos.
 
 Although there are best practices you can learn, prompt engineering is fundamentally an exploratory, guess-and-check process. Exploring what the models can do and how they behave is more akin to biology than traditional computer science.
 
@@ -46,23 +54,24 @@ There are general heuristics you can follow (e.g. "be specific"), but often you'
 
 The key intuition is that models are trained to imitate what they've read on the internet. So if you say "answer this question as if you're a physics expert", you'll get better results than if you say "answer this question like a child".
 
-As models improve, prompt engineering will become less necessary, because they'll be better at figuring out what you want.
+As models improve, prompt engineering will become less necessary, because the models will be better at figuring out what you want.
 
 ### Feedback Loop
 
-Imagine you have a workflow of tweaking a prompt, then re-running your program to check the results.
+Imagine you have a workflow with two steps:
 
-Every model call is non-deterministic, so you can see different results on each run, even if you don't change the prompt at all.
+1. Tweaking a prompt
+2. Re-running your program to check the results
 
-Therefore, to get a stronger signal on whether your changes made a difference, set up your program to produce a batch of outputs at once.
+Every model call is non-deterministic. This means you can get different results each time even if you don't change the prompt.
 
-Additionally, it's best to make a single change at a time. If you change several things, you won't know what to caused any change in output, robbing you of a chance to build your intuition.
+So how do we figure out if our prompt changes are having an impact? One thing that works well is to set up our program to produce a batch of outputs at once. Additionally, it's best to make a single change at a time. If you change several things, you won't know what to caused any change in output, robbing you of a chance to build your intuition.
 
-### Context Window
-
-The biggest constraint on the prompt is the context window, which is the combined length of the prompt and the model's response. (Because the budget is shared between input and output, the longer your prompt to the model, the shorter the model's response can be.)
+### Context Window = Prompt Length + Model's Response
 
 Each model API has a context window that it supports. For instance, [GPT-4 Standard](https://platform.openai.com/docs/models/gpt-4) is 8,192 tokens. (A [token](https://platform.openai.com/tokenizer) is a common grouping of characters.)
+
+The context window is the combined length of the prompt and the model's response. Effectively this means we have a budget (i.e. the size of the context window) that is shared between the input and the output. As we increase the length of the prompt to the model, we decrease the potential length of the response from the model.
 
 Intuitively, think about the context window as the model's working memory. When you think about a problem, you're able to hold some of the relevant information in your head at one time. When the problem gets too complicated, you rely on external aids (like written notes). The context window is similar – it's what the model has access to at once. (But, unlike humans, the model has perfect recall of everything in its window.)
 
@@ -74,12 +83,16 @@ So, as you're setting up your prompts, it's best to get the model to show its wo
 
 ### See Also
 
-- [OpenAI: GPT Best Practices](https://platform.openai.com/docs/guides/gpt-best-practices).
+- [OpenAI: GPT Best Practices](https://platform.openai.com/docs/guides/gpt-best-practices)
 - [Prompt Engineering Guide](https://www.promptingguide.ai/)
 
 When you need robust tools, you may wish to use something like [HumanLoop](https://humanloop.com/) to A/B test different prompts in production.
 
-## Using Tools
+## Additional Concepts
+
+So far we've covered what LLMs are good/bad at and how to think a bit about constructing prompts for the model. What follows are some other concepts that we think will be useful as you build AI-powered applications.
+
+### Using Tools
 
 On their own, LLMs can't interact with the outside world. If you want to give them that capability, you can give them tools. ([ChatGPT Plugins](https://openai.com/blog/chatgpt-plugins) are a well-known implementation of this.)
 
@@ -124,17 +137,19 @@ const tools: Record<string, Tool> = {
 
 More detail: [`UseTools` API docs](../api/modules/batteries_use_tools#usetools).
 
-## Accessing Knowledge ("Docs QA")
+### Accessing Knowledge (AKA "Docs QA")
 
-LLMs have "soft knowledge" of the world, but if you just ask a question without providing any context, they're prone to hallucination. And, LLMs were only trained on public data, so they don't have context on the private data you care about.
+LLMs have "soft knowledge" of the world, but if you just ask a question without providing any context, they're prone to [hallucination](<https://en.wikipedia.org/wiki/Hallucination_(artificial_intelligence)>). Additionally, because LLMs are only trained on public data, they don't have context on private data your or your app may care about.
 
-To address this, the community has developed a variety of techniques, known collectively as "DocsQA". For more details, see [DocsQA in ai-jsx](./docsqa.md).
+To address this, the community has developed a variety of techniques known collectively as "Document Q&A" (DocsQA). DocsQA enables your application to provide the LLM with a set of content/documents that serve as the source of truth. This avoids hallucination and enables the model to provide better responses.
 
-## Streaming
+For more details, see the [DocsQA Guide](./docsqa.md).
 
-To improve responsiveness and perceived performance, it's better to stream your results to the user. Each word should be shown to the user as soon as it's available, rather than waiting until your entire response is done. (This also allows the user to cancel the response if it's going in the wrong direction.)
+### Streaming
 
-In AI.JSX, this happens for you automatically.
+To improve responsiveness and perceived performance, it's better to stream your results to the user. Each word should be shown to the user as soon as it's available, rather than waiting until your entire response is done. This also allows the user to cancel the response if it's not relevant or if things are going in the wrong direction.
+
+In AI.JSX, streaming happens for you automatically.
 
 ```tsx
 function App() {
@@ -150,11 +165,11 @@ AI.createRenderContext().render(<App />, {
 });
 ```
 
-The pit of success in AI.JSX is your program being automatically parallelized and streamed to the caller.
+The "pit of success" in AI.JSX is your program being automatically parallelized and streamed to the caller.
 
-For more detail: [Performance](./performance.md).
+More details on streaming can be found in the [Performance Guide](./performance.md).
 
-## Semantic Similarity ("Embeddings")
+### Semantic Similarity ("Embeddings")
 
 LLMs can tell us how related two pieces of text are. An embedding is a very long vector locating a given piece of text in semantic space. We could imagine a model that embeds according to this scheme:
 
@@ -172,21 +187,23 @@ So the text "I love the bright Japense cherry blossoms" might be encoded as `[1,
 
 You can use embeddings for any task where you want to know how related things are, what clusters they form, etc. Possible usecases include:
 
-- Find related GitHub issues
-- Take an emotional temperature of how people are talking in Slack today
-- Find all the fight scenes in a book
+- Finding related GitHub issues
+- Taking an emotional temperature of employees based on how they are chatting in Slack today
+- Finding all the fight scenes in a book
 
-See also: [OpenAI Embeddings docs](https://platform.openai.com/docs/models/embeddings).
+AI.JSX automatically generates and uses embeddings in our [DocsQA](./docsqa.md) implementation.
 
-## Recommended Dev Workflow
+For more information on embeddings, see the [OpenAI Embeddings](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) docs.
 
-When you're considering building an AI app, the most fundamental question is whether the model is capable of doing what you want it to. It's best to test this in a [Playground environment](https://platform.openai.com/playground) before you write code. (You can also use a tool like [Poe](https://poe.com/) to try your query against many models at once.)
+### Recommended Dev Workflow
 
-For example, if you plan to prompt the model with some docs, then ask the model questions about it, start by manually pasting the relevant docs into the prompt and asking your question. If the model doesn't perform well here, there's no point coding the rest of the [docs process](#accessing-knowledge-docs-qa).
+When you're considering building an AI app, the most fundamental question is whether the model is capable of doing what you want it to. It's best to test this in a [playground environment](https://platform.openai.com/playground) before you write code. (You can also use a tool like [Poe](https://poe.com/) to try your query against many models at once.)
+
+For example, if you plan to prompt the model with some docs, then ask the model questions about it, start by manually pasting the relevant docs into the prompt and asking your question. If the model doesn't perform well here, there's no point coding the rest of the [docs process](#accessing-knowledge-aka-docs-qa).
 
 Start with the best model (GPT-4) and work your way down. Other models may be faster or cheaper, but none of that matters if the accuracy isn't there.
 
-## What about fine tuning?
+### What About Fine Tuning?
 
 Fine tuning is when you train a model on top of a base model, using your own dataset. This is not recommended until you know you have a strong need for it; prompt composition can get you quite far, and is much more flexible than fine tuning.
 
@@ -196,15 +213,15 @@ Conversely, with prompt composition, if you realize some data isn't helpful, you
 
 Fine tuning also makes it harder to take advantage of base model updates. When GPT-4.5 comes out, if you've fine tuned on GPT-4, you'll be behind until you repeat your tuning process. However, if you're doing prompt composition, then you automatically can use GPT-4.5.
 
-## See Also
+### See Also
 
 - [OpenAI: State of GPT](https://www.youtube.com/watch?v=bZQun8Y4L2A). Microsoft Build presentation from top AI researcher Andrej Karpathy. A great overview of how the models work and tips for how to use them most effectively.
-- [OpenAI: GPT Best Practices](https://platform.openai.com/docs/guides/gpt-best-practices).
+- [OpenAI: GPT Best Practices](https://platform.openai.com/docs/guides/gpt-best-practices)
 - [Anthropic Guidance](https://console.anthropic.com/docs/prompt-design)
 - [Poe](https://poe.com/) – chat with many different models (OpenAI, Anthropic, etc) at once.
-- [Perplexity](https://www.perplexity.ai/) – AI-powered search
+- [Perplexity](https://www.perplexity.ai/) – AI-powered search.
 
-## Case Study: Avoid asking the LLM to do something deterministic
+## Case Study: Avoid Asking the LLM to do Something Deterministic
 
 Consider an AI app that can ask a group of people when they're available to hang out, then find the mutual free times.
 

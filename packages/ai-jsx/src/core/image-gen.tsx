@@ -74,23 +74,41 @@ export function ImageGenProvider<T extends ImageGenPropsWithChildren>(
 /**
  * This component can be used to perform an [image generation](https://platform.openai.com/docs/guides/images/introduction).
  *
- * @returns a URL to the generated image.
+ * @returns URL(s) to the generated image, wrapped in {@link Image} component(s).
  *
  * @example
  * ```tsx
- *    <ImageGen size={256} numSamples={1}>
- *    An image of a chicken riding a rocket ship
+ *    <ImageGen size="256x256" numSamples={1}>
+ *        An image of a chicken riding a rocket ship
  *    </ImageGen>
  * ```
  */
-export function ImageGen(
-  { children, ...props }: ImageGenPropsWithChildren & Record<string, unknown>,
-  { getContext }: RenderContext
-) {
+export function ImageGen({ children, ...props }: ImageGenPropsWithChildren, { getContext }: RenderContext) {
   const [ImageGenComponent, defaultProps] = getContext(imageGenContext);
   return (
     <ImageGenComponent {...defaultProps} {...props}>
       {children}
     </ImageGenComponent>
   );
+}
+
+export interface GeneratedImageProps {
+  /** The image URL. */
+  url: string;
+  /** The prompt used for generating the image. Currently only used for debugging.  */
+  prompt: string;
+  /** The model used for generating the image. Currently only used for debugging. */
+  modelName: string;
+}
+
+/**
+ * This component represents an image via a single `url` prop.
+ * It is a wrapper for the output of {@link ImageGen} to allow for first-class support of images.
+ *
+ * The rendering of this component depends on the environment:
+ * - In terminal-based environments, this component will be rendered as a URL.
+ * - In browser-based environments, this component will be rendered as an `img` tag.
+ */
+export function Image(props: GeneratedImageProps) {
+  return props.url;
 }

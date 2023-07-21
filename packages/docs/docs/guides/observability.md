@@ -4,7 +4,7 @@ sidebar_position: 5
 
 # Observability
 
-In this guide, we'll start with the [hello world example](https://github.com/fixie-ai/ai-jsx-template) and iteratively add logging.
+In this guide, we'll start with the Hello World example from the [AI JSX template](https://github.com/fixie-ai/ai-jsx-template) and iteratively add logging.
 
 ```tsx file="index.tsx"
 import * as AI from 'ai-jsx';
@@ -26,7 +26,7 @@ This produces no logging.
 
 ## Console Logging of LLM Calls
 
-To log to console:
+Now to add logging to the console, we will add two lines of code:
 
 ```tsx file="index.tsx"
 import * as AI from 'ai-jsx';
@@ -52,7 +52,7 @@ console.log(
 );
 ```
 
-Now, when you run, you'll see something like this on the console:
+The first line we added is where we import our logger. See [`PinoLogger`](/api/classes/core_log.PinoLogger) to learn more. In the second line, we instantiate and use the logger. Now, when you run the code, you should see something like this on the console:
 
 ```json
 {
@@ -107,7 +107,7 @@ When using NextJS, instead of specifying a logger in `createRenderContext`, you 
 
 :::
 
-## Custom Pino Logging
+### Custom Pino Logging
 
 If you want to customize the log sources further, you can create your own `pino` logger instance:
 
@@ -150,7 +150,7 @@ console.log(
 
 When you run this, you'll see `pino-pretty`-formatted logs on stdout. See `pino`'s other [options](https://github.com/pinojs/pino) for further ways you can configure the logging.
 
-## Fully Custom Logging
+### Fully Custom Logging
 
 Pino is provided above as a convenience. However, if you want to implement your own logger, you can create a class that extends `LogImplementation`. The `log` method on your implementation will receive all log events:
 
@@ -196,7 +196,7 @@ The logger instance will be automatically bound with an identifier for the curre
 ### Creating Logger Components
 
 :::caution
-This is an advanced usecase.
+This is an advanced use case.
 :::
 
 Sometimes, you want a logger that wraps every `render` call for part of your component tree. For instance, the `OpenTelemetryTracer` creates [OpenTelemetry](https://opentelemetry.io/) spans for each component render. To do that, use the `wrapRender` method:
@@ -246,6 +246,10 @@ function MyTracer(props: { children: AI.Node }, { wrapRender }: AI.ComponentCont
 This technique uses the [context affordance](./rules-of-jsx.md#context).
 
 ### Weights & Biases Tracer Integration
+
+:::info
+Requires an API key from Weights & Biases. Check out [their docs](https://docs.wandb.ai/guides) for more information.
+:::
 
 [W&B Prompts](https://docs.wandb.ai/guides/prompts/quickstart) provides a visual trace table that can be very useful
 for debugging.
