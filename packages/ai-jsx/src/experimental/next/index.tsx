@@ -1,4 +1,5 @@
-import * as ReactModule from 'react';
+/** @jsxImportSource ai-jsx/react */
+import React, { Suspense, ReactNode } from 'react';
 import 'server-only';
 import { LogImplementation } from '../../core/log.js';
 import * as AI from '../../react/core.js';
@@ -9,6 +10,7 @@ import { ComponentMap } from '../../react/map.js';
 export * from '../../react/core.js';
 import { Image } from '../../core/image-gen.js';
 import _ from 'lodash';
+import { Clock, DelayedReveal } from './client.js';
 
 /**
  * The {@link jsx} component will render its children until it gets to boundary elements.
@@ -16,10 +18,10 @@ import _ from 'lodash';
  */
 const boundaryElements = [
   { tag: AI.React, unwrap: (e: AI.Element<any>) => e.props.children },
-  { tag: Image, unwrap: (e: AI.Element<any>) => ReactModule.createElement('img', { src: e.props.url }) },
+  { tag: Image, unwrap: (e: AI.Element<any>) => <img src={e.props.url} /> },
 ];
 
-function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.ReactNode {
+function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactNode {
   if (AI.isElement(partiallyRendered)) {
     for (const { tag, unwrap } of boundaryElements) {
       if (partiallyRendered.tag === tag) {
@@ -41,15 +43,12 @@ function unwrapReact(partiallyRendered: AI.PartiallyRendered): ReactModule.React
  * If `frame` is prefixed by `prefix`, returns the rest of `frame`, i.e. the suffix. Otherwise returns null.
  * @returns The computed suffix, or null if `frame` is not prefixed by `prefix.
  */
-function computeSuffix(
-  prefix: ReactModule.ReactNode[],
-  frame: ReactModule.ReactNode[]
-): ReactModule.ReactNode[] | null {
-  const computedSuffix = [] as ReactModule.ReactNode[];
+function computeSuffix(prefix: ReactNode[], frame: ReactNode[]): ReactNode[] | null {
+  const computedSuffix = [] as ReactNode[];
   for (let i = 0; i < frame.length; ++i) {
     if (i >= prefix.length) {
       computedSuffix.push(...frame.slice(i));
-      return null;
+      break;
     }
     if (computedSuffix.length > 0) {
       return null;
@@ -72,11 +71,39 @@ function computeSuffix(
   return computedSuffix;
 }
 
+type StreamType = 'smooth' | 'fast';
+
+function StreamRoot({ stream, children }: { stream?: StreamType; children: ReactNode }) {
+  if (stream === 'smooth') {
+    return <Clock serverOrigin={new Date().valueOf()}>{children}</Clock>;
+  }
+
+  return children;
+}
+
+function Chunk({ stream, children }: { stream?: 'smooth' | 'fast'; children: ReactNode }) {
+  if (stream === 'smooth') {
+    return <DelayedReveal t={new Date().valueOf()}>{children}</DelayedReveal>;
+  }
+
+  return children;
+}
+
 /**
  * A JSX component that allows AI.JSX elements to be used in a [NextJS RSC component tree](https://nextjs.org/docs/getting-started/react-essentials#server-components).
  */
 export const jsx = asJsxBoundary(function jsx(
-  { props, children }: { props?: { logger?: LogImplementation }; children: AI.Node },
+  {
+    logger,
+    stream,
+    children,
+    onComplete,
+  }: {
+    logger?: LogImplementation;
+    stream?: StreamType;
+    children: AI.Node;
+    onComplete?: (finalText: string, finalUI: ReactNode) => void;
+  },
   context?: any | AI.ComponentContext
 ) {
   if (typeof context?.render === 'function') {
@@ -84,7 +111,7 @@ export const jsx = asJsxBoundary(function jsx(
     return children as any;
   }
 
-  const renderResult = AI.createRenderContext(props ?? {}).render(children, {
+  const renderResult = AI.createRenderContext({ logger }).render(children, {
     stop: (e) => boundaryElements.some((special) => special.tag === e.tag),
     map: (frame) => frame.map(unwrapReact),
   });
@@ -98,30 +125,34 @@ export const jsx = asJsxBoundary(function jsx(
     prefix,
     replace,
   }: {
-    prefix?: ReactModule.ReactNode[];
+    prefix?: ReactNode[];
     /**
      * Replaces the entire existing stream (rather than appending to it). Must be used
      * when the stream is complete to indicate that the stream has finished.
      */
-    replace: (value: ReactModule.ReactNode) => ReactModule.ReactNode;
-  }): Promise<ReactModule.ReactNode> {
+    replace: (value: ReactNode) => ReactNode;
+  }): Promise<ReactNode> {
     const nextResult = await asyncIterator.next();
 
     if (nextResult.done) {
-      return replace(nextResult.value.map(unwrapReact));
+      const finalResult = nextResult.value.map(unwrapReact);
+      const finalText = nextResult.value.filter((v) => typeof v === 'string').join('');
+      onComplete?.(finalText, finalResult);
+      return replace(finalResult);
     }
 
     // If we can append the stream, do so.
     const suffix = prefix && computeSuffix(prefix, nextResult.value);
     if (suffix) {
-      return [
-        suffix,
-        ReactModule.createElement(
-          ReactModule.Suspense,
-          { fallback: '' },
-          ReactModule.createElement(Stream as any, { prefix: nextResult.value, replace })
-        ),
-      ];
+      return (
+        <>
+          <Chunk stream={stream}>{suffix}</Chunk>
+          <Suspense fallback={null}>
+            {/* @ts-expect-error Server Component */}
+            <Stream prefix={nextResult.value} replace={replace} />
+          </Suspense>
+        </>
+      );
     }
 
     // Otherwise, construct a new "replaceable stream". By streaming deltas into the _fallback_
@@ -132,8 +163,8 @@ export const jsx = asJsxBoundary(function jsx(
     // For non-append-only streams we could do better by fixing the parts of the tree that are
     // fully resolved and only updating the portions of the tree that are still evolving, but
     // `render` doesn't currently provide enough visibility into rendering to do this.
-    let newReplace: ((value: ReactModule.ReactNode) => ReactModule.ReactNode) | undefined = undefined;
-    const finalResult = new Promise<ReactModule.ReactNode>((resolve) => {
+    let newReplace: ((value: ReactNode) => ReactNode) | undefined = undefined;
+    const finalResult = new Promise<ReactNode>((resolve) => {
       newReplace = (node) => {
         // Resolve it in a microtask to work around an issue where the fallback value
         // tries to replace the final value.
@@ -142,21 +173,31 @@ export const jsx = asJsxBoundary(function jsx(
       };
     });
 
-    const replaceableStream = ReactModule.createElement(ReactModule.Suspense, {
-      fallback: [
-        nextResult.value,
-        ReactModule.createElement(Stream as any, { prefix: nextResult.value, replace: newReplace }),
-      ],
-      children: ReactModule.createElement(() => finalResult as any),
-    });
+    const replaceableStream = (
+      <Suspense
+        fallback={
+          <>
+            <Chunk stream={stream}>{nextResult.value}</Chunk>
+            {/* @ts-expect-error Server Component */}
+            <Stream prefix={nextResult.value} replace={newReplace} />
+          </>
+        }
+      >
+        {/* @ts-expect-error Server Component */}
+        {finalResult}
+      </Suspense>
+    );
 
     return replace(replaceableStream);
   }
 
   // Since we start without any prefix or <Suspense> boundary, `replace` is simply the identity function.
-  return ReactModule.createElement(Stream as any, {
-    replace: (node: ReactModule.ReactNode) => node,
-  }) as JSX.Element;
+  return (
+    <StreamRoot stream={stream}>
+      {/* @ts-expect-error Server Component */}
+      <Stream replace={(node) => node} />
+    </StreamRoot>
+  );
 });
 export const JSX = jsx;
 
