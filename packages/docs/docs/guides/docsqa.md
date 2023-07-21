@@ -86,7 +86,7 @@ flowchart LR
   que[Query] -->|string| embed2[Embed] -->|vector| vdb2[(Vector DB)] -->|similar chunks| LLM
 ```
 
-If you use the built-in DocsQA tag from AI.JSX, then you just need to decide how to present the chunk to your LLM:
+If you use the built-in `DocsQA` component from AI.JSX, then you just need to decide how to present the chunk to your LLM:
 
 ```typescript
 function ShowDoc({ doc }: { doc: Document<MyDocMetadata> }) {
@@ -107,6 +107,52 @@ function AskAndAnswer({ query }: { query: string }) {
     </>
   );
 }
+```
+
+The `DocsQA` component provides an answer, like:
+
+```tsx
+<DocsQA question="What is the atomic number of nitrogen?" corpus={corpus} docComponent={ShowDoc} />
+/* Renders:
+    Nitogen's atomic number is 7
+*/
+```
+
+If you want an answer that cites sources, use `DocsQAWithSources`:
+
+```tsx
+<DocsQAWithSources question="What is the atomic number of nitrogen?" 
+  corpus={corpus} docComponent={ShowDoc} />
+/* Renders:
+    Nitogen's atomic number is 7
+    Sources: https://en.wikipedia.org/wiki/Nitrogen
+*/
+```
+
+If you want to customize how the citations are formatted, pass a `resultsFormatter`:
+
+```tsx
+function ResultFormatter(result: QAWithSourcesResult) {
+  return <>
+    {result.answer}
+    {result.sources.length && <>
+      Learn more:{'\n'}
+      {result.sources.map(source => <>* {source}{'\n'}</>)}
+    </>}
+  </>
+}
+
+<DocsQAWithSources 
+  question="What is the atomic number of nitrogen?"
+  corpus={corpus} docComponent={ShowDoc}
+  // highlight-next-line
+  resultFormatter={ResultFormatter}
+/>
+/* Renders:
+    Nitogen's atomic number is 7
+    Learn more:
+    * https://en.wikipedia.org/wiki/Nitrogen
+*/
 ```
 
 ## Picking a Corpus Implementation
