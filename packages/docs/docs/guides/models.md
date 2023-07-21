@@ -1,17 +1,13 @@
 # Models
 
-AI.JSX supports [OpenAI](https://openai.com/) and [Anthropic](https://www.anthropic.com/).
-
 :::tip Getting started?
-Most people should start with OpenAI's GPT-4 model.
+AI.JSX supports models from [OpenAI](https://openai.com/) and [Anthropic](https://www.anthropic.com/). Most people should start with OpenAI's GPT-4 model. If you need a very long context window, use Anthropic's Claude 100k.
 
-If you need a very long context window, use Anthropic's Claude 100k.
-
-([More detail](./brand-new.md#recommended-dev-workflow))
+See the [recommended dev workflow](./brand-new.md#recommended-dev-workflow) guide for tips on model selection.
 
 :::
 
-## Choosing a Model
+## How AI.JSX Chooses the Model
 
 The model provider will be chosen according to the following:
 
@@ -27,16 +23,16 @@ The model provider will be chosen according to the following:
 
 :::note Which strategy should I use?
 
-- If you want to use the same model everywhere, [set an env var](#setting-the-model-via-env-var).
+- If you want to use the same model everywhere, [set an env var](#setting-the-model-via-environment-variables).
 - If you want to use different models for different parts of your program, [set it explicitly](#setting-the-model-explicitly)
 
 :::
 
-## Setting the Model Via Env Var
+## Setting the Model Via Environment Variables
 
-Using env vars, you can instruct AI.JSX to use a model provider directly, or use a proxy.
+Using environment variables ("env vars"), you can instruct AI.JSX to use a model provider directly or via the use of a proxy.
 
-### Set the API key env var
+### Using a Model Directly
 
 **When to do this:** your AI.JSX program runs in a controlled environment (e.g. a server), or you're comfortable sharing your API key with the client (e.g. you're doing a hackathon or building an internal tool).
 
@@ -51,7 +47,7 @@ You may do this with any of the [Architecture Patterns](./architecture.mdx).
 If your project is build on create-react-app, you'll want to set `REACT_APP_OPENAI_API_KEY` or `REACT_APP_ANTHROPIC_API_KEY` instead. ([More detail.](https://create-react-app.dev/docs/adding-custom-environment-variables/))
 :::
 
-### Set a proxy env var
+### Using a Model Via Proxy
 
 :::caution OpenAI only
 
@@ -61,7 +57,7 @@ This is only supported for OpenAI. [File an issue](https://github.com/fixie-ai/a
 
 **When to do this:** you have a proxy server that you'd like to use for OpenAI calls.
 
-You would do this with the [UI + AI.JSX on the client; API calls on the server](./architecture.mdx#ui--aijsx-on-the-client-api-calls-on-the-server) architecture pattern. (Nothing stops you from doing it for the other patterns, but this is the one for which it's most likely to be useful.)
+You would do this with the [API Proxy](./architecture.mdx#architecture-2-api-proxy) architecture pattern. Nothing stops you from doing it for the other patterns, but this is the one for which it's most likely to be useful.
 
 **How to do this:** Set the `OPENAI_API_BASE` env var. This value will be passed directly to the `openai` client lib ([source code](https://github.com/openai/openai-node/blob/dc821be3018c832650e21285bade265099f99efb/base.ts#L22)). The default value is `https://api.openai.com/v1`.
 
@@ -83,7 +79,7 @@ If your project is build on create-react-app, you'll want to set `REACT_APP_OPEN
 
 :::info Why would I want to do this?
 
-If you don't have a strong sense that you need this, don't worry about it. Start with GPT-4 and return to this if you have issues.
+If you don't have a strong sense that you need this, don't worry about it. Start by using GPT-4 and setting it via the env var then return to this if you have issues.
 
 Models have different strengths and weaknesses. GPT-4 is considered to have the best reasoning ability, but Claude-100k can consider far more information at once. Or you may wish to delegate some parts of your program to open source HuggingFace models which have less constrained output than the big corporate models.
 
@@ -108,6 +104,6 @@ If you have multiple layers of nesting, the closest parent wins:
 </ChatProvider>
 ```
 
-If there is no `ChatProvider` or `CompletionProvider` parent, [the default model provider](#choosing-a-model) will be used.
+If there is no `ChatProvider` or `CompletionProvider` parent, [the default model provider](#how-aijsx-chooses-the-model) will be used.
 
 For an example, see [multi-model-chat](https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/multi-model-chat.tsx).
