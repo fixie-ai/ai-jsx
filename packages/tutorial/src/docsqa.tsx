@@ -60,7 +60,7 @@ function App() {
     <>
       DocsQA without source citations:{'\n'}
       <DocsQA
-        question="Which dates did the Huricane Katrina occur?"
+        question="Which dates did the Hurricane Katrina occur?"
         corpus={corpus}
         chunkLimit={5}
         chunkFormatter={OptionalCustomChunkFormatter}

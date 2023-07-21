@@ -828,7 +828,7 @@ function DefaultQAResultFormatter(result: QAWithCitationsResult) {
 }
 
 /**
- * Similar to {@link DocsQA}, but encourages the LLM to return sources for its answer.
+ * Similar to {@link DocsQA}, but encourages the LLM to return citations for its answer.
  */
 export async function* DocsQAWithCitations<ChunkMetadata extends Jsonifiable = Jsonifiable>(
   props: DocsQAWithCitationsProps<ChunkMetadata>,

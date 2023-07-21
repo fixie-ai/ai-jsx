@@ -86,7 +86,7 @@ flowchart LR
   que[Query] -->|string| embed2[Embed] -->|vector| vdb2[(Vector DB)] -->|similar chunks| LLM
 ```
 
-If you use the built-in `DocsQA` component from AI.JSX, then you just need to decide how to present the chunk to your LLM:
+If you use the built-in [`DocsQA`](../api/modules/batteries_docs.md#docsqa) component from AI.JSX, then you just need to decide how to present the chunk to your LLM:
 
 ```typescript
 function ShowDoc({ doc }: { doc: Document<MyDocMetadata> }) {
@@ -118,7 +118,7 @@ The `DocsQA` component provides an answer, like:
 */
 ```
 
-If you want an answer that cites sources, use `DocsQAWithCitations`:
+If you want an answer that cites sources, use [`DocsQAWithCitations`](../api/modules/batteries_docs.md#docsqawithcitations):
 
 ```tsx
 <DocsQAWithCitations question="What is the atomic number of nitrogen?" corpus={corpus} docComponent={ShowDoc} />
