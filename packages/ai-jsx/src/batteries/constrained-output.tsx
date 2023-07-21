@@ -244,8 +244,12 @@ async function* ObjectCompletionWithRetry(
     output = yield* render(childrenWithCompletion);
     return output;
   } catch (e: any) {
-    validationError = e.metadata.validationError;
-    output = e.metadata.output;
+    if (e instanceof CompletionError) {
+      validationError = e.metadata.validationError;
+      output = e.metadata.output;
+    } else {
+      throw e;
+    }
   }
 
   logger.debug({ atempt: 1, expectedFormat: props.typeName, output }, `Output did not validate to ${props.typeName}.`);
@@ -271,8 +275,12 @@ async function* ObjectCompletionWithRetry(
       output = yield* render(completionRetry);
       return output;
     } catch (e: any) {
-      validationError = e.metadata.validationError;
-      output = e.metadata.output;
+      if (e instanceof CompletionError) {
+        validationError = e.metadata.validationError;
+        output = e.metadata.output;
+      } else {
+        throw e;
+      }
     }
 
     logger.debug(
