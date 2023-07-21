@@ -1,6 +1,7 @@
 import { ChatCompletion, UserMessage, SystemMessage } from 'ai-jsx/core/completion';
 import { OpenAI } from 'ai-jsx/lib/openai';
 import { Anthropic } from 'ai-jsx/lib/anthropic';
+import { ReplicateLlama2 } from 'ai-jsx/lib/llama2';
 import * as AI from 'ai-jsx';
 import { pino } from 'pino';
 import { PinoLogger } from 'ai-jsx/core/log';
@@ -32,21 +33,25 @@ const logger = pino({
   },
 });
 
-// logger.info('Using models explicitly');
-// console.log(
-//   await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(
-//     <>
-//       * Anthropic:{' '}
-//       <Anthropic chatModel="claude-1">
-//         <App />
-//       </Anthropic>
-//       {'\n\n'}* OpenAI:{' '}
-//       <OpenAI chatModel="gpt-3.5-turbo">
-//         <App />
-//       </OpenAI>
-//     </>
-//   )
-// );
+logger.info('Using models explicitly');
+console.log(
+  await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(
+    <>
+      {/* * Anthropic:{' '}
+      <Anthropic chatModel="claude-1">
+        <App />
+      </Anthropic>
+      {'\n\n'}* OpenAI:{' '}
+      <OpenAI chatModel="gpt-3.5-turbo">
+        <App />
+      </OpenAI> */}
+      {'\n\n'}* Llama2:{' '}
+      <ReplicateLlama2>
+        <App />
+      </ReplicateLlama2>
+    </>
+  )
+);
 
 // logger.info('Using OpenAI because both keys are set');
 // console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
@@ -56,10 +61,10 @@ const logger = pino({
 // delete process.env.ANTHROPIC_API_KEY;
 // console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
 
-logger.info('Using Anthropic');
-process.env.ANTHROPIC_API_KEY = originalAnthropicKey;
-delete process.env.OPENAI_API_KEY;
-console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
+// logger.info('Using Anthropic');
+// process.env.ANTHROPIC_API_KEY = originalAnthropicKey;
+// delete process.env.OPENAI_API_KEY;
+// console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
 
 // logger.info('Streaming Anthropic');
 // const rendering = AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />);

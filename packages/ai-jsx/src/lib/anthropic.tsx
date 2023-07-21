@@ -118,11 +118,11 @@ export async function getPolyfilledMessages(
       .map(async (message) => {
         switch (message.tag) {
           case UserMessage:
-            return `${AnthropicSDK.HUMAN_PROMPT}:${message.props.name ? ` (${message.props.name})` : ''} ${await render(
+            return `${AnthropicSDK.HUMAN_PROMPT}${message.props.name ? ` (${message.props.name})` : ''} ${await render(
               message
             )}`;
           case AssistantMessage:
-            return `${AnthropicSDK.AI_PROMPT}: ${await render(message)}`;
+            return `${AnthropicSDK.AI_PROMPT} ${await render(message)}`;
           case FunctionCall:
           case FunctionResponse:
             throw new AIJSXError(

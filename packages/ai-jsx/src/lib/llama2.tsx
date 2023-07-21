@@ -3,6 +3,8 @@ import { ErrorCode } from '../core/errors.js';
 import * as AI from '../index.js';
 import { getPolyfilledMessages } from './anthropic.js';
 import { Node } from '../index.js';
+import Replicate from 'replicate';
+import { getEnvVar } from './util.js';
 
 interface Llama2ModelProps extends ModelProps {
   /** Penalty for repeated words in the output. Must be in the range [0.01, 5]. */
@@ -36,7 +38,7 @@ interface FetchLlama2Args extends Pick<ModelProps, 'temperature'> {
  *
  * If you don't have a streaming API, you can just yield a single chunk.
  */
-type FetchLlama2 = (args: FetchLlama2Args) => Promise<AsyncGenerator<string, void>>;
+type FetchLlama2 = (args: FetchLlama2Args) => AsyncGenerator<string, string>;
 
 interface Llama2Props extends ModelPropsWithChildren, Pick<Llama2ModelProps, 'repetitionPenalty'> {
   fetch: FetchLlama2;
@@ -47,6 +49,30 @@ interface Llama2Props extends ModelPropsWithChildren, Pick<Llama2ModelProps, 're
  */
 export const defaultMaxTokens = 500;
 
+/**
+ * This will polyfill a chat model call for Llama2. However, note that Llama2 is not a structured chat model
+ * in the same way GPT-4 is. You may be better off thinking about Llama2 as a traditional completion model.
+ * And as such, you may wish to use `<Completion>` instead of `<ChatCompletion>`, for finer-grained control.
+ *
+ * The key difference between Chat and Completion models is that Chat models are structured as a conversation
+ * between a user and an assistant, whereas Completion models are just trying to predict subsequent text. So
+ * if you give a Completion model a prompt like:
+ *
+ *    Human: Hi, how are you?
+ *    Assistant: I'm doing well, how are you?
+ *    Human: I'm good. What is your name?
+ *
+ * You may get a completion like:
+ *    Assistant: Sam. What's yours?
+ *    Human: Chris.
+ *
+ * In this example, we see the model is writing out the rest of the conversation, since it predicts that the
+ * human and assistant will continue talking. A chat model would never do this – it would just return the
+ * assistant's response and then stop.
+ *
+ * You may have to do a little more prompt engineering work to get the model in the mood to chat and stop
+ * responding after a single message.
+ */
 async function* Llama2ChatModel(props: Llama2Props, { render, logger }: AI.ComponentContext): AI.RenderableStream {
   const messages = await getPolyfilledMessages(
     props.children,
@@ -94,8 +120,8 @@ async function* Llama2CompletionModel(
  * If you're using this component, you probably have your own Llama2 instance hosted somewhere.
  * To point this component to your Llama2 instance, pass a `fetchLlama2` function that returns a generator that yields chunks of the response.
  *
- * @param children The children to render.
- * @param client The Anthropic client.
+ * @see ReplicateLlama2 if you have a model hosted on Replicate.
+ * @see Llama2ChatModel for notes about polyfilling.
  */
 export function Llama2({
   children,
@@ -111,6 +137,31 @@ export function Llama2({
   );
 }
 
-export function ReplicateLlama2({ children, ...defaults }: { children: Node } & Llama2ModelProps) {
-  return <Llama2 {...defaults}>{children}</Llama2>;
+export function ReplicateLlama2(
+  { children, ...defaults }: { children: Node } & Llama2ModelProps,
+  { logger }: AI.ComponentContext
+) {
+  const replicate = new Replicate({
+    auth: getEnvVar('REPLICATE_API_TOKEN', true)!,
+  });
+
+  async function* fetchLlama2(input: FetchLlama2Args) {
+    yield '';
+    const output = (await replicate.run(
+      // Can we remove the part after the :?
+      'replicate/llama70b-v2-chat:e951f18578850b652510200860fc4ea62b3b16fac280f83ff32282f87bbd2e48',
+      {
+        input,
+      }
+    )) as string[];
+    logger.debug({ output }, 'Replicate output');
+    const result = output.join('');
+    return result;
+  }
+
+  return (
+    <Llama2 {...defaults} fetchLlama2={fetchLlama2}>
+      {children}
+    </Llama2>
+  );
 }
