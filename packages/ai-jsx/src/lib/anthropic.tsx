@@ -95,6 +95,13 @@ export async function* AnthropicChatModel(
   props: AnthropicChatModelProps,
   { render, getContext, logger }: AI.ComponentContext
 ): AI.RenderableStream {
+  if ('functionDefinitions' in props) {
+    throw new AIJSXError(
+      'Anthropic does not support function calling, but function definitions were provided.',
+      ErrorCode.ChatModelDoesNotSupportFunctions,
+      'user'
+    );
+  }
   const messageElements = await render(props.children, {
     stop: (e) =>
       e.tag == SystemMessage ||
