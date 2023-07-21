@@ -51,6 +51,10 @@ export function MdxChatCompletion({ children, usageExamples }: { children: AI.No
 
       Do not include a starting ```mdx and closing ``` line. Just respond with the MDX itself.
 
+      Do not include extra whitespace that is not needed for the markdown interpretation. For instance, if your component has a prop that's a JSON object, put it all on one line:
+
+      {`<Component prop={[[{"key": "value"}, {"long": "field"}]]} />`}
+
       This doc tells you the differences between MDX and markdown.
 
       {/* Adapted from https://github.com/micromark/mdx-state-machine#72-deviations-from-markdown */}

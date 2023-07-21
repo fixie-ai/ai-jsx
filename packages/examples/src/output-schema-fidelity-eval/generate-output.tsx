@@ -16,6 +16,7 @@ import { Prompt } from 'ai-jsx/batteries/prompts';
 import GPT3Tokenizer from 'gpt3-tokenizer';
 import fetch from 'node-fetch';
 import { compileSync } from '@mdx-js/mdx';
+import { App as MDXExample } from '../mdx.js';
 
 /**
  * This is a mini-tool to help you evaluate whether a model is producing good output.
@@ -63,7 +64,7 @@ import { compileSync } from '@mdx-js/mdx';
  * Note: parts of this should be replaced with an integration with https://www.promptfoo.dev/.
  */
 
-const testCaseCount = 100;
+const testCaseCount = 200;
 const concurrencyLimit = 2;
 const limit = pLimit(concurrencyLimit);
 
@@ -479,15 +480,23 @@ const mdxTestCaseSimpleFewShots: TestCase = {
   },
 };
 
+const mdxExampleTestCase: TestCase = {
+  name: 'mdx-example',
+  component: <MDXExample />,
+  validate: validateMdx,
+};
+
 const testCases: TestCase[] = [
   // simpleJson,
   // uiTestCase,
   // uiTestCaseSimpleComponents,
   // mdxTestCase,
 
-  zachTestCaseStory,
-  zachTestCaseRecipe,
-  zachTestCaseFlight,
+  // zachTestCaseStory,
+  // zachTestCaseRecipe,
+  // zachTestCaseFlight,
+
+  mdxExampleTestCase
 ];
 
 const logger = pino({

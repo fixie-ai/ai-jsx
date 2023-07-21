@@ -80,6 +80,10 @@ const usageExample = <>
 
   Use a BookFlight component to let the user book a flight. BookFlight requires a flights prop.
 
+  {/* We may be able to remove all the whitespace from the object literals in these
+      prop examples and thus convince the model to skip the whitespace as well,
+      improving performance.
+   */}
   Example 1:
     <BookFlight flights={[
       {from: 'SEA', to: 'SFO', date: '2021-10-01', price: 100},
@@ -121,7 +125,7 @@ function QuestionAndAnswer({ children }: { children: AI.Node }) {
   );
 }
 
-function App() {
+export function App() {
   return (
     <>
       <QuestionAndAnswer>
@@ -157,23 +161,23 @@ function App() {
 
 // showInspector(<App />);
 
-const logger = pino({
-  name: 'ai-jsx',
-  level: process.env.loglevel ?? 'trace',
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-    },
-  },
-});
+// const logger = pino({
+//   name: 'ai-jsx',
+//   level: process.env.loglevel ?? 'trace',
+//   transport: {
+//     target: 'pino-pretty',
+//     options: {
+//       colorize: true,
+//     },
+//   },
+// });
 
-let lastValue = '';
-const rendering = AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />, {appendOnly: true});
-for await (const frame of rendering) {
-  process.stdout.write(frame.slice(lastValue.length));
-  lastValue = frame;
-}
+// let lastValue = '';
+// const rendering = AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />, {appendOnly: true});
+// for await (const frame of rendering) {
+//   process.stdout.write(frame.slice(lastValue.length));
+//   lastValue = frame;
+// }
 
-const finalResult = await rendering;
-process.stdout.write(finalResult.slice(lastValue.length));
+// const finalResult = await rendering;
+// process.stdout.write(finalResult.slice(lastValue.length));
