@@ -162,6 +162,7 @@ export async function* AnthropicChatModel(
     max_tokens_to_sample: props.maxTokens ?? defaultMaxTokens,
     temperature: props.temperature,
     model: props.model,
+    top_p: props.topP,
     stop_sequences: props.stop,
     stream: true,
   };
