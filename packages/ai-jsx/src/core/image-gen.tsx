@@ -8,6 +8,7 @@ import { Node, Component, RenderContext } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { DalleImageGen } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
+import { StableDiffusionImageGen } from '../lib/stabilityai.js';
 
 /**
  * Represents properties passed to the {@link ImageGen} component.
@@ -16,7 +17,7 @@ export interface ImageGenProps {
   /** The number of image samples to produce. */
   numSamples?: number;
   /** The image resolution. */
-  size?: '256x256' | '512x512' | '1024x1024';
+  size?: number;
 }
 
 export type ImageGenPropsWithChildren = ImageGenProps & {
@@ -33,6 +34,8 @@ export type ImageGenComponent<T extends ImageGenPropsWithChildren> = Component<T
 function AutomaticImageGenModel({ children, ...props }: ImageGenPropsWithChildren) {
   if (getEnvVar('OPENAI_API_KEY', false) || getEnvVar('OPENAI_API_BASE', false)) {
     return <DalleImageGen {...props}>{children}</DalleImageGen>;
+  } else if (process.env.STABILITY_API_KEY) {
+    return <StableDiffusionImageGen {...props}>{children}</StableDiffusionImageGen>;
   }
 
   throw new AIJSXError(
@@ -75,7 +78,7 @@ export function ImageGenProvider<T extends ImageGenPropsWithChildren>(
  *
  * @example
  * ```tsx
- *    <ImageGen size="256x256" numSamples={1}>
+ *    <ImageGen size={256} numSamples={1}>
  *    An image of a chicken riding a rocket ship
  *    </ImageGen>
  * ```
