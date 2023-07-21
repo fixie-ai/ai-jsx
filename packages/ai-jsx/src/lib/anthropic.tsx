@@ -88,14 +88,8 @@ export function Anthropic({
   return result;
 }
 
-interface AnthropicChatModelProps extends ModelPropsWithChildren {
-  model: ValidChatModel;
-}
-export async function* AnthropicChatModel(
-  props: AnthropicChatModelProps,
-  { render, getContext, logger }: AI.ComponentContext
-): AI.RenderableStream {
-  const messageElements = await render(props.children, {
+export async function getPolyfilledMessages(children: Node, render: AI.ComponentContext['render'], providerName: string, doesNotSupoortFunctionsErrorCode: ErrorCode) {
+  const messageElements = await render(children, {
     stop: (e) =>
       e.tag == SystemMessage ||
       e.tag == UserMessage ||
@@ -103,8 +97,7 @@ export async function* AnthropicChatModel(
       e.tag == FunctionCall ||
       e.tag == FunctionResponse,
   });
-  yield AI.AppendOnlyStream;
-  const messages = await Promise.all(
+  return Promise.all(
     messageElements
       .filter(AI.isElement)
       .flatMap((message) => {
@@ -128,8 +121,8 @@ export async function* AnthropicChatModel(
           case FunctionCall:
           case FunctionResponse:
             throw new AIJSXError(
-              'Anthropic models do not support functions.',
-              ErrorCode.AnthropicDoesNotSupportFunctions,
+              `${providerName} models do not support functions.`,
+              doesNotSupoortFunctionsErrorCode,
               'user'
             );
           default:
@@ -141,6 +134,17 @@ export async function* AnthropicChatModel(
         }
       })
   );
+}
+
+interface AnthropicChatModelProps extends ModelPropsWithChildren {
+  model: ValidChatModel;
+}
+export async function* AnthropicChatModel(
+  props: AnthropicChatModelProps,
+  { render, getContext, logger }: AI.ComponentContext
+): AI.RenderableStream {
+  const messages = await getPolyfilledMessages(props.children, render, 'Anthropic', ErrorCode.AnthropicDoesNotSupportFunctions);
+  yield AI.AppendOnlyStream;
 
   if (!messages.length) {
     throw new AIJSXError(

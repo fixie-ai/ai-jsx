@@ -1,6 +1,6 @@
-import { ChatProvider, ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
-import { OpenAIChatModel } from 'ai-jsx/lib/openai';
-import { AnthropicChatModel } from 'ai-jsx/lib/anthropic';
+import { ChatCompletion, UserMessage, SystemMessage } from 'ai-jsx/core/completion';
+import { OpenAI } from 'ai-jsx/lib/openai';
+import { Anthropic } from 'ai-jsx/lib/anthropic';
 import * as AI from 'ai-jsx';
 import { pino } from 'pino';
 import { PinoLogger } from 'ai-jsx/core/log';
@@ -8,6 +8,7 @@ import { PinoLogger } from 'ai-jsx/core/log';
 function App() {
   return (
     <ChatCompletion>
+      <SystemMessage>Answer in an excited tone.</SystemMessage>
       <UserMessage>Why is the sky blue?</UserMessage>
     </ChatCompletion>
   );
@@ -31,42 +32,42 @@ const logger = pino({
   },
 });
 
-logger.info('Using models explicitly');
-console.log(
-  await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(
-    <>
-      * Anthropic:{' '}
-      <ChatProvider component={AnthropicChatModel} model="claude-1">
-        <App />
-      </ChatProvider>
-      {'\n\n'}* OpenAI:{' '}
-      <ChatProvider component={OpenAIChatModel} model="gpt-3.5-turbo">
-        <App />
-      </ChatProvider>
-    </>
-  )
-);
+// logger.info('Using models explicitly');
+// console.log(
+//   await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(
+//     <>
+//       * Anthropic:{' '}
+//       <Anthropic chatModel="claude-1">
+//         <App />
+//       </Anthropic>
+//       {'\n\n'}* OpenAI:{' '}
+//       <OpenAI chatModel="gpt-3.5-turbo">
+//         <App />
+//       </OpenAI>
+//     </>
+//   )
+// );
 
-logger.info('Using OpenAI because both keys are set');
-console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
+// logger.info('Using OpenAI because both keys are set');
+// console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
 
-logger.info('Using OpenAI because only its key is set');
-process.env.OPENAI_API_KEY = originalOpenAIKey;
-delete process.env.ANTHROPIC_API_KEY;
-console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
+// logger.info('Using OpenAI because only its key is set');
+// process.env.OPENAI_API_KEY = originalOpenAIKey;
+// delete process.env.ANTHROPIC_API_KEY;
+// console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
 
 logger.info('Using Anthropic');
 process.env.ANTHROPIC_API_KEY = originalAnthropicKey;
 delete process.env.OPENAI_API_KEY;
 console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
 
-logger.info('Streaming Anthropic');
-const rendering = AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />);
-let lastValue = '';
-for await (const frame of rendering) {
-  process.stdout.write(frame.slice(lastValue.length));
-  lastValue = frame;
-}
+// logger.info('Streaming Anthropic');
+// const rendering = AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />);
+// let lastValue = '';
+// for await (const frame of rendering) {
+//   process.stdout.write(frame.slice(lastValue.length));
+//   lastValue = frame;
+// }
 
-const finalResult = await rendering;
-process.stdout.write(finalResult.slice(lastValue.length));
+// const finalResult = await rendering;
+// process.stdout.write(finalResult.slice(lastValue.length));
