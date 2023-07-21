@@ -14,6 +14,7 @@ import { Jsonifiable } from 'type-fest';
 import z from 'zod';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
+import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { getEnvVar } from '../lib/util.js';
 import { JsonChatCompletion } from './constrained-output.js';
@@ -765,6 +766,20 @@ export interface DocsQAProps<ChunkMetadata extends Jsonifiable = Jsonifiable> {
    * ```
    */
   chunkFormatter?: (props: { doc: ScoredChunk<ChunkMetadata> }) => Node;
+
+  /**
+   * The component used to format results from a DocsQAWithSources query.
+   *
+   * ```tsx
+   *   function FormatQAResult(result: QAWithSourcesResult) {
+   *     if (result.sources?.length) {
+   *       return `${result.answer}\n\nSources:\n${result.sources.join('\n')}`;
+   *     }
+   *     return result.answer;
+   *   }
+   * ```
+   */
+  resultFormatter?: (result: QAWithSourcesResult) => Node;
 }
 
 /**
@@ -792,20 +807,33 @@ export async function DocsQA<ChunkMetadata extends Jsonifiable = Jsonifiable>(pr
   );
 }
 
+const ResultSchema: z.ZodObject<any> = z.object({
+  answer: z.string().describe("The answer to the user's question"),
+  sources: z.array(z.string()).describe('The title or URL of each document used to answer the question'),
+}).required({answer: true});
+
+export type QAWithSourcesResult = z.infer<typeof ResultSchema>;
+
+/** A default component for formatting DocsQAWithSources results. */
+function DefaultQAResultFormatter(result: QAWithSourcesResult) {
+  if (result.sources?.length) {
+    return `${result.answer}\n\nSources:\n${result.sources.join('\n')}`;
+  }
+  return result.answer;
+}
+
 /**
  * Similar to {@link DocsQA}, but encourages the LLM to return sources for its answer.
  */
-export async function DocsQAWithSources<ChunkMetadata extends Jsonifiable = Jsonifiable>(props: DocsQAProps<ChunkMetadata>) {
+export async function* DocsQAWithSources<ChunkMetadata extends Jsonifiable = Jsonifiable>(
+  props: DocsQAProps<ChunkMetadata>,
+  { render }: AI.ComponentContext) {
   const chunks = await props.corpus.search(props.question, { limit: props.chunkLimit });
   const chunkFormatter: (props: { doc: ScoredChunk<ChunkMetadata> }) => Node = props.chunkFormatter ?? DefaultFormatter;
+  const resultFormatter: (result: QAWithSourcesResult) => Node = props.resultFormatter ?? DefaultQAResultFormatter;
 
-  const resultSchema: z.ZodObject<any> = z.object({
-    answer: z.string().describe("The answer to the user's question"),
-    sources: z.array(z.string()).describe('The title or URL of each document used to answer the question'),
-  }).required({answer: true});
-
-  return (
-    <JsonChatCompletion schema={resultSchema}>
+  const stringifiedResult = (
+    <JsonChatCompletion schema={ResultSchema}>
       <SystemMessage>
         You are a trained question answerer. Answer questions truthfully, using only the document excerpts below. Do not
         use any other knowledge you have about the world. If you don't know how to answer the question, just say "I
@@ -816,4 +844,15 @@ export async function DocsQAWithSources<ChunkMetadata extends Jsonifiable = Json
       <UserMessage>{props.question}</UserMessage>
     </JsonChatCompletion>
   );
+
+  const frames = render(stringifiedResult);
+  for await (const frame of frames) {
+    try {
+      yield resultFormatter(ResultSchema.parse(JSON.parse(frame)));
+    } catch (e) {
+      // The intermediate result isn't valid yet. Return it as is instead.
+      yield frame;
+    }
+  }
+  return resultFormatter(ResultSchema.parse(JSON.parse(await frames)));
 }
