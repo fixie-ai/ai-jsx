@@ -6,7 +6,7 @@ import { Node } from '../index.js';
 import Replicate from 'replicate';
 import { getEnvVar } from './util.js';
 
-interface Llama2ModelProps extends ModelProps {
+export interface Llama2ModelProps extends ModelProps {
   /** Penalty for repeated words in the output. Must be in the range [0.01, 5]. */
   repetitionPenalty?: number;
 }
@@ -16,7 +16,7 @@ interface Llama2ModelProps extends ModelProps {
  *
  * @see https://replicate.com/replicate/llama70b-v2-chat
  */
-interface FetchLlama2Args extends Pick<ModelProps, 'temperature'> {
+export interface FetchLlama2Args extends Pick<ModelProps, 'temperature'> {
   prompt: string;
   /** The maximum number of tokens to generate */
   max_length?: number;
@@ -38,9 +38,9 @@ interface FetchLlama2Args extends Pick<ModelProps, 'temperature'> {
  *
  * If you don't have a streaming API, you can just yield a single chunk.
  */
-type FetchLlama2 = (args: FetchLlama2Args) => AsyncGenerator<string, string>;
+export type FetchLlama2 = (args: FetchLlama2Args) => AsyncGenerator<string, string>;
 
-interface Llama2Props extends ModelPropsWithChildren, Pick<Llama2ModelProps, 'repetitionPenalty'> {
+export interface Llama2Props extends ModelPropsWithChildren, Pick<Llama2ModelProps, 'repetitionPenalty'> {
   fetch: FetchLlama2;
 }
 
@@ -157,11 +157,8 @@ export function ReplicateLlama2(
 
   async function* fetchLlama2(input: FetchLlama2Args) {
     const output = (await replicate.run(
-      // Can we remove the part after the :?
       'replicate/llama70b-v2-chat:e951f18578850b652510200860fc4ea62b3b16fac280f83ff32282f87bbd2e48',
-      {
-        input,
-      }
+      { input }
     )) as string[];
     const result = output.join('');
     logger.debug({ output, result }, 'Replicate output');
