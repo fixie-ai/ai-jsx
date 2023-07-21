@@ -11,10 +11,13 @@ import { VectorStore } from 'langchain/vectorstores';
 import _ from 'lodash';
 import { similarity } from 'ml-distance';
 import { Jsonifiable } from 'type-fest';
+import z from 'zod';
 import { ChatCompletion, SystemMessage, UserMessage } from '../core/completion.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
+import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { getEnvVar } from '../lib/util.js';
-import { AIJSXError, ErrorCode } from '../core/errors.js';
+import { JsonChatCompletion } from './constrained-output.js';
 
 /**
  * A raw document loaded from an arbitrary source that has not yet been parsed.
@@ -765,6 +768,23 @@ export interface DocsQAProps<ChunkMetadata extends Jsonifiable = Jsonifiable> {
   chunkFormatter?: (props: { doc: ScoredChunk<ChunkMetadata> }) => Node;
 }
 
+export interface DocsQAWithCitationsProps<ChunkMetadata extends Jsonifiable = Jsonifiable>
+  extends DocsQAProps<ChunkMetadata> {
+  /**
+   * The component used to format results from a DocsQAWithCitations query.
+   *
+   * ```tsx
+   *   function FormatQAResult(result: QAWithCitationsResult) {
+   *     if (result.sources?.length) {
+   *       return `${result.answer}\n\nSources:\n${result.sources.join('\n')}`;
+   *     }
+   *     return result.answer;
+   *   }
+   * ```
+   */
+  resultFormatter?: (result: QAWithCitationsResult) => Node;
+}
+
 /**
  * A component that can be used to answer questions about documents. This is a very common usecase for LLMs.
  * @example
@@ -788,4 +808,57 @@ export async function DocsQA<ChunkMetadata extends Jsonifiable = Jsonifiable>(pr
       <UserMessage>{props.question}</UserMessage>
     </ChatCompletion>
   );
+}
+
+const ResultSchema = z
+  .object({
+    answer: z.string().describe("The answer to the user's question"),
+    sources: z.array(z.string()).describe('The title or URL of each document used to answer the question'),
+  })
+  .required({ answer: true });
+
+export type QAWithCitationsResult = Partial<z.infer<typeof ResultSchema>>;
+
+/** A default component for formatting DocsQAWithCitations results. */
+function DefaultQAResultFormatter(result: QAWithCitationsResult) {
+  if (result.sources?.length) {
+    return `${result.answer}\n\nSources:\n${result.sources.join('\n')}`;
+  }
+  return result.answer;
+}
+
+/**
+ * Similar to {@link DocsQA}, but encourages the LLM to return citations for its answer.
+ */
+export async function* DocsQAWithCitations<ChunkMetadata extends Jsonifiable = Jsonifiable>(
+  props: DocsQAWithCitationsProps<ChunkMetadata>,
+  { render, logger }: AI.ComponentContext
+) {
+  const chunks = await props.corpus.search(props.question, { limit: props.chunkLimit });
+  const chunkFormatter: (props: { doc: ScoredChunk<ChunkMetadata> }) => Node = props.chunkFormatter ?? DefaultFormatter;
+  const resultFormatter: (result: QAWithCitationsResult) => Node = props.resultFormatter ?? DefaultQAResultFormatter;
+
+  const stringifiedResult = (
+    <JsonChatCompletion schema={ResultSchema}>
+      <SystemMessage>
+        You are a trained question answerer. Answer questions truthfully, using only the document excerpts below. Do not
+        use any other knowledge you have about the world. If you don't know how to answer the question, just say "I
+        don't know." Here are the relevant document excerpts you have been given:
+        {chunks.map((chunk) => chunkFormatter({ doc: chunk }))}
+        And here is the question you must answer:
+      </SystemMessage>
+      <UserMessage>{props.question}</UserMessage>
+    </JsonChatCompletion>
+  );
+
+  const frames = render(stringifiedResult);
+  for await (const frame of frames) {
+    try {
+      yield resultFormatter(ResultSchema.parse(JSON.parse(frame)));
+    } catch (e) {
+      logger.debug(`Failed to parse DocsQAWithCitations frame: ${e}`);
+      yield frame;
+    }
+  }
+  return resultFormatter(ResultSchema.parse(JSON.parse(await frames)));
 }
