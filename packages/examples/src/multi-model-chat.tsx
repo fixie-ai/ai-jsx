@@ -37,14 +37,14 @@ logger.info('Using models explicitly');
 console.log(
   await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(
     <>
-      {/* * Anthropic:{' '}
+      * Anthropic:{' '}
       <Anthropic chatModel="claude-1">
         <App />
       </Anthropic>
       {'\n\n'}* OpenAI:{' '}
       <OpenAI chatModel="gpt-3.5-turbo">
         <App />
-      </OpenAI> */}
+      </OpenAI>
       {'\n\n'}* Llama2:{' '}
       <ReplicateLlama2>
         <App />
@@ -53,26 +53,26 @@ console.log(
   )
 );
 
-// logger.info('Using OpenAI because both keys are set');
-// console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
+logger.info('Using OpenAI because both keys are set');
+console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
 
-// logger.info('Using OpenAI because only its key is set');
-// process.env.OPENAI_API_KEY = originalOpenAIKey;
-// delete process.env.ANTHROPIC_API_KEY;
-// console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
+logger.info('Using OpenAI because only its key is set');
+process.env.OPENAI_API_KEY = originalOpenAIKey;
+delete process.env.ANTHROPIC_API_KEY;
+console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
 
-// logger.info('Using Anthropic');
-// process.env.ANTHROPIC_API_KEY = originalAnthropicKey;
-// delete process.env.OPENAI_API_KEY;
-// console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
+logger.info('Using Anthropic');
+process.env.ANTHROPIC_API_KEY = originalAnthropicKey;
+delete process.env.OPENAI_API_KEY;
+console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
 
-// logger.info('Streaming Anthropic');
-// const rendering = AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />);
-// let lastValue = '';
-// for await (const frame of rendering) {
-//   process.stdout.write(frame.slice(lastValue.length));
-//   lastValue = frame;
-// }
+logger.info('Streaming Anthropic');
+const rendering = AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />);
+let lastValue = '';
+for await (const frame of rendering) {
+  process.stdout.write(frame.slice(lastValue.length));
+  lastValue = frame;
+}
 
-// const finalResult = await rendering;
-// process.stdout.write(finalResult.slice(lastValue.length));
+const finalResult = await rendering;
+process.stdout.write(finalResult.slice(lastValue.length));

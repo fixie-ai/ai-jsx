@@ -137,6 +137,16 @@ export function Llama2({
   );
 }
 
+/**
+ * This component causes all children `ChatCompletion` and `Completion` components to use Llama2 hosted on Replicate.
+ *
+ * You must set env var REPLICATE_API_TOKEN or REACT_REPLICATE_API_TOKEN for this to work.
+ *
+ * Drawbacks to this implementation:
+ *  * The Replicate JS client lib does not support streaming.
+ *  * The Replicate API will sometimes return an empty string with no explanation.
+ *      (This has been observed when passing maxTokens=50.)
+ */
 export function ReplicateLlama2(
   { children, ...defaults }: { children: Node } & Llama2ModelProps,
   { logger }: AI.ComponentContext
@@ -146,7 +156,6 @@ export function ReplicateLlama2(
   });
 
   async function* fetchLlama2(input: FetchLlama2Args) {
-    yield '';
     const output = (await replicate.run(
       // Can we remove the part after the :?
       'replicate/llama70b-v2-chat:e951f18578850b652510200860fc4ea62b3b16fac280f83ff32282f87bbd2e48',
@@ -154,8 +163,9 @@ export function ReplicateLlama2(
         input,
       }
     )) as string[];
-    logger.debug({ output }, 'Replicate output');
     const result = output.join('');
+    logger.debug({ output, result }, 'Replicate output');
+    yield result;
     return result;
   }
 
