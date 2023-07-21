@@ -807,10 +807,12 @@ export async function DocsQA<ChunkMetadata extends Jsonifiable = Jsonifiable>(pr
   );
 }
 
-const ResultSchema: z.ZodObject<any> = z.object({
-  answer: z.string().describe("The answer to the user's question"),
-  sources: z.array(z.string()).describe('The title or URL of each document used to answer the question'),
-}).required({answer: true});
+const ResultSchema: z.ZodObject<any> = z
+  .object({
+    answer: z.string().describe("The answer to the user's question"),
+    sources: z.array(z.string()).describe('The title or URL of each document used to answer the question'),
+  })
+  .required({ answer: true });
 
 export type QAWithSourcesResult = z.infer<typeof ResultSchema>;
 
@@ -827,7 +829,8 @@ function DefaultQAResultFormatter(result: QAWithSourcesResult) {
  */
 export async function* DocsQAWithSources<ChunkMetadata extends Jsonifiable = Jsonifiable>(
   props: DocsQAProps<ChunkMetadata>,
-  { render }: AI.ComponentContext) {
+  { render }: AI.ComponentContext
+) {
   const chunks = await props.corpus.search(props.question, { limit: props.chunkLimit });
   const chunkFormatter: (props: { doc: ScoredChunk<ChunkMetadata> }) => Node = props.chunkFormatter ?? DefaultFormatter;
   const resultFormatter: (result: QAWithSourcesResult) => Node = props.resultFormatter ?? DefaultQAResultFormatter;

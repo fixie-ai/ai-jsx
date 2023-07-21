@@ -1,4 +1,12 @@
-import { DocsQA, DocsQAWithSources, LocalCorpus, QAWithSourcesResult, ScoredChunk, makeChunker, staticLoader } from 'ai-jsx/batteries/docs';
+import {
+  DocsQA,
+  DocsQAWithSources,
+  LocalCorpus,
+  QAWithSourcesResult,
+  ScoredChunk,
+  makeChunker,
+  staticLoader,
+} from 'ai-jsx/batteries/docs';
 import { showInspector } from 'ai-jsx/core/inspector';
 import fetch from 'node-fetch';
 import TurndownService from 'turndown';
@@ -33,12 +41,13 @@ function OptionalCustomResultFormatter(result: QAWithSourcesResult) {
    * The formats the result of a DocsQAWithSources call to present the answer and sources as
    * desired.
    */
-  const linkedSources = result.sources?.map((source: string) => {
-    if (source == 'Wikipedia Article about Hurricane Katrina') {
-      return `<a href="${URL}">${source}</a>`;
-    }
-    return source;
-  }) || [];
+  const linkedSources =
+    result.sources?.map((source: string) => {
+      if (source == 'Wikipedia Article about Hurricane Katrina') {
+        return `<a href="${URL}">${source}</a>`;
+      }
+      return source;
+    }) || [];
 
   if (linkedSources.length) {
     return `${result.answer} (from ${linkedSources.join(', ')})`;
@@ -51,7 +60,12 @@ function App() {
     <>
       <DocsQAWithSources question="What was Hurricane Katrina?" corpus={corpus} chunkLimit={5} />
       {'\n\n'}
-      <DocsQA question="Which dates did the storm occur?" corpus={corpus} chunkLimit={5} chunkFormatter={OptionalCustomChunkFormatter}/>
+      <DocsQA
+        question="Which dates did the storm occur?"
+        corpus={corpus}
+        chunkLimit={5}
+        chunkFormatter={OptionalCustomChunkFormatter}
+      />
       {'\n\n'}
       <DocsQAWithSources
         question="Where were the strongest winds reported?"
