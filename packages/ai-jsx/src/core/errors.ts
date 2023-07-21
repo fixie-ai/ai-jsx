@@ -27,7 +27,7 @@ export enum ErrorCode {
 
   ChatModelDoesNotSupportFunctions = 1022,
   ChatCompletionBadInput = 1023,
-  
+
   Llama2DoesNotSupportFunctions = 1024,
 
   ModelOutputDidNotMatchConstraint = 2000,

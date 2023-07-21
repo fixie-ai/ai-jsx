@@ -88,7 +88,12 @@ export function Anthropic({
   return result;
 }
 
-export async function getPolyfilledMessages(children: Node, render: AI.ComponentContext['render'], providerName: string, doesNotSupoortFunctionsErrorCode: ErrorCode) {
+export async function getPolyfilledMessages(
+  children: Node,
+  render: AI.ComponentContext['render'],
+  providerName: string,
+  doesNotSupoortFunctionsErrorCode: ErrorCode
+) {
   const messageElements = await render(children, {
     stop: (e) =>
       e.tag == SystemMessage ||
@@ -143,7 +148,12 @@ export async function* AnthropicChatModel(
   props: AnthropicChatModelProps,
   { render, getContext, logger }: AI.ComponentContext
 ): AI.RenderableStream {
-  const messages = await getPolyfilledMessages(props.children, render, 'Anthropic', ErrorCode.AnthropicDoesNotSupportFunctions);
+  const messages = await getPolyfilledMessages(
+    props.children,
+    render,
+    'Anthropic',
+    ErrorCode.AnthropicDoesNotSupportFunctions
+  );
   yield AI.AppendOnlyStream;
 
   if (!messages.length) {

@@ -24,9 +24,9 @@ export interface ModelProps {
   /** A list of stop tokens. */
   stop?: string[];
 
-  /** 
+  /**
    * An alternative sampling technique to temperature.
-   * 
+   *
    * @see https://platform.openai.com/docs/api-reference/chat/create#chat/create-top_p */
   topP?: number;
 }
