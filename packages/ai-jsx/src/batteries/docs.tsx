@@ -766,12 +766,15 @@ export interface DocsQAProps<ChunkMetadata extends Jsonifiable = Jsonifiable> {
    * ```
    */
   chunkFormatter?: (props: { doc: ScoredChunk<ChunkMetadata> }) => Node;
+}
 
+export interface DocsQAWithCitationsProps<ChunkMetadata extends Jsonifiable = Jsonifiable>
+  extends DocsQAProps<ChunkMetadata> {
   /**
-   * The component used to format results from a DocsQAWithSources query.
+   * The component used to format results from a DocsQAWithCitations query.
    *
    * ```tsx
-   *   function FormatQAResult(result: QAWithSourcesResult) {
+   *   function FormatQAResult(result: QAWithCitationsResult) {
    *     if (result.sources?.length) {
    *       return `${result.answer}\n\nSources:\n${result.sources.join('\n')}`;
    *     }
@@ -779,7 +782,7 @@ export interface DocsQAProps<ChunkMetadata extends Jsonifiable = Jsonifiable> {
    *   }
    * ```
    */
-  resultFormatter?: (result: QAWithSourcesResult) => Node;
+  resultFormatter?: (result: QAWithCitationsResult) => Node;
 }
 
 /**
@@ -807,17 +810,17 @@ export async function DocsQA<ChunkMetadata extends Jsonifiable = Jsonifiable>(pr
   );
 }
 
-const ResultSchema: z.ZodObject<any> = z
+const ResultSchema = z
   .object({
     answer: z.string().describe("The answer to the user's question"),
     sources: z.array(z.string()).describe('The title or URL of each document used to answer the question'),
   })
   .required({ answer: true });
 
-export type QAWithSourcesResult = z.infer<typeof ResultSchema>;
+export type QAWithCitationsResult = Partial<z.infer<typeof ResultSchema>>;
 
-/** A default component for formatting DocsQAWithSources results. */
-function DefaultQAResultFormatter(result: QAWithSourcesResult) {
+/** A default component for formatting DocsQAWithCitations results. */
+function DefaultQAResultFormatter(result: QAWithCitationsResult) {
   if (result.sources?.length) {
     return `${result.answer}\n\nSources:\n${result.sources.join('\n')}`;
   }
@@ -827,13 +830,13 @@ function DefaultQAResultFormatter(result: QAWithSourcesResult) {
 /**
  * Similar to {@link DocsQA}, but encourages the LLM to return sources for its answer.
  */
-export async function* DocsQAWithSources<ChunkMetadata extends Jsonifiable = Jsonifiable>(
-  props: DocsQAProps<ChunkMetadata>,
-  { render }: AI.ComponentContext
+export async function* DocsQAWithCitations<ChunkMetadata extends Jsonifiable = Jsonifiable>(
+  props: DocsQAWithCitationsProps<ChunkMetadata>,
+  { render, logger }: AI.ComponentContext
 ) {
   const chunks = await props.corpus.search(props.question, { limit: props.chunkLimit });
   const chunkFormatter: (props: { doc: ScoredChunk<ChunkMetadata> }) => Node = props.chunkFormatter ?? DefaultFormatter;
-  const resultFormatter: (result: QAWithSourcesResult) => Node = props.resultFormatter ?? DefaultQAResultFormatter;
+  const resultFormatter: (result: QAWithCitationsResult) => Node = props.resultFormatter ?? DefaultQAResultFormatter;
 
   const stringifiedResult = (
     <JsonChatCompletion schema={ResultSchema}>
@@ -853,7 +856,7 @@ export async function* DocsQAWithSources<ChunkMetadata extends Jsonifiable = Jso
     try {
       yield resultFormatter(ResultSchema.parse(JSON.parse(frame)));
     } catch (e) {
-      // The intermediate result isn't valid yet. Return it as is instead.
+      logger.debug(`Failed to parse DocsQAWithCitations frame: ${e}`);
       yield frame;
     }
   }

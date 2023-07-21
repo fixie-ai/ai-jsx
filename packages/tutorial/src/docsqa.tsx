@@ -1,8 +1,8 @@
 import {
   DocsQA,
-  DocsQAWithSources,
+  DocsQAWithCitations,
   LocalCorpus,
-  QAWithSourcesResult,
+  QAWithCitationsResult,
   ScoredChunk,
   makeChunker,
   staticLoader,
@@ -30,15 +30,15 @@ function OptionalCustomChunkFormatter({ doc }: { doc: ScoredChunk }) {
    * This presents document chunks as a simple string with the chunk's contents instead of
    * formatting it with metadata like a title.
    *
-   * Note that not including a title makes it difficult to use DocsQAWithSources since the LLM
+   * Note that not including a title makes it difficult to use DocsQAWithCitations since the LLM
    * won't know how to refer to this doc.
    */
   return doc.chunk.content;
 }
 
-function OptionalCustomResultFormatter(result: QAWithSourcesResult) {
+function OptionalCustomResultFormatter(result: QAWithCitationsResult) {
   /**
-   * The formats the result of a DocsQAWithSources call to present the answer and sources as
+   * The formats the result of a DocsQAWithCitations call to present the answer and sources as
    * desired.
    */
   const linkedSources =
@@ -47,7 +47,7 @@ function OptionalCustomResultFormatter(result: QAWithSourcesResult) {
         return `<a href="${URL}">${source}</a>`;
       }
       return source;
-    }) || [];
+    }) ?? [];
 
   if (linkedSources.length) {
     return `${result.answer} (from ${linkedSources.join(', ')})`;
@@ -58,16 +58,19 @@ function OptionalCustomResultFormatter(result: QAWithSourcesResult) {
 function App() {
   return (
     <>
-      <DocsQAWithSources question="What was Hurricane Katrina?" corpus={corpus} chunkLimit={5} />
-      {'\n\n'}
+      DocsQA without source citations:{'\n'}
       <DocsQA
-        question="Which dates did the storm occur?"
+        question="Which dates did the Huricane Katrina occur?"
         corpus={corpus}
         chunkLimit={5}
         chunkFormatter={OptionalCustomChunkFormatter}
       />
       {'\n\n'}
-      <DocsQAWithSources
+      DocsQA with source citations:{'\n'}
+      <DocsQAWithCitations question="What was Hurricane Katrina?" corpus={corpus} chunkLimit={5} />
+      {'\n\n'}
+      DocsQA with source citations and custom result formatter:{'\n'}
+      <DocsQAWithCitations
         question="Where were the strongest winds reported?"
         corpus={corpus}
         chunkLimit={5}

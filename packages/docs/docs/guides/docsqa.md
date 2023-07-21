@@ -118,11 +118,10 @@ The `DocsQA` component provides an answer, like:
 */
 ```
 
-If you want an answer that cites sources, use `DocsQAWithSources`:
+If you want an answer that cites sources, use `DocsQAWithCitations`:
 
 ```tsx
-<DocsQAWithSources question="What is the atomic number of nitrogen?" 
-  corpus={corpus} docComponent={ShowDoc} />
+<DocsQAWithCitations question="What is the atomic number of nitrogen?" corpus={corpus} docComponent={ShowDoc} />
 /* Renders:
     Nitogen's atomic number is 7
     Sources: https://en.wikipedia.org/wiki/Nitrogen
@@ -132,22 +131,32 @@ If you want an answer that cites sources, use `DocsQAWithSources`:
 If you want to customize how the citations are formatted, pass a `resultsFormatter`:
 
 ```tsx
-function ResultFormatter(result: QAWithSourcesResult) {
-  return <>
-    {result.answer}
-    {result.sources.length && <>
-      Learn more:{'\n'}
-      {result.sources.map(source => <>* {source}{'\n'}</>)}
-    </>}
-  </>
+function ResultFormatter(result: QAWithCitationsResult) {
+  return (
+    <>
+      {result.answer}
+      {result.sources.length && (
+        <>
+          Learn more:{'\n'}
+          {result.sources.map((source) => (
+            <>
+              * {source}
+              {'\n'}
+            </>
+          ))}
+        </>
+      )}
+    </>
+  );
 }
 
-<DocsQAWithSources 
+<DocsQAWithCitations
   question="What is the atomic number of nitrogen?"
-  corpus={corpus} docComponent={ShowDoc}
+  corpus={corpus}
+  docComponent={ShowDoc}
   // highlight-next-line
   resultFormatter={ResultFormatter}
-/>
+/>;
 /* Renders:
     Nitogen's atomic number is 7
     Learn more:
