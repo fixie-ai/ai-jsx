@@ -45,6 +45,10 @@ const usageExample = (
     {/* ... you may wish to add more examples */}
   </>
 );
+
+<MdxChatCompletion usageExamples={usageExample}>
+  <UserMessage>Tell me a children's story. Summarize the key characters at the end.</UserMessage>
+</MdxChatCompletion>
 ```
 
 In that example, `Card` may refer to a real component in scope, or you can just write it out as a string:

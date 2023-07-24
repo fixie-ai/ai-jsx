@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.5.14
+## 0.5.15
+
+- Add [`MdxChatCompletion`](./guides/mdx.md), so your model calls can now output [MDX](https://mdxjs.com/) using your components.
+
+## [0.5.14](https://github.com/fixie-ai/ai-jsx/commit/5971243)
 
 - Add [Llama2 support](./guides/models.md#llama2).
 
