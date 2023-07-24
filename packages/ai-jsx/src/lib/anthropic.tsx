@@ -102,6 +102,7 @@ export async function* AnthropicChatModel(
       'user'
     );
   }
+  yield AI.AppendOnlyStream;
   const messageElements = await render(props.children, {
     stop: (e) =>
       e.tag == SystemMessage ||
@@ -110,7 +111,6 @@ export async function* AnthropicChatModel(
       e.tag == FunctionCall ||
       e.tag == FunctionResponse,
   });
-  yield AI.AppendOnlyStream;
   const messages = await Promise.all(
     messageElements
       .filter(AI.isElement)

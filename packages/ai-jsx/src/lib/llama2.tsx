@@ -1,4 +1,4 @@
-import { ChatProvider, CompletionProvider, ModelProps, ModelPropsWithChildren } from '../core/completion.js';
+import { AssistantMessage, ChatProvider, CompletionProvider, FunctionCall, FunctionResponse, ModelProps, ModelPropsWithChildren, SystemMessage, UserMessage } from '../core/completion.js';
 import { ErrorCode } from '../core/errors.js';
 import * as AI from '../index.js';
 import { getPolyfilledMessages } from './anthropic.js';
@@ -46,6 +46,10 @@ export interface Llama2Props extends ModelPropsWithChildren, Pick<Llama2ModelPro
   fetch: FetchLlama2;
 }
 
+export interface Llama2ChatProps extends Llama2Props {
+  getArgsOfChildren(children: Node): Pick<FetchLlama2Args>;
+}
+
 /**
  * If you use a Llama2 model without specifying the max tokens for the completion, this value will be used as the default.
  */
@@ -75,22 +79,34 @@ export const defaultMaxTokens = 500;
  * You may have to do a little more prompt engineering work to get the model in the mood to chat and stop
  * responding after a single message.
  */
-async function* Llama2ChatModel(props: Llama2Props, { render, logger }: AI.ComponentContext): AI.RenderableStream {
-  const messages = await getPolyfilledMessages(
-    props.children,
-    render,
-    'Llama2',
-    ErrorCode.Llama2DoesNotSupportFunctions
-  );
+async function* Llama2ChatModel(props: Llama2ChatProps, { render, logger }: AI.ComponentContext): AI.RenderableStream {
   yield AI.AppendOnlyStream;
-  const prompt = messages.join('\n\n');
+  const messageElements = (await render(props.children, {
+    stop: (e) =>
+      e.tag == SystemMessage ||
+      e.tag == UserMessage ||
+      e.tag == AssistantMessage ||
+      e.tag == FunctionCall ||
+      e.tag == FunctionResponse,
+  }));
+
+  const systemMessage = messageElements.find((e) => e.tag == SystemMessage);
+  const userMessages = messageElements.filter((e) => e.tag == UserMessage);
+  if (userMessages.length > 1) {
+    throw new AIJSXError(
+      'Replicate Llama2 does not support multiple user messages. Please use a single <UserMessage>.',
+      ErrorCode.Llama2DoesNotSupportMultipleUserMessages
+    );
+  }
+
+  yield AI.AppendOnlyStream;
   const llama2Args: FetchLlama2Args = {
     modelType: 'chat',
-    prompt,
     max_length: props.maxTokens ?? defaultMaxTokens,
     repetition_penalty: props.repetitionPenalty,
     temperature: props.temperature,
     top_p: props.topP,
+    ...props.getArgsOfChildren(props.children),
   };
   logger.debug({ llama2Args }, 'Calling Llama2');
   const response = await props.fetch(llama2Args);
