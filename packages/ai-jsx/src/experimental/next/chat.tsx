@@ -21,6 +21,10 @@ export interface SerializedMessage {
   message: string;
 }
 
+/**
+ * A component that will resolve to a single message in a conversation. Used as part of
+ * the `children` prop of `<Conversation>`.
+ */
 export function Message(props: {}, maybeContext?: AI.ComponentContext) {
   if (maybeContext && 'render' in maybeContext) {
     return maybeContext.getContext(AIMessageContext);
