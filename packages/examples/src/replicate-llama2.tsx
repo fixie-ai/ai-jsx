@@ -35,12 +35,7 @@ function App() {
       </ReplicateLlama2>
       Temperature 3:{'\n'}
       <ReplicateLlama2>
-        <Completion>
-          List of cities:
-          1. Seattle
-          2. San Francisco
-          3. Paris
-        </Completion>
+        <Completion>List of cities: 1. Seattle 2. San Francisco 3. Paris</Completion>
       </ReplicateLlama2>
     </>
   );
