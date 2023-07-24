@@ -245,6 +245,24 @@
         "default": "./dist/cjs/experimental/next/index.cjs"
       }
     },
+    "./experimental/next/chat": {
+      "import": {
+        "types": "./dist/esm/experimental/next/chat.d.ts",
+        "default": "./dist/esm/experimental/next/chat.js"
+      },
+      "require": {
+        "default": "./dist/cjs/experimental/next/chat.cjs"
+      }
+    },
+    "./experimental/next/chat.client": {
+      "import": {
+        "types": "./dist/esm/experimental/next/chat.client.d.ts",
+        "default": "./dist/esm/experimental/next/chat.client.js"
+      },
+      "require": {
+        "default": "./dist/cjs/experimental/next/chat.client.cjs"
+      }
+    },
     "./stream": {
       "import": {
         "types": "./dist/esm/stream/index.d.ts",

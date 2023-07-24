@@ -1,111 +1,48 @@
 /** @jsxImportSource ai-jsx/react */
-import 'server-only';
-import * as AI from 'ai-jsx/experimental/next';
-import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { Chat, Conversation, Message, ChatState, sendMessage, SerializedMessage } from 'ai-jsx/experimental/next/chat';
+import { ChatCompletion, SystemMessage } from 'ai-jsx/core/completion';
 import ResultContainer from '@/components/ResultContainer';
-import Chat, { ChatForm, ChatState, ConversationUI, SendMessage, Submit } from '@/components/Chat';
-import { ReactNode, Suspense } from 'react';
-
-const ConversationContext = AI.createContext(null as AI.Node);
-
-function AIConversation(
-  {
-    children,
-  }: {
-    children?: { [key: string]: (message: React.ReactNode, index: number) => React.ReactNode };
-  },
-  maybeContext?: AI.ComponentContext
-) {
-  if (maybeContext && 'render' in maybeContext) {
-    return maybeContext.getContext(ConversationContext);
-  }
-  return <ConversationUI />;
-}
-
-async function AIChat({
-  children,
-  reply,
-  user,
-  assistant,
-  message: messageProp,
-}: {
-  children: ReactNode;
-  reply: () => Promise<AI.Node>;
-  user: (node: ReactNode) => Promise<ReactNode>;
-  assistant: (node: ReactNode) => Promise<ReactNode>;
-  message?: string | ((inputs: any) => Promise<string>);
-}) {
-  const onSend: SendMessage<string[]> = async (formData: FormData, context: string[]) => {
-    'use server';
-    console.log(context, formData);
-    const objectData = {} as Record<string, unknown>;
-    for (const key of formData.keys()) {
-      objectData[key] = formData.get(key);
-    }
-
-    const message =
-      typeof messageProp === 'string'
-        ? (formData.get(messageProp) as string)
-        : typeof messageProp === 'function'
-        ? await messageProp(objectData)
-        : (formData.get('message') as string);
-
-    const aiConversation: AI.Node[] = context
-      .map<AI.Node>((message, i) =>
-        i % 2 ? <UserMessage>{message}</UserMessage> : <AssistantMessage>{message}</AssistantMessage>
-      )
-      .concat([<UserMessage>{message}</UserMessage>]);
-
-    let setFinalReply = (value: string) => {};
-    const finalReplyPromise = new Promise<string>((resolve) => {
-      setFinalReply = resolve;
-    });
-
-    const userMessage = await user(message);
-    const assistantMessage = await assistant(
-      <AI.JSX stream="smooth" onComplete={setFinalReply}>
-        <ConversationContext.Provider value={aiConversation}>{await reply()}</ConversationContext.Provider>
-      </AI.JSX>
-    );
-
-    return [[userMessage, assistantMessage], finalReplyPromise.then((finalReply) => context.concat([finalReply]))];
-  };
-
-  return (
-    <ChatForm onSend={onSend} initialContext={[] as string[]}>
-      {children}
-    </ChatForm>
-  );
-}
+import { Suspense } from 'react';
 
 export default function BasicChat() {
   return (
     <ResultContainer title="Basic Chat" description="In this demo, you can chat with a quirky assistant.">
-      <AIChat
-        reply={async () => {
+      <Chat
+        onSend={async (formData, conversation?: SerializedMessage[]) => {
           'use server';
-          return (
+          return sendMessage(
+            formData.get('message') as string,
             <ChatCompletion>
-              <SystemMessage>You are a loquacious world-renowned expert on dinosaurs.</SystemMessage>
-              <AIConversation />
-            </ChatCompletion>
-          );
-        }}
-        user={async (message) => {
-          'use server';
-          return <li className="whitespace-pre-line">👤: {message}</li>;
-        }}
-        assistant={async (message) => {
-          'use server';
-          return (
-            <li className="whitespace-pre-line">
-              🤖: <Suspense fallback="_">{message}</Suspense>
-            </li>
+              <SystemMessage>
+                You are a web developer who is passionate about HTML, CSS, and JS/JSX. You think that other languages
+                are fine, but Javascript is the true language of the people. When the user is talking to you, always try
+                to steer the conversation back to these topics that you care so deeply about, and try to always ask your
+                own question back to the user.
+              </SystemMessage>
+              <Conversation />
+            </ChatCompletion>,
+            conversation
           );
         }}
       >
         <ul>
-          <AIConversation />
+          <Conversation>
+            {{
+              user: (
+                <li className="whitespace-pre-line">
+                  👤: <Message />
+                </li>
+              ),
+              assistant: (
+                <li className="whitespace-pre-line">
+                  🤖:{' '}
+                  <Suspense fallback="_">
+                    <Message />
+                  </Suspense>
+                </li>
+              ),
+            }}
+          </Conversation>
         </ul>
         <div className="mt-4 flex w-full">
           <input
@@ -135,7 +72,7 @@ export default function BasicChat() {
             </button>
           </ChatState>
         </div>
-      </AIChat>
+      </Chat>
     </ResultContainer>
   );
 }
