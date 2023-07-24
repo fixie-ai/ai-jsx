@@ -29,7 +29,11 @@ export enum ErrorCode {
   ChatCompletionBadInput = 1023,
 
   Llama2DoesNotSupportFunctions = 1024,
-
+  Llama2DoesNotSupportMultipleUserMessages = 1025,
+  Llama2DoesNotSupportAssistantMessages = 1026,
+  Llama2DoesNotSupportFunctionCalls = 1027,
+  Llama2DoesNotSupportFunctionResponse = 1028,
+  
   ModelOutputDidNotMatchConstraint = 2000,
 
   UnsupportedMimeType = 2001,
