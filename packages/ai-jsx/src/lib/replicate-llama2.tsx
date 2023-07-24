@@ -40,7 +40,7 @@ async function* fetchLlama2<ModelArgs extends Llama2ModelArgs>(
  * @see https://replicate.com/replicate/llama70b-v2-chat
  * @see https://replicate.com/replicate/llama70b-v2
  */
-export interface Llama2ModelArgs extends Omit<Llama2ModelProps, 'repetitionPenalty' | 'children'> {
+interface Llama2ModelArgs extends Omit<Llama2ModelProps, 'repetitionPenalty' | 'children'> {
   prompt: string;
   /** Penalty for repeated words in the output. Must be in the range [0.01, 5]. */
   repetition_penalty?: Llama2ModelProps['repetitionPenalty'];
@@ -66,7 +66,7 @@ export interface Llama2ModelProps extends ModelPropsWithChildren {
  *
  * @see https://replicate.com/replicate/llama70b-v2-chat
  */
-export interface Llama2ChatModelArgs extends Llama2ModelArgs {
+interface Llama2ChatModelArgs extends Llama2ModelArgs {
   system_prompt?: string;
 }
 
@@ -171,7 +171,7 @@ export async function* Llama2CompletionModel(
   };
   logger.debug({ llama2Args }, 'Calling Llama2');
   const response = await fetchLlama2(
-    'replicate/llama70b-v2-chat:e951f18578850b652510200860fc4ea62b3b16fac280f83ff32282f87bbd2e48',
+    'replicate/llama70b-v2:14ce4448d5e7e9ed0c37745ac46eca157aab09061f0c179ac2b323b5de56552b',
     llama2Args,
     logger
   );

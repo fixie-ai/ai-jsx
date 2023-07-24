@@ -3,6 +3,7 @@ import { ReplicateLlama2 } from 'ai-jsx/lib/replicate-llama2';
 import * as AI from 'ai-jsx';
 import { pino } from 'pino';
 import { PinoLogger } from 'ai-jsx/core/log';
+import { Completion } from 'ai-jsx/core/completion';
 
 function Question() {
   return (
@@ -32,6 +33,15 @@ function App() {
       <ReplicateLlama2 temperature={3}>
         <Question />
       </ReplicateLlama2>
+      Temperature 3:{'\n'}
+      <ReplicateLlama2>
+        <Completion>
+          List of cities:
+          1. Seattle
+          2. San Francisco
+          3. Paris
+        </Completion>
+      </ReplicateLlama2>
     </>
   );
 }
@@ -47,4 +57,4 @@ const logger = pino({
   },
 });
 
-await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />);
+console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
