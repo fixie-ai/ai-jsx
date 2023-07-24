@@ -1,7 +1,7 @@
 import { ChatCompletion, UserMessage, SystemMessage } from 'ai-jsx/core/completion';
 import { OpenAI } from 'ai-jsx/lib/openai';
 import { Anthropic } from 'ai-jsx/lib/anthropic';
-import { ReplicateLlama2 } from 'ai-jsx/lib/llama2';
+import { ReplicateLlama2 } from 'ai-jsx/lib/replicate-llama2';
 import * as AI from 'ai-jsx';
 import { pino } from 'pino';
 import { PinoLogger } from 'ai-jsx/core/log';

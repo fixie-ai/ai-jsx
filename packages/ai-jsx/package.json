@@ -190,13 +190,13 @@
         "default": "./dist/cjs/lib/anthropic.cjs"
       }
     },
-    "./lib/llama2": {
+    "./lib/replicate-llama2": {
       "import": {
-        "types": "./dist/esm/lib/llama2.d.ts",
-        "default": "./dist/esm/lib/llama2.js"
+        "types": "./dist/esm/lib/replicate-llama2.d.ts",
+        "default": "./dist/esm/lib/replicate-llama2.js"
       },
       "require": {
-        "default": "./dist/cjs/lib/llama2.cjs"
+        "default": "./dist/cjs/lib/replicate-llama2.cjs"
       }
     },
     "./react": {

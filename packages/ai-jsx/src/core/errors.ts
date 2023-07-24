@@ -33,7 +33,8 @@ export enum ErrorCode {
   Llama2DoesNotSupportAssistantMessages = 1026,
   Llama2DoesNotSupportFunctionCalls = 1027,
   Llama2DoesNotSupportFunctionResponse = 1028,
-  
+  Llama2DoesNotSupportMultipleSystemMessages = 1029,
+
   ModelOutputDidNotMatchConstraint = 2000,
 
   UnsupportedMimeType = 2001,
