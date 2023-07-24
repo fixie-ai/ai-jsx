@@ -1,9 +1,8 @@
-import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { ChatCompletion, SystemMessage, UserMessage, Completion } from 'ai-jsx/core/completion';
 import { ReplicateLlama2 } from 'ai-jsx/lib/replicate-llama2';
 import * as AI from 'ai-jsx';
 import { pino } from 'pino';
 import { PinoLogger } from 'ai-jsx/core/log';
-import { Completion } from 'ai-jsx/core/completion';
 
 function Question() {
   return (
