@@ -1,5 +1,12 @@
 /** @jsxImportSource ai-jsx/react */
-import { Chat, Conversation, Message, ChatState, sendMessage, SerializedMessage } from 'ai-jsx/experimental/next/chat';
+import {
+  Chat,
+  Conversation,
+  Message,
+  ChatState,
+  sendChatMessage,
+  SerializedMessage,
+} from 'ai-jsx/experimental/next/chat';
 import { ChatCompletion, SystemMessage } from 'ai-jsx/core/completion';
 import ResultContainer from '@/components/ResultContainer';
 import { ReactNode, Suspense } from 'react';
@@ -7,7 +14,7 @@ import { ReactNode, Suspense } from 'react';
 async function onSend(formData: FormData, conversation?: SerializedMessage[]) {
   'use server';
 
-  return sendMessage(
+  return sendChatMessage(
     formData.get('message') as string,
     <ChatCompletion>
       <SystemMessage>

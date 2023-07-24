@@ -13,26 +13,32 @@ export interface UIMessage {
 
 /**
  * A Server Action that processes a message and returns the resulting UI and context for the next message.
- * See the `sendMessage` helper in `ai-jsx/experimental/next/chat`.
+ * See the `sendChatMessage` helper in `ai-jsx/experimental/next/chat`.
+ *
+ * @see https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions
  */
-export type SendMessage<T> = (formData: FormData, context: T | undefined) => Promise<[UIMessage[], Promise<T>]>;
+export type SendChatMessage<T> = (
+  formData: FormData,
+  context: T | undefined
+) => Promise<{ messages: UIMessage[]; context: Promise<T> }>;
 
 /**
- * React Context containing the `UIMessage`s associated with a conversation. Typically consumed indirectly via
- * the `<Conversation>` component.
+ * React Context containing the `UIMessage`s associated with a conversation. You probably don't want to use this directly, and
+ * should use the `<Conversation>` component instead.
  */
 export const ConversationContext = createContext([] as UIMessage[]);
 
+const MessageContext = createContext(null as ReactNode);
+
 /**
- * React Context containing the UI of the contents of a single message. Typically consumed indirectly via the
- * `<Message>` component.
+ * The current status of the <Chat> form.
  */
-export const MessageContext = createContext(null as ReactNode);
+export type ChatStatus = 'idle' | 'pending' | 'streaming';
 
 /**
  * React Context containing the form status. Typically consumed indirectly via the `<ChatState>` component.
  */
-export const StatusContext = createContext<'idle' | 'pending' | 'streaming'>('idle');
+export const StatusContext = createContext<ChatStatus>('idle');
 
 /**
  * A component that produces a Chat UI driven by AI.JSX. The children will be rendered within a `<form>` that
@@ -46,12 +52,12 @@ export function Chat<T>({
 }: {
   children: ReactNode;
   initialContext?: T;
-  onSend: SendMessage<T>;
+  onSend: SendChatMessage<T>;
 }) {
   const [requestContext, setRequestContext] = React.useState(initialContext);
   const [conversation, setConversation] = React.useState([] as UIMessage[]);
   const [key, setKey] = React.useState(0); // Used to reset the form after each send.
-  const [status, setStatus] = React.useState<'idle' | 'pending' | 'streaming'>('idle');
+  const [status, setStatus] = React.useState<ChatStatus>('idle');
 
   return (
     <ConversationContext.Provider value={conversation}>
@@ -67,11 +73,11 @@ export function Chat<T>({
 
               setStatus('pending');
               (async function () {
-                const [stream, nextContext] = await onSend(formData, requestContext);
+                const { messages, context } = await onSend(formData, requestContext);
                 setStatus('streaming');
-                setConversation((existing) => existing.concat(stream));
+                setConversation((existing) => existing.concat(messages));
                 setKey((k) => k + 1);
-                setRequestContext(await nextContext);
+                setRequestContext(await context);
                 setStatus('idle');
               })();
             },
@@ -86,9 +92,10 @@ export function Chat<T>({
 
 /**
  * A component that when used within a `<Chat>` component can vary rendering according to the status.
- * Accepts `children`, which is rendered when the form is idle; `pending`, which is rendered when
- * a response has not yet been received from the server; and `streaming`, which is rendered when
- * a server response is streaming in.
+ * It uses the following props:
+ *     * `children`: rendered when the form is idle
+ *     * `pending`: rendered when a response has not yet been received from the server
+ *     * `streaming`: rendered when a server response is streaming in
  */
 export function ChatState({
   pending,

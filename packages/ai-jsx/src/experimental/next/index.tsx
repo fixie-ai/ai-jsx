@@ -81,7 +81,7 @@ function StreamRoot({ stream, children }: { stream?: StreamType; children: React
   return children;
 }
 
-function Chunk({ stream, children }: { stream?: 'smooth' | 'fast'; children: ReactNode }) {
+function Chunk({ stream, children }: { stream?: StreamType; children: ReactNode }) {
   if (stream === 'smooth') {
     return <DelayedReveal t={new Date().valueOf()}>{children}</DelayedReveal>;
   }

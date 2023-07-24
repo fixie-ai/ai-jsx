@@ -5,7 +5,7 @@ import {
   MessageMap,
   Message as ClientMessage,
   Conversation as ClientConversation,
-  SendMessage,
+  SendChatMessage,
 } from './chat.client.js';
 export { Chat, ChatState } from './chat.client.js';
 import * as AI from './index.js';
@@ -26,7 +26,8 @@ export interface SerializedMessage {
  * the `children` prop of `<Conversation>`.
  */
 export function Message(props: {}, maybeContext?: AI.ComponentContext) {
-  if (maybeContext && 'render' in maybeContext) {
+  const isInAIJSX = maybeContext && 'render' in maybeContext;
+  if (isInAIJSX) {
     return maybeContext.getContext(AIMessageContext);
   }
 
@@ -49,7 +50,8 @@ export function Conversation(
   },
   maybeContext?: AI.ComponentContext
 ) {
-  if (maybeContext && 'render' in maybeContext) {
+  const isInAIJSX = maybeContext && 'render' in maybeContext;
+  if (isInAIJSX) {
     const serializedMessages = maybeContext.getContext(AIConversationContext);
     return serializedMessages.map((msg, i) => {
       const forType =
@@ -81,11 +83,11 @@ export function Conversation(
  * @param conversation The serialized conversation.
  * @returns A value that can be returned from <Chat>'s `onSend` Server Action.
  */
-export function sendMessage(
+export function sendChatMessage(
   message: string,
   reply: AI.Node,
   conversation?: SerializedMessage[]
-): Awaited<ReturnType<SendMessage<SerializedMessage[]>>> {
+): Awaited<ReturnType<SendChatMessage<SerializedMessage[]>>> {
   const conversationWithUser = (conversation ?? []).concat([{ type: 'user', message }]);
 
   let setFinalReply = (_: string) => {};
@@ -93,8 +95,8 @@ export function sendMessage(
     setFinalReply = resolve;
   });
 
-  return [
-    [
+  return {
+    messages: [
       { type: 'user', message },
       {
         type: 'assistant',
@@ -105,6 +107,8 @@ export function sendMessage(
         ),
       },
     ],
-    finalReplyPromise.then((finalReply) => conversationWithUser.concat([{ type: 'assistant', message: finalReply }])),
-  ];
+    context: finalReplyPromise.then((finalReply) =>
+      conversationWithUser.concat([{ type: 'assistant', message: finalReply }])
+    ),
+  };
 }
