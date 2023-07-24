@@ -76,6 +76,11 @@ export interface Llama2ChatModelArgs extends Llama2ModelArgs {
  */
 export const defaultMaxTokens = 500;
 
+/**
+ * Don't use this directly. Instead, wrap your `<ChatCompletion>` element in `<ReplicateLlama2>`.
+ *
+ * @hidden
+ */
 export async function* Llama2ChatModel(
   props: Llama2ModelProps,
   { render, logger }: AI.ComponentContext
@@ -148,6 +153,11 @@ export async function* Llama2ChatModel(
   return AI.AppendOnlyStream;
 }
 
+/**
+ * Don't use this directly. Instead, wrap your `<Completion>` element in `<ReplicateLlama2>`.
+ *
+ * @hidden
+ */
 export async function* Llama2CompletionModel(
   props: Llama2ModelProps,
   { render, logger }: AI.ComponentContext
