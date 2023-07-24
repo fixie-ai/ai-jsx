@@ -327,13 +327,6 @@ export async function FunctionResponse(
   return `function ${name} returns ${output}`;
 }
 
-export type MessageElement =
-  | typeof SystemMessage
-  | typeof UserMessage
-  | typeof AssistantMessage
-  | typeof FunctionCall
-  | typeof FunctionResponse;
-
 /**
  * Perform a Large Language Mokdel call to do a [completion](https://platform.openai.com/docs/guides/gpt/completions-api).
  *
