@@ -10,6 +10,7 @@ import { OpenAI } from 'ai-jsx/lib/openai';
 import { PinoLogger } from 'ai-jsx/core/log';
 import {pino} from 'pino';
 import { Anthropic } from 'ai-jsx/lib/anthropic';
+import { memo } from 'ai-jsx/core/memoize';
 
 function Card() {
   return null;
@@ -59,6 +60,14 @@ const usageExample = <>
     $10 for some guy to spray your car with a hose.
    </Card>
 
+  Example 4 of how you might use this component, after writing out a report on economics:
+   ... and that concludes the report on economics.
+   <Card header='Primary Points'>
+     * Price is determined by supply and demand
+     * Setting price floors or ceilings cause deadweight loss.
+     * Interfering with the natural price can also cause shortages.
+   </Card>
+
   Use a button group when the user needs to make a choice. A ButtonGroup requires a labels prop.
 
   Example 1 of how you might use this component:
@@ -99,17 +108,17 @@ const usageExample = <>
     ]} />
 </>
 
-async function QuestionAndAnswer({ children }: { children: AI.Node }, { render }: AI.ComponentContext) {
-  const question = await render(children);
+function QuestionAndAnswer({ children }: { children: AI.Node }) {
+  const question = memo(children);
   return (
     <>
+      <OpenAI chatModel="gpt-4">
       Q: {question}
       {'\n'}
       A:{' '}
-      <OpenAI chatModel="gpt-4">
         <MdxChatCompletion usageExamples={usageExample}>{question}</MdxChatCompletion>
-      </OpenAI>
       {'\n\n'}
+      </OpenAI>
     </>
   );
 }
@@ -117,44 +126,36 @@ async function QuestionAndAnswer({ children }: { children: AI.Node }, { render }
 export function App() {
   return (
     <>
-      {/* <QuestionAndAnswer>
+      <QuestionAndAnswer>
         <SystemMessage>
-          You are an AI that helps users book flights.
-        </SystemMessage>
-        <UserMessage>
-          My flight reservation:{' '} <JsonChatCompletion schema={z.object({ reservation: z.any() })}>
+          You are an AI that helps users book flights. The user's reservation:{' '} <JsonChatCompletion schema={z.object({ reservation: z.any() })}>
             <UserMessage>Generate a sample flight reservation.</UserMessage>
           </JsonChatCompletion>
-          {'\n'}
-        </UserMessage>
+        </SystemMessage>
         <UserMessage>Tell me about the flight reservation I just made.</UserMessage>
       </QuestionAndAnswer>
       {'\n\n'}
       <QuestionAndAnswer>
-        <SystemMessage>You are an AI that helps users book hotels.</SystemMessage>
-        <UserMessage>
-          Hotels:{' '} <JsonChatCompletion schema={z.object({ hotels: z.any() })}>
+        <SystemMessage>You are an AI that helps users book hotels. Hotels:{' '} <JsonChatCompletion schema={z.object({ hotels: z.any() })}>
             <UserMessage>
               Generate some information about hotels, including each hotel's name and how many stars it is
             </UserMessage>
-          </JsonChatCompletion>
-          {'\n'}
-        </UserMessage>
+          </JsonChatCompletion></SystemMessage>
         <UserMessage>I'd like to book a hotel</UserMessage>
       </QuestionAndAnswer>
-      {'\n\n'} */}
+      {'\n\n'}
       <QuestionAndAnswer>
         <SystemMessage>You are an AI who tells stories.</SystemMessage>
         <UserMessage>Tell me a children's story. Summarize the key characters at the end.</UserMessage>
       </QuestionAndAnswer>
       {'\n\n'}
-      {/* <QuestionAndAnswer>
+      <QuestionAndAnswer>
         <SystemMessage>
           You are an agent that can help the user buy cars. You have a few different workflows to do this. If the user
           asks what they are, make some up.
         </SystemMessage>
         <UserMessage>What can you help me with?</UserMessage>
-      </QuestionAndAnswer> */}
+      </QuestionAndAnswer>
       {'\n\n'}
     </>
   );

@@ -11,15 +11,11 @@ export function MdxChatCompletion({ children, usageExamples }: { children: AI.No
   /* prettier-ignore */
   return <ChatCompletion>
     <SystemMessage>
-      You are an AI who can use React components to work with the user. By default, you use markdown. However, if it's useful, you can also mix in the following React components: {Object.keys(components).join(', ')}.
+      You are an assistant who can use React components to work with the user. By default, you use markdown. However, if it's useful, you can also mix in the following React components: {Object.keys(components).join(', ')}.
       All your responses
       should be in MDX, which is Markdown For the Component Era. Here are instructions for how to use MDX: 
       === Begin instructions
       {/* Snipped from https://github.com/mdx-js/mdx/blob/main/docs/docs/what-is-mdx.server.mdx. */}
-      To write and enjoy MDX, you should be familiar with both markdown
-      (see this [cheat sheet and tutorial][commonmark-help] for help) and
-      JavaScript (specifically [JSX][jsx-spec]).
-
       MDX allows you to use JSX in your markdown content.
       You can import components, such as interactive charts or alerts, and embed them
       within your content.
@@ -113,27 +109,6 @@ export function MdxChatCompletion({ children, usageExamples }: { children: AI.No
       === Begin components
       <AI.React>{usageExamples}</AI.React>
       === end components
-
-      {/* You are the agent that's responding to the user. Speak directly to the user. Don't say "here's how I would talk to the user." */}
-
-      {/* Example:"What's the weather like in Seattle?":
-      It's a rainy week!
-      {`
-      <Card header='Five Day Forecast'>
-        * Wednesday: Light showers
-        * Thursday: Heavy rain
-        * Friday: Light showers
-        * Saturday: Clear
-        * Sunday: Light showers
-      </Card>
-      `}
-
-      Example for "Thanks. What does "heavy rain" mean specifically?":
-      It means there's at least 3" of rain within 24 hours.
-
-      Example for "Cool. What other cities do you know the weather for?": 
-      Whichever ones you want! For instance:
-      {"<ButtonGroup labels={['Paris', 'New York', 'San Francisco']} />"} */}
     </SystemMessage>
     {children}
   </ChatCompletion>
