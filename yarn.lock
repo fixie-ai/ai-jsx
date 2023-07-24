@@ -7628,7 +7628,6 @@ __metadata:
     pino: ^8.14.1
     pino-pretty: ^10.0.0
     react: ^18.2.0
-    replicate: ^0.12.3
     server-only: ^0.0.1
     ts-jest: ^29.1.0
     ts-node: ^10.9.1
@@ -20642,13 +20641,6 @@ __metadata:
   version: 1.6.1
   resolution: "repeat-string@npm:1.6.1"
   checksum: 1b809fc6db97decdc68f5b12c4d1a671c8e3f65ec4a40c238bc5200e44e85bcc52a54f78268ab9c29fcf5fe4f1343e805420056d1f30fa9a9ee4c2d93e3cc6c0
-  languageName: node
-  linkType: hard
-
-"replicate@npm:^0.12.3":
-  version: 0.12.3
-  resolution: "replicate@npm:0.12.3"
-  checksum: 3eb1522315dba74a7fa35661985ba25a0fe1e723a0250996afeabd6224f9e43b142e4ff8f6b1280260ec7879ae7c9b84bc4384dc25522696e1f74ea0d7ecefa5
   languageName: node
   linkType: hard
 
