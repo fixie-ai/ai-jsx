@@ -84,11 +84,12 @@ export async function* UICompletion(
     name: z.string().refine((c) => Boolean(validComponents[c]), {
       message: `Unknown component "name". Supported components: ${Object.keys(validComponents)}`,
     }),
-    children: z.array(z.union([z.string(), z.lazy(() => Element)])),
+    children: z.union([z.string(), z.array(z.union([z.string(), z.lazy(() => Element)]))]),
   });
 
   const modelRenderGenerator = render(
     <JsonChatCompletion
+      retries={1}
       schema={Element}
       example={'<SomeComponent /> becomes: { "name": "SomeComponent", "children": [] }'}
     >

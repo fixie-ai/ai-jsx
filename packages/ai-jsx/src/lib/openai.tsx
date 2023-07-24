@@ -3,40 +3,42 @@
  * @packageDocumentation
  */
 
+import GPT3Tokenizer from 'gpt3-tokenizer';
+import {
+  ChatCompletionFunctions,
+  ChatCompletionRequestMessage,
+  ChatCompletionResponseMessage,
+  Configuration,
+  CreateChatCompletionRequestFunctionCall,
+  CreateChatCompletionResponse,
+  CreateCompletionResponse,
+  CreateImageRequestResponseFormatEnum,
+  CreateImageRequestSizeEnum,
+  OpenAIApi,
+  ResponseTypes,
+} from 'openai-edge';
+import { Merge, MergeExclusive } from 'type-fest';
 import {
   AssistantMessage,
   ChatProvider,
   CompletionProvider,
+  FunctionCall,
+  FunctionDefinition,
+  FunctionResponse,
   ModelProps,
   ModelPropsWithChildren,
   SystemMessage,
   UserMessage,
-  FunctionDefinition,
-  FunctionCall,
-  FunctionResponse,
   getParametersSchema,
 } from '../core/completion.js';
+import { AIJSXError, ErrorCode, HttpError } from '../core/errors.js';
 import { Image, ImageGenPropsWithChildren } from '../core/image-gen.js';
-import {
-  Configuration,
-  CreateChatCompletionResponse,
-  CreateCompletionResponse,
-  OpenAIApi,
-  ChatCompletionFunctions,
-  ChatCompletionResponseMessage,
-  ChatCompletionRequestMessage,
-  CreateImageRequestSizeEnum,
-  CreateImageRequestResponseFormatEnum,
-  ResponseTypes,
-} from 'openai-edge';
-import * as AI from '../index.js';
-import { PropsOfComponent, Node } from '../index.js';
-import GPT3Tokenizer from 'gpt3-tokenizer';
-import { Merge, MergeExclusive } from 'type-fest';
 import { Logger } from '../core/log.js';
-import { HttpError, AIJSXError, ErrorCode } from '../core/errors.js';
-import { getEnvVar, patchedUntruncateJson } from './util.js';
+import * as AI from '../index.js';
+import { Node, PropsOfComponent } from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
+import { getEnvVar, patchedUntruncateJson } from './util.js';
+import { CreateChatCompletionRequest } from 'openai';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -48,13 +50,16 @@ type ValidCompletionModel =
 
 type ValidChatModel =
   | 'gpt-4'
-  | 'gpt-4-0314'
+  | 'gpt-4-0314' // discontinue on 06/13/2024
   | 'gpt-4-0613'
   | 'gpt-4-32k'
-  | 'gpt-4-32k-0314'
+  | 'gpt-4-32k-0314' // discontinue on 06/13/2024
+  | 'gpt-4-32k-0613'
   | 'gpt-3.5-turbo'
-  | 'gpt-3.5-turbo-0301'
-  | 'gpt-3.5-turbo-0613';
+  | 'gpt-3.5-turbo-0301' // discontinue on 06/13/2024
+  | 'gpt-3.5-turbo-0613'
+  | 'gpt-3.5-turbo-16k'
+  | 'gpt-3.5-turbo-16k-0613';
 
 type OpenAIModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
 
@@ -173,7 +178,15 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
  * @returns True if the model supports function calling, false otherwise.
  */
 function chatModelSupportsFunctions(model: ValidChatModel) {
-  return ['gpt-4', 'gpt-3.5-turbo', 'gpt-4-0613', 'gpt-3.5-turbo-0613'].includes(model);
+  return [
+    'gpt-4',
+    'gpt-3.5-turbo',
+    'gpt-4-0613',
+    'gpt-4-32k-0613',
+    'gpt-3.5-turbo-0613',
+    'gpt-3.5-turbo-16k',
+    'gpt-3.5-turbo-16k-0613',
+  ].includes(model);
 }
 
 type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
@@ -244,6 +257,7 @@ export async function* OpenAICompletionModel(
     model: props.model,
     max_tokens: props.maxTokens,
     temperature: props.temperature,
+    top_p: props.topP,
     prompt: await render(props.children),
     stop: props.stop,
     stream: true,
@@ -281,6 +295,7 @@ export async function* OpenAIChatModel(
   } & MergeExclusive<
       {
         functionDefinitions: Record<string, FunctionDefinition>;
+        forcedFunction: string;
 
         /**
          * Internal only.
@@ -291,6 +306,7 @@ export async function* OpenAIChatModel(
       },
       {
         functionDefinitions?: never;
+        forcedFunction?: never;
         experimental_streamFunctionCallOnly?: never;
       }
     >,
@@ -309,6 +325,14 @@ export async function* OpenAIChatModel(
   else if (props.experimental_streamFunctionCallOnly) {
     throw new AIJSXError(
       'The experimental_streamFunctionCallOnly flag can only be passed when function definitions are also passed.',
+      ErrorCode.ChatCompletionBadInput,
+      'user'
+    );
+  }
+
+  if (props.forcedFunction && !Object.keys(props.functionDefinitions).includes(props.forcedFunction)) {
+    throw new AIJSXError(
+      `The function ${props.forcedFunction} was forced, but no function with that name was defined.`,
       ErrorCode.ChatCompletionBadInput,
       'user'
     );
@@ -384,14 +408,19 @@ export async function* OpenAIChatModel(
         description: functionDefinition.description,
         parameters: getParametersSchema(functionDefinition.parameters),
       }));
+  const openaiFunctionCall: CreateChatCompletionRequestFunctionCall | undefined = props.forcedFunction
+    ? { name: props.forcedFunction }
+    : undefined;
 
   const openai = getContext(openAiClientContext);
-  const chatCompletionRequest = {
+  const chatCompletionRequest: CreateChatCompletionRequest = {
     model: props.model,
     max_tokens: props.maxTokens,
     temperature: props.temperature,
+    top_p: props.topP,
     messages,
     functions: openaiFunctions,
+    function_call: openaiFunctionCall,
     stop: props.stop,
     logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
     stream: true,
