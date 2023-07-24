@@ -27,7 +27,6 @@ async function* fetchLlama2<ModelArgs extends Llama2ModelArgs>(
 
   logger.debug({ modelId, input }, 'Calling Replicate llama2');
 
-  // const modelId = input.modelType === 'chat' ? '' : ;
   const output = (await replicate.run(modelId, { input })) as string[];
   const result = output.join('');
   logger.debug({ output, result }, 'Replicate llama2 output');
