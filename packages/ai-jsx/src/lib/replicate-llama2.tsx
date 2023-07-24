@@ -25,10 +25,12 @@ async function* fetchLlama2<ModelArgs extends Llama2ModelArgs>(
     auth: getEnvVar('REPLICATE_API_TOKEN', true)!,
   });
 
+  logger.debug({ modelId, input }, 'Calling Replicate llama2');
+
   // const modelId = input.modelType === 'chat' ? '' : ;
   const output = (await replicate.run(modelId, { input })) as string[];
   const result = output.join('');
-  logger.debug({ output, result }, 'Replicate output');
+  logger.debug({ output, result }, 'Replicate llama2 output');
   yield result;
   return result;
 }
@@ -137,7 +139,6 @@ export async function* Llama2ChatModel(
     prompt: await render(userMessages[0]),
     system_prompt: systemMessage.length ? await render(systemMessage[0]) : undefined,
   };
-  logger.debug({ llama2Args }, 'Calling Llama2');
   const response = await fetchLlama2(
     'replicate/llama70b-v2-chat:2d19859030ff705a87c746f7e96eea03aefb71f166725aee39692f1476566d48',
     llama2Args,
