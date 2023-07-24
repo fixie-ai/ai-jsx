@@ -29,7 +29,7 @@ async function* fetchLlama2<ModelArgs extends Llama2ModelArgs>(
 
   const output = (await replicate.run(modelId, { input })) as string[];
   const result = output.join('');
-  logger.debug({ output, result }, 'Replicate llama2 output');
+  logger.debug({ result }, 'Replicate llama2 output');
   yield result;
   return result;
 }
