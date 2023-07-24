@@ -8,7 +8,7 @@ import z from 'zod';
 
 import { OpenAI } from 'ai-jsx/lib/openai';
 import { PinoLogger } from 'ai-jsx/core/log';
-import {pino} from 'pino';
+import { pino } from 'pino';
 import { Anthropic } from 'ai-jsx/lib/anthropic';
 import { memo } from 'ai-jsx/core/memoize';
 
@@ -113,11 +113,10 @@ function QuestionAndAnswer({ children }: { children: AI.Node }) {
   return (
     <>
       <OpenAI chatModel="gpt-4">
-      Q: {question}
-      {'\n'}
-      A:{' '}
-        <MdxChatCompletion usageExamples={usageExample}>{question}</MdxChatCompletion>
-      {'\n\n'}
+        Q: {question}
+        {'\n'}
+        A: <MdxChatCompletion usageExamples={usageExample}>{question}</MdxChatCompletion>
+        {'\n\n'}
       </OpenAI>
     </>
   );
@@ -128,7 +127,8 @@ export function App() {
     <>
       <QuestionAndAnswer>
         <SystemMessage>
-          You are an AI that helps users book flights. The user's reservation:{' '} <JsonChatCompletion schema={z.object({ reservation: z.any() })}>
+          You are an AI that helps users book flights. The user's reservation:{' '}
+          <JsonChatCompletion schema={z.object({ reservation: z.any() })}>
             <UserMessage>Generate a sample flight reservation.</UserMessage>
           </JsonChatCompletion>
         </SystemMessage>
@@ -136,11 +136,14 @@ export function App() {
       </QuestionAndAnswer>
       {'\n\n'}
       <QuestionAndAnswer>
-        <SystemMessage>You are an AI that helps users book hotels. Hotels:{' '} <JsonChatCompletion schema={z.object({ hotels: z.any() })}>
+        <SystemMessage>
+          You are an AI that helps users book hotels. Hotels:{' '}
+          <JsonChatCompletion schema={z.object({ hotels: z.any() })}>
             <UserMessage>
               Generate some information about hotels, including each hotel's name and how many stars it is
             </UserMessage>
-          </JsonChatCompletion></SystemMessage>
+          </JsonChatCompletion>
+        </SystemMessage>
         <UserMessage>I'd like to book a hotel</UserMessage>
       </QuestionAndAnswer>
       {'\n\n'}
@@ -175,7 +178,7 @@ const logger = pino({
 });
 
 let lastValue = '';
-const rendering = AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />, {appendOnly: true});
+const rendering = AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />, { appendOnly: true });
 for await (const frame of rendering) {
   process.stdout.write(frame.slice(lastValue.length));
   lastValue = frame;
