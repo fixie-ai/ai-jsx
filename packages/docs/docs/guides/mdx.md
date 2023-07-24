@@ -28,12 +28,15 @@ To do this, use the `MdxChatCompletion` component:
 
 The API for `MdxChatCompletion` is the same as `ChatCompletion`, except it adds a `usageExamples` prop. That prop is an AI.JSX component that tells the model which components are available:
 
+<!-- prettier-ignore -->
 ```tsx
 const usageExample = (
   <>
     Use a Card to display collected information to the user. The children can be markdown. Only use the card if you have
     a logically-grouped set of information to show the user, in the context of a larger response. Generally, your entire
-    response should not be a card. A card takes optional header and footer props. Example 1 of how you might use this
+    response should not be a card. A card takes optional header and footer props.
+    
+    Example 1 of how you might use this
     component: Here's the best candidate I found:
     <Card header="Sam Smith">
       **Skills**: React, TypeScript, Node.js **Location**: Seattle, WA **Years of experience**: 5 **Availability**:
@@ -46,6 +49,7 @@ const usageExample = (
 
 In that example, `Card` may refer to a real component in scope, or you can just write it out as a string:
 
+<!-- prettier-ignore -->
 ```tsx
 function Card({ header, footer, children }) {
   return (
@@ -61,6 +65,7 @@ const usageExample = (
   <>
     {/* Reference a component in scope */}
     Here's how you use a Card: <Card>content</Card>
+
     {/* Just write out a string */}
     You can also use a ButtonGroup: {`<ButtonGroup labels=['Yes', 'No'] />`}
   </>
