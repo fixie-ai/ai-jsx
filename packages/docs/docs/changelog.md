@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.14
+
+- Add [Llama2 support](./guides/models.md#llama2).
+
+## [0.5.13](https://github.com/fixie-ai/ai-jsx/commit/80e25c7d701d0d227e6815f4303ca7dc28dfce0c)
+
+- Add [`DocsQAWithSources` component](./guides/docsqa.md#handling-a-query)
+
 ## 0.5.12
 
 - Updated `readme.md` in the `ai-jsx` package to fix bugs on the npm landing page.

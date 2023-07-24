@@ -37,6 +37,7 @@
     "demo:getting-started": "yarn build && cp src/getting-started/data.json dist/getting-started/ && node dist/getting-started/index.js",
     "demo:inspector": "yarn build && node dist/inspector.js",
     "demo:router": "yarn build && node dist/router.js",
+    "demo:replicate-llama2": "yarn build && node dist/replicate-llama2.js",
     "demo:debug": "yarn build && node dist/debug.js",
     "demo:summarizer": "yarn build && node dist/summarizer.js",
     "demo:use-tools": "yarn build && node dist/use-tools.js",

@@ -1,6 +1,7 @@
-import { ChatProvider, ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
-import { OpenAIChatModel } from 'ai-jsx/lib/openai';
-import { AnthropicChatModel } from 'ai-jsx/lib/anthropic';
+import { ChatCompletion, UserMessage, SystemMessage } from 'ai-jsx/core/completion';
+import { OpenAI } from 'ai-jsx/lib/openai';
+import { Anthropic } from 'ai-jsx/lib/anthropic';
+import { ReplicateLlama2 } from 'ai-jsx/lib/replicate-llama2';
 import * as AI from 'ai-jsx';
 import { pino } from 'pino';
 import { PinoLogger } from 'ai-jsx/core/log';
@@ -8,6 +9,7 @@ import { PinoLogger } from 'ai-jsx/core/log';
 function App() {
   return (
     <ChatCompletion>
+      <SystemMessage>Answer in an excited tone.</SystemMessage>
       <UserMessage>Why is the sky blue?</UserMessage>
     </ChatCompletion>
   );
@@ -36,13 +38,17 @@ console.log(
   await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(
     <>
       * Anthropic:{' '}
-      <ChatProvider component={AnthropicChatModel} model="claude-1">
+      <Anthropic chatModel="claude-1">
         <App />
-      </ChatProvider>
+      </Anthropic>
       {'\n\n'}* OpenAI:{' '}
-      <ChatProvider component={OpenAIChatModel} model="gpt-3.5-turbo">
+      <OpenAI chatModel="gpt-3.5-turbo">
         <App />
-      </ChatProvider>
+      </OpenAI>
+      {'\n\n'}* Llama2:{' '}
+      <ReplicateLlama2>
+        <App />
+      </ReplicateLlama2>
     </>
   )
 );
