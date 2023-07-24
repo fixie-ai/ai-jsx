@@ -86,7 +86,7 @@ export async function* UICompletion(
 }
 
 /**
- * Bug: this function doesn't handle symbols, so if `Component` is a fragment, it'll return 
+ * Bug: this function doesn't handle symbols, so if `Component` is a fragment, it'll return
  * `undefined`.
  */
 function reactComponentName(component: React.JSXElementConstructor<any> | string) {
