@@ -1,7 +1,7 @@
 /** @jsxImportSource ai-jsx/react */
 import * as AI from 'ai-jsx';
 import { SystemMessage, UserMessage } from 'ai-jsx/core/completion';
-import { showInspector } from 'ai-jsx/core/inspector';
+// import { showInspector } from 'ai-jsx/core/inspector';
 import { MdxChatCompletion } from 'ai-jsx/react/jit-ui/mdx';
 import { JsonChatCompletion } from 'ai-jsx/batteries/constrained-output';
 import z from 'zod';
@@ -9,21 +9,22 @@ import z from 'zod';
 import { OpenAI } from 'ai-jsx/lib/openai';
 import { PinoLogger } from 'ai-jsx/core/log';
 import { pino } from 'pino';
-import { Anthropic } from 'ai-jsx/lib/anthropic';
 import { memo } from 'ai-jsx/core/memoize';
 
-function Card() {
+/* eslint-disable @typescript-eslint/no-unused-vars */
+function Card({ header, footer, children }: { header?: string; footer?: string; children: string }) {
   return null;
 }
-function ButtonGroup() {
+function ButtonGroup({ labels }: { labels: string[] }) {
   return null;
 }
-function BookFlight() {
+function BookFlight({ flights }: { flights: any }) {
   return null;
 }
-function BookHotel() {
+function BookHotel({ hotels }: { hotels: any }) {
   return null;
 }
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 /* prettier-ignore */
 const usageExample = <>
@@ -106,7 +107,7 @@ const usageExample = <>
       {name: 'Red Roof Inn', stars: 1},
       {name: 'Marriott', stars: 3},
     ]} />
-</>
+</>;
 
 function QuestionAndAnswer({ children }: { children: AI.Node }) {
   const question = memo(children);

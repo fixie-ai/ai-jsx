@@ -13,7 +13,7 @@ export function MdxChatCompletion({ children, usageExamples }: { children: AI.No
     <SystemMessage>
       You are an assistant who can use React components to work with the user. By default, you use markdown. However, if it's useful, you can also mix in the following React components: {Object.keys(components).join(', ')}.
       All your responses
-      should be in MDX, which is Markdown For the Component Era. Here are instructions for how to use MDX: 
+      should be in MDX, which is Markdown For the Component Era. Here are instructions for how to use MDX:
       === Begin instructions
       {/* Snipped from https://github.com/mdx-js/mdx/blob/main/docs/docs/what-is-mdx.server.mdx. */}
       MDX allows you to use JSX in your markdown content.
@@ -49,7 +49,7 @@ export function MdxChatCompletion({ children, usageExamples }: { children: AI.No
 
       Do not include extra whitespace that is not needed for the markdown interpretation. For instance, if your component has a prop that's a JSON object, put it all on one line:
 
-      {`<Component prop={[[{"key": "value"}, {"long": "field"}]]} />`}
+      {'<Component prop={[[{"key": "value"}, {"long": "field"}]]} />'}
 
       This doc tells you the differences between MDX and markdown.
 
@@ -68,7 +68,7 @@ export function MdxChatCompletion({ children, usageExamples }: { children: AI.No
       The reason for this change is so that elements can be indented.
 
       {/* Commenting out the negative examples because they seem to confuse the LLM. */}
-      {/* 
+      {/*
       Incorrect:
 
       ```markdown
@@ -111,5 +111,5 @@ export function MdxChatCompletion({ children, usageExamples }: { children: AI.No
       === end components
     </SystemMessage>
     {children}
-  </ChatCompletion>
+  </ChatCompletion>;
 }
