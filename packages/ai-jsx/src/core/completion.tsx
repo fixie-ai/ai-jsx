@@ -23,12 +23,6 @@ export interface ModelProps {
   maxTokens?: number;
   /** A list of stop tokens. */
   stop?: string[];
-
-  /**
-   * An alternative sampling technique to temperature.
-   *
-   * @see https://platform.openai.com/docs/api-reference/chat/create#chat/create-top_p */
-  topP?: number;
 }
 
 /**
@@ -189,7 +183,10 @@ export function CompletionProvider<T extends ModelPropsWithChildren>(
 }
 
 /** The default context used by {@link ChatProvider}. */
-const chatContext = AI.createContext<[ModelComponent<ModelPropsWithChildren>, ModelProps]>([AutomaticChatModel, {}]);
+export const chatContext = AI.createContext<[ModelComponent<ModelPropsWithChildren>, ModelProps]>([
+  AutomaticChatModel,
+  {},
+]);
 
 /**
  * A ChatProvider is used by {@link ChatCompletion} to access an underlying Large Language Model.
