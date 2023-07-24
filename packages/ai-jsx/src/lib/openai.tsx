@@ -50,13 +50,16 @@ type ValidCompletionModel =
 
 type ValidChatModel =
   | 'gpt-4'
-  | 'gpt-4-0314'
+  | 'gpt-4-0314' // discontinue on 06/13/2024
   | 'gpt-4-0613'
   | 'gpt-4-32k'
-  | 'gpt-4-32k-0314'
+  | 'gpt-4-32k-0314' // discontinue on 06/13/2024
+  | 'gpt-4-32k-0613'
   | 'gpt-3.5-turbo'
-  | 'gpt-3.5-turbo-0301'
-  | 'gpt-3.5-turbo-0613';
+  | 'gpt-3.5-turbo-0301' // discontinue on 06/13/2024
+  | 'gpt-3.5-turbo-0613'
+  | 'gpt-3.5-turbo-16k'
+  | 'gpt-3.5-turbo-16k-0613';
 
 type OpenAIModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
 
@@ -175,7 +178,15 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
  * @returns True if the model supports function calling, false otherwise.
  */
 function chatModelSupportsFunctions(model: ValidChatModel) {
-  return ['gpt-4', 'gpt-3.5-turbo', 'gpt-4-0613', 'gpt-3.5-turbo-0613'].includes(model);
+  return [
+    'gpt-4',
+    'gpt-3.5-turbo',
+    'gpt-4-0613',
+    'gpt-4-32k-0613',
+    'gpt-3.5-turbo-0613',
+    'gpt-3.5-turbo-16k',
+    'gpt-3.5-turbo-16k-0613',
+  ].includes(model);
 }
 
 type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
@@ -319,18 +330,12 @@ export async function* OpenAIChatModel(
     );
   }
 
-  if (props.forcedFunction) {
-    if (
-      !Object.entries(props.functionDefinitions)
-        .map(([functionName, _]) => functionName)
-        .find((f) => f == props.forcedFunction)
-    ) {
-      throw new AIJSXError(
-        `The function ${props.forcedFunction} was forced, but no function with that name was defined.`,
-        ErrorCode.ChatCompletionBadInput,
-        'user'
-      );
-    }
+  if (props.forcedFunction && !Object.keys(props.functionDefinitions).includes(props.forcedFunction)) {
+    throw new AIJSXError(
+      `The function ${props.forcedFunction} was forced, but no function with that name was defined.`,
+      ErrorCode.ChatCompletionBadInput,
+      'user'
+    );
   }
 
   const messageElements = await render(props.children, {
@@ -403,11 +408,9 @@ export async function* OpenAIChatModel(
         description: functionDefinition.description,
         parameters: getParametersSchema(functionDefinition.parameters),
       }));
-  const openaiFunctionCall: CreateChatCompletionRequestFunctionCall | undefined = !props.forcedFunction
-    ? undefined
-    : {
-        name: props.forcedFunction,
-      };
+  const openaiFunctionCall: CreateChatCompletionRequestFunctionCall | undefined = props.forcedFunction
+    ? { name: props.forcedFunction }
+    : undefined;
 
   const openai = getContext(openAiClientContext);
   const chatCompletionRequest: CreateChatCompletionRequest = {
