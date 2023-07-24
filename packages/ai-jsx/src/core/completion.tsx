@@ -189,10 +189,7 @@ export function CompletionProvider<T extends ModelPropsWithChildren>(
 }
 
 /** The default context used by {@link ChatProvider}. */
-export const chatContext = AI.createContext<[ModelComponent<ModelPropsWithChildren>, ModelProps]>([
-  AutomaticChatModel,
-  {},
-]);
+const chatContext = AI.createContext<[ModelComponent<ModelPropsWithChildren>, ModelProps]>([AutomaticChatModel, {}]);
 
 /**
  * A ChatProvider is used by {@link ChatCompletion} to access an underlying Large Language Model.
