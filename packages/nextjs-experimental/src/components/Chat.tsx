@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, ReactNode, Suspense } from 'react';
+import React, { useState, ReactNode, Suspense, useContext, createContext } from 'react';
 
 export function User({ children }: { children: ReactNode }) {
   return <li className="whitespace-pre-line">👤: {children}</li>;
@@ -11,6 +11,88 @@ export function Assistant({ children }: { children: ReactNode }) {
       🤖: <Suspense fallback="_">{children}</Suspense>
     </li>
   );
+}
+
+export type SendMessage<T> = (formData: FormData, context: T) => Promise<[ReactNode[], Promise<T>]>;
+
+const ConversationContext = createContext([] as ReactNode[]);
+const StatusContext = createContext<'idle' | 'pending' | 'streaming'>('idle');
+
+export function ChatForm<T>({
+  children,
+  onSend,
+  initialContext,
+}: {
+  children: ReactNode;
+  initialContext: T;
+  onSend: SendMessage<T>;
+}) {
+  const [requestContext, setRequestContext] = React.useState(initialContext);
+  const [conversation, setConversation] = React.useState([] as ReactNode[]);
+  const [key, setKey] = React.useState(0); // Used to reset the form after each send.
+  const [status, setStatus] = React.useState<'idle' | 'pending' | 'streaming'>('idle');
+
+  return (
+    <ConversationContext.Provider value={conversation}>
+      <StatusContext.Provider value={status}>
+        <form
+          key={key}
+          action={(formData) => {
+            if (status !== 'idle') {
+              return;
+            }
+
+            setStatus('pending');
+            (async function () {
+              const [stream, nextContext] = await onSend(formData, requestContext);
+              setStatus('streaming');
+              setConversation((existing) => existing.concat(stream));
+              setKey((k) => k + 1);
+              setRequestContext(await nextContext);
+              setStatus('idle');
+            })();
+          }}
+        >
+          {children}
+        </form>
+      </StatusContext.Provider>
+    </ConversationContext.Provider>
+  );
+}
+
+export function ChatState({
+  pending,
+  streaming,
+  children,
+}: {
+  pending?: ReactNode;
+  streaming?: ReactNode;
+  children: ReactNode;
+}) {
+  const status = useContext(StatusContext);
+  if (status === 'streaming') {
+    return streaming || pending || children;
+  }
+
+  if (status === 'pending') {
+    return pending || children;
+  }
+
+  return children;
+}
+
+export function Submit(props: { pending: ReactNode; children: ReactNode } & Record<string, any>) {
+  const status = useContext(StatusContext);
+  const { pending, children, ...rest } = props;
+  return (
+    <button type="submit" {...rest}>
+      {status === 'idle' ? children : pending}
+    </button>
+  );
+}
+
+export function ConversationUI() {
+  return useContext(ConversationContext);
 }
 
 export default function Chat({
