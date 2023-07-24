@@ -24,6 +24,8 @@ export interface FetchLlama2Args extends Pick<ModelProps, 'temperature'> {
   repetition_penalty?: Llama2ModelProps['repetitionPenalty'];
 
   top_p: ModelProps['topP'];
+
+  modelType: 'chat' | 'completion';
 }
 
 /**
@@ -83,6 +85,7 @@ async function* Llama2ChatModel(props: Llama2Props, { render, logger }: AI.Compo
   yield AI.AppendOnlyStream;
   const prompt = messages.join('\n\n');
   const llama2Args: FetchLlama2Args = {
+    modelType: 'chat',
     prompt,
     max_length: props.maxTokens ?? defaultMaxTokens,
     repetition_penalty: props.repetitionPenalty,
@@ -102,6 +105,7 @@ async function* Llama2CompletionModel(
   yield AI.AppendOnlyStream;
   const prompt = await render(props.children);
   const llama2Args: FetchLlama2Args = {
+    modelType: 'completion',
     prompt,
     max_length: props.maxTokens ?? defaultMaxTokens,
     temperature: props.temperature,
@@ -156,8 +160,9 @@ export function ReplicateLlama2(
   });
 
   async function* fetchLlama2(input: FetchLlama2Args) {
+    const modelId = input.modelType === 'chat' ? 'replicate/llama70b-v2-chat:2d19859030ff705a87c746f7e96eea03aefb71f166725aee39692f1476566d48' : 'replicate/llama70b-v2-chat:e951f18578850b652510200860fc4ea62b3b16fac280f83ff32282f87bbd2e48';
     const output = (await replicate.run(
-      'replicate/llama70b-v2-chat:e951f18578850b652510200860fc4ea62b3b16fac280f83ff32282f87bbd2e48',
+      modelId,
       { input }
     )) as string[];
     const result = output.join('');

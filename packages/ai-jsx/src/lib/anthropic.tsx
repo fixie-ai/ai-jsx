@@ -88,13 +88,21 @@ export function Anthropic({
   return result;
 }
 
-export async function getPolyfilledMessages(
-  children: Node,
-  render: AI.ComponentContext['render'],
-  providerName: string,
-  doesNotSupoortFunctionsErrorCode: ErrorCode
-) {
-  const messageElements = await render(children, {
+interface AnthropicChatModelProps extends ModelPropsWithChildren {
+  model: ValidChatModel;
+}
+export async function* AnthropicChatModel(
+  props: AnthropicChatModelProps,
+  { render, getContext, logger }: AI.ComponentContext
+): AI.RenderableStream {
+  if ('functionDefinitions' in props) {
+    throw new AIJSXError(
+      'Anthropic does not support function calling, but function definitions were provided.',
+      ErrorCode.ChatModelDoesNotSupportFunctions,
+      'user'
+    );
+  }
+  const messageElements = await render(props.children, {
     stop: (e) =>
       e.tag == SystemMessage ||
       e.tag == UserMessage ||
@@ -102,7 +110,8 @@ export async function getPolyfilledMessages(
       e.tag == FunctionCall ||
       e.tag == FunctionResponse,
   });
-  return Promise.all(
+  yield AI.AppendOnlyStream;
+  const messages = await Promise.all(
     messageElements
       .filter(AI.isElement)
       .flatMap((message) => {
@@ -118,16 +127,16 @@ export async function getPolyfilledMessages(
       .map(async (message) => {
         switch (message.tag) {
           case UserMessage:
-            return `${AnthropicSDK.HUMAN_PROMPT}${message.props.name ? ` (${message.props.name})` : ''} ${await render(
+            return `${AnthropicSDK.HUMAN_PROMPT}:${message.props.name ? ` (${message.props.name})` : ''} ${await render(
               message
             )}`;
           case AssistantMessage:
-            return `${AnthropicSDK.AI_PROMPT} ${await render(message)}`;
+            return `${AnthropicSDK.AI_PROMPT}: ${await render(message)}`;
           case FunctionCall:
           case FunctionResponse:
             throw new AIJSXError(
-              `${providerName} models do not support functions.`,
-              doesNotSupoortFunctionsErrorCode,
+              'Anthropic models do not support functions.',
+              ErrorCode.AnthropicDoesNotSupportFunctions,
               'user'
             );
           default:
@@ -139,22 +148,6 @@ export async function getPolyfilledMessages(
         }
       })
   );
-}
-
-interface AnthropicChatModelProps extends ModelPropsWithChildren {
-  model: ValidChatModel;
-}
-export async function* AnthropicChatModel(
-  props: AnthropicChatModelProps,
-  { render, getContext, logger }: AI.ComponentContext
-): AI.RenderableStream {
-  const messages = await getPolyfilledMessages(
-    props.children,
-    render,
-    'Anthropic',
-    ErrorCode.AnthropicDoesNotSupportFunctions
-  );
-  yield AI.AppendOnlyStream;
 
   if (!messages.length) {
     throw new AIJSXError(
@@ -172,9 +165,9 @@ export async function* AnthropicChatModel(
     max_tokens_to_sample: props.maxTokens ?? defaultMaxTokens,
     temperature: props.temperature,
     model: props.model,
-    top_p: props.topP,
     stop_sequences: props.stop,
     stream: true,
+    top_p: props.topP,
   };
 
   logger.debug({ anthropicCompletionRequest }, 'Calling createCompletion');
