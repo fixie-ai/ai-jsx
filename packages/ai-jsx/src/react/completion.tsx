@@ -7,44 +7,13 @@ import { isJsxBoundary } from './jsx-boundary.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import z from 'zod';
 
-function reactComponentName(component: React.JSXElementConstructor<any> | string) {
-  return typeof component === 'string' ? component : component.name;
-}
-
 export async function* UICompletion(
   { example, children }: { example: React.ReactNode; children: AI.Node },
   { render, logger }: AI.ComponentContext
 ) {
   yield '';
-  const reactComponents = new Set<React.JSXElementConstructor<any> | string>();
-  function collectComponents(node: React.ReactNode | AI.Node, inReact: boolean) {
-    if (Array.isArray(node)) {
-      node.forEach((node) => collectComponents(node, inReact));
-    }
 
-    if (React.isValidElement(node)) {
-      if (inReact) {
-        reactComponents.add(node.type);
-      }
-
-      const childrenAreReact = (inReact || node.type === AI.React) && !isJsxBoundary(node.type);
-      if ('children' in node.props) {
-        collectComponents(node.props.children, childrenAreReact);
-      }
-    }
-
-    if (AI.isElement(node)) {
-      const childrenAreReact = (inReact || node.tag === AI.React) && !isJsxBoundary(node.tag);
-      if ('children' in node.props) {
-        collectComponents(node.props.children, childrenAreReact);
-      }
-    }
-  }
-
-  collectComponents(example, true);
-
-  const validComponents = Object.fromEntries(Array.from(reactComponents).map((c) => [reactComponentName(c), c]));
-
+  const validComponents = collectComponents(example);
   interface SerializedComponent {
     name: string;
     children: (string | SerializedComponent)[];
@@ -114,4 +83,41 @@ export async function* UICompletion(
     }
     yield component;
   }
+}
+
+/**
+ * Bug: this function doesn't handle symbols, so if `Component` is a fragment, it'll return 
+ * `undefined`.
+ */
+function reactComponentName(component: React.JSXElementConstructor<any> | string) {
+  return typeof component === 'string' ? component : component.name;
+}
+
+export function collectComponents(node: React.ReactNode | AI.Node) {
+  const reactComponents = new Set<React.JSXElementConstructor<any> | string>();
+  function collectComponentsRec(node: React.ReactNode | AI.Node, inReact: boolean) {
+    if (Array.isArray(node)) {
+      node.forEach((node) => collectComponentsRec(node, inReact));
+    }
+
+    if (React.isValidElement(node)) {
+      if (inReact) {
+        reactComponents.add(node.type);
+      }
+
+      const childrenAreReact = (inReact || node.type === AI.React) && !isJsxBoundary(node.type);
+      if ('children' in node.props) {
+        collectComponentsRec(node.props.children, childrenAreReact);
+      }
+    }
+
+    if (AI.isElement(node)) {
+      const childrenAreReact = (inReact || node.tag === AI.React) && !isJsxBoundary(node.tag);
+      if ('children' in node.props) {
+        collectComponentsRec(node.props.children, childrenAreReact);
+      }
+    }
+  }
+  collectComponentsRec(node, true);
+  return Object.fromEntries(Array.from(reactComponents).map((c) => [reactComponentName(c), c]));
 }
