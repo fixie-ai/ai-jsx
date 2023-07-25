@@ -4,6 +4,8 @@ import * as AI from 'ai-jsx';
 import Fastify from 'fastify';
 import { toTextStream } from 'ai-jsx/stream';
 import { ReadableStream } from 'stream/web';
+import { pino } from 'pino';
+import { PinoLogger } from 'ai-jsx/core/log';
 
 /**
  * To run this demo:
@@ -18,6 +20,17 @@ import { ReadableStream } from 'stream/web';
 
 const fastify = Fastify({
   logger: true,
+});
+
+const pinoStdoutLogger = pino({
+  name: 'ai-jsx',
+  level: process.env.loglevel ?? 'trace',
+  transport: {
+    target: 'pino-pretty',
+    options: {
+      colorize: true,
+    },
+  },
 });
 
 function FantasyCharacter() {
@@ -44,7 +57,7 @@ fastify.get('/stream-sample', async (request, reply) => {
       </ChatCompletion>
     );
   }
-  const responseStream = toTextStream(<DescribeCharacter />);
+  const responseStream = toTextStream(<DescribeCharacter />, new PinoLogger(pinoStdoutLogger));
   await sendReadableStreamToFastifyReply(reply, responseStream);
 });
 
