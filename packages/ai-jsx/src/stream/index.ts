@@ -1,3 +1,4 @@
+import { LogImplementation } from '../core/log.js';
 import {
   isElement as isAIElement,
   Element,
@@ -178,9 +179,9 @@ export function toSerializedStreamResponse(
  * this allows the response to be easily consumed by other frameworks (such as https://sdk.vercel.ai/)
  * but does not support UI components or concurrently streaming multiple parts of the tree.
  */
-export function toTextStream(renderable: Renderable): ReadableStream<Uint8Array> {
+export function toTextStream(renderable: Renderable, logger?: LogImplementation): ReadableStream<Uint8Array> {
   let previousValue = '';
-  const generator = createRenderContext().render(renderable, { appendOnly: true })[Symbol.asyncIterator]();
+  const generator = createRenderContext({ logger }).render(renderable, { appendOnly: true })[Symbol.asyncIterator]();
   return new ReadableStream({
     async pull(controller) {
       const next = await generator.next();
