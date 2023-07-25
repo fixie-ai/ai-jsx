@@ -4,7 +4,7 @@
 
 - Update `toTextStream` to accept a `logger`, so you can now see log output when you're running AI.JSX on the server and outputting to a stream. See [AI + UI](./guides/ai-ui.md) and [Observability](./guides/observability.md).
 
-## [0.5.15](https://github.com/fixie-ai/ai-jsx/commit/68adddd) 
+## [0.5.15](https://github.com/fixie-ai/ai-jsx/commit/68adddd)
 
 - Add [`MdxChatCompletion`](./guides/mdx.md), so your model calls can now output [MDX](https://mdxjs.com/) using your components.
 
