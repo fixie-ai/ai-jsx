@@ -35,6 +35,7 @@
     "demo:multi-model-chat": "yarn build && node dist/multi-model-chat.js",
     "demo:simple-completion": "yarn build && node dist/simple-completion.js",
     "demo:getting-started": "yarn build && cp src/getting-started/data.json dist/getting-started/ && node dist/getting-started/index.js",
+    "demo:mdx-jit": "yarn build && node dist/mdx.js",
     "demo:inspector": "yarn build && node dist/inspector.js",
     "demo:router": "yarn build && node dist/router.js",
     "demo:replicate-llama2": "yarn build && node dist/replicate-llama2.js",

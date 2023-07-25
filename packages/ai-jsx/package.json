@@ -4,7 +4,7 @@
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://ai-jsx.com",
-  "version": "0.5.14",
+  "version": "0.5.15",
   "volta": {
     "extends": "../../package.json"
   },
@@ -243,6 +243,15 @@
       },
       "require": {
         "default": "./dist/cjs/react/completion.cjs"
+      }
+    },
+    "./react/jit-ui/mdx": {
+      "import": {
+        "types": "./dist/esm/react/jit-ui/mdx.d.ts",
+        "default": "./dist/esm/react/jit-ui/mdx.js"
+      },
+      "require": {
+        "default": "./dist/cjs/react/jit-ui/mdx.cjs"
       }
     },
     "./experimental/next": {
