@@ -1,15 +1,15 @@
-import { type Message } from 'ai'
+import { type Message } from 'ai';
 
-import { Separator } from '@/components/ui/separator'
-import { ChatMessage } from '@/components/chat-message'
+import { Separator } from '@/components/ui/separator';
+import { ChatMessage } from '@/components/chat-message';
 
 export interface ChatList {
-  messages: Message[]
+  messages: Message[];
 }
 
 export function ChatList({ messages }: ChatList) {
   if (!messages.length) {
-    return null
+    return null;
   }
 
   return (
@@ -17,11 +17,9 @@ export function ChatList({ messages }: ChatList) {
       {messages.map((message, index) => (
         <div key={index}>
           <ChatMessage message={message} />
-          {index < messages.length - 1 && (
-            <Separator className="my-4 md:my-8" />
-          )}
+          {index < messages.length - 1 && <Separator className="my-4 md:my-8" />}
         </div>
       ))}
     </div>
-  )
+  );
 }

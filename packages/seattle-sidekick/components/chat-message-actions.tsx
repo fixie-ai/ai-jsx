@@ -1,27 +1,23 @@
-'use client'
+'use client';
 
-import { type Message } from 'ai'
+import { type Message } from 'ai';
 
-import { Button } from '@/components/ui/button'
-import { IconCheck, IconCopy } from '@/components/ui/icons'
-import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard'
-import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button';
+import { IconCheck, IconCopy } from '@/components/ui/icons';
+import { useCopyToClipboard } from '@/lib/hooks/use-copy-to-clipboard';
+import { cn } from '@/lib/utils';
 
 interface ChatMessageActionsProps extends React.ComponentProps<'div'> {
-  message: Message
+  message: Message;
 }
 
-export function ChatMessageActions({
-  message,
-  className,
-  ...props
-}: ChatMessageActionsProps) {
-  const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 })
+export function ChatMessageActions({ message, className, ...props }: ChatMessageActionsProps) {
+  const { isCopied, copyToClipboard } = useCopyToClipboard({ timeout: 2000 });
 
   const onCopy = () => {
-    if (isCopied) return
-    copyToClipboard(message.content)
-  }
+    if (isCopied) return;
+    copyToClipboard(message.content);
+  };
 
   return (
     <div
@@ -36,5 +32,5 @@ export function ChatMessageActions({
         <span className="sr-only">Copy message</span>
       </Button>
     </div>
-  )
+  );
 }

@@ -1,14 +1,14 @@
-'use client'
+'use client';
 
-import * as React from 'react'
+import * as React from 'react';
 
-import { cn } from '@/lib/utils'
-import { useAtBottom } from '@/lib/hooks/use-at-bottom'
-import { Button, type ButtonProps } from '@/components/ui/button'
-import { IconArrowDown } from '@/components/ui/icons'
+import { cn } from '@/lib/utils';
+import { useAtBottom } from '@/lib/hooks/use-at-bottom';
+import { Button, type ButtonProps } from '@/components/ui/button';
+import { IconArrowDown } from '@/components/ui/icons';
 
 export function ButtonScrollToBottom({ className, ...props }: ButtonProps) {
-  const isAtBottom = useAtBottom()
+  const isAtBottom = useAtBottom();
 
   return (
     <Button
@@ -22,7 +22,7 @@ export function ButtonScrollToBottom({ className, ...props }: ButtonProps) {
       onClick={() =>
         window.scrollTo({
           top: document.body.offsetHeight,
-          behavior: 'smooth'
+          behavior: 'smooth',
         })
       }
       {...props}
@@ -30,5 +30,5 @@ export function ButtonScrollToBottom({ className, ...props }: ButtonProps) {
       <IconArrowDown />
       <span className="sr-only">Scroll to bottom</span>
     </Button>
-  )
+  );
 }
