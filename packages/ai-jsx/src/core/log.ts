@@ -75,7 +75,7 @@ const defaultPinoLogger = _.once(() => {
   const logEnv = process.env.AIJSX_LOG ?? 'silent';
   const [level, file] = logEnv.split(':', 2);
   // @ts-expect-error
-  return pino({ name: 'ai-jsx', level }, (file && pino.destination(file)) ?? undefined);
+  return pino({ name: 'ai-jsx', level }, file && pino.destination(file));
 });
 
 /**
