@@ -188,11 +188,12 @@ export interface UseToolsProps {
  *    },
  *  };
  *
- * <UseTools
- *    tools={tools}
- *    fallback="Politely explain you aren't able to help with that request."
- *    query={ "You control a home automation system. The user has requested you take some
- *       action in their home: " + userRequest }
+ * <UseTools tools={tools} fallback="Politely explain you aren't able to help with that request.">
+ *   <SystemMessage>
+ *     You control a home automation system. The user will request an action in their home. You should take an action and
+ *     then generate a response telling the user what you've done.
+ *   </SystemMessage>
+ *   <UserMessage>{userRequest}</UserMessage>
  * </UseTools>;
  * ```
  *
