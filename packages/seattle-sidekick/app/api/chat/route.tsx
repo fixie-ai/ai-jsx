@@ -28,7 +28,7 @@ interface UseToolsProps extends Omit<UpstreamUseToolsProps, 'query'> {
   messages: Messages;
 }
 
-export async function* UseTools(props: UseToolsProps, { render }: AI.RenderContext) {
+async function* UseTools(props: UseToolsProps, { render }: AI.RenderContext) {
   const messages = [
     <SystemMessage>You are a smart agent that may use functions to answer a user question.</SystemMessage>,
   ];
