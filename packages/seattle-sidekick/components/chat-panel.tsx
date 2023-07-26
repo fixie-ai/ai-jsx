@@ -44,7 +44,6 @@ export function ChatPanel({ id, isLoading, stop, append, reload, input, setInput
             setInput={setInput}
             isLoading={isLoading}
           />
-          <FooterText className="hidden sm:block" />
         </div>
       </div>
     </div>
