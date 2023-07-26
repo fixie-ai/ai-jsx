@@ -65,13 +65,13 @@ AIJSX_LOG=debug node ./my-ai-jsx-program.tsx | npx pino-pretty
 
 You can use `grep` to filter the log to just the events or loglevels you care about.
 
-You may also specify a file for log events as well by putting a path after level, separated by ':' charatcer:
+You may also specify a file for log events as well by putting a path after level, separated by ':' character:
 
 ```sh
 AIJSX_LOG=debug:/tmp/ai-jsx.log node ./my-ai-jsx-program.tsx
 ```
 
-Now logs will be written to `/tmp/ai-jsx.log`.
+Now logs will be appended to `/tmp/ai-jsx.log`.
 
 ### Fully Custom Logging
 
@@ -93,6 +93,18 @@ log(
   message?: string
 ): void;
 ```
+
+A custom `LogImplementation` can be passed to `createRenderContext` via the `logger` option:
+
+```ts
+AI.createRenderContext({ logger: new CustomLogImplementation() });
+```
+
+:::note NextJS
+
+When using NextJS, instead of specifying a logger in `createRenderContext`, you can pass one to the props of your `<AI.JSX>` tag.
+
+:::
 
 ## Producing Logs
 
