@@ -5,6 +5,7 @@
  */
 
 import {
+  AssistantMessage,
   ChatCompletion,
   FunctionCall,
   FunctionParameters,
@@ -12,10 +13,11 @@ import {
   SystemMessage,
   UserMessage,
 } from '../core/completion.js';
-import { Node, RenderContext, isElement, Element } from '../index.js';
+import { Node, RenderContext, isElement, Element, AppendOnlyStream, RenderableStream } from '../index.js';
 import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
+import { memo } from '../core/memoize.js';
 
 const toolChoiceSchema = z.object({
   nameOfTool: z.string(),
@@ -24,7 +26,7 @@ const toolChoiceSchema = z.object({
 });
 export type ToolChoice = z.infer<typeof toolChoiceSchema> | null;
 
-function ChooseTools(props: Pick<UseToolsProps, 'tools' | 'userData' | 'query'>): Node {
+function ChooseTools(props: Pick<UseToolsProps, 'tools' | 'userData' | 'children'>): Node {
   return (
     <ChatCompletion>
       <SystemMessage>
@@ -43,7 +45,7 @@ function ChooseTools(props: Pick<UseToolsProps, 'tools' | 'userData' | 'query'>)
         If none of the tools seem appropriate, or the user data doesn't have the necessary context to use the tool the
         user needs, respond with `null`.
       </SystemMessage>
-      <UserMessage>Generate a JSON response for this query: {props.query}</UserMessage>
+      <UserMessage>Generate a JSON response for this query: {props.children}</UserMessage>
     </ChatCompletion>
   );
 }
@@ -87,7 +89,7 @@ async function InvokeTool(
   return (
     <ChatCompletion>
       <SystemMessage>
-        You are a tool-using agent. You previously choose to use a tool, and generated this response to the user:
+        You are a tool-using agent. You previously chose to use a tool, and generated this response to the user:
         {toolChoiceResult.responseToUser}
         When you ran the tool, you got this result: {JSON.stringify(toolResult)}
         Using the above, provide a final response to the user.
@@ -127,9 +129,14 @@ export interface UseToolsProps {
   tools: Record<string, Tool>;
 
   /**
-   * A query the AI will use to decide which tool to use, and what parameters to invoke it with.
+   * The conversation in which the AI can use a tool.
    */
-  query: string;
+  children: Node;
+
+  /**
+   * Whether the result should include intermediate steps, for example, the execution of the function and its response.
+   */
+  showSteps?: boolean;
 
   /**
    * A fallback response to use if the AI doesn't think any of the tools are relevant.
@@ -181,11 +188,12 @@ export interface UseToolsProps {
  *    },
  *  };
  *
- * <UseTools
- *    tools={tools}
- *    fallback="Politely explain you aren't able to help with that request."
- *    query={ "You control a home automation system. The user has requested you take some
- *       action in their home: " + userRequest }
+ * <UseTools tools={tools} fallback="Politely explain you aren't able to help with that request.">
+ *   <SystemMessage>
+ *     You control a home automation system. The user will request an action in their home. You should take an action and
+ *     then generate a response telling the user what you've done.
+ *   </SystemMessage>
+ *   <UserMessage>{userRequest}</UserMessage>
  * </UseTools>;
  * ```
  *
@@ -203,30 +211,31 @@ export async function* UseTools(props: UseToolsProps, { render }: RenderContext)
 }
 
 /** @hidden */
-export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: RenderContext) {
-  const messages = [
-    <SystemMessage>You are a smart agent that may use functions to answer a user question.</SystemMessage>,
-  ];
-  if (props.fallback) {
-    messages.push(
-      <SystemMessage>Here's the fallback strategy/message if something failed: {props.fallback}</SystemMessage>
-    );
-  }
-  messages.push(<UserMessage>{props.query}</UserMessage>);
+export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: RenderContext): RenderableStream {
+  yield AppendOnlyStream;
+
+  const conversation = [memo(props.children)];
 
   do {
-    const modelResponse = <ChatCompletion functionDefinitions={props.tools}>{messages}</ChatCompletion>;
+    const modelResponse = memo(<ChatCompletion functionDefinitions={props.tools}>{conversation}</ChatCompletion>);
+    if (props.showSteps) {
+      yield modelResponse;
+    }
 
-    const renderResult = yield* render(modelResponse, { stop: (el) => el.tag == FunctionCall });
-
-    const stringResponses: String[] = [];
+    const renderResult = await render(modelResponse, { stop: (el) => el.tag == FunctionCall });
     let functionCallElement: Element<any> | null = null;
 
+    let currentString = '';
     for (const element of renderResult) {
       if (typeof element === 'string') {
         // Model has generated a string response. Record it.
-        stringResponses.push(element);
-      } else if (isElement(element)) {
+        currentString += element;
+      } else if (isElement(element) && element.tag === FunctionCall) {
+        if (currentString.trim() !== '') {
+          conversation.push(<AssistantMessage>{currentString}</AssistantMessage>);
+          currentString = '';
+        }
+
         // Model has generated a function call.
         if (functionCallElement) {
           throw new AIJSXError(
@@ -235,6 +244,7 @@ export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: Re
             'runtime'
           );
         }
+        conversation.push(memo(element));
         functionCallElement = element;
       } else {
         throw new AIJSXError(
@@ -246,25 +256,40 @@ export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: Re
     }
 
     if (functionCallElement) {
-      messages.push(functionCallElement);
-      yield functionCallElement;
       // Call the selected function and append the result to the messages.
       let response;
       try {
         const callable = props.tools[functionCallElement.props.name].func;
         response = await callable(functionCallElement.props.args);
       } catch (e: any) {
-        response = `Function called failed with error: ${e.message}.`;
+        response = `Function call to ${functionCallElement.props.name} failed with error: ${e.message}.`;
       } finally {
-        const functionResponse = <FunctionResponse name={functionCallElement.props.name}>{response}</FunctionResponse>;
-        yield functionResponse;
-        messages.push(functionResponse);
+        const functionResponse = memo(
+          <FunctionResponse name={functionCallElement.props.name}>{response}</FunctionResponse>
+        );
+        if (props.showSteps) {
+          yield (
+            <>
+              {'\n'}
+              {functionResponse}
+              {'\n'}
+            </>
+          );
+        }
+        conversation.push(functionResponse);
       }
-    } else {
-      // Model did not generate any function call. Return the string responses.
-      return stringResponses.join('');
+
+      continue;
     }
+
+    // Terminate the loop when the model produces a response without a function call.
+    if (!props.showSteps) {
+      yield modelResponse;
+    }
+    break;
   } while (true);
+
+  return AppendOnlyStream;
 }
 
 /** @hidden */
