@@ -71,10 +71,12 @@ export class NoOpLogImplementation extends LogImplementation {
   log(): void {}
 }
 
-const defaultPinoLogger = _.once(() =>
+const defaultPinoLogger = _.once(() => {
+  const logEnv = process.env.AIJSX_LOG ?? 'silent';
+  const [level, file] = logEnv.split(':', 2);
   // @ts-expect-error
-  pino({ name: 'ai-jsx', level: 'info' })
-);
+  return pino({ name: 'ai-jsx', level }, (file && pino.destination(file)) ?? undefined);
+});
 
 /**
  * An implementation of {@link LogImplementation} that uses the `pino` logging library.

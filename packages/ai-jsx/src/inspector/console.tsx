@@ -8,7 +8,6 @@ import Spinner from './spinner.js';
 import { DebugTree } from '../core/debug.js';
 
 import { Box, render, Spacer, Text, useInput, useStdout } from 'ink';
-import { NoOpLogImplementation } from '../core/log.js';
 
 /** Get the size of the terminal window. */
 export function useStdoutDimensions(): [number, number] {
@@ -87,7 +86,7 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
   const pushDebugTreeStep = (step: string) => setDebugTreeSteps((previous) => previous.concat([step]));
 
   useEffect(() => {
-    const renderContext = AI.createRenderContext({ logger: new NoOpLogImplementation() });
+    const renderContext = AI.createRenderContext();
     const memoized = memo(componentToInspect);
 
     async function getAllFrames() {

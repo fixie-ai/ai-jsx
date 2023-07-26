@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.6.0
+## 0.6.1
+
+- Add `AIJSX_LOG` environment variable to control log level and output location.
+
+## [0.6.0](https://github.com/fixie-ai/ai-jsx/commit/7fce0f4ae4eca4d2679177ecb357cd60699e3913)
 
 - Update `<UseTools>` to take a complete conversation as a `children` prop, rather than as a string `query` prop.
 
