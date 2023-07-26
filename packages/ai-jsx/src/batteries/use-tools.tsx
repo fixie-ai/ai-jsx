@@ -262,7 +262,7 @@ export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: Re
         const callable = props.tools[functionCallElement.props.name].func;
         response = await callable(functionCallElement.props.args);
       } catch (e: any) {
-        response = `Function called failed with error: ${e.message}.`;
+        response = `Function call to ${functionCallElement.props.name} failed with error: ${e.message}.`;
       } finally {
         const functionResponse = memo(
           <FunctionResponse name={functionCallElement.props.name}>{response}</FunctionResponse>

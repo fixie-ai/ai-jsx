@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0
+
+- Update `<UseTools>` to take a complete conversation as a `children` prop, rather than as a string `query` prop.
+
 ## 0.5.16
 
 - Update `toTextStream` to accept a `logger`, so you can now see log output when you're running AI.JSX on the server and outputting to a stream. See [AI + UI](./guides/ai-ui.md) and [Observability](./guides/observability.md).
