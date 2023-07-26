@@ -8778,7 +8778,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"ai-jsx@^0.5.16, ai-jsx@workspace:*, ai-jsx@workspace:packages/ai-jsx":
+"ai-jsx@workspace:*, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
@@ -19846,7 +19846,7 @@ __metadata:
     "@vercel/kv": ^0.2.1
     "@vercel/og": ^0.5.7
     ai: ^2.1.6
-    ai-jsx: ^0.5.16
+    ai-jsx: "workspace:*"
     autoprefixer: ^10.4.13
     class-variance-authority: ^0.4.0
     clsx: ^1.2.1
