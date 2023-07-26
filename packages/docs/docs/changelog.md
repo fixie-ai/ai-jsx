@@ -4,7 +4,7 @@
 
 - Update `<UseTools>` to take a complete conversation as a `children` prop, rather than as a string `query` prop.
 
-## 0.5.16
+## [0.5.16](https://github.com/fixie-ai/ai-jsx/commit/5017e6fd)
 
 - Update `toTextStream` to accept a `logger`, so you can now see log output when you're running AI.JSX on the server and outputting to a stream. See [AI + UI](./guides/ai-ui.md) and [Observability](./guides/observability.md).
 
