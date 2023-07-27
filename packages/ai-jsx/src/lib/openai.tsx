@@ -38,6 +38,7 @@ import * as AI from '../index.js';
 import { Node, PropsOfComponent } from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
 import { getEnvVar, patchedUntruncateJson } from './util.js';
+import { CreateChatCompletionRequest } from 'openai';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -256,6 +257,7 @@ export async function* OpenAICompletionModel(
     model: props.model,
     max_tokens: props.maxTokens,
     temperature: props.temperature,
+    top_p: props.topP,
     prompt: await render(props.children),
     stop: props.stop,
     stream: true,
@@ -411,10 +413,11 @@ export async function* OpenAIChatModel(
     : undefined;
 
   const openai = getContext(openAiClientContext);
-  const chatCompletionRequest = {
+  const chatCompletionRequest: CreateChatCompletionRequest = {
     model: props.model,
     max_tokens: props.maxTokens,
     temperature: props.temperature,
+    top_p: props.topP,
     messages,
     functions: openaiFunctions,
     function_call: openaiFunctionCall,

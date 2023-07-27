@@ -4,7 +4,7 @@
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://ai-jsx.com",
-  "version": "0.5.13",
+  "version": "0.6.1",
   "volta": {
     "extends": "../../package.json"
   },
@@ -190,6 +190,15 @@
         "default": "./dist/cjs/lib/anthropic.cjs"
       }
     },
+    "./lib/replicate-llama2": {
+      "import": {
+        "types": "./dist/esm/lib/replicate-llama2.d.ts",
+        "default": "./dist/esm/lib/replicate-llama2.js"
+      },
+      "require": {
+        "default": "./dist/cjs/lib/replicate-llama2.cjs"
+      }
+    },
     "./react": {
       "import": {
         "types": "./dist/esm/react/index.d.ts",
@@ -236,6 +245,15 @@
         "default": "./dist/cjs/react/completion.cjs"
       }
     },
+    "./react/jit-ui/mdx": {
+      "import": {
+        "types": "./dist/esm/react/jit-ui/mdx.d.ts",
+        "default": "./dist/esm/react/jit-ui/mdx.js"
+      },
+      "require": {
+        "default": "./dist/cjs/react/jit-ui/mdx.cjs"
+      }
+    },
     "./experimental/next": {
       "import": {
         "types": "./dist/esm/experimental/next/index.d.ts",
@@ -243,6 +261,24 @@
       },
       "require": {
         "default": "./dist/cjs/experimental/next/index.cjs"
+      }
+    },
+    "./experimental/next/chat": {
+      "import": {
+        "types": "./dist/esm/experimental/next/chat.d.ts",
+        "default": "./dist/esm/experimental/next/chat.js"
+      },
+      "require": {
+        "default": "./dist/cjs/experimental/next/chat.cjs"
+      }
+    },
+    "./experimental/next/chat.client": {
+      "import": {
+        "types": "./dist/esm/experimental/next/chat.client.d.ts",
+        "default": "./dist/esm/experimental/next/chat.client.js"
+      },
+      "require": {
+        "default": "./dist/cjs/experimental/next/chat.client.cjs"
       }
     },
     "./stream": {
@@ -315,6 +351,7 @@
     "openai": "^3.3.0",
     "openai-edge": "^1.2.0",
     "pino": "^8.14.1",
+    "replicate": "^0.12.3",
     "server-only": "^0.0.1",
     "untruncate-json": "^0.0.1",
     "uuid": "^9.0.0",

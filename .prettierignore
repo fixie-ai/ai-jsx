@@ -1,9 +1,10 @@
 .pnp*
 .yarn*
 .vscode*
-*data*
+packages/examples/src/bakeoff/*/data/*
 dist
 .next
 .docusaurus
-*build*
 packages/docs/docs/api
+packages/docs/build
+packages/create-react-app-demo/build/

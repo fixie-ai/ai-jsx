@@ -107,3 +107,9 @@ If you have multiple layers of nesting, the closest parent wins:
 If there is no `ChatProvider` or `CompletionProvider` parent, [the default model provider](#how-aijsx-chooses-the-model) will be used.
 
 For an example, see [multi-model-chat](https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/multi-model-chat.tsx).
+
+## Llama2
+
+[Llama2](https://huggingface.co/docs/transformers/main/model_doc/llama2) is an open-source model from Facebook. Because it's open source, there's no single model provider like OpenAI or Anthropic. Instead, people run it in their own environment.
+
+AI.JSX includes `<ReplicateLlama2>`, which uses the [chat](https://replicate.com/replicate/llama70b-v2-chat) and [completion](https://replicate.com/replicate/llama70b-v2) Replicate-hosted Llama2 models. If you'd like to use a Llama2 instance hosted somewhere else, see [the source code for ReplicateLlama2](https://github.com/fixie-ai/ai-jsx/blob/main/packages/ai-jsx/src/lib/replicate-llama2.tsx) and adapt it to match your endpoint.
