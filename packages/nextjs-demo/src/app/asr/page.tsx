@@ -1,6 +1,6 @@
 'use client';
 import '../globals.css';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MicManager, SpeechRecognitionFactory, SpeechRecognitionBase } from '@ai-jsx/lib/asr/asr';
 import { wordErrorRate } from 'word-error-rate';
 
@@ -26,6 +26,7 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, id, manager }) => {
   const [wer, setWer] = useState<number | null>(null);
   const [latency, setLatency] = useState<number | null>(null);
   const [recognizer, setRecognizer] = useState<SpeechRecognitionBase>(null);
+  const textarea = useRef(null);
   const computeWer = (inText: string, refText: string) => {
     const numLines = inText.split('\n').length - 1;
     const refClean = refText
@@ -43,8 +44,8 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, id, manager }) => {
   };
   const start = () => {
     const recognizer = SpeechRecognitionFactory.create(id, manager);
+    const el = textarea.current as HTMLTextAreaElement;
     setRecognizer(recognizer);
-    const el = document.getElementById(id) as HTMLTextAreaElement;
     el.value = '';
     recognizer.addEventListener('transcript', (event: CustomEvent) => {
       const lastNewlineIndex = el.value.lastIndexOf('\n');
@@ -78,7 +79,7 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, id, manager }) => {
       <p className="text-xl font-bold mt-2">{name}</p>
       <div className="text-sm">Latency: {latency ? latency.toFixed(0) : ''} ms</div>
       <div className="text-sm">Word Error Rate: {wer !== null ? wer.toFixed(3) : ''}</div>
-      <textarea cols={80} rows={5} id={id}></textarea>
+      <textarea cols={80} rows={5} ref={textarea}e></textarea>
     </div>
   );
 };
