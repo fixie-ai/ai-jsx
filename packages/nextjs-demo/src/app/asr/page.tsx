@@ -1,11 +1,7 @@
 'use client';
 import '../globals.css';
 import React, { useState, useEffect } from 'react';
-import {
-  MicManager,
-  SpeechRecognitionFactory,
-  SpeechRecognitionBase,
-} from '@ai-jsx/lib/asr/asr';
+import { MicManager, SpeechRecognitionFactory, SpeechRecognitionBase } from '@ai-jsx/lib/asr/asr';
 import { wordErrorRate } from 'word-error-rate';
 
 const HARVARD_SENTENCES_01_TRANSCRIPT = `Harvard list number one.
@@ -52,8 +48,7 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, id, manager }) => {
     el.value = '';
     recognizer.addEventListener('transcript', (event: CustomEvent) => {
       const lastNewlineIndex = el.value.lastIndexOf('\n');
-      const oldData =
-        lastNewlineIndex != -1 ? el.value.slice(0, lastNewlineIndex + 1) : '';
+      const oldData = lastNewlineIndex != -1 ? el.value.slice(0, lastNewlineIndex + 1) : '';
       el.value = oldData + event.detail.transcript;
       if (event.detail.final) {
         el.value += '\n';
@@ -81,12 +76,8 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, id, manager }) => {
   return (
     <div className="ml-2">
       <p className="text-xl font-bold mt-2">{name}</p>
-      <div className="text-sm">
-        Latency: {latency ? latency.toFixed(0) : ''} ms
-      </div>
-      <div className="text-sm">
-        Word Error Rate: {wer !== null ? wer.toFixed(3) : ''}
-      </div>
+      <div className="text-sm">Latency: {latency ? latency.toFixed(0) : ''} ms</div>
+      <div className="text-sm">Word Error Rate: {wer !== null ? wer.toFixed(3) : ''}</div>
       <textarea cols={80} rows={5} id={id}></textarea>
     </div>
   );
@@ -111,9 +102,8 @@ const PageComponent: React.FC = () => {
   return (
     <>
       <p className="font-sm ml-2 mb-2">
-        This demo exercises several real-time ASR (speech-to-text)
-        implementations. You can see how they do on a stock text recording using
-        Start File, or you can use Start Mic to try with your own voice.
+        This demo exercises several real-time ASR (speech-to-text) implementations. You can see how they do on a stock
+        text recording using Start File, or you can use Start Mic to try with your own voice.
       </p>
       <div className="font-bold">
         <button onClick={handleStartFile}>Start File</button>

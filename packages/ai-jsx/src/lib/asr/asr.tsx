@@ -32,17 +32,17 @@ registerProcessor("input-processor", InputProcessor);
 `;
 
 class EventTargetImpl implements EventTarget {
-  listeners: Object;
+  listeners: Record<string, EventListener[]>;
   constructor() {
     this.listeners = {};
   }
-  addEventListener(type: string, listener) {
+  addEventListener(type: string, listener: EventListener) {
     if (!this.listeners[type]) {
       this.listeners[type] = [];
     }
     this.listeners[type].push(listener);
   }
-  removeEventListener(type: string, listener) {
+  removeEventListener(type: string, listener: EventListener) {
     const index = this.listeners[type].indexOf(listener);
     if (index != -1) {
       this.listeners[type].splice(index, 1);
@@ -54,18 +54,24 @@ class EventTargetImpl implements EventTarget {
   }
 }
 
+/**
+ * Manages capturing audio from the microphone or a URL (for testing).
+ * Currently uses a WebAudio worker, but we may want to switch to MediaRecorder
+ * in the future so that we can emit Opus encoded frames.
+ * Once started, emits "chunk" events containing 16-bit PCM audio data of
+ * duration no shorter than `timeslice` milliseconds.
+ * Also emits "vad" events upon voice activity or silence being detected.
+ * Currently, the VAD is quite primitive with a speech threshold of -50 dbFS.
+ */
 export class MicManager extends EventTargetImpl {
-  private outBuf?: Float32Array[];
-  private context?: AudioContext;  
+  private outBuffer?: Float32Array[];
+  private context?: AudioContext;
   private streamElement?: HTMLAudioElement;
   private stream?: MediaStream;
   private processorNode?: AudioWorkletNode;
   private numSilentFrames = 0;
   async startMic(timeslice: number) {
-    this.startGraph(
-      await navigator.mediaDevices.getUserMedia({ audio: true }),
-      timeslice,
-    );
+    this.startGraph(await navigator.mediaDevices.getUserMedia({ audio: true }), timeslice);
   }
   async startFile(url: string, timeslice: number) {
     const response = await fetch(url);
@@ -77,8 +83,8 @@ export class MicManager extends EventTargetImpl {
     await this.startGraph(stream, timeslice);
   }
   private async startGraph(stream: MediaStream, timeslice: number) {
-    this.outBuf = [];
-    this.context = new window.AudioContext(); 
+    this.outBuffer = [];
+    this.context = new window.AudioContext();
     this.stream = stream;
     const workletSrcBlob = new Blob([AUDIO_WORKLET_SRC], {
       type: 'application/javascript',
@@ -87,15 +93,14 @@ export class MicManager extends EventTargetImpl {
     await this.context!.audioWorklet.addModule(workletSrcUrl);
     this.processorNode = new AudioWorkletNode(this.context, 'input-processor');
     this.processorNode.port.onmessage = (event) => {
-      this.outBuf!.push(event.data);
-      const bufDuration =
-        ((128 * this.outBuf!.length) / this.sampleRate()) * 1000;
+      this.outBuffer!.push(event.data);
+      const bufDuration = ((128 * this.outBuffer!.length) / this.sampleRate()) * 1000;
       if (bufDuration >= timeslice) {
         const chunkEvent = new CustomEvent('chunk', {
-          detail: this.makePcmChunk(this.outBuf!),
+          detail: this.makePcmChunk(this.outBuffer!),
         });
         this.dispatchEvent(chunkEvent);
-        this.outBuf = [];
+        this.outBuffer = [];
       }
     };
     const source = this.context.createMediaStreamSource(stream);
@@ -103,16 +108,14 @@ export class MicManager extends EventTargetImpl {
     this.numSilentFrames = 0;
   }
   stop() {
-    this.processorNode!.disconnect();
-    this.stream!.getTracks().forEach((track) => track.stop());
-    if (this.streamElement) {
-      this.streamElement.pause();
-    }
-    this.context!.close();
+    this.processorNode?.disconnect();
+    this.stream?.getTracks().forEach((track) => track.stop());
+    this.streamElement?.pause();
+    this.context?.close();
     this.processorNode = undefined;
     this.stream = undefined;
     this.context = undefined;
-    this.outBuf = [];
+    this.outBuffer = [];
   }
   sampleRate() {
     return this.context?.sampleRate;
@@ -126,10 +129,7 @@ export class MicManager extends EventTargetImpl {
     buffers.forEach((buffer) => {
       buffer.forEach((sample) => {
         energy += sample * sample;
-        const i16 = Math.max(
-          -32768,
-          Math.min(32767, Math.floor(sample * 32768)),
-        );
+        const i16 = Math.max(-32768, Math.min(32767, Math.floor(sample * 32768)));
         view.setInt16(index, i16, true);
         index += 2;
       });
@@ -153,22 +153,21 @@ export class MicManager extends EventTargetImpl {
   }
 }
 
+/**
+ * Base class for live speech recognizers that wraps a web socket
+ * connection to a speech recognition server.
+ * Override handleOpen/handleMessage/sendChunk to customize for a particular
+ * speech recognition service.
+ */
 export class SpeechRecognitionBase extends EventTargetImpl {
-  private lastUtteranceEndTime: number;
-  protected manager: MicManager;
+  private lastUtteranceEndTime: number = 0;
+  private outBuffer: ArrayBuffer[] = [];
   protected socket?: WebSocket;
-  protected name: string;
-  protected language?: string;
-  private outBuf: ArrayBuffer[];
-  constructor(manager: MicManager, name: string, language?: string) {
+
+  constructor(protected manager: MicManager, protected name: string, protected language?: string) {
     super();
-    this.manager = manager;
-    this.name = name;
-    this.language = language;
-    this.lastUtteranceEndTime = 0;
-    this.outBuf = [];
   }
-  async start() {}
+
   close() {
     if (this.socket) {
       this.sendClose();
@@ -186,34 +185,38 @@ export class SpeechRecognitionBase extends EventTargetImpl {
   protected startInternal(url: string, protocols?: string[]) {
     const startTime = performance.now();
     console.log(`${this.name} socket connecting...`);
-    this.outBuf = [];
+    this.outBuffer = [];
     this.socket = new WebSocket(url, protocols);
     this.socket.binaryType = 'arraybuffer';
     this.socket.onopen = (event) => {
       const elapsed = performance.now() - startTime;
-      console.log(`${this.name} socket opened, et=${elapsed.toFixed(0)}`);
+      console.log(`${this.name} socket opened, elapsed=${elapsed.toFixed(0)}`);
       this.handleOpen();
       this.flush();
     };
     this.socket.onmessage = (event) => {
-      const result = JSON.parse(event.data);
+      let result;
+      try {
+        result = JSON.parse(event.data);
+      } catch (error) {
+        console.error(`Failed to parse socket message: ${error}`);
+        return;
+      }
       this.handleMessage(result);
     };
     this.socket.onerror = (event) => {
       console.log(`${this.name} socket error`);
     };
     this.socket.onclose = (event) => {
-      console.log(
-        `${this.name} socket closed, code=${event.code} reason=${event.reason}`,
-      );
+      console.log(`${this.name} socket closed, code=${event.code} reason=${event.reason}`);
     };
     this.manager.addEventListener('chunk', (event: CustomEvent) => {
       if (this.socket!.readyState == 1) {
         this.sendChunk(event.detail);
       } else if (this.socket!.readyState == 0) {
-        this.outBuf.push(event.detail);
+        this.outBuffer.push(event.detail);
       } else {
-        console.warn(`${this.name} socket closed`);
+        console.error(`${this.name} socket closed`);
       }
     });
     this.manager.addEventListener('vad', (event: CustomEvent) => {
@@ -243,12 +246,15 @@ export class SpeechRecognitionBase extends EventTargetImpl {
     this.socket!.send(chunk);
   }
   protected flush() {
-    this.outBuf.forEach((chunk) => this.sendChunk(chunk));
-    this.outBuf = [];
+    this.outBuffer.forEach((chunk) => this.sendChunk(chunk));
+    this.outBuffer = [];
   }
   protected sendClose() {}
 }
 
+/**
+ * Speech recognizer that uses the Deepgram service.
+ */
 export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
   private buf: string;
   constructor(manager: MicManager, language?: string) {
@@ -278,10 +284,7 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
       let transcript = this.buf ? `${this.buf} ` : '';
       transcript += result.channel.alternatives[0].transcript;
       if (transcript) {
-        this.dispatchTranscript(
-          transcript,
-          result.is_final && result.speech_final,
-        );
+        this.dispatchTranscript(transcript, result.is_final && result.speech_final);
         if (result.speech_final) {
           this.buf = '';
         } else if (result.is_final) {
@@ -297,6 +300,9 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
   }
 }
 
+/**
+ * Speech recognizer that uses the Soniox service.
+ */
 export class SonioxSpeechRecognition extends SpeechRecognitionBase {
   private token?: string;
   constructor(manager: MicManager, language?: string) {
@@ -348,6 +354,9 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
   }
 }
 
+/**
+ * Speech recognizer that uses the Gladia service.
+ */
 export class GladiaSpeechRecognition extends SpeechRecognitionBase {
   private token?: string;
   constructor(manager: MicManager, language?: string) {
@@ -384,21 +393,21 @@ export class GladiaSpeechRecognition extends SpeechRecognitionBase {
   }
 }
 
+/**
+ * Speech recognizer that uses the AssemblyAI service.
+ */
 export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
   constructor(manager: MicManager, language?: string) {
     super(manager, 'aai', language);
   }
   async start() {
     super.startInternal(
-      `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=${this.manager.sampleRate()}&token=${await this.fetchToken()}`,
+      `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=${this.manager.sampleRate()}&token=${await this.fetchToken()}`
     );
   }
   protected handleMessage(result) {
     if (result.text) {
-      this.dispatchTranscript(
-        result.text,
-        result.message_type == 'FinalTranscript',
-      );
+      this.dispatchTranscript(result.text, result.message_type == 'FinalTranscript');
     }
   }
   protected sendChunk(chunk: ArrayBuffer) {
@@ -410,6 +419,9 @@ export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
   }
 }
 
+/**
+ * Creates a speech recoginzer of the given type (e.g., 'deepgram').
+ */
 export class SpeechRecognitionFactory {
   static create(type: string, manager: MicManager, language?: string) {
     switch (type) {
