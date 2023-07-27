@@ -131,10 +131,11 @@ Then tell the agent to use them:
 ```tsx
 <UseTools
   tools={tools}
-  query={query}
   fallback={<ApologizeForBeingUnableToShowThisSummary query={query} />}
   userData={JSON.stringify(userData)}
-/>
+>
+  <UserMessage>{query}</UserMessage>
+</UseTools>
 ```
 
 We use [`zod`](https://www.npmjs.com/package/zod) to define the tool schema, as does LangChain.

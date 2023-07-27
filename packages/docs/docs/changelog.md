@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.6.1
+
+- Add `AIJSX_LOG` environment variable to control log level and output location.
+
+## [0.6.0](https://github.com/fixie-ai/ai-jsx/commit/7fce0f4ae4eca4d2679177ecb357cd60699e3913)
+
+- Update `<UseTools>` to take a complete conversation as a `children` prop, rather than as a string `query` prop.
+
+## [0.5.16](https://github.com/fixie-ai/ai-jsx/commit/5017e6fd)
+
+- Update `toTextStream` to accept a `logger`, so you can now see log output when you're running AI.JSX on the server and outputting to a stream. See [AI + UI](./guides/ai-ui.md) and [Observability](./guides/observability.md).
+
+## [0.5.15](https://github.com/fixie-ai/ai-jsx/commit/68adddd)
+
+- Add [`MdxChatCompletion`](./guides/mdx.md), so your model calls can now output [MDX](https://mdxjs.com/) using your components.
+
+## [0.5.14](https://github.com/fixie-ai/ai-jsx/commit/5971243)
+
+- Add [Llama2 support](./guides/models.md#llama2).
+
+## [0.5.13](https://github.com/fixie-ai/ai-jsx/commit/80e25c7d701d0d227e6815f4303ca7dc28dfce0c)
+
+- Add [`DocsQAWithSources` component](./guides/docsqa.md#handling-a-query)
+
 ## 0.5.12
 
 - Updated `readme.md` in the `ai-jsx` package to fix bugs on the npm landing page.

@@ -7,6 +7,7 @@ export declare namespace JSX {
   type Element = React.JSX.Element & AIJSX.Element;
   type IntrinsicElements = React.JSX.IntrinsicElements & AIJSX.IntrinsicElements;
   type ElementChildrenAttribute = React.JSX.ElementChildrenAttribute & AIJSX.ElementChildrenAttribute;
+  type IntrinsicAttributes = React.JSX.IntrinsicAttributes;
 }
 
 export function jsx(type: any, config: any, maybeKey?: any) {

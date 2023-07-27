@@ -20,3 +20,25 @@ test('env var does not exist', () => {
 test('env var does not exist and shouldThrow=false', () => {
   expect(getEnvVar('DOES_NOT_EXIST', false)).toBeUndefined();
 });
+
+test('process is not defined', () => {
+  const originalProcess = globalThis.process;
+
+  // @ts-expect-error
+  delete globalThis.process;
+
+  expect(getEnvVar('DOES_NOT_EXIST', false)).toBeUndefined();
+
+  globalThis.process = originalProcess;
+});
+
+test('env is not defined', () => {
+  const originalEnv = globalThis.process.env;
+
+  // @ts-expect-error
+  delete globalThis.process.env;
+
+  expect(getEnvVar('DOES_NOT_EXIST', false)).toBeUndefined();
+
+  globalThis.process.env = originalEnv;
+});

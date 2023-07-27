@@ -26,33 +26,13 @@ This produces no logging.
 
 ## Console Logging of LLM Calls
 
-Now to add logging to the console, we will add two lines of code:
+To log to the console, set the `AIJSX_LOG` environment variable to the desired log level (for example `"info"` or `"debug"`).
 
-```tsx file="index.tsx"
-import * as AI from 'ai-jsx';
-import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
-// highlight-next-line
-import { PinoLogger } from 'ai-jsx/core/log';
-import pino from 'pino';
-
-function App() {
-  return (
-    <ChatCompletion>
-      <SystemMessage>You are an agent that only asks rhetorical questions.</SystemMessage>
-      <UserMessage>How can I learn about Ancient Egypt?</UserMessage>
-    </ChatCompletion>
-  );
-}
-
-console.log(
-  await AI.createRenderContext({
-    // highlight-next-line
-    logger: new PinoLogger(pino({ level: 'debug' })), //default level is 'info'
-  }).render(<App />)
-);
+```sh
+AIJSX_LOG=debug node ./my-ai-jsx-program.tsx
 ```
 
-The first line we added is where we import our logger. See [`PinoLogger`](/api/classes/core_log.PinoLogger) to learn more. In the second line, we instantiate and use the logger. Now, when you run the code, you should see something like this on the console:
+Now you should see JSON log events written to the console, such as
 
 ```json
 {
@@ -75,80 +55,23 @@ The first line we added is where we import our logger. See [`PinoLogger`](/api/c
 }
 ```
 
-To view this in a nicer way, pipe the console output to `pino-pretty`: `node ./my-ai-jsx-program.tsx | npx pino-pretty`:
+To view this in a nicer way, pipe the console output to `pino-pretty`:
 
-```
-[12:05:39.756] DEBUG (ai-jsx/57473): Calling createChatCompletion
-    chatCompletionRequest: {
-      "model": "gpt-3.5-turbo",
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are an agent that only asks rhetorical questions."
-        },
-        {
-          "role": "user",
-          "content": "How can I learn about Ancient Egypt?"
-        }
-      ],
-      "stream": true
-    }
-    renderId: "6ce9175d-2fbd-4651-a72f-fa0764a9c4c2"
-    element: "<OpenAIChatModel>"
+```sh
+AIJSX_LOG=debug node ./my-ai-jsx-program.tsx | npx pino-pretty
 ```
 
 `pino-pretty` has a number of [options](https://github.com/pinojs/pino-pretty#cli-arguments) you can use to further configure how you view the logs.
 
 You can use `grep` to filter the log to just the events or loglevels you care about.
 
-:::note NextJS
+You may also specify a file for log events as well by putting a path after level, separated by ':' character:
 
-When using NextJS, instead of specifying a logger in `createRenderContext`, you can pass one to the props of your `<AI.JSX>` tag.
-
-:::
-
-### Custom Pino Logging
-
-If you want to customize the log sources further, you can create your own `pino` logger instance:
-
-```tsx file="index.tsx"
-import * as AI from 'ai-jsx';
-import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
-import { PinoLogger } from 'ai-jsx/core/log';
-// highlight-next-line
-import { pino } from 'pino';
-
-function App() {
-  return (
-    <ChatCompletion>
-      <SystemMessage>You are an agent that only asks rhetorical questions.</SystemMessage>
-      <UserMessage>How can I learn about Ancient Egypt?</UserMessage>
-    </ChatCompletion>
-  );
-}
-
-// highlight-start
-const pinoStdoutLogger = pino({
-  name: 'my-project',
-  level: process.env.loglevel ?? 'debug',
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-    },
-  },
-});
-// highlight-end
-
-console.log(
-  await AI.createRenderContext({
-    // highlight-next-line
-    logger: new PinoLogger(pinoStdoutLogger),
-  }).render(<App />)
-);
+```sh
+AIJSX_LOG=debug:/tmp/ai-jsx.log node ./my-ai-jsx-program.tsx
 ```
 
-When you run this, you'll see `pino-pretty`-formatted logs on stdout. See `pino`'s other [options](https://github.com/pinojs/pino) for further ways you can configure the logging.
+Now logs will be appended to `/tmp/ai-jsx.log`.
 
 ### Fully Custom Logging
 
@@ -170,6 +93,18 @@ log(
   message?: string
 ): void;
 ```
+
+A custom `LogImplementation` can be passed to `createRenderContext` via the `logger` option:
+
+```ts
+AI.createRenderContext({ logger: new CustomLogImplementation() });
+```
+
+:::note NextJS
+
+When using NextJS, instead of specifying a logger in `createRenderContext`, you can pass one to the props of your `<AI.JSX>` tag.
+
+:::
 
 ## Producing Logs
 
