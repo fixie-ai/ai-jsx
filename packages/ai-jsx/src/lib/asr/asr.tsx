@@ -31,6 +31,11 @@ class InputProcessor extends AudioWorkletProcessor {
 registerProcessor("input-processor", InputProcessor);
 `;
 
+function bufferToBase64(buffer: ArrayBuffer) {
+  const numberArray: number[] = Array.from(new Uint8Array(buffer));
+  return btoa(String.fromCharCode.apply(null, numberArray));
+}
+
 class EventTargetImpl implements EventTarget {
   listeners: Record<string, EventListener[]>;
   constructor() {
@@ -94,7 +99,7 @@ export class MicManager extends EventTargetImpl {
     this.processorNode = new AudioWorkletNode(this.context, 'input-processor');
     this.processorNode.port.onmessage = (event) => {
       this.outBuffer!.push(event.data);
-      const bufDuration = ((128 * this.outBuffer!.length) / this.sampleRate()) * 1000;
+      const bufDuration = ((128 * this.outBuffer!.length) / this.sampleRate()!) * 1000;
       if (bufDuration >= timeslice) {
         const chunkEvent = new CustomEvent('chunk', {
           detail: this.makePcmChunk(this.outBuffer!),
@@ -210,17 +215,17 @@ export class SpeechRecognitionBase extends EventTargetImpl {
     this.socket.onclose = (event) => {
       console.log(`${this.name} socket closed, code=${event.code} reason=${event.reason}`);
     };
-    this.manager.addEventListener('chunk', (event: CustomEvent) => {
+    this.manager.addEventListener('chunk', (evt: CustomEventInit<ArrayBuffer>) => {
       if (this.socket!.readyState == 1) {
-        this.sendChunk(event.detail);
+        this.sendChunk(evt.detail!);
       } else if (this.socket!.readyState == 0) {
-        this.outBuffer.push(event.detail);
+        this.outBuffer.push(evt.detail!);
       } else {
         console.error(`${this.name} socket closed`);
       }
     });
-    this.manager.addEventListener('vad', (event: CustomEvent) => {
-      if (!event.detail) {
+    this.manager.addEventListener('vad', (evt: CustomEventInit<boolean>) => {
+      if (!evt.detail) {
         this.lastUtteranceEndTime = performance.now();
       } else {
         this.lastUtteranceEndTime = 0;
@@ -241,7 +246,7 @@ export class SpeechRecognitionBase extends EventTargetImpl {
     this.dispatchEvent(event);
   }
   protected handleOpen() {}
-  protected handleMessage(result) {}
+  protected handleMessage(_result: any) {}
   protected sendChunk(chunk: ArrayBuffer) {
     this.socket!.send(chunk);
   }
@@ -268,7 +273,7 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
       version: 'latest',
       encoding: 'linear16',
       channels: '1',
-      sample_rate: this.manager.sampleRate().toString(),
+      sample_rate: this.manager.sampleRate()!.toString(),
       punctuate: 'true',
       interim_results: 'true',
       endpointing: '300',
@@ -279,7 +284,7 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
     const url = `wss://api.deepgram.com/v1/listen?${params.toString()}`;
     super.startInternal(url, ['token', await this.fetchToken()]);
   }
-  protected handleMessage(result) {
+  protected handleMessage(result: any) {
     if (result.type == 'Results') {
       let transcript = this.buf ? `${this.buf} ` : '';
       transcript += result.channel.alternatives[0].transcript;
@@ -319,29 +324,24 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
       include_nonfinal: true,
       enable_endpoint_detection: true,
       speech_context: null,
+      model: this.language ? `${this.language.slice(0, 2)}_precision` : null,
     };
-    if (this.language) {
-      obj['model'] = `${this.language.slice(0, 2)}_precision`;
-    }
     this.socket!.send(JSON.stringify(obj));
   }
-  protected handleMessage(result) {
-    const append = (transcript: string, w) => {
+  protected handleMessage(result: any) {
+    const append = (transcript: string, w: any) => {
       if (w.t == '<end>') {
         return transcript;
       }
       let temp = transcript;
-      if (temp && ',.?!'.indexOf(w.t[0]) == -1) {
+      if (temp && !',.?!'.includes(w.t[0])) {
         temp += ' ';
       }
       temp += w.t;
       return temp;
     };
     const partialTranscript = result.nfw.reduce(append, '');
-    //const tpt = result.tpt;
-    //const rtt = time() - this.firstSampleTime - tpt / 1000;
     if (partialTranscript) {
-      //console.log(`${time()}: ${transcript}, rtt=${rtt}`);
       this.dispatchTranscript(partialTranscript, false);
     }
     const finalTranscript = result.fw.reduce(append, '');
@@ -372,15 +372,12 @@ export class GladiaSpeechRecognition extends SpeechRecognitionBase {
       sample_rate: this.manager.sampleRate(),
       encoding: 'wav',
       // 300ms endpointing by default
+      language: this.language?.slice(0, 2) == 'en' ? 'english' : null,
     };
-    if (this.language?.toLowerCase() == 'en-us') {
-      obj['language'] = 'english';
-    }
     this.socket!.send(JSON.stringify(obj));
   }
-  protected handleMessage(result) {
+  protected handleMessage(result: any) {
     if (result.transcription) {
-      //console.log(`${result.type}: ${result.transcription}`);
       this.dispatchTranscript(result.transcription, result.type == 'final');
     }
     if (result.error) {
@@ -388,8 +385,7 @@ export class GladiaSpeechRecognition extends SpeechRecognitionBase {
     }
   }
   protected sendChunk(chunk: ArrayBuffer) {
-    const base64 = btoa(String.fromCharCode.apply(null, new Uint8Array(chunk)));
-    return this.socket!.send(JSON.stringify({ frames: base64 }));
+    return this.socket!.send(JSON.stringify({ frames: bufferToBase64(chunk) }));
   }
 }
 
@@ -405,14 +401,13 @@ export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
       `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=${this.manager.sampleRate()}&token=${await this.fetchToken()}`
     );
   }
-  protected handleMessage(result) {
+  protected handleMessage(result: any) {
     if (result.text) {
       this.dispatchTranscript(result.text, result.message_type == 'FinalTranscript');
     }
   }
   protected sendChunk(chunk: ArrayBuffer) {
-    const base64 = btoa(String.fromCharCode.apply(null, new Uint8Array(chunk)));
-    this.socket!.send(JSON.stringify({ audio_data: base64 }));
+    this.socket!.send(JSON.stringify({ audio_data: bufferToBase64(chunk) }));
   }
   protected sendClose() {
     this.socket!.send(JSON.stringify({ terminate_session: true }));

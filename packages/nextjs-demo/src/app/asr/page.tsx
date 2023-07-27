@@ -79,7 +79,7 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, id, manager }) => {
       <p className="text-xl font-bold mt-2">{name}</p>
       <div className="text-sm">Latency: {latency ? latency.toFixed(0) : ''} ms</div>
       <div className="text-sm">Word Error Rate: {wer !== null ? wer.toFixed(3) : ''}</div>
-      <textarea cols={80} rows={5} ref={textarea}e></textarea>
+      <textarea cols={80} rows={5} ref={textarea}></textarea>
     </div>
   );
 };
