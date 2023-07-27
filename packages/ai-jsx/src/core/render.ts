@@ -1,5 +1,5 @@
 /**
- * This module defines the core interfaces for AI.JSX.
+ * This module defines the core rendering interfaces for AI.JSX.
  *
  * See: https://ai-jsx.com for more details.
  *
@@ -7,55 +7,28 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { BoundLogger, NoOpLogImplementation, LogImplementation, Logger, PinoLogger } from './log.js';
-import { AIJSXError, ErrorCode } from '../core/errors.js';
-
-/** A context that is used to render an AI.JSX component. */
-export interface ComponentContext extends RenderContext {
-  logger: Logger;
-}
-
-/** Represents a single AI.JSX component. */
-export type Component<P> = (props: P, context: ComponentContext) => Renderable;
-
-/**
- * A Literal represents a literal value.
- */
-export type Literal = string | number | null | undefined | boolean;
+import { BoundLogger, NoOpLogImplementation, LogImplementation, PinoLogger } from './log.js';
+import { AIJSXError, ErrorCode } from './errors.js';
+import { partialMemo } from './memoize.js';
+import {
+  Node,
+  Component,
+  Element,
+  ElementPredicate,
+  withContext,
+  isIndirectNode,
+  getReferencedNode,
+  attachedContext,
+  createElement,
+  isElement,
+  Fragment,
+} from './node.js';
 
 /**
  * A value that can be yielded by a component to indicate that each yielded value should
  * be appended to, rather than replace, the previously yielded values.
  */
 export const AppendOnlyStream = Symbol('AI.appendOnlyStream');
-
-const attachedContext = Symbol('AI.attachedContext');
-/**
- * An Element represents an instance of an AI.JSX component, with an associated tag, properties, and a render function.
- */
-export interface Element<P> {
-  /** The tag associated with this {@link Element}. */
-  tag: Component<P>;
-  /** The component properties. */
-  props: P;
-  /** A function that renders this {@link Element} to a {@link Renderable}. */
-  render: (renderContext: RenderContext, logger: Logger) => Renderable;
-  /** The {@link RenderContext} associated with this {@link Element}. */
-  [attachedContext]?: RenderContext;
-}
-
-const indirectNodeSymbol = Symbol('AI.indirectNode');
-/**
- * An IndirectNode represents an opaque type with a reference to a {@link Node} that represents it.
- */
-export interface IndirectNode {
-  [indirectNodeSymbol]: Node;
-}
-
-/**
- * A Node represents an element of an AI.JSX component tree.
- */
-export type Node = Element<any> | Literal | Node[] | IndirectNode;
 
 /**
  * A RenderableStream represents an async iterable that yields {@link Renderable}s.
@@ -71,12 +44,6 @@ export interface RenderableStream {
  * A Renderable represents a value that can be rendered to a string.
  */
 export type Renderable = Node | PromiseLike<Renderable> | RenderableStream;
-
-/** @hidden */
-export type ElementPredicate = (e: Element<any>) => boolean;
-
-/** @hidden */
-export type PropsOfComponent<T extends Component<any>> = T extends Component<infer P> ? P : never;
 
 /** @hidden */
 export type PartiallyRendered = string | Element<any>;
@@ -161,65 +128,51 @@ export interface RenderContext {
   wrapRender(getRenderer: (r: StreamRenderer) => StreamRenderer): RenderContext;
 
   /**
+   * Memoize a {@link Renderable} so it always returns the same thing.
+   *
+   * For example, imagine you have the following:
+   * ```tsx
+   *    const catName = (
+   *      <ChatCompletion>
+   *        <UserMessage>Give me a cat name</UserMessage>
+   *      </ChatCompletion>
+   *    );
+   *
+   *    <ChatCompletion>
+   *      <UserMessage>
+   *        I have a cat named {catName}. Tell me a story about {catName}.
+   *      </UserMessage>
+   *     </ChatCompletion>
+   * ```
+   *
+   * In this case, `catName` will result in two separate model calls, so you'll get two different cat names.
+   *
+   * If this is not desired, you can wrap the component in `memo`:
+   * ```tsx
+   *    const catName = memo(<ChatCompletion>
+   *      <UserMessage>Give me a cat name</UserMessage>
+   *    </ChatCompletion>);
+   *
+   *    <ChatCompletion>
+   *      <UserMessage>
+   *        I have a cat named {catName}. Tell me a story about {catName}.
+   *      </UserMessage>
+   *     </ChatCompletion>
+   * ```
+   * Now, `catName` will result in a single model call, and its value will be reused everywhere that component appears
+   * in the tree.
+   *
+   * The memoization is fully recursive.
+   */
+  memo(renderable: Renderable): Node;
+
+  /**
    * An internal function used to set the value associated with a given context.
    * @param context The context holder, as returned from `createContext`.
    * @param value The value to set.
    * @returns The new `RenderContext`.
    */
   [pushContextSymbol]: <T>(context: Context<T>, value: T) => RenderContext;
-}
-
-export function createElement<P extends { children: C }, C>(
-  tag: Component<P>,
-  props: Omit<P, 'children'> | null,
-  ...children: [C]
-): Element<P>;
-/** @hidden */
-export function createElement<P extends { children: C[] }, C>(
-  tag: Component<P>,
-  props: Omit<P, 'children'> | null,
-  ...children: C[]
-): Element<P>;
-/** @hidden */
-export function createElement<P extends { children: C | C[] }, C>(
-  tag: Component<P>,
-  props: Omit<P, 'children'> | null,
-  ...children: C[]
-): Element<P> {
-  const propsToPass = {
-    ...(props ?? {}),
-    ...(children.length === 0 ? {} : { children: children.length === 1 ? children[0] : children }),
-  } as P;
-
-  const result = {
-    tag,
-    props: propsToPass,
-    render: (ctx, logger) => tag(propsToPass, { ...ctx, logger }),
-  } as Element<P>;
-  Object.freeze(propsToPass);
-  Object.freeze(result);
-  return result;
-}
-
-/** @hidden */
-export function isElement(value: unknown): value is Element<any> {
-  return value !== null && typeof value === 'object' && 'tag' in value;
-}
-
-/** @hidden */
-export function Fragment({ children }: { children: Node }): Renderable {
-  return children;
-}
-
-/** @hidden */
-export function withContext<P extends object>(element: Element<P>, context: RenderContext): Element<P> {
-  const withContext = {
-    ...element,
-    [attachedContext]: context,
-  };
-
-  Object.freeze(withContext);
-  return withContext;
 }
 
 /** @hidden */
@@ -233,24 +186,6 @@ export function createContext<T>(defaultValue: T): Context<T> {
   };
 
   return ctx;
-}
-
-/** @hidden */
-export function isIndirectNode(value: unknown): value is IndirectNode {
-  return value !== null && typeof value === 'object' && indirectNodeSymbol in value;
-}
-
-/** @hidden */
-export function getReferencedNode(value: IndirectNode): Node {
-  return value[indirectNodeSymbol];
-}
-
-/** @hidden */
-export function makeIndirectNode<T extends object>(value: T, node: Node): T & IndirectNode {
-  return new Proxy(value, {
-    has: (target, p) => p === indirectNodeSymbol || p in target,
-    get: (target, p, receiver) => (p === indirectNodeSymbol ? node : Reflect.get(target, p, receiver)),
-  }) as T & IndirectNode;
 }
 
 /** @hidden */
@@ -354,12 +289,12 @@ async function* renderStream(
       // If the renderable already has a context bound to it, leave it as-is because that context would've
       // taken precedence over the current one. But, if it does _not_ have a bound context, we bind
       // the current context so that if/when it is rendered, rendering will "continue on" as-is.
-      if (!renderable[attachedContext]) {
+      if (!attachedContext(renderable)) {
         return [withContext(renderable, context)];
       }
       return [renderable];
     }
-    const renderingContext = renderable[attachedContext] ?? context;
+    const renderingContext = attachedContext(renderable) ?? context;
     if (renderingContext !== context) {
       // We need to switch contexts before we can render the element.
       return yield* renderingContext.render(renderable, recursiveRenderOpts);
@@ -540,6 +475,8 @@ function createRenderContextInternal(renderStream: StreamRenderer, userContext: 
       }
       return defaultValue;
     },
+
+    memo: (renderable) => withContext(partialMemo(renderable), context),
 
     wrapRender: (getRenderStream) => createRenderContextInternal(getRenderStream(renderStream), userContext),
 

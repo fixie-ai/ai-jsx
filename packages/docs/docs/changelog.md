@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.6.1
+## 0.7.0
+
+- Move `memo` to `AI.RenderContext` to ensure that memoized components render once, even if placed under a different context provider.
+
+## [0.6.1](https://github.com/fixie-ai/ai-jsx/commit/625459d25d538019e42afe8ba952c89b363ff662)
 
 - Add `AIJSX_LOG` environment variable to control log level and output location.
 

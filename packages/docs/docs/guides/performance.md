@@ -188,11 +188,9 @@ Use AI.JSX's built-in support for memoization instead.
 Instead, use [`memo`](/api/modules/core_memoize#memo):
 
 ```tsx
-import { memo } from 'ai-jsx/core/memoize';
-
-function StoryGenerator(props, { render }) {
+function StoryGenerator(props, { memo }) {
   // highlight-next-line
-  const heroName = await memo(<CharacterName role="hero" />);
+  const heroName = memo(<CharacterName role="hero" />);
   const villainName = <CharacterName role="villain" />;
 
   return (
