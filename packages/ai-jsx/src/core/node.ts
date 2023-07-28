@@ -80,13 +80,13 @@ export function withContext(renderable: Renderable, context: RenderContext): Ele
     return renderable;
   }
 
-  const withContext = {
+  const elementWithContext = {
     ...(isElement(renderable) ? renderable : createElement(SwitchContext, null)),
     [attachedContextSymbol]: context,
   };
 
-  Object.freeze(withContext);
-  return withContext;
+  Object.freeze(elementWithContext);
+  return elementWithContext;
 }
 
 /** @hidden */

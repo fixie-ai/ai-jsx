@@ -7,6 +7,7 @@ let memoizedId = 0;
 export const isMemoizedSymbol = Symbol('isMemoized');
 
 /**
+ * @hidden
  * "Partially" memoizes a renderable such that it will only be rendered once in any
  * single `RenderContext`.
  */
@@ -27,8 +28,10 @@ export function partialMemo(renderable: Renderable): Node {
       return renderable;
     }
 
-    // N.B. The memoization applies per-RenderContext -- if the same component is rendered under
-    // two different RenderContexts, it won't be memoized.
+    // N.B. "Partial" memoization applies per-RenderContext -- if the same component is
+    // rendered under two different RenderContexts, it won't be memoized. However, the
+    // top-level RenderContext.memo will additionally bind the top-level `Renderable` to a
+    // single RenderContext to ensure that it only renders once.
     const memoizedValues = new WeakMap<RenderContext, Renderable>();
     const newElement = {
       ...renderable,
