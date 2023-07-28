@@ -345,15 +345,15 @@ export async function* JsonChatCompletionFunctionCall(
       continue;
     }
 
-    const object = functionCall.props.args;
+    const jsonResult = functionCall.props.args;
     try {
       for (const validator of validatorsAndSchema) {
-        validator(object);
+        validator(jsonResult);
       }
     } catch (e: any) {
       continue;
     }
-    yield JSON.stringify(object);
+    yield JSON.stringify(jsonResult);
   }
 
   const functionCall = (await frames).find((e) => AI.isElement(e) && e.tag === FunctionCall) as
@@ -364,16 +364,16 @@ export async function* JsonChatCompletionFunctionCall(
     return null;
   }
 
-  const object = functionCall.props.args;
+  const jsonResult = functionCall.props.args;
   try {
     for (const validator of validatorsAndSchema) {
-      validator(object);
+      validator(jsonResult);
     }
   } catch (e: any) {
     throw new CompletionError('The model did not produce a valid JSON object', 'runtime', {
-      output: JSON.stringify(object),
+      output: JSON.stringify(jsonResult),
       validationError: e.message,
     });
   }
-  return JSON.stringify(object);
+  return JSON.stringify(jsonResult);
 }
