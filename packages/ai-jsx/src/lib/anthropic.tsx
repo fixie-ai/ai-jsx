@@ -93,7 +93,7 @@ interface AnthropicChatModelProps extends ModelPropsWithChildren {
 }
 export async function* AnthropicChatModel(
   props: AnthropicChatModelProps,
-  { render, getContext, logger }: AI.ComponentContext
+  { render, getContext, logger, memo }: AI.ComponentContext
 ): AI.RenderableStream {
   if ('functionDefinitions' in props) {
     throw new AIJSXError(
@@ -186,22 +186,34 @@ export async function* AnthropicChatModel(
     }
     throw err;
   }
-  let resultSoFar = '';
-  let isFirstResponse = true;
-  for await (const completion of response) {
-    let text = completion.completion;
-    if (isFirstResponse && text.length > 0) {
-      isFirstResponse = false;
-      if (text.startsWith(' ')) {
-        text = text.slice(1);
-      }
-    }
-    resultSoFar += text;
-    logger.trace({ completion }, 'Got Anthropic stream event');
-    yield text;
-  }
 
-  logger.debug({ completion: resultSoFar }, 'Anthropic completion finished');
+  // Embed the stream "within" an <AssistantMessage>, memoizing it to ensure it's only consumed once.
+  yield (
+    <AssistantMessage>
+      {memo(
+        (async function* (): AI.RenderableStream {
+          yield AI.AppendOnlyStream;
+          let resultSoFar = '';
+          let isFirstResponse = true;
+          for await (const completion of response) {
+            let text = completion.completion;
+            if (isFirstResponse && text.length > 0) {
+              isFirstResponse = false;
+              if (text.startsWith(' ')) {
+                text = text.slice(1);
+              }
+            }
+            resultSoFar += text;
+            logger.trace({ completion }, 'Got Anthropic stream event');
+            yield text;
+          }
+
+          logger.debug({ completion: resultSoFar }, 'Anthropic completion finished');
+          return AI.AppendOnlyStream;
+        })()
+      )}
+    </AssistantMessage>
+  );
 
   return AI.AppendOnlyStream;
 }

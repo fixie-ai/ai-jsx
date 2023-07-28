@@ -299,8 +299,16 @@ export function ConversationHistory({ messages }: { messages: ChatCompletionResp
  *    ==> "That would be 83,076."
  * ```
  */
-export function FunctionCall({ name, args }: { name: string; args: Record<string, string | number | boolean | null> }) {
-  return `Call function ${name} with ${JSON.stringify(args)}`;
+export function FunctionCall({
+  name,
+  partial,
+  args,
+}: {
+  name: string;
+  partial?: boolean;
+  args: Record<string, string | number | boolean | null>;
+}) {
+  return `Call function ${name} with ${partial ? '(incomplete) ' : ''}${JSON.stringify(args)}`;
 }
 
 /**

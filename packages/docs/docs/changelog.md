@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.7.0
+## 0.7.1
+
+- Change `ChatCompletion` components to render to `<AssistantMessage>` and `<FunctionCall>` elements.
+
+## [0.7.0](https://github.com/fixie-ai/ai-jsx/commit/f8c8cff92fa1f228bf5826e8a0ac7129df765150)
 
 - Move `memo` to `AI.RenderContext` to ensure that memoized components render once, even if placed under a different context provider.
 

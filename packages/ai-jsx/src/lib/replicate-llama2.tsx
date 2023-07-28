@@ -16,7 +16,7 @@ import { getEnvVar } from './util.js';
 /**
  * Run a Llama2 model on Replicate.
  */
-async function* fetchLlama2<ModelArgs extends Llama2ModelArgs>(
+async function fetchLlama2<ModelArgs extends Llama2ModelArgs>(
   modelId: Parameters<Replicate['run']>[0],
   input: ModelArgs,
   logger: AI.ComponentContext['logger']
@@ -30,7 +30,6 @@ async function* fetchLlama2<ModelArgs extends Llama2ModelArgs>(
   const output = (await replicate.run(modelId, { input })) as string[];
   const result = output.join('');
   logger.debug({ result }, 'Replicate llama2 output');
-  yield result;
   return result;
 }
 
@@ -143,12 +142,15 @@ export async function* Llama2ChatModel(
     prompt: await render(userMessages[0]),
     system_prompt: systemMessage.length ? await render(systemMessage[0]) : undefined,
   };
-  const response = await fetchLlama2(
-    'replicate/llama70b-v2-chat:2d19859030ff705a87c746f7e96eea03aefb71f166725aee39692f1476566d48',
-    llama2Args,
-    logger
+  yield (
+    <AssistantMessage>
+      {await fetchLlama2(
+        'replicate/llama70b-v2-chat:2d19859030ff705a87c746f7e96eea03aefb71f166725aee39692f1476566d48',
+        llama2Args,
+        logger
+      )}
+    </AssistantMessage>
   );
-  yield* response;
   return AI.AppendOnlyStream;
 }
 
@@ -175,7 +177,7 @@ export async function* Llama2CompletionModel(
     llama2Args,
     logger
   );
-  yield* response;
+  yield response;
   return AI.AppendOnlyStream;
 }
 

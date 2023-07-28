@@ -221,7 +221,7 @@ export async function* UseTools(props: UseToolsProps, { render }: RenderContext)
 /** @hidden */
 export async function* UseToolsFunctionCall(
   props: UseToolsProps,
-  { render, memo }: ComponentContext
+  { render, memo, logger }: ComponentContext
 ): RenderableStream {
   yield AppendOnlyStream;
 
@@ -233,35 +233,30 @@ export async function* UseToolsFunctionCall(
       yield modelResponse;
     }
 
-    const renderResult = await render(modelResponse, { stop: (el) => el.tag == FunctionCall });
+    const renderResult = await render(modelResponse, {
+      stop: (el) => el.tag === AssistantMessage || el.tag == FunctionCall,
+    });
     let functionCallElement: Element<any> | null = null;
 
-    let currentString = '';
     for (const element of renderResult) {
-      if (typeof element === 'string') {
-        // Model has generated a string response. Record it.
-        currentString += element;
-      } else if (isElement(element) && element.tag === FunctionCall) {
-        if (currentString.trim() !== '') {
-          conversation.push(<AssistantMessage>{currentString}</AssistantMessage>);
-          currentString = '';
-        }
-
-        // Model has generated a function call.
-        if (functionCallElement) {
-          throw new AIJSXError(
-            `ChatCompletion returned 2 function calls at the same time ${renderResult.join(', ')}`,
-            ErrorCode.ModelOutputCouldNotBeParsedForTool,
-            'runtime'
-          );
-        }
+      if (isElement(element)) {
         conversation.push(memo(element));
-        functionCallElement = element;
+
+        if (element.tag === FunctionCall) {
+          // Model has generated a function call.
+          if (functionCallElement) {
+            throw new AIJSXError(
+              `ChatCompletion returned 2 function calls at the same time ${renderResult.join(', ')}`,
+              ErrorCode.ModelOutputCouldNotBeParsedForTool,
+              'runtime'
+            );
+          }
+          functionCallElement = element;
+        }
       } else {
-        throw new AIJSXError(
-          `Unexpected result from render ${renderResult.join(', ')}`,
-          ErrorCode.ModelOutputCouldNotBeParsedForTool,
-          'runtime'
+        logger.debug(
+          { text: element },
+          '<ChatCompletion> emitted something other than <AssistantMessage> or <FunctionCall>, which is unexpected.'
         );
       }
     }
