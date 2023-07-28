@@ -24,8 +24,8 @@ export async function* MdxChatCompletion(
   {
     children,
     usageExamples,
-    alwaysParsable,
-  }: { children: AI.Node; usageExamples: React.ReactNode; alwaysParsable?: boolean },
+    hydrate,
+  }: { children: AI.Node; usageExamples: React.ReactNode; hydrate?: boolean },
   { render, logger }: AI.ComponentContext
 ) {
   const components = collectComponents(usageExamples);
@@ -134,29 +134,44 @@ export async function* MdxChatCompletion(
     {children}
   </ChatCompletion>;
 
-  if (!alwaysParsable) {
+  if (!hydrate) {
     return completion;
   }
 
-  const renderedCompletion = render(completion, { appendOnly: true });
-  yield AI.AppendOnlyStream;
-
-  let lastParsablerame = '';
+  const renderedCompletion = render(completion);
 
   for await (const frame of renderedCompletion) {
-    const delta = frame.slice(lastParsablerame.length);
     try {
-      await compile(frame);
+      yield hydrateMDX(frame);
       logger.trace({ frame }, 'Yielding parsable frame');
-      lastParsablerame = frame;
-      yield delta;
     } catch {
       // Make sure we only yield parsable frames.
       logger.trace({ frame }, 'Not yielding unparsable frame');
     }
   }
-  const finalResult = await renderedCompletion;
-  yield finalResult.slice(lastParsablerame.length);
   // Assume the last frame is parsable.
-  return AI.AppendOnlyStream;
+  return hydrateMDX(await renderedCompletion);
+}
+
+interface Node {
+  type: string;
+  tagName?: string;
+  children?: Node[];
+  name?: string;
+  value?: string;
+  attributes?: { type: string; name: string; value: string }[];
+}
+
+async function hydrateMDX(mdx: string) {
+  let ast: Node | undefined;
+  
+  function rehypePlugin() {
+    return (_ast: Node) => {
+      ast = _ast;
+    };
+  }
+  await compile(mdx, {
+    rehypePlugins: [rehypePlugin],
+  });
+  
 }
