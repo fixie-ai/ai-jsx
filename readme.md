@@ -4,32 +4,36 @@
 [![Discord Follow](https://dcbadge.vercel.app/api/server/MsKAeKF8kU?style=flat)](https://discord.gg/MsKAeKF8kU)
 [![Twitter Follow](https://img.shields.io/twitter/follow/fixieai?style=social)](https://twitter.com/fixieai)
 
-## What is AI.JSX?
+## About AI.JSX
 
-AI.JSX is a framework for building AI applications using Javascript and [JSX](https://react.dev/learn/writing-markup-with-jsx). While AI.JSX [is not React](https://docs.ai-jsx.com/is-it-react), it's designed to look and feel very similar while also integrating seamlessly with React-based projects. With AI.JSX, you don't just use JSX to describe what your UI should look like, you also use it to describe how **Large Language Models**, such as ChatGPT, should integrate into the rest of your application. The end result is a powerful combination where _intelligence_ can be deeply embedded into the application stack.
+AI.JSX is a framework for building AI applications using Javascript and JSX. With AI.JSX, you can easily orchestrate multiple Large Language Model (LLM) calls expressed as modular, reusable components, and interweave UI components with your AI components. This means you can rely on the LLM to construct your UI dynamically from a set of provided React components. AI.JSX also provides native support for tools, Document Question & Answering, and much more.
 
-AI.JSX is designed to give you two important capabilities out of the box:
+AI.JSX can be used to create standalone LLM applications that can be deployed anywhere Node.js is supported, or it can be used as part of a larger React application.
 
-1. An intuitive mechanism for orchestrating multiple LLM calls expressed as modular, re-usable components.
-1. The ability to seamlessly interweave UI components with your AI components. This means you can rely on the LLM to construct your UI dynamically from a set of provided React components.
+## Features
 
-AI.JSX can be used to create standalone LLM applications that can be deployed anywhere Node.JS is supported, or it can be used as part of a larger React application. For an example of how to integrate AI.JSX into a React project, see the [NextJS demo package](/packages/nextjs-demo/) or [follow the tutorial](https://docs.ai-jsx.com/category/tutorial). For an overview of all deployment architectures, see the [architecture overview](https://docs.ai-jsx.com/guides/architecture).
+AI.JSX comes with the following features out-of-the-box:
 
-For more details on how AI.JSX works with React in general, see our [AI+UI guide](https://docs.ai-jsx.com/guides/ai-ui).
+- **Componetized** → LLM prompt engineering through modular, reusable components.
+- **Model Support** → Use Llama2 and models from Anthropic and OpenAI. Seamlessly switch between model providers and LLM config (e.g. temperature).
+- **Complete AI Toolbox** → Built-in support for Tools (ReAct pattern), Document Question and Answering, Chain of Thought, and more.
+- **Generative UI** → Seamlessly interweave LLM calls with standard UI components. LLM can dynamically render UI from a set of provided components.
+- **Streaming** → Built-in streaming support.
+- **Modern Web Stack Support** → First-class support for NextJS and Create React App. (more coming soon)
+- **LangChain Integration** → Full support for LangChainJS.
 
-#### Check-out the 2 minute [intro video](https://github.com/fixie-ai/ai-jsx/assets/476553/301b79e4-7023-4adc-a3a5-72d5b7af0cde).
+## Learning AI.JSX
 
-## Quickstart
+To get started with AI.JSX, follow these steps:
 
-1. Follow the [Getting Started Guide](https://docs.ai-jsx.com/getting-started)
-1. Run through the [tutorial](https://docs.ai-jsx.com/category/tutorial)
-1. Clone our [Hello World template](https://github.com/fixie-ai/ai-jsx-template) to start hacking
-1. Check out the different examples in the [examples package](https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples)
-1. If you're new to AI, read the [Guide for AI Newcomers](https://docs.ai-jsx.com/guides/brand-new)
+1. Check out the [Getting Started Guide](https://docs.ai-jsx.com/getting-started).
+1. Run through the [AI.JSX Tutorial](https://docs.ai-jsx.com/category/tutorial).
+1. Say "Hello AI World" by cloning the [ai-jsx-template](https://github.com/fixie-ai/ai-jsx-template).
+1. Discover many more use cases in the [examples package](https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples).
+1. If you're new to AI, read the [Guide for AI Newcomers](https://docs.ai-jsx.com/guides/brand-new).
+
 
 ## Examples
-
-You can play with live demos on our [live demo app](https://ai-jsx-nextjs-demo.vercel.app/) or view [the source code](./packages/nextjs-demo/).
 
 Here is a simple example using AI.JSX to generate an AI response to a prompt:
 
@@ -47,44 +51,14 @@ const response = await renderContext.render(app);
 console.log(response);
 ```
 
-Here's a more complex example that uses the built-in `<Inline>` component to progressively generate multiple fields in a JSON object:
-
-```tsx
-function CharacterGenerator() {
-  const inlineCompletion = (prompt: Node) => (
-    <Completion stop={['"']} temperature={1.0}>
-      {prompt}
-    </Completion>
-  );
-
-  return (
-    <Inline>
-      Generate a character profile for a fantasy role-playing game in JSON format.{'\n'}
-      {'{'}
-      {'\n  '}"name": "{inlineCompletion}",
-      {'\n  '}"class": "{inlineCompletion}",
-      {'\n  '}"race": "{inlineCompletion}",
-      {'\n  '}"alignment": "{inlineCompletion}",
-      {'\n  '}"weapons": "{inlineCompletion}",
-      {'\n  '}"spells": "{inlineCompletion}",
-      {'\n}'}
-    </Inline>
-  );
-}
-```
-
+You can play with live demos on our [live demo app](https://ai-jsx-nextjs-demo.vercel.app/) or view [the source code](./packages/nextjs-demo/).
 For a full set of examples, see [the examples package](https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples).
-
-## Features
-
-- Prompt engineering through modular, reusable components
-- The ability to easily switch between model providers and LLM configurations (e.g., temperature)
-- Built in support for Tools (ReAct pattern), Document Question and Answering, Chain of Thought, and more
-- Ability to directly interweave LLM calls with standard UI components, including the ability for the LLM to render the UI from a set of provided components
-- Built-in streaming support
-- First-class support for NextJS and Create React App (more coming soon)
-- Full support for LangChainJS
+#### Check-out the 2 minute [intro video](https://github.com/fixie-ai/ai-jsx/assets/476553/301b79e4-7023-4adc-a3a5-72d5b7af0cde).
 
 ## Contributing
 
-We welcome contributions! See [Contributing](packages/docs/docs/contributing/index.md) for how to get started.
+We welcome contributions! See the [Contribution Guide](packages/docs/docs/contributing/index.md) for details on how to get started.
+
+## License
+
+AI.JSX is open-source software and released under the [MIT license](https://opensource.org/license/mit).
