@@ -18,10 +18,13 @@ export async function POST(request: NextRequest) {
     token = await getDeepgramToken();
   } else if (provider == 'gladia') {
     token = await getGladiaToken();
+  } else if (provider == 'revai') {
+    token = await getRevAIToken();
+  } else if (provider == 'speechmatics') {
+    token = await getSpeechmaticsToken();
   } else {
     return new NextResponse(JSON.stringify({ error: 'unknown provider' }));
   }
-  console.log('token' + token);
   return new NextResponse(JSON.stringify({ token }));
 }
 
@@ -50,13 +53,28 @@ async function getGladiaToken() {
   return process.env.GLADIA_API_KEY;
 }
 
+async function getRevAIToken() {
+  return process.env.REVAI_API_KEY;
+}
+
+async function getSpeechmaticsToken() {
+  const apiKey = process.env.SPEECHMATICS_API_KEY;
+  const response = await fetch('https://mp.speechmatics.com/v1/api_keys?type=rt', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ttl: KEY_LIFETIME_SECONDS }),
+  });
+  const json = await response.json();
+  return json.key_value;
+}
+
 async function getAssemblyAIToken() {
   const apiKey = process.env.AAI_API_KEY;
   const response = await fetch('https://api.assemblyai.com/v2/realtime/token', {
     method: 'POST',
-    headers: { Authorization: apiKey, 'Content-Type': 'application/json' },
+    headers: { Authorization: `${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ expires_in: KEY_LIFETIME_SECONDS }),
   });
-  const { token } = await response.json();
-  return token;
+  const json = await response.json();
+  return json.token;
 }

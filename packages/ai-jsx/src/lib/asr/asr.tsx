@@ -42,7 +42,7 @@ class EventTargetImpl implements EventTarget {
     this.listeners = {};
   }
   addEventListener(type: string, listener: EventListener) {
-    if (!this.listeners[type]) {
+    if (!(type in this.listeners)) {
       this.listeners[type] = [];
     }
     this.listeners[type].push(listener);
@@ -158,6 +158,14 @@ export class MicManager extends EventTargetImpl {
   }
 }
 
+export class Transcript {
+  constructor(public text: string, public final: boolean, public latency?: number) {
+    this.text = text;
+    this.final = final;
+    this.latency = latency;
+  }
+}
+
 /**
  * Base class for live speech recognizers that wraps a web socket
  * connection to a speech recognition server.
@@ -233,7 +241,7 @@ export class SpeechRecognitionBase extends EventTargetImpl {
     });
   }
   protected dispatchTranscript(transcript: string, final: boolean) {
-    let latency = null;
+    let latency;
     if (final) {
       if (this.lastUtteranceEndTime == 0) {
         console.warn(`${this.name} final transcript while VAD is still active`);
@@ -241,7 +249,7 @@ export class SpeechRecognitionBase extends EventTargetImpl {
       latency = performance.now() - this.lastUtteranceEndTime;
     }
     const event = new CustomEvent('transcript', {
-      detail: { transcript, final, latency },
+      detail: new Transcript(transcript, final, latency),
     });
     this.dispatchEvent(event);
   }
@@ -415,6 +423,85 @@ export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
 }
 
 /**
+ * Speech recognizer that uses the Speechmatics service.
+ */
+export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
+  private buf: string;
+  constructor(manager: MicManager, language?: string) {
+    super(manager, 'speechmatics', language);
+    this.buf = '';
+  }
+  async start() {
+    const languageCode = this.language?.slice(0, 2) ?? 'en';
+    super.startInternal(`wss://eu.rt.speechmatics.com/v2/${languageCode}?jwt=${await this.fetchToken()}`);
+  }
+  protected handleOpen() {
+    this.buf = '';
+    const obj = {
+      message: 'StartRecognition',
+      audio_format: {
+        type: 'raw',
+        encoding: 'pcm_s16le',
+        sample_rate: this.manager.sampleRate(),
+      },
+      transcription_config: {
+        language: this.language?.slice(0, 2) ?? 'en',
+        enable_partials: true,
+        max_delay: 2, // the minimum (seconds)
+      },
+    };
+    this.socket!.send(JSON.stringify(obj));
+  }
+  protected handleMessage(result: any) {
+    if (result.message == 'AddPartialTranscript') {
+      if (result.metadata.transcript) {
+        this.dispatchTranscript(this.buf + result.metadata.transcript, false);
+      }
+    } else if (result.message == 'AddTranscript') {
+      console.log(result);
+      if (result.metadata.transcript) {
+        if (!('is_eos' in result.results[0])) {
+          this.buf += result.metadata.transcript;
+        } else {
+          this.dispatchTranscript(this.buf, true);
+          this.buf = result.metadata.transcript;
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Speech recognizer that uses the Rev AI service.
+ */
+export class RevAISpeechRecognition extends SpeechRecognitionBase {
+  constructor(manager: MicManager, language?: string) {
+    super(manager, 'revai', language);
+  }
+  async start() {
+    const params = new URLSearchParams({
+      access_token: await this.fetchToken(),
+      content_type: `audio/x-raw;layout=interleaved;rate=${this.manager.sampleRate()};format=S16LE;channels=1`,
+    });
+    if (this.language) {
+      params.set('language', this.language.slice(0, 2));
+    }
+    const url = `wss://api.rev.ai/speechtotext/v1/stream?${params.toString()}`;
+    super.startInternal(url);
+  }
+  protected handleMessage(result: any) {
+    //console.log(result);
+    if (result.type == 'partial') {
+      const text = result.elements.reduce((t: string, w: any) => `${t}${w.value} `, '');
+      this.dispatchTranscript(text, false);
+    } else if (result.type == 'final') {
+      const text = result.elements.reduce((t: string, w: any) => t + w.value, '');
+      this.dispatchTranscript(text, true);
+    }
+  }
+}
+
+/**
  * Creates a speech recoginzer of the given type (e.g., 'deepgram').
  */
 export class SpeechRecognitionFactory {
@@ -428,6 +515,10 @@ export class SpeechRecognitionFactory {
         return new GladiaSpeechRecognition(manager, language);
       case 'aai':
         return new AssemblyAISpeechRecognition(manager, language);
+      case 'speechmatics':
+        return new SpeechmaticsSpeechRecognition(manager, language);
+      case 'revai':
+        return new RevAISpeechRecognition(manager, language);
       default:
         throw new Error(`Unknown speech recognition type: ${type}`);
     }

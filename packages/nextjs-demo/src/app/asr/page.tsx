@@ -1,7 +1,7 @@
 'use client';
 import '../globals.css';
 import React, { useState, useEffect, useRef } from 'react';
-import { MicManager, SpeechRecognitionFactory, SpeechRecognitionBase } from '@ai-jsx/lib/asr/asr';
+import { MicManager, SpeechRecognitionFactory, SpeechRecognitionBase, Transcript } from 'ai-jsx/lib/asr/asr';
 import { wordErrorRate } from 'word-error-rate';
 
 const HARVARD_SENTENCES_01_TRANSCRIPT = `Harvard list number one.
@@ -18,14 +18,17 @@ const HARVARD_SENTENCES_01_TRANSCRIPT = `Harvard list number one.
 
 interface AsrComponentProps {
   name: string;
+  link: string;
   id: string;
+  costPerMinute: number;
   manager: MicManager | null;
 }
 
-const AsrComponent: React.FC<AsrComponentProps> = ({ name, id, manager }) => {
-  const [wer, setWer] = useState<number | null>(null);
-  const [latency, setLatency] = useState<number | null>(null);
-  const [recognizer, setRecognizer] = useState<SpeechRecognitionBase>(null);
+const AsrComponent: React.FC<AsrComponentProps> = ({ name, link, id, costPerMinute, manager }) => {
+  const [count, setCount] = useState(0);
+  const [wer, setWer] = useState(0.0);
+  const [latency, setLatency] = useState(0);
+  const [recognizer, setRecognizer] = useState<SpeechRecognitionBase | null>(null);
   const textarea = useRef(null);
   const computeWer = (inText: string, refText: string) => {
     const numLines = inText.split('\n').length - 1;
@@ -43,21 +46,24 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, id, manager }) => {
     return wordErrorRate(refClean, inClean);
   };
   const start = () => {
-    const recognizer = SpeechRecognitionFactory.create(id, manager);
-    const el = textarea.current as HTMLTextAreaElement;
+    const recognizer = SpeechRecognitionFactory.create(id, manager!);
+    const element = textarea.current! as HTMLTextAreaElement;
     setRecognizer(recognizer);
-    el.value = '';
-    recognizer.addEventListener('transcript', (event: CustomEvent) => {
-      const lastNewlineIndex = el.value.lastIndexOf('\n');
-      const oldData = lastNewlineIndex != -1 ? el.value.slice(0, lastNewlineIndex + 1) : '';
-      el.value = oldData + event.detail.transcript;
-      if (event.detail.final) {
-        el.value += '\n';
-        setLatency(event.detail.latency);
-        const wer = computeWer(el.value, HARVARD_SENTENCES_01_TRANSCRIPT);
+    element.value = '';
+    recognizer.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
+      const currData = element.value;
+      const lastNewlineIndex = currData.lastIndexOf('\n');
+      const oldData = lastNewlineIndex != -1 ? currData.slice(0, lastNewlineIndex + 1) : '';
+      let newData = oldData + event.detail!.text;
+      if (event.detail!.final) {
+        newData += '\n';
+        setLatency((latency * count + event.detail!.latency!) / (count + 1));
+        setCount(count + 1);
+        const wer = computeWer(newData, HARVARD_SENTENCES_01_TRANSCRIPT);
         setWer(wer);
       }
-      el.scrollTop = el.scrollHeight;
+      element.value = newData;
+      element.scrollTop = element.scrollHeight;
     });
     recognizer.start();
   };
@@ -76,28 +82,40 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, id, manager }) => {
   }, [manager]);
   return (
     <div className="ml-2">
-      <p className="text-xl font-bold mt-2">{name}</p>
-      <div className="text-sm">Latency: {latency ? latency.toFixed(0) : ''} ms</div>
-      <div className="text-sm">Word Error Rate: {wer !== null ? wer.toFixed(3) : ''}</div>
+      <p className="text-xl font-bold mt-2">
+        <a href={link}>{name}</a>
+      </p>
+      <div className="text-sm">
+        <span className="font-bold">Cost: </span>
+        <a href={`${link}/pricing`}>${costPerMinute}/min</a>
+      </div>
+      <div className="text-sm">
+        <span className="font-bold">Latency: </span>
+        {latency.toFixed(0)} ms
+      </div>
+      <div className="text-sm">
+        <span className="font-bold">WER: </span>
+        {wer.toFixed(3)}
+      </div>
       <textarea cols={80} rows={5} ref={textarea}></textarea>
     </div>
   );
 };
 
 const PageComponent: React.FC = () => {
-  const [manager, setManager] = useState<MicManager>(null);
-  const handleStartFile = () => {
+  const [manager, setManager] = useState<MicManager | null>(null);
+  const handleStartFile = async () => {
     const manager = new MicManager();
-    manager.startFile('/audio/harvard01.m4a', 100);
+    await manager.startFile('/audio/harvard01.m4a', 100);
     setManager(manager);
   };
-  const handleStartMic = () => {
+  const handleStartMic = async () => {
     const manager = new MicManager();
-    manager.startMic(100);
+    await manager.startMic(100);
     setManager(manager);
   };
   const handleStop = () => {
-    manager.stop();
+    manager?.stop();
     setManager(null);
   };
   return (
@@ -111,10 +129,32 @@ const PageComponent: React.FC = () => {
         <button onClick={handleStartMic}>Start Mic</button>
         <button onClick={handleStop}>Stop</button>
       </div>
-      <AsrComponent name="Deepgram" id="deepgram" manager={manager} />
-      <AsrComponent name="Soniox" id="soniox" manager={manager} />
-      <AsrComponent name="Gladia" id="gladia" manager={manager} />
-      <AsrComponent name="AssemblyAI" id="aai" manager={manager} />
+      <div className="grid grid-cols-1 md:grid-cols-2">
+        <AsrComponent
+          name="Deepgram"
+          link="https://deegram.com"
+          id="deepgram"
+          costPerMinute={0.0059}
+          manager={manager}
+        />
+        <AsrComponent
+          name="AssemblyAI"
+          link="https://assemblyai.com"
+          id="aai"
+          costPerMinute={0.015}
+          manager={manager}
+        />
+        <AsrComponent
+          name="Speechmatics"
+          link="https://speechmatics.com"
+          id="speechmatics"
+          costPerMinute={0.0173}
+          manager={manager}
+        />
+        <AsrComponent name="Rev AI" link="https://rev.ai" id="revai" costPerMinute={0.02} manager={manager} />
+        <AsrComponent name="Soniox" link="https://soniox.com" id="soniox" costPerMinute={0.0067} manager={manager} />
+        <AsrComponent name="Gladia" link="https://gladia.io" id="gladia" costPerMinute={0.0126} manager={manager} />
+      </div>
     </>
   );
 };
