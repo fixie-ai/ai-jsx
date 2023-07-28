@@ -338,9 +338,9 @@ export async function* JsonChatCompletionFunctionCall(
 
   const frames = render(childrenWithCompletion, { stop: (e) => e.tag === FunctionCall, map: (e) => e });
   for await (const frame of frames) {
-    const functionCall = frame.find((e) => AI.isElement(e) && e.tag === FunctionCall) as AI.Element<
-      AI.PropsOfComponent<typeof FunctionCall>
-    >;
+    const functionCall = frame.find((e) => AI.isElement(e) && e.tag === FunctionCall) as
+      | AI.Element<AI.PropsOfComponent<typeof FunctionCall>>
+      | undefined;
     if (!functionCall) {
       continue;
     }
@@ -356,11 +356,15 @@ export async function* JsonChatCompletionFunctionCall(
     yield JSON.stringify(object);
   }
 
-  const functionCall = (await frames).find((e) => AI.isElement(e) && e.tag === FunctionCall) as AI.Element<
-    AI.PropsOfComponent<typeof FunctionCall>
-  >;
+  const functionCall = (await frames).find((e) => AI.isElement(e) && e.tag === FunctionCall) as
+    | AI.Element<AI.PropsOfComponent<typeof FunctionCall>>
+    | undefined;
 
-  const object = functionCall?.props.args;
+  if (functionCall === undefined) {
+    return null;
+  }
+
+  const object = functionCall.props.args;
   try {
     for (const validator of validatorsAndSchema) {
       validator(object);
