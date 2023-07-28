@@ -13,11 +13,18 @@ import {
   SystemMessage,
   UserMessage,
 } from '../core/completion.js';
-import { Node, RenderContext, isElement, Element, AppendOnlyStream, RenderableStream } from '../index.js';
+import {
+  Node,
+  RenderContext,
+  isElement,
+  Element,
+  AppendOnlyStream,
+  ComponentContext,
+  RenderableStream,
+} from '../index.js';
 import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
-import { memo } from '../core/memoize.js';
 
 const toolChoiceSchema = z.object({
   nameOfTool: z.string(),
@@ -212,7 +219,10 @@ export async function* UseTools(props: UseToolsProps, { render }: RenderContext)
 }
 
 /** @hidden */
-export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: RenderContext): RenderableStream {
+export async function* UseToolsFunctionCall(
+  props: UseToolsProps,
+  { render, memo }: ComponentContext
+): RenderableStream {
   yield AppendOnlyStream;
 
   const conversation = [memo(props.children)];

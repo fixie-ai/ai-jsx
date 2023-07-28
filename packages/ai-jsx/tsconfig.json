@@ -6,7 +6,7 @@
   },
   "typedocOptions": {
     "entryPoints": [
-      "src/core/core.ts",
+      "src/index.ts",
       "src/core/completion.tsx",
       "src/core/debug.tsx",
       "src/core/error-boundary.ts",
@@ -14,7 +14,8 @@
       "src/core/image-gen.tsx",
       "src/core/inline.tsx",
       "src/core/log.ts",
-      "src/core/memoize.tsx",
+      "src/core/node.ts",
+      "src/core/render.ts",
       "src/inspector/console.tsx",
       "src/lib/openai.tsx",
       "src/batteries/constrained-output.tsx",

@@ -5,7 +5,7 @@
 
 import _ from 'lodash';
 import pino from 'pino';
-import { Element } from '../index.js';
+import { Element } from './node.js';
 
 export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
 
