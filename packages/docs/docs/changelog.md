@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.7.1
+## 0.7.2
+
+- Add `Converse` and `ShowConversation` components facilitate streaming conversations.
+
+## [0.7.1](https://github.com/fixie-ai/ai-jsx/commit/058c463a32321d754639dcf44a2b6f3b5a863d1f)
 
 - Change `ChatCompletion` components to render to `<AssistantMessage>` and `<FunctionCall>` elements.
 

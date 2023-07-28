@@ -1,13 +1,5 @@
-import {
-  AssistantMessage,
-  ChatProvider,
-  CompletionProvider,
-  FunctionCall,
-  FunctionResponse,
-  ModelPropsWithChildren,
-  SystemMessage,
-  UserMessage,
-} from '../core/completion.js';
+import { ChatProvider, CompletionProvider, ModelPropsWithChildren } from '../core/completion.js';
+import { AssistantMessage, renderToConversation } from '../core/conversation.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import * as AI from '../index.js';
 import Replicate from 'replicate';
@@ -84,19 +76,10 @@ export async function* Llama2ChatModel(
   { render, logger }: AI.ComponentContext
 ): AI.RenderableStream {
   yield AI.AppendOnlyStream;
-  const messageElements = (
-    await render(props.children, {
-      stop: (e) =>
-        e.tag == SystemMessage ||
-        e.tag == UserMessage ||
-        e.tag == AssistantMessage ||
-        e.tag == FunctionCall ||
-        e.tag == FunctionResponse,
-    })
-  ).filter(AI.isElement);
 
-  const systemMessage = messageElements.filter((e) => e.tag == SystemMessage);
-  const userMessages = messageElements.filter((e) => e.tag == UserMessage);
+  const messageElements = await renderToConversation(props.children, render);
+  const systemMessage = messageElements.filter((e) => e.type == 'system');
+  const userMessages = messageElements.filter((e) => e.type == 'user');
   if (systemMessage.length > 1) {
     throw new AIJSXError(
       'Replicate Llama2 does not support multiple system messages. Please use a single <SystemMessage>.',
@@ -111,21 +94,21 @@ export async function* Llama2ChatModel(
       'user'
     );
   }
-  if (messageElements.find((e) => e.tag == AssistantMessage)) {
+  if (messageElements.find((e) => e.type == 'assistant')) {
     throw new AIJSXError(
       'Replicate Llama2 does not support <AssistantMessage>. Please use <SystemMessage> instead.',
       ErrorCode.Llama2DoesNotSupportAssistantMessages,
       'user'
     );
   }
-  if (messageElements.find((e) => e.tag == FunctionCall)) {
+  if (messageElements.find((e) => e.type == 'functionCall')) {
     throw new AIJSXError(
       'Replicate Llama2 does not support <FunctionCall>. Please use <SystemMessage> instead.',
       ErrorCode.Llama2DoesNotSupportFunctionCalls,
       'user'
     );
   }
-  if (messageElements.find((e) => e.tag == FunctionResponse)) {
+  if (messageElements.find((e) => e.type == 'functionResponse')) {
     throw new AIJSXError(
       'Replicate Llama2 does not support <FunctionResponse>. Please use <SystemMessage> instead.',
       ErrorCode.Llama2DoesNotSupportFunctionResponse,
@@ -139,8 +122,8 @@ export async function* Llama2ChatModel(
     repetition_penalty: props.repetitionPenalty,
     temperature: props.temperature,
     top_p: props.topP,
-    prompt: await render(userMessages[0]),
-    system_prompt: systemMessage.length ? await render(systemMessage[0]) : undefined,
+    prompt: await render(userMessages[0].element),
+    system_prompt: systemMessage.length ? await render(systemMessage[0].element) : undefined,
   };
   yield (
     <AssistantMessage>

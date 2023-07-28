@@ -1,7 +1,7 @@
 import * as math from 'mathjs';
-import { UseTools, Tool } from 'ai-jsx/batteries/use-tools';
+import { Tool, UseTools } from 'ai-jsx/batteries/use-tools';
 import { showInspector } from 'ai-jsx/core/inspector';
-import { UserMessage } from 'ai-jsx/core/completion';
+import { UserMessage, ShowConversation } from 'ai-jsx/core/conversation';
 
 function evaluate({ expression }: { expression: string }) {
   return math.evaluate(expression);
@@ -22,9 +22,39 @@ function App({ query }: { query: string }) {
     },
   };
   return (
-    <UseTools showSteps tools={tools} fallback="Failed to evaluate the mathematical expression">
-      <UserMessage>{query}</UserMessage>
-    </UseTools>
+    <ShowConversation
+      present={(msg) => {
+        switch (msg.type) {
+          case 'assistant':
+            return (
+              <>
+                Assistant: {msg.element}
+                {'\n'}
+              </>
+            );
+          case 'functionCall':
+            return (
+              <>
+                Function Call: {msg.element}
+                {'\n'}
+              </>
+            );
+          case 'functionResponse':
+            return (
+              <>
+                Function Result: {msg.element}
+                {'\n'}
+              </>
+            );
+          default:
+            return null;
+        }
+      }}
+    >
+      <UseTools tools={tools} fallback="Failed to evaluate the mathematical expression">
+        <UserMessage>{query}</UserMessage>
+      </UseTools>
+    </ShowConversation>
   );
 }
 

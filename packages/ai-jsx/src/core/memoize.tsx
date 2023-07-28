@@ -32,17 +32,22 @@ export function partialMemo(renderable: Renderable): Node {
     // rendered under two different RenderContexts, it won't be memoized. However, the
     // top-level RenderContext.memo will additionally bind the top-level `Renderable` to a
     // single RenderContext to ensure that it only renders once.
+    //
+    // We do _not_ memoize separate results based on the value of `isAppendOnlyRender`, as
+    // components should emit functionally equivalent results. However, this means that if
+    // a memoized component is rendered _first_ in an append-only render, a non-append-only
+    // render may see a stream optimized for append-only contexts.
     const memoizedValues = new WeakMap<RenderContext, Renderable>();
     const newElement = {
       ...renderable,
-      render: (ctx: RenderContext, logger: Logger) => {
+      render: (ctx: RenderContext, logger: Logger, isAppendOnlyRender: boolean) => {
         if (memoizedValues.has(ctx)) {
           return memoizedValues.get(ctx);
         }
 
         let renderResult: Renderable;
         try {
-          renderResult = partialMemo(renderable.render(ctx, logger));
+          renderResult = partialMemo(renderable.render(ctx, logger, isAppendOnlyRender));
         } catch (ex) {
           // Wrap it in a promise so that it throws on await.
           renderResult = Promise.reject(ex);
