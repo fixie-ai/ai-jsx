@@ -221,7 +221,7 @@ export async function* UseTools(props: UseToolsProps, { render }: RenderContext)
 /** @hidden */
 export async function* UseToolsFunctionCall(
   props: UseToolsProps,
-  { render, memo }: ComponentContext
+  { render, memo, logger }: ComponentContext
 ): RenderableStream {
   yield AppendOnlyStream;
 
@@ -253,6 +253,11 @@ export async function* UseToolsFunctionCall(
           }
           functionCallElement = element;
         }
+      } else {
+        logger.debug(
+          { text: element },
+          '<ChatCompletion> emitted something other than <AssistantMessage> or <FunctionCall>, which is unexpected.'
+        );
       }
     }
 
