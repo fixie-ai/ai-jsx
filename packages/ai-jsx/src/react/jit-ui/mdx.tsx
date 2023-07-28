@@ -5,9 +5,29 @@ import { collectComponents } from '../completion.js';
 import { compile } from '@mdx-js/mdx';
 
 /**
- * Use GPT-4 with this.
+ * A completion component that emits [MDX](https://mdxjs.com/).
+ *
+ * By default, the result streamed out of this component will sometimes be unparsable, as the model emits a partial value.
+ * (For instance, if the model is emitting the string `foo <Bar />`, and
+ * it streams out `foo <Ba`, that's not parsable.)
+ *
+ * To ensure that the result is always parsable, pass the prop `alwaysParsable`. This will buffer up intermediate streaming results until the result accumulated so far is parsable.
+ *
+ * You'll get better results with this if you use GPT-4.
+ *
+ * Use `usageExamples` to teach the model how to use your components.
+ *
+ * @see https://docs.ai-jsx.com/guides/mdx
+ * @see https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/mdx.tsx
  */
-export async function* MdxChatCompletion({ children, usageExamples, alwaysParsable }: { children: AI.Node; usageExamples: React.ReactNode, alwaysParsable?: boolean }, {render, logger}: AI.ComponentContext) {
+export async function* MdxChatCompletion(
+  {
+    children,
+    usageExamples,
+    alwaysParsable,
+  }: { children: AI.Node; usageExamples: React.ReactNode; alwaysParsable?: boolean },
+  { render, logger }: AI.ComponentContext
+) {
   const components = collectComponents(usageExamples);
   /* prettier-ignore */
   const completion = <ChatCompletion>
@@ -118,7 +138,7 @@ export async function* MdxChatCompletion({ children, usageExamples, alwaysParsab
     return completion;
   }
 
-  const renderedCompletion = render(completion, {appendOnly: true});
+  const renderedCompletion = render(completion, { appendOnly: true });
   yield AI.AppendOnlyStream;
 
   let lastParsablerame = '';
@@ -127,12 +147,12 @@ export async function* MdxChatCompletion({ children, usageExamples, alwaysParsab
     const delta = frame.slice(lastParsablerame.length);
     try {
       await compile(frame);
-      logger.trace({frame}, 'Yielding parsable frame')
+      logger.trace({ frame }, 'Yielding parsable frame');
       lastParsablerame = frame;
       yield delta;
     } catch {
       // Make sure we only yield parsable frames.
-      logger.trace({frame}, 'Not yielding unparsable frame')
+      logger.trace({ frame }, 'Not yielding unparsable frame');
     }
   }
   const finalResult = await renderedCompletion;
