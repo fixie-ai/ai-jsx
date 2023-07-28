@@ -32,7 +32,6 @@ To get started with AI.JSX, follow these steps:
 1. Discover many more use cases in the [examples package](https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples).
 1. If you're new to AI, read the [Guide for AI Newcomers](https://docs.ai-jsx.com/guides/brand-new).
 
-
 ## Examples
 
 Here is a simple example using AI.JSX to generate an AI response to a prompt:
@@ -53,6 +52,7 @@ console.log(response);
 
 You can play with live demos on our [live demo app](https://ai-jsx-nextjs-demo.vercel.app/) or view [the source code](./packages/nextjs-demo/).
 For a full set of examples, see [the examples package](https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples).
+
 #### Check-out the 2 minute [intro video](https://github.com/fixie-ai/ai-jsx/assets/476553/301b79e4-7023-4adc-a3a5-72d5b7af0cde).
 
 ## Contributing
