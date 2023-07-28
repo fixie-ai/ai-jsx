@@ -1,16 +1,14 @@
 import InputPrompt from '@/components/InputPrompt';
 import ResultContainer from '@/components/ResultContainer';
-import {BuildingBlocks} from '@/components/BuildingBlocksGenerator';
+import BuildingBlocks from '@/components/BuildingBlocksGenerator';
 
-export default function RecipeExample({ searchParams }: { searchParams: any }) {
-  const defaultValue = 'Chicken Tikka Masala';
+export default function BuildingBlocksPage({ searchParams }: { searchParams: any }) {
+  const defaultValue =
+    'Summarize this JSON blob for me, using a card: {"reservation":{"reservationId":"1234567890","passengerName":"John Doe","flightNumber":"ABC123","origin":"Los Angeles","destination":"New York","departureDate":"2022-01-01","departureTime":"09:00","arrivalDate":"2022-01-01","arrivalTime":"15:00"}}';
   const query = searchParams.q ?? defaultValue;
   return (
     <>
-      <ResultContainer
-        title="Building Blocks"
-        description="In this demo, the AI can use building block UI components"
-      >
+      <ResultContainer title="Building Blocks" description="In this demo, the AI can use building block UI components">
         <InputPrompt label="Ask me anything..." defaultValue={query} />
         <BuildingBlocks topic={query} />
       </ResultContainer>

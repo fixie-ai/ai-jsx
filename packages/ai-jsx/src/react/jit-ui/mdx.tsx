@@ -1,8 +1,11 @@
+/** @jsxImportSource ai-jsx/react */
+
 import * as AI from '../core.js';
 import { ChatCompletion, SystemMessage } from '../../core/completion.js';
 import React from 'react';
 import { collectComponents } from '../completion.js';
 import { compile } from '@mdx-js/mdx';
+import _ from 'lodash';
 
 /**
  * A completion component that emits [MDX](https://mdxjs.com/).
@@ -21,11 +24,7 @@ import { compile } from '@mdx-js/mdx';
  * @see https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/mdx.tsx
  */
 export async function* MdxChatCompletion(
-  {
-    children,
-    usageExamples,
-    hydrate,
-  }: { children: AI.Node; usageExamples: React.ReactNode; hydrate?: boolean },
+  { children, usageExamples, hydrate }: { children: AI.Node; usageExamples: React.ReactNode; hydrate?: boolean },
   { render, logger }: AI.ComponentContext
 ) {
   const components = collectComponents(usageExamples);
@@ -138,11 +137,94 @@ export async function* MdxChatCompletion(
     return completion;
   }
 
+  async function hydrateMDX(mdx: string, components: ReturnType<typeof collectComponents>) {
+    let ast: Node | undefined;
+
+    function rehypePlugin() {
+      return (_ast: Node) => {
+        ast = _ast;
+      };
+    }
+    await compile(mdx, {
+      rehypePlugins: [rehypePlugin],
+    });
+
+    const hydrated = convertAstToComponent(ast!, components);
+    logger.warn({ hydrated }, 'Hydrating MDX');
+
+    return (
+      <AI.React>
+        {convertAstToComponent(ast!, components)}
+        {/* <div>{mdx}</div> */}
+        {/* {React.createElement('div', { children: mdx })} */}
+      </AI.React>
+    );
+  }
+
+  function convertAstToComponent(ast: Node, components: ReturnType<typeof collectComponents>): React.ReactNode {
+    function convertAstToComponentRec(ast: Node): React.ReactNode {
+      const { type, tagName, children = [], name, attributes = [] } = ast;
+
+      switch (type) {
+        case 'root': {
+          return <div>{_.compact(children.map(convertAstToComponentRec))}</div>;
+        }
+        case 'element': {
+          return React.createElement(tagName!, {}, _.compact(children.map(convertAstToComponentRec)));
+        }
+        case 'mdxJsxFlowElement': {
+          const componentName = name!;
+          // @ts-expect-error
+          const props = attributes.reduce<Jsonifiable>((acc: any, attr: any) => {
+            if (attr.value?.type) {
+              // E.g. <A b={null} />
+              throw new Error(
+                `Unimplemented code path: handling a React component with a non-trivial prop ${JSON.stringify(
+                  attr.value,
+                  null,
+                  2
+                )}`
+              );
+            }
+            acc[attr.name] = attr.value === null ? true : attr.value;
+            return acc;
+          }, {});
+
+          const Component = components[componentName];
+          if (!Component) {
+            logger.warn(
+              { component: componentName },
+              `Ignoring component "${componentName}" that wasn't present in the example. ` +
+                'You may need to adjust the prompt or include an example of this component.'
+            );
+            return null;
+          }
+
+          return <Component {...props}>{_.compact(children.map(convertAstToComponentRec))}</Component>;
+        }
+        case 'text': {
+          if (ast.value === '\n') {
+            return <br />;
+          }
+          return <p>{[ast.value]}</p>;
+        }
+        // We handle the imports separately.
+        case 'mdxjsEsm': {
+          return null;
+        }
+        default: {
+          throw new Error(`Unhandled type: ${JSON.stringify(ast, null, 2)}`);
+        }
+      }
+    }
+    return convertAstToComponentRec(ast);
+  }
+
   const renderedCompletion = render(completion);
 
   for await (const frame of renderedCompletion) {
     try {
-      yield hydrateMDX(frame);
+      yield hydrateMDX(frame, components);
       logger.trace({ frame }, 'Yielding parsable frame');
     } catch {
       // Make sure we only yield parsable frames.
@@ -150,7 +232,7 @@ export async function* MdxChatCompletion(
     }
   }
   // Assume the last frame is parsable.
-  return hydrateMDX(await renderedCompletion);
+  return hydrateMDX(await renderedCompletion, components);
 }
 
 interface Node {
@@ -160,18 +242,4 @@ interface Node {
   name?: string;
   value?: string;
   attributes?: { type: string; name: string; value: string }[];
-}
-
-async function hydrateMDX(mdx: string) {
-  let ast: Node | undefined;
-  
-  function rehypePlugin() {
-    return (_ast: Node) => {
-      ast = _ast;
-    };
-  }
-  await compile(mdx, {
-    rehypePlugins: [rehypePlugin],
-  });
-  
 }

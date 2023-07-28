@@ -113,10 +113,7 @@ function QuestionAndAnswer({ children }: { children: AI.Node }, { memo }: AI.Com
       <OpenAI chatModel="gpt-4">
         Q: {question}
         {'\n'}
-        A:{' '}
-        <MdxChatCompletion usageExamples={usageExample} alwaysParsable>
-          {question}
-        </MdxChatCompletion>
+        A: <MdxChatCompletion usageExamples={usageExample}>{question}</MdxChatCompletion>
         {'\n\n'}
       </OpenAI>
     </>

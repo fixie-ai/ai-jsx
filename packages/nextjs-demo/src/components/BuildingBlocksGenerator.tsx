@@ -1,3 +1,5 @@
+'use client';
+
 import { useAIStream } from 'ai-jsx/react';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
