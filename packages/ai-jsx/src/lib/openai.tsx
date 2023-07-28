@@ -467,10 +467,11 @@ export async function* OpenAIChatModel(
       );
       yield <AssistantMessage>{assistantStream}</AssistantMessage>;
 
-      // Ensure the assistantStream() is flushed by rendering it.
+      // Ensure the assistantStream is flushed by rendering it.
       await render(assistantStream);
     }
 
+    // TS doesn't realize that the assistantStream closure can make `delta` be `null`.
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (delta?.function_call) {
       // Memoize the stream to ensure it renders only once.
@@ -501,10 +502,11 @@ export async function* OpenAIChatModel(
       );
       yield functionCallStream;
 
-      // Ensure the functionStream() is flushed by rendering it.
+      // Ensure the functionCallStream is flushed by rendering it.
       await render(functionCallStream);
     }
 
+    // TS doesn't realize that the functionCallStream closure can make `delta` be `null`.
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (delta !== null) {
       delta = await advance();
