@@ -11,6 +11,7 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 import {
   AssistantMessage,
   ChatCompletion,
+  FunctionCall,
   ModelPropsWithChildren,
   SystemMessage,
   UserMessage,
@@ -318,7 +319,6 @@ export async function* JsonChatCompletionFunctionCall(
 
   const childrenWithCompletion = (
     <ChatCompletion
-      experimental_streamFunctionCallOnly
       {...props}
       functionDefinitions={{
         print: {
@@ -336,9 +336,16 @@ export async function* JsonChatCompletionFunctionCall(
     </ChatCompletion>
   );
 
-  const frames = render(childrenWithCompletion);
+  const frames = render(childrenWithCompletion, { stop: (e) => e.tag === FunctionCall, map: (e) => e });
   for await (const frame of frames) {
-    const object = JSON.parse(frame).arguments;
+    const functionCall = frame.find((e) => AI.isElement(e) && e.tag === FunctionCall) as AI.Element<
+      AI.PropsOfComponent<typeof FunctionCall>
+    >;
+    if (!functionCall) {
+      continue;
+    }
+
+    const object = functionCall.props.args;
     try {
       for (const validator of validatorsAndSchema) {
         validator(object);
@@ -348,7 +355,12 @@ export async function* JsonChatCompletionFunctionCall(
     }
     yield JSON.stringify(object);
   }
-  const object = JSON.parse(await frames).arguments;
+
+  const functionCall = (await frames).find((e) => AI.isElement(e) && e.tag === FunctionCall) as AI.Element<
+    AI.PropsOfComponent<typeof FunctionCall>
+  >;
+
+  const object = functionCall?.props.args;
   try {
     for (const validator of validatorsAndSchema) {
       validator(object);
