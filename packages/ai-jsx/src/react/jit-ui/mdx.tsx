@@ -145,6 +145,9 @@ post text`}</>
     return completion;
   }
 
+  // Instead of this, should we just be sending the raw MDX to the client,
+  // then having an MDX component do the on-the-fly compiling?
+  // How else will we customize what everything gets compiled to?
   async function hydrateMDX(mdx: string, components: ReturnType<typeof collectComponents>) {
     let ast: Node | undefined;
 
@@ -153,12 +156,12 @@ post text`}</>
         ast = _ast;
       };
     }
-    await compile(mdx, {
+    const compileResult = await compile(mdx, {
       rehypePlugins: [rehypePlugin],
     });
 
     const hydrated = convertAstToComponent(ast!, components);
-    logger.warn({ hydrated, ast }, 'Hydrating MDX');
+    logger.warn({ hydrated, ast, compileResult }, 'Hydrating MDX');
 
     return (
       <AI.React>
@@ -169,6 +172,8 @@ post text`}</>
     );
   }
 
+  // I think we just need to use an honest markdown renderer here.
+
   function convertAstToComponent(ast: Node, components: ReturnType<typeof collectComponents>): React.ReactNode {
     function convertAstToComponentRec(ast: Node): React.ReactNode {
       const { type, tagName, children = [], name, attributes = [] } = ast;
@@ -178,8 +183,8 @@ post text`}</>
           return <div>{_.compact(children.map(convertAstToComponentRec))}</div>;
         }
         case 'element': {
-          return <div>element {_.compact(children.map(convertAstToComponentRec))}</div>;
-          // return React.createElement(tagName!, {}, ..._.compact(children.map(convertAstToComponentRec)));
+          // return <div>{tagName} {_.compact(children.map(convertAstToComponentRec))}</div>;
+          return React.createElement(tagName!, {}, ...[tagName, ..._.compact(children.map(convertAstToComponentRec))]);
         }
         case 'mdxJsxTextElement':
         case 'mdxJsxFlowElement': {
