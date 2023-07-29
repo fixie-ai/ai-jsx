@@ -3,7 +3,7 @@ import * as AI from 'ai-jsx/experimental/next';
 import { NextRequest } from 'next/server';
 import { UserMessage } from 'ai-jsx/core/completion';
 import BuildingBlocksMap from '@/components/BuildingBlocks.map';
-const { Card, ButtonGroup } = BuildingBlocksMap;
+const { Card, ButtonGroup, Badge, Toggle } = BuildingBlocksMap;
 import fs from 'fs';
 import path from 'path';
 import { MdxChatCompletion } from 'ai-jsx/react/jit-ui/mdx';
@@ -43,6 +43,11 @@ function BuildingBlocksAI({ query }: { query: string }) {
       Example 2 of how you might use this component (using with surrounding markdown): The system is configured. How
       would you like to proceed?
       <ButtonGroup labels={['Deploy to prod', 'Deploy to staging', 'Cancel']} />
+      Use a badge to indicate status:
+      <Badge color="yellow">In progress</Badge>
+      <Badge color="green">Complete</Badge>
+      Use a toggle to let users enable/disable an option:
+      <Toggle title="Use rocket fuel" subtitle="($7 surcharge)" />
     </>
   );
 

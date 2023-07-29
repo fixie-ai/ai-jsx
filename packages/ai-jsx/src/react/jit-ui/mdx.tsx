@@ -29,109 +29,117 @@ export async function* MdxChatCompletion(
 ) {
   const components = collectComponents(usageExamples);
   /* prettier-ignore */
-  const completion = <ChatCompletion>
-    <SystemMessage>
-      You are an assistant who can use React components to work with the user. By default, you use markdown. However, if it's useful, you can also mix in the following React components: {Object.keys(components).join(', ')}.
-      All your responses
-      should be in MDX, which is Markdown For the Component Era. Here are instructions for how to use MDX:
-      === Begin instructions
-      {/* Snipped from https://github.com/mdx-js/mdx/blob/main/docs/docs/what-is-mdx.server.mdx. */}
-      MDX allows you to use JSX in your markdown content.
-      You can import components, such as interactive charts or alerts, and embed them
-      within your content.
-      This makes writing long-form content with components a blast.
+  // const completion = <ChatCompletion>
+  //   <SystemMessage>
+  //     You are an assistant who can use React components to work with the user. By default, you use markdown. However, if it's useful, you can also mix in the following React components: {Object.keys(components).join(', ')}.
+  //     All your responses
+  //     should be in MDX, which is Markdown For the Component Era. Here are instructions for how to use MDX:
+  //     === Begin instructions
+  //     {/* Snipped from https://github.com/mdx-js/mdx/blob/main/docs/docs/what-is-mdx.server.mdx. */}
+  //     MDX allows you to use JSX in your markdown content.
+  //     You can import components, such as interactive charts or alerts, and embed them
+  //     within your content.
+  //     This makes writing long-form content with components a blast.
 
-      More practically MDX can be explained as a format that combines markdown with
-      JSX and looks as follows:
+  //     More practically MDX can be explained as a format that combines markdown with
+  //     JSX and looks as follows:
 
-      === Begin example
-      {`
-        Here is some markdown text 
-        <MyComponent id="123" />
+  //     === Begin example
+  //     {`
+  //       Here is some markdown text
+  //       <MyComponent id="123" />
 
-        # Here is more markdown text
+  //       # Here is more markdown text
 
-        <Component
-          open
-          x={1}
-          label={'this is a string, *not* markdown!'}
-          icon={<Icon />}
-        />
+  //       <Component
+  //         open
+  //         x={1}
+  //         label={'this is a string, *not* markdown!'}
+  //         icon={<Icon />}
+  //       />
 
-        * Markdown list item 1
-        * Markdown list item 2
-        * Markdown list item 3
-      `}
-      === end example
-      === end instructions
+  //       * Markdown list item 1
+  //       * Markdown list item 2
+  //       * Markdown list item 3
+  //     `}
+  //     === end example
+  //     === end instructions
 
-      Do not include a starting ```mdx and closing ``` line. Just respond with the MDX itself.
+  //     Do not include a starting ```mdx and closing ``` line. Just respond with the MDX itself.
 
-      Do not include extra whitespace that is not needed for the markdown interpretation. For instance, if your component has a prop that's a JSON object, put it all on one line:
+  //     Do not include extra whitespace that is not needed for the markdown interpretation. For instance, if your component has a prop that's a JSON object, put it all on one line:
 
-      {'<Component prop={[[{"key": "value"}, {"long": "field"}]]} />'}
+  //     {'<Component prop={[[{"key": "value"}, {"long": "field"}]]} />'}
 
-      This doc tells you the differences between MDX and markdown.
+  //     This doc tells you the differences between MDX and markdown.
 
-      {/* Adapted from https://github.com/micromark/mdx-state-machine#72-deviations-from-markdown */}
-      === Start doc
-      ### 7.2 Deviations from Markdown
+  //     {/* Adapted from https://github.com/micromark/mdx-state-machine#72-deviations-from-markdown */}
+  //     === Start doc
+  //     ### 7.2 Deviations from Markdown
 
-      MDX adds constructs to Markdown but also prohibits certain normal Markdown
-      constructs.
+  //     MDX adds constructs to Markdown but also prohibits certain normal Markdown
+  //     constructs.
 
-      #### 7.2.2 Indented code
+  //     #### 7.2.2 Indented code
 
-      Indentation to create code blocks is not supported.
-      Instead, use fenced code blocks.
+  //     Indentation to create code blocks is not supported.
+  //     Instead, use fenced code blocks.
 
-      The reason for this change is so that elements can be indented.
+  //     The reason for this change is so that elements can be indented.
 
-      {/* Commenting out the negative examples because they seem to confuse the LLM. */}
-      {/*
-      Incorrect:
+  //     {/* Commenting out the negative examples because they seem to confuse the LLM. */}
+  //     {/*
+  //     Incorrect:
 
-      ```markdown
-          console.log(1)
-      ``` */}
+  //     ```markdown
+  //         console.log(1)
+  //     ``` */}
 
-      Correct:
+  //     Correct:
 
-        ```js
-        console.log(1)
-        ```
+  //       ```js
+  //       console.log(1)
+  //       ```
 
-      #### 7.2.3 Autolinks
+  //     #### 7.2.3 Autolinks
 
-      Autolinks are not supported.
-      Instead, use links or references.
+  //     Autolinks are not supported.
+  //     Instead, use links or references.
 
-      The reason for this change is because whether something is an element (whether
-      HTML or JSX) or an autolink is ambiguous {'(Markdown normally treats `<svg:rect>`, `<xml:lang/>`, or `<svg:circle{...props}>` as links).'}
+  //     The reason for this change is because whether something is an element (whether
+  //     HTML or JSX) or an autolink is ambiguous {'(Markdown normally treats `<svg:rect>`, `<xml:lang/>`, or `<svg:circle{...props}>` as links).'}
 
-      {/* Incorrect:
+  //     {/* Incorrect:
 
-      ```markdown
-      See <https://example.com> for more information
-      ``` */}
+  //     ```markdown
+  //     See <https://example.com> for more information
+  //     ``` */}
 
-      Correct:
+  //     Correct:
 
-        See [example.com](https://example.com) for more information.
+  //       See [example.com](https://example.com) for more information.
 
-      #### 7.2.4 Errors
+  //     #### 7.2.4 Errors
 
-      Whereas all Markdown is valid, incorrect MDX will crash.
-      === end doc
+  //     Whereas all Markdown is valid, incorrect MDX will crash.
+  //     === end doc
 
-      Here are the components you have available, and how to use them:
+  //     Here are the components you have available, and how to use them:
 
-      === Begin components
-      <AI.React>{usageExamples}</AI.React>
-      === end components
-    </SystemMessage>
-    {children}
-  </ChatCompletion>;
+  //     === Begin components
+  //     <AI.React>{usageExamples}</AI.React>
+  //     === end components
+  //   </SystemMessage>
+  //   {children}
+  // </ChatCompletion>;
+
+  const completion = <>{`pre text
+<Card>
+  * **Foo**: bar
+  <Badge color='red'>Content</Badge>
+  <Toggle title='my title' subtitle='my subtitle' />
+</Card>
+post text`}</>
 
   if (!hydrate) {
     return completion;
@@ -150,7 +158,7 @@ export async function* MdxChatCompletion(
     });
 
     const hydrated = convertAstToComponent(ast!, components);
-    logger.warn({ hydrated }, 'Hydrating MDX');
+    logger.warn({ hydrated, ast }, 'Hydrating MDX');
 
     return (
       <AI.React>
@@ -170,8 +178,10 @@ export async function* MdxChatCompletion(
           return <div>{_.compact(children.map(convertAstToComponentRec))}</div>;
         }
         case 'element': {
-          return React.createElement(tagName!, {}, _.compact(children.map(convertAstToComponentRec)));
+          return <div>element {_.compact(children.map(convertAstToComponentRec))}</div>;
+          // return React.createElement(tagName!, {}, ..._.compact(children.map(convertAstToComponentRec)));
         }
+        case 'mdxJsxTextElement':
         case 'mdxJsxFlowElement': {
           const componentName = name!;
           // @ts-expect-error
@@ -200,20 +210,23 @@ export async function* MdxChatCompletion(
             return null;
           }
 
+          // return <div>{JSON.stringify(ast)}</div>
+          // return React.createElement(Component, props, _.compact(children.map(convertAstToComponentRec)));
+          // console.log({Component}, 'rendering component');
           return <Component {...props}>{_.compact(children.map(convertAstToComponentRec))}</Component>;
         }
         case 'text': {
           if (ast.value === '\n') {
             return <br />;
           }
-          return <p>{[ast.value]}</p>;
+          return <span>{[ast.value]}</span>;
         }
         // We handle the imports separately.
         case 'mdxjsEsm': {
           return null;
         }
         default: {
-          throw new Error(`Unhandled type: ${JSON.stringify(ast, null, 2)}`);
+          throw new Error(`Unhandled MDX AST type: ${JSON.stringify(ast, null, 2)}`);
         }
       }
     }
@@ -231,7 +244,7 @@ export async function* MdxChatCompletion(
       logger.trace({ frame }, 'Not yielding unparsable frame');
     }
   }
-  // Assume the last frame is parsable.
+  // TODO: do not assume the last frame is parsable.
   return hydrateMDX(await renderedCompletion, components);
 }
 
