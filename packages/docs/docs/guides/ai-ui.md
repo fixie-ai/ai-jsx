@@ -8,7 +8,7 @@ In traditional UI development, human engineers write deterministic code to handl
 
 JIT UI has the advantage of being very flexible with a minimum amount of human-maintained code. However, it is slower and more error prone than fully deterministic code. We expect both these concerns to diminish and even go away completely over time as models continue to improve.
 
-For now, we think JIT UI can be beneficial for line of business (LOB) and other internal applications. These are a good fit because the tradeoffs make sense: there isn't always enough time allocated to the creation and maintenance of these apps and because the apps have an internal audience there is more tolerance for errors and performance issues. There is tremendous benefit from being able to have the custom UI flexibily rendered based on what the user needs.
+For now, we think JIT UI can be beneficial for line of business (LOB) and other internal applications. These are a good fit because the tradeoffs make sense: there isn't always enough time allocated to the creation and maintenance of these apps and because the apps have an internal audience there is more tolerance for errors and performance issues. There is tremendous benefit from being able to have the custom UI flexibility rendered based on what the user needs.
 
 ## Example: JIT UI
 
