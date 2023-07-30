@@ -333,6 +333,22 @@ export async function* OpenAIChatModel(
       e.tag == FunctionResponse,
   });
 
+  logger.warn({ messageElements });
+
+  const invalidChildren = messageElements.filter((el) => typeof el === 'string') as string[];
+  if (invalidChildren.length) {
+    throw new AIJSXError(
+      `Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "${invalidChildren.join(
+        '", "'
+      )}". To fix this, wrap this content in the appropriate child type (e.g. UserMessage).`,
+      ErrorCode.ChatCompletionInvalidInput,
+      'user',
+      {
+        invalidChildren,
+      }
+    );
+  }
+
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
     messageElements.filter(AI.isElement).map(async (message) => {
       switch (message.tag) {
