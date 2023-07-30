@@ -1,15 +1,15 @@
-// import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 // import { showInspector } from 'ai-jsx/core/inspector';
 import * as AI from 'ai-jsx';
 
-// function App() {
-//   return (
-//     <ChatCompletion>
-//       <SystemMessage>You are an assistant who only uses one syllable words.</SystemMessage>
-//       <UserMessage>Why is the sky blue?</UserMessage>
-//     </ChatCompletion>
-//   );
-// }
+function App() {
+  return (
+    <ChatCompletion>
+      <SystemMessage>You are an assistant who only uses one syllable words.</SystemMessage>
+      <UserMessage>Why is the sky blue?</UserMessage>
+    </ChatCompletion>
+  );
+}
 
 // showInspector(<App />);
 
@@ -27,41 +27,69 @@ async function* renderableMock() {
 
 function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
   const mapFn = opts?.map ? opts.map : (x: string) => x;
-
-  let lastFrame = mapFn('');
-  let done = false;
-  let resolveNextFrameAvailable;
-  let nextFrameAvailable = new Promise(resolve => {
-    resolveNextFrameAvailable = resolve;
-  });
-
-  let resolveFinalResult;
-  let finalResult = new Promise(resolve => {
-    resolveFinalResult = resolve
-  });
-
   
-  (async () => {
-    for await (const frame of renderable()) {
-      lastFrame = mapFn(frame);
-      resolveNextFrameAvailable!();
+  function makeRenderAdapter(renderResult: AI.RenderResult<string, string>) {
+    let lastFrame = mapFn('');
+    let done = false;
+    let resolveNextFrameAvailable: (value?: unknown) => void;
+    let nextFrameAvailable = new Promise(resolve => {
+      resolveNextFrameAvailable = resolve;
+    });
+  
+    let resolveFinalResult;
+    let finalResult = new Promise(resolve => {
+      resolveFinalResult = resolve
+    });
 
-      nextFrameAvailable = new Promise(resolve => {
-        resolveNextFrameAvailable = resolve;
-      })
+    (async () => {
+      for await (const frame of renderResult) {
+        lastFrame = mapFn(frame);
+        resolveNextFrameAvailable!();
+  
+        nextFrameAvailable = new Promise(resolve => {
+          resolveNextFrameAvailable = resolve;
+        })
+      }
+      done = true;
+      resolveFinalResult!(lastFrame);
+    })() 
+
+    return {
+      getLastFrame: () => lastFrame,
+      getDone: () => done,
+      getResolveNextFrameAvailable: () => resolveNextFrameAvailable,
+      finalResult
     }
-    done = true;
-    resolveFinalResult!(lastFrame);
-  })()
+  }
 
-  function makeFrameStream() {
+
+  const renderContext = AI.createRenderContext(/* take logger */); 
+  const memoized = renderContext.memo(renderable);
+  const treeStreamRender = AI.createRenderContext().render(memoized);
+  const appendStreamRender = AI.createRenderContext().render(memoized, {appendOnly: true});
+
+  const treeStreamRenderAdapter = makeRenderAdapter(treeStreamRender);
+  const appendStreamRenderAdapter = makeRenderAdapter(appendStreamRender);
+
+  function makeFrameStream(renderAdapter: ReturnType<typeof makeRenderAdapter>) {
+    // let lastEmitted: string | undefined;
     return new ReadableStream({
       async pull(controller) {
-        controller.enqueue(lastFrame);
-        if (done) {
+        // console.log('pull', lastEmitted, lastFrame)
+
+        // When I do this, the process exits with code 13
+        // if (lastEmitted !== lastFrame) {
+        //   controller.enqueue(lastFrame);
+        //   lastEmitted = lastFrame;
+        // }
+
+        // If I do this, we see a bunch of intermediate frames.
+        controller.enqueue(renderAdapter.getLastFrame());
+
+        if (renderAdapter.getDone()) {
           controller.close();
         }
-        await resolveNextFrameAvailable!;
+        await renderAdapter.getResolveNextFrameAvailable();
       }
     })
   }
@@ -75,19 +103,19 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
     let lastEmittedValue = '';
     return new TransformStream({
       transform(latestFrame, controller) {
-        const delta = latestFrame.slice(lastEmittedValue)
+        const delta = latestFrame.slice(lastEmittedValue.length)
         lastEmittedValue = latestFrame;
         controller.enqueue(delta);
       }
     })  
   }
 
-  // Maybe there should be an export on this object called treeStream.
-
   return {
-    frameStream: makeFrameStream,
-    deltaStream: () => makeFrameStream().pipeThrough(makeDeltaStream()),
-    result: finalResult
+    treeStream: () => makeFrameStream(treeStreamRenderAdapter),
+    appendStream: () => makeFrameStream(appendStreamRenderAdapter),
+    deltaStream: () => makeFrameStream(appendStreamRenderAdapter).pipeThrough(makeDeltaStream()),
+    // We could pull the final result from either adapter – they're equivalent.
+    result: appendStreamRenderAdapter.finalResult
   }
 }
 
@@ -103,29 +131,35 @@ async function streamToValues(stream: ReadableStream) {
   return values;
 }
 
-const rendered = render(renderableMock);
+const renderable = <App />
+const rendered = render(renderable);
+console.log('=== First Render ===')
 // You can consume a stream multiple times.
 console.log(await Promise.all([
-  streamToValues(rendered.frameStream()),
-  streamToValues(rendered.frameStream())
+  // streamToValues(rendered.treeStream()),
+  // streamToValues(rendered.treeStream()),
+  streamToValues(rendered.deltaStream()),
 ]))
 // If you consume a stream after the render is complete, you just get one chunk with the final result.
-console.log(await streamToValues(rendered.frameStream()))
-// You can await the final result as a promise.
-console.log(await rendered.result)
+// console.log(await streamToValues(rendered.treeStream()))
+// console.log('Deltas', await streamToValues(rendered.deltaStream()))
+// console.log('Final result:', await rendered.result)
 
-// Pass a single map function, and it's applied to intermediate and the final results.
-const mappedRender = render(renderableMock, {
-  map: frame => `frame prefix: ${frame}`
-})
-console.log(await streamToValues(mappedRender.frameStream()))
-console.log(await mappedRender.result)
+// console.log();
+// console.log('=== Second Render ===')
+// // Pass a single map function, and it's applied to intermediate and the final results.
+// const mappedRender = render(renderable, {
+//   map: frame => `frame prefix: ${frame}`
+// })
+// console.log(await streamToValues(mappedRender.treeStream()))
+// console.log('Deltas', await streamToValues(mappedRender.deltaStream()))
+// console.log('Final result:', await mappedRender.result)
 
-// const reader = render(renderableMock).frameStream.getReader()
-// while (true) {
-//   const { done, value } = await reader.read();
-//   if (done) {
-//     break;
-//   }
-//   process.stdout.write(value);
-// }
+// // const reader = render(renderableMock).frameStream.getReader()
+// // while (true) {
+// //   const { done, value } = await reader.read();
+// //   if (done) {
+// //     break;
+// //   }
+// //   process.stdout.write(value);
+// // }
