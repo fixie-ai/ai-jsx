@@ -63,7 +63,7 @@ export interface Context<T> {
   [contextKey]: { defaultValue: T; userContextSymbol: symbol };
 }
 
-interface RenderOpts<TIntermediate = string, TFinal = string> {
+export interface RenderOpts<TIntermediate = string, TFinal = string> {
   /**
    * Instructs rendering to stop rendering on certain elements. When specified,
    * rendering will return an array of strings and `Element`s rather than a
@@ -382,6 +382,21 @@ export function createRenderContext(opts?: { logger?: LogImplementation }) {
   return createRenderContextInternal(renderStream, {
     [LoggerContext[contextKey].userContextSymbol]: logger,
   });
+}
+
+// class RenderObserver {
+//   constructor(renderResult: )
+// }
+
+async function render(renderable: Renderable, opts?: {
+  logger?: LogImplementation,
+} & Pick<RenderOpts, 'appendOnly'>) {
+  const renderResult = createRenderContext({logger: opts?.logger}).render(renderable, {appendOnly: opts?.appendOnly});
+
+  let lastFrame = '';
+  for await (const frame of renderResult) {
+    lastFrame = frame;
+  }
 }
 
 function createRenderContextInternal(renderStream: StreamRenderer, userContext: Record<symbol, any>): RenderContext {

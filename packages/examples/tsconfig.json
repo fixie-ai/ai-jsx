@@ -1,6 +1,6 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
-  "include": ["src/**/*", ".eslintrc.cjs"],
+  "include": ["src/simple-chat.tsx", ".eslintrc.cjs"],
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "ai-jsx",
@@ -8,6 +8,7 @@
     "module": "esnext",
     "resolveJsonModule": true,
     "outDir": "dist",
+    "lib": ["DOM", "DOM.Iterable"],
     "declaration": true
   }
 }
