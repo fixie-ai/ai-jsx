@@ -412,10 +412,25 @@ export async function* OpenAIChatModel(
     stream: true,
   };
 
+  function sleep() {
+    // return new Promise(resolve => setTimeout(resolve, 500));
+
+    // return new Promise<void>((resolve) => {
+    //   console.log('timeout start');
+    //   setTimeout(() => {
+    //     console.log('timeout done');
+    //     resolve();
+    //   }, 1000);
+    // })
+
+    return Promise.resolve();
+  }
   iteration++;
-  console.log('yielding');
+  await sleep();
   yield `first ${iteration} `
+  await sleep();
   yield `second ${iteration} `
+  await sleep();
   yield `third ${iteration}`
   return AI.AppendOnlyStream;
 

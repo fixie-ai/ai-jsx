@@ -25,6 +25,13 @@ async function* renderableMock() {
 
 /* eslint-disable no-undef */
 
+// function sleep() {
+//   return new Promise(resolve => setTimeout(resolve, 500));
+// }
+// console.log('pre sleep')
+// await sleep();
+// console.log('post sleep')
+
 function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
   const mapFn = opts?.map ? opts.map : (x: string) => x;
   
@@ -42,7 +49,9 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
     });
 
     (async () => {
+      let loopIteration = 0;
       for await (const frame of renderResult) {
+        // console.log({frame, loopIteration: loopIteration++});
         lastFrame = mapFn(frame);
         resolveNextFrameAvailable!();
   
@@ -61,7 +70,6 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
       finalResult
     }
   }
-
 
   const renderContext = AI.createRenderContext(/* take logger */); 
   const memoized = renderContext.memo(renderable);
@@ -99,7 +107,7 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
    * Can I memoize a renderable and then render it both appendOnly
    * and tree-streamed?
    */
-  function makeDeltaStream() {
+  function makeDeltaTransformer() {
     let lastEmittedValue = '';
     return new TransformStream({
       transform(latestFrame, controller) {
@@ -110,12 +118,28 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
     })  
   }
 
+  function makeDeltaStream() {
+    return makeFrameStream(appendStreamRenderAdapter).pipeThrough(makeDeltaTransformer());
+  }
+
   return {
     treeStream: () => makeFrameStream(treeStreamRenderAdapter),
     appendStream: () => makeFrameStream(appendStreamRenderAdapter),
-    deltaStream: () => makeFrameStream(appendStreamRenderAdapter).pipeThrough(makeDeltaStream()),
+    deltaStream: makeDeltaStream,
     // We could pull the final result from either adapter – they're equivalent.
-    result: appendStreamRenderAdapter.finalResult
+    result: appendStreamRenderAdapter.finalResult,
+
+    writeToStdout: async () => {
+      const reader = makeDeltaStream().getReader();
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        }
+        process.stdout.write(value);
+      }
+    }
   }
 }
 
@@ -131,35 +155,40 @@ async function streamToValues(stream: ReadableStream) {
   return values;
 }
 
+// This all needs to be validate with genuine async.
+
 const renderable = <App />
 const rendered = render(renderable);
 console.log('=== First Render ===')
 // You can consume a stream multiple times.
 console.log(await Promise.all([
-  // streamToValues(rendered.treeStream()),
-  // streamToValues(rendered.treeStream()),
+  streamToValues(rendered.treeStream()),
+  streamToValues(rendered.treeStream()),
   streamToValues(rendered.deltaStream()),
 ]))
 // If you consume a stream after the render is complete, you just get one chunk with the final result.
-// console.log(await streamToValues(rendered.treeStream()))
-// console.log('Deltas', await streamToValues(rendered.deltaStream()))
-// console.log('Final result:', await rendered.result)
+console.log(await streamToValues(rendered.treeStream()))
+console.log('Deltas', await streamToValues(rendered.deltaStream()))
+console.log('Final result:', await rendered.result)
 
-// console.log();
-// console.log('=== Second Render ===')
-// // Pass a single map function, and it's applied to intermediate and the final results.
-// const mappedRender = render(renderable, {
-//   map: frame => `frame prefix: ${frame}`
-// })
-// console.log(await streamToValues(mappedRender.treeStream()))
-// console.log('Deltas', await streamToValues(mappedRender.deltaStream()))
-// console.log('Final result:', await mappedRender.result)
+console.log();
+console.log('=== Second Render ===')
+// Pass a single map function, and it's applied to intermediate and the final results.
+const mappedRender = render(renderable, {
+  map: frame => `frame prefix: ${frame}`
+})
+console.log('Tree stream', await streamToValues(mappedRender.treeStream()))
+console.log('Append stream', await streamToValues(mappedRender.appendStream()))
+console.log('Deltas', await streamToValues(mappedRender.deltaStream()))
+console.log('Final result:', await mappedRender.result)
 
-// // const reader = render(renderableMock).frameStream.getReader()
-// // while (true) {
-// //   const { done, value } = await reader.read();
-// //   if (done) {
-// //     break;
-// //   }
-// //   process.stdout.write(value);
-// // }
+console.log();
+console.log('=== Third Render ===')
+const renderForAppendStream = render(renderable);
+console.log(await streamToValues(renderForAppendStream.treeStream()));
+console.log(await streamToValues(renderForAppendStream.appendStream()));
+
+console.log();
+console.log('=== Fourth Render: writing to stdout ===')
+await render(renderable).writeToStdout();
+console.log('\nDone writing to stdout')
