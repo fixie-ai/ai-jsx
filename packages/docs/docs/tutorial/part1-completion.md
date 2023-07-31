@@ -52,7 +52,7 @@ distinctions are used by OpenAI's API to differentiate between the fixed, system
 of the prompt and the variable, user aspect of the prompt.
 
 In order to actually get a result, we need to pass our application to a
-[`RenderContext`](../api/interfaces/core_core.RenderContext) and call `render()` on it. The `RenderContext` is responsible
+[`RenderContext`](../api/interfaces/core_render.RenderContext) and call `render()` on it. The `RenderContext` is responsible
 for managing the state of the application and progressively evaluating the state
 of the application as it is rendered. The `render()` method returns a `Promise`
 that evaluates to a string, which is the final result of rendering the JSX

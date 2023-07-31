@@ -9,7 +9,6 @@ import z from 'zod';
 import { OpenAI } from 'ai-jsx/lib/openai';
 import { PinoLogger } from 'ai-jsx/core/log';
 import { pino } from 'pino';
-import { memo } from 'ai-jsx/core/memoize';
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 function Card({ header, footer, children }: { header?: string; footer?: string; children: string }) {
@@ -109,7 +108,7 @@ const usageExample = <>
     ]} />
 </>;
 
-function QuestionAndAnswer({ children }: { children: AI.Node }) {
+function QuestionAndAnswer({ children }: { children: AI.Node }, { memo }: AI.ComponentContext) {
   const question = memo(children);
   return (
     <>

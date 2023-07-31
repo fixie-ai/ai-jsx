@@ -3,7 +3,6 @@ import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { useState, useEffect } from 'react';
 import SyntaxHighlight from './syntax-highlight.js';
-import { memo } from '../core/memoize.js';
 import Spinner from './spinner.js';
 import { DebugTree } from '../core/debug.js';
 
@@ -87,7 +86,7 @@ function Inspector({ componentToInspect, showDebugTree }: { componentToInspect: 
 
   useEffect(() => {
     const renderContext = AI.createRenderContext();
-    const memoized = memo(componentToInspect);
+    const memoized = renderContext.memo(componentToInspect);
 
     async function getAllFrames() {
       // This results in some duplicate pages.
