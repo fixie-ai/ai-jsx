@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.7.2
+## 0.7.3
+
+- Update readme on npm.
+
+## [0.7.2](https://github.com/fixie-ai/ai-jsx/pull/221/commits)
 
 - Add `Converse` and `ShowConversation` components facilitate streaming conversations.
 
