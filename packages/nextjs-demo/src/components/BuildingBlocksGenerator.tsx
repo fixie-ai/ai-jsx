@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import * as BuildingBlocks from './BuildingBlocks';
-import { MDXProvider } from '@mdx-js/react';
 import { run, compile } from '@mdx-js/mdx';
 import * as runtime from 'react/jsx-runtime';
 import { useChat } from 'ai/react';
