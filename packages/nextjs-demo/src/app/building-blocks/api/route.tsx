@@ -1,17 +1,12 @@
 /** @jsxImportSource ai-jsx/react */
-import * as AI from 'ai-jsx/experimental/next';
 import { NextRequest } from 'next/server';
-import { UserMessage } from 'ai-jsx/core/completion';
+import { UserMessage, ChatCompletion } from 'ai-jsx/core/completion';
 import * as BuildingBlocks from '@/components/BuildingBlocks';
 const { Card, ButtonGroup, Badge, Toggle } = BuildingBlocks;
-import fs from 'fs';
-import path from 'path';
-import { MdxChatCompletion } from 'ai-jsx/react/jit-ui/mdx';
+import { MdxSystemMessage } from 'ai-jsx/react/jit-ui/mdx';
 import { toTextStream } from 'ai-jsx/stream';
-import { StreamingTextResponse } from 'ai';
-
-// Flip this flag to use a fixture response. This makes it easier to iterate on the UI.
-const useFixture = false;
+import { Message, StreamingTextResponse } from 'ai';
+import _ from 'lodash';
 
 function BuildingBlocksAI({ query }: { query: string }) {
   const usageExamples = (
@@ -54,14 +49,16 @@ function BuildingBlocksAI({ query }: { query: string }) {
   );
 
   return (
-    <MdxChatCompletion hydrate usageExamples={usageExamples}>
+    <ChatCompletion>
+      <MdxSystemMessage usageExamples={usageExamples} />
       <UserMessage>{query}</UserMessage>
-    </MdxChatCompletion>
+    </ChatCompletion>
   );
 }
 
 export async function POST(request: NextRequest) {
-  const { topic } = await request.json();
-
-  return new StreamingTextResponse(toTextStream(<BuildingBlocksAI query={topic} />));
+  const { messages } = await request.json();
+  const lastMessage = _.last(messages) as Message;
+ 
+  return new StreamingTextResponse(toTextStream(<BuildingBlocksAI query={lastMessage.content} />));
 }

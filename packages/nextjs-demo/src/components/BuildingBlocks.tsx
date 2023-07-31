@@ -52,9 +52,11 @@ export function Badge({ children, color }: { children: ReactNode; color: Backgro
       case 'pink':
         return 'bg-pink-100 text-pink-800 ring-pink-600/20';
       case 'gray':
-        return 'bg-gray-100 text-gray-800 ring-gray-600/20';
       default:
-        throw new Error(`Unrecognized color: ${color}`);
+        return 'bg-gray-100 text-gray-800 ring-gray-600/20';
+      // This makes it too sensitive to model failures. It's better
+      // to gracefully degrade.
+      //   throw new Error(`Unrecognized color: ${color}`);
     }
   }
   return (

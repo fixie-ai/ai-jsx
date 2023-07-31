@@ -65,9 +65,12 @@ export default function BuildingBlockGenerator({ topic }: { topic: string }) {
 
   return (
     <div>
-      <h2>Raw MDX</h2>
+      <h2 className='text-lg'>Raw MDX</h2>
       <div className="whitespace-pre-line">{getAIResponse()}</div>
-      <h2>Compiled MDX</h2>
+      <div className="mt-4">
+        {isLoading && <Image src="/loading.gif" alt="loading spiner" width={20} height={20} />}
+      </div>
+      <h2 className='text-lg mt-4'>Compiled MDX</h2>
       <div>{mdx}</div>
       <div className="mt-4">
         {isLoading && <Image src="/loading.gif" alt="loading spiner" width={20} height={20} />}

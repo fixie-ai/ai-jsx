@@ -119,5 +119,11 @@ export function collectComponents(node: React.ReactNode | AI.Node) {
     }
   }
   collectComponentsRec(node, true);
-  return Object.fromEntries(Array.from(reactComponents).map((c) => [reactComponentName(c), c]));
+  return Object.fromEntries(
+    Array
+      .from(reactComponents)
+      /* filter out symbols, e.g. React.Fragment */
+      .filter(component => typeof component !== 'symbol')
+      .map((c) => [reactComponentName(c), c])
+  );
 }
