@@ -3,16 +3,8 @@ import { getEnvVar } from './util.js';
 import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
-import {
-  AssistantMessage,
-  ChatProvider,
-  FunctionCall,
-  FunctionResponse,
-  ModelProps,
-  SystemMessage,
-  UserMessage,
-  ModelPropsWithChildren,
-} from '../core/completion.js';
+import { ChatProvider, ModelProps, ModelPropsWithChildren } from '../core/completion.js';
+import { AssistantMessage, ConversationMessage, UserMessage, renderToConversation } from '../core/conversation.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 
 export const anthropicClientContext = AI.createContext<AnthropicSDK>(
@@ -93,7 +85,7 @@ interface AnthropicChatModelProps extends ModelPropsWithChildren {
 }
 export async function* AnthropicChatModel(
   props: AnthropicChatModelProps,
-  { render, getContext, logger }: AI.ComponentContext
+  { render, getContext, logger, memo }: AI.ComponentContext
 ): AI.RenderableStream {
   if ('functionDefinitions' in props) {
     throw new AIJSXError(
@@ -103,47 +95,41 @@ export async function* AnthropicChatModel(
     );
   }
   yield AI.AppendOnlyStream;
-  const messageElements = await render(props.children, {
-    stop: (e) =>
-      e.tag == SystemMessage ||
-      e.tag == UserMessage ||
-      e.tag == AssistantMessage ||
-      e.tag == FunctionCall ||
-      e.tag == FunctionResponse,
-  });
   const messages = await Promise.all(
-    messageElements
-      .filter(AI.isElement)
-      .flatMap((message) => {
-        if (message.tag === SystemMessage) {
+    (
+      await renderToConversation(props.children, render)
+    )
+      .flatMap<Exclude<ConversationMessage, { type: 'system' }>>((message) => {
+        if (message.type === 'system') {
           return [
-            <UserMessage>For subsequent replies you will adhere to the following instructions: {message}</UserMessage>,
-            <AssistantMessage>Okay, I will do that.</AssistantMessage>,
+            {
+              type: 'user',
+              element: (
+                <UserMessage>
+                  For subsequent replies you will adhere to the following instructions: {message.element}
+                </UserMessage>
+              ),
+            },
+            { type: 'assistant', element: <AssistantMessage>Okay, I will do that.</AssistantMessage> },
           ];
         }
 
-        return message;
+        return [message];
       })
       .map(async (message) => {
-        switch (message.tag) {
-          case UserMessage:
-            return `${AnthropicSDK.HUMAN_PROMPT}:${message.props.name ? ` (${message.props.name})` : ''} ${await render(
-              message
-            )}`;
-          case AssistantMessage:
-            return `${AnthropicSDK.AI_PROMPT}: ${await render(message)}`;
-          case FunctionCall:
-          case FunctionResponse:
+        switch (message.type) {
+          case 'user':
+            return `${AnthropicSDK.HUMAN_PROMPT}:${
+              message.element.props.name ? ` (${message.element.props.name})` : ''
+            } ${await render(message.element)}`;
+          case 'assistant':
+            return `${AnthropicSDK.AI_PROMPT}: ${await render(message.element)}`;
+          case 'functionCall':
+          case 'functionResponse':
             throw new AIJSXError(
               'Anthropic models do not support functions.',
               ErrorCode.AnthropicDoesNotSupportFunctions,
               'user'
-            );
-          default:
-            throw new AIJSXError(
-              `ChatCompletion's prompts must be UserMessage or AssistantMessage, but this child was ${message.tag.name}`,
-              ErrorCode.ChatCompletionUnexpectedChild,
-              'internal'
             );
         }
       })
@@ -186,22 +172,34 @@ export async function* AnthropicChatModel(
     }
     throw err;
   }
-  let resultSoFar = '';
-  let isFirstResponse = true;
-  for await (const completion of response) {
-    let text = completion.completion;
-    if (isFirstResponse && text.length > 0) {
-      isFirstResponse = false;
-      if (text.startsWith(' ')) {
-        text = text.slice(1);
-      }
-    }
-    resultSoFar += text;
-    logger.trace({ completion }, 'Got Anthropic stream event');
-    yield text;
-  }
 
-  logger.debug({ completion: resultSoFar }, 'Anthropic completion finished');
+  // Embed the stream "within" an <AssistantMessage>, memoizing it to ensure it's only consumed once.
+  yield (
+    <AssistantMessage>
+      {memo(
+        (async function* (): AI.RenderableStream {
+          yield AI.AppendOnlyStream;
+          let resultSoFar = '';
+          let isFirstResponse = true;
+          for await (const completion of response) {
+            let text = completion.completion;
+            if (isFirstResponse && text.length > 0) {
+              isFirstResponse = false;
+              if (text.startsWith(' ')) {
+                text = text.slice(1);
+              }
+            }
+            resultSoFar += text;
+            logger.trace({ completion }, 'Got Anthropic stream event');
+            yield text;
+          }
+
+          logger.debug({ completion: resultSoFar }, 'Anthropic completion finished');
+          return AI.AppendOnlyStream;
+        })()
+      )}
+    </AssistantMessage>
+  );
 
   return AI.AppendOnlyStream;
 }

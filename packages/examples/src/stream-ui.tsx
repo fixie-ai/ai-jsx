@@ -4,13 +4,12 @@
 
 /** @jsxImportSource ai-jsx/react */
 import * as AI from 'ai-jsx/experimental/next';
-import { memo } from 'ai-jsx/core/memoize';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 import { makeComponentMap } from 'ai-jsx/react/map';
 import { pino } from 'pino';
 import { PinoLogger } from 'ai-jsx/core/log';
 
-function App() {
+function App(_: {}, { memo }: AI.ComponentContext) {
   const chatCompletion = memo(
     <ChatCompletion temperature={1}>
       <UserMessage>List five dog names</UserMessage>

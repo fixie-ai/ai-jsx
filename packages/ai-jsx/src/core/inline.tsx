@@ -1,5 +1,4 @@
-import { Node } from '../index.js';
-import { memo } from './memoize.js';
+import { ComponentContext, Node } from '../index.js';
 
 type InlineFn = (prefix: Node) => Node;
 type InlineChild = Node | InlineFn;
@@ -42,7 +41,7 @@ type InlineChildren = InlineChild | InlineChildren[];
  *
  * For more details, see [this example code](https://github.com/fixie-ai/ai-jsx/blob/main/packages/tutorial/src/part2.tsx).
  */
-export function Inline(props: { children: InlineChildren }) {
+export function Inline(props: { children: InlineChildren }, { memo }: ComponentContext) {
   const flattened = [props.children].flat(Infinity as 1) as InlineChild[];
   return flattened.reduce((prefix: Node[], current) => {
     if (typeof current === 'function') {

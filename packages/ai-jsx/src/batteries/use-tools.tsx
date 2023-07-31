@@ -5,19 +5,17 @@
  */
 
 import {
-  AssistantMessage,
   ChatCompletion,
-  FunctionCall,
   FunctionParameters,
   FunctionResponse,
   SystemMessage,
   UserMessage,
 } from '../core/completion.js';
-import { Node, RenderContext, isElement, Element, AppendOnlyStream, RenderableStream } from '../index.js';
+import { Node, RenderContext, ComponentContext, isElement } from '../index.js';
 import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
-import { memo } from '../core/memoize.js';
+import { Converse, isConversationalComponent, renderToConversation } from '../core/conversation.js';
 
 const toolChoiceSchema = z.object({
   nameOfTool: z.string(),
@@ -199,10 +197,21 @@ export interface UseToolsProps {
  * ```
  *
  */
-export async function* UseTools(props: UseToolsProps, { render }: RenderContext) {
+export async function UseTools(props: UseToolsProps, { render, memo }: RenderContext) {
   try {
-    const rendered = yield* render(<UseToolsFunctionCall {...props} />);
-    return rendered;
+    // TODO: ErrorBoundaries should be able to preserve the conversational structure, but they can't currently.
+    // So instead we start rendering the function call until it yields any conversational message. If we see one,
+    // we know that the <ChatCompletion> didn't immediately fail.
+    const memoizedFunctionCall = memo(<UseToolsFunctionCall {...props} />);
+    for await (const containsElement of render(memoizedFunctionCall, {
+      stop: isConversationalComponent,
+      map: (frame) => frame.find(isElement) !== undefined,
+    })) {
+      if (containsElement) {
+        break;
+      }
+    }
+    return memoizedFunctionCall;
   } catch (e: any) {
     if (e.code === ErrorCode.ChatModelDoesNotSupportFunctions) {
       return <UseToolsPromptEngineered {...props} />;
@@ -212,85 +221,46 @@ export async function* UseTools(props: UseToolsProps, { render }: RenderContext)
 }
 
 /** @hidden */
-export async function* UseToolsFunctionCall(props: UseToolsProps, { render }: RenderContext): RenderableStream {
-  yield AppendOnlyStream;
-
-  const conversation = [memo(props.children)];
-
-  do {
-    const modelResponse = memo(<ChatCompletion functionDefinitions={props.tools}>{conversation}</ChatCompletion>);
-    if (props.showSteps) {
-      yield modelResponse;
-    }
-
-    const renderResult = await render(modelResponse, { stop: (el) => el.tag == FunctionCall });
-    let functionCallElement: Element<any> | null = null;
-
-    let currentString = '';
-    for (const element of renderResult) {
-      if (typeof element === 'string') {
-        // Model has generated a string response. Record it.
-        currentString += element;
-      } else if (isElement(element) && element.tag === FunctionCall) {
-        if (currentString.trim() !== '') {
-          conversation.push(<AssistantMessage>{currentString}</AssistantMessage>);
-          currentString = '';
+export async function UseToolsFunctionCall(props: UseToolsProps, { render }: ComponentContext) {
+  const converse = (
+    <Converse
+      reply={async (messages, fullConversation) => {
+        const lastMessage = messages[messages.length - 1];
+        switch (lastMessage.type) {
+          case 'functionCall': {
+            const { name, args } = lastMessage.element.props;
+            try {
+              return <FunctionResponse name={name}>{await props.tools[name].func(args)}</FunctionResponse>;
+            } catch (e: any) {
+              return (
+                <FunctionResponse failed name={name}>
+                  {e.message}
+                </FunctionResponse>
+              );
+            }
+          }
+          case 'functionResponse':
+          case 'user':
+            return (
+              <ChatCompletion functionDefinitions={props.tools}>
+                {fullConversation.map((m) => m.element)}
+              </ChatCompletion>
+            );
+          default:
+            return null;
         }
+      }}
+    >
+      {props.children}
+    </Converse>
+  );
 
-        // Model has generated a function call.
-        if (functionCallElement) {
-          throw new AIJSXError(
-            `ChatCompletion returned 2 function calls at the same time ${renderResult.join(', ')}`,
-            ErrorCode.ModelOutputCouldNotBeParsedForTool,
-            'runtime'
-          );
-        }
-        conversation.push(memo(element));
-        functionCallElement = element;
-      } else {
-        throw new AIJSXError(
-          `Unexpected result from render ${renderResult.join(', ')}`,
-          ErrorCode.ModelOutputCouldNotBeParsedForTool,
-          'runtime'
-        );
-      }
-    }
+  if (props.showSteps) {
+    return converse;
+  }
 
-    if (functionCallElement) {
-      // Call the selected function and append the result to the messages.
-      let response;
-      try {
-        const callable = props.tools[functionCallElement.props.name].func;
-        response = await callable(functionCallElement.props.args);
-      } catch (e: any) {
-        response = `Function call to ${functionCallElement.props.name} failed with error: ${e.message}.`;
-      } finally {
-        const functionResponse = memo(
-          <FunctionResponse name={functionCallElement.props.name}>{response}</FunctionResponse>
-        );
-        if (props.showSteps) {
-          yield (
-            <>
-              {'\n'}
-              {functionResponse}
-              {'\n'}
-            </>
-          );
-        }
-        conversation.push(functionResponse);
-      }
-
-      continue;
-    }
-
-    // Terminate the loop when the model produces a response without a function call.
-    if (!props.showSteps) {
-      yield modelResponse;
-    }
-    break;
-  } while (true);
-
-  return AppendOnlyStream;
+  const messages = await renderToConversation(converse, render);
+  return messages.length && messages[messages.length - 1].element;
 }
 
 /** @hidden */

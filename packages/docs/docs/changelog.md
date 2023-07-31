@@ -1,6 +1,18 @@
 # Changelog
 
-## 0.6.1
+## 0.7.2
+
+- Add `Converse` and `ShowConversation` components facilitate streaming conversations.
+
+## [0.7.1](https://github.com/fixie-ai/ai-jsx/commit/058c463a32321d754639dcf44a2b6f3b5a863d1f)
+
+- Change `ChatCompletion` components to render to `<AssistantMessage>` and `<FunctionCall>` elements.
+
+## [0.7.0](https://github.com/fixie-ai/ai-jsx/commit/f8c8cff92fa1f228bf5826e8a0ac7129df765150)
+
+- Move `memo` to `AI.RenderContext` to ensure that memoized components render once, even if placed under a different context provider.
+
+## [0.6.1](https://github.com/fixie-ai/ai-jsx/commit/625459d25d538019e42afe8ba952c89b363ff662)
 
 - Add `AIJSX_LOG` environment variable to control log level and output location.
 

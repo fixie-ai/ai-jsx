@@ -111,7 +111,7 @@ function* GenerateImage() {
 
 AI.JSX will interpret each `yield`ed value as a new value which should totally overwrite the previously-yielded values, so the caller would see a progression of increasingly high-quality images.
 
-However, sometimes your data source will give you deltas, so replacing the previous contents doesn't make much sense. In this case, `yield` the [`AppendOnlyStream`](../api/modules/core_core.md#appendonlystream) symbol to indicate that `yield`ed results should be interpreted as deltas:
+However, sometimes your data source will give you deltas, so replacing the previous contents doesn't make much sense. In this case, `yield` the [`AppendOnlyStream`](../api/modules/core_render.md#appendonlystream) symbol to indicate that `yield`ed results should be interpreted as deltas:
 
 ```tsx
 import * as AI from 'ai-jsx';
@@ -128,13 +128,13 @@ function* GenerateText() {
 
 ## Component API
 
-Components take props as the first argument and [`ComponentContext`](../api/interfaces/core_core.ComponentContext) as the second:
+Components take props as the first argument and [`ComponentContext`](../api/interfaces/core_render.ComponentContext) as the second:
 
 ```tsx
 function MyComponent(props, componentContext) {}
 ```
 
-`componentContext` contains a [`render`](../api/interfaces/core_core.ComponentContext#render) method, which you can use to [render other JSX components](./rendering.md#rendering-from-a-component).
+`componentContext` contains a [`render`](../api/interfaces/core_render.ComponentContext#render) method, which you can use to [render other JSX components](./rendering.md#rendering-from-a-component).
 
 ### Context
 
@@ -173,7 +173,7 @@ Each instance of `CharacterGenerator` will use the context value set by its near
 
 See also:
 
-- API ([`packages/ai-jsx/src/core/core.ts`](../api/modules/core_core))
+- API ([`packages/ai-jsx/src/index.ts`](../api/modules/))
 - Usage example ([`packages/examples/src/context.tsx`](https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/context.tsx))
 
 ## Handling Errors
