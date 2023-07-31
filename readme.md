@@ -16,7 +16,7 @@ AI.JSX comes with the following features out-of-the-box:
 
 - **Componetized** → LLM prompt engineering through modular, reusable components.
 - **Model Support** → Use OpenAI, Anthropic, Llama2, or BYOM. Seamlessly switch between model providers and LLM config (e.g. temperature).
-- **Complete AI Toolbox** → Built-in support for Tools (ReAct pattern), Document Question and Answering, Chain of Thought, and more.
+- **Complete AI Toolbox** → Built-in support for Tools, Document Question and Answering, and more.
 - **Generative UI** → Seamlessly interweave LLM calls with standard UI components. LLM can dynamically render UI from a set of components you provide.
 - **Streaming** → Built-in streaming support.
 - **Modern Web Stack Support** → First-class support for NextJS and Create React App. (more coming soon)
