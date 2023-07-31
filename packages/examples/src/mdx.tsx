@@ -1,6 +1,7 @@
 /** @jsxImportSource ai-jsx/react */
 import * as AI from 'ai-jsx';
 import { SystemMessage, UserMessage, ChatCompletion } from 'ai-jsx/core/completion';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { showInspector } from 'ai-jsx/core/inspector';
 import { MdxSystemMessage } from 'ai-jsx/react/jit-ui/mdx';
 import { JsonChatCompletion } from 'ai-jsx/batteries/constrained-output';
@@ -113,7 +114,8 @@ function QuestionAndAnswer({ children }: { children: AI.Node }, { memo }: AI.Com
       <OpenAI chatModel="gpt-4">
         Q: {question}
         {'\n'}
-        A: <ChatCompletion>
+        A:{' '}
+        <ChatCompletion>
           <MdxSystemMessage usageExamples={usageExample} />
           <UserMessage>{question}</UserMessage>
         </ChatCompletion>
@@ -173,4 +175,3 @@ for await (const frame of rendering) {
   process.stdout.write(frame.slice(lastValue.length));
   lastValue = frame;
 }
-

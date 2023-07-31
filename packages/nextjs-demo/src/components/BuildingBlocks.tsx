@@ -133,7 +133,7 @@ export function CardList({ children }: { children: ReactNode[] }) {
 
 /**
  * Example:
- * 
+ *
     <InputWithLabel
       label="Quests Completed"
       type="number"
