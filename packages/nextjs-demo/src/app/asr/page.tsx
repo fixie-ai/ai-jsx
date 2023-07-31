@@ -1,7 +1,7 @@
 'use client';
 import '../globals.css';
 import React, { useState, useEffect, useRef } from 'react';
-import { MicManager, SpeechRecognitionFactory, SpeechRecognitionBase, Transcript } from 'ai-jsx/lib/asr/asr';
+import { MicManager, createSpeechRecognition, SpeechRecognitionBase, Transcript } from 'ai-jsx/lib/asr/asr';
 import { wordErrorRate } from 'word-error-rate';
 
 const HARVARD_SENTENCES_01_TRANSCRIPT = `Harvard list number one.
@@ -46,7 +46,7 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, link, id, costPerMinu
     return wordErrorRate(refClean, inClean);
   };
   const start = () => {
-    const recognizer = SpeechRecognitionFactory.create(id, manager!);
+    const recognizer = createSpeechRecognition(id, manager!);
     const element = textarea.current! as HTMLTextAreaElement;
     setRecognizer(recognizer);
     element.value = '';

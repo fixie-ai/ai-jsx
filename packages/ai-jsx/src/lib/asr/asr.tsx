@@ -30,6 +30,7 @@ class InputProcessor extends AudioWorkletProcessor {
 
 registerProcessor("input-processor", InputProcessor);
 `;
+const AUDIO_WORKLET_NUM_SAMPLES = 128;
 
 function bufferToBase64(buffer: ArrayBuffer) {
   const numberArray: number[] = Array.from(new Uint8Array(buffer));
@@ -54,7 +55,9 @@ class EventTargetImpl implements EventTarget {
     }
   }
   dispatchEvent(e: CustomEvent) {
-    this.listeners[e.type]?.forEach((listener) => listener(e));
+    if (e.type in this.listeners) {
+      this.listeners[e.type].forEach((listener) => listener(e));
+    }
     return true;
   }
 }
@@ -99,10 +102,10 @@ export class MicManager extends EventTargetImpl {
     this.processorNode = new AudioWorkletNode(this.context, 'input-processor');
     this.processorNode.port.onmessage = (event) => {
       this.outBuffer!.push(event.data);
-      const bufDuration = ((128 * this.outBuffer!.length) / this.sampleRate()!) * 1000;
+      const bufDuration = ((AUDIO_WORKLET_NUM_SAMPLES * this.outBuffer!.length) / this.sampleRate()!) * 1000;
       if (bufDuration >= timeslice) {
         const chunkEvent = new CustomEvent('chunk', {
-          detail: this.makePcmChunk(this.outBuffer!),
+          detail: this.makeAudioChunk(this.outBuffer!),
         });
         this.dispatchEvent(chunkEvent);
         this.outBuffer = [];
@@ -125,14 +128,21 @@ export class MicManager extends EventTargetImpl {
   sampleRate() {
     return this.context?.sampleRate;
   }
-  private makePcmChunk(buffers: Float32Array[]) {
-    const byteLength = buffers.reduce((sum, buf) => sum + buf.length, 0) * 2;
-    const pcmBuffer = new ArrayBuffer(byteLength);
-    const view = new DataView(pcmBuffer);
+  /**
+   * Converts a list of Float32Arrays to a single ArrayBuffer of 16-bit
+   * little-endian Pulse Code Modulation (PCM) audio data, which is
+   * the universal format for ASR providers.
+   * Also updates the Voice Activity Detection (VAD) state based on the
+   * average energy of the audio data.
+   */
+  private makeAudioChunk(inBuffers: Float32Array[]) {
+    const byteLength = inBuffers.reduce((sum, inBuffer) => sum + inBuffer.length, 0) * 2;
+    const outBuffer = new ArrayBuffer(byteLength);
+    const view = new DataView(outBuffer);
     let index = 0;
     let energy = 0.0;
-    buffers.forEach((buffer) => {
-      buffer.forEach((sample) => {
+    inBuffers.forEach((inBuffer) => {
+      inBuffer.forEach((sample) => {
         energy += sample * sample;
         const i16 = Math.max(-32768, Math.min(32767, Math.floor(sample * 32768)));
         view.setInt16(index, i16, true);
@@ -140,8 +150,14 @@ export class MicManager extends EventTargetImpl {
       });
       this.updateVad(energy / (index / 2));
     });
-    return pcmBuffer;
+    return outBuffer;
   }
+  /**
+   * Updates the Voice Activity Detection (VAD) state based on the
+   * average energy of a single audio buffer. This is a very primitive
+   * VAD that simply checks if the average energy is above a threshold
+   * for a certain amount of time (12800 samples @ 48KHz = 266ms)
+   */
   private updateVad(energy: number) {
     const dbfs = 10 * Math.log10(energy);
     if (dbfs < -50) {
@@ -158,6 +174,14 @@ export class MicManager extends EventTargetImpl {
   }
 }
 
+/**
+ * Represents a single transcript from a speech recognition service. The
+ * transcript should correlate to a single utterance (sentence or phrase).
+ * The final flag indicates whether the service is still processing the
+ * received audio.
+ * The latency field is optional and indicates the time in milliseconds
+ * between when VAD detected silence and the transcript was received.
+ */
 export class Transcript {
   constructor(public text: string, public final: boolean, public latency?: number) {
     this.text = text;
@@ -201,7 +225,7 @@ export class SpeechRecognitionBase extends EventTargetImpl {
     this.outBuffer = [];
     this.socket = new WebSocket(url, protocols);
     this.socket.binaryType = 'arraybuffer';
-    this.socket.onopen = (event) => {
+    this.socket.onopen = (_event) => {
       const elapsed = performance.now() - startTime;
       console.log(`${this.name} socket opened, elapsed=${elapsed.toFixed(0)}`);
       this.handleOpen();
@@ -217,7 +241,7 @@ export class SpeechRecognitionBase extends EventTargetImpl {
       }
       this.handleMessage(result);
     };
-    this.socket.onerror = (event) => {
+    this.socket.onerror = (_event) => {
       console.log(`${this.name} socket error`);
     };
     this.socket.onclose = (event) => {
@@ -341,12 +365,12 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
       if (w.t == '<end>') {
         return transcript;
       }
-      let temp = transcript;
-      if (temp && !',.?!'.includes(w.t[0])) {
-        temp += ' ';
+      let out = transcript;
+      if (out && !',.?!'.includes(w.t[0])) {
+        out += ' ';
       }
-      temp += w.t;
-      return temp;
+      out += w.t;
+      return out;
     };
     const partialTranscript = result.nfw.reduce(append, '');
     if (partialTranscript) {
@@ -458,8 +482,8 @@ export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
         this.dispatchTranscript(this.buf + result.metadata.transcript, false);
       }
     } else if (result.message == 'AddTranscript') {
-      console.log(result);
       if (result.metadata.transcript) {
+        console.log(result);
         if (!('is_eos' in result.results[0])) {
           this.buf += result.metadata.transcript;
         } else {
@@ -490,7 +514,7 @@ export class RevAISpeechRecognition extends SpeechRecognitionBase {
     super.startInternal(url);
   }
   protected handleMessage(result: any) {
-    //console.log(result);
+    // console.log(result);
     if (result.type == 'partial') {
       const text = result.elements.reduce((t: string, w: any) => `${t}${w.value} `, '');
       this.dispatchTranscript(text, false);
@@ -504,23 +528,21 @@ export class RevAISpeechRecognition extends SpeechRecognitionBase {
 /**
  * Creates a speech recoginzer of the given type (e.g., 'deepgram').
  */
-export class SpeechRecognitionFactory {
-  static create(type: string, manager: MicManager, language?: string) {
-    switch (type) {
-      case 'deepgram':
-        return new DeepgramSpeechRecognition(manager, language);
-      case 'soniox':
-        return new SonioxSpeechRecognition(manager, language);
-      case 'gladia':
-        return new GladiaSpeechRecognition(manager, language);
-      case 'aai':
-        return new AssemblyAISpeechRecognition(manager, language);
-      case 'speechmatics':
-        return new SpeechmaticsSpeechRecognition(manager, language);
-      case 'revai':
-        return new RevAISpeechRecognition(manager, language);
-      default:
-        throw new Error(`Unknown speech recognition type: ${type}`);
-    }
+export function createSpeechRecognition(type: string, manager: MicManager, language?: string) {
+  switch (type) {
+    case 'deepgram':
+      return new DeepgramSpeechRecognition(manager, language);
+    case 'soniox':
+      return new SonioxSpeechRecognition(manager, language);
+    case 'gladia':
+      return new GladiaSpeechRecognition(manager, language);
+    case 'aai':
+      return new AssemblyAISpeechRecognition(manager, language);
+    case 'speechmatics':
+      return new SpeechmaticsSpeechRecognition(manager, language);
+    case 'revai':
+      return new RevAISpeechRecognition(manager, language);
+    default:
+      throw new Error(`Unknown speech recognition type: ${type}`);
   }
 }

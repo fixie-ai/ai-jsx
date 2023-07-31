@@ -1,35 +1,47 @@
 /** @jsxImportSource ai-jsx */
 import { NextRequest, NextResponse } from 'next/server';
 // TODO(juberti): figure out why this packages make node unhappy
-//import { Deepgram  } from "@deepgram/sdk";
-//import { SpeechClient } from "@soniox/soniox-node";
+// import { Deepgram  } from "@deepgram/sdk";
+// import { SpeechClient } from "@soniox/soniox-node";
+
+type GetTokenFunction = () => Promise<string>;
+interface FunctionMap {
+  [key: string]: GetTokenFunction;
+}
 
 const KEY_LIFETIME_SECONDS = 300;
+const FUNCTION_MAP: FunctionMap = {
+  deepgram: getDeepgramToken,
+  soniox: getSonioxToken,
+  gladia: getGladiaToken,
+  revai: getRevAIToken,
+  speechmatics: getSpeechmaticsToken,
+  aai: getAssemblyAIToken,
+};
 
 export async function POST(request: NextRequest) {
   const inJson = await request.json();
-  const provider = inJson.provider;
-  let token = null;
-  if (provider == 'aai') {
-    token = await getAssemblyAIToken();
-  } else if (provider == 'soniox') {
-    token = await getSonioxToken();
-  } else if (provider == 'deepgram') {
-    token = await getDeepgramToken();
-  } else if (provider == 'gladia') {
-    token = await getGladiaToken();
-  } else if (provider == 'revai') {
-    token = await getRevAIToken();
-  } else if (provider == 'speechmatics') {
-    token = await getSpeechmaticsToken();
-  } else {
+  const provider = inJson.provider as string;
+  if (!(provider in FUNCTION_MAP)) {
     return new NextResponse(JSON.stringify({ error: 'unknown provider' }));
   }
-  return new NextResponse(JSON.stringify({ token }));
+
+  const func = FUNCTION_MAP[provider] as Function;
+  return new NextResponse(JSON.stringify({ token: await func() }));
 }
 
-async function getDeepgramToken() {
-  return process.env.DEEPGRAM_API_KEY;
+function getApiKey(keyName: string) {
+  const key = process.env[keyName];
+  if (!key) {
+    throw new Error('API key not provided ');
+  }
+  return new Promise<string>((resolve) => {
+    setTimeout(() => resolve(key), 0);
+  });
+}
+
+function getDeepgramToken() {
+  return getApiKey('DEEPGRAM_API_KEY');
   /*
   const client = new Deepgram(process.env.DEEPGRAM_API_KEY);
   const projectId = process.env.DEEPGRAM_PROJECT_ID;
@@ -43,18 +55,20 @@ async function getDeepgramToken() {
   */
 }
 
-async function getSonioxToken() {
-  //const client = new SpeechClient(process.env.SONIOX_API_KEY);
-  //return await client.getToken();
-  return process.env.SONIOX_API_KEY;
+function getSonioxToken() {
+  return getApiKey('SONIOX_API_KEY');
+  /*
+  const client = new SpeechClient(process.env.SONIOX_API_KEY);
+  return await client.getToken();
+  */
 }
 
-async function getGladiaToken() {
-  return process.env.GLADIA_API_KEY;
+function getGladiaToken() {
+  return getApiKey('GLADIA_API_KEY');
 }
 
-async function getRevAIToken() {
-  return process.env.REVAI_API_KEY;
+function getRevAIToken() {
+  return getApiKey('REVAI_API_KEY');
 }
 
 async function getSpeechmaticsToken() {
