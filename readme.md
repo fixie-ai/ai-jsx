@@ -6,7 +6,7 @@
 
 ## About AI.JSX
 
-AI.JSX is a framework for building AI applications using Javascript and JSX. With AI.JSX, you can easily orchestrate multiple Large Language Model (LLM) calls expressed as modular, reusable components, and interweave UI components with your AI components. This means you can rely on the LLM to construct your UI dynamically from a set of provided React components. AI.JSX also provides native support for tools, Document Question & Answering, and much more.
+AI.JSX is a framework for building AI applications using Javascript and JSX. With AI.JSX, you get great tools for prompt engineering and can have the LLM render React components in its response (instead of only text). This means you can provide a set of React components and let the LLM construct your UI dynamically at runtime. AI.JSX also provides native support for tools, Document Question & Answering, and much more.
 
 AI.JSX can be used to create standalone LLM applications that can be deployed anywhere Node.js is supported, or it can be used as part of a larger React application.
 
