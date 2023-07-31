@@ -8,6 +8,7 @@ import { run, compile } from '@mdx-js/mdx';
 import * as runtime from 'react/jsx-runtime';
 import { useChat } from 'ai/react';
 import _ from 'lodash';
+import remarkGFM from 'remark-gfm';
 
 export default function BuildingBlockGenerator({ topic }: { topic: string }) {
   const { messages, isLoading, append } = useChat({
@@ -48,17 +49,27 @@ export default function BuildingBlockGenerator({ topic }: { topic: string }) {
             // But we also get _jsxDev is not a function.
             // This seems surmountable but also not something I want to attend to now.
             development: false,
+            remarkPlugins: [remarkGFM]
           })
         );
       } catch {
-        // Sometimes the current output will not be parsable – that's fine.
+        console.log('Cannot parse MDX. If the stream is still coming in, this is fine. But if you were expecting this to be parsable, then there may be a bug.', aiResponse);
         return;
       }
       const { default: Content } = await run(compiled, runtime);
+
+      const components = {
+        table: (props: any) =>  <table className="min-w-full divide-y divide-gray-300" {...props} />,
+        th: (props: any) => <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900" {...props} />,
+        td: (props: any) => <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500" {...props} />,
+        h2: (props: any) => <h2 className="text-lg font-bold" {...props} />,
+        h3: (props: any) => <h2 className="text-md font-bold" {...props} />,
+        h4: (props: any) => <h2 className="text-sm uppercase font-bold" {...props} />,
+        ...BuildingBlocks
+      }
+
       setMdx(
-        <MDXProvider components={BuildingBlocks}>
-          <Content components={BuildingBlocks} />
-        </MDXProvider>
+        <Content components={components} />
       );
     })();
   }, [getAIResponse()]);

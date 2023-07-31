@@ -7,6 +7,7 @@ import { MdxSystemMessage } from 'ai-jsx/react/jit-ui/mdx';
 import { toTextStream } from 'ai-jsx/stream';
 import { Message, StreamingTextResponse } from 'ai';
 import _ from 'lodash';
+import { OpenAI } from 'ai-jsx/lib/openai';
 
 function BuildingBlocksAI({ query }: { query: string }) {
   const usageExamples = (
@@ -49,10 +50,12 @@ function BuildingBlocksAI({ query }: { query: string }) {
   );
 
   return (
-    <ChatCompletion>
-      <MdxSystemMessage usageExamples={usageExamples} />
-      <UserMessage>{query}</UserMessage>
-    </ChatCompletion>
+    <OpenAI chatModel="gpt-4">
+      <ChatCompletion>
+        <MdxSystemMessage usageExamples={usageExamples} />
+        <UserMessage>{query}</UserMessage>
+      </ChatCompletion>
+    </OpenAI>
   );
 }
 
