@@ -2,11 +2,13 @@
 import * as AI from 'ai-jsx/experimental/next';
 import { NextRequest } from 'next/server';
 import { UserMessage } from 'ai-jsx/core/completion';
-import BuildingBlocksMap from '@/components/BuildingBlocks.map';
-const { Card, ButtonGroup, Badge, Toggle } = BuildingBlocksMap;
+import * as BuildingBlocks from '@/components/BuildingBlocks';
+const { Card, ButtonGroup, Badge, Toggle } = BuildingBlocks;
 import fs from 'fs';
 import path from 'path';
 import { MdxChatCompletion } from 'ai-jsx/react/jit-ui/mdx';
+import { toTextStream } from 'ai-jsx/stream';
+import { StreamingTextResponse } from 'ai';
 
 // Flip this flag to use a fixture response. This makes it easier to iterate on the UI.
 const useFixture = false;
@@ -61,20 +63,5 @@ function BuildingBlocksAI({ query }: { query: string }) {
 export async function POST(request: NextRequest) {
   const { topic } = await request.json();
 
-  // This is an intentional constant flag.
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (useFixture) {
-    const textEncoder = new TextEncoder();
-    const fakeStream = fs.readFileSync(path.join(process.cwd(), 'src', 'app', 'recipe', 'api', 'fixture.txt'), 'utf-8');
-    return new Response(
-      new ReadableStream({
-        start(controller) {
-          controller.enqueue(textEncoder.encode(fakeStream));
-          controller.close();
-        },
-      })
-    );
-  }
-
-  return AI.toReactStream(BuildingBlocksMap, <BuildingBlocksAI query={topic} />);
+  return new StreamingTextResponse(toTextStream(<BuildingBlocksAI query={topic} />));
 }
