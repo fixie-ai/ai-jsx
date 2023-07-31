@@ -102,11 +102,6 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
     })
   }
 
-  /**
-   * This only works when the stream being piped into it is appendOnly.
-   * Can I memoize a renderable and then render it both appendOnly
-   * and tree-streamed?
-   */
   function makeDeltaTransformer() {
     let lastEmittedValue = '';
     return new TransformStream({
@@ -143,6 +138,9 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
   }
 }
 
+/**
+ * Helper function for debugging.
+ */
 async function streamToValues(stream: ReadableStream) {
   const values: any[] = [];
   
@@ -155,7 +153,7 @@ async function streamToValues(stream: ReadableStream) {
   return values;
 }
 
-// This all needs to be validate with genuine async.
+// This all needs to be validated with genuine async.
 
 const renderable = <App />
 const rendered = render(renderable);
