@@ -15,7 +15,7 @@ AI.JSX can be used to create standalone LLM applications that can be deployed an
 AI.JSX comes with the following features out-of-the-box:
 
 - **Componetized** → LLM prompt engineering through modular, reusable components.
-- **Model Support** → Use Llama2 and models from Anthropic and OpenAI. Seamlessly switch between model providers and LLM config (e.g. temperature).
+- **Model Support** → Use OpenAI, Anthropic, Llama2, or BYOM. Seamlessly switch between model providers and LLM config (e.g. temperature).
 - **Complete AI Toolbox** → Built-in support for Tools (ReAct pattern), Document Question and Answering, Chain of Thought, and more.
 - **Generative UI** → Seamlessly interweave LLM calls with standard UI components. LLM can dynamically render UI from a set of provided components.
 - **Streaming** → Built-in streaming support.
