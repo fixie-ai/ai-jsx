@@ -311,7 +311,7 @@ async function* renderStream(
        */
       logImpl.log('debug', renderable, renderId, 'Start rendering element');
       const finalResult = yield* renderingContext.render(
-        renderable.render(renderingContext, new BoundLogger(logImpl, renderId, renderable)),
+        renderable.render(renderingContext, new BoundLogger(logImpl, renderId, renderable), appendOnly),
         recursiveRenderOpts
       );
       logImpl.log('debug', renderable, renderId, { finalResult }, 'Finished rendering element');

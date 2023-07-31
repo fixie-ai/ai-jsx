@@ -4,7 +4,7 @@
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://ai-jsx.com",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "volta": {
     "extends": "../../package.json"
   },
@@ -79,6 +79,15 @@
       },
       "require": {
         "default": "./dist/cjs/core/completion.cjs"
+      }
+    },
+    "./core/conversation": {
+      "import": {
+        "types": "./dist/esm/core/conversation.d.ts",
+        "default": "./dist/esm/core/conversation.js"
+      },
+      "require": {
+        "default": "./dist/cjs/core/conversation.cjs"
       }
     },
     "./core/image-gen": {
