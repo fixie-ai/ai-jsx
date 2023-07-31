@@ -12,6 +12,7 @@ import { Logger } from './log.js';
 /** A context that is used to render an AI.JSX component. */
 export interface ComponentContext extends RenderContext {
   logger: Logger;
+  isAppendOnlyRender: boolean;
 }
 
 /** Represents a single AI.JSX component. */
@@ -32,7 +33,7 @@ export interface Element<P> {
   /** The component properties. */
   props: P;
   /** A function that renders this {@link Element} to a {@link Renderable}. */
-  render: (renderContext: RenderContext, logger: Logger) => Renderable;
+  render: (renderContext: RenderContext, logger: Logger, isAppendOnlyRender: boolean) => Renderable;
   /** The {@link RenderContext} associated with this {@link Element}. */
   [attachedContextSymbol]?: RenderContext;
 }
@@ -119,7 +120,7 @@ export function createElement<P extends { children: C | C[] }, C>(
   const result = {
     tag,
     props: propsToPass,
-    render: (ctx, logger) => tag(propsToPass, { ...ctx, logger }),
+    render: (ctx, logger, isAppendOnlyRender) => tag(propsToPass, { ...ctx, logger, isAppendOnlyRender }),
   } as Element<P>;
   Object.freeze(propsToPass);
   Object.freeze(result);

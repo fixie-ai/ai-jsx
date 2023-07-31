@@ -19,26 +19,23 @@ import {
 } from 'openai-edge';
 import { Merge, MergeExclusive } from 'type-fest';
 import {
-  AssistantMessage,
   ChatProvider,
   CompletionProvider,
-  FunctionCall,
   FunctionDefinition,
-  FunctionResponse,
   ModelProps,
   ModelPropsWithChildren,
-  SystemMessage,
-  UserMessage,
   getParametersSchema,
 } from '../core/completion.js';
+import { AssistantMessage, FunctionCall, renderToConversation } from '../core/conversation.js';
 import { AIJSXError, ErrorCode, HttpError } from '../core/errors.js';
 import { Image, ImageGenPropsWithChildren } from '../core/image-gen.js';
 import { Logger } from '../core/log.js';
 import * as AI from '../index.js';
-import { Node, PropsOfComponent } from '../index.js';
+import { Node } from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
 import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { CreateChatCompletionRequest } from 'openai';
+import { debug } from '../core/debug.js';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -324,62 +321,49 @@ export async function* OpenAIChatModel(
 
   yield AI.AppendOnlyStream;
 
-  const messageElements = await render(props.children, {
-    stop: (e) =>
-      e.tag == SystemMessage ||
-      e.tag == UserMessage ||
-      e.tag == AssistantMessage ||
-      e.tag == FunctionCall ||
-      e.tag == FunctionResponse,
-  });
-
+  const conversationMessages = await renderToConversation(props.children, render);
+  logger.debug({ messages: conversationMessages.map((m) => debug(m.element, true)) }, 'Got input conversation');
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
-    messageElements.filter(AI.isElement).map(async (message) => {
-      switch (message.tag) {
-        case SystemMessage:
+    conversationMessages.map(async (message) => {
+      switch (message.type) {
+        case 'system':
           return {
             role: 'system',
-            content: await render(message),
+            content: await render(message.element),
           };
-        case UserMessage:
+        case 'user':
           return {
             role: 'user',
-            content: await render(message),
-            name: (message.props as PropsOfComponent<typeof UserMessage>).name,
+            content: await render(message.element),
+            name: message.element.props.name,
           };
-        case AssistantMessage:
+        case 'assistant':
           return {
             role: 'assistant',
-            content: await render(message),
+            content: await render(message.element),
           };
-        case FunctionCall:
+        case 'functionCall':
           return {
             role: 'assistant',
             content: '',
             function_call: {
-              name: message.props.name,
-              arguments: JSON.stringify(message.props.args),
+              name: message.element.props.name,
+              arguments: JSON.stringify(message.element.props.args),
             },
           };
-        case FunctionResponse:
+        case 'functionResponse':
           return {
             role: 'function',
-            name: message.props.name,
-            content: await render(message.props.children),
+            name: message.element.props.name,
+            content: await render(message.element.props.children),
           };
-        default:
-          throw new AIJSXError(
-            `ChatCompletion's prompts must be SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse but this child was ${message.tag.name}`,
-            ErrorCode.ChatCompletionUnexpectedChild,
-            'internal'
-          );
       }
     })
   );
 
   if (!messages.length) {
     throw new AIJSXError(
-      "ChatCompletion must have at least child that's a SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse, but no such children were found.",
+      "ChatCompletion must have at least one child that's a SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse, but no such children were found.",
       ErrorCode.ChatCompletionMissingChildren,
       'user'
     );
@@ -444,9 +428,14 @@ export async function* OpenAIChatModel(
     return next.value.choices[0].delta;
   }
 
+  let isAssistant = false;
   let delta = await advance();
   while (delta !== null) {
     if (delta.role === 'assistant') {
+      isAssistant = true;
+    }
+
+    if (isAssistant && delta.content) {
       // Memoize the stream to ensure it renders only once.
       const assistantStream = memo(
         (async function* (): AI.RenderableStream {
