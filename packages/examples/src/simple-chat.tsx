@@ -108,7 +108,7 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
 
     writeToStdout: () =>
       // @ts-expect-error
-      new ReadableWebStreamToNodeStream.ReadableWebToNodeStream(makeDeltaStream()).pipe(process.stdout),
+      new ReadableWebStreamToNodeStream.ReadableWebToNodeStream(appendStreamRenderAdapter.createDeltaStream()).pipe(process.stdout),
   };
 }
 
