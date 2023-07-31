@@ -153,9 +153,9 @@ const mappedRender = render(renderable, {
   map: (frame) => `frame prefix: ${frame}`,
 });
 console.log('Tree stream', await streamToValues(mappedRender.treeStream()));
-// console.log('Append stream', await streamToValues(mappedRender.appendStream()));
-// console.log('Deltas', await streamToValues(mappedRender.deltaStream()));
-// console.log('Final result:', await mappedRender.result);
+console.log('Append stream', await streamToValues(mappedRender.appendStream()));
+console.log('Deltas', await streamToValues(mappedRender.deltaStream()));
+console.log('Final result:', await mappedRender.result);
 
 console.log();
 console.log('=== Third Render ===');
