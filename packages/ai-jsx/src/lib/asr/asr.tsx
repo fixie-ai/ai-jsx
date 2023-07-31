@@ -175,6 +175,13 @@ export class MicManager extends EventTargetImpl {
 }
 
 /**
+ * Defines a function that can be used to retrieve an ephemeral access token
+ * for us with a speech recognition service. Typically, this will be a
+ * fetch request to a server that will return an opaque token.
+ */
+export type GetTokenFunction = (provider: string) => Promise<string>;
+
+/**
  * Represents a single transcript from a speech recognition service. The
  * transcript should correlate to a single utterance (sentence or phrase).
  * The final flag indicates whether the service is still processing the
@@ -201,23 +208,23 @@ export class SpeechRecognitionBase extends EventTargetImpl {
   private outBuffer: ArrayBuffer[] = [];
   protected socket?: WebSocket;
 
-  constructor(protected manager: MicManager, protected name: string, protected language?: string) {
+  constructor(
+    protected name: string,
+    protected manager: MicManager,
+    protected tokenFunc: GetTokenFunction,
+    protected language?: string,
+    protected model?: string
+  ) {
     super();
   }
-
   close() {
     if (this.socket) {
       this.sendClose();
       this.socket.close();
     }
   }
-  protected async fetchToken() {
-    const response = await fetch('/asr/api', {
-      method: 'POST',
-      body: JSON.stringify({ provider: this.name }),
-    });
-    const json = await response.json();
-    return json.token;
+  protected fetchToken() {
+    return this.tokenFunc(this.name);
   }
   protected startInternal(url: string, protocols?: string[]) {
     const startTime = performance.now();
@@ -294,14 +301,15 @@ export class SpeechRecognitionBase extends EventTargetImpl {
  */
 export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
   private buf: string;
-  constructor(manager: MicManager, language?: string) {
-    super(manager, 'deepgram', language);
+  constructor(manager: MicManager, tokenFunc: GetTokenFunction, language?: string, model?: string) {
+    super('deepgram', manager, tokenFunc, language, model);
     this.buf = '';
   }
   async start() {
     this.buf = '';
     const params = new URLSearchParams({
-      model: 'nova',
+      tier: 'nova',
+      model: this.model ?? 'general',
       version: 'latest',
       encoding: 'linear16',
       channels: '1',
@@ -342,12 +350,12 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
  */
 export class SonioxSpeechRecognition extends SpeechRecognitionBase {
   private token?: string;
-  constructor(manager: MicManager, language?: string) {
-    super(manager, 'soniox', language);
+  constructor(manager: MicManager, tokenFunc: GetTokenFunction, language?: string) {
+    super('soniox', manager, tokenFunc, language);
   }
   async start() {
-    this.token = await this.fetchToken();
     super.startInternal('wss://api.soniox.com/transcribe-websocket');
+    this.token = await this.fetchToken();
   }
   protected handleOpen() {
     const obj = {
@@ -391,12 +399,12 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
  */
 export class GladiaSpeechRecognition extends SpeechRecognitionBase {
   private token?: string;
-  constructor(manager: MicManager, language?: string) {
-    super(manager, 'gladia', language);
+  constructor(manager: MicManager, tokenFunc: GetTokenFunction, language?: string) {
+    super('gladia', manager, tokenFunc, language);
   }
   async start() {
-    this.token = await this.fetchToken();
     super.startInternal('wss://api.gladia.io/audio/text/audio-transcription');
+    this.token = await this.fetchToken();
   }
   protected handleOpen() {
     const obj = {
@@ -425,8 +433,8 @@ export class GladiaSpeechRecognition extends SpeechRecognitionBase {
  * Speech recognizer that uses the AssemblyAI service.
  */
 export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
-  constructor(manager: MicManager, language?: string) {
-    super(manager, 'aai', language);
+  constructor(manager: MicManager, tokenFunc: GetTokenFunction, language?: string) {
+    super('aai', manager, tokenFunc, language);
   }
   async start() {
     super.startInternal(
@@ -451,8 +459,8 @@ export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
  */
 export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
   private buf: string;
-  constructor(manager: MicManager, language?: string) {
-    super(manager, 'speechmatics', language);
+  constructor(manager: MicManager, tokenFunc: GetTokenFunction, language?: string) {
+    super('speechmatics', manager, tokenFunc, language);
     this.buf = '';
   }
   async start() {
@@ -499,8 +507,8 @@ export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
  * Speech recognizer that uses the Rev AI service.
  */
 export class RevAISpeechRecognition extends SpeechRecognitionBase {
-  constructor(manager: MicManager, language?: string) {
-    super(manager, 'revai', language);
+  constructor(manager: MicManager, tokenFunc: GetTokenFunction, language?: string) {
+    super('revai', manager, tokenFunc, language);
   }
   async start() {
     const params = new URLSearchParams({
@@ -528,20 +536,26 @@ export class RevAISpeechRecognition extends SpeechRecognitionBase {
 /**
  * Creates a speech recoginzer of the given type (e.g., 'deepgram').
  */
-export function createSpeechRecognition(type: string, manager: MicManager, language?: string) {
+export function createSpeechRecognition(
+  type: string,
+  manager: MicManager,
+  tokenFunc: GetTokenFunction,
+  language?: string,
+  model?: string
+) {
   switch (type) {
     case 'deepgram':
-      return new DeepgramSpeechRecognition(manager, language);
+      return new DeepgramSpeechRecognition(manager, tokenFunc, language, model);
     case 'soniox':
-      return new SonioxSpeechRecognition(manager, language);
+      return new SonioxSpeechRecognition(manager, tokenFunc, language);
     case 'gladia':
-      return new GladiaSpeechRecognition(manager, language);
+      return new GladiaSpeechRecognition(manager, tokenFunc, language);
     case 'aai':
-      return new AssemblyAISpeechRecognition(manager, language);
+      return new AssemblyAISpeechRecognition(manager, tokenFunc, language);
     case 'speechmatics':
-      return new SpeechmaticsSpeechRecognition(manager, language);
+      return new SpeechmaticsSpeechRecognition(manager, tokenFunc, language);
     case 'revai':
-      return new RevAISpeechRecognition(manager, language);
+      return new RevAISpeechRecognition(manager, tokenFunc, language);
     default:
       throw new Error(`Unknown speech recognition type: ${type}`);
   }

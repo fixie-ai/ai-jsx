@@ -16,10 +16,24 @@ const HARVARD_SENTENCES_01_TRANSCRIPT = `Harvard list number one.
      Four hours of steady work faced us.     
      A large size in stockings is hard to sell.`;
 
+/**
+ * Retrieves an ephemeral token from the server for the given recognition service.
+ */
+async function GetToken(provider: string) {
+  const response = await fetch('/asr/api', {
+    method: 'POST',
+    body: JSON.stringify({ provider }),
+  });
+  const json = await response.json();
+  return json.token;
+}
+
 interface AsrComponentProps {
   name: string;
   link: string;
   id: string;
+  model?: string;
+  language?: string;
   costPerMinute: number;
   manager: MicManager | null;
 }
@@ -46,7 +60,7 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, link, id, costPerMinu
     return wordErrorRate(refClean, inClean);
   };
   const start = () => {
-    const recognizer = createSpeechRecognition(id, manager!);
+    const recognizer = createSpeechRecognition(id, manager!, GetToken);
     const element = textarea.current! as HTMLTextAreaElement;
     setRecognizer(recognizer);
     element.value = '';
