@@ -7,11 +7,11 @@ export default function BuildingBlocksPage({ searchParams }: { searchParams: any
     'Summarize this JSON blob for me, using a card: {"reservation":{"reservationId":"1234567890","passengerName":"John Doe","flightNumber":"ABC123","origin":"Los Angeles","destination":"New York","departureDate":"2022-01-01","departureTime":"09:00","arrivalDate":"2022-01-01","arrivalTime":"15:00"}}';
   const query = searchParams.q ?? defaultValue;
   return (
-    <>
+    <div>
       <ResultContainer title="Building Blocks" description="In this demo, the AI can use building block UI components">
         <InputPrompt label="Ask me anything..." defaultValue={query} />
-        <BuildingBlocks topic={query} />
       </ResultContainer>
-    </>
+      <BuildingBlocks topic={query} />
+    </div>
   );
 }

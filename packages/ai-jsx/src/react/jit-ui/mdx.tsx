@@ -23,7 +23,7 @@ import _ from 'lodash';
  * @see https://docs.ai-jsx.com/guides/mdx
  * @see https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/mdx.tsx
  */
-export async function* MdxChatCompletion(
+export async function MdxChatCompletion(
   { children, usageExamples, hydrate }: { children: AI.Node; usageExamples: React.ReactNode; hydrate?: boolean },
   { render, logger }: AI.ComponentContext
 ) {
@@ -141,116 +141,118 @@ export async function* MdxChatCompletion(
 </Card>
 post text`}</>
 
-  if (!hydrate) {
-    return completion;
-  }
+  return completion;
 
-  // Instead of this, should we just be sending the raw MDX to the client,
-  // then having an MDX component do the on-the-fly compiling?
-  // How else will we customize what everything gets compiled to?
-  async function hydrateMDX(mdx: string, components: ReturnType<typeof collectComponents>) {
-    let ast: Node | undefined;
+  // if (!hydrate) {
+  //   return completion;
+  // }
 
-    function rehypePlugin() {
-      return (_ast: Node) => {
-        ast = _ast;
-      };
-    }
-    const compileResult = await compile(mdx, {
-      rehypePlugins: [rehypePlugin],
-    });
+  // // Instead of this, should we just be sending the raw MDX to the client,
+  // // then having an MDX component do the on-the-fly compiling?
+  // // How else will we customize what everything gets compiled to?
+  // async function hydrateMDX(mdx: string, components: ReturnType<typeof collectComponents>) {
+  //   let ast: Node | undefined;
 
-    const hydrated = convertAstToComponent(ast!, components);
-    logger.warn({ hydrated, ast, compileResult }, 'Hydrating MDX');
+  //   function rehypePlugin() {
+  //     return (_ast: Node) => {
+  //       ast = _ast;
+  //     };
+  //   }
+  //   const compileResult = await compile(mdx, {
+  //     rehypePlugins: [rehypePlugin],
+  //   });
 
-    return (
-      <AI.React>
-        {convertAstToComponent(ast!, components)}
-        {/* <div>{mdx}</div> */}
-        {/* {React.createElement('div', { children: mdx })} */}
-      </AI.React>
-    );
-  }
+  //   const hydrated = convertAstToComponent(ast!, components);
+  //   logger.warn({ hydrated, ast, compileResult }, 'Hydrating MDX');
 
-  // I think we just need to use an honest markdown renderer here.
+  //   return (
+  //     <AI.React>
+  //       {convertAstToComponent(ast!, components)}
+  //       {/* <div>{mdx}</div> */}
+  //       {/* {React.createElement('div', { children: mdx })} */}
+  //     </AI.React>
+  //   );
+  // }
 
-  function convertAstToComponent(ast: Node, components: ReturnType<typeof collectComponents>): React.ReactNode {
-    function convertAstToComponentRec(ast: Node): React.ReactNode {
-      const { type, tagName, children = [], name, attributes = [] } = ast;
+  // // I think we just need to use an honest markdown renderer here.
 
-      switch (type) {
-        case 'root': {
-          return <div>{_.compact(children.map(convertAstToComponentRec))}</div>;
-        }
-        case 'element': {
-          // return <div>{tagName} {_.compact(children.map(convertAstToComponentRec))}</div>;
-          return React.createElement(tagName!, {}, ...[tagName, ..._.compact(children.map(convertAstToComponentRec))]);
-        }
-        case 'mdxJsxTextElement':
-        case 'mdxJsxFlowElement': {
-          const componentName = name!;
-          // @ts-expect-error
-          const props = attributes.reduce<Jsonifiable>((acc: any, attr: any) => {
-            if (attr.value?.type) {
-              // E.g. <A b={null} />
-              throw new Error(
-                `Unimplemented code path: handling a React component with a non-trivial prop ${JSON.stringify(
-                  attr.value,
-                  null,
-                  2
-                )}`
-              );
-            }
-            acc[attr.name] = attr.value === null ? true : attr.value;
-            return acc;
-          }, {});
+  // function convertAstToComponent(ast: Node, components: ReturnType<typeof collectComponents>): React.ReactNode {
+  //   function convertAstToComponentRec(ast: Node): React.ReactNode {
+  //     const { type, tagName, children = [], name, attributes = [] } = ast;
 
-          const Component = components[componentName];
-          if (!Component) {
-            logger.warn(
-              { component: componentName },
-              `Ignoring component "${componentName}" that wasn't present in the example. ` +
-                'You may need to adjust the prompt or include an example of this component.'
-            );
-            return null;
-          }
+  //     switch (type) {
+  //       case 'root': {
+  //         return <div>{_.compact(children.map(convertAstToComponentRec))}</div>;
+  //       }
+  //       case 'element': {
+  //         // return <div>{tagName} {_.compact(children.map(convertAstToComponentRec))}</div>;
+  //         return React.createElement(tagName!, {}, ...[tagName, ..._.compact(children.map(convertAstToComponentRec))]);
+  //       }
+  //       case 'mdxJsxTextElement':
+  //       case 'mdxJsxFlowElement': {
+  //         const componentName = name!;
+  //         // @ts-expect-error
+  //         const props = attributes.reduce<Jsonifiable>((acc: any, attr: any) => {
+  //           if (attr.value?.type) {
+  //             // E.g. <A b={null} />
+  //             throw new Error(
+  //               `Unimplemented code path: handling a React component with a non-trivial prop ${JSON.stringify(
+  //                 attr.value,
+  //                 null,
+  //                 2
+  //               )}`
+  //             );
+  //           }
+  //           acc[attr.name] = attr.value === null ? true : attr.value;
+  //           return acc;
+  //         }, {});
 
-          // return <div>{JSON.stringify(ast)}</div>
-          // return React.createElement(Component, props, _.compact(children.map(convertAstToComponentRec)));
-          // console.log({Component}, 'rendering component');
-          return <Component {...props}>{_.compact(children.map(convertAstToComponentRec))}</Component>;
-        }
-        case 'text': {
-          if (ast.value === '\n') {
-            return <br />;
-          }
-          return <span>{[ast.value]}</span>;
-        }
-        // We handle the imports separately.
-        case 'mdxjsEsm': {
-          return null;
-        }
-        default: {
-          throw new Error(`Unhandled MDX AST type: ${JSON.stringify(ast, null, 2)}`);
-        }
-      }
-    }
-    return convertAstToComponentRec(ast);
-  }
+  //         const Component = components[componentName];
+  //         if (!Component) {
+  //           logger.warn(
+  //             { component: componentName },
+  //             `Ignoring component "${componentName}" that wasn't present in the example. ` +
+  //               'You may need to adjust the prompt or include an example of this component.'
+  //           );
+  //           return null;
+  //         }
 
-  const renderedCompletion = render(completion);
+  //         // return <div>{JSON.stringify(ast)}</div>
+  //         // return React.createElement(Component, props, _.compact(children.map(convertAstToComponentRec)));
+  //         // console.log({Component}, 'rendering component');
+  //         return <Component {...props}>{_.compact(children.map(convertAstToComponentRec))}</Component>;
+  //       }
+  //       case 'text': {
+  //         if (ast.value === '\n') {
+  //           return <br />;
+  //         }
+  //         return <span>{[ast.value]}</span>;
+  //       }
+  //       // We handle the imports separately.
+  //       case 'mdxjsEsm': {
+  //         return null;
+  //       }
+  //       default: {
+  //         throw new Error(`Unhandled MDX AST type: ${JSON.stringify(ast, null, 2)}`);
+  //       }
+  //     }
+  //   }
+  //   return convertAstToComponentRec(ast);
+  // }
 
-  for await (const frame of renderedCompletion) {
-    try {
-      yield hydrateMDX(frame, components);
-      logger.trace({ frame }, 'Yielding parsable frame');
-    } catch {
-      // Make sure we only yield parsable frames.
-      logger.trace({ frame }, 'Not yielding unparsable frame');
-    }
-  }
-  // TODO: do not assume the last frame is parsable.
-  return hydrateMDX(await renderedCompletion, components);
+  // const renderedCompletion = render(completion);
+
+  // for await (const frame of renderedCompletion) {
+  //   try {
+  //     yield hydrateMDX(frame, components);
+  //     logger.trace({ frame }, 'Yielding parsable frame');
+  //   } catch {
+  //     // Make sure we only yield parsable frames.
+  //     logger.trace({ frame }, 'Not yielding unparsable frame');
+  //   }
+  // }
+  // // TODO: do not assume the last frame is parsable.
+  // return hydrateMDX(await renderedCompletion, components);
 }
 
 interface Node {

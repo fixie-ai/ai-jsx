@@ -294,7 +294,7 @@ export function CheckboxList({ items }: { items: { id: string; title: string; de
   );
 }
 
-export default function ActionPanel({
+export function ActionPanel({
   title,
   description,
   buttonLabel,
