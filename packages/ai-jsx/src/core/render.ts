@@ -63,7 +63,7 @@ export interface Context<T> {
   [contextKey]: { defaultValue: T; userContextSymbol: symbol };
 }
 
-interface RenderOpts<TIntermediate = string, TFinal = string> {
+export interface RenderOpts<TIntermediate = string, TFinal = string> {
   /**
    * Instructs rendering to stop rendering on certain elements. When specified,
    * rendering will return an array of strings and `Element`s rather than a

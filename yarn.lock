@@ -12362,6 +12362,7 @@ __metadata:
     pino-pretty: ^10.0.0
     prompt-sync: ^4.2.0
     react: ^18.2.0
+    readable-web-to-node-stream: ^3.0.2
     type-fest: ^3.12.0
     typescript: ^5.1.3
     uuid: ^9.0.0
@@ -20574,6 +20575,15 @@ __metadata:
     events: ^3.3.0
     process: ^0.11.10
   checksum: cc1630c2de134aee92646e77b1770019633000c408fd48609babf2caa53f00ca794928023aa9ad3d435a1044cec87d2ce7e2b7389dd1caf948b65c175edb7f52
+  languageName: node
+  linkType: hard
+
+"readable-web-to-node-stream@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "readable-web-to-node-stream@npm:3.0.2"
+  dependencies:
+    readable-stream: ^3.6.0
+  checksum: 8c56cc62c68513425ddfa721954875b382768f83fa20e6b31e365ee00cbe7a3d6296f66f7f1107b16cd3416d33aa9f1680475376400d62a081a88f81f0ea7f9c
   languageName: node
   linkType: hard
 

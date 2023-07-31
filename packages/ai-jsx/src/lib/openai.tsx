@@ -425,14 +425,14 @@ export async function* OpenAIChatModel(
 
     return Promise.resolve();
   }
-  iteration++;
-  await sleep();
-  yield `first ${iteration} `
-  await sleep();
-  yield `second ${iteration} `
-  await sleep();
-  yield `third ${iteration}`
-  return AI.AppendOnlyStream;
+  // iteration++;
+  // await sleep();
+  // yield `first ${iteration} `
+  // await sleep();
+  // yield `second ${iteration} `
+  // await sleep();
+  // yield `third ${iteration}`
+  // return AI.AppendOnlyStream;
 
   logger.debug({ chatCompletionRequest }, 'Calling createChatCompletion');
   const chatResponse = await openai.createChatCompletion(chatCompletionRequest);

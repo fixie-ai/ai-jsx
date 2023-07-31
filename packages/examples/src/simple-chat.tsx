@@ -1,6 +1,7 @@
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 // import { showInspector } from 'ai-jsx/core/inspector';
 import * as AI from 'ai-jsx';
+import ReadableWebStreamToNodeStream from 'readable-web-to-node-stream';
 
 function App() {
   return (
@@ -13,16 +14,6 @@ function App() {
 
 // showInspector(<App />);
 
-async function* renderableMock() {
-  yield 'first '
-  yield 'first second '
-  yield 'first second third'
-}
-
-// class RenderObserver {
-//   constructor()  
-// }
-
 /* eslint-disable no-undef */
 
 // function sleep() {
@@ -34,18 +25,18 @@ async function* renderableMock() {
 
 function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
   const mapFn = opts?.map ? opts.map : (x: string) => x;
-  
+
   function makeRenderAdapter(renderResult: AI.RenderResult<string, string>) {
     let lastFrame = mapFn('');
     let done = false;
     let resolveNextFrameAvailable: (value?: unknown) => void;
-    let nextFrameAvailable = new Promise(resolve => {
+    let nextFrameAvailable = new Promise((resolve) => {
       resolveNextFrameAvailable = resolve;
     });
-  
+
     let resolveFinalResult;
-    let finalResult = new Promise(resolve => {
-      resolveFinalResult = resolve
+    let finalResult = new Promise((resolve) => {
+      resolveFinalResult = resolve;
     });
 
     (async () => {
@@ -54,27 +45,27 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
         // console.log({frame, loopIteration: loopIteration++});
         lastFrame = mapFn(frame);
         resolveNextFrameAvailable!();
-  
-        nextFrameAvailable = new Promise(resolve => {
+
+        nextFrameAvailable = new Promise((resolve) => {
           resolveNextFrameAvailable = resolve;
-        })
+        });
       }
       done = true;
       resolveFinalResult!(lastFrame);
-    })() 
+    })();
 
     return {
       getLastFrame: () => lastFrame,
       getDone: () => done,
       getResolveNextFrameAvailable: () => resolveNextFrameAvailable,
-      finalResult
-    }
+      finalResult,
+    };
   }
 
-  const renderContext = AI.createRenderContext(/* take logger */); 
+  const renderContext = AI.createRenderContext(/* take logger */);
   const memoized = renderContext.memo(renderable);
   const treeStreamRender = AI.createRenderContext().render(memoized);
-  const appendStreamRender = AI.createRenderContext().render(memoized, {appendOnly: true});
+  const appendStreamRender = AI.createRenderContext().render(memoized, { appendOnly: true });
 
   const treeStreamRenderAdapter = makeRenderAdapter(treeStreamRender);
   const appendStreamRenderAdapter = makeRenderAdapter(appendStreamRender);
@@ -98,19 +89,19 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
           controller.close();
         }
         await renderAdapter.getResolveNextFrameAvailable();
-      }
-    })
+      },
+    });
   }
 
   function makeDeltaTransformer() {
     let lastEmittedValue = '';
     return new TransformStream({
       transform(latestFrame, controller) {
-        const delta = latestFrame.slice(lastEmittedValue.length)
+        const delta = latestFrame.slice(lastEmittedValue.length);
         lastEmittedValue = latestFrame;
         controller.enqueue(delta);
-      }
-    })  
+      },
+    });
   }
 
   function makeDeltaStream() {
@@ -124,18 +115,10 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
     // We could pull the final result from either adapter – they're equivalent.
     result: appendStreamRenderAdapter.finalResult,
 
-    writeToStdout: async () => {
-      const reader = makeDeltaStream().getReader();
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
-        process.stdout.write(value);
-      }
-    }
-  }
+    writeToStdout: () =>
+      // @ts-expect-error
+      new ReadableWebStreamToNodeStream.ReadableWebToNodeStream(makeDeltaStream()).pipe(process.stdout),
+  };
 }
 
 /**
@@ -143,50 +126,54 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
  */
 async function streamToValues(stream: ReadableStream) {
   const values: any[] = [];
-  
-  await stream.pipeTo(new WritableStream({
-    write(chunk) {
-      values.push(chunk);
-    }
-  }))
+
+  await stream.pipeTo(
+    new WritableStream({
+      write(chunk) {
+        values.push(chunk);
+      },
+    })
+  );
 
   return values;
 }
 
 // This all needs to be validated with genuine async.
 
-const renderable = <App />
+const renderable = <App />;
 const rendered = render(renderable);
-console.log('=== First Render ===')
+console.log('=== First Render ===');
 // You can consume a stream multiple times.
-console.log(await Promise.all([
-  streamToValues(rendered.treeStream()),
-  streamToValues(rendered.treeStream()),
-  streamToValues(rendered.deltaStream()),
-]))
+console.log(
+  await Promise.all([
+    streamToValues(rendered.treeStream()),
+    streamToValues(rendered.treeStream()),
+    streamToValues(rendered.deltaStream()),
+  ])
+);
 // If you consume a stream after the render is complete, you just get one chunk with the final result.
-console.log(await streamToValues(rendered.treeStream()))
-console.log('Deltas', await streamToValues(rendered.deltaStream()))
-console.log('Final result:', await rendered.result)
+console.log(await streamToValues(rendered.treeStream()));
+console.log('Deltas', await streamToValues(rendered.deltaStream()));
+console.log('Final result:', await rendered.result);
 
 console.log();
-console.log('=== Second Render ===')
+console.log('=== Second Render ===');
 // Pass a single map function, and it's applied to intermediate and the final results.
 const mappedRender = render(renderable, {
-  map: frame => `frame prefix: ${frame}`
-})
-console.log('Tree stream', await streamToValues(mappedRender.treeStream()))
-console.log('Append stream', await streamToValues(mappedRender.appendStream()))
-console.log('Deltas', await streamToValues(mappedRender.deltaStream()))
-console.log('Final result:', await mappedRender.result)
+  map: (frame) => `frame prefix: ${frame}`,
+});
+console.log('Tree stream', await streamToValues(mappedRender.treeStream()));
+console.log('Append stream', await streamToValues(mappedRender.appendStream()));
+console.log('Deltas', await streamToValues(mappedRender.deltaStream()));
+console.log('Final result:', await mappedRender.result);
 
 console.log();
-console.log('=== Third Render ===')
+console.log('=== Third Render ===');
 const renderForAppendStream = render(renderable);
 console.log(await streamToValues(renderForAppendStream.treeStream()));
 console.log(await streamToValues(renderForAppendStream.appendStream()));
 
 console.log();
-console.log('=== Fourth Render: writing to stdout ===')
+console.log('=== Fourth Render: writing to stdout ===');
 await render(renderable).writeToStdout();
-console.log('\nDone writing to stdout')
+console.log('\nDone writing to stdout');
