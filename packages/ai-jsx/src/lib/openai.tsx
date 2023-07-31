@@ -243,8 +243,6 @@ async function checkOpenAIResponse<M extends OpenAIMethod>(response: Response, l
   }
 }
 
-let iteration = 0;
-
 /**
  * Represents an OpenAI text completion model (e.g., `text-davinci-003`).
  */
@@ -412,28 +410,6 @@ export async function* OpenAIChatModel(
     stream: true,
   };
 
-  function sleep() {
-    // return new Promise(resolve => setTimeout(resolve, 500));
-
-    // return new Promise<void>((resolve) => {
-    //   console.log('timeout start');
-    //   setTimeout(() => {
-    //     console.log('timeout done');
-    //     resolve();
-    //   }, 1000);
-    // })
-
-    return Promise.resolve();
-  }
-  // iteration++;
-  // await sleep();
-  // yield `first ${iteration} `
-  // await sleep();
-  // yield `second ${iteration} `
-  // await sleep();
-  // yield `third ${iteration}`
-  // return AI.AppendOnlyStream;
-
   logger.debug({ chatCompletionRequest }, 'Calling createChatCompletion');
   const chatResponse = await openai.createChatCompletion(chatCompletionRequest);
 
@@ -470,7 +446,6 @@ export async function* OpenAIChatModel(
 
   let delta = await advance();
   while (delta !== null) {
-    // @ts-ignore
     if (delta.role === 'assistant') {
       // Memoize the stream to ensure it renders only once.
       const assistantStream = memo(
