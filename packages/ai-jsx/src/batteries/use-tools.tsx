@@ -11,7 +11,7 @@ import {
   SystemMessage,
   UserMessage,
 } from '../core/completion.js';
-import { Node, RenderContext, ComponentContext } from '../index.js';
+import { Node, RenderContext, ComponentContext, isElement } from '../index.js';
 import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
@@ -197,14 +197,21 @@ export interface UseToolsProps {
  * ```
  *
  */
-export async function* UseTools(props: UseToolsProps, { render }: RenderContext) {
+export async function UseTools(props: UseToolsProps, { render, memo }: RenderContext) {
   try {
-    const rendered = yield* render(<UseToolsFunctionCall {...props} />, {
-      // TODO: ErrorBoundaries should be able to preserve the conversational structure, but they can't currently.
+    // TODO: ErrorBoundaries should be able to preserve the conversational structure, but they can't currently.
+    // So instead we start rendering the function call until it yields any conversational message. If we see one,
+    // we know that the <ChatCompletion> didn't immediately fail.
+    const memoizedFunctionCall = memo(<UseToolsFunctionCall {...props} />);
+    for await (const containsElement of render(memoizedFunctionCall, {
       stop: isConversationalComponent,
-      map: (x) => x,
-    });
-    return rendered;
+      map: (frame) => frame.find(isElement) !== undefined,
+    })) {
+      if (containsElement) {
+        break;
+      }
+    }
+    return memoizedFunctionCall;
   } catch (e: any) {
     if (e.code === ErrorCode.ChatModelDoesNotSupportFunctions) {
       return <UseToolsPromptEngineered {...props} />;
@@ -226,8 +233,8 @@ export async function UseToolsFunctionCall(props: UseToolsProps, { render }: Com
               return <FunctionResponse name={name}>{await props.tools[name].func(args)}</FunctionResponse>;
             } catch (e: any) {
               return (
-                <FunctionResponse name={name}>
-                  Function call to {name} failed with error: {e.message}.
+                <FunctionResponse failed name={name}>
+                  {e.message}
                 </FunctionResponse>
               );
             }

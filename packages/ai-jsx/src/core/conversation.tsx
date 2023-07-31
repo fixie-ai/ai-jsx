@@ -119,12 +119,20 @@ export function FunctionCall({
  *    ==> "That would be 83,076."
  * ```
  */
-export async function FunctionResponse(
-  { name, children }: { name: string; children: Node },
-  { render }: AI.ComponentContext
-) {
-  const output = await render(children);
-  return `function ${name} returns ${output}`;
+export function FunctionResponse({ name, failed, children }: { name: string; failed?: boolean; children: Node }) {
+  if (failed) {
+    return (
+      <>
+        function {name} failed with {children}
+      </>
+    );
+  }
+
+  return (
+    <>
+      function {name} returned {children}
+    </>
+  );
 }
 
 interface ConversationMessageType<T, C extends AI.Component<any>> {
@@ -145,12 +153,8 @@ export type ConversationMessage =
 /** @hidden */
 export function isConversationalComponent(element: AI.Element<any>): boolean {
   return (
-    element.tag === UserMessage ||
-    element.tag === AssistantMessage ||
-    element.tag === SystemMessage ||
-    element.tag === FunctionCall ||
-    element.tag === FunctionResponse
-  );
+    [UserMessage, AssistantMessage, SystemMessage, FunctionCall, FunctionResponse] as AI.Component<any>[]
+  ).includes(element.tag);
 }
 
 function toConversationMessages(partialRendering: AI.PartiallyRendered[]): ConversationMessage[] {
@@ -179,10 +183,7 @@ function toConversationMessages(partialRendering: AI.PartiallyRendered[]): Conve
 }
 
 /** @hidden */
-export async function renderToConversation(
-  conversation: AI.Node,
-  render: AI.ComponentContext['render']
-): Promise<ConversationMessage[]> {
+export async function renderToConversation(conversation: AI.Node, render: AI.ComponentContext['render']) {
   return toConversationMessages(await render(conversation, { stop: isConversationalComponent }));
 }
 
@@ -195,8 +196,23 @@ export async function renderToConversation(
  *
  * @example
  * ```tsx
- *    <Converse reply={(messages) => messages[0].type === "user" ? <AssistantMessage>Hello there!</AssistantMessage> : null}>
- *      <UserMessage>Hello!</UserMessage>
+ *    <Converse reply={function (messages, fullConversation) {
+ *        const lastMessage = messages[messages.length - 1];
+ *        if (lastMessage.type === "user") {
+ *          return (
+ *            <ChatCompletion functions={functions}>
+ *              {fullConversation.map(msg => msg.element)}
+ *            </ChatCompletion>
+ *          );
+ *        }
+ *
+ *        if (lastMessage.type === "functionCall") {
+ *          return <EvaluateFunction name={lastMessage.element.name} args={lastMessage.element.args} />
+ *        }
+ *
+ *        return null;
+ *      }>
+ *      <ConversationHistory messages={jsonMessages} />
  *    </ChatCompletion>
  *
  *    ==> 'Hello there!'
@@ -215,16 +231,16 @@ export async function* Converse(
 ): AI.RenderableStream {
   yield AI.AppendOnlyStream;
 
-  let fullConversation = [] as ConversationMessage[];
+  const fullConversation = [] as ConversationMessage[];
   let next = memo(children);
   while (true) {
-    const messages = await renderToConversation(next, render);
-    if (messages.length === 0) {
+    const newMessages = await renderToConversation(next, render);
+    if (newMessages.length === 0) {
       break;
     }
 
-    fullConversation = fullConversation.concat(messages);
-    next = memo(reply(messages, fullConversation));
+    fullConversation.push(...newMessages);
+    next = memo(reply(newMessages, fullConversation.slice()));
     yield next;
   }
 
