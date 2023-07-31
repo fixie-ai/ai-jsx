@@ -30,30 +30,16 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
   function makeRenderAdapter(renderResult: AI.RenderResult<string, string>) {
     let lastFrame = mapFn('');
     let done = false;
-    // let resolveNextFrameAvailable: (value?: unknown) => void;
-    // let nextFrameAvailable = new Promise((resolve) => {
-    //   resolveNextFrameAvailable = resolve;
-    // });
-
     let resolveFinalResult;
-    let finalResult = new Promise((resolve) => {
+    const finalResult = new Promise((resolve) => {
       resolveFinalResult = resolve;
     });
-
     const eventEmitter = new EventEmitter();
 
     (async () => {
-      let loopIteration = 0;
       for await (const frame of renderResult) {
-        console.log({ frame, loopIteration: loopIteration++ });
         lastFrame = mapFn(frame);
         eventEmitter.emit('frame', lastFrame);
-        // resolveNextFrameAvailable!();
-
-        // nextFrameAvailable = new Promise((resolve) => {
-        //   resolveNextFrameAvailable = resolve;
-        // });
-        // console.log('await next frame');
       }
       done = true;
       resolveFinalResult!(lastFrame);
@@ -63,17 +49,20 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
     function createFrameStream() {
       const streamController = new TransformStream();
       const writer = streamController.writable.getWriter();
-      writer.write(lastFrame);
-      eventEmitter.on('frame', (frame) => {
+      function handleFrame(frame: string) {
         writer.write(frame);
-      });
+      }
+      handleFrame(lastFrame);
+      eventEmitter.on('frame', handleFrame);
 
       // Close the stream when done
       if (done) {
+        eventEmitter.off('frame', handleFrame);
         writer.close();
       } else {
         finalResult.then(() => {
           writer.write(lastFrame);
+          eventEmitter.off('frame', handleFrame);
           writer.close();
         });
       }
@@ -96,10 +85,6 @@ function render(renderable: any, opts?: Pick<AI.RenderOpts, 'map'>) {
     return {
       createFrameStream,
       createDeltaStream,
-
-      // getLastFrame: () => lastFrame,
-      // getDone: () => done,
-      // getResolveNextFrameAvailable: () => resolveNextFrameAvailable,
       finalResult,
     };
   }
@@ -156,29 +141,29 @@ console.log(
     streamToValues(rendered.deltaStream()),
   ])
 );
-// // If you consume a stream after the render is complete, you just get one chunk with the final result.
-// console.log(await streamToValues(rendered.treeStream()));
-// // console.log('Deltas', await streamToValues(rendered.deltaStream()));
-// // console.log('Final result:', await rendered.result);
+// If you consume a stream after the render is complete, you just get one chunk with the final result.
+console.log(await streamToValues(rendered.treeStream()));
+// console.log('Deltas', await streamToValues(rendered.deltaStream()));
+// console.log('Final result:', await rendered.result);
 
-// console.log();
-// console.log('=== Second Render ===');
-// // Pass a single map function, and it's applied to intermediate and the final results.
-// const mappedRender = render(renderable, {
-//   map: (frame) => `frame prefix: ${frame}`,
-// });
-// console.log('Tree stream', await streamToValues(mappedRender.treeStream()));
-// // console.log('Append stream', await streamToValues(mappedRender.appendStream()));
-// // console.log('Deltas', await streamToValues(mappedRender.deltaStream()));
-// // console.log('Final result:', await mappedRender.result);
+console.log();
+console.log('=== Second Render ===');
+// Pass a single map function, and it's applied to intermediate and the final results.
+const mappedRender = render(renderable, {
+  map: (frame) => `frame prefix: ${frame}`,
+});
+console.log('Tree stream', await streamToValues(mappedRender.treeStream()));
+// console.log('Append stream', await streamToValues(mappedRender.appendStream()));
+// console.log('Deltas', await streamToValues(mappedRender.deltaStream()));
+// console.log('Final result:', await mappedRender.result);
 
-// console.log();
-// console.log('=== Third Render ===');
-// const renderForAppendStream = render(renderable);
-// console.log(await streamToValues(renderForAppendStream.treeStream()));
-// // console.log(await streamToValues(renderForAppendStream.appendStream()));
+console.log();
+console.log('=== Third Render ===');
+const renderForAppendStream = render(renderable);
+console.log(await streamToValues(renderForAppendStream.treeStream()));
+// console.log(await streamToValues(renderForAppendStream.appendStream()));
 
-// console.log();
-// console.log('=== Fourth Render: writing to stdout ===');
-// await render(renderable).writeToStdout();
-// console.log('\nDone writing to stdout');
+console.log();
+console.log('=== Fourth Render: writing to stdout ===');
+await render(renderable).writeToStdout();
+console.log('\nDone writing to stdout');
