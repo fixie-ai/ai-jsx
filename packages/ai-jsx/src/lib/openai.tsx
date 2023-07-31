@@ -335,7 +335,7 @@ export async function* OpenAIChatModel(
 
   logger.warn({ messageElements });
 
-  const invalidChildren = messageElements.filter((el) => typeof el === 'string') as string[];
+  const invalidChildren = messageElements.filter((el) => typeof el === 'string' && el.trim()) as string[];
   if (invalidChildren.length) {
     throw new AIJSXError(
       `Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "${invalidChildren.join(
