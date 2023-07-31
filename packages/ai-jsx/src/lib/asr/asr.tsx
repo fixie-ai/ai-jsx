@@ -37,31 +37,6 @@ function bufferToBase64(buffer: ArrayBuffer) {
   return btoa(String.fromCharCode.apply(null, numberArray));
 }
 
-class EventTargetImpl implements EventTarget {
-  listeners: Record<string, EventListener[]>;
-  constructor() {
-    this.listeners = {};
-  }
-  addEventListener(type: string, listener: EventListener) {
-    if (!(type in this.listeners)) {
-      this.listeners[type] = [];
-    }
-    this.listeners[type].push(listener);
-  }
-  removeEventListener(type: string, listener: EventListener) {
-    const index = this.listeners[type].indexOf(listener);
-    if (index != -1) {
-      this.listeners[type].splice(index, 1);
-    }
-  }
-  dispatchEvent(e: CustomEvent) {
-    if (e.type in this.listeners) {
-      this.listeners[e.type].forEach((listener) => listener(e));
-    }
-    return true;
-  }
-}
-
 /**
  * Manages capturing audio from the microphone or a URL (for testing).
  * Currently uses a WebAudio worker, but we may want to switch to MediaRecorder
@@ -71,7 +46,7 @@ class EventTargetImpl implements EventTarget {
  * Also emits "vad" events upon voice activity or silence being detected.
  * Currently, the VAD is quite primitive with a speech threshold of -50 dbFS.
  */
-export class MicManager extends EventTargetImpl {
+export class MicManager extends EventTarget {
   private outBuffer?: Float32Array[];
   private context?: AudioContext;
   private streamElement?: HTMLAudioElement;
@@ -87,6 +62,7 @@ export class MicManager extends EventTargetImpl {
     this.streamElement = new Audio();
     this.streamElement.src = URL.createObjectURL(blob);
     await this.streamElement.play();
+    // TODO(juberti): replace use of this API (not present in Safari) with Web Audio.
     const stream = await (this.streamElement as any).captureStream();
     await this.startGraph(stream, timeslice);
   }
@@ -203,7 +179,7 @@ export class Transcript {
  * Override handleOpen/handleMessage/sendChunk to customize for a particular
  * speech recognition service.
  */
-export class SpeechRecognitionBase extends EventTargetImpl {
+export class SpeechRecognitionBase extends EventTarget {
   private lastUtteranceEndTime: number = 0;
   private outBuffer: ArrayBuffer[] = [];
   protected socket?: WebSocket;
