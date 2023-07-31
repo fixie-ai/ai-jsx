@@ -59,6 +59,6 @@ function BuildingBlocksAI({ query }: { query: string }) {
 export async function POST(request: NextRequest) {
   const { messages } = await request.json();
   const lastMessage = _.last(messages) as Message;
- 
+
   return new StreamingTextResponse(toTextStream(<BuildingBlocksAI query={lastMessage.content} />));
 }

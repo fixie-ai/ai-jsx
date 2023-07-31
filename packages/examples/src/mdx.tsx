@@ -1,8 +1,8 @@
 /** @jsxImportSource ai-jsx/react */
 import * as AI from 'ai-jsx';
-import { SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { SystemMessage, UserMessage, ChatCompletion } from 'ai-jsx/core/completion';
 import { showInspector } from 'ai-jsx/core/inspector';
-import { MdxChatCompletion } from 'ai-jsx/react/jit-ui/mdx';
+import { MdxSystemMessage } from 'ai-jsx/react/jit-ui/mdx';
 import { JsonChatCompletion } from 'ai-jsx/batteries/constrained-output';
 import z from 'zod';
 
@@ -113,7 +113,10 @@ function QuestionAndAnswer({ children }: { children: AI.Node }, { memo }: AI.Com
       <OpenAI chatModel="gpt-4">
         Q: {question}
         {'\n'}
-        A: <MdxChatCompletion usageExamples={usageExample}>{question}</MdxChatCompletion>
+        A: <ChatCompletion>
+          <MdxSystemMessage usageExamples={usageExample} />
+          <UserMessage>{question}</UserMessage>
+        </ChatCompletion>
         {'\n\n'}
       </OpenAI>
     </>
@@ -167,10 +170,7 @@ export function App() {
 let lastValue = '';
 const rendering = AI.createRenderContext().render(<App />, { appendOnly: true });
 for await (const frame of rendering) {
-  // console.log(frame);
-  // console.log(frame.slice(lastValue.length));
   process.stdout.write(frame.slice(lastValue.length));
   lastValue = frame;
 }
 
-// console.log(await rendering);

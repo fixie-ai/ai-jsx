@@ -328,7 +328,6 @@
     "prepack": "yarn create-entry-points",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
-    "demo": "node dist/esm/react/jit-ui/sample.js",
     "test": "jest",
     "unit": "yarn build && jest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -339,7 +338,6 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.5.0",
-    "@mdx-js/mdx": "^2.3.0",
     "@nick.heiner/wandb-fork": "^0.5.2-5",
     "axios": "^1.4.0",
     "cli-highlight": "^2.1.11",
