@@ -1,14 +1,13 @@
 /** @jsxImportSource ai-jsx/react */
 import * as AI from 'ai-jsx';
-import { SystemMessage, UserMessage } from 'ai-jsx/core/completion';
-// import { showInspector } from 'ai-jsx/core/inspector';
-import { MdxChatCompletion } from 'ai-jsx/react/jit-ui/mdx';
+import { SystemMessage, UserMessage, ChatCompletion } from 'ai-jsx/core/completion';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { showInspector } from 'ai-jsx/core/inspector';
+import { MdxSystemMessage } from 'ai-jsx/react/jit-ui/mdx';
 import { JsonChatCompletion } from 'ai-jsx/batteries/constrained-output';
 import z from 'zod';
 
 import { OpenAI } from 'ai-jsx/lib/openai';
-import { PinoLogger } from 'ai-jsx/core/log';
-import { pino } from 'pino';
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 function Card({ header, footer, children }: { header?: string; footer?: string; children: string }) {
@@ -115,7 +114,11 @@ function QuestionAndAnswer({ children }: { children: AI.Node }, { memo }: AI.Com
       <OpenAI chatModel="gpt-4">
         Q: {question}
         {'\n'}
-        A: <MdxChatCompletion usageExamples={usageExample}>{question}</MdxChatCompletion>
+        A:{' '}
+        <ChatCompletion>
+          <MdxSystemMessage usageExamples={usageExample} />
+          <UserMessage>{question}</UserMessage>
+        </ChatCompletion>
         {'\n\n'}
       </OpenAI>
     </>
@@ -166,19 +169,8 @@ export function App() {
 
 // showInspector(<App />);
 
-const logger = pino({
-  name: 'ai-jsx',
-  level: process.env.loglevel ?? 'trace',
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-    },
-  },
-});
-
 let lastValue = '';
-const rendering = AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />, { appendOnly: true });
+const rendering = AI.createRenderContext().render(<App />, { appendOnly: true });
 for await (const frame of rendering) {
   process.stdout.write(frame.slice(lastValue.length));
   lastValue = frame;

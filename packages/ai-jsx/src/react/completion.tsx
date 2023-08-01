@@ -119,5 +119,12 @@ export function collectComponents(node: React.ReactNode | AI.Node) {
     }
   }
   collectComponentsRec(node, true);
-  return Object.fromEntries(Array.from(reactComponents).map((c) => [reactComponentName(c), c]));
+  return Object.fromEntries(
+    Array.from(reactComponents)
+      /* Filter out symbols, e.g. React.Fragment.
+        `usageExample` will often be passed as a Fragment, and we don't want to tell the AI to output fragments.
+      */
+      .filter((component) => typeof component !== 'symbol')
+      .map((c) => [reactComponentName(c), c])
+  );
 }
