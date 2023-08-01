@@ -1,0 +1,49 @@
+{
+  "name": "fixie",
+  "version": "1.0.0",
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "devDependencies": {
+    "@tsconfig/node18": "^2.0.1",
+    "@types/lodash": "^4.14.195",
+    "@types/node": "^20.3.1",
+    "@types/prompt-sync": "^4.2.0",
+    "@types/uuid": "^9.0.2",
+    "@types/yargs": "^17.0.24",
+    "@typescript-eslint/eslint-plugin": "^5.60.0",
+    "@typescript-eslint/parser": "^5.60.0",
+    "eslint": "^8.40.0",
+    "eslint-config-nth": "^2.0.1",
+    "typescript": "^5.1.3"
+  },
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prod": "yarn build && node dist/serve-bin.js --port 8080",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "yarn run typecheck",
+    "bin:dev": "npx ts-node dist/serve-bin.js --port 8080 --package-path fixie" 
+  },
+  "dependencies": { 
+    "ai-jsx": "^0.7.3",
+    "fastify": "^4.20.0",
+    "yargs": "^17.7.2"
+  },
+  "bin": {
+    "serve-bin": "dist/serve-bin.js"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "default": "./dist/cjs/index.cjs"
+      }
+    }
+  }
+}
