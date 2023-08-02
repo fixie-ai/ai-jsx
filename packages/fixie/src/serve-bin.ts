@@ -6,12 +6,25 @@ import { fastify, FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { ReadableStream, TextEncoderStream } from 'stream/web';
 import { createRenderContext, Renderable } from 'ai-jsx';
 
+class FixieMessage {
+  constructor(public text: string) {}
+}
+
+class FixieRequest {
+  constructor(public message: FixieMessage) {}
+}
+
+class FixieResponse {
+  constructor(public message: FixieMessage) {}
+}
+
 function toMessageStream(renderable: Renderable) {
   const generator = createRenderContext().render(renderable)[Symbol.asyncIterator]();
   return new ReadableStream({
     async pull(controller) {
       const next = await generator.next();
-      controller.enqueue(`${JSON.stringify({ message: next.value })}\n`);
+      const response = new FixieResponse(new FixieMessage(next.value));
+      controller.enqueue(`${JSON.stringify(response)}\n`);
       if (next.done) {
         controller.close();
       }
@@ -47,7 +60,7 @@ async function serve({
     res.type('application/json').send({ type: 'standalone' });
   });
   app.post('/', async (req: FastifyRequest, res: FastifyReply) => {
-    const body = req.body as { message: { text: string } };
+    const body = req.body as FixieRequest;
     try {
       const messageStream = toMessageStream(handler({ message: body.message.text }));
       await sendReadableStreamToFastifyReply(res, messageStream);
@@ -79,7 +92,7 @@ const { argv } = yargs(hideBin(process.argv))
       describe:
         'Path to the package to serve functions from. If this is a relative path, it will be interpreted relative to the current working directory.',
       type: 'string',
-      default: '.',
+      default: './index.js',
     },
   })
   .strict()
