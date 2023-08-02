@@ -25,7 +25,7 @@
     "bin:dev": "npx ts-node dist/serve-bin.js --port 8080 --package-path fixie"
   },
   "dependencies": {
-    "ai-jsx": "^0.7.3",
+"ai-jsx": "workspace:*",
     "fastify": "^4.20.0",
     "yargs": "^17.7.2"
   },
