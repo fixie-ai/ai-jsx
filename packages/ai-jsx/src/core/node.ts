@@ -77,17 +77,30 @@ export function makeIndirectNode<T extends object>(value: T, node: Node): T & In
 
 /** @hidden */
 export function withContext(renderable: Renderable, context: RenderContext): Element<any> {
-  function SwitchContext() {
-    return renderable;
+  if (isElement(renderable)) {
+    if (renderable[attachedContextSymbol]) {
+      // It's already been bound to a context; don't replace it.
+      return renderable;
+    }
+
+    const elementWithContext = {
+      ...renderable,
+      [attachedContextSymbol]: context,
+    };
+    Object.freeze(elementWithContext);
+    return elementWithContext;
   }
 
-  const elementWithContext = {
-    ...(isElement(renderable) ? renderable : createElement(SwitchContext, null)),
-    [attachedContextSymbol]: context,
-  };
-
-  Object.freeze(elementWithContext);
-  return elementWithContext;
+  // Wrap it in an element and bind to that.
+  return withContext(
+    createElement(
+      function SwitchContext({ children }) {
+        return children;
+      },
+      { children: renderable }
+    ),
+    context
+  );
 }
 
 /** @hidden */
