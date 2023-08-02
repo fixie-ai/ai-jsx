@@ -6,19 +6,11 @@ import { fastify, FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { toTextStream } from 'ai-jsx/stream';
 import index from './index.js';
 
-async function serve({
-  packagePath,
-  port,
-  silentStartup,
-}: {
-  packagePath: string;
-  port: number;
-  silentStartup: boolean;
-}): Promise<void> {
-  //const handler = await import(packagePath);
+async function serve({ port, silentStartup }: { port: number; silentStartup: boolean }): Promise<void> {
+  // const handler = await import(packagePath);
   const handler = index;
   const app: FastifyInstance = fastify();
-  app.post('/', async (req: FastifyRequest, res: FastifyReply) => {
+  app.post('/', (req: FastifyRequest, res: FastifyReply) => {
     const body = req.body as { message: { text: string } };
     try {
       res.send(toTextStream(handler({ message: body.message.text })));
@@ -27,7 +19,7 @@ async function serve({
     }
   });
 
-  const address = await app.listen({ host: '0.0.0.0', port: port });
+  const address = await app.listen({ host: '0.0.0.0', port });
   if (!silentStartup) {
     console.log(`AI.JSX agent listening on ${address}.`);
   }
