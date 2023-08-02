@@ -3,17 +3,54 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { fastify, FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { toTextStream } from 'ai-jsx/stream';
-import index from './index.js';
+import { ReadableStream, TextEncoderStream } from 'stream/web';
+import { createRenderContext, Renderable } from 'ai-jsx';
 
-async function serve({ port, silentStartup }: { port: number; silentStartup: boolean }): Promise<void> {
-  // const handler = await import(packagePath);
-  const handler = index;
+function toMessageStream(renderable: Renderable) {
+  const generator = createRenderContext().render(renderable)[Symbol.asyncIterator]();
+  return new ReadableStream({
+    async pull(controller) {
+      const next = await generator.next();
+      controller.enqueue(`${JSON.stringify({ message: next.value })}\n`);
+      if (next.done) {
+        controller.close();
+      }
+    },
+  }).pipeThrough(new TextEncoderStream());
+}
+
+async function sendReadableStreamToFastifyReply(reply: FastifyReply, readableStream: ReadableStream) {
+  const reader = readableStream.getReader();
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      reply.raw.end();
+      break;
+    }
+    reply.raw.write(value);
+  }
+}
+
+async function serve({
+  packagePath,
+  port,
+  silentStartup,
+}: {
+  packagePath: string;
+  port: number;
+  silentStartup: boolean;
+}): Promise<void> {
+  const handler = (await import(packagePath)).default;
   const app: FastifyInstance = fastify();
-  app.post('/', (req: FastifyRequest, res: FastifyReply) => {
+  app.get('/', (req: FastifyRequest, res: FastifyReply) => {
+    res.type('application/json').send({ type: 'standalone' });
+  });
+  app.post('/', async (req: FastifyRequest, res: FastifyReply) => {
     const body = req.body as { message: { text: string } };
     try {
-      res.send(toTextStream(handler({ message: body.message.text })));
+      const messageStream = toMessageStream(handler({ message: body.message.text }));
+      await sendReadableStreamToFastifyReply(res, messageStream);
     } catch (e: any) {
       res.status(500).send(e.message);
     }
