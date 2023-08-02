@@ -1,9 +1,6 @@
 {
   "name": "fixie",
   "version": "1.0.0",
-  "volta": {
-    "extends": "../../package.json"
-  },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.1",
     "@types/lodash": "^4.14.195",
@@ -20,14 +17,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prod": "yarn build && node dist/serve-bin.js --port 8080",
+    "dev": "yarn build && npx ts-node dist/serve-bin.js --port 8080 --package-path fixie",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.json",
     "build": "yarn run typecheck",
-    "bin:dev": "npx ts-node dist/serve-bin.js --port 8080 --package-path fixie" 
+    "bin:dev": "npx ts-node dist/serve-bin.js --port 8080 --package-path fixie"
   },
-  "dependencies": { 
+  "dependencies": {
     "ai-jsx": "^0.7.3",
     "fastify": "^4.20.0",
     "yargs": "^17.7.2"

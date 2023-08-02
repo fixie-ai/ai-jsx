@@ -3,21 +3,8 @@
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { fastify, FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { ReadableStream } from 'stream/web';
+import { toTextStream } from 'ai-jsx/stream';
 import index from './index.js';
-
-async function sendReadableStreamToFastifyReply(reply: FastifyReply, readableStream: ReadableStream) {
-  const reader = readableStream.getReader();
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) {
-      reply.raw.end();
-      break;
-    }
-    reply.raw.write(value);
-  }
-}
 
 async function serve({
   packagePath,
@@ -34,16 +21,15 @@ async function serve({
   app.post('/', async (req: FastifyRequest, res: FastifyReply) => {
     const body = req.body as { message: { text: string } };
     try {
-      const responseStream = handler(body.message.text);
-      await sendReadableStreamToFastifyReply(res, responseStream);
+      res.send(toTextStream(handler({ message: body.message.text })));
     } catch (e: any) {
       res.status(500).send(e.message);
     }
   });
 
-  await app.listen({ port: port });
+  const address = await app.listen({ host: '0.0.0.0', port: port });
   if (!silentStartup) {
-    console.log(`AI.JSX agent listening on port ${port}.`);
+    console.log(`AI.JSX agent listening on ${address}.`);
   }
 }
 
