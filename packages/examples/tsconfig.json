@@ -1,6 +1,7 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
-  "include": ["src/**/*", ".eslintrc.cjs"],
+  "include": ["src/**/*", "jest.config.ts", ".eslintrc.cjs"],
+  "exclude": ["test"],
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "ai-jsx",
