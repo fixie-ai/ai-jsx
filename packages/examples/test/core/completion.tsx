@@ -1,11 +1,10 @@
 import { Readable } from "stream";
-import { CreateChatCompletionResponse } from 'openai';
 import { ChatCompletionDelta } from 'ai-jsx/lib/openai'
 
 class TempResponse extends Response {
   constructor(...args: any[]) {
     if (args[0] instanceof ReadableStream) {
-      // @ts-ignore
+      // @ts-expect-error
       args[0] = Readable.from(args[0]);
     }
     super(...args);
@@ -24,7 +23,7 @@ import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 
 
 it('passes all function fields', async () => {
-  mockOpenAIResponse();
+  mockOpenAIResponse('response from OpenAI');
 
   const result = await AI.createRenderContext().render(
     <ChatCompletion>
@@ -33,10 +32,10 @@ it('passes all function fields', async () => {
   );
   expect(result).toEqual('response from OpenAI');
 });
-function mockOpenAIResponse() {
+function mockOpenAIResponse(message: string, handleRequest?: (req: Request) => Promise<Response>) {
   // @ts-expect-error
   fetchMock.mockIf(/^https:\/\/api.openai.com\/v1\/chat\/completions/, async (req) => {
-    console.log('hit mock', await req.json());
+    handleRequest?.(req);
 
     const stringStream = new ReadableStream({
       start(controller) {
@@ -48,22 +47,16 @@ function mockOpenAIResponse() {
           choices: [{
             delta: {
               role: 'assistant',
-              content: 'response from OpenAI'
+              content: message
             },
           }]
         };
 
-        function enqueue(str: string) {
-          controller.enqueue(str);
-        }
-
-        enqueue(`data: ${JSON.stringify(response)}\n\n`);
-        enqueue(`[DONE]`);
+        controller.enqueue(`data: ${JSON.stringify(response)}\n\n`);
+        controller.enqueue(`[DONE]`);
         controller.close();
       }
     }).pipeThrough(new TextEncoderStream());
-
-    // console.log(await streamToValues(stringStream));
     return {
       status: 200,
       body: stringStream
