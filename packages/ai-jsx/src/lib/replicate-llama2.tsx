@@ -77,6 +77,7 @@ export async function* Llama2ChatModel(
 ): AI.RenderableStream {
   yield AI.AppendOnlyStream;
 
+  // TODO: Support token budget/conversation shrinking
   const messageElements = await renderToConversation(props.children, render);
   const systemMessage = messageElements.filter((e) => e.type == 'system');
   const userMessages = messageElements.filter((e) => e.type == 'user');

@@ -3,6 +3,7 @@ import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { debug } from './debug.js';
+import _ from 'lodash';
 
 /**
  * Provide a System Message to the LLM, for use within a {@link ChatCompletion}.
@@ -326,17 +327,40 @@ export async function* ShowConversation(
 
 /**
  * @hidden
- * "Shrinks" a conversation messages according to a cost function (i.e. token length),
- * a budget (i.e. context window size), and the `importance` prop set on any `<Shrinkable>`
+ * "Shrinks" a conversation messages according to a cost function (e.g. token length),
+ * a budget (e.g. context window size), and the `importance` prop set on any `<Shrinkable>`
  * components within the conversation.
  *
- * Currently, `<Shrinkable>` components must wrap conversational messages and have no
- * effect within the messages themselves.
+ * Currently, `<Shrinkable>` components must wrap conversational components and do not allow
+ * content to shrink _within_ conversational components. For example this:
+ *
+ * @example
+ * ```tsx
+ *    // Do not do this!
+ *    <UserMessage>
+ *      Content
+ *      <Shrinkable importance={0}>Not shrinkable!</Shrinkable>
+ *      Content
+ *    </UserMessage>
+ * ```
+ *
+ * is not shrinkable. Instead, do this:
+ *
+ * * @example
+ * ```tsx
+ *    <Shrinkable importance={0} replacement={<UserMessage>Content Content</UserMessage>}>
+ *      <UserMessage>
+ *        Content
+ *        Shrinkable!
+ *        Content
+ *      </UserMessage
+ *    </Shrinkable>
+ * ```
  */
 export async function ShrinkConversation(
   {
     cost: costFn,
-    budget: budget,
+    budget,
     children,
   }: {
     cost: (message: ConversationMessage, render: AI.RenderContext['render']) => Promise<number>;
@@ -392,7 +416,7 @@ export async function ShrinkConversation(
     return asTreeNodes.filter((n): n is TreeNode => n !== null);
   }
 
-  /** Finds the least important node in the tree, considering cost as a second factor. */
+  /** Finds the least important node in any of the trees, considering cost as a second factor. */
   function leastImportantNode(roots: TreeNode[]): ShrinkableTreeNode | undefined {
     function compareImportance(nodeA: ShrinkableTreeNode, nodeB: ShrinkableTreeNode) {
       // If the two nodes are of the same importance, consider the higher cost node less important.
@@ -419,13 +443,13 @@ export async function ShrinkConversation(
   }
 
   function aggregateCost(roots: TreeNode[]): number {
-    return roots.reduce((cost, node) => cost + node.cost, 0);
+    return _.sumBy(roots, (node) => node.cost);
   }
 
   /** Replaces a single ShrinkableTreeNode in the tree. */
   async function replaceNode(roots: TreeNode[], nodeToReplace: ShrinkableTreeNode): Promise<TreeNode[]> {
     const newRoots = await Promise.all(
-      roots.map<Promise<TreeNode[]>>(async (root) => {
+      roots.flatMap<Promise<TreeNode[]>>(async (root) => {
         if (root === nodeToReplace) {
           return conversationToTreeRoots(root.element.props.replacement);
         }
@@ -488,7 +512,7 @@ export async function ShrinkConversation(
     );
 
     // N.B. This currently quadratic in that each time we replace a node we search the entire
-    // tree for the least important node, and then search _again_ to replace it. If we end up
+    // tree for the least important node (and then search again to replace it). If we end up
     // doing many replacements we should be smarter about this.
     roots = await replaceNode(roots, nodeToReplace);
   }
@@ -504,12 +528,14 @@ export function Shrinkable(
   { children, importance, replacement }: { children: Node; importance: number; replacement?: Node },
   { memo }: AI.ComponentContext
 ) {
-  // We renders to a separate component so that:
+  // We render to a separate component so that:
   //
   // a) The memoization happens in the expected context (that of the <Shrinkable>)
   // b) The memoization can be applied directly to the replacement and children
   //
-  // This allows them to be taken off the props correctly memoized.
+  // This allows `children` and `replacement` to be taken off the props of <InternalShrinkable>
+  // and be correctly memoized, which would not otherwise be the case even if the <Shrinkable>
+  // or <InternalShrinkable> were memoized.
   return (
     <InternalShrinkable importance={importance} replacement={replacement && memo(replacement)}>
       {children && memo(children)}
