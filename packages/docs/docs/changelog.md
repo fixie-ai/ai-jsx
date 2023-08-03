@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.8.0
+## 0.8.1
+
+- Add support for token-based conversation shrinking via `<Shrinkable>`.
+
+## [0.8.0](https://github.com/fixie-ai/ai-jsx/commit/58062b9e42b2ccecd467de90ee1dedf7ec70dfbf)
 
 - Move `MdxChatCompletion` to be `MdxSystemMessage`. You can now put this `SystemMessage` in any `ChatCompletion` to prompt the model to give MDX output.
 

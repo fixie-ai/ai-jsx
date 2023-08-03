@@ -96,6 +96,7 @@ export async function* AnthropicChatModel(
   }
   yield AI.AppendOnlyStream;
   const messages = await Promise.all(
+    // TODO: Support token budget/conversation shrinking
     (
       await renderToConversation(props.children, render)
     )

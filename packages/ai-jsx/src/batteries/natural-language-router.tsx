@@ -112,7 +112,7 @@ export async function* NaturalLanguageRouter(props: { children: Node; query: Nod
     }
 
     const props = e.props as RouteProps;
-    return props.unmatched ? choiceIndex === 0 : props.when === whenOptions[choiceIndex];
+    return props.unmatched ? choiceIndex === whenOptions.length - 1 : props.when === whenOptions[choiceIndex];
   });
 }
 
