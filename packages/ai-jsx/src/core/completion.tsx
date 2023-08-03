@@ -85,7 +85,7 @@ export function getParametersSchema(parameters: FunctionParameters) {
 
 /**
  * Represents parameters to a {@link FunctionDefinition}.
- * 
+ *
  * If you want to pass a field to {@link FunctionParameters} that isn't supported on this type, you can use a {@link z.ZodObject} schema instead.
  */
 export interface PlainFunctionParameter {
