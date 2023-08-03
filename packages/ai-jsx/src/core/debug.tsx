@@ -6,7 +6,7 @@
 
 import * as AI from '../index.js';
 import { Element, ElementPredicate, Node, RenderContext } from '../index.js';
-import { isMemoizedSymbol } from './memoize.js';
+import { memoizedIdSymbol } from './memoize.js';
 
 const maxStringLength = 1000;
 
@@ -54,19 +54,24 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
       const tag = value.tag === AI.Fragment ? '' : typeof value.tag === 'string' ? value.tag : value.tag.name;
       const childIndent = `${indent}  `;
 
-      const isMemoized = isMemoizedSymbol in value.props;
-      const memoizedIsPreviouslyRenderedToDebugOutput = previouslyMemoizedIds.has(value.props.id);
+      const memoizedId = memoizedIdSymbol in value.props && (value.props[memoizedIdSymbol] as number);
+      const memoizedIsPreviouslyRenderedToDebugOutput = memoizedId && previouslyMemoizedIds.has(memoizedId);
 
-      if (isMemoized && !memoizedIsPreviouslyRenderedToDebugOutput) {
-        previouslyMemoizedIds.add(value.props.id);
+      if (memoizedId && !memoizedIsPreviouslyRenderedToDebugOutput) {
+        previouslyMemoizedIds.add(memoizedId);
       }
 
       let children = '';
-      if (expandJSXChildren && (!isMemoized || !memoizedIsPreviouslyRenderedToDebugOutput)) {
+      if (expandJSXChildren && (!memoizedId || !memoizedIsPreviouslyRenderedToDebugOutput)) {
         children = debugRec(value.props.children, childIndent, 'children');
       }
 
       const results = [];
+
+      if (memoizedId) {
+        results.push(' @memoizedId=' + memoizedId);
+      }
+
       if (value.props) {
         for (const key of Object.keys(value.props)) {
           const propValue = value.props[key];

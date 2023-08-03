@@ -1,17 +1,19 @@
-import { Renderable, RenderContext, AppendOnlyStream } from './render.js';
+import { Renderable, RenderContext, AppendOnlyStream, RenderableStream } from './render.js';
 import { Node, getReferencedNode, isIndirectNode, makeIndirectNode, isElement } from './node.js';
 import { Logger } from './log.js';
 
-let memoizedId = 0;
+let lastMemoizedId = 0;
 /** @hidden */
-export const isMemoizedSymbol = Symbol('isMemoized');
+export const memoizedIdSymbol = Symbol('memoizedId');
 
 /**
  * @hidden
  * "Partially" memoizes a renderable such that it will only be rendered once in any
  * single `RenderContext`.
  */
-export function partialMemo(renderable: Renderable): Node {
+export function partialMemo(node: Node): Node;
+export function partialMemo(renderable: Renderable): Renderable;
+export function partialMemo(renderable: Renderable): Node | Renderable {
   if (typeof renderable !== 'object' || renderable === null) {
     return renderable;
   }
@@ -21,10 +23,10 @@ export function partialMemo(renderable: Renderable): Node {
   }
 
   if (Array.isArray(renderable)) {
-    return renderable.map(partialMemo);
+    return renderable.map((node) => partialMemo(node));
   }
   if (isElement(renderable)) {
-    if (isMemoizedSymbol in renderable.props) {
+    if (memoizedIdSymbol in renderable.props) {
       return renderable;
     }
 
@@ -40,6 +42,7 @@ export function partialMemo(renderable: Renderable): Node {
     const memoizedValues = new WeakMap<RenderContext, Renderable>();
     const newElement = {
       ...renderable,
+      props: { ...renderable.props, [memoizedIdSymbol]: ++lastMemoizedId },
       render: (ctx: RenderContext, logger: Logger, isAppendOnlyRender: boolean) => {
         if (memoizedValues.has(ctx)) {
           return memoizedValues.get(ctx);
@@ -58,15 +61,13 @@ export function partialMemo(renderable: Renderable): Node {
       },
     };
     Object.freeze(newElement);
-
-    const Memoized = () => newElement;
-    return (
-      <Memoized id={++memoizedId} {...{ [isMemoizedSymbol]: true }}>
-        {newElement}
-      </Memoized>
-    );
+    return newElement;
   }
   if (Symbol.asyncIterator in renderable) {
+    if (memoizedIdSymbol in renderable) {
+      return renderable;
+    }
+
     // It's an async iterable (which might be mutable). We set up some machinery to buffer the
     // results so that we can create memoized iterators as necessary.
     const generator = renderable[Symbol.asyncIterator]();
@@ -75,38 +76,45 @@ export function partialMemo(renderable: Renderable): Node {
     let completed = false;
     let nextPromise: Promise<void> | null = null;
 
-    const MemoizedGenerator = async function* (): AsyncGenerator<
-      Renderable | typeof AppendOnlyStream,
-      Renderable | typeof AppendOnlyStream
-    > {
-      let index = 0;
-      while (true) {
-        if (index < sink.length) {
-          yield sink[index++];
-          continue;
-        } else if (completed) {
-          return finalResult;
-        } else if (nextPromise == null) {
-          nextPromise = generator.next().then((result) => {
-            const memoized = result.value === AppendOnlyStream ? result.value : partialMemo(result.value);
-            if (result.done) {
-              completed = true;
-              finalResult = memoized;
-            } else {
-              sink.push(memoized);
-            }
-            nextPromise = null;
-          });
+    return {
+      [memoizedIdSymbol]: ++lastMemoizedId,
+      [Symbol.asyncIterator]: async function* (): AsyncGenerator<
+        Renderable | typeof AppendOnlyStream,
+        Renderable | typeof AppendOnlyStream
+      > {
+        let index = 0;
+        while (true) {
+          if (index < sink.length) {
+            yield sink[index++];
+            continue;
+          } else if (completed) {
+            return finalResult;
+          } else if (nextPromise == null) {
+            nextPromise = generator.next().then((result) => {
+              const memoized = result.value === AppendOnlyStream ? result.value : partialMemo(result.value);
+              if (result.done) {
+                completed = true;
+                finalResult = memoized;
+              } else {
+                sink.push(memoized);
+              }
+              nextPromise = null;
+            });
+          }
+
+          await nextPromise;
         }
-
-        await nextPromise;
-      }
-    };
-
-    return <MemoizedGenerator id={++memoizedId} {...{ [isMemoizedSymbol]: true }} />;
+      },
+    } as RenderableStream;
   }
 
-  const memoizedRenderable = renderable.then(partialMemo);
-  const MemoizedPromise = () => memoizedRenderable;
-  return <MemoizedPromise id={++memoizedId} {...{ [isMemoizedSymbol]: true }} />;
+  if (memoizedIdSymbol in renderable) {
+    return renderable;
+  }
+
+  const memoizedPromise = renderable.then(partialMemo);
+  return {
+    [memoizedIdSymbol]: ++lastMemoizedId,
+    then: memoizedPromise.then.bind(memoizedPromise),
+  } as PromiseLike<Renderable>;
 }
