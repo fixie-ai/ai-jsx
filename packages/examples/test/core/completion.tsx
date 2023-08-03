@@ -1,53 +1,67 @@
+import { Readable } from "stream";
+import { ReadableStream } from 'stream/web';
+import { CreateChatCompletionResponse } from 'openai';
+import { ChatCompletionDelta } from 'ai-jsx/lib/openai'
+
+// @ts-ignore
+class TempResponse extends Response {
+  constructor(...args: any[]) {
+    if (args[0] instanceof ReadableStream) {
+      args[0] = Readable.from(args[0]);
+    }
+    super(...args);
+  }
+}
+Object.defineProperty(global, "Response", {
+  value: TempResponse,
+});
+
+
 import jestFetchMock from 'jest-fetch-mock';
-
 jestFetchMock.enableFetchMocks();
-
-// import { MockAgent, MockPool, setGlobalDispatcher } from 'undici';
-
-// // Create a new MockAgent instance
-// const agent = new MockAgent();
-
-// // Set the global dispatcher to the MockAgent instance
-// setGlobalDispatcher(agent);
-
-// const pool = new MockPool('https://api.openai.com', { agent });
-
-// // Intercept the API request and provide a mocked response
-// pool.intercept({
-//   path: '/data',
-//   method: 'GET',
-// }).reply(200, {
-//   // Return a mocked response here
-//   data: 'Mocked data',
-// });
-
 
 import * as AI from 'ai-jsx';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 
+
 it('passes all function fields', async () => {
-  // jest.mock(globalThis, 'fetch', () => {
-  //   console.log('called fetch');
-  // })
-
-
-  // const openaiScope = nock('https://api.openai.com')
-  // .post('/v1/chat/completions', body => {
-  //   console.log('got body', body)
-  //   return true;
-  // })
-  // .reply(200, {
-  //   // Return a mocked response here
-  //   choices: [
-  //     {
-  //       text: 'Mocked response text',
-  //     },
-  //   ],
-  // });
-
+  // @ts-ignore
   fetchMock.mockIf(/^https:\/\/api.openai.com\/v1\/chat\/completions/, async (req) => {
-    console.log('hit mock', req)
-    return Promise.resolve({});
+    console.log('hit mock', await req.json())
+
+    const stringStream = new ReadableStream({
+      start(controller) {
+        const textEncoder = new TextEncoder();
+
+        const response: ChatCompletionDelta = {
+          id: 'cmpl-3QJ8ZjX1J5Z5X',
+          object: 'text_completion',
+          created: 1624430979,
+          model: 'gpt-3.5-turbo',
+          choices: [{
+            delta: {
+              role: 'assistant',
+              content: 'response from OpenAI'
+            },
+          }]
+        }
+
+        function enqueue(str: string) {
+          controller.enqueue(textEncoder.encode(str))
+        }
+
+        enqueue(`data: ${JSON.stringify(response)}\n\n`)
+        enqueue(`[DONE]`)
+        controller.close()
+      }
+    })
+
+    // console.log(await streamToValues(stringStream));
+
+    return {
+      status: 200,
+      body: stringStream 
+    };
   });
 
   const result = await AI.createRenderContext().render(
@@ -55,7 +69,19 @@ it('passes all function fields', async () => {
       <UserMessage>Hello</UserMessage>
     </ChatCompletion>
   );
-  expect(result).toEqual('fak');
-
-  // openaiScope.done();
+  expect(result).toEqual('response from OpenAI');
 });
+
+// async function streamToValues(stream: ReadableStream) {
+//   const values: any[] = [];
+
+//   await stream.pipeTo(
+//     new WritableStream({
+//       write(chunk) {
+//         values.push(chunk);
+//       },
+//     })
+//   );
+
+//   return values;
+// }

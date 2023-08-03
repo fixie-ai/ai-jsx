@@ -4,6 +4,7 @@
   "exclude": [],
   "compilerOptions": {
     "types": ["jest", "node"],
-    "noEmit": true
+    "noEmit": true,
+    "lib": ["DOM"]
   }
 }
