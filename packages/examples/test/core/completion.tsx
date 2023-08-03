@@ -1,12 +1,11 @@
 import { Readable } from "stream";
-import { ReadableStream } from 'stream/web';
 import { CreateChatCompletionResponse } from 'openai';
 import { ChatCompletionDelta } from 'ai-jsx/lib/openai'
 
-// @ts-ignore
 class TempResponse extends Response {
   constructor(...args: any[]) {
     if (args[0] instanceof ReadableStream) {
+      // @ts-ignore
       args[0] = Readable.from(args[0]);
     }
     super(...args);
@@ -25,7 +24,7 @@ import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 
 
 it('passes all function fields', async () => {
-  // @ts-ignore
+  // @ts-expect-error
   fetchMock.mockIf(/^https:\/\/api.openai.com\/v1\/chat\/completions/, async (req) => {
     console.log('hit mock', await req.json())
 
@@ -47,14 +46,14 @@ it('passes all function fields', async () => {
         }
 
         function enqueue(str: string) {
-          controller.enqueue(textEncoder.encode(str))
+          controller.enqueue(str)
         }
 
         enqueue(`data: ${JSON.stringify(response)}\n\n`)
         enqueue(`[DONE]`)
         controller.close()
       }
-    })
+    }).pipeThrough(new TextEncoderStream());
 
     // console.log(await streamToValues(stringStream));
 
@@ -71,17 +70,3 @@ it('passes all function fields', async () => {
   );
   expect(result).toEqual('response from OpenAI');
 });
-
-// async function streamToValues(stream: ReadableStream) {
-//   const values: any[] = [];
-
-//   await stream.pipeTo(
-//     new WritableStream({
-//       write(chunk) {
-//         values.push(chunk);
-//       },
-//     })
-//   );
-
-//   return values;
-// }
