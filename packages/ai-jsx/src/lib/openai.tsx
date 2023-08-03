@@ -362,7 +362,7 @@ export async function* OpenAIChatModel(
     logitBias?: Record<string, number>;
   } & MergeExclusive<
       {
-        functionDefinitions: Record<string, FunctionDefinition>;
+        functionDefinitions: Record<ChatCompletionFunctions['name'], FunctionDefinition>;
         forcedFunction: string;
       },
       {
