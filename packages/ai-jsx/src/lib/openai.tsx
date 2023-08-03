@@ -139,11 +139,8 @@ async function* openAiEventsToJson<T>(iterable: AsyncIterable<String>): AsyncGen
     const events = eventsWithExtra.slice(0, -1);
     bufferedContent = eventsWithExtra[eventsWithExtra.length - 1] ?? '';
 
-    console.log({events, bufferedContent, chunk});
-
     for (const event of events) {
       if (!event.startsWith(SSE_PREFIX)) {
-        console.log('continue because event does not start with SSE prefix');
         continue;
       }
       const text = event.slice(SSE_PREFIX.length);
@@ -151,7 +148,6 @@ async function* openAiEventsToJson<T>(iterable: AsyncIterable<String>): AsyncGen
         continue;
       }
 
-      console.log({text})
       yield JSON.parse(text) as T;
     }
   }
@@ -232,11 +228,9 @@ async function* asyncIteratorOfFetchStream(reader: ReturnType<NonNullable<Respon
       // I don't know why the types fail here, but the code works.
       // @ts-expect-error
       await reader.read();
-    console.log({done, value: decoder.decode(value)});
     if (done) {
       return;
     }
-    console.log('yielding', decoder.decode(value))
     yield decoder.decode(value);
   }
 }
@@ -500,7 +494,6 @@ export async function* OpenAIChatModel(
 
   await checkOpenAIResponse(chatResponse, logger, 'createChatCompletion');
 
-  console.log('body', chatResponse.body)
   const iterator = openAiEventsToJson<ChatCompletionDelta>(asyncIteratorOfFetchStream(chatResponse.body!.getReader()))[
     Symbol.asyncIterator
   ]();
@@ -515,7 +508,6 @@ export async function* OpenAIChatModel(
   // That is, the logical loop execution is spread over multiple functions (closures over the shared iterator).
   async function advance(): Promise<Partial<ChatCompletionResponseMessage> | null> {
     const next = await iterator.next();
-    console.log({next});
     if (next.done) {
       return null;
     }
