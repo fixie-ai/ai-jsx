@@ -199,6 +199,15 @@
         "default": "./dist/cjs/lib/replicate-llama2.cjs"
       }
     },
+    "./lib/asr/asr": {
+      "import": {
+        "types": "./dist/esm/lib/asr/asr.d.ts",
+        "default": "./dist/esm/lib/asr/asr.js"
+      },
+      "require": {
+        "default": "./dist/cjs/lib/asr/asr.cjs"
+      }
+    },
     "./react": {
       "import": {
         "types": "./dist/esm/react/index.d.ts",

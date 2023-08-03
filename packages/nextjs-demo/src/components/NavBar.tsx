@@ -14,6 +14,7 @@ export default function NavBar() {
     'Docs Chat': '/docs-chat',
     'Recipe JIT UI': '/recipe',
     'Building Blocks JIT UI': '/building-blocks',
+    'Speech-to-Text': '/asr',
   };
 
   return (
