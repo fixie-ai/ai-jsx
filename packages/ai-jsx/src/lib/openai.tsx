@@ -2,6 +2,8 @@
  * This module provides interfaces to OpenAI's various models.
  * @packageDocumentation
  */
+
+import GPT3Tokenizer from 'gpt3-tokenizer';
 import {
   ChatCompletionFunctions,
   ChatCompletionRequestMessage,
@@ -24,7 +26,7 @@ import {
   ModelPropsWithChildren,
   getParametersSchema,
 } from '../core/completion.js';
-import { AssistantMessage, ConversationMessage, FunctionCall, renderToConversation } from '../core/conversation.js';
+import { AssistantMessage, FunctionCall, renderToConversation } from '../core/conversation.js';
 import { AIJSXError, ErrorCode, HttpError } from '../core/errors.js';
 import { Image, ImageGenPropsWithChildren } from '../core/image-gen.js';
 import { Logger } from '../core/log.js';
@@ -34,8 +36,6 @@ import { ChatOrCompletionModelOrBoth } from './model.js';
 import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { CreateChatCompletionRequest } from 'openai';
 import { debug } from '../core/debug.js';
-import { getEncoding } from 'js-tiktoken';
-import _ from 'lodash';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -151,21 +151,20 @@ async function* openAiEventsToJson<T>(iterable: AsyncIterable<String>): AsyncGen
   }
 }
 
-const getEncoder = _.once(() => getEncoding('cl100k_base'));
-
 function logitBiasOfTokens(tokens: Record<string, number>) {
-  const tokenizer = getEncoder();
+  // N.B. We're using GPT3Tokenizer which per https://platform.openai.com/tokenizer "works for most GPT-3 models".
+  const tokenizer = new GPT3Tokenizer.default({ type: 'gpt3' });
   return Object.fromEntries(
     Object.entries(tokens).map(([token, bias]) => {
-      const encoded = tokenizer.encode(token);
-      if (encoded.length > 1) {
+      const encoded = tokenizer.encode(token) as { bpe: number[]; text: string[] };
+      if (encoded.bpe.length > 1) {
         throw new AIJSXError(
-          `You can only set logit_bias for a single token, but "${bias}" is ${encoded.length} tokens.`,
+          `You can only set logit_bias for a single token, but "${bias}" is ${encoded.bpe.length} tokens.`,
           ErrorCode.LogitBiasBadInput,
           'user'
         );
       }
-      return [encoded[0], bias];
+      return [encoded.bpe[0], bias];
     })
   );
 }
@@ -283,76 +282,6 @@ export async function* OpenAICompletionModel(
   return AI.AppendOnlyStream;
 }
 
-function estimateFunctionTokenCount(functions: Record<string, FunctionDefinition>): number {
-  // According to https://community.openai.com/t/how-to-calculate-the-tokens-when-using-function-call/266573
-  // function definitions are serialized as TypeScript. We'll use JSON-serialization as an approximation (which
-  // is almost certainly an overestimate).
-  return getEncoder().encode(JSON.stringify(functions)).length;
-}
-
-function tokenLimitForChatModel(
-  model: ValidChatModel,
-  functionDefinitions?: Record<string, FunctionDefinition>
-): number | undefined {
-  const TOKENS_CONSUMED_BY_REPLY_PREFIX = 3;
-  const functionEstimate =
-    chatModelSupportsFunctions(model) && functionDefinitions ? estimateFunctionTokenCount(functionDefinitions) : 0;
-
-  switch (model) {
-    case 'gpt-4':
-    case 'gpt-4-0314':
-    case 'gpt-4-0613':
-      return 8192 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
-    case 'gpt-4-32k':
-    case 'gpt-4-32k-0314':
-    case 'gpt-4-32k-0613':
-      return 32768 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
-    case 'gpt-3.5-turbo':
-    case 'gpt-3.5-turbo-0301':
-    case 'gpt-3.5-turbo-0613':
-      return 4096 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
-    case 'gpt-3.5-turbo-16k':
-    case 'gpt-3.5-turbo-16k-0613':
-      return 16384 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
-    default:
-      return undefined;
-  }
-}
-
-async function tokenCountForConversationMessage(
-  message: ConversationMessage,
-  render: AI.RenderContext['render']
-): Promise<number> {
-  const TOKENS_PER_MESSAGE = 3;
-  const TOKENS_PER_NAME = 1;
-  const encoder = getEncoder();
-  switch (message.type) {
-    case 'user':
-      return (
-        TOKENS_PER_MESSAGE +
-        encoder.encode(await render(message.element)).length +
-        (message.element.props.name ? encoder.encode(message.element.props.name).length + TOKENS_PER_NAME : 0)
-      );
-    case 'assistant':
-    case 'system':
-      return TOKENS_PER_MESSAGE + encoder.encode(await render(message.element)).length;
-    case 'functionCall':
-      return (
-        TOKENS_PER_MESSAGE +
-        TOKENS_PER_NAME +
-        encoder.encode(message.element.props.name).length +
-        encoder.encode(JSON.stringify(message.element.props.args)).length
-      );
-    case 'functionResponse':
-      return (
-        TOKENS_PER_MESSAGE +
-        TOKENS_PER_NAME +
-        encoder.encode(await render(message.element.props.children)).length +
-        encoder.encode(message.element.props.name).length
-      );
-  }
-}
-
 /**
  * Represents an OpenAI text chat model (e.g., `gpt-4`).
  */
@@ -392,21 +321,8 @@ export async function* OpenAIChatModel(
 
   yield AI.AppendOnlyStream;
 
-  let promptTokenLimit = tokenLimitForChatModel(props.model, props.functionDefinitions);
-
-  // If maxTokens is set, reserve that many tokens for the reply.
-  if (promptTokenLimit !== undefined && props.maxTokens) {
-    promptTokenLimit -= props.maxTokens;
-  }
-
-  const conversationMessages = await renderToConversation(
-    props.children,
-    render,
-    tokenCountForConversationMessage,
-    promptTokenLimit
-  );
+  const conversationMessages = await renderToConversation(props.children, render);
   logger.debug({ messages: conversationMessages.map((m) => debug(m.element, true)) }, 'Got input conversation');
-
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
     conversationMessages.map(async (message) => {
       switch (message.type) {
