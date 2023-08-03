@@ -24,14 +24,22 @@ import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 
 
 it('passes all function fields', async () => {
+  mockOpenAIResponse();
+
+  const result = await AI.createRenderContext().render(
+    <ChatCompletion>
+      <UserMessage>Hello</UserMessage>
+    </ChatCompletion>
+  );
+  expect(result).toEqual('response from OpenAI');
+});
+function mockOpenAIResponse() {
   // @ts-expect-error
   fetchMock.mockIf(/^https:\/\/api.openai.com\/v1\/chat\/completions/, async (req) => {
-    console.log('hit mock', await req.json())
+    console.log('hit mock', await req.json());
 
     const stringStream = new ReadableStream({
       start(controller) {
-        const textEncoder = new TextEncoder();
-
         const response: ChatCompletionDelta = {
           id: 'cmpl-3QJ8ZjX1J5Z5X',
           object: 'text_completion',
@@ -43,30 +51,23 @@ it('passes all function fields', async () => {
               content: 'response from OpenAI'
             },
           }]
-        }
+        };
 
         function enqueue(str: string) {
-          controller.enqueue(str)
+          controller.enqueue(str);
         }
 
-        enqueue(`data: ${JSON.stringify(response)}\n\n`)
-        enqueue(`[DONE]`)
-        controller.close()
+        enqueue(`data: ${JSON.stringify(response)}\n\n`);
+        enqueue(`[DONE]`);
+        controller.close();
       }
     }).pipeThrough(new TextEncoderStream());
 
     // console.log(await streamToValues(stringStream));
-
     return {
       status: 200,
-      body: stringStream 
+      body: stringStream
     };
   });
+}
 
-  const result = await AI.createRenderContext().render(
-    <ChatCompletion>
-      <UserMessage>Hello</UserMessage>
-    </ChatCompletion>
-  );
-  expect(result).toEqual('response from OpenAI');
-});
