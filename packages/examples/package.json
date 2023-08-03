@@ -51,6 +51,7 @@
     "demo:prompting-basics": "yarn build && node dist/prompting-basics.js",
     "demo:validated-generation": "yarn build && node dist/validated-generation.js",
     "demo:image-generation": "yarn build && node dist/image-generation.js",
+    "demo:shrink": "yarn build && node dist/conversation-shrinking.js",
     "view-logs": "cat ai-jsx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",

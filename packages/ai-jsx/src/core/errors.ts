@@ -35,7 +35,8 @@ export enum ErrorCode {
   Llama2DoesNotSupportFunctionResponse = 1028,
   Llama2DoesNotSupportMultipleSystemMessages = 1029,
 
-  ChatCompletionInvalidInput = 1030,
+  UnexpectedPartialRenderResult = 1030,
+  ChatCompletionInvalidInput = 1031,
 
   ModelOutputDidNotMatchConstraint = 2000,
 

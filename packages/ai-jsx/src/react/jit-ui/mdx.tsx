@@ -1,16 +1,28 @@
+/** @jsxImportSource ai-jsx/react */
+
 import * as AI from '../core.js';
-import { ChatCompletion, SystemMessage } from '../../core/completion.js';
+import { SystemMessage } from '../../core/completion.js';
 import React from 'react';
 import { collectComponents } from '../completion.js';
 
 /**
- * Use GPT-4 with this.
+ * A completion component that emits [MDX](https://mdxjs.com/).
+ *
+ * By default, the result streamed out of this component will sometimes be unparsable, as the model emits a partial value.
+ * (For instance, if the model is emitting the string `foo <Bar />`, and
+ * it streams out `foo <Ba`, that's not parsable.)
+ *
+ * You'll get better results with this if you use GPT-4.
+ *
+ * Use `usageExamples` to teach the model how to use your components.
+ *
+ * @see https://docs.ai-jsx.com/guides/mdx
+ * @see https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/mdx.tsx
  */
-export function MdxChatCompletion({ children, usageExamples }: { children: AI.Node; usageExamples: React.ReactNode }) {
+export function MdxSystemMessage({ usageExamples }: { usageExamples: React.ReactNode }) {
   const components = collectComponents(usageExamples);
   /* prettier-ignore */
-  return <ChatCompletion>
-    <SystemMessage>
+  return <SystemMessage>
       You are an assistant who can use React components to work with the user. By default, you use markdown. However, if it's useful, you can also mix in the following React components: {Object.keys(components).join(', ')}.
       All your responses
       should be in MDX, which is Markdown For the Component Era. Here are instructions for how to use MDX:
@@ -26,7 +38,7 @@ export function MdxChatCompletion({ children, usageExamples }: { children: AI.No
 
       === Begin example
       {`
-        Here is some markdown text 
+        Here is some markdown text
         <MyComponent id="123" />
 
         # Here is more markdown text
@@ -109,7 +121,5 @@ export function MdxChatCompletion({ children, usageExamples }: { children: AI.No
       === Begin components
       <AI.React>{usageExamples}</AI.React>
       === end components
-    </SystemMessage>
-    {children}
-  </ChatCompletion>;
+    </SystemMessage>;
 }

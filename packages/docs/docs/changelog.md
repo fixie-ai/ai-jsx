@@ -1,6 +1,22 @@
 # Changelog
 
-## 0.7.1
+## 0.8.1
+
+- Add support for token-based conversation shrinking via `<Shrinkable>`.
+
+## [0.8.0](https://github.com/fixie-ai/ai-jsx/commit/58062b9e42b2ccecd467de90ee1dedf7ec70dfbf)
+
+- Move `MdxChatCompletion` to be `MdxSystemMessage`. You can now put this `SystemMessage` in any `ChatCompletion` to prompt the model to give MDX output.
+
+## [0.7.3](https://github.com/fixie-ai/ai-jsx/commit/670ea52647138052cb116cbc56b6cc4bb49512a0)
+
+- Update readme.
+
+## [0.7.2](https://github.com/fixie-ai/ai-jsx/commit/203574abdbdce22c876a0c5a3a94dcc093b753cb)
+
+- Add `Converse` and `ShowConversation` components facilitate streaming conversations.
+
+## [0.7.1](https://github.com/fixie-ai/ai-jsx/commit/058c463a32321d754639dcf44a2b6f3b5a863d1f)
 
 - Change `ChatCompletion` components to render to `<AssistantMessage>` and `<FunctionCall>` elements.
 

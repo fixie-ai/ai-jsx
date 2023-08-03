@@ -3,16 +3,8 @@ import { getEnvVar } from './util.js';
 import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
-import {
-  AssistantMessage,
-  ChatProvider,
-  FunctionCall,
-  FunctionResponse,
-  ModelProps,
-  SystemMessage,
-  UserMessage,
-  ModelPropsWithChildren,
-} from '../core/completion.js';
+import { ChatProvider, ModelProps, ModelPropsWithChildren } from '../core/completion.js';
+import { AssistantMessage, ConversationMessage, UserMessage, renderToConversation } from '../core/conversation.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 
 export const anthropicClientContext = AI.createContext<AnthropicSDK>(
@@ -103,47 +95,42 @@ export async function* AnthropicChatModel(
     );
   }
   yield AI.AppendOnlyStream;
-  const messageElements = await render(props.children, {
-    stop: (e) =>
-      e.tag == SystemMessage ||
-      e.tag == UserMessage ||
-      e.tag == AssistantMessage ||
-      e.tag == FunctionCall ||
-      e.tag == FunctionResponse,
-  });
   const messages = await Promise.all(
-    messageElements
-      .filter(AI.isElement)
-      .flatMap((message) => {
-        if (message.tag === SystemMessage) {
+    // TODO: Support token budget/conversation shrinking
+    (
+      await renderToConversation(props.children, render)
+    )
+      .flatMap<Exclude<ConversationMessage, { type: 'system' }>>((message) => {
+        if (message.type === 'system') {
           return [
-            <UserMessage>For subsequent replies you will adhere to the following instructions: {message}</UserMessage>,
-            <AssistantMessage>Okay, I will do that.</AssistantMessage>,
+            {
+              type: 'user',
+              element: (
+                <UserMessage>
+                  For subsequent replies you will adhere to the following instructions: {message.element}
+                </UserMessage>
+              ),
+            },
+            { type: 'assistant', element: <AssistantMessage>Okay, I will do that.</AssistantMessage> },
           ];
         }
 
-        return message;
+        return [message];
       })
       .map(async (message) => {
-        switch (message.tag) {
-          case UserMessage:
-            return `${AnthropicSDK.HUMAN_PROMPT}:${message.props.name ? ` (${message.props.name})` : ''} ${await render(
-              message
-            )}`;
-          case AssistantMessage:
-            return `${AnthropicSDK.AI_PROMPT}: ${await render(message)}`;
-          case FunctionCall:
-          case FunctionResponse:
+        switch (message.type) {
+          case 'user':
+            return `${AnthropicSDK.HUMAN_PROMPT}:${
+              message.element.props.name ? ` (${message.element.props.name})` : ''
+            } ${await render(message.element)}`;
+          case 'assistant':
+            return `${AnthropicSDK.AI_PROMPT}: ${await render(message.element)}`;
+          case 'functionCall':
+          case 'functionResponse':
             throw new AIJSXError(
               'Anthropic models do not support functions.',
               ErrorCode.AnthropicDoesNotSupportFunctions,
               'user'
-            );
-          default:
-            throw new AIJSXError(
-              `ChatCompletion's prompts must be UserMessage or AssistantMessage, but this child was ${message.tag.name}`,
-              ErrorCode.ChatCompletionUnexpectedChild,
-              'internal'
             );
         }
       })

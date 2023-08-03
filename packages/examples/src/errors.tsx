@@ -4,10 +4,12 @@ import { ErrorBoundary } from 'ai-jsx/core/error-boundary';
 import * as AI from 'ai-jsx';
 
 function FailingComponent(): AI.Node {
-  return <ChatCompletion>
-    This is a bare string in a chat completion, which is not allowed.
-    {Math.random()}
-  </ChatCompletion>
+  return (
+    <ChatCompletion>
+      This is a bare string in a chat completion, which is not allowed.
+      {Math.random()}
+    </ChatCompletion>
+  );
 }
 
 function App() {

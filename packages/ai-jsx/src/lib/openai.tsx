@@ -2,8 +2,6 @@
  * This module provides interfaces to OpenAI's various models.
  * @packageDocumentation
  */
-
-import GPT3Tokenizer from 'gpt3-tokenizer';
 import {
   ChatCompletionFunctions,
   ChatCompletionRequestMessage,
@@ -19,26 +17,25 @@ import {
 } from 'openai-edge';
 import { Merge, MergeExclusive } from 'type-fest';
 import {
-  AssistantMessage,
   ChatProvider,
   CompletionProvider,
-  FunctionCall,
   FunctionDefinition,
-  FunctionResponse,
   ModelProps,
   ModelPropsWithChildren,
-  SystemMessage,
-  UserMessage,
   getParametersSchema,
 } from '../core/completion.js';
+import { AssistantMessage, ConversationMessage, FunctionCall, renderToConversation } from '../core/conversation.js';
 import { AIJSXError, ErrorCode, HttpError } from '../core/errors.js';
 import { Image, ImageGenPropsWithChildren } from '../core/image-gen.js';
 import { Logger } from '../core/log.js';
 import * as AI from '../index.js';
-import { Node, PropsOfComponent } from '../index.js';
+import { Node } from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
 import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { CreateChatCompletionRequest } from 'openai';
+import { debug } from '../core/debug.js';
+import { getEncoding } from 'js-tiktoken';
+import _ from 'lodash';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
 type ValidCompletionModel =
@@ -154,20 +151,21 @@ async function* openAiEventsToJson<T>(iterable: AsyncIterable<String>): AsyncGen
   }
 }
 
+const getEncoder = _.once(() => getEncoding('cl100k_base'));
+
 function logitBiasOfTokens(tokens: Record<string, number>) {
-  // N.B. We're using GPT3Tokenizer which per https://platform.openai.com/tokenizer "works for most GPT-3 models".
-  const tokenizer = new GPT3Tokenizer.default({ type: 'gpt3' });
+  const tokenizer = getEncoder();
   return Object.fromEntries(
     Object.entries(tokens).map(([token, bias]) => {
-      const encoded = tokenizer.encode(token) as { bpe: number[]; text: string[] };
-      if (encoded.bpe.length > 1) {
+      const encoded = tokenizer.encode(token);
+      if (encoded.length > 1) {
         throw new AIJSXError(
-          `You can only set logit_bias for a single token, but "${bias}" is ${encoded.bpe.length} tokens.`,
+          `You can only set logit_bias for a single token, but "${bias}" is ${encoded.length} tokens.`,
           ErrorCode.LogitBiasBadInput,
           'user'
         );
       }
-      return [encoded.bpe[0], bias];
+      return [encoded[0], bias];
     })
   );
 }
@@ -285,6 +283,76 @@ export async function* OpenAICompletionModel(
   return AI.AppendOnlyStream;
 }
 
+function estimateFunctionTokenCount(functions: Record<string, FunctionDefinition>): number {
+  // According to https://community.openai.com/t/how-to-calculate-the-tokens-when-using-function-call/266573
+  // function definitions are serialized as TypeScript. We'll use JSON-serialization as an approximation (which
+  // is almost certainly an overestimate).
+  return getEncoder().encode(JSON.stringify(functions)).length;
+}
+
+function tokenLimitForChatModel(
+  model: ValidChatModel,
+  functionDefinitions?: Record<string, FunctionDefinition>
+): number | undefined {
+  const TOKENS_CONSUMED_BY_REPLY_PREFIX = 3;
+  const functionEstimate =
+    chatModelSupportsFunctions(model) && functionDefinitions ? estimateFunctionTokenCount(functionDefinitions) : 0;
+
+  switch (model) {
+    case 'gpt-4':
+    case 'gpt-4-0314':
+    case 'gpt-4-0613':
+      return 8192 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
+    case 'gpt-4-32k':
+    case 'gpt-4-32k-0314':
+    case 'gpt-4-32k-0613':
+      return 32768 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
+    case 'gpt-3.5-turbo':
+    case 'gpt-3.5-turbo-0301':
+    case 'gpt-3.5-turbo-0613':
+      return 4096 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
+    case 'gpt-3.5-turbo-16k':
+    case 'gpt-3.5-turbo-16k-0613':
+      return 16384 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
+    default:
+      return undefined;
+  }
+}
+
+async function tokenCountForConversationMessage(
+  message: ConversationMessage,
+  render: AI.RenderContext['render']
+): Promise<number> {
+  const TOKENS_PER_MESSAGE = 3;
+  const TOKENS_PER_NAME = 1;
+  const encoder = getEncoder();
+  switch (message.type) {
+    case 'user':
+      return (
+        TOKENS_PER_MESSAGE +
+        encoder.encode(await render(message.element)).length +
+        (message.element.props.name ? encoder.encode(message.element.props.name).length + TOKENS_PER_NAME : 0)
+      );
+    case 'assistant':
+    case 'system':
+      return TOKENS_PER_MESSAGE + encoder.encode(await render(message.element)).length;
+    case 'functionCall':
+      return (
+        TOKENS_PER_MESSAGE +
+        TOKENS_PER_NAME +
+        encoder.encode(message.element.props.name).length +
+        encoder.encode(JSON.stringify(message.element.props.args)).length
+      );
+    case 'functionResponse':
+      return (
+        TOKENS_PER_MESSAGE +
+        TOKENS_PER_NAME +
+        encoder.encode(await render(message.element.props.children)).length +
+        encoder.encode(message.element.props.name).length
+      );
+  }
+}
+
 /**
  * Represents an OpenAI text chat model (e.g., `gpt-4`).
  */
@@ -324,78 +392,62 @@ export async function* OpenAIChatModel(
 
   yield AI.AppendOnlyStream;
 
-  const messageElements = await render(props.children, {
-    stop: (e) =>
-      e.tag == SystemMessage ||
-      e.tag == UserMessage ||
-      e.tag == AssistantMessage ||
-      e.tag == FunctionCall ||
-      e.tag == FunctionResponse,
-  });
+  let promptTokenLimit = tokenLimitForChatModel(props.model, props.functionDefinitions);
 
-  logger.warn({ messageElements });
-
-  const invalidChildren = messageElements.filter((el) => typeof el === 'string' && el.trim()) as string[];
-  if (invalidChildren.length) {
-    throw new AIJSXError(
-      `Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "${invalidChildren.join(
-        '", "'
-      )}". To fix this, wrap this content in the appropriate child type (e.g. UserMessage).`,
-      ErrorCode.ChatCompletionInvalidInput,
-      'user',
-      {
-        invalidChildren,
-      }
-    );
+  // If maxTokens is set, reserve that many tokens for the reply.
+  if (promptTokenLimit !== undefined && props.maxTokens) {
+    promptTokenLimit -= props.maxTokens;
   }
 
+  const conversationMessages = await renderToConversation(
+    props.children,
+    render,
+    tokenCountForConversationMessage,
+    promptTokenLimit
+  );
+  logger.debug({ messages: conversationMessages.map((m) => debug(m.element, true)) }, 'Got input conversation');
+
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
-    messageElements.filter(AI.isElement).map(async (message) => {
-      switch (message.tag) {
-        case SystemMessage:
+    conversationMessages.map(async (message) => {
+      switch (message.type) {
+        case 'system':
           return {
             role: 'system',
-            content: await render(message),
+            content: await render(message.element),
           };
-        case UserMessage:
+        case 'user':
           return {
             role: 'user',
-            content: await render(message),
-            name: (message.props as PropsOfComponent<typeof UserMessage>).name,
+            content: await render(message.element),
+            name: message.element.props.name,
           };
-        case AssistantMessage:
+        case 'assistant':
           return {
             role: 'assistant',
-            content: await render(message),
+            content: await render(message.element),
           };
-        case FunctionCall:
+        case 'functionCall':
           return {
             role: 'assistant',
             content: '',
             function_call: {
-              name: message.props.name,
-              arguments: JSON.stringify(message.props.args),
+              name: message.element.props.name,
+              arguments: JSON.stringify(message.element.props.args),
             },
           };
-        case FunctionResponse:
+        case 'functionResponse':
           return {
             role: 'function',
-            name: message.props.name,
-            content: await render(message.props.children),
+            name: message.element.props.name,
+            content: await render(message.element.props.children),
           };
-        default:
-          throw new AIJSXError(
-            `ChatCompletion's prompts must be SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse but this child was ${message.tag.name}`,
-            ErrorCode.ChatCompletionUnexpectedChild,
-            'internal'
-          );
       }
     })
   );
 
   if (!messages.length) {
     throw new AIJSXError(
-      "ChatCompletion must have at least child that's a SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse, but no such children were found.",
+      "ChatCompletion must have at least one child that's a SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse, but no such children were found.",
       ErrorCode.ChatCompletionMissingChildren,
       'user'
     );
@@ -460,9 +512,14 @@ export async function* OpenAIChatModel(
     return next.value.choices[0].delta;
   }
 
+  let isAssistant = false;
   let delta = await advance();
   while (delta !== null) {
     if (delta.role === 'assistant') {
+      isAssistant = true;
+    }
+
+    if (isAssistant && delta.content) {
       // Memoize the stream to ensure it renders only once.
       const assistantStream = memo(
         (async function* (): AI.RenderableStream {

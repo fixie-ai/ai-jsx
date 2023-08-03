@@ -8,6 +8,7 @@
     "entryPoints": [
       "src/index.ts",
       "src/core/completion.tsx",
+      "src/core/conversation.tsx",
       "src/core/debug.tsx",
       "src/core/error-boundary.ts",
       "src/core/errors.ts",

@@ -147,20 +147,27 @@ const config = {
           dark: 'dark',
         },
       },
+      algolia: {
+        appId: '5GCK080THV',
+        apiKey: '670cb378da13b7d7f1e90dd51faf2398',
+        indexName: 'fixie',
+        contextualSearch: false,
+        searchPagePath: false,
+      },
     }),
 
   themes: [
     ['@docusaurus/theme-mermaid', {}],
-    [
-      require.resolve('@easyops-cn/docusaurus-search-local'),
-      /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */
-      ({
-        hashed: true,
-        indexBlog: false,
-        highlightSearchTermsOnTargetPage: true,
-        docsRouteBasePath: '/',
-      }),
-    ],
+    // [
+    //   require.resolve('@easyops-cn/docusaurus-search-local'),
+    //   /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */
+    //   ({
+    //     hashed: true,
+    //     indexBlog: false,
+    //     highlightSearchTermsOnTargetPage: true,
+    //     docsRouteBasePath: '/',
+    //   }),
+    // ],
   ],
 
   markdown: {
