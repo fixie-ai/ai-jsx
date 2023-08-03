@@ -19,8 +19,10 @@ jestFetchMock.enableFetchMocks();
 import * as AI from 'ai-jsx';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 import { ChatCompletionDelta, SSE_FINAL_EVENT, SSE_PREFIX, SSE_TERMINATOR } from 'ai-jsx/lib/openai';
+import { Tool } from 'ai-jsx/batteries/use-tools';
+import { CreateChatCompletionRequest } from 'openai';
 
-it('passes all function fields', async () => {
+it('passes creates a chat completion', async () => {
   mockOpenAIResponse('response from OpenAI');
 
   const result = await AI.createRenderContext().render(
@@ -30,7 +32,49 @@ it('passes all function fields', async () => {
   );
   expect(result).toEqual('response from OpenAI');
 });
-function mockOpenAIResponse(message: string, handleRequest?: (req: Request) => Promise<Response>) {
+
+it('passes all function fields', async () => {
+  const functions: Record<string, Tool> = {
+    myFunc: {
+      description: 'My function',
+      parameters: {
+        myParam: {
+          description: 'My parameter',
+          type: 'string',
+          required: true,
+        },
+      },
+      func: () => { return null; }
+    }
+  }
+
+
+  mockOpenAIResponse('', async (req) => {
+    const body: CreateChatCompletionRequest = await req.json();
+    expect(body.functions?.[0]).toEqual({
+      name: 'myFunc',
+      description: 'My function',
+      parameters: {
+        type: 'object',
+        required: ['myParam'],
+        properties: {
+          myParam: {
+            type: 'string',
+            description: 'My parameter',
+          }
+        }
+      }
+    })
+  });
+
+  await AI.createRenderContext().render(
+    <ChatCompletion functionDefinitions={functions}>
+      <UserMessage>Hello</UserMessage>
+    </ChatCompletion>
+  );
+});
+
+function mockOpenAIResponse(message: string, handleRequest?: (req: Request) => Promise<void>) {
   // @ts-expect-error
   fetchMock.mockIf(/^https:\/\/api.openai.com\/v1\/chat\/completions/, async (req) => {
     handleRequest?.(req);
