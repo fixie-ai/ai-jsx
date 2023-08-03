@@ -7250,7 +7250,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/yargs@npm:^17.0.8":
+"@types/yargs@npm:^17.0.24, @types/yargs@npm:^17.0.8":
   version: 17.0.24
   resolution: "@types/yargs@npm:17.0.24"
   dependencies:
@@ -13083,6 +13083,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fixie@workspace:packages/fixie":
+  version: 0.0.0-use.local
+  resolution: "fixie@workspace:packages/fixie"
+  dependencies:
+    "@tsconfig/node18": ^2.0.1
+    "@types/lodash": ^4.14.195
+    "@types/node": ^20.3.1
+    "@types/prompt-sync": ^4.2.0
+    "@types/uuid": ^9.0.2
+    "@types/yargs": ^17.0.24
+    "@typescript-eslint/eslint-plugin": ^5.60.0
+    "@typescript-eslint/parser": ^5.60.0
+    ai-jsx: "workspace:*"
+    eslint: ^8.40.0
+    eslint-config-nth: ^2.0.1
+    fastify: ^4.20.0
+    typescript: ^5.1.3
+    yargs: ^17.7.2
+  bin:
+    serve-bin: dist/serve-bin.js
+  languageName: unknown
+  linkType: soft
+
 "flat-cache@npm:^3.0.4":
   version: 3.0.4
   resolution: "flat-cache@npm:3.0.4"
@@ -16985,6 +17008,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"levenshtein-edit-distance@npm:^2.0.3":
+  version: 2.0.5
+  resolution: "levenshtein-edit-distance@npm:2.0.5"
+  bin:
+    levenshtein-edit-distance: cli.js
+  checksum: 50618c01cd0c9bae6d4371d75af62c17c25a8f91bfd8d06400315b8b15976900cff951b48e102e074e9c5c6758260fff1675cfad186732afe124a5708e1032fd
+  languageName: node
+  linkType: hard
+
 "levn@npm:^0.4.1":
   version: 0.4.1
   resolution: "levn@npm:0.4.1"
@@ -18820,6 +18852,7 @@ __metadata:
     remark-gfm: ^3.0.1
     tailwindcss: 3.3.2
     typescript: ^5.1.3
+    word-error-rate: ^0.0.7
   languageName: unknown
   linkType: soft
 
@@ -19065,6 +19098,13 @@ __metadata:
   version: 4.1.1
   resolution: "object-assign@npm:4.1.1"
   checksum: fcc6e4ea8c7fe48abfbb552578b1c53e0d194086e2e6bbbf59e0a536381a292f39943c6e9628af05b5528aa5e3318bb30d6b2e53cadaf5b8fe9e12c4b69af23f
+  languageName: node
+  linkType: hard
+
+"object-hash@npm:^1.3.1":
+  version: 1.3.1
+  resolution: "object-hash@npm:1.3.1"
+  checksum: fdcb957a2f15a9060e30655a9f683ba1fc25dfb8809a73d32e9634bec385a2f1d686c707ac1e5f69fb773bc12df03fb64c77ce3faeed83e35f4eb1946cb1989e
   languageName: node
   linkType: hard
 
@@ -25530,6 +25570,16 @@ __metadata:
   version: 2.0.1
   resolution: "wildcard@npm:2.0.1"
   checksum: e0c60a12a219e4b12065d1199802d81c27b841ed6ad6d9d28240980c73ceec6f856771d575af367cbec2982d9ae7838759168b551776577f155044f5a5ba843c
+  languageName: node
+  linkType: hard
+
+"word-error-rate@npm:^0.0.7":
+  version: 0.0.7
+  resolution: "word-error-rate@npm:0.0.7"
+  dependencies:
+    levenshtein-edit-distance: ^2.0.3
+    object-hash: ^1.3.1
+  checksum: c86f70c9fb682c323428031e7683fad6288d0c4e7eb1c3b57f5a2e2f4b538972726d3cefdf8590a103c3996764a8b242ce8f9b69049794e55c049d35fd3cab01
   languageName: node
   linkType: hard
 
