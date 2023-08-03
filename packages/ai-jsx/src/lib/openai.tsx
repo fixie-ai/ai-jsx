@@ -127,8 +127,6 @@ export const SSE_FINAL_EVENT = '[DONE]';
  * @returns An async generator that yields the parsed JSON objects from the stream.
  */
 async function* openAiEventsToJson<T>(iterable: AsyncIterable<String>): AsyncGenerator<T> {
-
-
   let bufferedContent = '';
 
   for await (const chunk of iterable) {
@@ -356,14 +354,14 @@ async function tokenCountForConversationMessage(
 }
 
 export type ChatCompletionDelta = Merge<
-    CreateChatCompletionResponse,
-    {
-      choices: { 
-        delta: Partial<ChatCompletionResponseMessage>; 
-        finish_reason?: string 
-      }[];
-    }
-  >;
+  CreateChatCompletionResponse,
+  {
+    choices: {
+      delta: Partial<ChatCompletionResponseMessage>;
+      finish_reason?: string;
+    }[];
+  }
+>;
 
 /**
  * Represents an OpenAI text chat model (e.g., `gpt-4`).

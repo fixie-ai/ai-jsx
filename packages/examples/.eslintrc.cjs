@@ -54,8 +54,8 @@ module.exports = {
       files: ['test/**/*.ts', 'test/**/*.tsx'],
       plugins: ['jest'],
       env: {
-        'jest/globals': true
-      }
+        'jest/globals': true,
+      },
     },
   ],
 };

@@ -1,5 +1,4 @@
-import { Readable } from "stream";
-import { ChatCompletionDelta } from 'ai-jsx/lib/openai'
+import { Readable } from 'stream';
 
 class TempResponse extends Response {
   constructor(...args: any[]) {
@@ -10,17 +9,16 @@ class TempResponse extends Response {
     super(...args);
   }
 }
-Object.defineProperty(global, "Response", {
+Object.defineProperty(global, 'Response', {
   value: TempResponse,
 });
-
 
 import jestFetchMock from 'jest-fetch-mock';
 jestFetchMock.enableFetchMocks();
 
 import * as AI from 'ai-jsx';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
-
+import { ChatCompletionDelta, SSE_FINAL_EVENT, SSE_PREFIX, SSE_TERMINATOR } from 'ai-jsx/lib/openai';
 
 it('passes all function fields', async () => {
   mockOpenAIResponse('response from OpenAI');
@@ -39,28 +37,35 @@ function mockOpenAIResponse(message: string, handleRequest?: (req: Request) => P
 
     const stringStream = new ReadableStream({
       start(controller) {
-        const response: ChatCompletionDelta = {
-          id: 'cmpl-3QJ8ZjX1J5Z5X',
-          object: 'text_completion',
-          created: 1624430979,
-          model: 'gpt-3.5-turbo',
-          choices: [{
-            delta: {
-              role: 'assistant',
-              content: message
-            },
-          }]
-        };
+        function sendDelta(messagePart: string) {
+          const response: ChatCompletionDelta = {
+            id: 'cmpl-3QJ8ZjX1J5Z5X',
+            object: 'text_completion',
+            created: 1624430979,
+            model: 'gpt-3.5-turbo',
+            choices: [
+              {
+                delta: {
+                  role: 'assistant',
+                  content: messagePart,
+                },
+              },
+            ],
+          };
+          controller.enqueue(`${SSE_PREFIX}${JSON.stringify(response)}${SSE_TERMINATOR}`);
+        }
 
-        controller.enqueue(`data: ${JSON.stringify(response)}\n\n`);
-        controller.enqueue(`[DONE]`);
+        for (const char of message) {
+          sendDelta(char);
+        }
+
+        controller.enqueue(SSE_FINAL_EVENT);
         controller.close();
-      }
+      },
     }).pipeThrough(new TextEncoderStream());
     return {
       status: 200,
-      body: stringStream
+      body: stringStream,
     };
   });
 }
-
