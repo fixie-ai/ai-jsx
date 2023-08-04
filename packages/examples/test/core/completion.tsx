@@ -53,7 +53,7 @@ it('passes all function fields', async () => {
           required: true,
         },
       },
-      func: () => {},
+      func: () => undefined,
     },
   };
 

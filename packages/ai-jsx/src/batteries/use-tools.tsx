@@ -114,7 +114,9 @@ export interface Tool {
    * A function to invoke the tool.
    */
   // Can we use Zod to do better than any[]?
-  func: (...args: any[]) => string | number | boolean | null | undefined | Promise<string | number | boolean | null>;
+  func: (
+    ...args: any[]
+  ) => string | number | boolean | null | undefined | Promise<string | number | boolean | null | undefined>;
 }
 
 /**
