@@ -50,7 +50,10 @@ it('throws an error when a bare string is passsed to chat completion', async () 
   mockOpenAIResponse('response from OpenAI');
 
   await expect(() =>
-    AI.createRenderContext().render(<ChatCompletion>Hello</ChatCompletion>)
+    AI.createRenderContext().render(<ChatCompletion>
+      Wrong
+      <UserMessage>Correct</UserMessage>
+    </ChatCompletion>)
   ).rejects.toThrowErrorMatchingInlineSnapshot(
     `"ChatCompletion must have at least one child that's a SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse, but no such children were found."`
   );
