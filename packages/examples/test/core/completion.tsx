@@ -30,7 +30,8 @@ process.env.OPENAI_API_KEY = 'fake-openai-key';
 process.env.ANTHROPIC_API_KEY = 'fake-anthropic-key';
 
 import * as AI from 'ai-jsx';
-import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
+import { ChatCompletion } from 'ai-jsx/core/completion';
+import { UserMessage, Shrinkable } from 'ai-jsx/core/conversation';
 import { ChatCompletionDelta, SSE_FINAL_EVENT, SSE_PREFIX, SSE_TERMINATOR } from 'ai-jsx/lib/openai';
 import { Tool } from 'ai-jsx/batteries/use-tools';
 
@@ -43,6 +44,34 @@ it('passes creates a chat completion', async () => {
     </ChatCompletion>
   );
   expect(result).toEqual('response from OpenAI');
+});
+
+it('throws an error when a bare string is passsed to chat completion', async () => {
+  mockOpenAIResponse('response from OpenAI');
+
+  await expect(() =>
+    AI.createRenderContext().render(<ChatCompletion>Hello</ChatCompletion>)
+  ).rejects.toThrowErrorMatchingInlineSnapshot(
+    `"ChatCompletion must have at least one child that's a SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse, but no such children were found."`
+  );
+});
+
+it('throws an error when a bare string is passsed as a replacement', async () => {
+  mockOpenAIResponse('response from OpenAI');
+
+  const largeString = 'a'.repeat(1e3);
+
+  await expect(() =>
+    AI.createRenderContext().render(
+      <ChatCompletion maxTokens={4000}>
+        <Shrinkable replacement="bare replacement, which is invalid" importance={0}>
+          <UserMessage>{largeString}</UserMessage>
+        </Shrinkable>
+      </ChatCompletion>
+    )
+  ).rejects.toThrowErrorMatchingInlineSnapshot(
+    `"Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "bare replacement, which is invalid". To fix this, wrap this content in the appropriate child type (e.g. UserMessage)."`
+  );
 });
 
 it('passes all function fields', async () => {
