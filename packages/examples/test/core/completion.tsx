@@ -53,6 +53,7 @@ it('passes all function fields', async () => {
         myParam: {
           description: 'My parameter',
           type: 'string',
+          enum: ['option1', 'option2'],
           required: true,
         },
       },
@@ -81,6 +82,7 @@ it('passes all function fields', async () => {
             properties: {
               myParam: {
                 type: 'string',
+                enum: ['option1', 'option2'],
                 description: 'My parameter',
               },
             },

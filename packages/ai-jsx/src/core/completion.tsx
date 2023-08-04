@@ -86,11 +86,18 @@ export function getParametersSchema(parameters: FunctionParameters) {
 /**
  * Represents parameters to a {@link FunctionDefinition}.
  *
+ * This is a simplified version of the `parameters` field in {@link ChatCompletionFunctions}: https://platform.openai.com/docs/api-reference/chat/create#chat/create-parameters.
+ *
+ *
  * If you want to pass a field to {@link FunctionParameters} that isn't supported on this type, you can use a {@link z.ZodObject} schema instead.
  */
 export interface PlainFunctionParameter {
   description?: string;
   type?: string;
+  /**
+   * The possible values this param can take.
+   */
+  enum?: string[];
   required: boolean;
 }
 
