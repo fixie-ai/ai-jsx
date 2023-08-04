@@ -13,7 +13,7 @@ function App() {
     }
 
     messages.push(
-      <Shrinkable importance={0} replacement={counting[counting.length - 1]}>
+      <Shrinkable importance={0}>
         <UserMessage>{counting.join(' ')}</UserMessage>
       </Shrinkable>
     );
