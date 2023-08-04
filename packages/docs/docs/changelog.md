@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.8.1
+## 0.8.2
+
+- Fix issue where the `description` field wasn't passed to function definitions.
+
+## [0.8.1](https://github.com/fixie-ai/ai-jsx/commit/c6dfba422761f23ad4939c746a4a369385dc1f36)
 
 - Add support for token-based conversation shrinking via `<Shrinkable>`.
 
