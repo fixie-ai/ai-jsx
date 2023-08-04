@@ -26,6 +26,9 @@ import jestFetchMock from 'jest-fetch-mock';
  */
 jestFetchMock.enableFetchMocks();
 
+process.env.OPENAI_API_KEY = 'fake-openai-key';
+process.env.ANTHROPIC_API_KEY = 'fake-anthropic-key';
+
 import * as AI from 'ai-jsx';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
 import { ChatCompletionDelta, SSE_FINAL_EVENT, SSE_PREFIX, SSE_TERMINATOR } from 'ai-jsx/lib/openai';
