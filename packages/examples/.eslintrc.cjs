@@ -17,6 +17,7 @@ module.exports = {
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': ['warn', { ignoreRestSiblings: true, argsIgnorePattern: '^_' }],
 
+    'no-undef': 'off',
     'no-magic-numbers': 'off',
     '@typescript-eslint/no-magic-numbers': 'off',
 
