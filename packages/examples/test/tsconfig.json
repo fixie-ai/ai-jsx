@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["*.ts", "*.tsx", "**/*.ts", "**/*.tsx"],
+  "exclude": [],
+  "compilerOptions": {
+    "types": ["jest", "node"],
+    "noEmit": true,
+    "lib": ["DOM"]
+  }
+}
