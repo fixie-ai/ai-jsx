@@ -76,7 +76,18 @@ export function makeIndirectNode<T extends object>(value: T, node: Node): T & In
 }
 
 /** @hidden */
-export function withContext(renderable: Renderable, context: RenderContext): Element<any> {
+export function withContext<P>(element: Element<P>, context: RenderContext): Element<P>;
+export function withContext(renderable: Renderable, context: RenderContext): Node;
+export function withContext(renderable: Renderable, context: RenderContext): Node {
+  if (typeof renderable !== 'object' || renderable == null) {
+    // Switching contexts isn't meaningful for scalars.
+    return renderable;
+  }
+
+  if (Array.isArray(renderable)) {
+    return renderable.map((node) => withContext(node, context));
+  }
+
   if (isElement(renderable)) {
     if (renderable[attachedContextSymbol]) {
       // It's already been bound to a context; don't replace it.
