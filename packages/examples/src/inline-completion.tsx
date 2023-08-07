@@ -24,4 +24,4 @@ function CharacterGenerator() {
     </Inline>
   );
 }
-showInspector(<CharacterGenerator />);
+showInspector(<CharacterGenerator />, { showDebugTree: false });
