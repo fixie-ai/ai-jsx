@@ -15,7 +15,7 @@ const maxStringLength = 1000;
  * @hidden
  */
 export function debug(value: unknown, expandJSXChildren: boolean = true): string {
-  const previouslyMemoizedIds = new Set();
+  const previouslyMemoizedElements = new Set<Element<any>>();
 
   function debugRec(value: unknown, indent: string, context: 'code' | 'children' | 'props'): string {
     if (AI.isIndirectNode(value)) {
@@ -51,18 +51,16 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
           return '{null}';
       }
     } else if (AI.isElement(value)) {
-      const tag = value.tag === AI.Fragment ? '' : typeof value.tag === 'string' ? value.tag : value.tag.name;
       const childIndent = `${indent}  `;
 
       const memoizedId = memoizedIdSymbol in value.props && (value.props[memoizedIdSymbol] as number);
-      const memoizedIsPreviouslyRenderedToDebugOutput = memoizedId && previouslyMemoizedIds.has(memoizedId);
-
-      if (memoizedId && !memoizedIsPreviouslyRenderedToDebugOutput) {
-        previouslyMemoizedIds.add(memoizedId);
+      const expandChildrenForThisElement = expandJSXChildren && !previouslyMemoizedElements.has(value);
+      if (memoizedId) {
+        previouslyMemoizedElements.add(value);
       }
 
       let children = '';
-      if (expandJSXChildren && (!memoizedId || !memoizedIsPreviouslyRenderedToDebugOutput)) {
+      if (expandChildrenForThisElement) {
         children = debugRec(value.props.children, childIndent, 'children');
       }
 
@@ -90,6 +88,12 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
 
       const propsString = results.join('');
 
+      const tag =
+        value.tag === AI.Fragment && results.length == 0
+          ? ''
+          : typeof value.tag === 'string'
+          ? value.tag
+          : value.tag.name;
       const child =
         children !== ''
           ? `<${tag}${propsString}>\n${childIndent}${children}\n${indent}</${tag}>`
