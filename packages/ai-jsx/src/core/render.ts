@@ -7,7 +7,14 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { BoundLogger, NoOpLogImplementation, LogImplementation, PinoLogger } from './log.js';
+import {
+  BoundLogger,
+  NoOpLogImplementation,
+  LogImplementation,
+  PinoLogger,
+  OpenTelemetryLogger,
+  CombinedLogger,
+} from './log.js';
 import { AIJSXError, ErrorCode } from './errors.js';
 import { partialMemo } from './memoize.js';
 import {
@@ -23,6 +30,7 @@ import {
   isElement,
   Fragment,
 } from './node.js';
+import { openTelemetryStreamRenderer } from './opentelemetry.js';
 
 /**
  * A value that can be yielded by a component to indicate that each yielded value should
@@ -377,9 +385,14 @@ async function* renderStream(
  * @param logger The logger to use for the new context. If not provided, a new {@link PinoLogger} will be created.
  * @returns A new RenderContext.
  */
-export function createRenderContext(opts?: { logger?: LogImplementation }) {
-  const logger = opts?.logger ?? new PinoLogger();
-  return createRenderContextInternal(renderStream, {
+export function createRenderContext(opts?: { logger?: LogImplementation; enableOpenTelemetry?: boolean }) {
+  let renderFn = renderStream;
+  let logger = opts?.logger ?? new PinoLogger();
+  if (opts?.enableOpenTelemetry ?? process.env.AIJSX_ENABLE_OPENTELEMETRY) {
+    renderFn = openTelemetryStreamRenderer(renderFn);
+    logger = new CombinedLogger([logger, new OpenTelemetryLogger()]);
+  }
+  return createRenderContextInternal(renderFn, {
     [LoggerContext[contextKey].userContextSymbol]: logger,
   });
 }

@@ -4,7 +4,7 @@
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://ai-jsx.com",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "volta": {
     "extends": "../../package.json"
   },
@@ -343,11 +343,15 @@
     "view-logs": "cat ai-jsx.log | pino-pretty"
   },
   "peerDependencies": {
+    "@opentelemetry/api": "^1.4.1",
+    "@opentelemetry/api-logs": "^0.41.1",
     "react": "^16.8.0  || ^17.0.0 || ^18.0.0"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.5.0",
     "@nick.heiner/wandb-fork": "^0.5.2-5",
+    "@opentelemetry/api": "^1.4.1",
+    "@opentelemetry/api-logs": "^0.41.1",
     "axios": "^1.4.0",
     "cli-highlight": "^2.1.11",
     "cli-spinners": "^2.9.0",
