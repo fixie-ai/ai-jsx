@@ -79,7 +79,7 @@ export function partialMemo(renderable: Renderable, existingId?: number): Node |
 
     return {
       [memoizedIdSymbol]: id,
-      [Symbol.asyncIterator]: async function* (): AsyncGenerator<
+      async *[Symbol.asyncIterator](): AsyncGenerator<
         Renderable | typeof AppendOnlyStream,
         Renderable | typeof AppendOnlyStream
       > {

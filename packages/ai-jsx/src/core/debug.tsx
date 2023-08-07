@@ -67,7 +67,7 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
       const results = [];
 
       if (memoizedId) {
-        results.push(' @memoizedId=' + memoizedId);
+        results.push(` @memoizedId=${memoizedId}`);
       }
 
       if (value.props) {
