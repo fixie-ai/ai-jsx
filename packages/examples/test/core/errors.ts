@@ -1,4 +1,4 @@
-import { AIJSXError } from '../../dist/cjs/core/errors.cjs';
+import { AIJSXError } from 'ai-jsx/core/errors';
 
 test('Message is formatted as expected', () => {
   expect(new AIJSXError('message', 1000, 'user', { checkedNames: ['name1', 'name2'] }).toString())

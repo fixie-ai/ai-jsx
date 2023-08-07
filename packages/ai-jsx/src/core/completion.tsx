@@ -8,9 +8,11 @@ import { Node, Component, RenderContext } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
+import { ChatCompletionFunctions } from 'openai';
 import { AnthropicChatModel } from '../lib/anthropic.js';
 import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import _ from 'lodash';
 export {
   UserMessage,
   SystemMessage,
@@ -54,7 +56,7 @@ export type ModelComponent<T extends ModelPropsWithChildren> = Component<T>;
  * Represents a function definition that can be invoked using the {@link FunctionCall} component.
  */
 export interface FunctionDefinition {
-  description?: string;
+  description?: ChatCompletionFunctions['description'];
   parameters: FunctionParameters;
 }
 
@@ -74,9 +76,7 @@ export function getParametersSchema(parameters: FunctionParameters) {
     properties: Object.keys(parameters).reduce(
       (map: Record<string, any>, paramName) => ({
         ...map,
-        [paramName]: {
-          type: parameters[paramName].type,
-        },
+        [paramName]: _.omit(parameters[paramName], 'required'),
       }),
       {}
     ),
@@ -85,10 +85,19 @@ export function getParametersSchema(parameters: FunctionParameters) {
 
 /**
  * Represents parameters to a {@link FunctionDefinition}.
+ *
+ * This is a simplified version of the `parameters` field in {@link ChatCompletionFunctions}: https://platform.openai.com/docs/api-reference/chat/create#chat/create-parameters.
+ *
+ *
+ * If you want to pass a field to {@link FunctionParameters} that isn't supported on this type, you can use a {@link z.ZodObject} schema instead.
  */
 export interface PlainFunctionParameter {
   description?: string;
   type?: string;
+  /**
+   * The possible values this param can take.
+   */
+  enum?: string[];
   required: boolean;
 }
 

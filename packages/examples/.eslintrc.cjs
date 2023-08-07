@@ -4,7 +4,7 @@ module.exports = {
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/strict', 'nth'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: [path.join(__dirname, 'tsconfig.json')],
+    project: [path.join(__dirname, 'tsconfig.json'), path.join(__dirname, 'test', 'tsconfig.json')],
   },
   plugins: ['@typescript-eslint'],
   root: true,
@@ -17,6 +17,7 @@ module.exports = {
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': ['warn', { ignoreRestSiblings: true, argsIgnorePattern: '^_' }],
 
+    'no-undef': 'off',
     'no-magic-numbers': 'off',
     '@typescript-eslint/no-magic-numbers': 'off',
 
@@ -48,4 +49,14 @@ module.exports = {
     '@typescript-eslint/no-base-to-string': 'error',
     '@typescript-eslint/no-unnecessary-condition': ['warn', { allowConstantLoopConditions: true }],
   },
+
+  overrides: [
+    {
+      files: ['test/**/*.ts', 'test/**/*.tsx'],
+      plugins: ['jest'],
+      env: {
+        'jest/globals': true,
+      },
+    },
+  ],
 };

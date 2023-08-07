@@ -115,6 +115,10 @@ export function OpenAI({
   return result;
 }
 
+export const SSE_PREFIX = 'data: ';
+export const SSE_TERMINATOR = '\n\n';
+export const SSE_FINAL_EVENT = '[DONE]';
+
 /**
  * Parses an OpenAI SSE response stream according to:
  *  - https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events
@@ -123,10 +127,6 @@ export function OpenAI({
  * @returns An async generator that yields the parsed JSON objects from the stream.
  */
 async function* openAiEventsToJson<T>(iterable: AsyncIterable<String>): AsyncGenerator<T> {
-  const SSE_PREFIX = 'data: ';
-  const SSE_TERMINATOR = '\n\n';
-  const SSE_FINAL_EVENT = '[DONE]';
-
   let bufferedContent = '';
 
   for await (const chunk of iterable) {
@@ -353,6 +353,16 @@ async function tokenCountForConversationMessage(
   }
 }
 
+export type ChatCompletionDelta = Merge<
+  CreateChatCompletionResponse,
+  {
+    choices: {
+      delta: Partial<ChatCompletionResponseMessage>;
+      finish_reason?: string;
+    }[];
+  }
+>;
+
 /**
  * Represents an OpenAI text chat model (e.g., `gpt-4`).
  */
@@ -362,7 +372,7 @@ export async function* OpenAIChatModel(
     logitBias?: Record<string, number>;
   } & MergeExclusive<
       {
-        functionDefinitions: Record<string, FunctionDefinition>;
+        functionDefinitions: Record<ChatCompletionFunctions['name'], FunctionDefinition>;
         forcedFunction: string;
       },
       {
@@ -481,13 +491,6 @@ export async function* OpenAIChatModel(
   const chatResponse = await openai.createChatCompletion(chatCompletionRequest);
 
   await checkOpenAIResponse(chatResponse, logger, 'createChatCompletion');
-
-  type ChatCompletionDelta = Merge<
-    CreateChatCompletionResponse,
-    {
-      choices: { delta: Partial<ChatCompletionResponseMessage>; finish_reason: string | undefined }[];
-    }
-  >;
 
   const iterator = openAiEventsToJson<ChatCompletionDelta>(asyncIteratorOfFetchStream(chatResponse.body!.getReader()))[
     Symbol.asyncIterator
