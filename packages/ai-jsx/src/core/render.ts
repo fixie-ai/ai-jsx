@@ -31,6 +31,7 @@ import {
   Fragment,
 } from './node.js';
 import { openTelemetryStreamRenderer } from './opentelemetry.js';
+import { getEnvVar } from '../lib/util.js';
 
 /**
  * A value that can be yielded by a component to indicate that each yielded value should
@@ -388,7 +389,7 @@ async function* renderStream(
 export function createRenderContext(opts?: { logger?: LogImplementation; enableOpenTelemetry?: boolean }) {
   let renderFn = renderStream;
   let logger = opts?.logger ?? new PinoLogger();
-  if (opts?.enableOpenTelemetry ?? process.env.AIJSX_ENABLE_OPENTELEMETRY) {
+  if (opts?.enableOpenTelemetry ?? getEnvVar('AIJSX_ENABLE_OPENTELEMETRY')) {
     renderFn = openTelemetryStreamRenderer(renderFn);
     logger = new CombinedLogger([logger, new OpenTelemetryLogger()]);
   }

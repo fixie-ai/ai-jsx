@@ -7,6 +7,7 @@ import _ from 'lodash';
 import pino from 'pino';
 import { Element } from './node.js';
 import { logs, type Logger as OpenTelemetryLoggerInterface } from '@opentelemetry/api-logs';
+import { getEnvVar } from '../lib/util.js';
 
 export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
 
@@ -73,7 +74,7 @@ export class NoOpLogImplementation extends LogImplementation {
 }
 
 const defaultPinoLogger = _.once(() => {
-  const logEnv = process.env.AIJSX_LOG ?? 'silent';
+  const logEnv = getEnvVar('AIJSX_LOG') ?? 'silent';
   const [level, file] = logEnv.split(':', 2);
   // @ts-expect-error
   return pino({ name: 'ai-jsx', level }, file && pino.destination(file));
