@@ -5,7 +5,6 @@ function App() {
   return (
     <ChatCompletion>
       <SystemMessage>You are an assistant who only uses one syllable words.</SystemMessage>
-      fak
       <UserMessage>Why is the sky blue?</UserMessage>
     </ChatCompletion>
   );
