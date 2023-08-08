@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.8.2
+## 0.8.3
+
+- Throw validation errors when invalid elements (like bare strings) are passed to `ChatCompletion` components.
+- Reduce logspam from memoization.
+
+## [0.8.2](https://github.com/fixie-ai/ai-jsx/commit/4ff41e2bbafaa89901d9c79e8a639f46d956f08d)
 
 - Fix issue where the `description` field wasn't passed to function definitions.
 
