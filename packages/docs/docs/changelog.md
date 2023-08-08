@@ -1,8 +1,13 @@
 # Changelog
 
-## 0.8.3
+## 0.8.4
 
 - Add OpenTelemetry integration for AI.JSX render tracing, which can be enabled by setting the `AIJSX_ENABLE_OPENTELEMETRY` environment variable.
+
+## [0.8.3](https://github.com/fixie-ai/ai-jsx/commit/0c0309382d5beb6e3bb177fc5af464a4cf6ab3ef)
+
+- Throw validation errors when invalid elements (like bare strings) are passed to `ChatCompletion` components.
+- Reduce logspam from memoization.
 
 ## [0.8.2](https://github.com/fixie-ai/ai-jsx/commit/4ff41e2bbafaa89901d9c79e8a639f46d956f08d)
 

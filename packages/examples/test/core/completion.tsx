@@ -30,7 +30,8 @@ process.env.OPENAI_API_KEY = 'fake-openai-key';
 process.env.ANTHROPIC_API_KEY = 'fake-anthropic-key';
 
 import * as AI from 'ai-jsx';
-import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
+import { ChatCompletion } from 'ai-jsx/core/completion';
+import { UserMessage, SystemMessage, Shrinkable } from 'ai-jsx/core/conversation';
 import { ChatCompletionDelta, SSE_FINAL_EVENT, SSE_PREFIX, SSE_TERMINATOR } from 'ai-jsx/lib/openai';
 import { Tool } from 'ai-jsx/batteries/use-tools';
 
@@ -43,6 +44,76 @@ it('passes creates a chat completion', async () => {
     </ChatCompletion>
   );
   expect(result).toEqual('response from OpenAI');
+});
+
+it('throws an error when a bare string is passsed to chat completion', async () => {
+  mockOpenAIResponse('response from OpenAI');
+
+  function Fak() {
+    return 'fak';
+  }
+
+  await expect(() =>
+    AI.createRenderContext().render(
+      <ChatCompletion>
+        <Fak />
+        This should not be here
+        <UserMessage>Correct</UserMessage>
+      </ChatCompletion>
+    )
+  ).rejects.toThrowErrorMatchingInlineSnapshot(
+    `"Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "fak", "This should not be here". To fix this, wrap this content in the appropriate child type (e.g. UserMessage)."`
+  );
+});
+
+it('throws an error when a string is passsed in a shrinkable to chat completion', async () => {
+  mockOpenAIResponse('response from OpenAI');
+
+  await expect(() =>
+    AI.createRenderContext().render(
+      <ChatCompletion>
+        <Shrinkable importance={0}>Wrong</Shrinkable>
+        <UserMessage>Correct</UserMessage>
+      </ChatCompletion>
+    )
+  ).rejects.toThrowErrorMatchingInlineSnapshot(
+    `"Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "Wrong". To fix this, wrap this content in the appropriate child type (e.g. UserMessage)."`
+  );
+});
+
+it('accepts conversational elements not being the top level', async () => {
+  mockOpenAIResponse('response from OpenAI');
+
+  function MySystemMessage() {
+    return <SystemMessage>my system message</SystemMessage>;
+  }
+
+  expect(
+    await AI.createRenderContext().render(
+      <ChatCompletion>
+        <MySystemMessage />
+        <UserMessage>Correct</UserMessage>
+      </ChatCompletion>
+    )
+  ).toEqual('response from OpenAI');
+});
+
+it('throws an error when a bare string is passsed as a replacement', async () => {
+  mockOpenAIResponse('response from OpenAI');
+
+  const largeString = 'a'.repeat(1e3);
+
+  await expect(() =>
+    AI.createRenderContext().render(
+      <ChatCompletion maxTokens={4000}>
+        <Shrinkable replacement="bare replacement, which is invalid" importance={0}>
+          <UserMessage>{largeString}</UserMessage>
+        </Shrinkable>
+      </ChatCompletion>
+    )
+  ).rejects.toThrowErrorMatchingInlineSnapshot(
+    `"Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "bare replacement, which is invalid". To fix this, wrap this content in the appropriate child type (e.g. UserMessage)."`
+  );
 });
 
 it('passes all function fields', async () => {

@@ -159,29 +159,45 @@ export function isConversationalComponent(element: AI.Element<any>): boolean {
   ).includes(element.tag);
 }
 
-function toConversationMessages(partialRendering: AI.PartiallyRendered[]): ConversationMessage[] {
-  return partialRendering
-    .flatMap((e) => (AI.isElement(e) ? [e] : []))
-    .map<ConversationMessage>((e) => {
-      switch (e.tag) {
-        case UserMessage:
-          return { type: 'user', element: e };
-        case AssistantMessage:
-          return { type: 'assistant', element: e };
-        case SystemMessage:
-          return { type: 'system', element: e };
-        case FunctionCall:
-          return { type: 'functionCall', element: e };
-        case FunctionResponse:
-          return { type: 'functionResponse', element: e };
-        default:
-          throw new AIJSXError(
-            `Unexpected tag (${e.tag.name}) in conversation`,
-            ErrorCode.UnexpectedPartialRenderResult,
-            'internal'
-          );
+function assertAllElementsAreConversationalComponents(partialRendering: AI.PartiallyRendered[]) {
+  const invalidChildren = partialRendering.filter((el) => typeof el === 'string' && el.trim()) as string[];
+  if (invalidChildren.length) {
+    throw new AIJSXError(
+      `Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "${invalidChildren.join(
+        '", "'
+      )}". To fix this, wrap this content in the appropriate child type (e.g. UserMessage).`,
+      ErrorCode.ChatCompletionInvalidInput,
+      'user',
+      {
+        invalidChildren,
       }
-    });
+    );
+  }
+}
+
+function toConversationMessages(partialRendering: AI.PartiallyRendered[]): ConversationMessage[] {
+  assertAllElementsAreConversationalComponents(partialRendering);
+
+  return (partialRendering as AI.Element<any>[]).map<ConversationMessage>((e) => {
+    switch (e.tag) {
+      case UserMessage:
+        return { type: 'user', element: e };
+      case AssistantMessage:
+        return { type: 'assistant', element: e };
+      case SystemMessage:
+        return { type: 'system', element: e };
+      case FunctionCall:
+        return { type: 'functionCall', element: e };
+      case FunctionResponse:
+        return { type: 'functionResponse', element: e };
+      default:
+        throw new AIJSXError(
+          `Unexpected tag (${e.tag.name}) in conversation`,
+          ErrorCode.UnexpectedPartialRenderResult,
+          'internal'
+        );
+    }
+  });
 }
 
 /** @hidden */
@@ -394,6 +410,8 @@ export async function ShrinkConversation(
       stop: (e) => isConversationalComponent(e) || e.tag === InternalShrinkable,
     });
 
+    assertAllElementsAreConversationalComponents(rendered);
+
     const asTreeNodes = await Promise.all(
       rendered.map<Promise<TreeNode | null>>(async (value) => {
         if (typeof value === 'string') {
@@ -481,12 +499,14 @@ export async function ShrinkConversation(
 
   const memoized = memo(children);
 
+  const rendered = await render(memoized, {
+    stop: (e) => isConversationalComponent(e) || e.tag === InternalShrinkable,
+  });
+
+  assertAllElementsAreConversationalComponents(rendered);
+
   // If there are no shrinkable elements, there's no need to evaluate the cost.
-  const shrinkableOrConversationElements = (
-    await render(memoized, {
-      stop: (e) => isConversationalComponent(e) || e.tag === InternalShrinkable,
-    })
-  ).filter(AI.isElement);
+  const shrinkableOrConversationElements = rendered.filter(AI.isElement);
   if (!shrinkableOrConversationElements.find((value) => value.tag === InternalShrinkable)) {
     return shrinkableOrConversationElements;
   }
