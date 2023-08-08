@@ -14,7 +14,6 @@ import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import _ from 'lodash';
 export {
-  /** @deprecated */
   UserMessage,
   SystemMessage,
   AssistantMessage,
