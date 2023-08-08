@@ -14,6 +14,7 @@ const sdk = new NodeSDK({
 });
 
 // Add some workarounds for `FetchInstrumentation` assuming we're in the browser.
+// See https://github.com/open-telemetry/opentelemetry-js/issues/3413
 (globalThis as any).location = {} as any;
 (globalThis as any).navigator = {} as any;
 
