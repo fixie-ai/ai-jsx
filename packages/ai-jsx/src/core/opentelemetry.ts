@@ -45,8 +45,8 @@ export function openTelemetryStreamRenderer(streamRenderer: StreamRenderer): Str
     }
 
     const activeContext = context.active();
-    let startup = (span: opentelemetry.Span) => {};
-    let cleanup = (span: opentelemetry.Span) => {};
+    let startup = (_span: opentelemetry.Span) => {};
+    let cleanup = (_span: opentelemetry.Span) => {};
     const renderInSpan = (span: opentelemetry.Span) => {
       async function* gen() {
         let result: PartiallyRendered[] | undefined = undefined;
