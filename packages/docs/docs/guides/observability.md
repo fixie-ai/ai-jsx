@@ -180,6 +180,21 @@ function MyTracer(props: { children: AI.Node }, { wrapRender }: AI.ComponentCont
 
 This technique uses the [context affordance](./rules-of-jsx.md#context).
 
+### OpenTelemetry Integration
+
+AI.JSX includes an integration with [OpenTelemetry](https://opentelemetry.io/) to trace rendering. To enable it,
+set the `AIJSX_ENABLE_OPENTELEMETRY` environment variable to `1`. [Spans](https://opentelemetry.io/docs/concepts/signals/traces/#spans)
+are emitted for each element and capture:
+
+- The input and output of each element
+- Dependencies between elements
+- Latency
+
+Logs are automatically emitted to OpenTelemetry as well.
+
+To learn more about configuring or deploying an OpenTelemetry collector, see the [Getting Started](https://opentelemetry.io/docs/collector/getting-started/)
+page. The [examples project](https://github.com/fixie-ai/ai-jsx/blob/main/packages/examples/src/opentelemetry.ts) has a sample as well.
+
 ### Weights & Biases Tracer Integration
 
 :::info
@@ -223,5 +238,3 @@ yarn workspace examples demo:wandb
 ```
 
 ![W&B Trace Timeline](wandb-tracer.png)
-
-<!-- TODO: move `OpenTelemetryTracer` into batteries and document them here. -->
