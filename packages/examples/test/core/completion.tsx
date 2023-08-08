@@ -46,35 +46,55 @@ it('passes creates a chat completion', async () => {
   expect(result).toEqual('response from OpenAI');
 });
 
-it.only('throws an error when a bare string is passsed to chat completion', async () => {
+it('throws an error when a bare string is passsed to chat completion', async () => {
   mockOpenAIResponse('response from OpenAI');
 
-  function Fak() { return 'fak'}
+  function Fak() {
+    return 'fak';
+  }
 
   await expect(() =>
-    AI.createRenderContext().render(<ChatCompletion>
-      <Fak />
-      Wrong
-      <UserMessage>Correct</UserMessage>
-    </ChatCompletion>)
+    AI.createRenderContext().render(
+      <ChatCompletion>
+        <Fak />
+        This should not be here
+        <UserMessage>Correct</UserMessage>
+      </ChatCompletion>
+    )
   ).rejects.toThrowErrorMatchingInlineSnapshot(
-    `"ChatCompletion must have at least one child that's a SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse, but no such children were found."`
+    `"Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "fak", "This should not be here". To fix this, wrap this content in the appropriate child type (e.g. UserMessage)."`
+  );
+});
+
+it('throws an error when a string is passsed in a shrinkable to chat completion', async () => {
+  mockOpenAIResponse('response from OpenAI');
+
+  await expect(() =>
+    AI.createRenderContext().render(
+      <ChatCompletion>
+        <Shrinkable importance={0}>Wrong</Shrinkable>
+        <UserMessage>Correct</UserMessage>
+      </ChatCompletion>
+    )
+  ).rejects.toThrowErrorMatchingInlineSnapshot(
+    `"Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "Wrong". To fix this, wrap this content in the appropriate child type (e.g. UserMessage)."`
   );
 });
 
 it('accepts conversational elements not being the top level', async () => {
   mockOpenAIResponse('response from OpenAI');
 
-  function MySystemMessage() { return <SystemMessage>my system message</SystemMessage>}
+  function MySystemMessage() {
+    return <SystemMessage>my system message</SystemMessage>;
+  }
 
-  await expect(() =>
-    AI.createRenderContext().render(<ChatCompletion>
-      <MySystemMessage />
-      <UserMessage>Correct</UserMessage>
-    </ChatCompletion>)
-  ).rejects.toThrowErrorMatchingInlineSnapshot(
-    `"ChatCompletion must have at least one child that's a SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse, but no such children were found."`
-  );
+  expect(
+    await AI.createRenderContext().render(
+      <ChatCompletion>
+        <MySystemMessage />
+        <UserMessage>Correct</UserMessage>
+      </ChatCompletion>
+  )).toEqual('response from OpenAI');
 });
 
 it('throws an error when a bare string is passsed as a replacement', async () => {

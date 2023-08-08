@@ -159,8 +159,7 @@ export function isConversationalComponent(element: AI.Element<any>): boolean {
   ).includes(element.tag);
 }
 
-function toConversationMessages(partialRendering: AI.PartiallyRendered[]): ConversationMessage[] {
-  console.log({partialRendering});
+function assertAllElementsAreConversationalComponents(partialRendering: AI.PartiallyRendered[]) {
   const invalidChildren = partialRendering.filter((el) => typeof el === 'string' && el.trim()) as string[];
   if (invalidChildren.length) {
     throw new AIJSXError(
@@ -174,6 +173,10 @@ function toConversationMessages(partialRendering: AI.PartiallyRendered[]): Conve
       }
     );
   }
+}
+
+function toConversationMessages(partialRendering: AI.PartiallyRendered[]): ConversationMessage[] {
+  assertAllElementsAreConversationalComponents(partialRendering);
 
   return (partialRendering as AI.Element<any>[]).map<ConversationMessage>((e) => {
     switch (e.tag) {
@@ -204,7 +207,6 @@ export async function renderToConversation(
   cost?: (message: ConversationMessage, render: AI.ComponentContext['render']) => Promise<number>,
   budget?: number
 ) {
-  console.log({conversation});
   const conversationToUse =
     cost && budget ? (
       <ShrinkConversation cost={cost} budget={budget}>
@@ -213,7 +215,7 @@ export async function renderToConversation(
     ) : (
       conversation
     );
-  return toConversationMessages(await render(conversationToUse, { stop: e => isConversationalComponent(e) || typeof e === 'string' }));
+  return toConversationMessages(await render(conversationToUse, { stop: isConversationalComponent }));
 }
 
 /**
@@ -408,19 +410,7 @@ export async function ShrinkConversation(
       stop: (e) => isConversationalComponent(e) || e.tag === InternalShrinkable,
     });
 
-    const invalidChildren = rendered.filter((el) => typeof el === 'string' && el.trim()) as string[];
-    if (invalidChildren.length) {
-      throw new AIJSXError(
-        `Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "${invalidChildren.join(
-          '", "'
-        )}". To fix this, wrap this content in the appropriate child type (e.g. UserMessage).`,
-        ErrorCode.ChatCompletionInvalidInput,
-        'user',
-        {
-          invalidChildren,
-        }
-      );
-    }
+    assertAllElementsAreConversationalComponents(rendered);
 
     const asTreeNodes = await Promise.all(
       rendered.map<Promise<TreeNode | null>>(async (value) => {
@@ -509,12 +499,14 @@ export async function ShrinkConversation(
 
   const memoized = memo(children);
 
+  const rendered = await render(memoized, {
+    stop: (e) => isConversationalComponent(e) || e.tag === InternalShrinkable,
+  });
+
+  assertAllElementsAreConversationalComponents(rendered);
+
   // If there are no shrinkable elements, there's no need to evaluate the cost.
-  const shrinkableOrConversationElements = (
-    await render(memoized, {
-      stop: (e) => isConversationalComponent(e) || e.tag === InternalShrinkable,
-    })
-  ).filter(AI.isElement);
+  const shrinkableOrConversationElements = rendered.filter(AI.isElement);
   if (!shrinkableOrConversationElements.find((value) => value.tag === InternalShrinkable)) {
     return shrinkableOrConversationElements;
   }
