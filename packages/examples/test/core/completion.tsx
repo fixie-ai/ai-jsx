@@ -94,7 +94,8 @@ it('accepts conversational elements not being the top level', async () => {
         <MySystemMessage />
         <UserMessage>Correct</UserMessage>
       </ChatCompletion>
-  )).toEqual('response from OpenAI');
+    )
+  ).toEqual('response from OpenAI');
 });
 
 it('throws an error when a bare string is passsed as a replacement', async () => {

@@ -60,7 +60,7 @@ module.exports = {
       rules: {
         // This rule conflicts with how Jest writes inline snapshots.
         quotes: 'off',
-      }
+      },
     },
   ],
 };
