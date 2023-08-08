@@ -74,7 +74,7 @@ export class NoOpLogImplementation extends LogImplementation {
 }
 
 const defaultPinoLogger = _.once(() => {
-  const logEnv = getEnvVar('AIJSX_LOG') ?? 'silent';
+  const logEnv = getEnvVar('AIJSX_LOG', false) ?? 'silent';
   const [level, file] = logEnv.split(':', 2);
   // @ts-expect-error
   return pino({ name: 'ai-jsx', level }, file && pino.destination(file));

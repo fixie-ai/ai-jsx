@@ -389,7 +389,7 @@ async function* renderStream(
 export function createRenderContext(opts?: { logger?: LogImplementation; enableOpenTelemetry?: boolean }) {
   let renderFn = renderStream;
   let logger = opts?.logger ?? new PinoLogger();
-  if (opts?.enableOpenTelemetry ?? getEnvVar('AIJSX_ENABLE_OPENTELEMETRY')) {
+  if (opts?.enableOpenTelemetry ?? getEnvVar('AIJSX_ENABLE_OPENTELEMETRY', false)) {
     renderFn = openTelemetryStreamRenderer(renderFn);
     logger = new CombinedLogger([logger, new OpenTelemetryLogger()]);
   }
