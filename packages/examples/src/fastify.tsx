@@ -58,7 +58,7 @@ fastify.get('/stream-sample', async (request, reply) => {
     );
   }
   const responseStream = toTextStream(<DescribeCharacter />, new PinoLogger(pinoStdoutLogger));
-  await sendReadableStreamToFastifyReply(reply, responseStream as any);
+  await sendReadableStreamToFastifyReply(reply, responseStream);
 });
 
 fastify.get('/standalone-stream-sample', async (request, reply) => {
