@@ -6,6 +6,7 @@ import { ChatOrCompletionModelOrBoth } from './model.js';
 import { ChatProvider, ModelProps, ModelPropsWithChildren } from '../core/completion.js';
 import { AssistantMessage, ConversationMessage, UserMessage, renderToConversation } from '../core/conversation.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
+import { debugRepresentation } from '../core/debug.js';
 
 export const anthropicClientContext = AI.createContext<AnthropicSDK>(
   new AnthropicSDK({
@@ -175,32 +176,34 @@ export async function* AnthropicChatModel(
   }
 
   // Embed the stream "within" an <AssistantMessage>, memoizing it to ensure it's only consumed once.
-  yield (
-    <AssistantMessage>
-      {memo(
-        (async function* (): AI.RenderableStream {
-          yield AI.AppendOnlyStream;
-          let resultSoFar = '';
-          let isFirstResponse = true;
-          for await (const completion of response) {
-            let text = completion.completion;
-            if (isFirstResponse && text.length > 0) {
-              isFirstResponse = false;
-              if (text.startsWith(' ')) {
-                text = text.slice(1);
-              }
-            }
-            resultSoFar += text;
-            logger.trace({ completion }, 'Got Anthropic stream event');
-            yield text;
-          }
+  let accumulatedContent = '';
+  let complete = false;
+  const Stream = async function* (): AI.RenderableStream {
+    yield AI.AppendOnlyStream;
+    let isFirstResponse = true;
+    for await (const completion of response) {
+      let text = completion.completion;
+      if (isFirstResponse && text.length > 0) {
+        isFirstResponse = false;
+        if (text.startsWith(' ')) {
+          text = text.slice(1);
+        }
+      }
+      accumulatedContent += text;
+      logger.trace({ completion }, 'Got Anthropic stream event');
+      yield text;
+    }
 
-          logger.debug({ completion: resultSoFar }, 'Anthropic completion finished');
-          return AI.AppendOnlyStream;
-        })()
-      )}
-    </AssistantMessage>
+    complete = true;
+    logger.debug({ completion: accumulatedContent }, 'Anthropic completion finished');
+    return AI.AppendOnlyStream;
+  };
+  const assistantStream = memo(
+    <Stream {...debugRepresentation(() => `${accumulatedContent}${complete ? '' : '▮'}`)} />
   );
+  yield <AssistantMessage>{assistantStream}</AssistantMessage>;
 
+  // Flush the stream to ensure that this element completes rendering only after the stream has completed.
+  await render(assistantStream);
   return AI.AppendOnlyStream;
 }

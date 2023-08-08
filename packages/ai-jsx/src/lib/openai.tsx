@@ -33,7 +33,7 @@ import { Node } from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
 import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { CreateChatCompletionRequest } from 'openai';
-import { debug } from '../core/debug.js';
+import { debug, debugRepresentation } from '../core/debug.js';
 import { getEncoding } from 'js-tiktoken';
 import _ from 'lodash';
 
@@ -523,22 +523,27 @@ export async function* OpenAIChatModel(
 
     if (isAssistant && delta.content) {
       // Memoize the stream to ensure it renders only once.
-      const assistantStream = memo(
-        (async function* (): AI.RenderableStream {
-          yield AI.AppendOnlyStream;
+      let accumulatedContent = '';
+      let complete = false;
+      const Stream = async function* (): AI.RenderableStream {
+        yield AI.AppendOnlyStream;
 
-          while (delta !== null) {
-            if (delta.content) {
-              yield delta.content;
-            }
-            if (delta.function_call) {
-              break;
-            }
-            delta = await advance();
+        while (delta !== null) {
+          if (delta.content) {
+            accumulatedContent += delta.content;
+            yield delta.content;
           }
+          if (delta.function_call) {
+            break;
+          }
+          delta = await advance();
+        }
+        complete = true;
 
-          return AI.AppendOnlyStream;
-        })()
+        return AI.AppendOnlyStream;
+      };
+      const assistantStream = memo(
+        <Stream {...debugRepresentation(() => `${accumulatedContent}${complete ? '' : '▮'}`)} />
       );
       yield <AssistantMessage>{assistantStream}</AssistantMessage>;
 
