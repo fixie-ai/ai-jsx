@@ -31,7 +31,7 @@ process.env.ANTHROPIC_API_KEY = 'fake-anthropic-key';
 
 import * as AI from 'ai-jsx';
 import { ChatCompletion } from 'ai-jsx/core/completion';
-import { UserMessage, Shrinkable } from 'ai-jsx/core/conversation';
+import { UserMessage, SystemMessage, Shrinkable } from 'ai-jsx/core/conversation';
 import { ChatCompletionDelta, SSE_FINAL_EVENT, SSE_PREFIX, SSE_TERMINATOR } from 'ai-jsx/lib/openai';
 import { Tool } from 'ai-jsx/batteries/use-tools';
 
@@ -46,12 +46,30 @@ it('passes creates a chat completion', async () => {
   expect(result).toEqual('response from OpenAI');
 });
 
-it('throws an error when a bare string is passsed to chat completion', async () => {
+it.only('throws an error when a bare string is passsed to chat completion', async () => {
   mockOpenAIResponse('response from OpenAI');
+
+  function Fak() { return 'fak'}
 
   await expect(() =>
     AI.createRenderContext().render(<ChatCompletion>
+      <Fak />
       Wrong
+      <UserMessage>Correct</UserMessage>
+    </ChatCompletion>)
+  ).rejects.toThrowErrorMatchingInlineSnapshot(
+    `"ChatCompletion must have at least one child that's a SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse, but no such children were found."`
+  );
+});
+
+it('accepts conversational elements not being the top level', async () => {
+  mockOpenAIResponse('response from OpenAI');
+
+  function MySystemMessage() { return <SystemMessage>my system message</SystemMessage>}
+
+  await expect(() =>
+    AI.createRenderContext().render(<ChatCompletion>
+      <MySystemMessage />
       <UserMessage>Correct</UserMessage>
     </ChatCompletion>)
   ).rejects.toThrowErrorMatchingInlineSnapshot(

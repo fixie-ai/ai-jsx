@@ -160,6 +160,7 @@ export function isConversationalComponent(element: AI.Element<any>): boolean {
 }
 
 function toConversationMessages(partialRendering: AI.PartiallyRendered[]): ConversationMessage[] {
+  console.log({partialRendering});
   const invalidChildren = partialRendering.filter((el) => typeof el === 'string' && el.trim()) as string[];
   if (invalidChildren.length) {
     throw new AIJSXError(
@@ -203,6 +204,7 @@ export async function renderToConversation(
   cost?: (message: ConversationMessage, render: AI.ComponentContext['render']) => Promise<number>,
   budget?: number
 ) {
+  console.log({conversation});
   const conversationToUse =
     cost && budget ? (
       <ShrinkConversation cost={cost} budget={budget}>
@@ -211,7 +213,7 @@ export async function renderToConversation(
     ) : (
       conversation
     );
-  return toConversationMessages(await render(conversationToUse, { stop: isConversationalComponent }));
+  return toConversationMessages(await render(conversationToUse, { stop: e => isConversationalComponent(e) || typeof e === 'string' }));
 }
 
 /**
