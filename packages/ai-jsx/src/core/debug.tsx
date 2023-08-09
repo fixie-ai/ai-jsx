@@ -10,6 +10,28 @@ import { memoizedIdSymbol } from './memoize.js';
 
 const maxStringLength = 1000;
 
+const debugRepresentationSymbol = Symbol('AI.JSX debug representation');
+
+/**
+ * Creates props that associate a debug representation with an element.
+ *
+ * Usage example:
+ *
+ * ```tsx
+ * <InvisibleComponent {...debugRepresentation((e) => e.props.children)}>
+ *   <Foo>1</Foo>
+ * </InvisibleComponent>
+ * ```
+ *
+ * When the `<InvisibleComponent>` would be displayed in a {@link DebugTree}, it will be replaced
+ * with its children.
+ */
+export function debugRepresentation(fn: (element: Element<any>) => unknown) {
+  return {
+    [debugRepresentationSymbol]: fn,
+  };
+}
+
 /**
  * Used by {@link DebugTree} to render a tree of {@link Node}s.
  * @hidden
@@ -51,6 +73,10 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
           return '{null}';
       }
     } else if (AI.isElement(value)) {
+      if (debugRepresentationSymbol in value.props) {
+        return debugRec(value.props[debugRepresentationSymbol](value), indent, context);
+      }
+
       const childIndent = `${indent}  `;
 
       const memoizedId = memoizedIdSymbol in value.props && (value.props[memoizedIdSymbol] as number);
