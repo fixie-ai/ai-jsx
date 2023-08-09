@@ -25,7 +25,16 @@
     "bin:dev": "npx ts-node dist/serve-bin.js --port 8080 --package-path fixie"
   },
   "dependencies": {
-    "ai-jsx": "workspace:*",
+    "@opentelemetry/api": "^1.4.1",
+    "@opentelemetry/api-logs": "^0.41.1",
+    "@opentelemetry/exporter-logs-otlp-grpc": "^0.41.1",
+    "@opentelemetry/exporter-trace-otlp-grpc": "^0.41.1",
+    "@opentelemetry/instrumentation-fastify": "^0.32.0",
+    "@opentelemetry/instrumentation-fetch": "^0.41.1",
+    "@opentelemetry/instrumentation-http": "^0.41.2",
+    "@opentelemetry/sdk-logs": "^0.41.1",
+    "@opentelemetry/sdk-node": "^0.41.1",
+    "ai-jsx": "*",
     "fastify": "^4.20.0",
     "yargs": "^17.7.2"
   },
