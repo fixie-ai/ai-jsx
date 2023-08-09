@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 
 export default function HelloWorld({ message }: { message: string }) {
