@@ -52,12 +52,12 @@ export function openTelemetryStreamRenderer(streamRenderer: StreamRenderer): Str
         let result: PartiallyRendered[] | undefined = undefined;
         try {
           result = yield* streamRenderer(renderContext, renderable, shouldStop, appendOnly);
+          span.setStatus({ code: SpanStatusCode.OK });
           return result;
         } catch (ex) {
           span.setStatus({ code: SpanStatusCode.ERROR, message: `${ex}` });
           throw ex;
         } finally {
-          span.setStatus({ code: SpanStatusCode.OK });
           if (result) {
             // Record the rendered value.
             span.setAttribute('ai.jsx.result', result.find(isElement) ? debug(result, true) : result.join(''));
