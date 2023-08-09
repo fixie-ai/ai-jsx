@@ -6624,7 +6624,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"ai-jsx@workspace:*, ai-jsx@workspace:packages/ai-jsx":
+"ai-jsx@*, ai-jsx@workspace:*, ai-jsx@workspace:packages/ai-jsx":
   version: 0.0.0-use.local
   resolution: "ai-jsx@workspace:packages/ai-jsx"
   dependencies:
@@ -10271,6 +10271,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dotenv@npm:^16.3.1":
+  version: 16.3.1
+  resolution: "dotenv@npm:16.3.1"
+  checksum: 15d75e7279018f4bafd0ee9706593dd14455ddb71b3bcba9c52574460b7ccaf67d5cf8b2c08a5af1a9da6db36c956a04a1192b101ee102a3e0cf8817bbcf3dfd
+  languageName: node
+  linkType: hard
+
 "duplexer3@npm:^0.1.4":
   version: 0.1.5
   resolution: "duplexer3@npm:0.1.5"
@@ -11970,7 +11977,8 @@ __metadata:
     "@types/yargs": ^17.0.24
     "@typescript-eslint/eslint-plugin": ^5.60.0
     "@typescript-eslint/parser": ^5.60.0
-    ai-jsx: "workspace:*"
+    ai-jsx: "*"
+    dotenv: ^16.3.1
     eslint: ^8.40.0
     eslint-config-nth: ^2.0.1
     fastify: ^4.20.0

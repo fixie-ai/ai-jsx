@@ -1,5 +1,6 @@
 #! /usr/bin/env node
 
+import 'dotenv/config';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { fastify, FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
@@ -65,6 +66,7 @@ async function serve({
       const messageStream = toMessageStream(handler({ message: body.message.text }));
       await sendReadableStreamToFastifyReply(res, messageStream);
     } catch (e: any) {
+      console.error(e);
       res.status(500).send(e.message);
     }
   });
