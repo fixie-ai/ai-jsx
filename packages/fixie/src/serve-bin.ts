@@ -1,5 +1,6 @@
 #! /usr/bin/env node
 
+import 'dotenv/config';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { fastify, FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
