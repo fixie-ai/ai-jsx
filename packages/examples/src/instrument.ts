@@ -24,6 +24,6 @@ try {
   console.error(error);
 }
 
-process.on('exit', () => {
-  sdk.shutdown();
+process.on('beforeExit', async () => {
+  await sdk.shutdown();
 });
