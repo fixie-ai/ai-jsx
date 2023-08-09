@@ -65,6 +65,7 @@ async function serve({
       const messageStream = toMessageStream(handler({ message: body.message.text }));
       await sendReadableStreamToFastifyReply(res, messageStream);
     } catch (e: any) {
+      console.error(e);
       res.status(500).send(e.message);
     }
   });
