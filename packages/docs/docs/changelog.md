@@ -2,7 +2,7 @@
 
 ## 0.8.5
 
-- Fix issue where OpenTelemetry failures were not being properly attributed
+- Fix issue where OpenTelemetry failures were not being properly attributed.
 
 ## [0.8.4](https://github.com/fixie-ai/ai-jsx/commit/652dcd51d2ce16d77130fe40488e5e609a164af2)
 
