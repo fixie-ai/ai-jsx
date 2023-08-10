@@ -1,5 +1,6 @@
 #! /usr/bin/env node
 
+import './instrument.js';
 import 'dotenv/config';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
@@ -20,7 +21,7 @@ class FixieResponse {
 }
 
 function toMessageStream(renderable: Renderable) {
-  const generator = createRenderContext().render(renderable)[Symbol.asyncIterator]();
+  const generator = createRenderContext({ enableOpenTelemetry: true }).render(renderable)[Symbol.asyncIterator]();
   return new ReadableStream({
     async pull(controller) {
       const next = await generator.next();
