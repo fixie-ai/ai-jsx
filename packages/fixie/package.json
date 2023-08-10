@@ -35,6 +35,7 @@
     "@opentelemetry/sdk-logs": "^0.41.1",
     "@opentelemetry/sdk-node": "^0.41.1",
     "ai-jsx": "*",
+    "dotenv": "^16.3.1",
     "fastify": "^4.20.0",
     "yargs": "^17.7.2"
   },
