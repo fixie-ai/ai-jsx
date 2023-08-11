@@ -55,12 +55,6 @@ export interface UseToolsProps {
   showSteps?: boolean;
 
   /**
-   * A fallback response to use if the AI doesn't think any of the tools are relevant. This is only used for models that do not support functions natively. Models that support functions natively don't need this, because they generate
-   * their own messages in the case of failure.
-   */
-  fallback: Node;
-
-  /**
    * User data the AI can use to determine what parameters to invoke the tool with.
    *
    * For instance, if the user's query can be "what's the weather like at my current location", you might pass `userData` as { "location": "Seattle" }.

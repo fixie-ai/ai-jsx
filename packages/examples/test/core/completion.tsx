@@ -200,10 +200,23 @@ describe('functions', () => {
 
     expect(result).toEqual('response from OpenAI');
   });
+
+  it.only('throws an error for models that do not support functions', async () =>
+    expect(() =>
+      AI.createRenderContext().render(
+        <Anthropic chatModel="claude-2">
+          <ChatCompletion functionDefinitions={{}}>
+            <UserMessage>Hello</UserMessage>
+          </ChatCompletion>
+        </Anthropic>
+      )
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `"Anthropic does not support function calling, but function definitions were provided."`
+    ));
 });
 
 describe('anthropic', () => {
-  it.only('handles function calls/responses', async () => {
+  it('handles function calls/responses', async () => {
     const handleRequest = jest.fn();
     mockAnthropicResponse('response from Anthropic', handleRequest);
     const result = await AI.createRenderContext().render(
