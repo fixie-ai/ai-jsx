@@ -33,8 +33,7 @@ export type ValidChatModel =
   | 'claude-instant-1.1-100k'
   | 'claude-instant-1.0'
   | 'claude-2'
-  | 'claude-2.0'
-  ;
+  | 'claude-2.0';
 
 type AnthropicModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
 
@@ -91,7 +90,7 @@ export async function* AnthropicChatModel(
   props: AnthropicChatModelProps,
   { render, getContext, logger, memo }: AI.ComponentContext
 ): AI.RenderableStream {
-  logger.warn({props}, 'got props');
+  logger.warn({ props }, 'got props');
   if ('functionDefinitions' in props) {
     throw new AIJSXError(
       'Anthropic does not support function calling, but function definitions were provided.',
