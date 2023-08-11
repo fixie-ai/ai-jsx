@@ -129,7 +129,7 @@ const tools: Record<string, Tool> = {
 };
 
 // Provide the tools to the agent
-<UseTools tools={tools} fallback="Politely explain you aren't able to help with that request.">
+<UseTools tools={tools}>
   <SystemMessage>
     You control a home automation system. The user will request an action in their home. You should take an action and
     then generate a response telling the user what you've done.
