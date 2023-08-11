@@ -31,7 +31,10 @@ type ValidChatModel =
   | 'claude-1.0'
   | 'claude-instant-1.1'
   | 'claude-instant-1.1-100k'
-  | 'claude-instant-1.0';
+  | 'claude-instant-1.0'
+  | 'claude-2'
+  | 'claude-2.0'
+  ;
 
 type AnthropicModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
 

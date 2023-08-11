@@ -31,9 +31,11 @@ process.env.ANTHROPIC_API_KEY = 'fake-anthropic-key';
 
 import * as AI from 'ai-jsx';
 import { ChatCompletion } from 'ai-jsx/core/completion';
+import { FunctionCall, FunctionResponse } from 'ai-jsx/core/conversation';
 import { UserMessage, SystemMessage, Shrinkable } from 'ai-jsx/core/conversation';
 import { ChatCompletionDelta, OpenAI, SSE_FINAL_EVENT, SSE_PREFIX, SSE_TERMINATOR } from 'ai-jsx/lib/openai';
 import { Tool } from 'ai-jsx/batteries/use-tools';
+import { Anthropic } from 'ai-jsx/lib/anthropic';
 
 it('passes creates a chat completion', async () => {
   mockOpenAIResponse('response from OpenAI');
@@ -195,6 +197,24 @@ describe('functions', () => {
   });
 });
 
+describe('anthropic', () => {
+  it('handles function calls/responses', async () => {
+    mockAnthropicResponse('response from Anthropic');
+    const result = await AI.createRenderContext().render(
+      <Anthropic chatModel='claude-2'>
+        <ChatCompletion>
+          <UserMessage>Hello</UserMessage>
+          <FunctionCall name='myFunc' args={{ myParam: 'option1' }} />
+          <FunctionResponse name='myFunc'>
+            12345
+          </FunctionResponse>
+        </ChatCompletion>
+      </Anthropic>
+    );
+    expect(result).toEqual('response from Anthropic');
+  })
+})
+
 function mockOpenAIResponse(message: string, handleRequest?: jest.MockedFn<(req: Request) => Promise<void>>) {
   fetchMock.mockIf(
     /^https:\/\/api.openai.com\/v1\/chat\/completions/,
@@ -237,4 +257,44 @@ function mockOpenAIResponse(message: string, handleRequest?: jest.MockedFn<(req:
       };
     }
   );
+}
+
+function mockAnthropicResponse(message: string, handleRequest?: jest.MockedFn<(req: Request) => Promise<void>>) {
+  fetchMock.mockIf(
+    new RegExp('https://api.anthropic.com/v1/complete'),
+    // This is a hack to let jest-fetch-mock handle response streams.
+    // @ts-expect-error
+    async (req) => {
+      handleRequest?.(await req.json());
+
+      const stringStream = new ReadableStream({
+        start(controller) {
+          function sendDelta(messagePart: string) {
+            const response = {
+              completion: messagePart,
+              stop_reason: null,
+              model: 'fake-model-name'
+            };
+            controller.enqueue(`event: completion\n${SSE_PREFIX}${JSON.stringify(response)}${SSE_TERMINATOR}`);
+          }
+
+          for (const char of message) {
+            sendDelta(char);
+          }
+
+          const finalResponse = {
+            completion: '',
+            stop_reason: 'stop_sequence',
+            model: 'fake-model-name'
+          };
+          controller.enqueue(`event: completion\n${SSE_PREFIX}${JSON.stringify(finalResponse)}${SSE_TERMINATOR}`);
+          controller.close();
+        },
+      }).pipeThrough(new TextEncoderStream());
+      return {
+        status: 200,
+        body: stringStream,
+      };
+    }
+  )
 }
