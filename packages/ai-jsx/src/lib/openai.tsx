@@ -176,15 +176,7 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
  * @returns True if the model supports function calling, false otherwise.
  */
 function chatModelSupportsFunctions(model: ValidChatModel) {
-  return [
-    'gpt-4',
-    'gpt-3.5-turbo',
-    'gpt-4-0613',
-    'gpt-4-32k-0613',
-    'gpt-3.5-turbo-0613',
-    'gpt-3.5-turbo-16k',
-    'gpt-3.5-turbo-16k-0613',
-  ].includes(model);
+  return model.startsWith('gpt-4') || model.startsWith('gpt-3.5-turbo');
 }
 
 type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';

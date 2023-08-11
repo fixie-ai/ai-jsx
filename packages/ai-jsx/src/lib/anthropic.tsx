@@ -121,18 +121,13 @@ export async function* AnthropicChatModel(
       .map(async (message) => {
         switch (message.type) {
           case 'user':
-            return `${AnthropicSDK.HUMAN_PROMPT}:${
+            return `${AnthropicSDK.HUMAN_PROMPT}${
               message.element.props.name ? ` (${message.element.props.name})` : ''
             } ${await render(message.element)}`;
           case 'assistant':
-            return `${AnthropicSDK.AI_PROMPT}: ${await render(message.element)}`;
           case 'functionCall':
           case 'functionResponse':
-            throw new AIJSXError(
-              'Anthropic models do not support functions.',
-              ErrorCode.AnthropicDoesNotSupportFunctions,
-              'user'
-            );
+            return `${AnthropicSDK.AI_PROMPT} ${await render(message.element)}`;
         }
       })
   );
