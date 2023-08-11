@@ -6,6 +6,7 @@
 - Fix issue where `gpt-4-32k` didn't accept functions.
 - Fix issue where Anthropic didn't permit function call/responses in its conversation history.
 - Add Anthropic's claude-2 models as valid chat model types.
+- Fix issue where Anthropic prompt formatting had extra `:`s.
 
 ## 0.8.5
 

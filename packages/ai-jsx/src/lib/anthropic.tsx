@@ -90,7 +90,6 @@ export async function* AnthropicChatModel(
   props: AnthropicChatModelProps,
   { render, getContext, logger, memo }: AI.ComponentContext
 ): AI.RenderableStream {
-  logger.warn({ props }, 'got props');
   if ('functionDefinitions' in props) {
     throw new AIJSXError(
       'Anthropic does not support function calling, but function definitions were provided.',
@@ -163,7 +162,6 @@ export async function* AnthropicChatModel(
     response = await anthropic.completions.create(anthropicCompletionRequest);
   } catch (err) {
     if (err instanceof AnthropicSDK.APIError) {
-      console.log(err);
       throw new AIJSXError(
         err.message,
         ErrorCode.AnthropicAPIError,

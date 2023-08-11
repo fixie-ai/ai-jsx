@@ -6680,9 +6680,6 @@ __metadata:
     prettier: ^2.8.8
     turbo: ^1.10.4
     typescript: ^5.1.3
-  dependenciesMeta:
-    "@anthropic-ai/sdk@0.5.10":
-      unplugged: true
   languageName: unknown
   linkType: soft
 
