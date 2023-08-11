@@ -201,7 +201,7 @@ describe('functions', () => {
     expect(result).toEqual('response from OpenAI');
   });
 
-  it.only('throws an error for models that do not support functions', async () =>
+  it('throws an error for models that do not support functions', () =>
     expect(() =>
       AI.createRenderContext().render(
         <Anthropic chatModel="claude-2">
