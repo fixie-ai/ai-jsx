@@ -20,7 +20,7 @@ type ValidCompletionModel = never;
  *
  * @see https://docs.anthropic.com/claude/reference/complete_post.
  */
-type ValidChatModel =
+export type ValidChatModel =
   | 'claude-1'
   | 'claude-1-100k'
   | 'claude-instant-1'
@@ -31,7 +31,9 @@ type ValidChatModel =
   | 'claude-1.0'
   | 'claude-instant-1.1'
   | 'claude-instant-1.1-100k'
-  | 'claude-instant-1.0';
+  | 'claude-instant-1.0'
+  | 'claude-2'
+  | 'claude-2.0';
 
 type AnthropicModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
 
@@ -121,18 +123,13 @@ export async function* AnthropicChatModel(
       .map(async (message) => {
         switch (message.type) {
           case 'user':
-            return `${AnthropicSDK.HUMAN_PROMPT}:${
+            return `${AnthropicSDK.HUMAN_PROMPT}${
               message.element.props.name ? ` (${message.element.props.name})` : ''
             } ${await render(message.element)}`;
           case 'assistant':
-            return `${AnthropicSDK.AI_PROMPT}: ${await render(message.element)}`;
           case 'functionCall':
           case 'functionResponse':
-            throw new AIJSXError(
-              'Anthropic models do not support functions.',
-              ErrorCode.AnthropicDoesNotSupportFunctions,
-              'user'
-            );
+            return `${AnthropicSDK.AI_PROMPT} ${await render(message.element)}`;
         }
       })
   );

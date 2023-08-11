@@ -3,6 +3,8 @@ import { Readable } from 'stream';
 /**
  * This is a hack to let jest-fetch-mock handle response streams.
  * https://github.com/jefflau/jest-fetch-mock/issues/113#issuecomment-1445010122
+ *
+ * Or, we could move away from jest-fetch-mock and instead set the BASE_URL to point to a locally-running server.
  */
 class TempResponse extends Response {
   constructor(...args: any[]) {
@@ -29,11 +31,16 @@ jestFetchMock.enableFetchMocks();
 process.env.OPENAI_API_KEY = 'fake-openai-key';
 process.env.ANTHROPIC_API_KEY = 'fake-anthropic-key';
 
+import nock from 'nock';
+
 import * as AI from 'ai-jsx';
 import { ChatCompletion } from 'ai-jsx/core/completion';
-import { UserMessage, SystemMessage, Shrinkable } from 'ai-jsx/core/conversation';
-import { ChatCompletionDelta, SSE_FINAL_EVENT, SSE_PREFIX, SSE_TERMINATOR } from 'ai-jsx/lib/openai';
+import { FunctionCall, FunctionResponse, UserMessage, SystemMessage, Shrinkable } from 'ai-jsx/core/conversation';
+import { ChatCompletionDelta, OpenAI, SSE_FINAL_EVENT, SSE_PREFIX, SSE_TERMINATOR } from 'ai-jsx/lib/openai';
 import { Tool } from 'ai-jsx/batteries/use-tools';
+import { Anthropic } from 'ai-jsx/lib/anthropic';
+import { CompletionCreateParams } from '@anthropic-ai/sdk/resources/completions';
+import { Jsonifiable } from 'type-fest';
 
 it('passes creates a chat completion', async () => {
   mockOpenAIResponse('response from OpenAI');
@@ -116,55 +123,133 @@ it('throws an error when a bare string is passsed as a replacement', async () =>
   );
 });
 
-it('passes all function fields', async () => {
-  const functions: Record<string, Tool> = {
-    myFunc: {
-      description: 'My function',
-      parameters: {
-        myParam: {
-          description: 'My parameter',
-          type: 'string',
-          enum: ['option1', 'option2'],
-          required: true,
+describe('functions', () => {
+  it('passes all function fields', async () => {
+    const functions: Record<string, Tool> = {
+      myFunc: {
+        description: 'My function',
+        parameters: {
+          myParam: {
+            description: 'My parameter',
+            type: 'string',
+            enum: ['option1', 'option2'],
+            required: true,
+          },
         },
+        func: () => undefined,
       },
-      func: () => undefined,
-    },
-  };
+    };
 
-  const handleRequest = jest.fn();
-  mockOpenAIResponse('', handleRequest);
+    const handleRequest = jest.fn();
+    mockOpenAIResponse('', handleRequest);
 
-  await AI.createRenderContext().render(
-    <ChatCompletion functionDefinitions={functions}>
-      <UserMessage>Hello</UserMessage>
-    </ChatCompletion>
-  );
+    await AI.createRenderContext().render(
+      <ChatCompletion functionDefinitions={functions}>
+        <UserMessage>Hello</UserMessage>
+      </ChatCompletion>
+    );
 
-  expect(handleRequest).toHaveBeenCalledWith(
-    expect.objectContaining({
-      functions: [
-        {
-          name: 'myFunc',
-          description: 'My function',
-          parameters: {
-            type: 'object',
-            required: ['myParam'],
-            properties: {
-              myParam: {
-                type: 'string',
-                enum: ['option1', 'option2'],
-                description: 'My parameter',
+    expect(handleRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        functions: [
+          {
+            name: 'myFunc',
+            description: 'My function',
+            parameters: {
+              type: 'object',
+              required: ['myParam'],
+              properties: {
+                myParam: {
+                  type: 'string',
+                  enum: ['option1', 'option2'],
+                  description: 'My parameter',
+                },
               },
             },
           },
+        ],
+      })
+    );
+  });
+
+  it('supports function definitions for GPT-4-32k', async () => {
+    mockOpenAIResponse('response from OpenAI');
+
+    const functions: Record<string, Tool> = {
+      myFunc: {
+        description: 'My function',
+        parameters: {
+          myParam: {
+            description: 'My parameter',
+            type: 'string',
+            enum: ['option1', 'option2'],
+            required: true,
+          },
         },
-      ],
-    })
-  );
+        func: () => undefined,
+      },
+    };
+
+    const result = await AI.createRenderContext().render(
+      <OpenAI chatModel="gpt-4-32k">
+        <ChatCompletion functionDefinitions={functions}>
+          <UserMessage>Hello</UserMessage>
+        </ChatCompletion>
+      </OpenAI>
+    );
+
+    expect(result).toEqual('response from OpenAI');
+  });
+
+  it('throws an error for models that do not support functions', () =>
+    expect(() =>
+      AI.createRenderContext().render(
+        <Anthropic chatModel="claude-2">
+          <ChatCompletion functionDefinitions={{}}>
+            <UserMessage>Hello</UserMessage>
+          </ChatCompletion>
+        </Anthropic>
+      )
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `"Anthropic does not support function calling, but function definitions were provided."`
+    ));
 });
 
-function mockOpenAIResponse(message: string, handleRequest?: jest.MockedFn<(req: Request) => Promise<void>>) {
+describe('anthropic', () => {
+  it('handles function calls/responses', async () => {
+    const handleRequest = jest.fn();
+    mockAnthropicResponse('response from Anthropic', handleRequest);
+    const result = await AI.createRenderContext().render(
+      <Anthropic chatModel="claude-2">
+        <ChatCompletion>
+          <UserMessage>Hello</UserMessage>
+          <FunctionCall name="myFunc" args={{ myParam: 'option1' }} />
+          <FunctionResponse name="myFunc">12345</FunctionResponse>
+        </ChatCompletion>
+      </Anthropic>
+    );
+    expect(handleRequest.mock.calls[0][0].prompt).toMatchInlineSnapshot(`
+      "
+
+      Human: Hello
+
+
+
+      Assistant: Call function myFunc with {"myParam":"option1"}
+
+
+
+      Assistant: function myFunc returned 12345
+
+
+
+      Assistant:"
+    `);
+    expect(result).toEqual('response from Anthropic');
+  });
+});
+
+function mockOpenAIResponse(message: string, handleRequest?: jest.MockedFn<(req: Jsonifiable) => Promise<void>>) {
   fetchMock.mockIf(
     /^https:\/\/api.openai.com\/v1\/chat\/completions/,
     // This is a hack to let jest-fetch-mock handle response streams.
@@ -206,4 +291,34 @@ function mockOpenAIResponse(message: string, handleRequest?: jest.MockedFn<(req:
       };
     }
   );
+}
+
+function mockAnthropicResponse(
+  message: string,
+  handleRequest?: jest.MockedFn<(req: CompletionCreateParams) => Promise<void>>
+) {
+  nock('https://api.anthropic.com')
+    .post('/v1/complete')
+    .reply(200, (_uri: string, requestBody: CompletionCreateParams) => {
+      handleRequest?.(requestBody);
+
+      function createDelta(messagePart: string) {
+        const response = {
+          completion: messagePart,
+          stop_reason: null,
+          model: requestBody.model,
+        };
+        return `event: completion\n${SSE_PREFIX}${JSON.stringify(response)}${SSE_TERMINATOR}`;
+      }
+
+      const completionEvents = message.split('').map(createDelta).join('\n');
+
+      const finalResponse = {
+        completion: '',
+        stop_reason: 'stop_sequence',
+        model: requestBody.model,
+      };
+
+      return `${completionEvents}event: completion\n${SSE_PREFIX}${JSON.stringify(finalResponse)}${SSE_TERMINATOR}`;
+    });
 }

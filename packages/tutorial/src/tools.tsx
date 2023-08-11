@@ -53,7 +53,7 @@ function StockAgent(props: { query: string }) {
   };
 
   return (
-    <UseTools tools={tools} fallback="Politely explain that you cannot help.">
+    <UseTools tools={tools}>
       <SystemMessage>You are an agent that can answer questions about stocks.</SystemMessage>
       <UserMessage>{props.query}</UserMessage>
     </UseTools>
