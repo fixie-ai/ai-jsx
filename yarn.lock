@@ -13007,6 +13007,33 @@ __metadata:
   languageName: node
   linkType: hard
 
+"hssk@workspace:packages/hssk":
+  version: 0.0.0-use.local
+  resolution: "hssk@workspace:packages/hssk"
+  dependencies:
+    "@tsconfig/node18": ^2.0.1
+    "@types/lodash": ^4.14.195
+    "@types/node": ^20.3.1
+    "@types/prompt-sync": ^4.2.0
+    "@types/uuid": ^9.0.2
+    "@types/yargs": ^17.0.24
+    "@typescript-eslint/eslint-plugin": ^5.60.0
+    "@typescript-eslint/parser": ^5.60.0
+    ai-jsx: "*"
+    dotenv: ^16.3.1
+    eslint: ^8.40.0
+    eslint-config-nth: ^2.0.1
+    fastify: ^4.20.0
+    node-fetch: ^3.3.2
+    type-fest: ^4.2.0
+    typescript: ^5.1.3
+    yargs: ^17.7.2
+    zod: ^3.21.4
+  bin:
+    serve-bin: dist/serve-bin.js
+  languageName: unknown
+  linkType: soft
+
 "html-encoding-sniffer@npm:^2.0.1":
   version: 2.0.1
   resolution: "html-encoding-sniffer@npm:2.0.1"
@@ -17895,6 +17922,17 @@ __metadata:
     fetch-blob: ^3.1.4
     formdata-polyfill: ^4.0.10
   checksum: 62145fd3ba4770a76110bc31fdc0054ab2f5442b5ce96e9c4b39fc9e94a3d305560eec76e1165d9259eab866e02a8eecf9301062bb5dfc9f08a4d08b69d223dd
+  languageName: node
+  linkType: hard
+
+"node-fetch@npm:^3.3.2":
+  version: 3.3.2
+  resolution: "node-fetch@npm:3.3.2"
+  dependencies:
+    data-uri-to-buffer: ^4.0.0
+    fetch-blob: ^3.1.4
+    formdata-polyfill: ^4.0.10
+  checksum: 06a04095a2ddf05b0830a0d5302699704d59bda3102894ea64c7b9d4c865ecdff2d90fd042df7f5bc40337266961cb6183dcc808ea4f3000d024f422b462da92
   languageName: node
   linkType: hard
 
@@ -23241,6 +23279,13 @@ __metadata:
   version: 3.12.0
   resolution: "type-fest@npm:3.12.0"
   checksum: 11cb6f40e42f92c462a13677eafedf5c48353eaefa8e489a146e55fe0ae5cecd59a2ba03cd6b294345b5ea304361891a6313c23ed959fa0117f63fb71ee6cbab
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "type-fest@npm:4.2.0"
+  checksum: 76c5dfde9293b1b185b266a07df669f68d58ae3e19c06e33f0ff0dd0ba68628f05389bc26bcee8476e29a79ab7da054653670b9778399ceb079c4c259bac29f0
   languageName: node
   linkType: hard
 
