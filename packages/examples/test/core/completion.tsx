@@ -32,7 +32,7 @@ process.env.ANTHROPIC_API_KEY = 'fake-anthropic-key';
 import * as AI from 'ai-jsx';
 import { ChatCompletion } from 'ai-jsx/core/completion';
 import { UserMessage, SystemMessage, Shrinkable } from 'ai-jsx/core/conversation';
-import { ChatCompletionDelta, SSE_FINAL_EVENT, SSE_PREFIX, SSE_TERMINATOR } from 'ai-jsx/lib/openai';
+import { ChatCompletionDelta, OpenAI, SSE_FINAL_EVENT, SSE_PREFIX, SSE_TERMINATOR } from 'ai-jsx/lib/openai';
 import { Tool } from 'ai-jsx/batteries/use-tools';
 
 it('passes creates a chat completion', async () => {
@@ -116,52 +116,83 @@ it('throws an error when a bare string is passsed as a replacement', async () =>
   );
 });
 
-it('passes all function fields', async () => {
-  const functions: Record<string, Tool> = {
-    myFunc: {
-      description: 'My function',
-      parameters: {
-        myParam: {
-          description: 'My parameter',
-          type: 'string',
-          enum: ['option1', 'option2'],
-          required: true,
+describe('functions', () => {
+  it('passes all function fields', async () => {
+    const functions: Record<string, Tool> = {
+      myFunc: {
+        description: 'My function',
+        parameters: {
+          myParam: {
+            description: 'My parameter',
+            type: 'string',
+            enum: ['option1', 'option2'],
+            required: true,
+          },
         },
+        func: () => undefined,
       },
-      func: () => undefined,
-    },
-  };
+    };
 
-  const handleRequest = jest.fn();
-  mockOpenAIResponse('', handleRequest);
+    const handleRequest = jest.fn();
+    mockOpenAIResponse('', handleRequest);
 
-  await AI.createRenderContext().render(
-    <ChatCompletion functionDefinitions={functions}>
-      <UserMessage>Hello</UserMessage>
-    </ChatCompletion>
-  );
+    await AI.createRenderContext().render(
+      <ChatCompletion functionDefinitions={functions}>
+        <UserMessage>Hello</UserMessage>
+      </ChatCompletion>
+    );
 
-  expect(handleRequest).toHaveBeenCalledWith(
-    expect.objectContaining({
-      functions: [
-        {
-          name: 'myFunc',
-          description: 'My function',
-          parameters: {
-            type: 'object',
-            required: ['myParam'],
-            properties: {
-              myParam: {
-                type: 'string',
-                enum: ['option1', 'option2'],
-                description: 'My parameter',
+    expect(handleRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        functions: [
+          {
+            name: 'myFunc',
+            description: 'My function',
+            parameters: {
+              type: 'object',
+              required: ['myParam'],
+              properties: {
+                myParam: {
+                  type: 'string',
+                  enum: ['option1', 'option2'],
+                  description: 'My parameter',
+                },
               },
             },
           },
+        ],
+      })
+    );
+  });
+
+  it('supports function definitions for GPT-4-32k', async () => {
+    mockOpenAIResponse('response from OpenAI');
+
+    const functions: Record<string, Tool> = {
+      myFunc: {
+        description: 'My function',
+        parameters: {
+          myParam: {
+            description: 'My parameter',
+            type: 'string',
+            enum: ['option1', 'option2'],
+            required: true,
+          },
         },
-      ],
-    })
-  );
+        func: () => undefined,
+      },
+    };
+
+    const result = await AI.createRenderContext().render(
+      <OpenAI chatModel="gpt-4-32k">
+        <ChatCompletion functionDefinitions={functions}>
+          <UserMessage>Hello</UserMessage>
+        </ChatCompletion>
+      </OpenAI>
+    );
+
+    expect(result).toEqual('response from OpenAI');
+  });
 });
 
 function mockOpenAIResponse(message: string, handleRequest?: jest.MockedFn<(req: Request) => Promise<void>>) {
