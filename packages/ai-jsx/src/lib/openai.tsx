@@ -212,6 +212,8 @@ export class OpenAIError<M extends OpenAIMethod> extends HttpError {
   }
 }
 
+// Anthropic has a similar polyfill here:
+// https://github.com/anthropics/anthropic-sdk-typescript/blob/9af152707a9bcf3027afc64f027566be25da2eb9/src/streaming.ts#L266C1-L291C2
 async function* asyncIteratorOfFetchStream(reader: ReturnType<NonNullable<Response['body']>['getReader']>) {
   while (true) {
     const { done, value } =

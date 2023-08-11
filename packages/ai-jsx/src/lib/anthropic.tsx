@@ -20,7 +20,7 @@ type ValidCompletionModel = never;
  *
  * @see https://docs.anthropic.com/claude/reference/complete_post.
  */
-type ValidChatModel =
+export type ValidChatModel =
   | 'claude-1'
   | 'claude-1-100k'
   | 'claude-instant-1'
@@ -163,6 +163,7 @@ export async function* AnthropicChatModel(
     response = await anthropic.completions.create(anthropicCompletionRequest);
   } catch (err) {
     if (err instanceof AnthropicSDK.APIError) {
+      console.log(err);
       throw new AIJSXError(
         err.message,
         ErrorCode.AnthropicAPIError,
