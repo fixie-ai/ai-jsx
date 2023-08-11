@@ -38,7 +38,7 @@ import { ChatCompletion } from 'ai-jsx/core/completion';
 import { FunctionCall, FunctionResponse, UserMessage, SystemMessage, Shrinkable } from 'ai-jsx/core/conversation';
 import { ChatCompletionDelta, OpenAI, SSE_FINAL_EVENT, SSE_PREFIX, SSE_TERMINATOR } from 'ai-jsx/lib/openai';
 import { Tool } from 'ai-jsx/batteries/use-tools';
-import { Anthropic, ValidChatModel } from 'ai-jsx/lib/anthropic';
+import { Anthropic } from 'ai-jsx/lib/anthropic';
 import { CompletionCreateParams } from '@anthropic-ai/sdk/resources/completions';
 import { Jsonifiable } from 'type-fest';
 
@@ -289,29 +289,23 @@ function mockAnthropicResponse(
     .reply(200, (_uri: string, requestBody: CompletionCreateParams) => {
       handleRequest?.(requestBody);
 
-      return new ReadableStream({
-        start(controller) {
-          function sendDelta(messagePart: string) {
-            const response = {
-              completion: messagePart,
-              stop_reason: null,
-              model: requestBody.model,
-            };
-            controller.enqueue(`event: completion\n${SSE_PREFIX}${JSON.stringify(response)}${SSE_TERMINATOR}`);
-          }
+      function createDelta(messagePart: string) {
+        const response = {
+          completion: messagePart,
+          stop_reason: null,
+          model: requestBody.model,
+        };
+        return `event: completion\n${SSE_PREFIX}${JSON.stringify(response)}${SSE_TERMINATOR}`;
+      }
 
-          for (const char of message) {
-            sendDelta(char);
-          }
+      const completionEvents = message.split('').map(createDelta).join('\n');
 
-          const finalResponse = {
-            completion: '',
-            stop_reason: 'stop_sequence',
-            model: 'fake-model-name',
-          };
-          controller.enqueue(`event: completion\n${SSE_PREFIX}${JSON.stringify(finalResponse)}${SSE_TERMINATOR}`);
-          controller.close();
-        },
-      }).pipeThrough(new TextEncoderStream());
+      const finalResponse = {
+        completion: '',
+        stop_reason: 'stop_sequence',
+        model: requestBody.model,
+      };
+
+      return `${completionEvents}event: completion\n${SSE_PREFIX}${JSON.stringify(finalResponse)}${SSE_TERMINATOR}`;
     });
 }
