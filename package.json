@@ -34,10 +34,5 @@
     "packages/*",
     "packages/sandboxes/*"
   ],
-  "packageManager": "yarn@3.6.0",
-  "dependenciesMeta": {
-    "@anthropic-ai/sdk@0.5.10": {
-      "unplugged": true
-    }
-  }
+  "packageManager": "yarn@3.6.0"
 }
