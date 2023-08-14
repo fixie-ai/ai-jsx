@@ -78,6 +78,8 @@
     "@opentelemetry/instrumentation-fetch": "^0.41.1",
     "@opentelemetry/sdk-logs": "^0.41.1",
     "@opentelemetry/sdk-node": "^0.41.1",
+    "@opentelemetry/sdk-trace-base": "^1.15.2",
+    "@opentelemetry/sdk-trace-node": "^1.15.2",
     "@wandb/sdk": "^0.5.1",
     "ai-jsx": "workspace:*",
     "axios": "^1.4.0",
