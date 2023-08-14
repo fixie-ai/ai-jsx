@@ -58,30 +58,35 @@ describe('MyFunction', () => {
         },
         {
           "ai.jsx.result": "hello",
+          "ai.jsx.result.tokenCount": 1,
           "ai.jsx.tag": "UserMessage",
           "ai.jsx.tree": "<UserMessage @memoizedId=1>
         {"hello"}
       </UserMessage>",
         },
         {
-          "ai.jsx.result": "Hi there! How can I assist you today?",
+          "ai.jsx.result": "Hello! How can I assist you today?",
+          "ai.jsx.result.tokenCount": 9,
           "ai.jsx.tag": "Stream",
           "ai.jsx.tree": ""▮"",
         },
         {
-          "ai.jsx.result": "Hi there! How can I assist you today?",
+          "ai.jsx.result": "Hello! How can I assist you today?",
+          "ai.jsx.result.tokenCount": 9,
           "ai.jsx.tag": "AssistantMessage",
           "ai.jsx.tree": "<AssistantMessage>
         {"▮"}
       </AssistantMessage>",
         },
         {
-          "ai.jsx.result": "Hi there! How can I assist you today?",
+          "ai.jsx.result": "Hello! How can I assist you today?",
+          "ai.jsx.result.tokenCount": 9,
           "ai.jsx.tag": "Stream",
-          "ai.jsx.tree": ""Hi there! How can I assist you today?"",
+          "ai.jsx.tree": ""Hello! How can I assist you today?"",
         },
         {
-          "ai.jsx.result": "Hi there! How can I assist you today?",
+          "ai.jsx.result": "Hello! How can I assist you today?",
+          "ai.jsx.result.tokenCount": 9,
           "ai.jsx.tag": "OpenAIChatModel",
           "ai.jsx.tree": "<OpenAIChatModel model="gpt-3.5-turbo">
         <UserMessage>
@@ -90,7 +95,8 @@ describe('MyFunction', () => {
       </OpenAIChatModel>",
         },
         {
-          "ai.jsx.result": "Hi there! How can I assist you today?",
+          "ai.jsx.result": "Hello! How can I assist you today?",
+          "ai.jsx.result.tokenCount": 9,
           "ai.jsx.tag": "AutomaticChatModel",
           "ai.jsx.tree": "<AutomaticChatModel>
         <UserMessage>
@@ -99,7 +105,8 @@ describe('MyFunction', () => {
       </AutomaticChatModel>",
         },
         {
-          "ai.jsx.result": "Hi there! How can I assist you today?",
+          "ai.jsx.result": "Hello! How can I assist you today?",
+          "ai.jsx.result.tokenCount": 9,
           "ai.jsx.tag": "ChatCompletion",
           "ai.jsx.tree": "<ChatCompletion>
         <UserMessage>
