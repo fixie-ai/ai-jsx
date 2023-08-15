@@ -5,7 +5,9 @@
 
 import _ from 'lodash';
 import pino from 'pino';
-import { Element } from '../index.js';
+import { Element } from './node.js';
+import { logs, type Logger as OpenTelemetryLoggerInterface } from '@opentelemetry/api-logs';
+import { getEnvVar } from '../lib/util.js';
 
 export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
 
@@ -71,10 +73,12 @@ export class NoOpLogImplementation extends LogImplementation {
   log(): void {}
 }
 
-const defaultPinoLogger = _.once(() =>
+const defaultPinoLogger = _.once(() => {
+  const logEnv = getEnvVar('AIJSX_LOG', false) ?? 'silent';
+  const [level, file] = logEnv.split(':', 2);
   // @ts-expect-error
-  pino({ name: 'ai-jsx', level: 'info' })
-);
+  return pino({ name: 'ai-jsx', level }, file && pino.destination(file));
+});
 
 /**
  * An implementation of {@link LogImplementation} that uses the `pino` logging library.
@@ -94,6 +98,59 @@ export class PinoLogger extends LogImplementation {
     const [objectToLog, messageToLog] =
       typeof metadataOrMessage === 'object' ? [metadataOrMessage, message] : [{}, metadataOrMessage];
     this.pino[level]({ ...objectToLog, renderId, element: `<${element.tag.name}>` }, messageToLog);
+  }
+}
+
+/**
+ * An implementation of {@link LogImplementation} that logs to the
+ * registered OpenTelemetry LoggerProvider.
+ */
+export class OpenTelemetryLogger extends LogImplementation {
+  private readonly logger: OpenTelemetryLoggerInterface;
+
+  constructor() {
+    super();
+    this.logger = logs.getLoggerProvider().getLogger('ai.jsx');
+  }
+  log(
+    level: LogLevel,
+    element: Element<any>,
+    renderId: string,
+    metadataOrMessage: string | object,
+    message?: string | undefined
+  ): void {
+    this.logger.emit({
+      severityText: level.toUpperCase(),
+      body: typeof metadataOrMessage === 'object' ? message ?? '' : metadataOrMessage,
+      attributes: {
+        element: `<${element.tag.name}>`,
+        renderId,
+        ...(typeof metadataOrMessage === 'object' ? metadataOrMessage : {}),
+      },
+    });
+  }
+}
+
+/**
+ * An implementation of {@link LogImplementation} that logs to multiple underlying LogImplementations.
+ */
+export class CombinedLogger extends LogImplementation {
+  constructor(private readonly loggers: LogImplementation[]) {
+    super();
+  }
+
+  log(
+    level: LogLevel,
+    element: Element<any>,
+    renderId: string,
+    metadataOrMessage: string | object,
+    message?: string | undefined
+  ): void {
+    this.loggers.forEach((l) => l.log(level, element, renderId, metadataOrMessage, message));
+  }
+
+  logException(element: Element<object>, renderId: string, exception: unknown): void {
+    this.loggers.forEach((l) => l.logException(element, renderId, exception));
   }
 }
 

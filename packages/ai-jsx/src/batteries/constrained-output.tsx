@@ -4,19 +4,20 @@
  * @packageDocumentation
  */
 
-import * as AI from '../index.js';
-import {
-  ChatCompletion,
-  SystemMessage,
-  AssistantMessage,
-  UserMessage,
-  ModelPropsWithChildren,
-} from '../core/completion.js';
 import yaml from 'js-yaml';
-import { AIJSXError, ErrorCode, ErrorBlame } from '../core/errors.js';
 import { Jsonifiable } from 'type-fest';
 import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import {
+  AssistantMessage,
+  ChatCompletion,
+  FunctionCall,
+  ModelPropsWithChildren,
+  SystemMessage,
+  UserMessage,
+} from '../core/completion.js';
+import { AIJSXError, ErrorBlame, ErrorCode } from '../core/errors.js';
+import * as AI from '../index.js';
 import { patchedUntruncateJson } from '../lib/util.js';
 
 export type ObjectCompletion = ModelPropsWithChildren & {
@@ -244,8 +245,12 @@ async function* ObjectCompletionWithRetry(
     output = yield* render(childrenWithCompletion);
     return output;
   } catch (e: any) {
-    validationError = e.metadata.validationError;
-    output = e.metadata.output;
+    if (e instanceof CompletionError) {
+      validationError = e.metadata.validationError;
+      output = e.metadata.output;
+    } else {
+      throw e;
+    }
   }
 
   logger.debug({ atempt: 1, expectedFormat: props.typeName, output }, `Output did not validate to ${props.typeName}.`);
@@ -271,8 +276,12 @@ async function* ObjectCompletionWithRetry(
       output = yield* render(completionRetry);
       return output;
     } catch (e: any) {
-      validationError = e.metadata.validationError;
-      output = e.metadata.output;
+      if (e instanceof CompletionError) {
+        validationError = e.metadata.validationError;
+        output = e.metadata.output;
+      } else {
+        throw e;
+      }
     }
 
     logger.debug(
@@ -302,12 +311,14 @@ async function* ObjectCompletionWithRetry(
  * @hidden
  */
 export async function* JsonChatCompletionFunctionCall(
-  { schema, children, ...props }: ModelPropsWithChildren & { schema: z.Schema },
+  { schema, validators, children, ...props }: ObjectCompletion,
   { render }: AI.ComponentContext
 ) {
+  // If a schema is provided, it is added to the list of validators as well as the prompt.
+  const validatorsAndSchema = schema ? [schema.parse, ...(validators ?? [])] : validators ?? [];
+
   const childrenWithCompletion = (
     <ChatCompletion
-      experimental_streamFunctionCallOnly
       {...props}
       functionDefinitions={{
         print: {
@@ -315,6 +326,7 @@ export async function* JsonChatCompletionFunctionCall(
           parameters: schema,
         },
       }}
+      forcedFunction="print"
     >
       {children}
       <SystemMessage>
@@ -324,9 +336,44 @@ export async function* JsonChatCompletionFunctionCall(
     </ChatCompletion>
   );
 
-  const frames = render(childrenWithCompletion);
+  const frames = render(childrenWithCompletion, { stop: (e) => e.tag === FunctionCall, map: (e) => e });
   for await (const frame of frames) {
-    yield JSON.stringify(JSON.parse(frame).arguments);
+    const functionCall = frame.find((e) => AI.isElement(e) && e.tag === FunctionCall) as
+      | AI.Element<AI.PropsOfComponent<typeof FunctionCall>>
+      | undefined;
+    if (!functionCall) {
+      continue;
+    }
+
+    const jsonResult = functionCall.props.args;
+    try {
+      for (const validator of validatorsAndSchema) {
+        validator(jsonResult);
+      }
+    } catch (e: any) {
+      continue;
+    }
+    yield JSON.stringify(jsonResult);
   }
-  return JSON.stringify(JSON.parse(await frames).arguments);
+
+  const functionCall = (await frames).find((e) => AI.isElement(e) && e.tag === FunctionCall) as
+    | AI.Element<AI.PropsOfComponent<typeof FunctionCall>>
+    | undefined;
+
+  if (functionCall === undefined) {
+    return null;
+  }
+
+  const jsonResult = functionCall.props.args;
+  try {
+    for (const validator of validatorsAndSchema) {
+      validator(jsonResult);
+    }
+  } catch (e: any) {
+    throw new CompletionError('The model did not produce a valid JSON object', 'runtime', {
+      output: JSON.stringify(jsonResult),
+      validationError: e.message,
+    });
+  }
+  return JSON.stringify(jsonResult);
 }

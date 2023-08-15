@@ -1,5 +1,78 @@
 # Changelog
 
+## 0.9.0
+
+- **Breaking:** Remove prompt-engineered `UseTools`. Previously, if you called `UseTools` with a model that doesn't support native function calling (e.g. Anthropic), `UseTools` would use a polyfilled version that uses prompt engineering to simulate function calling. However, this wasn't reliable enough in practice, so we've dropped it.
+- Fix issue where `gpt-4-32k` didn't accept functions.
+- Fix issue where Anthropic didn't permit function call/responses in its conversation history.
+- Add Anthropic's claude-2 models as valid chat model types.
+- Fix issue where Anthropic prompt formatting had extra `:`s.
+
+## 0.8.5
+
+- Fix issue where OpenTelemetry failures were not being properly attributed.
+
+## [0.8.4](https://github.com/fixie-ai/ai-jsx/commit/652dcd51d2ce16d77130fe40488e5e609a164af2)
+
+- Add OpenTelemetry integration for AI.JSX render tracing, which can be enabled by setting the `AIJSX_ENABLE_OPENTELEMETRY` environment variable.
+
+## [0.8.3](https://github.com/fixie-ai/ai-jsx/commit/0c0309382d5beb6e3bb177fc5af464a4cf6ab3ef)
+
+- Throw validation errors when invalid elements (like bare strings) are passed to `ChatCompletion` components.
+- Reduce logspam from memoization.
+
+## [0.8.2](https://github.com/fixie-ai/ai-jsx/commit/4ff41e2bbafaa89901d9c79e8a639f46d956f08d)
+
+- Fix issue where the `description` field wasn't passed to function definitions.
+
+## [0.8.1](https://github.com/fixie-ai/ai-jsx/commit/c6dfba422761f23ad4939c746a4a369385dc1f36)
+
+- Add support for token-based conversation shrinking via `<Shrinkable>`.
+
+## [0.8.0](https://github.com/fixie-ai/ai-jsx/commit/58062b9e42b2ccecd467de90ee1dedf7ec70dfbf)
+
+- Move `MdxChatCompletion` to be `MdxSystemMessage`. You can now put this `SystemMessage` in any `ChatCompletion` to prompt the model to give MDX output.
+
+## [0.7.3](https://github.com/fixie-ai/ai-jsx/commit/670ea52647138052cb116cbc56b6cc4bb49512a0)
+
+- Update readme.
+
+## [0.7.2](https://github.com/fixie-ai/ai-jsx/commit/203574abdbdce22c876a0c5a3a94dcc093b753cb)
+
+- Add `Converse` and `ShowConversation` components facilitate streaming conversations.
+
+## [0.7.1](https://github.com/fixie-ai/ai-jsx/commit/058c463a32321d754639dcf44a2b6f3b5a863d1f)
+
+- Change `ChatCompletion` components to render to `<AssistantMessage>` and `<FunctionCall>` elements.
+
+## [0.7.0](https://github.com/fixie-ai/ai-jsx/commit/f8c8cff92fa1f228bf5826e8a0ac7129df765150)
+
+- Move `memo` to `AI.RenderContext` to ensure that memoized components render once, even if placed under a different context provider.
+
+## [0.6.1](https://github.com/fixie-ai/ai-jsx/commit/625459d25d538019e42afe8ba952c89b363ff662)
+
+- Add `AIJSX_LOG` environment variable to control log level and output location.
+
+## [0.6.0](https://github.com/fixie-ai/ai-jsx/commit/7fce0f4ae4eca4d2679177ecb357cd60699e3913)
+
+- Update `<UseTools>` to take a complete conversation as a `children` prop, rather than as a string `query` prop.
+
+## [0.5.16](https://github.com/fixie-ai/ai-jsx/commit/5017e6fd)
+
+- Update `toTextStream` to accept a `logger`, so you can now see log output when you're running AI.JSX on the server and outputting to a stream. See [AI + UI](./guides/ai-ui.md) and [Observability](./guides/observability.md).
+
+## [0.5.15](https://github.com/fixie-ai/ai-jsx/commit/68adddd)
+
+- Add [`MdxChatCompletion`](./guides/mdx.md), so your model calls can now output [MDX](https://mdxjs.com/) using your components.
+
+## [0.5.14](https://github.com/fixie-ai/ai-jsx/commit/5971243)
+
+- Add [Llama2 support](./guides/models.md#llama2).
+
+## [0.5.13](https://github.com/fixie-ai/ai-jsx/commit/80e25c7d701d0d227e6815f4303ca7dc28dfce0c)
+
+- Add [`DocsQAWithSources` component](./guides/docsqa.md#handling-a-query)
+
 ## 0.5.12
 
 - Updated `readme.md` in the `ai-jsx` package to fix bugs on the npm landing page.

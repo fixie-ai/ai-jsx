@@ -56,11 +56,4 @@ module.exports = {
     '@typescript-eslint/no-base-to-string': 'error',
     '@typescript-eslint/no-unnecessary-condition': ['warn', { allowConstantLoopConditions: true }],
   },
-
-  overrides: [
-    {
-      files: ['*.test.ts', '*.test.tsx'],
-      plugins: ['jest'],
-    },
-  ],
 };

@@ -1,9 +1,15 @@
+import { ChatCompletion } from 'ai-jsx/core/completion';
 import { showInspector } from 'ai-jsx/core/inspector';
 import { ErrorBoundary } from 'ai-jsx/core/error-boundary';
 import * as AI from 'ai-jsx';
 
 function FailingComponent(): AI.Node {
-  throw new Error(`Something went wrong! ${Math.random()}`);
+  return (
+    <ChatCompletion>
+      This is a bare string in a chat completion, which is not allowed.
+      {Math.random()}
+    </ChatCompletion>
+  );
 }
 
 function App() {

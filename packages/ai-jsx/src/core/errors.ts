@@ -24,8 +24,19 @@ export enum ErrorCode {
   AnthropicDoesNotSupportSystemMessage = 1019,
   AnthropicDoesNotSupportFunctions = 1020,
   AnthropicAPIError = 1021,
+
   ChatModelDoesNotSupportFunctions = 1022,
   ChatCompletionBadInput = 1023,
+
+  Llama2DoesNotSupportFunctions = 1024,
+  Llama2DoesNotSupportMultipleUserMessages = 1025,
+  Llama2DoesNotSupportAssistantMessages = 1026,
+  Llama2DoesNotSupportFunctionCalls = 1027,
+  Llama2DoesNotSupportFunctionResponse = 1028,
+  Llama2DoesNotSupportMultipleSystemMessages = 1029,
+
+  UnexpectedPartialRenderResult = 1030,
+  ChatCompletionInvalidInput = 1031,
 
   ModelOutputDidNotMatchConstraint = 2000,
 

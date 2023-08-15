@@ -3,15 +3,24 @@
  * @packageDocumentation
  */
 
-import { ChatCompletionResponseMessage } from 'openai';
 import * as AI from '../index.js';
 import { Node, Component, RenderContext } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
+import { ChatCompletionFunctions } from 'openai';
 import { AnthropicChatModel } from '../lib/anthropic.js';
 import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import _ from 'lodash';
+export {
+  UserMessage,
+  SystemMessage,
+  AssistantMessage,
+  FunctionCall,
+  FunctionResponse,
+  ConversationHistory,
+} from './conversation.js';
 
 /**
  * Represents properties passed to a given Large Language Model.
@@ -23,6 +32,12 @@ export interface ModelProps {
   maxTokens?: number;
   /** A list of stop tokens. */
   stop?: string[];
+
+  /**
+   * An alternative sampling technique to temperature.
+   *
+   * @see https://platform.openai.com/docs/api-reference/chat/create#chat/create-top_p */
+  topP?: number;
 }
 
 /**
@@ -41,7 +56,7 @@ export type ModelComponent<T extends ModelPropsWithChildren> = Component<T>;
  * Represents a function definition that can be invoked using the {@link FunctionCall} component.
  */
 export interface FunctionDefinition {
-  description?: string;
+  description?: ChatCompletionFunctions['description'];
   parameters: FunctionParameters;
 }
 
@@ -61,9 +76,7 @@ export function getParametersSchema(parameters: FunctionParameters) {
     properties: Object.keys(parameters).reduce(
       (map: Record<string, any>, paramName) => ({
         ...map,
-        [paramName]: {
-          type: parameters[paramName].type,
-        },
+        [paramName]: _.omit(parameters[paramName], 'required'),
       }),
       {}
     ),
@@ -72,10 +85,19 @@ export function getParametersSchema(parameters: FunctionParameters) {
 
 /**
  * Represents parameters to a {@link FunctionDefinition}.
+ *
+ * This is a simplified version of the `parameters` field in {@link ChatCompletionFunctions}: https://platform.openai.com/docs/api-reference/chat/create#chat/create-parameters.
+ *
+ *
+ * If you want to pass a field to {@link FunctionParameters} that isn't supported on this type, you can use a {@link z.ZodObject} schema instead.
  */
 export interface PlainFunctionParameter {
   description?: string;
   type?: string;
+  /**
+   * The possible values this param can take.
+   */
+  enum?: string[];
   required: boolean;
 }
 
@@ -203,122 +225,6 @@ export function ChatProvider<T extends ModelPropsWithChildren>(
       {children}
     </chatContext.Provider>
   );
-}
-
-/**
- * Provide a System Message to the LLM, for use within a {@link ChatCompletion}.
- *
- * The system message can be used to put the model in character. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
- *
- * @example
- * ```tsx
- *    <ChatCompletion>
- *      <SystemMessage>You are a helpful customer service agent.</SystemMessage>
- *    </ChatCompletion>
- * ```
- */
-export function SystemMessage({ children }: { children: Node }) {
-  return children;
-}
-
-/**
- * Provide a User Message to the LLM, for use within a {@link ChatCompletion}.
- *
- * The user message tells the model what the user has said. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
- *
- * @example
- * ```tsx
- *    <ChatCompletion>
- *      <UserMessage>I'd like to cancel my account.</UserMessage>
- *    </ChatCompletion>
- *
- *    ==> 'Sorry to hear that. Can you tell me why?
- * ```
- */
-export function UserMessage({ children }: { name?: string; children: Node }) {
-  return children;
-}
-
-/**
- * Provide an Assistant Message to the LLM, for use within a {@link ChatCompletion}.
- *
- * The assistant message tells the model what it has previously said. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
- *
- * @example
- * ```tsx
- *    <ChatCompletion>
- *      <UserMessage>I'd like to cancel my account.</UserMessage>
- *      <AssistantMessage>Sorry to hear that. Can you tell me why?</AssistantMessage>
- *      <UserMessage>It's too expensive.</UserMessage>
- *    </ChatCompletion>
- * ```
- *
- *    ==> "Ok, thanks for that feedback. I'll cancel your account."
- */
-export function AssistantMessage({ children }: { children: Node }) {
-  return children;
-}
-
-export function ConversationHistory({ messages }: { messages: ChatCompletionResponseMessage[] }) {
-  return messages.map((message) => {
-    switch (message.role) {
-      case 'system':
-        return <SystemMessage>{message.content}</SystemMessage>;
-      case 'user':
-        return <UserMessage>{message.content}</UserMessage>;
-      case 'assistant':
-        return <AssistantMessage>{message.content}</AssistantMessage>;
-      case 'function':
-        return (
-          <FunctionCall name={message.function_call!.name!} args={JSON.parse(message.function_call!.arguments!)} />
-        );
-    }
-  });
-}
-
-/**
- * Provide a function call to the LLM, for use within a {@link ChatCompletion}.
- *
- * The function call tells the model that a function was previously invoked by the model. See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
- * When the model returns a function call, @{link ChatCompletion} returns a @{link FunctionCall} component.
- *
- * @example
- * ```tsx
- *    <ChatCompletion>
- *      <UserMessage>What is 258 * 322?</UserMessage>
- *      <FunctionCall name="evaluate_math" args={expression: "258 * 322"} />
- *      <FunctionResponse name="evaluate_math">83076</FunctionResponse>
- *    </ChatCompletion>
- *
- *    ==> "That would be 83,076."
- * ```
- */
-export function FunctionCall({ name, args }: { name: string; args: Record<string, string | number | boolean | null> }) {
-  return `Call function ${name} with ${JSON.stringify(args)}`;
-}
-
-/**
- * Renders to the output of a previous {@link FunctionCall} component, for use within a {@link ChatCompletion}.
- *
- * See https://platform.openai.com/docs/guides/gpt/chat-completions-api for more detail.
- *
- * @example
- * ```tsx
- *    <ChatCompletion>
- *      <UserMessage>What is 258 * 322?</UserMessage>
- *      <FunctionCall name="evaluate_math" args={expression: "258 * 322"} />
- *      <FunctionResponse name="evaluate_math">83076</FunctionResponse>
- *    </ChatCompletion>
- *
- *    ==> "That would be 83,076."
- * ```
- */
-export async function FunctionResponse(
-  { name, children }: { name: string; children: Node },
-  { render }: AI.ComponentContext
-) {
-  const output = await render(children);
-  return `function ${name} returns ${output}`;
 }
 
 /**

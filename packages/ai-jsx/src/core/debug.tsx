@@ -6,16 +6,38 @@
 
 import * as AI from '../index.js';
 import { Element, ElementPredicate, Node, RenderContext } from '../index.js';
-import { isMemoizedSymbol } from './memoize.js';
+import { memoizedIdSymbol } from './memoize.js';
 
 const maxStringLength = 1000;
+
+const debugRepresentationSymbol = Symbol('AI.JSX debug representation');
+
+/**
+ * Creates props that associate a debug representation with an element.
+ *
+ * Usage example:
+ *
+ * ```tsx
+ * <InvisibleComponent {...debugRepresentation((e) => e.props.children)}>
+ *   <Foo>1</Foo>
+ * </InvisibleComponent>
+ * ```
+ *
+ * When the `<InvisibleComponent>` would be displayed in a {@link DebugTree}, it will be replaced
+ * with its children.
+ */
+export function debugRepresentation(fn: (element: Element<any>) => unknown) {
+  return {
+    [debugRepresentationSymbol]: fn,
+  };
+}
 
 /**
  * Used by {@link DebugTree} to render a tree of {@link Node}s.
  * @hidden
  */
 export function debug(value: unknown, expandJSXChildren: boolean = true): string {
-  const previouslyMemoizedIds = new Set();
+  const previouslyMemoizedElements = new Set<Element<any>>();
 
   function debugRec(value: unknown, indent: string, context: 'code' | 'children' | 'props'): string {
     if (AI.isIndirectNode(value)) {
@@ -51,22 +73,29 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
           return '{null}';
       }
     } else if (AI.isElement(value)) {
-      const tag = value.tag === AI.Fragment ? '' : typeof value.tag === 'string' ? value.tag : value.tag.name;
+      if (debugRepresentationSymbol in value.props) {
+        return debugRec(value.props[debugRepresentationSymbol](value), indent, context);
+      }
+
       const childIndent = `${indent}  `;
 
-      const isMemoized = isMemoizedSymbol in value.props;
-      const memoizedIsPreviouslyRenderedToDebugOutput = previouslyMemoizedIds.has(value.props.id);
-
-      if (isMemoized && !memoizedIsPreviouslyRenderedToDebugOutput) {
-        previouslyMemoizedIds.add(value.props.id);
+      const memoizedId = memoizedIdSymbol in value.props && (value.props[memoizedIdSymbol] as number);
+      const expandChildrenForThisElement = expandJSXChildren && !previouslyMemoizedElements.has(value);
+      if (memoizedId) {
+        previouslyMemoizedElements.add(value);
       }
 
       let children = '';
-      if (expandJSXChildren && (!isMemoized || !memoizedIsPreviouslyRenderedToDebugOutput)) {
+      if (expandChildrenForThisElement) {
         children = debugRec(value.props.children, childIndent, 'children');
       }
 
       const results = [];
+
+      if (memoizedId) {
+        results.push(` @memoizedId=${memoizedId}`);
+      }
+
       if (value.props) {
         for (const key of Object.keys(value.props)) {
           const propValue = value.props[key];
@@ -85,6 +114,12 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
 
       const propsString = results.join('');
 
+      const tag =
+        value.tag === AI.Fragment && results.length == 0
+          ? ''
+          : typeof value.tag === 'string'
+          ? value.tag
+          : value.tag.name;
       const child =
         children !== ''
           ? `<${tag}${propsString}>\n${childIndent}${children}\n${indent}</${tag}>`

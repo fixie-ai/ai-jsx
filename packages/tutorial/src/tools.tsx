@@ -3,6 +3,7 @@ import { UseTools } from 'ai-jsx/batteries/use-tools';
 import yahooFinance from 'yahoo-finance2';
 import asciichart from 'asciichart';
 import enquirer from 'enquirer';
+import { SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 
 const { prompt } = enquirer;
 
@@ -52,11 +53,10 @@ function StockAgent(props: { query: string }) {
   };
 
   return (
-    <UseTools
-      tools={tools}
-      fallback="Politely explain that you cannot help."
-      query={`You are an agent that can answer questions about stocks. ${props.query}`}
-    />
+    <UseTools tools={tools}>
+      <SystemMessage>You are an agent that can answer questions about stocks.</SystemMessage>
+      <UserMessage>{props.query}</UserMessage>
+    </UseTools>
   );
 }
 

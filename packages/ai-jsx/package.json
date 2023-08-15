@@ -4,7 +4,7 @@
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://ai-jsx.com",
-  "version": "0.5.12",
+  "version": "0.9.0",
   "volta": {
     "extends": "../../package.json"
   },
@@ -81,6 +81,15 @@
         "default": "./dist/cjs/core/completion.cjs"
       }
     },
+    "./core/conversation": {
+      "import": {
+        "types": "./dist/esm/core/conversation.d.ts",
+        "default": "./dist/esm/core/conversation.js"
+      },
+      "require": {
+        "default": "./dist/cjs/core/conversation.cjs"
+      }
+    },
     "./core/image-gen": {
       "import": {
         "types": "./dist/esm/core/image-gen.d.ts",
@@ -124,15 +133,6 @@
       },
       "require": {
         "default": "./dist/cjs/core/log.cjs"
-      }
-    },
-    "./core/memoize": {
-      "import": {
-        "types": "./dist/esm/core/memoize.d.ts",
-        "default": "./dist/esm/core/memoize.js"
-      },
-      "require": {
-        "default": "./dist/cjs/core/memoize.cjs"
       }
     },
     "./core/inspector": {
@@ -190,6 +190,24 @@
         "default": "./dist/cjs/lib/anthropic.cjs"
       }
     },
+    "./lib/replicate-llama2": {
+      "import": {
+        "types": "./dist/esm/lib/replicate-llama2.d.ts",
+        "default": "./dist/esm/lib/replicate-llama2.js"
+      },
+      "require": {
+        "default": "./dist/cjs/lib/replicate-llama2.cjs"
+      }
+    },
+    "./lib/asr/asr": {
+      "import": {
+        "types": "./dist/esm/lib/asr/asr.d.ts",
+        "default": "./dist/esm/lib/asr/asr.js"
+      },
+      "require": {
+        "default": "./dist/cjs/lib/asr/asr.cjs"
+      }
+    },
     "./react": {
       "import": {
         "types": "./dist/esm/react/index.d.ts",
@@ -236,6 +254,15 @@
         "default": "./dist/cjs/react/completion.cjs"
       }
     },
+    "./react/jit-ui/mdx": {
+      "import": {
+        "types": "./dist/esm/react/jit-ui/mdx.d.ts",
+        "default": "./dist/esm/react/jit-ui/mdx.js"
+      },
+      "require": {
+        "default": "./dist/cjs/react/jit-ui/mdx.cjs"
+      }
+    },
     "./experimental/next": {
       "import": {
         "types": "./dist/esm/experimental/next/index.d.ts",
@@ -243,6 +270,24 @@
       },
       "require": {
         "default": "./dist/cjs/experimental/next/index.cjs"
+      }
+    },
+    "./experimental/next/chat": {
+      "import": {
+        "types": "./dist/esm/experimental/next/chat.d.ts",
+        "default": "./dist/esm/experimental/next/chat.js"
+      },
+      "require": {
+        "default": "./dist/cjs/experimental/next/chat.cjs"
+      }
+    },
+    "./experimental/next/chat.client": {
+      "import": {
+        "types": "./dist/esm/experimental/next/chat.client.d.ts",
+        "default": "./dist/esm/experimental/next/chat.client.js"
+      },
+      "require": {
+        "default": "./dist/cjs/experimental/next/chat.client.cjs"
       }
     },
     "./stream": {
@@ -298,16 +343,20 @@
     "view-logs": "cat ai-jsx.log | pino-pretty"
   },
   "peerDependencies": {
+    "@opentelemetry/api": "^1.4.1",
+    "@opentelemetry/api-logs": "^0.41.1",
     "react": "^16.8.0  || ^17.0.0 || ^18.0.0"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.5.0",
+    "@anthropic-ai/sdk": "^0.5.10",
     "@nick.heiner/wandb-fork": "^0.5.2-5",
+    "@opentelemetry/api": "^1.4.1",
+    "@opentelemetry/api-logs": "^0.41.1",
     "axios": "^1.4.0",
     "cli-highlight": "^2.1.11",
     "cli-spinners": "^2.9.0",
-    "gpt3-tokenizer": "^1.1.5",
     "ink": "^4.2.0",
+    "js-tiktoken": "^1.0.7",
     "js-yaml": "^4.1.0",
     "langchain": "^0.0.81",
     "lodash": "^4.17.21",
@@ -315,6 +364,7 @@
     "openai": "^3.3.0",
     "openai-edge": "^1.2.0",
     "pino": "^8.14.1",
+    "replicate": "^0.12.3",
     "server-only": "^0.0.1",
     "untruncate-json": "^0.0.1",
     "uuid": "^9.0.0",

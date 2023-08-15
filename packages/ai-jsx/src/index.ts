@@ -6,4 +6,5 @@
  * @packageDocumentation
  */
 
-export * from './core/core.js';
+export * from './core/node.js';
+export * from './core/render.js';

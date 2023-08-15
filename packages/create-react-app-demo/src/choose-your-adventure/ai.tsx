@@ -4,7 +4,6 @@ import * as AI from 'ai-jsx/react';
 import { useEffect, useRef } from 'react';
 import { z } from 'zod';
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
-import { memo } from 'ai-jsx/core/memoize';
 import { OpenAI } from 'ai-jsx/lib/openai';
 import { atom, useAtom } from 'jotai';
 import _ from 'lodash';
@@ -91,7 +90,6 @@ function AIComponent() {
   const [, setCallInProgress] = useAtom(modelCallInProgress);
   const isInProgressRef = useRef(false);
 
-  const children = memo(<ButtonEnabledAgent conversation={conversation} />);
   const when = !conversation.length || _.last(conversation)?.type === 'user';
 
   const lastMessageType = _.last(conversation)?.type;
@@ -105,7 +103,7 @@ function AIComponent() {
     // I couldn't get streaming to work here and I don't know why.
     // Maybe because we're in the client and however Axios is doing it only works in Node?
     AI.createRenderContext()
-      .render(children)
+      .render(<ButtonEnabledAgent conversation={conversation} />)
       .then((finalFrame) => {
         isInProgressRef.current = false;
         setCallInProgress(false);
@@ -145,7 +143,7 @@ function AIComponent() {
           console.log('Error normalizing JSON from model:', e, parts);
         }
       });
-  }, [children, lastMessageType, setCallInProgress, when, setConversation]);
+  }, [conversation, lastMessageType, setCallInProgress, when, setConversation]);
 
   return null;
 }
