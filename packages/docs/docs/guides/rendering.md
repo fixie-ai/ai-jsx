@@ -4,7 +4,12 @@ Once you assemble your AI.JSX component tree, you'll want to render it into text
 
 ## Streaming in AI.JSX
 
-Rendering an AI.JSX program yields a stream. By default, AI.JSX will give you partial results for the output. Alternatively, you can choose to use append-only streams which outputs sequential chunks that can then be concatenated together.
+Rendering an AI.JSX program yields a stream. You can consume the stream in one of two ways:
+
+1. **Partial Stream (i.e. in-progress stream)** → The stream contains partial, in-progress versions of the final (full) result.
+1. **Append-Only Stream (i.e. stream of deltas) ** → The stream contains individual chunks that need to be concatenated together.
+
+By default, AI.JSX will give you partial results for the output. These two options are explored in more detail below.
 
 ### Strings vs. Streams
 
@@ -14,7 +19,7 @@ When you `await` the result of `render`, you get a string:
 const str = await AI.createRenderContext().render(<App />);
 ```
 
-This might be fine for a short response. However, for performance, you'll often prefer to get a stream of results. This enables your app to display content to your end-user as it comes in versus having a long period of time where nothing seems to be happening.
+This is fine for offline processing. However, for interactive experiences where an end-user is actively waiting, you'll often prefer to get a stream of results. This enables your app to display content to your end-user as it comes in versus having a long period of time where nothing seems to be happening.
 
 To stream like this, treat the result of `render` like a generator:
 
