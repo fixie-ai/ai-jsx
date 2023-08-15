@@ -42,6 +42,133 @@ import { Anthropic } from 'ai-jsx/lib/anthropic';
 import { CompletionCreateParams } from '@anthropic-ai/sdk/resources/completions';
 import { Jsonifiable } from 'type-fest';
 
+import { trace } from '@opentelemetry/api';
+import { SimpleSpanProcessor, InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import _ from 'lodash';
+
+afterEach(() => {
+  fetchMock.resetMocks();
+});
+
+describe('OpenTelemetry', () => {
+  const memoryExporter = new InMemorySpanExporter();
+  const tracerProvider = new NodeTracerProvider();
+  tracerProvider.addSpanProcessor(new SimpleSpanProcessor(memoryExporter));
+  trace.setGlobalTracerProvider(tracerProvider);
+
+  beforeEach(() => {
+    memoryExporter.reset();
+  });
+
+  it('should emit a span with the correct attributes', async () => {
+    mockOpenAIResponse('opentel response from OpenAI');
+
+    // Call your function that creates spans
+    await AI.createRenderContext({ enableOpenTelemetry: true }).render(
+      <ChatCompletion>
+        <UserMessage>hello</UserMessage>
+      </ChatCompletion>
+    );
+
+    const spans = memoryExporter.getFinishedSpans();
+    const minimalSpans = _.map(spans, 'attributes');
+    // Unfortunately, the @memoizedId will be sensitive how many tests in this file ran before it.
+    // To avoid issues with that, we put this test first.
+    expect(minimalSpans).toMatchInlineSnapshot(`
+      [
+        {
+          "ai.jsx.result": "[<UserMessage @memoizedId=1>
+        {"hello"}
+      </UserMessage>]",
+          "ai.jsx.tag": "UserMessage",
+          "ai.jsx.tree": "<UserMessage @memoizedId=1>
+        {"hello"}
+      </UserMessage>",
+        },
+        {
+          "ai.jsx.result": "[<UserMessage @memoizedId=1>
+        {"hello"}
+      </UserMessage>]",
+          "ai.jsx.tag": "UserMessage",
+          "ai.jsx.tree": "<UserMessage @memoizedId=1>
+        {"hello"}
+      </UserMessage>",
+        },
+        {
+          "ai.jsx.result": "[<UserMessage @memoizedId=1>
+        {"hello"}
+      </UserMessage>]",
+          "ai.jsx.tag": "ShrinkConversation",
+          "ai.jsx.tree": "<ShrinkConversation cost={tokenCountForConversationMessage} budget={4093}>
+        <UserMessage>
+          {"hello"}
+        </UserMessage>
+      </ShrinkConversation>",
+        },
+        {
+          "ai.jsx.result": "hello",
+          "ai.jsx.result.tokenCount": 1,
+          "ai.jsx.tag": "UserMessage",
+          "ai.jsx.tree": "<UserMessage @memoizedId=1>
+        {"hello"}
+      </UserMessage>",
+        },
+        {
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.result.tokenCount": 7,
+          "ai.jsx.tag": "Stream",
+          "ai.jsx.tree": ""▮"",
+        },
+        {
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.result.tokenCount": 7,
+          "ai.jsx.tag": "AssistantMessage",
+          "ai.jsx.tree": "<AssistantMessage>
+        {"▮"}
+      </AssistantMessage>",
+        },
+        {
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.result.tokenCount": 7,
+          "ai.jsx.tag": "Stream",
+          "ai.jsx.tree": ""opentel response from OpenAI"",
+        },
+        {
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.result.tokenCount": 7,
+          "ai.jsx.tag": "OpenAIChatModel",
+          "ai.jsx.tree": "<OpenAIChatModel model="gpt-3.5-turbo">
+        <UserMessage>
+          {"hello"}
+        </UserMessage>
+      </OpenAIChatModel>",
+        },
+        {
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.result.tokenCount": 7,
+          "ai.jsx.tag": "AutomaticChatModel",
+          "ai.jsx.tree": "<AutomaticChatModel>
+        <UserMessage>
+          {"hello"}
+        </UserMessage>
+      </AutomaticChatModel>",
+        },
+        {
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.result.tokenCount": 7,
+          "ai.jsx.tag": "ChatCompletion",
+          "ai.jsx.tree": "<ChatCompletion>
+        <UserMessage>
+          {"hello"}
+        </UserMessage>
+      </ChatCompletion>",
+        },
+      ]
+    `);
+  });
+});
+
 it('passes creates a chat completion', async () => {
   mockOpenAIResponse('response from OpenAI');
 

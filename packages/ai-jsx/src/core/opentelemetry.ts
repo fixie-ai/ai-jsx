@@ -3,6 +3,8 @@ import { PartiallyRendered, StreamRenderer } from './render.js';
 import { Element, isElement } from './node.js';
 import { memoizedIdSymbol } from './memoize.js';
 import { debug } from './debug.js';
+import { getEncoding } from 'js-tiktoken';
+import _ from 'lodash';
 
 function bindAsyncGeneratorToActiveContext<T = unknown, TReturn = any, TNext = unknown>(
   generator: AsyncGenerator<T, TReturn, TNext>
@@ -36,6 +38,8 @@ function spanAttributesForElement(element: Element<any>): opentelemetry.Attribut
   return { 'ai.jsx.tag': element.tag.name, 'ai.jsx.tree': debug(element, true) };
 }
 
+const getEncoder = _.once(() => getEncoding('cl100k_base'));
+
 export function openTelemetryStreamRenderer(streamRenderer: StreamRenderer): StreamRenderer {
   const tracer = opentelemetry.trace.getTracer('ai.jsx');
 
@@ -59,8 +63,12 @@ export function openTelemetryStreamRenderer(streamRenderer: StreamRenderer): Str
           throw ex;
         } finally {
           if (result) {
+            const resultIsPartial = result.find(isElement);
             // Record the rendered value.
-            span.setAttribute('ai.jsx.result', result.find(isElement) ? debug(result, true) : result.join(''));
+            span.setAttribute('ai.jsx.result', resultIsPartial ? debug(result, true) : result.join(''));
+            if (!resultIsPartial) {
+              span.setAttribute('ai.jsx.result.tokenCount', getEncoder().encode(result.join('')).length);
+            }
           }
           cleanup(span);
           span.end();

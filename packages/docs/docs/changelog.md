@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.9.0
+## 0.9.1
+
+- Add `tokenCount` field to [OpenTelemetry-emitted spans](./guides/observability.md#opentelemetry-integration). Now, if you're emitting via OpenTelemetry (e.g. to DataDog), the spans will tell you how many tokens each component resolved to. This is helpful for answering quetsions like "how big is my system message?".
+
+## [0.9.0](https://github.com/fixie-ai/ai-jsx/commit/94624bedc27defc96f7cfead96094c8a577c8e27)
 
 - **Breaking:** Remove prompt-engineered `UseTools`. Previously, if you called `UseTools` with a model that doesn't support native function calling (e.g. Anthropic), `UseTools` would use a polyfilled version that uses prompt engineering to simulate function calling. However, this wasn't reliable enough in practice, so we've dropped it.
 - Fix issue where `gpt-4-32k` didn't accept functions.
