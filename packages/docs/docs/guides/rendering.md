@@ -1,39 +1,226 @@
 # Rendering
 
-Once you assemble your AI.JSX component tree, you'll want to render it into text or UI components. The way you do it depends on how you're using AI.JSX.
+Once you assemble your AI.JSX component tree, you'll want to render it into text or UI components. The way in which components get assembled depends on your scenario and how you are using AI.JSX. By default (and to provide the best end-user experience) AI.JSX streams results from all calls you make to an LLM.
 
-## From clientside React
+## Streaming in AI.JSX
+
+Rendering an AI.JSX program yields a stream. You can consume the stream in one of two ways:
+
+1. **Partial Stream (i.e. in-progress stream)** → The stream contains partial, in-progress versions of the final (full) result.
+1. **Append-Only Stream (i.e. stream of deltas) ** → The stream contains individual chunks that need to be concatenated together.
+
+By default, AI.JSX will give you partial results for the output. These two options are explored in more detail below.
+
+### Strings vs. Streams
+
+When you `await` the result of `render`, you get a string:
+
+```tsx
+const str = await AI.createRenderContext().render(<App />);
+```
+
+This is fine for offline processing. However, for interactive experiences where an end-user is actively waiting, you'll often prefer to get a stream of results. This enables your app to display content to your end-user as it comes in versus having a long period of time where nothing seems to be happening.
+
+To stream like this, treat the result of `render` like a generator:
+
+```tsx
+const result = AI.createRenderContext().render(<App />);
+let frameCount = 0;
+for await (const frame of result) {
+  console.log('got frame', frameCount++, frame);
+}
+```
+
+If `Component` ultimately resolved to `hello world`, then the output might look something like this:
+
+```
+got frame 0 h
+got frame 1 hell
+got frame 2 hello w
+got frame 3 hello wor
+got frame 4 hello world
+```
+
+The exact chunking you'll get depends on the chunks emitted by the component you're rendering.
+
+### Partial Streaming
+
+By default, AI.JSX will return partial streams. This means that new values may be inserted anywhere in the output. For example, if you had two completions that ran in parallel, you'd see them both stream in at the same time:
+
+```tsx
+function Debater({topic, position}) { /* ... */}
+
+function Debate({topic}) {
+  return <>
+    Pro: <Debater topic={topic} position='pro' />, Con: <Debater topic={topic} position='con' />
+  <>
+}
+```
+
+In this example, both `Debater` AI calls will stream into your final result in parallel. Imagine you stream the results like so:
+
+```tsx
+const result = AI.createRenderContext().render(<Debate topic="are beans good" />);
+let frameCount = 0;
+for await (const frame of result) {
+  console.log('got frame', frameCount++, frame);
+}
+```
+
+Your stream of results would look like:
+
+```
+got frame 0 Pro: I think, Con: We should
+got frame 1 Pro: I think beans are, Con: We should never eat
+got frame 2 Pro: I think beans are great, Con: We should never eat beans
+```
+
+You can see both the Pro and Con stream parts arrive in parallel.
+
+### Append-Only Streaming
+
+AI.JSX supports another kind of streaming: Append-Only. Just add `{ appendOnly: true }` to switch from partial to append-only streaming.
+
+Let's take the debate example from above and render it in append-only mode:
+
+```tsx
+const result = AI.createRenderContext().render(
+  <Debate topic="are beans good" />,
+  // highlight-next-line
+  { appendOnly: true }
+);
+let chunkCount = 0;
+for await (const chunk of result) {
+  console.log('got chunk', chunkCount++, chunk);
+}
+```
+
+This produces the following chunks:
+
+```
+got chunk 0 Pro: I think
+got chunk 1 beans are
+got chunk 2 great
+got chunk 3 , Con: We should never eat beans
+```
+
+In this output, we see that the chunks are sequential and will need to be concatenated (e.g. `+=`) to create the final output that will be displayed to our end-user.
+
+With partial streaming, both of our debaters (i.e. Pro and Con) were able to stream in parallel. However, with append-only streaming, only one element can stream at a time. Additional elements are still processing in the background so there is no degradation of end-to-end performance.
+
+### Constraints
+
+If you use a `renderResult` as a generator, you can only iterate over it once:
+
+```tsx
+const result = AI.createRenderContext().render(<Debate topic="are beans good" />);
+for await (const frame of result) {
+  console.log(frame);
+}
+// highlight-start
+// Error! `result` has already been iterated over.
+for await (const frame of result) {
+  console.log(frame);
+}
+// highlight-end
+```
+
+You also can't `await` it like a promise after you've iterated over it:
+
+```tsx
+const result = AI.createRenderContext().render(<Debate topic="are beans good" />);
+for await (const frame of result) {
+  console.log(frame);
+}
+// highlight-start
+// Error! `result` has already been iterated over.
+console.log(await result);
+// highlight-end
+```
+
+## Rendering Examples in AI.JSX
+
+Let's take a closer look at some more examples of how to do rendering. There are five examples: the first one shows how to do local debugging of your app, the next two provide more information of examples above, and the last two map to [deployment architectures](./architecture.mdx) you might be using.
+
+### Debugging Locally in the Terminal
+
+Use [the Inspector](../tutorial/part2-inline.md).
+
+```tsx
+import { showInspector } from 'ai-jsx/core/inspector';
+
+function App() {
+  /* ... */
+}
+
+showInspector(<App />);
+```
+
+### You Just Want a String
 
 :::note Architectures
 This applies to the following architectures:
 
-- [Run entirely on the client](./architecture.mdx#run-entirely-on-the-client)
-- [UI + AI.JSX on the client; API calls on the server](./architecture.mdx#ui--aijsx-on-the-client-api-calls-on-the-server)
+- [Headless AI (no UI)](./architecture.mdx#architecture-5-headless-ai)
+- Any other case where you just want a string.
 
 :::
 
-Use the `AI.JSX` component to directly render AI-generated content into your UI:
+To render your component to a string:
 
 ```tsx
-/* react component */
-<div>
-  <AI.jsx>
-    {/* AI.JSX component */}
-    <ChatCompletion>
-      <UserMessage>Write me a poem about {query}</UserMessage>
-    </ChatCompletion>
-  </AI.jsx>
-</div>
+import * as AI from 'ai-jsx';
+
+function App() {
+  /* ... */
+}
+
+const str = await AI.createRenderContext().render(<App />);
 ```
 
-See [AI + UI](./ai-ui.md#clientside-ai--ui-integration) for more detail.
+### Append-only Streaming (with Vercel)
 
-## From the server into React
+This is the best way to use AI.JSX with [Vercel's `useAI` hook](https://sdk.vercel.ai/docs).
+
+For example, from a [Vercel Serverless Function](https://vercel.com/docs/concepts/functions/serverless-functions):
+
+```tsx
+import { toTextStream } from 'ai-jsx/stream';
+import { StreamingTextResponse } from 'ai';
+
+export async function POST(request: NextRequest) {
+  const { topic } = await request.json();
+
+  return new StreamingTextResponse(
+    // highlight-next-line
+    toTextStream(
+      <>
+        A poem about {topic}:{'\n\n'}
+        <ChatCompletion temperature={1}>
+          <UserMessage>Write me a poem about {topic}</UserMessage>
+        </ChatCompletion>
+        {'\n\n'}
+        Ten facts about {topic}:{'\n\n'}
+        <ChatCompletion temperature={1}>
+          <UserMessage>Give me ten facts about {topic}</UserMessage>
+        </ChatCompletion>
+      </>
+    )
+  );
+}
+```
+
+For more detail, see:
+
+- [Partial streaming](#partial-streaming)
+- [Append-only streaming](#append-only-streaming)
+
+### From the Server into React
 
 :::note Architectures
 This applies to the following architectures:
 
-- [UI on the client; AI.JSX on the server](./architecture.mdx#ui-on-the-client-aijsx-on-the-server)
+- [Server-Side AI.JSX + Client UI](./architecture.mdx#architecture-3-server-side-aijsx--client-ui)
 
 :::
 
@@ -68,83 +255,36 @@ export function RecipeGenerator({ topic }: { topic: string }) {
 
 See [AI + UI](./ai-ui.md#serverside-ai--ui) for more detail.
 
-## When you just want a stream of deltas
-
-This is the best way to use AI.JSX with [Vercel's `useAI` hook](https://sdk.vercel.ai/docs).
-
-For example, from a [Vercel Serverless Function](https://vercel.com/docs/concepts/functions/serverless-functions):
-
-```tsx
-import { toTextStream } from 'ai-jsx/stream';
-import { StreamingTextResponse } from 'ai';
-
-export async function POST(request: NextRequest) {
-  const { topic } = await request.json();
-
-  return new StreamingTextResponse(
-    // highlight-next-line
-    toTextStream(
-      <>
-        A poem about {topic}:{'\n\n'}
-        <ChatCompletion temperature={1}>
-          <UserMessage>Write me a poem about {topic}</UserMessage>
-        </ChatCompletion>
-        {'\n\n'}
-        Ten facts about {topic}:{'\n\n'}
-        <ChatCompletion temperature={1}>
-          <UserMessage>Give me ten facts about {topic}</UserMessage>
-        </ChatCompletion>
-      </>
-    )
-  );
-}
-```
-
-For more detail, see:
-
-- [Tree streaming](#tree-streaming)
-- [Append-only streaming](#append-only-streaming)
-
-## When you just want a string
+### From Client-Side React
 
 :::note Architectures
 This applies to the following architectures:
 
-- [Headless AI (no UI)](./architecture.mdx#headless-ai)
-- Any other case where you just want a string.
+- [Client-Side Only](./architecture.mdx#architecture-1-client-side-only)
+- [API Proxy](./architecture.mdx#architecture-2-api-proxy)
 
 :::
 
-To render your component to a string:
+Use the `AI.JSX` component to directly render AI-generated content into your UI:
 
 ```tsx
-import * as AI from 'ai-jsx';
-
-function App() {
-  /* ... */
-}
-
-const str = await AI.createRenderContext().render(<App />);
+/* react component */
+<div>
+  <AI.jsx>
+    {/* AI.JSX component */}
+    <ChatCompletion>
+      <UserMessage>Write me a poem about {query}</UserMessage>
+    </ChatCompletion>
+  </AI.jsx>
+</div>
 ```
 
-## When you're debugging locally on the command line
+See [AI + UI](./ai-ui.md#clientside-ai--ui-integration) for more detail.
 
-Use [the Inspector](../tutorial/part2-inline.md).
-
-```tsx
-import { showInspector } from 'ai-jsx/core/inspector';
-
-function App() {
-  /* ... */
-}
-
-showInspector(<App />);
-```
-
-## Advanced Cases
+## Advanced Scenarios
 
 :::caution
-In most cases, the above patterns are all you'll need. The rest of this doc will talk about the more advanced cases.
+Most of the time, the patterns provided in the above scenarios are all you will need. The rest of this guide covers advanced scenarios.
 
 :::
 
@@ -182,133 +322,10 @@ function ValidateJsonOutput({ children }, { render }): string {
 
 In this example, `ValidateJsonOutput` takes in a child, and returns a JSON result. To do that, it needs to know what the child renders to, so it uses `render`.
 
-### Streaming Results
-
-When you `await` the result of `render`, you get a string:
-
-```tsx
-const str = await AI.createRenderContext().render(<App />);
-```
-
-However, for performance, you'll often prefer to get a stream of results. To do this, treat the result of `render` like a generator:
-
-```tsx
-const result = AI.createRenderContext().render(<App />);
-let frameCount = 0;
-for await (const frame of result) {
-  console.log('got frame', frameCount++, frame);
-}
-```
-
-If `Component` ultimately resolved to `hello world`, then the `map` function might be called with:
-
-```
-got frame 0 h
-got frame 1 hell
-got frame 2 hello w
-got frame 3 hello wor
-got frame 4 hello world
-```
-
-(The exact chunking you'll get depends on the chunks emitted by the component you're rendering.)
-
-#### Tree Streaming
-
-By default, these streamed results are "tree streaming", meaning that new values may be inserted anywhere in the output. For example, if you had two completions that ran in parallel, you'd see them both stream in at the same time:
-
-```tsx
-function Debater({topic, position}) { /* ... */}
-
-function Debate({topic}) {
-  return <>
-    Pro: <Debater topic={topic} position='pro' />, Con: <Debater topic={topic} position='con' />
-  <>
-}
-```
-
-In this example, both `Debater` AI calls will stream into your final result in parallel. Imagine you stream the results like so:
-
-```tsx
-const result = AI.createRenderContext().render(<Debate topic="are beans good" />);
-let frameCount = 0;
-for await (const frame of result) {
-  console.log('got frame', frameCount++, frame);
-}
-```
-
-Your stream of results would look like:
-
-```
-got frame 0 Pro: I think, Con: We should
-got frame 1 Pro: I think beans are, Con: We should never eat
-got frame 2 Pro: I think beans are great, Con: We should never eat beans
-```
-
-You can see both the Pro and Con stream parts arrive in parallel.
-
-#### Append-Only Streaming
-
-Sometimes, you want your result stream to be an append-only stream. Let's take the debate example from above and render it in append-only mode:
-
-```tsx
-const result = AI.createRenderContext().render(
-  <Debate topic="are beans good" />,
-  // highlight-next-line
-  { appendOnly: true }
-);
-let chunkCount = 0;
-for await (const chunk of result) {
-  console.log('got chunk', chunkCount++, chunk);
-}
-```
-
-This produces the following chunks:
-
-```
-got chunk 0 Pro: I think
-got chunk 1 beans are
-got chunk 2 great
-got chunk 3 , Con: We should never eat beans
-```
-
-In this output, we see that each chunk is a delta, so you'll need to `+=` them yourself to create the final output.
-
-With tree streaming, Pro and Con were able to stream in parallel. However, with append-only streaming, only one element can stream at a time. (The others are still processing in the background, so you're not losing end-to-end performance.)
-
-#### Constraints
-
-If you use a `renderResult` as a generator, you can only iterate over it once:
-
-```tsx
-const result = AI.createRenderContext().render(<Debate topic="are beans good" />);
-for await (const frame of result) {
-  console.log(frame);
-}
-// highlight-start
-// Error! `result` has already been iterated over.
-for await (const frame of result) {
-  console.log(frame);
-}
-// highlight-end
-```
-
-You also can't `await` it like a promise after you've iterated over it:
-
-```tsx
-const result = AI.createRenderContext().render(<Debate topic="are beans good" />);
-for await (const frame of result) {
-  console.log(frame);
-}
-// highlight-start
-// Error! `result` has already been iterated over.
-console.log(await result);
-// highlight-end
-```
-
 ### Partial Rendering
 
 :::warning Advanced
-This is an advanced case that most people won't need.
+This is an advanced case that most applications won't need.
 :::
 
 By default, `render` will render the entire tree down to a string. However, you can use partial rendering if you'd like to only render some of it.
