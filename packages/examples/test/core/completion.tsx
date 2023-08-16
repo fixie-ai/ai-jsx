@@ -42,9 +42,8 @@ import { Anthropic } from 'ai-jsx/lib/anthropic';
 import { CompletionCreateParams } from '@anthropic-ai/sdk/resources/completions';
 import { Jsonifiable } from 'type-fest';
 
-import { trace } from '@opentelemetry/api';
+import { NodeSDK } from '@opentelemetry/sdk-node';
 import { SimpleSpanProcessor, InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import _ from 'lodash';
 
 afterEach(() => {
@@ -53,9 +52,14 @@ afterEach(() => {
 
 describe('OpenTelemetry', () => {
   const memoryExporter = new InMemorySpanExporter();
-  const tracerProvider = new NodeTracerProvider();
-  tracerProvider.addSpanProcessor(new SimpleSpanProcessor(memoryExporter));
-  trace.setGlobalTracerProvider(tracerProvider);
+  const sdk = new NodeSDK({
+    spanProcessor: new SimpleSpanProcessor(memoryExporter) as any,
+  });
+  sdk.start();
+
+  afterAll(async () => {
+    await sdk.shutdown();
+  });
 
   beforeEach(() => {
     memoryExporter.reset();
@@ -81,24 +85,6 @@ describe('OpenTelemetry', () => {
           "ai.jsx.result": "[<UserMessage @memoizedId=1>
         {"hello"}
       </UserMessage>]",
-          "ai.jsx.tag": "UserMessage",
-          "ai.jsx.tree": "<UserMessage @memoizedId=1>
-        {"hello"}
-      </UserMessage>",
-        },
-        {
-          "ai.jsx.result": "[<UserMessage @memoizedId=1>
-        {"hello"}
-      </UserMessage>]",
-          "ai.jsx.tag": "UserMessage",
-          "ai.jsx.tree": "<UserMessage @memoizedId=1>
-        {"hello"}
-      </UserMessage>",
-        },
-        {
-          "ai.jsx.result": "[<UserMessage @memoizedId=1>
-        {"hello"}
-      </UserMessage>]",
           "ai.jsx.tag": "ShrinkConversation",
           "ai.jsx.tree": "<ShrinkConversation cost={tokenCountForConversationMessage} budget={4093}>
         <UserMessage>
@@ -107,36 +93,24 @@ describe('OpenTelemetry', () => {
       </ShrinkConversation>",
         },
         {
-          "ai.jsx.result": "hello",
-          "ai.jsx.result.tokenCount": 1,
-          "ai.jsx.tag": "UserMessage",
-          "ai.jsx.tree": "<UserMessage @memoizedId=1>
-        {"hello"}
-      </UserMessage>",
-        },
-        {
           "ai.jsx.result": "opentel response from OpenAI",
-          "ai.jsx.result.tokenCount": 7,
           "ai.jsx.tag": "Stream",
           "ai.jsx.tree": ""▮"",
         },
         {
           "ai.jsx.result": "opentel response from OpenAI",
-          "ai.jsx.result.tokenCount": 7,
-          "ai.jsx.tag": "AssistantMessage",
-          "ai.jsx.tree": "<AssistantMessage>
-        {"▮"}
-      </AssistantMessage>",
-        },
-        {
-          "ai.jsx.result": "opentel response from OpenAI",
-          "ai.jsx.result.tokenCount": 7,
           "ai.jsx.tag": "Stream",
           "ai.jsx.tree": ""opentel response from OpenAI"",
         },
         {
           "ai.jsx.result": "opentel response from OpenAI",
-          "ai.jsx.result.tokenCount": 7,
+          "ai.jsx.tag": "Stream",
+          "ai.jsx.tree": ""opentel response from OpenAI"",
+        },
+        {
+          "ai.jsx.completion": "[{"element":"<AssistantMessage @memoizedId=2>\\n  {\\"opentel response from OpenAI\\"}\\n</AssistantMessage>","cost":10}]",
+          "ai.jsx.prompt": "[{"element":"<UserMessage @memoizedId=1>\\n  {\\"hello\\"}\\n</UserMessage>","cost":4}]",
+          "ai.jsx.result": "opentel response from OpenAI",
           "ai.jsx.tag": "OpenAIChatModel",
           "ai.jsx.tree": "<OpenAIChatModel model="gpt-3.5-turbo">
         <UserMessage>
@@ -146,17 +120,6 @@ describe('OpenTelemetry', () => {
         },
         {
           "ai.jsx.result": "opentel response from OpenAI",
-          "ai.jsx.result.tokenCount": 7,
-          "ai.jsx.tag": "AutomaticChatModel",
-          "ai.jsx.tree": "<AutomaticChatModel>
-        <UserMessage>
-          {"hello"}
-        </UserMessage>
-      </AutomaticChatModel>",
-        },
-        {
-          "ai.jsx.result": "opentel response from OpenAI",
-          "ai.jsx.result.tokenCount": 7,
           "ai.jsx.tag": "ChatCompletion",
           "ai.jsx.tree": "<ChatCompletion>
         <UserMessage>
