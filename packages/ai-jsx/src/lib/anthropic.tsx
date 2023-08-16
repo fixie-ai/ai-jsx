@@ -101,7 +101,7 @@ export async function* AnthropicChatModel(
   const messages = await Promise.all(
     // TODO: Support token budget/conversation shrinking
     (
-      await renderToConversation(props.children, render)
+      await renderToConversation(props.children, render, logger, 'prompt')
     )
       .flatMap<Exclude<ConversationMessage, { type: 'system' }>>((message) => {
         if (message.type === 'system') {
@@ -195,12 +195,14 @@ export async function* AnthropicChatModel(
     logger.debug({ completion: accumulatedContent }, 'Anthropic completion finished');
     return AI.AppendOnlyStream;
   };
-  const assistantStream = memo(
-    <Stream {...debugRepresentation(() => `${accumulatedContent}${complete ? '' : '▮'}`)} />
+  const assistantMessage = memo(
+    <AssistantMessage>
+      {<Stream {...debugRepresentation(() => `${accumulatedContent}${complete ? '' : '▮'}`)} />}
+    </AssistantMessage>
   );
-  yield <AssistantMessage>{assistantStream}</AssistantMessage>;
+  yield assistantMessage;
 
   // Flush the stream to ensure that this element completes rendering only after the stream has completed.
-  await render(assistantStream);
+  await renderToConversation(assistantMessage, render, logger, 'completion');
   return AI.AppendOnlyStream;
 }

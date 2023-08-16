@@ -204,6 +204,8 @@ function toConversationMessages(partialRendering: AI.PartiallyRendered[]): Conve
 export async function renderToConversation(
   conversation: AI.Node,
   render: AI.ComponentContext['render'],
+  logger?: AI.ComponentContext['logger'],
+  logType?: 'prompt' | 'completion',
   cost?: (message: ConversationMessage, render: AI.ComponentContext['render']) => Promise<number>,
   budget?: number
 ) {
@@ -215,7 +217,21 @@ export async function renderToConversation(
     ) : (
       conversation
     );
-  return toConversationMessages(await render(conversationToUse, { stop: isConversationalComponent }));
+  const messages = toConversationMessages(await render(conversationToUse, { stop: isConversationalComponent }));
+
+  if (logger && logType) {
+    const loggableMessages = await Promise.all(
+      messages.map(async (m) => ({
+        element: debug(m.element, true),
+        ...(cost && { cost: await cost(m, render) }),
+      }))
+    );
+
+    logger.setAttribute(`ai.jsx.${logType}`, JSON.stringify(loggableMessages));
+    logger.info({ [logType]: { messages: loggableMessages } }, `Got ${logType} conversation`);
+  }
+
+  return messages;
 }
 
 /**
@@ -258,14 +274,14 @@ export async function* Converse(
     reply: (messages: ConversationMessage[], fullConversation: ConversationMessage[]) => AI.Renderable;
     children: AI.Node;
   },
-  { render, memo }: AI.ComponentContext
+  { render, memo, logger }: AI.ComponentContext
 ): AI.RenderableStream {
   yield AI.AppendOnlyStream;
 
   const fullConversation = [] as ConversationMessage[];
   let next = memo(children);
   while (true) {
-    const newMessages = await renderToConversation(next, render);
+    const newMessages = await renderToConversation(next, render, logger);
     if (newMessages.length === 0) {
       break;
     }

@@ -6,6 +6,7 @@
 import _ from 'lodash';
 import pino from 'pino';
 import { Element } from './node.js';
+import opentelemetry from '@opentelemetry/api';
 import { logs, type Logger as OpenTelemetryLoggerInterface } from '@opentelemetry/api-logs';
 import { getEnvVar } from '../lib/util.js';
 
@@ -14,7 +15,9 @@ export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
 /**
  * A Logger represents an object that can log messages.
  */
-export type Logger = Record<LogLevel, (obj: object | string, msg?: string) => void>;
+export type Logger = Record<LogLevel, (obj: object | string, msg?: string) => void> & {
+  setAttribute: (key: string, value: string) => void;
+};
 
 /**
  * An abstract class that represents an implementation of {@link Logger}.
@@ -64,6 +67,11 @@ export abstract class LogImplementation {
       `Rendering element ${elementTag} failed with exception: ${exception}`
     );
   }
+
+  /**
+   * Sets an attribute to be associated with the rendering of a particular element.
+   */
+  setAttribute(_element: Element<any>, _renderId: string, _key: string, _value: string) {}
 }
 
 /**
@@ -129,6 +137,14 @@ export class OpenTelemetryLogger extends LogImplementation {
       },
     });
   }
+
+  setAttribute(element: Element<any>, renderId: string, key: string, value: string): void {
+    // Set the attribute on the current span.
+    const span = opentelemetry.trace.getActiveSpan();
+    if (span) {
+      span.setAttribute(key, value);
+    }
+  }
 }
 
 /**
@@ -152,6 +168,10 @@ export class CombinedLogger extends LogImplementation {
   logException(element: Element<object>, renderId: string, exception: unknown): void {
     this.loggers.forEach((l) => l.logException(element, renderId, exception));
   }
+
+  setAttribute(element: Element<any>, renderId: string, key: string, value: string): void {
+    this.loggers.forEach((l) => l.setAttribute(element, renderId, key, value));
+  }
 }
 
 /**
@@ -170,4 +190,5 @@ export class BoundLogger implements Logger {
   info = (obj: object | string, msg?: string) => this.impl.log('info', this.element, this.renderId, obj, msg);
   debug = (obj: object | string, msg?: string) => this.impl.log('debug', this.element, this.renderId, obj, msg);
   trace = (obj: object | string, msg?: string) => this.impl.log('trace', this.element, this.renderId, obj, msg);
+  setAttribute = (key: string, value: string) => this.impl.setAttribute(this.element, this.renderId, key, value);
 }

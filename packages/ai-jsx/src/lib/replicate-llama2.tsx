@@ -78,7 +78,7 @@ export async function* Llama2ChatModel(
   yield AI.AppendOnlyStream;
 
   // TODO: Support token budget/conversation shrinking
-  const messageElements = await renderToConversation(props.children, render);
+  const messageElements = await renderToConversation(props.children, render, logger, 'prompt');
   const systemMessage = messageElements.filter((e) => e.type == 'system');
   const userMessages = messageElements.filter((e) => e.type == 'user');
   if (systemMessage.length > 1) {
@@ -126,7 +126,7 @@ export async function* Llama2ChatModel(
     prompt: await render(userMessages[0].element),
     system_prompt: systemMessage.length ? await render(systemMessage[0].element) : undefined,
   };
-  yield (
+  const assistantMessage = (
     <AssistantMessage>
       {await fetchLlama2(
         'replicate/llama70b-v2-chat:2d19859030ff705a87c746f7e96eea03aefb71f166725aee39692f1476566d48',
@@ -135,6 +135,10 @@ export async function* Llama2ChatModel(
       )}
     </AssistantMessage>
   );
+  yield assistantMessage;
+
+  // Render it so that the conversation is logged.
+  await renderToConversation(assistantMessage, render, logger, 'completion');
   return AI.AppendOnlyStream;
 }
 
