@@ -1,0 +1,16 @@
+.root {
+  font-size: var(--font-size-big-2);
+  font-weight: var(--ifm-font-weight-normal);
+  color: var(--palette-pale-blue);
+  margin: 0;
+}
+
+.center {
+  text-align: center;
+}
+
+@media (max-width: 996px) {
+  .root.size-medium {
+    font-size: var(--font-size-large);
+  }
+}

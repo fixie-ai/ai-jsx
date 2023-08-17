@@ -1,0 +1,40 @@
+.root {
+  padding: 2rem;
+  border-radius: 16px;
+  background: var(--theme-attention-card-bg-color);
+}
+
+.title {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-size: var(--font-size-big-1);
+  font-weight: var(--ifm-font-weight-bold);
+}
+
+.description {
+  font-size: var(--font-size-large);
+}
+
+@media screen and (min-width: 880px) {
+  .root {
+    padding: 2rem;
+  }
+
+  .title {
+    font-size: 2.2rem;
+  }
+}
+
+.content {
+  display: flex;
+  flex: 1;
+}
+
+.skinPrimary {
+  background: var(--palette-pink);
+}
+
+.skinPrimary .title,
+.skinPrimary .description {
+  color: var(--theme-attention-card-text-color);
+}

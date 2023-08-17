@@ -1,0 +1,19 @@
+.cards {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.card__link {
+  text-transform: uppercase;
+  font-size: var(--font-size-normal);
+}
+
+.card__link:not(:last-child) {
+  margin-right: 1.5rem;
+}
+
+@media screen and (min-width: 768px) {
+  .cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}

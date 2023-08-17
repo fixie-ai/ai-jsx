@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
@@ -11,7 +13,7 @@ const config = {
   favicon: 'img/foxie.png',
 
   // Set the production url of your site here
-  url: 'https://docs.ai-jsx.com/',
+  url: process.env.DOCS_URL,
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
@@ -84,9 +86,15 @@ const config = {
           alt: 'AI.JSX Logo',
           src: 'img/foxie.png',
           srcDark: 'img/foxie.png',
-          href: 'https://docs.ai-jsx.com/',
+          href: process.env.DOCS_URL,
         },
         items: [
+          {
+            type: 'docSidebar',
+            sidebarId: 'tutorialSidebar',
+            position: 'left',
+            label: 'Tutorials',
+          },
           {
             type: 'docSidebar',
             sidebarId: 'tutorialSidebar',
@@ -94,12 +102,12 @@ const config = {
             label: 'Docs',
           },
           {
-            href: 'https://github.com/fixie-ai/ai-jsx',
+            href: process.env.GITHUB_URL,
             label: 'GitHub',
             position: 'right',
           },
           {
-            href: 'https://discord.gg/MsKAeKF8kU',
+            href: process.env.DISCORD_URL,
             label: 'Discord',
             position: 'right',
           },
@@ -113,15 +121,15 @@ const config = {
             items: [
               {
                 label: 'Discord',
-                href: 'https://discord.gg/MsKAeKF8kU',
+                href: process.env.DISCORD_URL,
               },
               {
                 label: 'Twitter',
-                href: 'https://twitter.com/fixieai?lang=en',
+                href: process.env.TWITTER_URL,
               },
               {
                 label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/ai-jsx',
+                href: process.env.STACK_OVERFLOW_URL,
               },
             ],
           },
@@ -130,12 +138,12 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/fixie-ai/ai-jsx/',
+                href: process.env.GITHUB_URL,
               },
             ],
           },
         ],
-        copyright: `Copyright © 2023 Fixie.ai`,
+        copyright: process.env.COPYRIGHT_FIXIE,
       },
       prism: {
         theme: lightCodeTheme,
@@ -172,6 +180,11 @@ const config = {
 
   markdown: {
     mermaid: true,
+  },
+
+  customFields: {
+    gitHubUrl: process.env.GITHUB_URL,
+    discordUrl: process.env.DISCORD_URL,
   },
 };
 

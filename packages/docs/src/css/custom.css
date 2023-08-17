@@ -35,3 +35,622 @@
 :root {
   --ifm-font-family-base: 'Lato', sans-serif;
 }
+
+/**********************************************************/
+/******                BEGIN CUSTOM CSS            ********/
+/**********************************************************/
+
+/*     Candidates for removal b/c they override us       */
+/* --ifm-code-font-size: var(--font-size-small); */
+/* --ifm-color-primary: var(--palette-pink);
+  --ifm-color-primary-dark: #c93261;
+  --ifm-color-primary-darker: var(--palette-pink-darker);
+  --ifm-color-primary-darkest: #9c274b;
+  --ifm-color-primary-light: #d75c82;
+  --ifm-color-primary-lighter: #d9688b;
+  --ifm-color-primary-lightest: #e289a4; */
+/* --ifm-font-family-base: var(--font-family-base); */
+/* --ifm-link-color: var(--palette-turquoise);  */
+
+:root {
+  --palette-charade: #21222c;
+  --palette-gray: #32343e;
+  --palette-green: #66bb6a;
+  --palette-midnight: #141725;
+  --palette-pale-blue: #b1b5d3;
+  --palette-pink: #d14671;
+  --palette-pink-darker: #be2f5b;
+  --palette-rock: rgb(var(--palette-rock-raw));
+  --palette-rock-raw: 38, 40, 51;
+  --palette-sky: #81d3f9;
+  --palette-turquoise: #0cc0df;
+  --palette-black-10: rgba(0, 0, 0, 0.1);
+  --palette-white: #fff;
+  --palette-white-03: rgba(255, 255, 255, 0.03);
+  --palette-white-05: rgba(255, 255, 255, 0.05);
+  --palette-white-10: rgba(255, 255, 255, 0.1);
+  --palette-white-20: rgba(255, 255, 255, 0.2);
+  --palette-white-30: rgba(255, 255, 255, 0.3);
+  --palette-white-40: rgba(255, 255, 255, 0.4);
+  --palette-white-60: rgba(255, 255, 255, 0.6);
+  --palette-white-darker: #d9d9d9;
+  --palette-yellow: #ffd54f;
+
+  --image-shadow: 0 15px 61px 5px rgba(20, 23, 37, 0.94);
+
+  --transition-bezier: cubic-bezier(0.17, 0.67, 0.83, 0.67);
+  --transition-fastest: 100ms;
+
+  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Ubuntu, Cantarell, Helvetica, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Android Emoji', EmojiSymbols, 'EmojiOne Mozilla', 'Twemoji Mozilla',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+
+  --font-size-small: 15px;
+  --font-size-normal: 16px;
+  --font-size-large: 17px;
+  --font-size-big-1: 22px;
+  --font-size-big-2: 24px;
+  --font-size-big-3: 32px;
+  --font-size-big-4: 46px;
+  --font-size-big-5: 64px;
+
+  --ifm-background-color: var(--palette-charade);
+  --ifm-blockquote-color: var(--palette-pale-blue);
+  --ifm-code-background: var(--palette-gray);
+  --ifm-code-color: var(--palette-white);
+
+  --ifm-color-emphasis-300: var(--palette-pale-blue);
+
+  --ifm-color-info: var(--palette-sky);
+  --ifm-color-success: var(--palette-green);
+  --ifm-color-warning: var(--palette-yellow);
+  --ifm-dropdown-background-color: var(--palette-rock);
+  --ifm-font-color-base: var(--palette-white);
+
+  --ifm-font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --ifm-font-size-base: var(--font-size-small);
+  --ifm-global-border-radius: 8px;
+  --ifm-h1-font-size: var(--font-size-big-4);
+  --ifm-h2-font-size: var(--font-size-big-2);
+  --ifm-h3-font-size: var(--font-size-big-1);
+  --ifm-h4-font-size: var(--font-size-large);
+  --ifm-heading-margin-bottom: 1.5rem;
+  --ifm-hr-border-color: var(--palette-white-20);
+
+  --ifm-list-paragraph-margin: 0.5rem;
+  --ifm-menu-link-sublist-icon: url('/img/infima/arrow.svg');
+  --ifm-navbar-background-color: var(--palette-charade);
+  --ifm-navbar-height: 80px;
+  --ifm-navbar-item-padding-horizontal: 20px;
+  --ifm-navbar-shadow: 0 1px 0 0 var(--palette-white-10);
+  --ifm-pre-background: var(--palette-midnight);
+  --ifm-table-cell-padding: 0.15rem 1rem;
+  --ifm-toc-border-color: var(--palette-white-10);
+  --ifm-heading-line-height: 1.5;
+
+  --theme-text-color: var(--ifm-font-color-base);
+
+  --theme-navbar-inner-padding: 2rem;
+  --theme-navbar-background-color: rgba(33, 34, 44, 0.8);
+
+  --theme-input-bg-color: #44475a;
+  --theme-input-text-color: #b1b5d3;
+
+  --theme-section-odd-bg-color: var(--palette-rock);
+
+  --theme-card-text-color: var(--palette-white);
+  --theme-card-title-color: var(--palette-white);
+  --theme-card-bg-color: var(--palette-rock);
+  --theme-card-bg-color-hover: rgb(47, 49, 63);
+  --theme-card-border-color: #51535f;
+  --theme-card-border-radius: 8px;
+  --theme-card-secondary-bg-color: #21222c;
+  --theme-card-illustration-bg-color: var(--palette-midnight);
+
+  --theme-attention-card-bg-color: var(--palette-gray);
+  --theme-attention-card-text-color: var(--palette-white);
+
+  --theme-team-article-title-color: var(--palette-white);
+  --theme-section-title-color: var(--palette-white);
+  --theme-contribute-text-color: var(--palette-white);
+
+  --theme-button-primary-background-color: var(--palette-pink);
+  --theme-button-primary-text-color: var(--palette-white);
+  --theme-button-primary-hover-background-color: var(--palette-pink-darker);
+
+  --theme-button-secondary-background-color: var(--palette-white);
+  --theme-button-secondary-text-color: var(--palette-charade);
+  --theme-button-secondary-hover-background-color: var(--palette-white-darker);
+
+  --theme-button-tertiary-background-color: var(--palette-white-10);
+  --theme-button-tertiary-text-color: var(--palette-white);
+  --theme-button-tertiary-hover-background-color: var(--palette-white-20);
+
+  --theme-tutorial-post-card-border: 1px solid transparent;
+  --theme-tutorial-post-card-hover-border: 1px solid var(--palette-white);
+
+  --theme-screenshot-background-color: var(--palette-charade);
+
+  --z-index-navbar: 100;
+  --z-index-dialog: 101;
+}
+
+html[data-theme='dark'] {
+  --ifm-background-color: var(--palette-charade);
+  --ifm-color-emphasis-300: var(--palette-pale-blue);
+  --ifm-menu-link-sublist-icon: url('/img/infima/arrow.svg');
+}
+
+html[data-theme='light'] {
+  --palette-pale-blue: #52556b;
+  --palette-rock: #262833;
+  --palette-gray: #4b4e5d;
+
+  --palette-dark-03: rgba(0, 0, 0, 0.03);
+  --palette-dark-05: rgba(0, 0, 0, 0.05);
+  --palette-dark-10: rgba(0, 0, 0, 0.1);
+  --palette-dark-20: rgba(0, 0, 0, 0.2);
+  --palette-dark-30: rgba(0, 0, 0, 0.3);
+  --palette-dark-40: rgba(0, 0, 0, 0.4);
+  --palette-dark-40: rgba(0, 0, 0, 0.4);
+  --palette-dark-80: rgba(0, 0, 0, 0.8);
+
+  --palette-white-darker: #d9d9d9;
+  --palette-yellow: #ffd54f;
+
+  --ifm-background-color: white;
+  --ifm-font-color-base: #333;
+  --ifm-navbar-background-color: white;
+  --ifm-dropdown-background-color: var(--palette-white);
+  --ifm-navbar-shadow: 0 1px 0 0 var(--palette-dark-10);
+  --ifm-toc-border-color: var(--palette-dark-10);
+  --ifm-link-color: #0aa6c2;
+  --ifm-code-background: #dadada;
+  --ifm-code-color: var(--palette-charade);
+
+  --docsearch-footer-background: var(--ifm-background-color);
+  --docsearch-key-gradient: linear-gradient(-26.5deg, var(--palette-gray) 0%, var(--palette-rock) 100%);
+  --docsearch-key-shadow: 0 3px 3px var(--palette-dark-30);
+
+  --image-shadow: 0 10px 20px 5px var(--palette-dark-20);
+
+  --theme-text-color: var(--ifm-font-color-base);
+  --theme-navbar-background-color: rgba(250, 250, 250, 0.8);
+
+  --theme-section-odd-bg-color: #f0f1f5;
+  --theme-input-bg-color: #f0f1f5;
+  --theme-input-text-color: #555b88;
+
+  --theme-card-bg-color: #f0f1f5;
+  --theme-card-bg-color-hover: rgb(225, 227, 235);
+  --theme-card-border-color: #b7b9c3;
+  --theme-card-text-color: #21222c;
+  --theme-card-title-color: #21222c;
+
+  --theme-card-secondary-bg-color: #dde0e9;
+  --theme-card-secondary-text-color: #21222c;
+
+  --theme-attention-card-bg-color: #f0f1f5;
+  --theme-card-illustration-bg-color: transparent;
+  --theme-team-article-title-color: var(--ifm-heading-color);
+  --theme-section-title-color: var(--palette-dark-80);
+  --theme-contribute-text-color: var(--palette-dark-80);
+
+  --theme-button-primary-background-color: var(--palette-pink);
+  --theme-button-primary-text-color: var(--palette-white);
+  --theme-button-primary-hover-background-color: var(--palette-pink-darker);
+
+  --theme-button-secondary-background-color: var(--palette-dark-10);
+  --theme-button-secondary-text-color: var(--palette-charade);
+  --theme-button-secondary-hover-background-color: var(--palette-dark-30);
+
+  --theme-button-tertiary-background-color: var(--palette-dark-30);
+  --theme-button-tertiary-text-color: var(--palette-dark-80);
+  --theme-button-tertiary-hover-background-color: var(--palette-dark-40);
+
+  --theme-tutorial-post-card-border: 1px solid transparent;
+  --theme-tutorial-post-card-hover-border: 1px solid var(--palette-dark-10);
+
+  --theme-screenshot-background-color: white;
+  --ifm-hr-border-color: var(--palette-black-10);
+}
+
+html[data-theme='dark'] .DocSearch {
+  --docsearch-text-color: var(--ifm-font-color-base);
+  --docsearch-muted-color: var(--ifm-color-secondary-darkest);
+  --docsearch-container-background: rgba(0, 0, 0, 0.5);
+  /* Modal */
+  --docsearch-modal-background: var(--ifm-background-color);
+  /* Search box */
+  --docsearch-searchbox-background: var(--palette-white-10);
+  --docsearch-searchbox-focus-background: var(--palette-midnight);
+  /* Hit */
+  --docsearch-hit-color: var(--ifm-font-color-base);
+  --docsearch-hit-active-color: var(--ifm-color-white);
+  --docsearch-hit-background: var(--palette-rock);
+  /* Footer */
+  --docsearch-footer-background: var(--ifm-background-color);
+  --docsearch-key-gradient: linear-gradient(-26.5deg, var(--palette-gray) 0%, var(--palette-rock) 100%);
+}
+
+/**
+ *
+ * Override Docusaurus/Infima variables
+ *
+ **/
+
+nav {
+  --ifm-font-size-base: var(--font-size-normal);
+  --ifm-link-color: var(--palette-pink);
+}
+
+.markdown {
+  --ifm-h2-vertical-rhythm-top: 3;
+  --ifm-h3-vertical-rhythm-top: 2;
+  --ifm-heading-vertical-rhythm-top: 2; /* h4 */
+  --ifm-heading-vertical-rhythm-bottom: 0.4;
+  --ifm-paragraph-margin-bottom: 0.5rem;
+  --ifm-table-background: var(--palette-white-03);
+  --ifm-table-border-color: var(--palette-charade);
+  --ifm-table-border-width: 1px;
+  --ifm-table-head-background: var(--palette-gray);
+  --ifm-table-head-color: var(--palette-white);
+  --ifm-table-stripe-background: var(--palette-white-03);
+}
+
+html[data-theme='light'] .markdown {
+  --ifm-table-head-background: #f6f8fa;
+  --ifm-table-head-color: #24292f;
+  --ifm-table-border-color: #d0d7de;
+  --ifm-table-stripe-background: #f6f8fa;
+}
+
+/* syntax railroad charts in documentation */
+html[data-theme='light'] .markdown img[src*='data:image/svg+xml'][alt*='chart'],
+html[data-theme='light'] .markdown img[src$='.svg'][alt*='chart'] {
+  filter: invert(1) hue-rotate(200deg);
+}
+
+.alert,
+.admonition.admonition-note {
+  border: 0;
+  --ifm-alert-color: #dadada;
+  --ra-admonition-icon-color: #dadada;
+  --ifm-heading-color: #dadada;
+}
+
+html[data-theme='light'] .alert,
+html[data-theme='light'] .admonition.admonition-note {
+  --ifm-alert-color: #000;
+  --ra-admonition-icon-color: #000;
+  --ifm-heading-color: #000;
+}
+
+.admonition.admonition-note {
+  background: #383a49;
+}
+html[data-theme='light'] .admonition.admonition-note {
+  background: #e2e5fc;
+}
+
+.admonition.alert--info,
+.admonition.alert--success {
+  background: #383a49;
+}
+html[data-theme='light'] .admonition.alert--info,
+html[data-theme='light'] .admonition.alert--success {
+  background: #e2e5fc;
+}
+
+.admonition.alert--danger,
+.admonition.alert--warning {
+  background: #302323;
+}
+html[data-theme='light'] .admonition.alert--danger,
+html[data-theme='light'] .admonition.alert--warning {
+  background: #faecaf;
+}
+
+.alert--secondary {
+  --ifm-alert-background-color: var(--palette-white-darker);
+  --ifm-alert-border-color: var(--palette-white-darker);
+}
+
+.pagination-nav {
+  --ifm-color-content-secondary: var(--palette-white);
+  --ifm-link-color: var(--palette-white);
+  --ifm-link-hover-color: var(--palette-white);
+  --ifm-pagination-nav-color-hover: var(--palette-white);
+  --ifm-pagination-nav-border-radius: var(--ifm-global-border-radius);
+  --ifm-color-emphasis-300: transparent;
+}
+
+/**
+ *
+ * Globals
+ *
+ **/
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  transition: var(--ifm-transition-fast) ease color;
+}
+
+#__docusaurus {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/**
+ *
+ * Utils
+ *
+ **/
+
+.font-size--large {
+  font-size: var(--font-size-large);
+}
+
+/**
+ *
+ * Blog
+ *
+ **/
+
+/* Change blog title color */
+.blog-wrapper header h2 a {
+  --ifm-link-color: var(--palette-white-darker);
+  --ifm-link-hover-color: var(--palette-white-darker);
+}
+
+html[data-theme='light'] .blog-wrapper header h2 a {
+  color: var(--ifm-font-color-base);
+}
+
+/**
+ *
+ * Careers
+ *
+ **/
+
+.career {
+  align-self: center;
+  box-sizing: content-box;
+}
+
+/**
+ *
+ * Supplemental docs (Privacy notice, TOS)
+ *
+ **/
+
+.supplemental {
+  align-self: center;
+  box-sizing: content-box;
+}
+
+/**
+ *
+ * Pagination
+ *
+ **/
+
+.pagination-nav__item--next .pagination-nav__link {
+  background: var(--palette-pink);
+}
+
+.pagination-nav__link {
+  background: var(--palette-white-05);
+}
+
+html[data-theme='light'] .pagination-nav__item--next .pagination-nav__link {
+  background: var(--palette-pink);
+  color: var(--palette-white);
+}
+
+html[data-theme='light'] .pagination-nav__item--next .pagination-nav__sublabel {
+  color: var(--palette-white);
+}
+
+html[data-theme='light'] .pagination-nav__link {
+  background: var(--palette-dark-10);
+  color: var(--palette-dark-80);
+}
+
+html[data-theme='light'] .pagination-nav__sublabel {
+  color: var(--palette-dark-80);
+}
+
+/**
+ *
+ * Hide the "See all ## results" link at the bottom of the search widget.
+ * See https://github.com/facebook/docusaurus/issues/5084 for context.
+ *
+ **/
+.DocSearch-Dropdown-Container .DocSearch-HitsFooter {
+  display: none;
+}
+.DocSearch-Dropdown-Container {
+  padding-bottom: var(--docsearch-spacing);
+}
+
+/**
+ *
+ * Light theme
+ *
+ **/
+html[data-theme='light'] .themedDocusaurus [fill='#FFFF50'] {
+  fill: greenyellow;
+}
+
+html[data-theme='light'] .react-toggle-track {
+  background-color: #ebedf0;
+}
+
+/* animation style for react-transition-group elements */
+.transition-node-enter {
+  opacity: 0;
+}
+.transition-node-enter-active {
+  opacity: 1;
+  transition: opacity 200ms;
+}
+.transition-node-exit {
+  opacity: 1;
+}
+.transition-node-exit-active {
+  opacity: 0;
+  transition: opacity 200ms;
+}
+
+.pink-table {
+  --color-odd: #943d6b;
+  --color-even: #446890;
+  --ifm-table-background: var(--color-odd);
+  --ifm-table-stripe-background: var(--color-odd);
+  --ifm-table-head-background: var(--color-odd);
+}
+
+.blue-table {
+  --color-odd: #943d6b;
+  --color-even: #446890;
+
+  --ifm-table-background: var(--color-even);
+  --ifm-table-stripe-background: var(--color-even);
+  --ifm-table-head-background: var(--color-even);
+}
+
+.table-alternate {
+  --color-odd: #943d6b;
+  --color-even: #446890;
+}
+
+html[data-theme='light'] .pink-table,
+html[data-theme='light'] .blue-table,
+html[data-theme='light'] .table-alternate {
+  --color-odd: #e6a9c9;
+  --color-even: #80b2ea;
+}
+
+.table-alternate th:nth-child(odd),
+.table-alternate td:nth-child(odd) {
+  background: var(--color-odd);
+}
+
+.table-alternate th:nth-child(even),
+.table-alternate td:nth-child(even) {
+  background: var(--color-even);
+}
+
+/* Hubspot-specific styling */
+
+#enterprise-contact-us .hs-form .hs-input {
+  color: var(--theme-input-text-color);
+  background: var(--theme-input-bg-color);
+  font-size: var(--font-size-small);
+  padding: 0.5rem;
+  border-radius: calc(var(--ifm-global-border-radius) / 2);
+  border: 2px solid transparent;
+}
+
+.hs-input:focus {
+  outline: none;
+  border-color: var(--palette-white);
+}
+
+.hs-input:placeholder {
+  color: var(--palette-pale-blue);
+  font-size: var(--font-size-normal);
+  font-weight: var(--ifm-font-weight-bold);
+}
+
+.hs-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: var(--font-size-large);
+}
+
+.hs-form .hs-error-msgs,
+.hs-form-required {
+  color: #ff5555;
+}
+
+.hs-form .hs-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 55px;
+  padding: 0 2rem;
+  border: none;
+  border-radius: calc(var(--ifm-global-border-radius) / 2);
+  font-weight: var(--ifm-font-weight-bold);
+  font-size: var(--font-size-normal);
+  transition: background-color var(--transition-fastest) var(--transition-bezier);
+}
+
+.hs-form .hs-button.primary {
+  background-color: var(--theme-button-primary-background-color);
+  color: var(--theme-button-primary-text-color);
+}
+
+#enterprise-contact-us form {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  width: 100%;
+}
+
+@media screen and (min-width: 600px) {
+  #enterprise-contact-us form {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      'firstname lastname'
+      'email email'
+      'company jobtitle'
+      'message message'
+      '. .';
+  }
+
+  #enterprise-contact-us .hs-firstname {
+    grid-area: firstname;
+  }
+
+  #enterprise-contact-us .hs-lastname {
+    grid-area: lastname;
+  }
+
+  #enterprise-contact-us .hs-email {
+    grid-area: email;
+  }
+
+  #enterprise-contact-us .hs-company {
+    grid-area: company;
+  }
+
+  #enterprise-contact-us .hs-jobtitle {
+    grid-area: jobtitle;
+  }
+
+  #enterprise-contact-us .hs-message {
+    grid-area: message;
+  }
+
+  #enterprise-contact-us .hs-message textarea {
+    min-height: 150px;
+  }
+}
+
+#enterprise-contact-us .hs-submit {
+  grid-column: 1 / -1;
+}
+
+#enterprise-contact-us .hs-submit .actions {
+  display: flex;
+  justify-content: center;
+}

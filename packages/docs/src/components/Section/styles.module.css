@@ -1,0 +1,41 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  max-width: var(--ifm-container-width);
+  width: 100%;
+  padding: 2rem 1rem;
+  margin: 0 auto;
+}
+
+@media screen and (min-width: 900px) {
+  .root {
+    padding: 4.5rem 2rem;
+  }
+}
+
+.row {
+  flex-direction: row;
+}
+
+.odd {
+  background-color: var(--theme-section-odd-bg-color);
+}
+
+.accent {
+  --ifm-link-hover-color: var(--palette-pink);
+  --ifm-link-color: var(--palette-pink);
+  padding-top: 7rem;
+  padding-bottom: 7.5rem;
+}
+
+.fullWidth {
+  max-width: 100%;
+}
+
+.noGap {
+  padding: 0;
+}
+
+.center {
+  align-items: center;
+}
