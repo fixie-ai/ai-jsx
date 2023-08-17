@@ -1,0 +1,11 @@
+.cards {
+  display: grid;
+  gap: 1.5rem;
+  padding-top: 9rem;
+}
+
+@media screen and (min-width: 768px) {
+  .cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}

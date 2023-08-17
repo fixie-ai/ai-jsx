@@ -11,6 +11,7 @@ import useBaseUrl, { useBaseUrlUtils } from '@docusaurus/useBaseUrl';
 import Layout from '@theme/Layout';
 import { PageHeader } from '../components/PageHeader';
 import { UseCases } from '../components/UseCases';
+import { ExampleScroller } from '../components/ExampleScroller';
 import DeveloperCommunity from '../components/DeveloperCommunity';
 
 export default function Home(): JSX.Element {
@@ -23,6 +24,7 @@ export default function Home(): JSX.Element {
     <Layout title={tagline} description={description}>
       <PageHeader />
       <UseCases />
+      <ExampleScroller />
       <DeveloperCommunity />
     </Layout>
   );
