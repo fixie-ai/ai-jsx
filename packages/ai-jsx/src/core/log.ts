@@ -155,22 +155,16 @@ export class CombinedLogger extends LogImplementation {
     super();
   }
 
-  log(
-    level: LogLevel,
-    element: Element<any>,
-    renderId: string,
-    metadataOrMessage: string | object,
-    message?: string | undefined
-  ): void {
-    this.loggers.forEach((l) => l.log(level, element, renderId, metadataOrMessage, message));
+  log(...args: Parameters<LogImplementation['log']>): void {
+    this.loggers.forEach((l) => l.log(...args));
   }
 
-  logException(element: Element<object>, renderId: string, exception: unknown): void {
-    this.loggers.forEach((l) => l.logException(element, renderId, exception));
+  logException(...args: Parameters<LogImplementation['logException']>): void {
+    this.loggers.forEach((l) => l.logException(...args));
   }
 
-  setAttribute(element: Element<any>, renderId: string, key: string, value: string): void {
-    this.loggers.forEach((l) => l.setAttribute(element, renderId, key, value));
+  setAttribute(...args: Parameters<LogImplementation['setAttribute']>): void {
+    this.loggers.forEach((l) => l.setAttribute(...args));
   }
 }
 

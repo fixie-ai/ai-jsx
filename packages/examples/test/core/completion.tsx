@@ -57,9 +57,7 @@ describe('OpenTelemetry', () => {
   });
   sdk.start();
 
-  afterAll(async () => {
-    await sdk.shutdown();
-  });
+  afterAll(() => sdk.shutdown());
 
   beforeEach(() => {
     memoryExporter.reset();
