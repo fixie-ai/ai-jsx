@@ -12,7 +12,7 @@ describe('OpenAIChatModel', () => {
         chatModel="gpt-3.5-turbo"
         client={{
           ...({} as any),
-          createChatCompletion: async (req) => {
+          createChatCompletion: (req) => {
             expect(req.max_tokens).toBe(4096);
             expect(req.messages).toEqual([
               expect.objectContaining({
@@ -20,9 +20,11 @@ describe('OpenAIChatModel', () => {
               }),
             ]);
 
-            return new Response(jsonToOpenAIStream([{ choices: [{ delta: { role: 'assistant', content: 'Hi!' } }] }]), {
-              status: 200,
-            });
+            return Promise.resolve(
+              new Response(jsonToOpenAIStream([{ choices: [{ delta: { role: 'assistant', content: 'Hi!' } }] }]), {
+                status: 200,
+              })
+            );
           },
         }}
       >
@@ -44,7 +46,7 @@ describe('OpenAIChatModel', () => {
         chatModel="gpt-3.5-turbo"
         client={{
           ...({} as any),
-          createChatCompletion: async (req) => {
+          createChatCompletion: (req) => {
             expect(req.max_tokens).toBe(undefined);
             expect(req.messages).toEqual([
               expect.objectContaining({
@@ -52,9 +54,11 @@ describe('OpenAIChatModel', () => {
               }),
             ]);
 
-            return new Response(jsonToOpenAIStream([{ choices: [{ delta: { role: 'assistant', content: 'Hi!' } }] }]), {
-              status: 200,
-            });
+            return Promise.resolve(
+              new Response(jsonToOpenAIStream([{ choices: [{ delta: { role: 'assistant', content: 'Hi!' } }] }]), {
+                status: 200,
+              })
+            );
           },
         }}
       >
