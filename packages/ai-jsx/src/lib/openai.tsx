@@ -398,9 +398,9 @@ export async function* OpenAIChatModel(
 
   let promptTokenLimit = tokenLimitForChatModel(props.model, props.functionDefinitions);
 
-  // If maxTokens is set, reserve that many tokens for the reply.
-  if (promptTokenLimit !== undefined && props.maxTokens) {
-    promptTokenLimit -= props.maxTokens;
+  // If reservedTokens (or maxTokens) is set, reserve that many tokens for the reply.
+  if (promptTokenLimit !== undefined) {
+    promptTokenLimit -= props.reservedTokens ?? props.maxTokens ?? 0;
   }
 
   const conversationMessages = await renderToConversation(
