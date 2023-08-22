@@ -33,20 +33,33 @@ import {
 import { openTelemetryStreamRenderer } from './opentelemetry.js';
 import { getEnvVar } from '../lib/util.js';
 
+const appendOnlyStreamSymbol = Symbol('AI.appendOnlyStream');
+
 /**
  * A value that can be yielded by a component to indicate that each yielded value should
  * be appended to, rather than replace, the previously yielded values.
  */
-export const AppendOnlyStream = Symbol('AI.appendOnlyStream');
+export function AppendOnlyStream(node?: Node) {
+  return { [appendOnlyStreamSymbol]: node };
+}
+
+/** @hidden */
+export type AppendOnlyStreamValue = typeof AppendOnlyStream | { [appendOnlyStreamSymbol]: Node };
+
+/** @hidden */
+export function isAppendOnlyStreamValue(value: unknown): value is AppendOnlyStreamValue {
+  return value === AppendOnlyStream || (typeof value === 'object' && value !== null && appendOnlyStreamSymbol in value);
+}
+/** @hidden */
+export function valueToAppend(value: AppendOnlyStreamValue): Node {
+  return typeof value === 'object' ? value[appendOnlyStreamSymbol] : undefined;
+}
 
 /**
  * A RenderableStream represents an async iterable that yields {@link Renderable}s.
  */
 export interface RenderableStream {
-  [Symbol.asyncIterator]: () => AsyncGenerator<
-    Renderable | typeof AppendOnlyStream,
-    Renderable | typeof AppendOnlyStream
-  >;
+  [Symbol.asyncIterator]: () => AsyncGenerator<Node | AppendOnlyStreamValue, Node | AppendOnlyStreamValue>;
 }
 
 /**
@@ -173,6 +186,7 @@ export interface RenderContext {
    *
    * The memoization is fully recursive.
    */
+  memo<T>(element: Element<T>): Element<T>;
   memo(renderable: Renderable): Node;
 
   /**
@@ -295,13 +309,8 @@ async function* renderStream(
   }
   if (isElement(renderable)) {
     if (shouldStop(renderable)) {
-      // If the renderable already has a context bound to it, leave it as-is because that context would've
-      // taken precedence over the current one. But, if it does _not_ have a bound context, we bind
-      // the current context so that if/when it is rendered, rendering will "continue on" as-is.
-      if (!attachedContext(renderable)) {
-        return [withContext(renderable, context)];
-      }
-      return [renderable];
+      // Don't render it, but memoize it so that rendering picks up where we left off.
+      return [context.memo(renderable)];
     }
     const renderingContext = attachedContext(renderable) ?? context;
     if (renderingContext !== context) {
@@ -338,12 +347,16 @@ async function* renderStream(
     let isAppendOnlyStream = false;
     while (true) {
       const next = await iterator.next();
-      if (next.value === AppendOnlyStream) {
+      let valueToRender = next.value;
+      if (isAppendOnlyStreamValue(valueToRender)) {
         // TODO: I'd like to emit a log here indicating that an element has chosen to AppendOnlyStream,
         // but I'm not sure what the best way is to know which element/renderId produced `renderable`.
         isAppendOnlyStream = true;
-      } else if (isAppendOnlyStream) {
-        const renderResult = context.render(next.value, recursiveRenderOpts);
+        valueToRender = valueToAppend(valueToRender);
+      }
+
+      if (isAppendOnlyStream) {
+        const renderResult = context.render(valueToRender, recursiveRenderOpts);
         for await (const frame of renderResult) {
           yield lastValue.concat(frame);
         }
@@ -352,9 +365,9 @@ async function* renderStream(
         // Subsequently yielded values might not be append-only, so we can't yield them. (But
         // if this iterator is `done` then we rely on the recursive call to decide when it's safe
         // to yield.)
-        lastValue = await context.render(next.value, recursiveRenderOpts);
+        lastValue = await context.render(valueToRender, recursiveRenderOpts);
       } else {
-        lastValue = yield* context.render(next.value, recursiveRenderOpts);
+        lastValue = yield* context.render(valueToRender, recursiveRenderOpts);
       }
 
       if (next.done) {
@@ -393,12 +406,20 @@ export function createRenderContext(opts?: { logger?: LogImplementation; enableO
     renderFn = openTelemetryStreamRenderer(renderFn);
     logger = new CombinedLogger([logger, new OpenTelemetryLogger()]);
   }
-  return createRenderContextInternal(renderFn, {
-    [LoggerContext[contextKey].userContextSymbol]: logger,
-  });
+  return createRenderContextInternal(
+    renderFn,
+    {
+      [LoggerContext[contextKey].userContextSymbol]: logger,
+    },
+    { id: 0 }
+  );
 }
 
-function createRenderContextInternal(renderStream: StreamRenderer, userContext: Record<symbol, any>): RenderContext {
+function createRenderContextInternal(
+  renderStream: StreamRenderer,
+  userContext: Record<symbol, any>,
+  memoizedIdHolder: { id: number }
+): RenderContext {
   const context: RenderContext = {
     render: <TFinal extends string | PartiallyRendered[], TIntermediate>(
       renderable: Renderable,
@@ -490,15 +511,20 @@ function createRenderContextInternal(renderStream: StreamRenderer, userContext: 
       return defaultValue;
     },
 
-    memo: (renderable) => withContext(partialMemo(renderable), context),
+    memo: (renderable: Renderable) => withContext(partialMemo(renderable, ++memoizedIdHolder.id), context) as any,
 
-    wrapRender: (getRenderStream) => createRenderContextInternal(getRenderStream(renderStream), userContext),
+    wrapRender: (getRenderStream) =>
+      createRenderContextInternal(getRenderStream(renderStream), userContext, memoizedIdHolder),
 
     [pushContextSymbol]: (contextReference, value) =>
-      createRenderContextInternal(renderStream, {
-        ...userContext,
-        [contextReference[contextKey].userContextSymbol]: value,
-      }),
+      createRenderContextInternal(
+        renderStream,
+        {
+          ...userContext,
+          [contextReference[contextKey].userContextSymbol]: value,
+        },
+        memoizedIdHolder
+      ),
   };
 
   return context;
