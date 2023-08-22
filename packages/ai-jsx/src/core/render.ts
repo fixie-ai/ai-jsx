@@ -43,7 +43,7 @@ export const AppendOnlyStream = Symbol('AI.appendOnlyStream');
  * A RenderableStream represents an async iterable that yields {@link Renderable}s.
  */
 export interface RenderableStream {
-  [Symbol.asyncIterator]: () => AsyncIterator<
+  [Symbol.asyncIterator]: () => AsyncGenerator<
     Renderable | typeof AppendOnlyStream,
     Renderable | typeof AppendOnlyStream
   >;

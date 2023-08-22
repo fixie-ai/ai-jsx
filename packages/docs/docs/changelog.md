@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.9.1
+## 0.9.2
+
+- In the [OpenTelemetry integration](./guides/observability.md#opentelemetry-integration):
+  - Add prompt/completion attributes with token counts for `<OpenAIChatModel>`. This replaces the `tokenCount` attribute added in 0.9.1.
+  - By default, only emit spans for `async` components.
+
+## [0.9.1](https://github.com/fixie-ai/ai-jsx/commit/0d2e6d8ecd1c75b457d0d6c76ff854c9145a9f5f)
 
 - Add `tokenCount` field to [OpenTelemetry-emitted spans](./guides/observability.md#opentelemetry-integration). Now, if you're emitting via OpenTelemetry (e.g. to DataDog), the spans will tell you how many tokens each component resolved to. This is helpful for answering quetsions like "how big is my system message?".
 

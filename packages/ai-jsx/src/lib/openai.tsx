@@ -33,7 +33,7 @@ import { Node } from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
 import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { CreateChatCompletionRequest } from 'openai';
-import { debug, debugRepresentation } from '../core/debug.js';
+import { debugRepresentation } from '../core/debug.js';
 import { getEncoding } from 'js-tiktoken';
 import _ from 'lodash';
 
@@ -406,10 +406,12 @@ export async function* OpenAIChatModel(
   const conversationMessages = await renderToConversation(
     props.children,
     render,
+    logger,
+    'prompt',
     tokenCountForConversationMessage,
     promptTokenLimit
   );
-  logger.debug({ messages: conversationMessages.map((m) => debug(m.element, true)) }, 'Got input conversation');
+
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
     conversationMessages.map(async (message) => {
       switch (message.type) {
@@ -510,6 +512,7 @@ export async function* OpenAIChatModel(
 
   let isAssistant = false;
   let delta = await advance();
+  const outputMessages = [] as AI.Node[];
   while (delta !== null) {
     if (delta.role === 'assistant') {
       isAssistant = true;
@@ -536,16 +539,19 @@ export async function* OpenAIChatModel(
 
         return AI.AppendOnlyStream;
       };
-      const assistantStream = memo(
-        <Stream {...debugRepresentation(() => `${accumulatedContent}${complete ? '' : '▮'}`)} />
+      const assistantMessage = memo(
+        <AssistantMessage>
+          <Stream {...debugRepresentation(() => `${accumulatedContent}${complete ? '' : '▮'}`)} />
+        </AssistantMessage>
       );
-      yield <AssistantMessage>{assistantStream}</AssistantMessage>;
+      yield assistantMessage;
 
-      // Ensure the assistantStream is flushed by rendering it.
-      await render(assistantStream);
+      // Ensure the assistant stream is flushed by rendering it.
+      await render(assistantMessage);
+      outputMessages.push(assistantMessage);
     }
 
-    // TS doesn't realize that the assistantStream closure can make `delta` be `null`.
+    // TS doesn't realize that the Stream closure can make `delta` be `null`.
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (delta?.function_call) {
       // Memoize the stream to ensure it renders only once.
@@ -578,6 +584,7 @@ export async function* OpenAIChatModel(
 
       // Ensure the functionCallStream is flushed by rendering it.
       await render(functionCallStream);
+      outputMessages.push(functionCallStream);
     }
 
     // TS doesn't realize that the functionCallStream closure can make `delta` be `null`.
@@ -587,8 +594,8 @@ export async function* OpenAIChatModel(
     }
   }
 
-  logger.debug('Finished createChatCompletion');
-
+  // Render the completion conversation to log it.
+  await renderToConversation(outputMessages, render, logger, 'completion', tokenCountForConversationMessage);
   return AI.AppendOnlyStream;
 }
 

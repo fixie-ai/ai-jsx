@@ -42,9 +42,8 @@ import { Anthropic } from 'ai-jsx/lib/anthropic';
 import { CompletionCreateParams } from '@anthropic-ai/sdk/resources/completions';
 import { Jsonifiable } from 'type-fest';
 
-import { trace } from '@opentelemetry/api';
+import { NodeSDK } from '@opentelemetry/sdk-node';
 import { SimpleSpanProcessor, InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import _ from 'lodash';
 
 afterEach(() => {
@@ -53,9 +52,12 @@ afterEach(() => {
 
 describe('OpenTelemetry', () => {
   const memoryExporter = new InMemorySpanExporter();
-  const tracerProvider = new NodeTracerProvider();
-  tracerProvider.addSpanProcessor(new SimpleSpanProcessor(memoryExporter));
-  trace.setGlobalTracerProvider(tracerProvider);
+  const sdk = new NodeSDK({
+    spanProcessor: new SimpleSpanProcessor(memoryExporter) as any,
+  });
+  sdk.start();
+
+  afterAll(() => sdk.shutdown());
 
   beforeEach(() => {
     memoryExporter.reset();
@@ -81,22 +83,82 @@ describe('OpenTelemetry', () => {
           "ai.jsx.result": "[<UserMessage @memoizedId=1>
         {"hello"}
       </UserMessage>]",
-          "ai.jsx.tag": "UserMessage",
-          "ai.jsx.tree": "<UserMessage @memoizedId=1>
-        {"hello"}
-      </UserMessage>",
+          "ai.jsx.tag": "ShrinkConversation",
+          "ai.jsx.tree": "<ShrinkConversation cost={tokenCountForConversationMessage} budget={4093}>
+        <UserMessage>
+          {"hello"}
+        </UserMessage>
+      </ShrinkConversation>",
         },
         {
-          "ai.jsx.result": "[<UserMessage @memoizedId=1>
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.tag": "Stream",
+          "ai.jsx.tree": ""▮"",
+        },
+        {
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.tag": "Stream",
+          "ai.jsx.tree": ""opentel response from OpenAI"",
+        },
+        {
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.tag": "Stream",
+          "ai.jsx.tree": ""opentel response from OpenAI"",
+        },
+        {
+          "ai.jsx.completion": "[{"element":"<AssistantMessage @memoizedId=2>\\n  {\\"opentel response from OpenAI\\"}\\n</AssistantMessage>","cost":10}]",
+          "ai.jsx.prompt": "[{"element":"<UserMessage @memoizedId=1>\\n  {\\"hello\\"}\\n</UserMessage>","cost":4}]",
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.tag": "OpenAIChatModel",
+          "ai.jsx.tree": "<OpenAIChatModel model="gpt-3.5-turbo">
+        <UserMessage>
+          {"hello"}
+        </UserMessage>
+      </OpenAIChatModel>",
+        },
+        {
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.tag": "ChatCompletion",
+          "ai.jsx.tree": "<ChatCompletion>
+        <UserMessage>
+          {"hello"}
+        </UserMessage>
+      </ChatCompletion>",
+        },
+      ]
+    `);
+
+    // Test with AIJSX_OPENTELEMETRY_TRACE_ALL
+    memoryExporter.reset();
+    process.env.AIJSX_OPENTELEMETRY_TRACE_ALL = '1';
+    await AI.createRenderContext({ enableOpenTelemetry: true }).render(
+      <ChatCompletion>
+        <UserMessage>hello</UserMessage>
+      </ChatCompletion>
+    );
+
+    expect(_.map(memoryExporter.getFinishedSpans(), 'attributes')).toMatchInlineSnapshot(`
+      [
+        {
+          "ai.jsx.result": "[<UserMessage @memoizedId=3>
         {"hello"}
       </UserMessage>]",
           "ai.jsx.tag": "UserMessage",
-          "ai.jsx.tree": "<UserMessage @memoizedId=1>
+          "ai.jsx.tree": "<UserMessage @memoizedId=3>
         {"hello"}
       </UserMessage>",
         },
         {
-          "ai.jsx.result": "[<UserMessage @memoizedId=1>
+          "ai.jsx.result": "[<UserMessage @memoizedId=3>
+        {"hello"}
+      </UserMessage>]",
+          "ai.jsx.tag": "UserMessage",
+          "ai.jsx.tree": "<UserMessage @memoizedId=3>
+        {"hello"}
+      </UserMessage>",
+        },
+        {
+          "ai.jsx.result": "[<UserMessage @memoizedId=3>
         {"hello"}
       </UserMessage>]",
           "ai.jsx.tag": "ShrinkConversation",
@@ -108,35 +170,67 @@ describe('OpenTelemetry', () => {
         },
         {
           "ai.jsx.result": "hello",
-          "ai.jsx.result.tokenCount": 1,
           "ai.jsx.tag": "UserMessage",
-          "ai.jsx.tree": "<UserMessage @memoizedId=1>
+          "ai.jsx.tree": "<UserMessage @memoizedId=3>
+        {"hello"}
+      </UserMessage>",
+        },
+        {
+          "ai.jsx.result": "hello",
+          "ai.jsx.tag": "UserMessage",
+          "ai.jsx.tree": "<UserMessage @memoizedId=3>
         {"hello"}
       </UserMessage>",
         },
         {
           "ai.jsx.result": "opentel response from OpenAI",
-          "ai.jsx.result.tokenCount": 7,
           "ai.jsx.tag": "Stream",
           "ai.jsx.tree": ""▮"",
         },
         {
           "ai.jsx.result": "opentel response from OpenAI",
-          "ai.jsx.result.tokenCount": 7,
           "ai.jsx.tag": "AssistantMessage",
-          "ai.jsx.tree": "<AssistantMessage>
+          "ai.jsx.tree": "<AssistantMessage @memoizedId=4>
         {"▮"}
       </AssistantMessage>",
         },
         {
           "ai.jsx.result": "opentel response from OpenAI",
-          "ai.jsx.result.tokenCount": 7,
           "ai.jsx.tag": "Stream",
           "ai.jsx.tree": ""opentel response from OpenAI"",
         },
         {
           "ai.jsx.result": "opentel response from OpenAI",
-          "ai.jsx.result.tokenCount": 7,
+          "ai.jsx.tag": "AssistantMessage",
+          "ai.jsx.tree": "<AssistantMessage @memoizedId=4>
+        {"opentel response from OpenAI"}
+      </AssistantMessage>",
+        },
+        {
+          "ai.jsx.result": "[<AssistantMessage @memoizedId=4>
+        {"opentel response from OpenAI"}
+      </AssistantMessage>]",
+          "ai.jsx.tag": "AssistantMessage",
+          "ai.jsx.tree": "<AssistantMessage @memoizedId=4>
+        {"opentel response from OpenAI"}
+      </AssistantMessage>",
+        },
+        {
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.tag": "Stream",
+          "ai.jsx.tree": ""opentel response from OpenAI"",
+        },
+        {
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.tag": "AssistantMessage",
+          "ai.jsx.tree": "<AssistantMessage @memoizedId=4>
+        {"opentel response from OpenAI"}
+      </AssistantMessage>",
+        },
+        {
+          "ai.jsx.completion": "[{"element":"<AssistantMessage @memoizedId=4>\\n  {\\"opentel response from OpenAI\\"}\\n</AssistantMessage>","cost":10}]",
+          "ai.jsx.prompt": "[{"element":"<UserMessage @memoizedId=3>\\n  {\\"hello\\"}\\n</UserMessage>","cost":4}]",
+          "ai.jsx.result": "opentel response from OpenAI",
           "ai.jsx.tag": "OpenAIChatModel",
           "ai.jsx.tree": "<OpenAIChatModel model="gpt-3.5-turbo">
         <UserMessage>
@@ -146,7 +240,6 @@ describe('OpenTelemetry', () => {
         },
         {
           "ai.jsx.result": "opentel response from OpenAI",
-          "ai.jsx.result.tokenCount": 7,
           "ai.jsx.tag": "AutomaticChatModel",
           "ai.jsx.tree": "<AutomaticChatModel>
         <UserMessage>
@@ -156,7 +249,6 @@ describe('OpenTelemetry', () => {
         },
         {
           "ai.jsx.result": "opentel response from OpenAI",
-          "ai.jsx.result.tokenCount": 7,
           "ai.jsx.tag": "ChatCompletion",
           "ai.jsx.tree": "<ChatCompletion>
         <UserMessage>

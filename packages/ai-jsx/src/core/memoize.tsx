@@ -1,6 +1,7 @@
 import { Renderable, RenderContext, AppendOnlyStream, RenderableStream } from './render.js';
 import { Node, getReferencedNode, isIndirectNode, makeIndirectNode, isElement } from './node.js';
 import { Logger } from './log.js';
+import { bindAsyncGeneratorToActiveContext } from './opentelemetry.js';
 
 let lastMemoizedId = 0;
 /** @hidden */
@@ -71,7 +72,10 @@ export function partialMemo(renderable: Renderable, existingId?: number): Node |
 
     // It's an async iterable (which might be mutable). We set up some machinery to buffer the
     // results so that we can create memoized iterators as necessary.
-    const generator = renderable[Symbol.asyncIterator]();
+    const unboundGenerator = renderable[Symbol.asyncIterator]();
+
+    // N.B. Async context doesn't get bound to the generator, so we need to do that manually.
+    const generator = bindAsyncGeneratorToActiveContext(unboundGenerator);
     const sink: (Renderable | typeof AppendOnlyStream)[] = [];
     let finalResult: Renderable | typeof AppendOnlyStream = null;
     let completed = false;
