@@ -10,6 +10,7 @@ import {
 import { Node, Element, getReferencedNode, isIndirectNode, makeIndirectNode, isElement } from './node.js';
 import { Logger } from './log.js';
 import { bindAsyncGeneratorToActiveContext } from './opentelemetry.js';
+import _ from 'lodash';
 
 /** @hidden */
 export const memoizedIdSymbol = Symbol('memoizedId');
@@ -97,7 +98,7 @@ export function partialMemo(renderable: Renderable, id: number): Node | Renderab
         while (true) {
           if (index < sink.length) {
             // There's something we can yield/return right away.
-            let nodes = [] as Node[];
+            let concatenatedNodes = [] as Node[];
             while (index < sink.length) {
               let value = sink[index++];
               if (isAppendOnlyStreamValue(value)) {
@@ -105,14 +106,15 @@ export function partialMemo(renderable: Renderable, id: number): Node | Renderab
                 value = valueToAppend(value);
               }
 
-              if (!isAppendOnly) {
-                nodes = [value];
+              if (isAppendOnly) {
+                concatenatedNodes.push(value);
               } else {
-                nodes.push(value);
+                // In case the stream changes to append-only, reset the concatenated nodes.
+                concatenatedNodes = [value];
               }
             }
 
-            const valueToYield = isAppendOnly ? AppendOnlyStream(nodes) : nodes;
+            const valueToYield = isAppendOnly ? AppendOnlyStream(concatenatedNodes) : _.last(sink);
             if (completed) {
               return valueToYield;
             }
