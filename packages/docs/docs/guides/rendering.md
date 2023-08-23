@@ -362,3 +362,5 @@ function MyUserMessages() {
   </>
 </ChatCompletion>;
 ```
+
+Elements returned by partial rendering will be [memoized](./rules-of-jsx.md#memoization) so that they render only once.

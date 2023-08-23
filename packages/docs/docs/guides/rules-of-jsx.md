@@ -111,7 +111,7 @@ function* GenerateImage() {
 
 AI.JSX will interpret each `yield`ed value as a new value which should totally overwrite the previously-yielded values, so the caller would see a progression of increasingly high-quality images.
 
-However, sometimes your data source will give you deltas, so replacing the previous contents doesn't make much sense. In this case, `yield` the [`AppendOnlyStream`](../api/modules/core_render.md#appendonlystream) symbol to indicate that `yield`ed results should be interpreted as deltas:
+However, sometimes your data source will give you deltas, so replacing the previous contents doesn't make much sense. In this case, `yield` the [`AppendOnlyStream`](../api/modules/core_render.md#appendonlystream) value to indicate that `yield`ed results should be interpreted as deltas:
 
 ```tsx
 import * as AI from 'ai-jsx';
@@ -226,6 +226,12 @@ const catName = memo(
 ```
 
 Now, `catName` will result in a single model call, and its value will be reused everywhere that component appears in the tree.
+
+:::note Memoized Streams
+
+If a streaming element is memoized, rendering will start with the last rendered frame rather than replaying every frame.
+
+:::
 
 # See Also
 
