@@ -6793,8 +6793,7 @@ __metadata:
     lodash: ^4.17.21
     ml-distance: ^4.0.1
     node-fetch: ^3.3.1
-    openai: ^3.3.0
-    openai-edge: ^1.2.0
+    openai: ^4.1.0
     pino: ^8.14.1
     pino-pretty: ^10.0.0
     react: ^18.2.0
@@ -11601,7 +11600,7 @@ __metadata:
     mathjs: ^11.8.1
     nock: ^13.3.2
     node-fetch: ^3.3.1
-    openai: ^3.3.0
+    openai: ^4.1.0
     pino: ^8.14.1
     pino-pretty: ^10.0.0
     prompt-sync: ^4.2.0
@@ -18341,7 +18340,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai-edge@npm:1.2.0, openai-edge@npm:^1.2.0":
+"openai-edge@npm:1.2.0":
   version: 1.2.0
   resolution: "openai-edge@npm:1.2.0"
   checksum: 5fa7962527b4001fe3beb29cb983014b1f7a1051199b4b1df60dc5638b8d31d9f8f8924b7795b997f609cc15cd19f93a64d5e55cd99e5d52a9970acd267e97c9
@@ -18355,6 +18354,24 @@ __metadata:
     axios: ^0.26.0
     form-data: ^4.0.0
   checksum: 28ccff8c09b6f47828c9583bb3bafc38a8459c76ea10eb9e08ca880f65523c5a9cc6c5f3c7669dded6f4c93e7cf49dd5c4dbfd12732a0f958c923117740d677b
+  languageName: node
+  linkType: hard
+
+"openai@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "openai@npm:4.1.0"
+  dependencies:
+    "@types/node": ^18.11.18
+    "@types/node-fetch": ^2.6.4
+    abort-controller: ^3.0.0
+    agentkeepalive: ^4.2.1
+    digest-fetch: ^1.3.0
+    form-data-encoder: 1.7.2
+    formdata-node: ^4.3.2
+    node-fetch: ^2.6.7
+  bin:
+    openai: bin/cli
+  checksum: 26b4484345b7a09e0524ff187488f4e3c96331791e1e87af8d49ef8bb67bb5ecaaa9c6d212f0a246be058089ad331ddcaacd3fc0b89fc8e1053e884b2fedd959
   languageName: node
   linkType: hard
 

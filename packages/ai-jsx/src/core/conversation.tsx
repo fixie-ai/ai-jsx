@@ -1,4 +1,4 @@
-import { ChatCompletionResponseMessage } from 'openai';
+import { type OpenAI as OpenAIClient } from 'openai';
 import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
@@ -59,7 +59,11 @@ export function AssistantMessage({ children }: { children: Node }) {
   return children;
 }
 
-export function ConversationHistory({ messages }: { messages: ChatCompletionResponseMessage[] }) {
+export function ConversationHistory({
+  messages,
+}: {
+  messages: OpenAIClient.Chat.CreateChatCompletionRequestMessage[];
+}) {
   return messages.map((message) => {
     switch (message.role) {
       case 'system':

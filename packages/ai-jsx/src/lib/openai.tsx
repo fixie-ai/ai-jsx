@@ -2,20 +2,8 @@
  * This module provides interfaces to OpenAI's various models.
  * @packageDocumentation
  */
-import {
-  ChatCompletionFunctions,
-  ChatCompletionRequestMessage,
-  ChatCompletionResponseMessage,
-  Configuration,
-  CreateChatCompletionRequestFunctionCall,
-  CreateChatCompletionResponse,
-  CreateCompletionResponse,
-  CreateImageRequestResponseFormatEnum,
-  CreateImageRequestSizeEnum,
-  OpenAIApi,
-  ResponseTypes,
-} from 'openai-edge';
-import { Merge, MergeExclusive } from 'type-fest';
+
+import { Jsonifiable, MergeExclusive } from 'type-fest';
 import {
   ChatProvider,
   CompletionProvider,
@@ -25,14 +13,13 @@ import {
   getParametersSchema,
 } from '../core/completion.js';
 import { AssistantMessage, ConversationMessage, FunctionCall, renderToConversation } from '../core/conversation.js';
-import { AIJSXError, ErrorCode, HttpError } from '../core/errors.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { Image, ImageGenPropsWithChildren } from '../core/image-gen.js';
-import { Logger } from '../core/log.js';
 import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
 import { getEnvVar, patchedUntruncateJson } from './util.js';
-import { CreateChatCompletionRequest } from 'openai';
+import { OpenAI as OpenAIClient } from 'openai';
 import { debugRepresentation } from '../core/debug.js';
 import { getEncoding } from 'js-tiktoken';
 import _ from 'lodash';
@@ -60,20 +47,18 @@ type ValidChatModel =
 
 type OpenAIModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
 
-const decoder = new TextDecoder();
-
-export const openAiClientContext = AI.createContext<OpenAIApi>(
-  new OpenAIApi(
-    new Configuration({
+const openAiClientContext = AI.createContext<() => OpenAIClient>(
+  _.once(() => {
+    const baseURL = getEnvVar('OPENAI_API_BASE', false);
+    return new OpenAIClient({
       apiKey: getEnvVar('OPENAI_API_KEY', false),
-    }),
-    // We actually want the nullish coalescing behavior in this case,
-    // because if the env var is '', we want to pass `undefined` instead.
-    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-    getEnvVar('OPENAI_API_BASE', false) || undefined,
-    // TODO: Figure out a better way to work around NextJS fetch blocking streaming
-    (globalThis as any)._nextOriginalFetch ?? globalThis.fetch
-  )
+      dangerouslyAllowBrowser: Boolean(getEnvVar('REACT_APP_OPENAI_API_KEY', false)),
+      // N.B. `baseURL` needs to be _unspecified_ rather than undefined
+      ...(baseURL ? { baseURL } : {}),
+      // TODO: Figure out a better way to work around NextJS fetch blocking streaming
+      fetch: ((globalThis as any)._nextOriginalFetch ?? globalThis.fetch).bind(globalThis),
+    });
+  })
 );
 
 /**
@@ -89,11 +74,11 @@ export function OpenAI({
   completionModel,
   client,
   ...defaults
-}: { children: Node; client?: OpenAIApi } & OpenAIModelChoices & ModelProps) {
+}: { children: Node; client?: OpenAIClient } & OpenAIModelChoices & ModelProps) {
   let result = children;
 
   if (client) {
-    result = <openAiClientContext.Provider value={client}>{children}</openAiClientContext.Provider>;
+    result = <openAiClientContext.Provider value={() => client}>{children}</openAiClientContext.Provider>;
   }
 
   if (chatModel) {
@@ -113,42 +98,6 @@ export function OpenAI({
   }
 
   return result;
-}
-
-export const SSE_PREFIX = 'data: ';
-export const SSE_TERMINATOR = '\n\n';
-export const SSE_FINAL_EVENT = '[DONE]';
-
-/**
- * Parses an OpenAI SSE response stream according to:
- *  - https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events
- *  - https://github.com/openai/openai-cookbook/blob/970d8261fbf6206718fe205e88e37f4745f9cf76/examples/How_to_stream_completions.ipynb
- * @param iterable A byte stream from an OpenAI SSE response.
- * @returns An async generator that yields the parsed JSON objects from the stream.
- */
-async function* openAiEventsToJson<T>(iterable: AsyncIterable<String>): AsyncGenerator<T> {
-  let bufferedContent = '';
-
-  for await (const chunk of iterable) {
-    const textToParse = bufferedContent + chunk;
-    const eventsWithExtra = textToParse.split(SSE_TERMINATOR);
-
-    // Any content not terminated by a "\n\n" will be buffered for the next chunk.
-    const events = eventsWithExtra.slice(0, -1);
-    bufferedContent = eventsWithExtra[eventsWithExtra.length - 1] ?? '';
-
-    for (const event of events) {
-      if (!event.startsWith(SSE_PREFIX)) {
-        continue;
-      }
-      const text = event.slice(SSE_PREFIX.length);
-      if (text === SSE_FINAL_EVENT) {
-        continue;
-      }
-
-      yield JSON.parse(text) as T;
-    }
-  }
 }
 
 const getEncoder = _.once(() => getEncoding('cl100k_base'));
@@ -179,62 +128,6 @@ function chatModelSupportsFunctions(model: ValidChatModel) {
   return model.startsWith('gpt-4') || model.startsWith('gpt-3.5-turbo');
 }
 
-type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
-
-/**
- * Represents an error that occurs when making an OpenAI API call.
- */
-export class OpenAIError<M extends OpenAIMethod> extends HttpError {
-  readonly errorResponse: Record<string, any> | null;
-
-  constructor(response: Response, method: M, responseText: string, errorCode: number) {
-    let errorResponse = null as Record<string, any> | null;
-    let responseSuffix = '';
-    try {
-      errorResponse = JSON.parse(responseText);
-    } catch {
-      // The response wasn't JSON, ignore it.
-    }
-
-    const parsedMessage = errorResponse?.error?.message;
-    if (typeof parsedMessage === 'string' && parsedMessage.trim().length > 0) {
-      responseSuffix = `: ${parsedMessage}`;
-    }
-
-    super(
-      `OpenAI ${method} request failed with status code ${response.status}${responseSuffix}\n\nFor more information, see https://platform.openai.com/docs/guides/error-codes/api-errors`,
-      response.status,
-      errorCode,
-      responseText,
-      Object.fromEntries(response.headers.entries())
-    );
-    this.errorResponse = errorResponse;
-  }
-}
-
-// Anthropic has a similar polyfill here:
-// https://github.com/anthropics/anthropic-sdk-typescript/blob/9af152707a9bcf3027afc64f027566be25da2eb9/src/streaming.ts#L266C1-L291C2
-async function* asyncIteratorOfFetchStream(reader: ReturnType<NonNullable<Response['body']>['getReader']>) {
-  while (true) {
-    const { done, value } =
-      // I don't know why the types fail here, but the code works.
-      // @ts-expect-error
-      await reader.read();
-    if (done) {
-      return;
-    }
-    yield decoder.decode(value);
-  }
-}
-
-async function checkOpenAIResponse<M extends OpenAIMethod>(response: Response, logger: Logger, method: M) {
-  if (response.status < 200 || response.status >= 300 || !response.body) {
-    throw new OpenAIError(response, method, await response.text(), 1023);
-  } else {
-    logger.debug({ statusCode: response.status, headers: response.headers }, `${method} succeeded`);
-  }
-}
-
 /**
  * Represents an OpenAI text completion model (e.g., `text-davinci-003`).
  */
@@ -244,7 +137,7 @@ export async function* OpenAICompletionModel(
 ): AI.RenderableStream {
   yield AI.AppendOnlyStream;
 
-  const openai = getContext(openAiClientContext);
+  const openai = getContext(openAiClientContext)();
   const completionRequest = {
     model: props.model,
     max_tokens: props.maxTokens,
@@ -252,21 +145,29 @@ export async function* OpenAICompletionModel(
     top_p: props.topP,
     prompt: await render(props.children),
     stop: props.stop,
-    stream: true,
+    stream: true as const,
     logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
   };
   logger.debug({ completionRequest }, 'Calling createCompletion');
 
-  const completionResponse = await openai.createCompletion(completionRequest);
+  let completionResponse;
+  try {
+    completionResponse = await openai.completions.create(completionRequest);
+  } catch (ex) {
+    if (ex instanceof OpenAIClient.APIError) {
+      throw new AIJSXError(
+        `OpenAI API Error: ${ex.message}`,
+        ErrorCode.OpenAIAPIError,
+        'ambiguous',
+        ex.error as Jsonifiable
+      );
+    }
 
-  await checkOpenAIResponse(completionResponse, logger, 'createCompletion');
+    throw ex;
+  }
 
   let resultSoFar = '';
-
-  // checkOpenAIResponse will throw if completionResponse.body is null, so we know it's not null here.
-  const responseIterator = asyncIteratorOfFetchStream(completionResponse.body!.getReader());
-
-  for await (const event of openAiEventsToJson<CreateCompletionResponse>(responseIterator)) {
+  for await (const event of completionResponse) {
     logger.trace({ event }, 'Got createCompletion event');
     yield event.choices[0].text;
     resultSoFar += event.choices[0].text;
@@ -347,16 +248,6 @@ async function tokenCountForConversationMessage(
   }
 }
 
-export type ChatCompletionDelta = Merge<
-  CreateChatCompletionResponse,
-  {
-    choices: {
-      delta: Partial<ChatCompletionResponseMessage>;
-      finish_reason?: string;
-    }[];
-  }
->;
-
 /**
  * Represents an OpenAI text chat model (e.g., `gpt-4`).
  */
@@ -366,7 +257,7 @@ export async function* OpenAIChatModel(
     logitBias?: Record<string, number>;
   } & MergeExclusive<
       {
-        functionDefinitions: Record<ChatCompletionFunctions['name'], FunctionDefinition>;
+        functionDefinitions: Record<string, FunctionDefinition>;
         forcedFunction: string;
       },
       {
@@ -412,7 +303,7 @@ export async function* OpenAIChatModel(
     promptTokenLimit
   );
 
-  const messages: ChatCompletionRequestMessage[] = await Promise.all(
+  const messages: OpenAIClient.Chat.CreateChatCompletionRequestMessage[] = await Promise.all(
     conversationMessages.map(async (message) => {
       switch (message.type) {
         case 'system':
@@ -458,39 +349,45 @@ export async function* OpenAIChatModel(
     );
   }
 
-  const openaiFunctions: ChatCompletionFunctions[] | undefined = !props.functionDefinitions
+  const openaiFunctions = !props.functionDefinitions
     ? undefined
     : Object.entries(props.functionDefinitions).map(([functionName, functionDefinition]) => ({
         name: functionName,
         description: functionDefinition.description,
         parameters: getParametersSchema(functionDefinition.parameters),
       }));
-  const openaiFunctionCall: CreateChatCompletionRequestFunctionCall | undefined = props.forcedFunction
-    ? { name: props.forcedFunction }
-    : undefined;
 
-  const openai = getContext(openAiClientContext);
-  const chatCompletionRequest: CreateChatCompletionRequest = {
+  const openai = getContext(openAiClientContext)();
+  const chatCompletionRequest = {
     model: props.model,
     max_tokens: props.maxTokens,
     temperature: props.temperature,
     top_p: props.topP,
     messages,
     functions: openaiFunctions,
-    function_call: openaiFunctionCall,
+    function_call: props.forcedFunction ? { name: props.forcedFunction } : undefined,
     stop: props.stop,
     logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
-    stream: true,
+    stream: true as const,
   };
 
   logger.debug({ chatCompletionRequest }, 'Calling createChatCompletion');
-  const chatResponse = await openai.createChatCompletion(chatCompletionRequest);
+  let chatResponse;
+  try {
+    chatResponse = await openai.chat.completions.create(chatCompletionRequest);
+  } catch (ex) {
+    if (ex instanceof OpenAIClient.APIError) {
+      throw new AIJSXError(
+        `OpenAI API Error: ${ex.message}`,
+        ErrorCode.OpenAIAPIError,
+        'ambiguous',
+        ex.error as Jsonifiable
+      );
+    }
 
-  await checkOpenAIResponse(chatResponse, logger, 'createChatCompletion');
-
-  const iterator = openAiEventsToJson<ChatCompletionDelta>(asyncIteratorOfFetchStream(chatResponse.body!.getReader()))[
-    Symbol.asyncIterator
-  ]();
+    throw ex;
+  }
+  const iterator = chatResponse[Symbol.asyncIterator]();
 
   // We have a single response iterator, but we'll wrap tokens _within_ the structure of <AssistantMessage> or <FunctionCall>
   // components. This:
@@ -500,7 +397,7 @@ export async function* OpenAIChatModel(
   //
   // This requires some gymnastics because several components will share a single iterator that can only be consumed once.
   // That is, the logical loop execution is spread over multiple functions (closures over the shared iterator).
-  async function advance(): Promise<Partial<ChatCompletionResponseMessage> | null> {
+  async function advance() {
     const next = await iterator.next();
     if (next.done) {
       return null;
@@ -611,25 +508,6 @@ export async function* DalleImageGen(
   { numSamples = 1, size = '512x512', children }: ImageGenPropsWithChildren,
   { render, getContext, logger }: AI.ComponentContext
 ) {
-  let sizeEnum;
-  switch (size) {
-    case '256x256':
-      sizeEnum = CreateImageRequestSizeEnum._256x256;
-      break;
-    case '512x512':
-      sizeEnum = CreateImageRequestSizeEnum._512x512;
-      break;
-    case '1024x1024':
-      sizeEnum = CreateImageRequestSizeEnum._1024x1024;
-      break;
-    default:
-      throw new AIJSXError(
-        `Invalid size ${size}. Dalle only supports 256x256, 512x512, and 1024x1024`,
-        ErrorCode.ImageBadDimensions,
-        'user'
-      );
-  }
-
   // Consider emitting http://via.placeholder.com/256x256 instead.
   yield (
     <Image
@@ -641,28 +519,23 @@ export async function* DalleImageGen(
 
   const prompt = await render(children);
 
-  const openai = getContext(openAiClientContext);
+  const openai = getContext(openAiClientContext)();
 
   const imageRequest = {
     prompt,
     n: numSamples,
-    size: sizeEnum,
-    response_format: CreateImageRequestResponseFormatEnum.Url,
+    size,
+    response_format: 'url' as const,
   };
 
   logger.debug({ imageRequest }, 'Calling createImage');
 
-  const response = await openai.createImage(imageRequest);
+  const response = await openai.images.generate(imageRequest);
 
-  if (response.status < 200 || response.status >= 300) {
-    throw new OpenAIError(response, 'createImage', await response.text(), 1024);
-  } else {
-    logger.debug({ statusCode: response.status, headers: response.headers }, 'createImage succeeded');
-  }
+  logger.debug({ size: response.data.length }, 'createImage succeeded');
 
   // return all image URLs as {@link Image} components.
-  const responseJson = (await response.json()) as ResponseTypes['createImage'];
-  return responseJson.data.flatMap((image) =>
+  return response.data.flatMap((image) =>
     image.url ? [<Image url={image.url} prompt={prompt} modelName="Dalle" />] : []
   );
 }
