@@ -30,6 +30,8 @@ export interface ModelProps {
   temperature?: number;
   /** The maximum number of tokens to generate. */
   maxTokens?: number;
+  /** The number of tokens to reserve for the generation. */
+  reservedTokens?: number;
   /** A list of stop tokens. */
   stop?: string[];
 

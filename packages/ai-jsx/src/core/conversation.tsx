@@ -204,6 +204,8 @@ function toConversationMessages(partialRendering: AI.PartiallyRendered[]): Conve
 export async function renderToConversation(
   conversation: AI.Node,
   render: AI.ComponentContext['render'],
+  logger?: AI.ComponentContext['logger'],
+  logType?: 'prompt' | 'completion',
   cost?: (message: ConversationMessage, render: AI.ComponentContext['render']) => Promise<number>,
   budget?: number
 ) {
@@ -215,7 +217,21 @@ export async function renderToConversation(
     ) : (
       conversation
     );
-  return toConversationMessages(await render(conversationToUse, { stop: isConversationalComponent }));
+  const messages = toConversationMessages(await render(conversationToUse, { stop: isConversationalComponent }));
+
+  if (logger && logType) {
+    const loggableMessages = await Promise.all(
+      messages.map(async (m) => ({
+        element: debug(m.element, true),
+        ...(cost && { cost: await cost(m, render) }),
+      }))
+    );
+
+    logger.setAttribute(`ai.jsx.${logType}`, JSON.stringify(loggableMessages));
+    logger.info({ [logType]: { messages: loggableMessages } }, `Got ${logType} conversation`);
+  }
+
+  return messages;
 }
 
 /**
@@ -258,14 +274,14 @@ export async function* Converse(
     reply: (messages: ConversationMessage[], fullConversation: ConversationMessage[]) => AI.Renderable;
     children: AI.Node;
   },
-  { render, memo }: AI.ComponentContext
+  { render, memo, logger }: AI.ComponentContext
 ): AI.RenderableStream {
   yield AI.AppendOnlyStream;
 
   const fullConversation = [] as ConversationMessage[];
-  let next = memo(children);
+  let next = children;
   while (true) {
-    const newMessages = await renderToConversation(next, render);
+    const newMessages = await renderToConversation(next, render, logger);
     if (newMessages.length === 0) {
       break;
     }
@@ -303,7 +319,7 @@ export async function* ShowConversation(
     present?: (message: ConversationMessage) => AI.Node;
     onComplete?: (conversation: ConversationMessage[], render: AI.RenderContext['render']) => Promise<void> | void;
   },
-  { render, isAppendOnlyRender, memo }: AI.ComponentContext
+  { render, isAppendOnlyRender }: AI.ComponentContext
 ): AI.RenderableStream {
   // If we're in an append-only render, do the transformation in an append-only manner so as not to block.
   if (isAppendOnlyRender) {
@@ -325,8 +341,7 @@ export async function* ShowConversation(
     return toConversationMessages(frame).map(present ?? ((m) => m.element));
   }
 
-  // Memoize before rendering so that the all the conversational components get memoized as well.
-  const finalFrame = yield* render(memo(children), {
+  const finalFrame = yield* render(children, {
     map: handleFrame,
     stop: isConversationalComponent,
     appendOnly: isAppendOnlyRender,
@@ -383,7 +398,7 @@ export async function ShrinkConversation(
     budget: number;
     children: Node;
   },
-  { render, memo, logger }: AI.ComponentContext
+  { render, logger }: AI.ComponentContext
 ) {
   /**
    * We construct a tree of immutable and shrinkable nodes such that shrinkable nodes
@@ -497,9 +512,7 @@ export async function ShrinkConversation(
     return roots.map((root) => (root.type === 'immutable' ? root.element : treeRootsToNode(root.children)));
   }
 
-  const memoized = memo(children);
-
-  const rendered = await render(memoized, {
+  const rendered = await render(children, {
     stop: (e) => isConversationalComponent(e) || e.tag === InternalShrinkable,
   });
 

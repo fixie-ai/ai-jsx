@@ -4,97 +4,9 @@
  * @packageDocumentation
  */
 
-import {
-  ChatCompletion,
-  FunctionParameters,
-  FunctionResponse,
-  SystemMessage,
-  UserMessage,
-} from '../core/completion.js';
-import { Node, RenderContext, ComponentContext, isElement } from '../index.js';
-import z from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { AIJSXError, ErrorCode } from '../core/errors.js';
-import { Converse, isConversationalComponent, renderToConversation } from '../core/conversation.js';
-
-const toolChoiceSchema = z.object({
-  nameOfTool: z.string(),
-  parameters: z.record(z.string(), z.any()),
-  responseToUser: z.string(),
-});
-export type ToolChoice = z.infer<typeof toolChoiceSchema> | null;
-
-function ChooseTools(props: Pick<UseToolsProps, 'tools' | 'userData' | 'children'>): Node {
-  return (
-    <ChatCompletion>
-      <SystemMessage>
-        You are an expert agent who knows how to use tools. You can use the following tools:
-        {Object.entries(props.tools).map(([toolName, tool]) => (
-          <>
-            {toolName}: Description: {tool.description}. Schema: {JSON.stringify(tool.parameters)}.
-          </>
-        ))}
-        The user will ask you a question. Pick the tool that best addresses what they're looking for. Which tool do you
-        want to use? Name the tool, identify the parameters, and generate a response to the user explaining what you're
-        doing. Do not answer the user's question itself. Your answer should be a JSON object matching this schema:{' '}
-        {JSON.stringify(zodToJsonSchema(toolChoiceSchema))}. Make sure to follow the schema strictly and do not include
-        any explanatory prose prefix or suffix.{' '}
-        {props.userData && <>When picking parameters, choose values according to this user data: {props.userData}</>}
-        If none of the tools seem appropriate, or the user data doesn't have the necessary context to use the tool the
-        user needs, respond with `null`.
-      </SystemMessage>
-      <UserMessage>Generate a JSON response for this query: {props.children}</UserMessage>
-    </ChatCompletion>
-  );
-}
-
-async function InvokeTool(
-  props: { tools: Record<string, Tool>; toolChoice: Node; fallback: Node },
-  { render }: RenderContext
-) {
-  // TODO: better validation around when this produces unexpected output.
-  const toolChoiceLLMOutput = await render(props.toolChoice);
-  let toolChoiceResult: ToolChoice;
-  try {
-    const parsedJson = JSON.parse(toolChoiceLLMOutput);
-    if (parsedJson === null) {
-      return props.fallback;
-    }
-    toolChoiceResult = toolChoiceSchema.parse(parsedJson);
-  } catch (e: any) {
-    const error = new AIJSXError(
-      `Failed to parse LLM output into a tool choice: ${e.message}. Output: ${toolChoiceLLMOutput}`,
-      ErrorCode.ModelOutputCouldNotBeParsedForTool,
-      'runtime',
-      { toolChoiceLLMOutput }
-    );
-    throw error;
-  }
-  if (!(toolChoiceResult.nameOfTool in props.tools)) {
-    throw new AIJSXError(
-      `LLM hallucinated a tool that does not exist: ${toolChoiceResult.nameOfTool}.`,
-      ErrorCode.ModelHallucinatedTool,
-      'runtime',
-      { toolChoiceResult }
-    );
-  }
-  const tool = props.tools[toolChoiceResult.nameOfTool];
-  const toolResult = await tool.func(toolChoiceResult.parameters);
-
-  // TDOO: Restore this once we have the logger attached to the render context.
-  // log.info({ toolChoice: toolChoiceResult }, 'Invoking tool');
-
-  return (
-    <ChatCompletion>
-      <SystemMessage>
-        You are a tool-using agent. You previously chose to use a tool, and generated this response to the user:
-        {toolChoiceResult.responseToUser}
-        When you ran the tool, you got this result: {JSON.stringify(toolResult)}
-        Using the above, provide a final response to the user.
-      </SystemMessage>
-    </ChatCompletion>
-  );
-}
+import { ChatCompletion, FunctionParameters, FunctionResponse } from '../core/completion.js';
+import { Node, RenderContext } from '../index.js';
+import { Converse, renderToConversation } from '../core/conversation.js';
 
 /**
  * Represents a tool that can be provided for the Large Language Model.
@@ -137,12 +49,6 @@ export interface UseToolsProps {
    * Whether the result should include intermediate steps, for example, the execution of the function and its response.
    */
   showSteps?: boolean;
-
-  /**
-   * A fallback response to use if the AI doesn't think any of the tools are relevant. This is only used for models that do not support functions natively. Models that support functions natively don't need this, because they generate
-   * their own messages in the case of failure.
-   */
-  fallback: Node;
 
   /**
    * User data the AI can use to determine what parameters to invoke the tool with.
@@ -189,7 +95,7 @@ export interface UseToolsProps {
  *    },
  *  };
  *
- * <UseTools tools={tools} fallback="Politely explain you aren't able to help with that request.">
+ * <UseTools tools={tools}>
  *   <SystemMessage>
  *     You control a home automation system. The user will request an action in their home. You should take an action and
  *     then generate a response telling the user what you've done.
@@ -199,31 +105,7 @@ export interface UseToolsProps {
  * ```
  *
  */
-export async function UseTools(props: UseToolsProps, { render, memo }: RenderContext) {
-  try {
-    // TODO: ErrorBoundaries should be able to preserve the conversational structure, but they can't currently.
-    // So instead we start rendering the function call until it yields any conversational message. If we see one,
-    // we know that the <ChatCompletion> didn't immediately fail.
-    const memoizedFunctionCall = memo(<UseToolsFunctionCall {...props} />);
-    for await (const containsElement of render(memoizedFunctionCall, {
-      stop: isConversationalComponent,
-      map: (frame) => frame.find(isElement) !== undefined,
-    })) {
-      if (containsElement) {
-        break;
-      }
-    }
-    return memoizedFunctionCall;
-  } catch (e: any) {
-    if (e.code === ErrorCode.ChatModelDoesNotSupportFunctions) {
-      return <UseToolsPromptEngineered {...props} />;
-    }
-    throw e;
-  }
-}
-
-/** @hidden */
-export async function UseToolsFunctionCall(props: UseToolsProps, { render }: ComponentContext) {
+export async function UseTools(props: UseToolsProps, { render }: RenderContext) {
   const converse = (
     <Converse
       reply={async (messages, fullConversation) => {
@@ -263,9 +145,4 @@ export async function UseToolsFunctionCall(props: UseToolsProps, { render }: Com
 
   const messages = await renderToConversation(converse, render);
   return messages.length && messages[messages.length - 1].element;
-}
-
-/** @hidden */
-export function UseToolsPromptEngineered(props: UseToolsProps) {
-  return <InvokeTool tools={props.tools} toolChoice={<ChooseTools {...props} />} fallback={props.fallback} />;
 }

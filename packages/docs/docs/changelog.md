@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.10.0
+
+- Memoized streaming elements no longer replay their entire stream with every render. Instead, they start with the last rendered frame.
+- Elements returned by partial rendering are automatically memoized to ensure they only render once.
+- Streaming components can no longer yield promises or generators. Only `Node`s or `AI.AppendOnlyStream` values can be yielded.
+- The `AI.AppendOnlyStream` value is now a function that can be called with a non-empty value to append.
+
+## [0.9.2](https://github.com/fixie-ai/ai-jsx/commit/219aebeb5e062bf3470a239443626915e0503ad9)
+
+- In the [OpenTelemetry integration](./guides/observability.md#opentelemetry-integration):
+  - Add prompt/completion attributes with token counts for `<OpenAIChatModel>`. This replaces the `tokenCount` attribute added in 0.9.1.
+  - By default, only emit spans for `async` components.
+
+## [0.9.1](https://github.com/fixie-ai/ai-jsx/commit/0d2e6d8ecd1c75b457d0d6c76ff854c9145a9f5f)
+
+- Add `tokenCount` field to [OpenTelemetry-emitted spans](./guides/observability.md#opentelemetry-integration). Now, if you're emitting via OpenTelemetry (e.g. to DataDog), the spans will tell you how many tokens each component resolved to. This is helpful for answering quetsions like "how big is my system message?".
+
+## [0.9.0](https://github.com/fixie-ai/ai-jsx/commit/94624bedc27defc96f7cfead96094c8a577c8e27)
+
+- **Breaking:** Remove prompt-engineered `UseTools`. Previously, if you called `UseTools` with a model that doesn't support native function calling (e.g. Anthropic), `UseTools` would use a polyfilled version that uses prompt engineering to simulate function calling. However, this wasn't reliable enough in practice, so we've dropped it.
+- Fix issue where `gpt-4-32k` didn't accept functions.
+- Fix issue where Anthropic didn't permit function call/responses in its conversation history.
+- Add Anthropic's claude-2 models as valid chat model types.
+- Fix issue where Anthropic prompt formatting had extra `:`s.
+
 ## 0.8.5
 
 - Fix issue where OpenTelemetry failures were not being properly attributed.

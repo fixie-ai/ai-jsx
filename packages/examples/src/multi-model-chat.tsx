@@ -38,7 +38,7 @@ console.log(
   await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(
     <>
       * Anthropic:{' '}
-      <Anthropic chatModel="claude-1">
+      <Anthropic chatModel="claude-2">
         <App />
       </Anthropic>
       {'\n\n'}* OpenAI:{' '}

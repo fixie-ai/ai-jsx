@@ -33,7 +33,7 @@ import { Node } from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
 import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { CreateChatCompletionRequest } from 'openai';
-import { debug, debugRepresentation } from '../core/debug.js';
+import { debugRepresentation } from '../core/debug.js';
 import { getEncoding } from 'js-tiktoken';
 import _ from 'lodash';
 
@@ -176,15 +176,7 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
  * @returns True if the model supports function calling, false otherwise.
  */
 function chatModelSupportsFunctions(model: ValidChatModel) {
-  return [
-    'gpt-4',
-    'gpt-3.5-turbo',
-    'gpt-4-0613',
-    'gpt-4-32k-0613',
-    'gpt-3.5-turbo-0613',
-    'gpt-3.5-turbo-16k',
-    'gpt-3.5-turbo-16k-0613',
-  ].includes(model);
+  return model.startsWith('gpt-4') || model.startsWith('gpt-3.5-turbo');
 }
 
 type OpenAIMethod = 'createCompletion' | 'createChatCompletion' | 'createImage';
@@ -220,6 +212,8 @@ export class OpenAIError<M extends OpenAIMethod> extends HttpError {
   }
 }
 
+// Anthropic has a similar polyfill here:
+// https://github.com/anthropics/anthropic-sdk-typescript/blob/9af152707a9bcf3027afc64f027566be25da2eb9/src/streaming.ts#L266C1-L291C2
 async function* asyncIteratorOfFetchStream(reader: ReturnType<NonNullable<Response['body']>['getReader']>) {
   while (true) {
     const { done, value } =
@@ -404,18 +398,20 @@ export async function* OpenAIChatModel(
 
   let promptTokenLimit = tokenLimitForChatModel(props.model, props.functionDefinitions);
 
-  // If maxTokens is set, reserve that many tokens for the reply.
-  if (promptTokenLimit !== undefined && props.maxTokens) {
-    promptTokenLimit -= props.maxTokens;
+  // If reservedTokens (or maxTokens) is set, reserve that many tokens for the reply.
+  if (promptTokenLimit !== undefined) {
+    promptTokenLimit -= props.reservedTokens ?? props.maxTokens ?? 0;
   }
 
   const conversationMessages = await renderToConversation(
     props.children,
     render,
+    logger,
+    'prompt',
     tokenCountForConversationMessage,
     promptTokenLimit
   );
-  logger.debug({ messages: conversationMessages.map((m) => debug(m.element, true)) }, 'Got input conversation');
+
   const messages: ChatCompletionRequestMessage[] = await Promise.all(
     conversationMessages.map(async (message) => {
       switch (message.type) {
@@ -516,6 +512,7 @@ export async function* OpenAIChatModel(
 
   let isAssistant = false;
   let delta = await advance();
+  const outputMessages = [] as AI.Node[];
   while (delta !== null) {
     if (delta.role === 'assistant') {
       isAssistant = true;
@@ -542,16 +539,19 @@ export async function* OpenAIChatModel(
 
         return AI.AppendOnlyStream;
       };
-      const assistantStream = memo(
-        <Stream {...debugRepresentation(() => `${accumulatedContent}${complete ? '' : '▮'}`)} />
+      const assistantMessage = memo(
+        <AssistantMessage>
+          <Stream {...debugRepresentation(() => `${accumulatedContent}${complete ? '' : '▮'}`)} />
+        </AssistantMessage>
       );
-      yield <AssistantMessage>{assistantStream}</AssistantMessage>;
+      yield assistantMessage;
 
-      // Ensure the assistantStream is flushed by rendering it.
-      await render(assistantStream);
+      // Ensure the assistant stream is flushed by rendering it.
+      await render(assistantMessage);
+      outputMessages.push(assistantMessage);
     }
 
-    // TS doesn't realize that the assistantStream closure can make `delta` be `null`.
+    // TS doesn't realize that the Stream closure can make `delta` be `null`.
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (delta?.function_call) {
       // Memoize the stream to ensure it renders only once.
@@ -584,6 +584,7 @@ export async function* OpenAIChatModel(
 
       // Ensure the functionCallStream is flushed by rendering it.
       await render(functionCallStream);
+      outputMessages.push(functionCallStream);
     }
 
     // TS doesn't realize that the functionCallStream closure can make `delta` be `null`.
@@ -593,8 +594,8 @@ export async function* OpenAIChatModel(
     }
   }
 
-  logger.debug('Finished createChatCompletion');
-
+  // Render the completion conversation to log it.
+  await renderToConversation(outputMessages, render, logger, 'completion', tokenCountForConversationMessage);
   return AI.AppendOnlyStream;
 }
 

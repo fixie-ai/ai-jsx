@@ -51,7 +51,7 @@ function App({ query }: { query: string }) {
         }
       }}
     >
-      <UseTools showSteps tools={tools} fallback="Failed to evaluate the mathematical expression">
+      <UseTools showSteps tools={tools}>
         <UserMessage>{query}</UserMessage>
       </UseTools>
     </ShowConversation>

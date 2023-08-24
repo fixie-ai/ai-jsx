@@ -19,6 +19,7 @@
     "eslint-plugin-jest": "^27.2.2",
     "jest": "^29.5.0",
     "jest-fetch-mock": "^3.0.3",
+    "nock": "^13.3.2",
     "openai": "^3.3.0",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
@@ -69,6 +70,7 @@
     "test": "yarn run typecheck && yarn run unit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.5.10",
     "@opentelemetry/api": "^1.4.1",
     "@opentelemetry/api-logs": "^0.41.1",
     "@opentelemetry/exporter-logs-otlp-grpc": "^0.41.1",
@@ -76,6 +78,8 @@
     "@opentelemetry/instrumentation-fetch": "^0.41.1",
     "@opentelemetry/sdk-logs": "^0.41.1",
     "@opentelemetry/sdk-node": "^0.41.1",
+    "@opentelemetry/sdk-trace-base": "^1.15.2",
+    "@opentelemetry/sdk-trace-node": "^1.15.2",
     "@wandb/sdk": "^0.5.1",
     "ai-jsx": "workspace:*",
     "axios": "^1.4.0",

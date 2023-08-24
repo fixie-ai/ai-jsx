@@ -3,8 +3,9 @@ import { PartiallyRendered, StreamRenderer } from './render.js';
 import { Element, isElement } from './node.js';
 import { memoizedIdSymbol } from './memoize.js';
 import { debug } from './debug.js';
+import { getEnvVar } from '../lib/util.js';
 
-function bindAsyncGeneratorToActiveContext<T = unknown, TReturn = any, TNext = unknown>(
+export function bindAsyncGeneratorToActiveContext<T = unknown, TReturn = any, TNext = unknown>(
   generator: AsyncGenerator<T, TReturn, TNext>
 ): AsyncGenerator<T, TReturn, TNext> {
   const activeContext = context.active();
@@ -29,6 +30,10 @@ interface MemoizedIdAndOwner {
   isOwner: boolean;
 }
 
+// Indicates whether we're currently tracing _any_ component so that we can skip
+// tracing non-root synchronous components.
+const isTracingComponent = createContextKey('Whether the current async context is tracing a component');
+
 // Indicates whether the current async context is responsible for tracing the memoized subtree.
 const activeMemoizedIdStorage = createContextKey('The active MemoizedIdAndOwner');
 
@@ -37,14 +42,25 @@ function spanAttributesForElement(element: Element<any>): opentelemetry.Attribut
 }
 
 export function openTelemetryStreamRenderer(streamRenderer: StreamRenderer): StreamRenderer {
+  const traceEveryComponent = Boolean(getEnvVar('AIJSX_OPENTELEMETRY_TRACE_ALL', false));
   const tracer = opentelemetry.trace.getTracer('ai.jsx');
 
-  return (renderContext, renderable, shouldStop, appendOnly) => {
+  const wrappedRender: StreamRenderer = (renderContext, renderable, shouldStop, appendOnly) => {
     if (!isElement(renderable)) {
       return streamRenderer(renderContext, renderable, shouldStop, appendOnly);
     }
 
-    const activeContext = context.active();
+    let activeContext = context.active();
+    if (!traceEveryComponent && renderable.tag.constructor === Function && activeContext.getValue(isTracingComponent)) {
+      // Don't trace synchronous functions, though note that this also means that non-async
+      // functions that simply return promises won't be traced.
+      return streamRenderer(renderContext, renderable, shouldStop, appendOnly);
+    }
+
+    if (!activeContext.getValue(isTracingComponent)) {
+      activeContext = activeContext.setValue(isTracingComponent, true);
+    }
+
     let startup = (_span: opentelemetry.Span) => {};
     let cleanup = (_span: opentelemetry.Span) => {};
     const renderInSpan = (span: opentelemetry.Span) => {
@@ -59,8 +75,9 @@ export function openTelemetryStreamRenderer(streamRenderer: StreamRenderer): Str
           throw ex;
         } finally {
           if (result) {
+            const resultIsPartial = result.find(isElement);
             // Record the rendered value.
-            span.setAttribute('ai.jsx.result', result.find(isElement) ? debug(result, true) : result.join(''));
+            span.setAttribute('ai.jsx.result', resultIsPartial ? debug(result, true) : result.join(''));
           }
           cleanup(span);
           span.end();
@@ -83,13 +100,11 @@ export function openTelemetryStreamRenderer(streamRenderer: StreamRenderer): Str
         // Nothing is currently tracing this memoized subtree.
         startup = (span) => memoizedIdsToActiveSpanContexts.set(memoizedId, span.spanContext());
         cleanup = () => memoizedIdsToActiveSpanContexts.delete(memoizedId);
-        const newContext = activeContext.setValue(activeMemoizedIdStorage, { id: memoizedId, isOwner: true });
-        return context.with(newContext, () =>
-          tracer.startActiveSpan(
-            `<${renderable.tag.name}>`,
-            { attributes: spanAttributesForElement(renderable) },
-            renderInSpan
-          )
+        return tracer.startActiveSpan(
+          `<${renderable.tag.name}>`,
+          { attributes: spanAttributesForElement(renderable) },
+          activeContext.setValue(activeMemoizedIdStorage, { id: memoizedId, isOwner: true }),
+          renderInSpan
         );
       }
 
@@ -99,16 +114,14 @@ export function openTelemetryStreamRenderer(streamRenderer: StreamRenderer): Str
       if (activeMemoizedIdAndOwner === undefined || activeMemoizedIdAndOwner.id !== memoizedId) {
         // We're entering a memoized subtree that's already being actively rendered. Create a
         // span that shows that we're blocked on the memoized subtree.
-        const newContext = context.active().setValue(activeMemoizedIdStorage, { id: memoizedId, isOwner: false });
-        return context.with(newContext, () =>
-          tracer.startActiveSpan(
-            `<Memoized.${renderable.tag.name}>`,
-            {
-              attributes: { 'ai.jsx.memoized': true, ...spanAttributesForElement(renderable) },
-              links: [{ context: activeSpanContext }],
-            },
-            renderInSpan
-          )
+        return tracer.startActiveSpan(
+          `<Memoized.${renderable.tag.name}>`,
+          {
+            attributes: { 'ai.jsx.memoized': true, ...spanAttributesForElement(renderable) },
+            links: [{ context: activeSpanContext }],
+          },
+          activeContext.setValue(activeMemoizedIdStorage, { id: memoizedId, isOwner: false }),
+          renderInSpan
         );
       }
 
@@ -123,7 +136,10 @@ export function openTelemetryStreamRenderer(streamRenderer: StreamRenderer): Str
     return tracer.startActiveSpan(
       `<${renderable.tag.name}>`,
       { attributes: spanAttributesForElement(renderable) },
+      activeContext,
       renderInSpan
     );
   };
+
+  return wrappedRender;
 }
