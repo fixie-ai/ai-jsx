@@ -1,13 +1,28 @@
 /** @jsxImportSource ai-jsx/react */
 /* eslint-disable react/jsx-key,react/no-unescaped-entities */
 
-import {
+/*import {
   Citation,
   ListUsers,
   FullConversation,
   Card,
   NextStepsButton
-} from '@/components/ui/gen-ui'
+} from './gen-ui-components.js'*/
+function Citation({ children}) {
+  return <></>;
+}
+function ListUsers({ children }) {
+  return <></>;
+}
+function FullConversation({ children }) {
+  return <></>;
+}
+function Card({ children }) {
+  return <></>;
+}
+function NextStepsButton({ children }) {
+  return <></>;
+}
 import { SystemMessage } from 'ai-jsx/core/conversation'
 
 // prettier-ignore

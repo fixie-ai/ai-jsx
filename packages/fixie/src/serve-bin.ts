@@ -12,12 +12,20 @@ class FixieMessage {
   constructor(public text: string) {}
 }
 
-class FixieRequest {
-  constructor(public message: FixieMessage) {}
+class FixieQuery {
+  constructor(public session_id: string, public message: FixieMessage) {}
 }
 
 class FixieResponse {
   constructor(public message: FixieMessage) {}
+}
+
+class ClientMessage {
+  constructor(public role: string, public text: string) {}
+}
+
+class AgentQuery {
+  constructor(public sessionId: string, public messages: ClientMessage[], public timeZoneOffset: string) {}
 }
 
 function toMessageStream(renderable: Renderable) {
@@ -62,9 +70,15 @@ async function serve({
     res.type('application/json').send({ type: 'standalone' });
   });
   app.post('/', async (req: FastifyRequest, res: FastifyReply) => {
-    const body = req.body as FixieRequest;
+    const fixieQuery = req.body as FixieQuery;
+    const agentQuery = new AgentQuery(
+      fixieQuery.session_id,
+      [new ClientMessage('user', fixieQuery.message.text)],
+      '-0700'
+    );
+    console.log(agentQuery);
     try {
-      const messageStream = toMessageStream(handler({ message: body.message.text }));
+      const messageStream = toMessageStream(handler(agentQuery));
       await sendReadableStreamToFastifyReply(res, messageStream);
     } catch (e: any) {
       console.error(e);

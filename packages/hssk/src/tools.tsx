@@ -9,7 +9,7 @@ import { Corpus, ScoredChunk } from 'ai-jsx/batteries/docs'
 import z from 'zod'
 import * as AI from 'ai-jsx'
 import _ from 'lodash'
-import fetch  from 'node-fetch'
+import fetch from 'node-fetch'
 
 // The Fixie corpus ID.
 const FIXIE_CORPUS_ID = '1185'

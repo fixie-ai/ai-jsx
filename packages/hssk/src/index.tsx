@@ -1,21 +1,21 @@
 /** @jsxImportSource ai-jsx/react */
 /* eslint-disable react/jsx-key,react/no-unescaped-entities */
 import 'dotenv/config';
-
+import {UserMessage} from 'ai-jsx/core/conversation'
 import { UseToolsProps } from 'ai-jsx/batteries/use-tools'
 import { OpenAI } from 'ai-jsx/lib/openai'
 import _ from 'lodash'
 import * as AI from 'ai-jsx'
 
 import { ShowConversation, Converse } from 'ai-jsx/core/conversation'
-import { Message as ClientMessage } from 'ai/react/dist'
+//import { Message as ClientMessage } from 'ai/react/dist'
 import createTools from './tools.js'
 import {
   SidekickHelpScoutSystemMessage,
   SidekickHelpScoutSystemMessageProps
 } from './system-message.js'
 import { getNextConversationStep, present } from './conversation.js'
-import { ChatStore } from './store.js'
+//import { ChatStore } from './store.js'
 
 export type OpenAIChatModel = Exclude<
   Parameters<typeof OpenAI>[0]['chatModel'],
@@ -40,7 +40,6 @@ async function App(
   { logger, render }: AI.ComponentContext
 ) {
   const observedTools = createTools({ logger, render })
-
   return (
     <OpenAI chatModel={model} temperature={0}>
       <UseToolsFunctionCall tools={observedTools} showSteps fallback="">
@@ -54,10 +53,8 @@ async function App(
   )
 }
 
-export default async function Foo({ message }: { message: string }) {
-  const messages = [message]
-  const timeZone = 'America/Los_Angeles'
-  const timeZoneOffset = '-07:00'
+export default async function Foo({ message, timeZone, timeZoneOffset }: { message: string, timeZone: string, timeZoneOffset: string }) {
+  const messages = [<UserMessage>{message}</UserMessage>]
 
   // const chatStore = await new ChatStore(reqBody.id ?? nanoid(), reqBody.messages)
   /*const chatStore = await ChatStore.load(
@@ -66,7 +63,6 @@ export default async function Foo({ message }: { message: string }) {
   )*/
 
   const model = DEFAULT_MODEL
-
   return (
       <ShowConversation
         present={present}

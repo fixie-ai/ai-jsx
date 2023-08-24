@@ -13024,6 +13024,7 @@ __metadata:
     eslint: ^8.40.0
     eslint-config-nth: ^2.0.1
     fastify: ^4.20.0
+    lodash: ^4.17.21
     node-fetch: ^3.3.2
     type-fest: ^4.2.0
     typescript: ^5.1.3

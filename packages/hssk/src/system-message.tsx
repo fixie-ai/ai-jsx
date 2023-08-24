@@ -4,7 +4,7 @@
 import { Prompt } from 'ai-jsx/batteries/prompts'
 import { SystemMessage } from 'ai-jsx/core/conversation'
 import { MdxSystemMessage } from 'ai-jsx/react/jit-ui/mdx'
-import { mdxUsageExamples } from './gen-ui'
+import { mdxUsageExamples } from './gen-ui.js'
 
 export interface SidekickHelpScoutSystemMessageProps {
   timeZone: string
