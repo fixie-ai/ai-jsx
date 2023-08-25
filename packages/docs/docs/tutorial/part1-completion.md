@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+displayed_sidebar: tutorialSidebar
 ---
 
 # Tutorial Part 1 - The basics

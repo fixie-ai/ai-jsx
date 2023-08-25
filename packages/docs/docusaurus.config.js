@@ -90,16 +90,19 @@ const config = {
         },
         items: [
           {
-            type: 'docSidebar',
-            sidebarId: 'tutorialSidebar',
+            to: 'tutorial/sidekick tutorial/part1-intro',
             position: 'left',
-            label: 'Tutorials',
+            label: 'Tutorials'
           },
           {
-            type: 'docSidebar',
-            sidebarId: 'tutorialSidebar',
+            to: 'aboutAIJSX',
             position: 'left',
             label: 'Docs',
+          },
+          {
+            to: 'api/',
+            position: 'left',
+            label: 'API',
           },
           {
             href: process.env.GITHUB_URL,
