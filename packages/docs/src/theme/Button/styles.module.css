@@ -8,8 +8,7 @@
   border-radius: calc(var(--ifm-global-border-radius) / 2);
   font-weight: var(--ifm-font-weight-bold);
   font-size: var(--font-size-normal);
-  transition: background-color var(--transition-fastest)
-    var(--transition-bezier);
+  transition: background-color var(--transition-fastest) var(--transition-bezier);
 }
 
 .button:hover {
@@ -26,14 +25,16 @@
 
 .button--primary {
   background-color: var(--theme-button-primary-background-color);
-  color: var(--theme-button-primary-text-color); }
+  color: var(--theme-button-primary-text-color);
+}
 
 .button--primary:hover {
   background-color: var(--theme-button-primary-hover-background-color);
   color: var(--theme-button-primary-text-color);
 }
 
-.button--icon img, .button--icon svg {
+.button--icon img,
+.button--icon svg {
   margin-right: 0.5rem;
 }
 
@@ -93,7 +94,6 @@
   .button--xxsmall {
     padding: 0 0.9rem;
   }
-
 
   .button--plain {
     padding: 0;

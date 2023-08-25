@@ -15,9 +15,9 @@ export const Sidekicks = () => {
         </Section.Title>
 
         <Section.Subtitle className={styles.subheader} left>
-          AI.JSX enables you to easily create Sidekicks, embeddable conversational assistants that live alongside
-          your application. Sidekicks harness the power of DocsQA, Tools, and GenUI and bring everything together in 
-          a seamless experience.
+          AI.JSX enables you to easily create Sidekicks, embeddable conversational assistants that live alongside your
+          application. Sidekicks harness the power of DocsQA, Tools, and GenUI and bring everything together in a
+          seamless experience.
         </Section.Subtitle>
 
         <Section.Subtitle className={styles.subheader} left>
@@ -26,12 +26,9 @@ export const Sidekicks = () => {
               icon={<SvgImage image={<SKFlowImage />} title="An icon showing a conversational sidekick" />}
               title="Start Building a Sidekick"
               description=""
-            >
-            </ActionCard>
+            ></ActionCard>
           </Link>
         </Section.Subtitle>
-        
-        
       </div>
     </Section>
   );

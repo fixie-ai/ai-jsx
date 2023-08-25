@@ -16,10 +16,9 @@
   width: 100%;
 }
 
-
 .showcase__left {
   position: relative;
-  max-height: 455px;  /* give more height to the showcase for our code examples */
+  max-height: 455px; /* give more height to the showcase for our code examples */
   overflow: hidden;
   flex: 1 1 515px;
 }
@@ -109,7 +108,6 @@
 
 .showcase__button--active {
   background: var(--ifm-color-primary);
-  
 }
 
 .showcase__button--active .showcase__description {

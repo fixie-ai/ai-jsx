@@ -164,7 +164,10 @@ export const ExampleScroller = () => {
               })}
               onClick={handleClick3}
             >
-              <h3 className={shCss.showcase__header}><SvgImage image={<ToolsIcon className={shCss.showcase__icon} />} title="Indication arrow icon" />Tools</h3>
+              <h3 className={shCss.showcase__header}>
+                <SvgImage image={<ToolsIcon className={shCss.showcase__icon} />} title="Indication arrow icon" />
+                Tools
+              </h3>
               <p className={shCss.showcase__description}>Give the LLM a tool for listing mailboxes.</p>
             </div>
             <div

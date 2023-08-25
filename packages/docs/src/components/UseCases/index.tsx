@@ -30,11 +30,7 @@ const useCases = [
   },
   {
     title: 'Tools',
-    uses: [
-      'Give your app new capabilities',
-      'Action-oriented through APIs',
-      'Enable end-users to close the loop',
-    ],
+    uses: ['Give your app new capabilities', 'Action-oriented through APIs', 'Enable end-users to close the loop'],
 
     cta: {
       label: 'More on Tools',
@@ -43,10 +39,7 @@ const useCases = [
   },
   {
     title: 'GenUI',
-    uses: [
-      'Move beyond simple text chat',
-      'JSX components enable the LLM to build UI dynamically at runtime',
-    ],
+    uses: ['Move beyond simple text chat', 'JSX components enable the LLM to build UI dynamically at runtime'],
 
     cta: {
       label: 'See GenUI In Action',

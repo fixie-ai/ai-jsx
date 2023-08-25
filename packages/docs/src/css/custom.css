@@ -180,7 +180,6 @@ html[data-theme='dark'] {
 
   /* --theme-text-color: var(--ifm-font-color-base); */
   --theme-text-color: var(--ifm-font-color-base);
-  
 }
 
 html[data-theme='light'] {
