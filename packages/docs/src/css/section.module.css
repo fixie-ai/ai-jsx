@@ -62,7 +62,8 @@
 
 .section--showcase {
   --ifm-pre-padding: 1rem 0;
-  --active-font-size: var(--font-size-big-2);
+  /* --active-font-size: var(--font-size-big-2); */
+  --active-font-size: var(--font-size-small);
 }
 
 .section__title {

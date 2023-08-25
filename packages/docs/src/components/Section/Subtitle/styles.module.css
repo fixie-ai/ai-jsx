@@ -1,7 +1,7 @@
 .root {
   font-size: var(--font-size-big-2);
   font-weight: var(--ifm-font-weight-normal);
-  color: var(--palette-pale-blue);
+  /* color: var(--palette-pale-blue); */
   margin: 0;
 }
 

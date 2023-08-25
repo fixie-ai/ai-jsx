@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import useWindowWidth from '../../theme/useWindowWidth';
 import clsx from 'clsx';
 import Highlight from '../Highlight';
-import MergeTimeIcon from '../../assets/img/pages/index/mergeTime.svg';
 import Chevron from '../../theme/Chevron';
 import seCss from '../../css/section.module.css';
 import shCss from '../../css/index/showcase.module.css';
-import NavigateTimeIcon from '../../assets/img/pages/index/navigateTime.svg';
-import SliceTimeIcon from '../../assets/img/pages/index/sliceTime.svg';
-import SearchTimeIcon from '../../assets/img/pages/index/searchTime.svg';
+import LLMPromptingIcon from '../../assets/img/pages/index/llmPrompting.svg';
+import DocsQAIcon from '../../assets/img/pages/index/docsQA.svg';
+import ToolsIcon from '../../assets/img/pages/index/tools.svg';
+import GenUIIcon from '../../assets/img/pages/index/genUI.svg';
 import SvgImage from '../SvgImage';
 
 const S = [3, 1, 6, 10];
@@ -32,20 +32,16 @@ const promptingJSXCode = `<SystemMessage>
 </SystemMessage>`;
 
 const docsQAJSXCode = `lookUpFixieKnowledgeBase: {
-  description: 'Look up information about Fixie from 
-  its customer support and developer docs',
-  parameters: {
-    query: {
-      description: 'The search query. It will be embedded and used in a vector search against the corpus.',
-      type: 'string',
-      required: true
-    }`;
+  description: 'Look up information about Fixie from its
+  customer support and developer docs'
+  ...
+}`;
 
 const toolsJSXCode = `tools: Record<string, Tool> = {
-  listMailboxes: {
-    description: 'List mailboxes for a customer',
+  listIssues: {
+    description: 'List issues from Github and Discord',
     func: async function () {
-      return fetchAPI('mailboxes')
+      return fetchAPI('issues')
     }
   }
 }`;
@@ -143,7 +139,7 @@ export const ExampleScroller = () => {
               onClick={handleClick1}
             >
               <h3 className={shCss.showcase__header}>
-                <SvgImage image={<SearchTimeIcon className={shCss.showcase__icon} />} title="Magnifying glass icon" />
+                <SvgImage image={<LLMPromptingIcon className={shCss.showcase__icon} />} title="Magnifying glass icon" />
                 LLM Prompting
               </h3>
               <p className={shCss.showcase__description}>Create prompts via components.</p>
@@ -156,7 +152,7 @@ export const ExampleScroller = () => {
               onClick={handleClick2}
             >
               <h3 className={shCss.showcase__header}>
-                <SvgImage image={<SliceTimeIcon className={shCss.showcase__icon} />} title="Knife icon" />
+                <SvgImage image={<DocsQAIcon className={shCss.showcase__icon} />} title="Knife icon" />
                 DocsQA
               </h3>
               <p className={shCss.showcase__description}>Give the LLM new knowledge from your docs and URLs.</p>
@@ -168,20 +164,15 @@ export const ExampleScroller = () => {
               })}
               onClick={handleClick3}
             >
-              <h3 className={shCss.showcase__header}>
-                <SvgImage image={<NavigateTimeIcon className={shCss.showcase__icon} />} title="Indication arrow icon" />
-                Tools
-              </h3>
+              <h3 className={shCss.showcase__header}><SvgImage image={<ToolsIcon className={shCss.showcase__icon} />} title="Indication arrow icon" />Tools</h3>
               <p className={shCss.showcase__description}>Give the LLM a tool for listing mailboxes.</p>
             </div>
             <div
-              className={clsx(shCss.showcase__button, {
-                [shCss['showcase__button--active']]: index === 4,
-              })}
+              className={clsx(shCss.showcase__button, { [shCss['showcase__button--active']]: index === 4 })}
               onClick={handleClick4}
             >
               <h3 className={shCss.showcase__header}>
-                <SvgImage image={<MergeTimeIcon className={shCss.showcase__icon} />} title="Two overlapping squares" />
+                <SvgImage image={<GenUIIcon className={shCss.showcase__icon} />} title="Two overlapping squares" />
                 GenUI
               </h3>
               <p className={shCss.showcase__description}>Move from text-only to fully visual output.</p>

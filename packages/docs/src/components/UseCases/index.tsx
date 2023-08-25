@@ -3,27 +3,25 @@ import Link from '@docusaurus/Link';
 import styles from './styles.module.css';
 
 const useCases = [
-  {
-    title: 'Build Sidekicks',
-    uses: [
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
-    ],
-    cta: {
-      label: 'Start Building',
-      url: '/sidekicks/',
-    },
-  },
+  // {
+  //   title: 'Build Sidekicks',
+  //   uses: [
+  //     'Embeddable conversational assistants',
+  //     'Live alongside your application',
+  //     'Bacon ipsum dolor amet chislic tri-tip',
+  //   ],
+  //   cta: {
+  //     label: 'Start Building',
+  //     url: '/sidekicks/',
+  //   },
+  // },
   {
     title: 'DocsQA',
     uses: [
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
+      'Ground the model in sources of truth',
+      'URLs, documents, PDFs',
+      'Video and audio files',
+      'Fully hosted or bring your own',
     ],
     cta: {
       label: 'Try DocsQA Now',
@@ -33,12 +31,9 @@ const useCases = [
   {
     title: 'Tools',
     uses: [
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
+      'Give your app new capabilities',
+      'Action-oriented through APIs',
+      'Enable end-users to close the loop',
     ],
 
     cta: {
@@ -49,12 +44,8 @@ const useCases = [
   {
     title: 'GenUI',
     uses: [
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
-      'Bacon ipsum dolor amet chislic tri-tip',
+      'Move beyond simple text chat',
+      'JSX components enable the LLM to build UI dynamically at runtime',
     ],
 
     cta: {

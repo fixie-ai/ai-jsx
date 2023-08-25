@@ -12,8 +12,7 @@ const themes = {
 
 const Highlight = ({ code, theme = 'dark' }: { code: string; theme?: 'light' | 'dark' }) => (
   <div>
-    {/* @ts-expect-error missing type for language "questdb-sql". We know it exists but Prism does not provide such type */}
-    <Prism {...defaultProps} language="questdb-sql" code={code} theme={themes[theme]}>
+    <Prism {...defaultProps} language="jsx" code={code} theme={themes[theme]}>
       {({ className, style, tokens, getLineProps, getTokenProps }) => (
         <pre className={className} style={style}>
           {tokens.map((line, i) => (

@@ -14,6 +14,12 @@
   padding: 2rem;
   border-radius: var(--theme-card-border-radius);
   background: var(--theme-card-bg-color);
+  
+}
+
+/* Style the cards in the use cases for dark mode */
+:global(html[data-theme='dark']) .card {
+  background-color: var(--ifm-color-primary);
 }
 
 .illustration {
@@ -32,7 +38,7 @@
 }
 
 .listItem {
-  color: var(--palette-pale-blue);
+  /* color: var(--palette-pale-blue); */
   font-size: var(--font-size-normal);
 }
 

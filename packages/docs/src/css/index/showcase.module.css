@@ -3,7 +3,7 @@
   width: 100%;
   padding: 5rem 3em;
   border-radius: 1rem;
-  font-size: var(--font-size-large);
+  font-size: var(--font-size-small);
   background: var(--palette-rock);
 }
 
@@ -16,9 +16,10 @@
   width: 100%;
 }
 
+
 .showcase__left {
   position: relative;
-  max-height: 355px;
+  max-height: 455px;  /* give more height to the showcase for our code examples */
   overflow: hidden;
   flex: 1 1 515px;
 }
@@ -107,7 +108,8 @@
 }
 
 .showcase__button--active {
-  background: var(--palette-pink);
+  background: var(--ifm-color-primary);
+  
 }
 
 .showcase__button--active .showcase__description {
@@ -143,7 +145,8 @@
 
 @media (max-width: 1113px) {
   .showcase {
-    --active-font-size: calc(var(--font-size-big-2) - 2px);
+    /* --active-font-size: calc(var(--font-size-big-2) - 2px); */
+    --active-font-size: var(--font-size-small);
     padding: 4rem 1.75em;
   }
 
@@ -168,7 +171,8 @@
 
 @media (max-width: 800px) {
   .showcase {
-    --active-font-size: var(--font-size-large);
+    /* --active-font-size: var(--font-size-large); */
+    --active-font-size: var(--font-size-small);
     padding: 3rem 1rem;
     font-size: var(--font-size-normal);
   }
@@ -191,7 +195,8 @@
 
 @media (max-width: 622px) {
   .showcase {
-    --active-font-size: var(--font-size-normal);
+    /* --active-font-size: var(--font-size-normal); */
+    --active-font-size: var(--font-size-small);
     padding: 0;
     font-size: var(--font-size-normal);
   }

@@ -22,8 +22,8 @@
 }
 
 .accent {
-  --ifm-link-hover-color: var(--palette-pink);
-  --ifm-link-color: var(--palette-pink);
+  /* --ifm-link-hover-color: var(--palette-pink);
+  --ifm-link-color: var(--palette-pink); */
   padding-top: 7rem;
   padding-bottom: 7.5rem;
 }

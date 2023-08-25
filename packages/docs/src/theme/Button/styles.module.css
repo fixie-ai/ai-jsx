@@ -1,0 +1,101 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 55px;
+  padding: 0 2rem;
+  border: none;
+  border-radius: calc(var(--ifm-global-border-radius) / 2);
+  font-weight: var(--ifm-font-weight-bold);
+  font-size: var(--font-size-normal);
+  transition: background-color var(--transition-fastest)
+    var(--transition-bezier);
+}
+
+.button:hover {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button--plain {
+  height: auto;
+  padding: 0;
+  font-weight: unset;
+  font-size: unset;
+}
+
+.button--primary {
+  background-color: var(--theme-button-primary-background-color);
+  color: var(--theme-button-primary-text-color); }
+
+.button--primary:hover {
+  background-color: var(--theme-button-primary-hover-background-color);
+  color: var(--theme-button-primary-text-color);
+}
+
+.button--icon img, .button--icon svg {
+  margin-right: 0.5rem;
+}
+
+.button--secondary {
+  background-color: var(--theme-button-secondary-background-color);
+  color: var(--theme-button-secondary-text-color);
+}
+
+.button--secondary:hover {
+  background-color: var(--theme-button-secondary-hover-background-color);
+  color: var(--theme-button-secondary-text-color);
+}
+
+.button--tertiary {
+  background-color: var(--theme-button-tertiary-background-color);
+  color: var(--theme-button-tertiary-text-color);
+}
+
+.button--tertiary:hover {
+  color: var(--theme-button-tertiary-text-color);
+  background-color: var(--theme-button-tertiary-hover-background-color);
+}
+
+.button--large {
+  height: 5rem;
+  font-size: 1.8rem;
+}
+
+.button--small {
+  height: 3.5rem;
+}
+
+.button--xsmall {
+  height: 2.6rem;
+  padding: 0 1rem;
+}
+
+.button--xxsmall {
+  height: 2rem;
+  font-weight: normal;
+  font-size: 0.9rem;
+}
+
+.button--uppercase {
+  text-transform: uppercase;
+}
+
+@media (max-width: 996px) {
+  .button {
+    padding: 0 1.75rem;
+  }
+
+  .button--xsmall {
+    padding: 0 1rem;
+  }
+
+  .button--xxsmall {
+    padding: 0 0.9rem;
+  }
+
+
+  .button--plain {
+    padding: 0;
+  }
+}
