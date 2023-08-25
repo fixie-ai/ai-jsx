@@ -641,7 +641,11 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.fixieApiKey}`,
       },
-      body: JSON.stringify({ query_string: query, chunk_limit: params?.limit }),
+      body: JSON.stringify({
+        corpus_id: this.corpusId,
+        query,
+        page_size: params?.limit ?? 10,
+      }),
     });
     if (response.status !== 200) {
       throw new AIJSXError(
@@ -650,12 +654,11 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
         'runtime'
       );
     }
-    const apiResults = await response.json();
-    return apiResults.chunks.map((result: any) => ({
+    const apiResult = await response.json();
+    return apiResult.results.map((result: any) => ({
       chunk: {
-        content: result.content,
-        metadata: result.metadata,
-        documentName: result.document_name,
+        content: result.snippet,
+        documentName: result.document_id,
       },
       score: result.score,
     }));
