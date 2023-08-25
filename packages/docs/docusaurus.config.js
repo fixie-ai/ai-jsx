@@ -92,7 +92,7 @@ const config = {
           {
             to: 'tutorial/sidekick tutorial/part1-intro',
             position: 'left',
-            label: 'Tutorials'
+            label: 'Tutorials',
           },
           {
             to: 'aboutAIJSX',
