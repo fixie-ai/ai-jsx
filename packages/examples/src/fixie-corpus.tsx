@@ -1,5 +1,5 @@
 /**
- * This is a simple demo showing how to query a corpus of documents through the Fixie service. 
+ * This is a simple demo showing how to query a corpus of documents through the Fixie service.
  * The app only sends a single query to a corpus, and dumps out the raw text of the top 4 chunks.
  */
 
