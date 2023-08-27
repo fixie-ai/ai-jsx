@@ -12443,7 +12443,7 @@ __metadata:
     terminal-kit: ^3.0.0
     typescript: 5.1.3
   bin:
-    fixi: dist/main.js
+    fixie: ./dist/main.js
   languageName: unknown
   linkType: soft
 
