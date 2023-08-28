@@ -11,7 +11,8 @@
 		"jsx": "react",
 		"esModuleInterop": true,
 		"outDir": "dist",
-		"lib": ["DOM"],
+		"lib": ["DOM"]
 	},
-	"include": ["src"]
+        "include": ["src/*", "jest.config.ts", ".eslintrc.cjs"]
 }
+

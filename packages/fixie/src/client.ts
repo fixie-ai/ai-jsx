@@ -20,17 +20,17 @@ export class FixieClient {
     const apiKey = process.env.FIXIE_API_KEY;
     if (!apiKey) {
       throw new Error(
-        'You must set the FIXIE_API_KEY environment variable. This can be found at: https://app.fixie.ai/profile'
+        'You must set the FIXIE_API_KEY environment variable. This can be found at: https://beta.fixie.ai/profile'
       );
     }
     client.apiKey = apiKey;
     return client;
   }
 
-  async request(path: string, body?: any): Promise<Jsonifiable> {
+  async request(path: string, bodyData?: any): Promise<Jsonifiable> {
     let res;
-    if (body) {
-      body = JSON.stringify(body);
+    if (bodyData) {
+      const body = JSON.stringify(bodyData);
       res = await fetch(`${this.url}${path}`, {
         method: 'POST',
         headers: {
@@ -53,27 +53,27 @@ export class FixieClient {
     return res.json();
   }
 
-  async userInfo(): Promise<Jsonifiable> {
+  userInfo(): Promise<Jsonifiable> {
     return this.request('/api/user');
   }
 
-  async listCorpora(): Promise<Jsonifiable> {
+  listCorpora(): Promise<Jsonifiable> {
     return this.request('/api/v1/corpora');
   }
 
-  async getCorpus(corpusId: string): Promise<Jsonifiable> {
+  getCorpus(corpusId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}`);
   }
 
-  async createCorpus(name?: string): Promise<Jsonifiable> {
+  createCorpus(name?: string): Promise<Jsonifiable> {
     const body = {
       name,
       sources: [],
     };
-    return this.request(`/api/v1/corpora`, body);
+    return this.request('/api/v1/corpora', body);
   }
 
-  async queryCorpus(corpusId: string, query: string, pageSize?: number): Promise<Jsonifiable> {
+  queryCorpus(corpusId: string, query: string, pageSize?: number): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
       query,
@@ -82,15 +82,15 @@ export class FixieClient {
     return this.request(`/api/v1/corpora/${corpusId}:query`, body);
   }
 
-  async listCorpusSources(corpusId: string): Promise<Jsonifiable> {
+  listCorpusSources(corpusId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources`);
   }
 
-  async getCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
+  getCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}`);
   }
 
-  async addCorpusSource(corpusId: string, urlPattern: string): Promise<Jsonifiable> {
+  addCorpusSource(corpusId: string, urlPattern: string): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
       source: {
@@ -131,7 +131,7 @@ export class FixieClient {
     return this.request(`/api/v1/corpora/${corpusId}/sources`, body);
   }
 
-  async refreshCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
+  refreshCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
       source_id: sourceId,
@@ -139,19 +139,19 @@ export class FixieClient {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, body);
   }
 
-  async listCorpusSourceJobs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
+  listCorpusSourceJobs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs`);
   }
 
-  async getCorpusSourceJob(corpusId: string, sourceId: string, jobId: string): Promise<Jsonifiable> {
+  getCorpusSourceJob(corpusId: string, sourceId: string, jobId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs/${jobId}`);
   }
 
-  async listCorpusDocs(corpusId: string): Promise<Jsonifiable> {
+  listCorpusDocs(corpusId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/documents`);
   }
 
-  async getCorpusDoc(corpusId: string, docId: string): Promise<Jsonifiable> {
+  getCorpusDoc(corpusId: string, docId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/documents/${docId}`);
   }
 }

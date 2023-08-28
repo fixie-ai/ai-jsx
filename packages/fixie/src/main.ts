@@ -6,7 +6,6 @@
 
 import { program } from 'commander';
 import terminal from 'terminal-kit';
-import open from 'open';
 import { FixieClient } from './client.js';
 
 const { terminal: term } = terminal;
