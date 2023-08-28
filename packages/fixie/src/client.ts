@@ -139,18 +139,6 @@ export class FixieClient {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, body);
   }
 
-  async getCorpusStatus(corpusId: string): Promise<string> {
-    const sources = (await this.listCorpusSources(corpusId)) as any[];
-    sources.map(async (source: any) => {
-      const jobs = await this.listCorpusSourceJobs(corpusId, source.id) as any[];
-      jobs.jobs.map(async (job: any) => {
-        const jobStatus = await this.getCorpusSourceJob(corpusId, source.id, job.id);
-        console.log(jobStatus);
-      }
-    });
-    return 'Okay';
-  }
-
   listCorpusSourceJobs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs`);
   }

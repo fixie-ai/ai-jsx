@@ -10,16 +10,25 @@ import { FixieClient } from './client.js';
 
 const { terminal: term } = terminal;
 
+function showResult(result: any, raw: boolean) {
+  if (raw) {
+    console.log(JSON.stringify(result));
+  } else {
+    term.green(JSON.stringify(result, null, 2));
+  }
+}
+
 program
   .name('fixie')
   .version('1.0.0')
   .description('A command-line client to the Fixie AI platform.')
-  .option('-u, --url <string>', 'URL of the Fixie API endpoint', 'https://app.fixie.ai');
+  .option('-u, --url <string>', 'URL of the Fixie API endpoint', 'https://app.fixie.ai')
+  .option('-r --raw', 'Output raw JSON instead of pretty-printing.');
 
 program.command('user').action(async () => {
   const client = await FixieClient.Create(program.opts().url);
-  const userInfo = await client.userInfo();
-  term('You are logged in as: \n').green(JSON.stringify(userInfo, null, 2));
+  const result = await client.userInfo();
+  showResult(result, program.opts().raw);
 });
 
 const corpus = program.command('corpus').description('Corpus related commands');
@@ -30,7 +39,7 @@ corpus
   .action(async () => {
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.listCorpora();
-    term('Corpora: \n').green(JSON.stringify(result, null, 2));
+    showResult(result, program.opts().raw);
   });
 
 corpus
@@ -39,7 +48,7 @@ corpus
   .action(async (corpusId: string) => {
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.getCorpus(corpusId);
-    term(`Corpus [${corpusId}]: \n`).green(JSON.stringify(result, null, 2));
+    showResult(result, program.opts().raw);
   });
 
 corpus
@@ -48,7 +57,7 @@ corpus
   .action(async (corpusName?: string) => {
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.createCorpus(corpusName);
-    term('Created corpus: \n').green(JSON.stringify(result, null, 2));
+    showResult(result, program.opts().raw);
   });
 
 corpus
@@ -57,7 +66,7 @@ corpus
   .action(async (corpusId: string, query: string) => {
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.queryCorpus(corpusId, query);
-    term('Query result: \n').green(JSON.stringify(result, null, 2));
+    showResult(result, program.opts().raw);
   });
 
 const sources = corpus.command('sources').description('Corpus source related commands');
@@ -68,7 +77,7 @@ sources
   .action(async (corpusId: string, urlPattern: string) => {
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.addCorpusSource(corpusId, urlPattern);
-    term(`Added source to corpus [${corpusId}]: \n`).green(JSON.stringify(result, null, 2));
+    showResult(result, program.opts().raw);
   });
 
 sources
@@ -77,7 +86,7 @@ sources
   .action(async (corpusId: string) => {
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.listCorpusSources(corpusId);
-    term(`Sources for corpus [${corpusId}]: \n`).green(JSON.stringify(result, null, 2));
+    showResult(result, program.opts().raw);
   });
 
 sources
@@ -86,7 +95,7 @@ sources
   .action(async (corpusId: string, sourceId: string) => {
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.getCorpusSource(corpusId, sourceId);
-    term(`Source [${sourceId}] for corpus [${corpusId}]: \n`).green(JSON.stringify(result, null, 2));
+    showResult(result, program.opts().raw);
   });
 
 sources
@@ -95,7 +104,7 @@ sources
   .action(async (corpusId: string, sourceId: string) => {
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.refreshCorpusSource(corpusId, sourceId);
-    term(`Refreshed source [${sourceId}] for corpus [${corpusId}]: \n`).green(JSON.stringify(result, null, 2));
+    showResult(result, program.opts().raw);
   });
 
 const jobs = sources.command('jobs').description('Job-related commands');
@@ -106,7 +115,7 @@ jobs
   .action(async (corpusId: string, sourceId: string) => {
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.listCorpusSourceJobs(corpusId, sourceId);
-    term(`Jobs for source [${sourceId}] in corpus [${corpusId}]: \n`).green(JSON.stringify(result, null, 2));
+    showResult(result, program.opts().raw);
   });
 
 jobs
@@ -115,7 +124,7 @@ jobs
   .action(async (corpusId: string, sourceId: string, jobId: string) => {
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.getCorpusSourceJob(corpusId, sourceId, jobId);
-    term(`Job [${jobId}] for source [${sourceId}] for corpus [${corpusId}]: \n`).green(JSON.stringify(result, null, 2));
+    showResult(result, program.opts().raw);
   });
 
 const docs = corpus.command('docs').description('Document-related commands');
@@ -126,7 +135,7 @@ docs
   .action(async (corpusId: string) => {
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.listCorpusDocs(corpusId);
-    term(`Docs for corpus [${corpusId}]: \n`).green(JSON.stringify(result, null, 2));
+    showResult(result, program.opts().raw);
   });
 
 jobs
@@ -135,7 +144,7 @@ jobs
   .action(async (corpusId: string, docId: string) => {
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.getCorpusDoc(corpusId, docId);
-    term(`Document [${docId}] for corpus [${corpusId}]: \n`).green(JSON.stringify(result, null, 2));
+    showResult(result, program.opts().raw);
   });
 
 program.parse(process.argv);

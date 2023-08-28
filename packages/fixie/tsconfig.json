@@ -1,18 +1,17 @@
 {
-	"extends": "@tsconfig/node18/tsconfig.json",
-	"compilerOptions": {
-		"target": "ES2020", // Node.js 14
-		"strict": true,
-		"noEmitOnError": true,
-		"forceConsistentCasingInFileNames": true,
-		"skipLibCheck": true,
-		"module": "node16",
-		"moduleResolution": "nodenext",
-		"jsx": "react",
-		"esModuleInterop": true,
-		"outDir": "dist",
-		"lib": ["DOM"]
-	},
-        "include": ["src/*", "jest.config.ts", ".eslintrc.cjs"]
+  "extends": "@tsconfig/node18/tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2020", // Node.js 14
+    "strict": true,
+    "noEmitOnError": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "module": "node16",
+    "moduleResolution": "nodenext",
+    "jsx": "react",
+    "esModuleInterop": true,
+    "outDir": "dist",
+    "lib": ["DOM"]
+  },
+  "include": ["src/*", "jest.config.ts", ".eslintrc.cjs"]
 }
-

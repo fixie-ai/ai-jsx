@@ -1,35 +1,35 @@
 {
-	"name": "fixie",
-	"version": "1.0.0",
-	"private": true,
-	"license": "MIT",
-	"type": "module",
-	"scripts": {
-		"build": "tsc",
-		"start": "node dist/main.js",
-		"build-start": "yarn run build && yarn run start",
-		"format": "prettier --write .",
-		"lint": "eslint ."
-	},
-	"files": [
-		"dist"
-	],
-	"bin": "./dist/main.js",
-	"dependencies": {
-		"commander": "^11.0.0",
-		"open": "^9.1.0",
-		"terminal-kit": "^3.0.0"
-	},
-	"devDependencies": {
-		"@tsconfig/node18": "^2.0.1",
-		"@types/node": "^20.4.1",
-		"@types/terminal-kit": "^2.5.1",
-		"@typescript-eslint/eslint-plugin": "^5.60.0",
-		"@typescript-eslint/parser": "^5.60.0",
-		"eslint": "^8.40.0",
-		"eslint-config-nth": "^2.0.1",
-		"prettier": "^3.0.0",
-		"type-fest": "^4.3.1",
-		"typescript": "5.1.3"
-	}
+  "name": "fixie",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "build-start": "yarn run build && yarn run start",
+    "format": "prettier --write .",
+    "lint": "eslint ."
+  },
+  "files": [
+    "dist"
+  ],
+  "bin": "./dist/main.js",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "open": "^9.1.0",
+    "terminal-kit": "^3.0.0"
+  },
+  "devDependencies": {
+    "@tsconfig/node18": "^2.0.1",
+    "@types/node": "^20.4.1",
+    "@types/terminal-kit": "^2.5.1",
+    "@typescript-eslint/eslint-plugin": "^5.60.0",
+    "@typescript-eslint/parser": "^5.60.0",
+    "eslint": "^8.40.0",
+    "eslint-config-nth": "^2.0.1",
+    "prettier": "^3.0.0",
+    "type-fest": "^4.3.1",
+    "typescript": "5.1.3"
+  }
 }
