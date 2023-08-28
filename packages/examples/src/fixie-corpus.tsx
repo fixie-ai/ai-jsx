@@ -6,13 +6,12 @@
 import { ScoredChunk, FixieCorpus } from 'ai-jsx/batteries/docs';
 import { showInspector } from 'ai-jsx/core/inspector';
 
-// This is the corpus ID for the docs.ai-jsx.com corpus.
-const FIXIE_CORPUS_ID = '07d42038-0c0c-4108-8b9e-163e0a4ce683';
+import promptly from 'promptly';
+const { prompt } = promptly;
 
 function ChunkFormatter({ doc }: { doc: ScoredChunk<any> }) {
   return (
     <>
-      {'\n\n'}Chunk from source: {doc.chunk.metadata?.source}
       {'\n'}```chunk{'\n'}
       {doc.chunk.content.replaceAll('```', '\\`\\`\\`')}
       {'\n'}```{'\n'}
@@ -20,19 +19,16 @@ function ChunkFormatter({ doc }: { doc: ScoredChunk<any> }) {
   );
 }
 
-async function App() {
-  const corpus = new FixieCorpus(FIXIE_CORPUS_ID);
+async function App({ corpusId }: { corpusId: string }) {
+  const corpus = new FixieCorpus(corpusId);
 
   const query = 'How do I write a chatbot in AI.JSX?';
   const results = await corpus.search(query, { limit: 4 });
 
-  return (
-    <>
-      {results.map((chunk) => (
-        <ChunkFormatter doc={chunk} />
-      ))}
-    </>
-  );
+  return results.map((chunk) => <ChunkFormatter doc={chunk} />);
 }
 
-showInspector(<App />);
+(async () => {
+  const corpusId = await prompt('Fixie Corpus ID: ');
+  showInspector(<App corpusId={corpusId} />);
+})();
