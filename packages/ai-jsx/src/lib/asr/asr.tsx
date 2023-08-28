@@ -180,10 +180,7 @@ export class Transcript {
  * speech recognition service.
  */
 export class SpeechRecognitionBase extends EventTarget {
-<<<<<<< Updated upstream
-=======
   private lastSentTimestamp: number = 0;
->>>>>>> Stashed changes
   private lastUtteranceEndTime: number = 0;
   private outBuffer: ArrayBuffer[] = [];
   protected socket?: WebSocket;
@@ -237,10 +234,7 @@ export class SpeechRecognitionBase extends EventTarget {
     this.manager.addEventListener('chunk', (evt: CustomEventInit<ArrayBuffer>) => {
       if (this.socket!.readyState == 1) {
         this.sendChunk(evt.detail!);
-<<<<<<< Updated upstream
-=======
         this.incrementSentTimestamp(evt.detail!);
->>>>>>> Stashed changes
       } else if (this.socket!.readyState == 0) {
         this.outBuffer.push(evt.detail!);
       } else {
@@ -255,14 +249,11 @@ export class SpeechRecognitionBase extends EventTarget {
       }
     });
   }
-<<<<<<< Updated upstream
-=======
   private incrementSentTimestamp(chunk: ArrayBuffer) {
     const chunkDuration = chunk.byteLength / 2 / this.manager.sampleRate()!;
     this.lastSentTimestamp += chunkDuration;
   }
   protected updateRecognitionTimestamp(timestamp: number) {}
->>>>>>> Stashed changes
   protected dispatchTranscript(transcript: string, final: boolean) {
     let latency;
     if (final) {
@@ -282,14 +273,10 @@ export class SpeechRecognitionBase extends EventTarget {
     this.socket!.send(chunk);
   }
   protected flush() {
-<<<<<<< Updated upstream
-    this.outBuffer.forEach((chunk) => this.sendChunk(chunk));
-=======
     this.outBuffer.forEach((chunk) => {
       this.sendChunk(chunk);
       this.incrementSentTimestamp(chunk);
     });
->>>>>>> Stashed changes
     this.outBuffer = [];
   }
   protected sendClose() {}
@@ -325,10 +312,7 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
   }
   protected handleMessage(result: any) {
     if (result.type == 'Results') {
-<<<<<<< Updated upstream
-=======
       this.updateRecognitionTimestamp(result.start + result.duration);
->>>>>>> Stashed changes
       let transcript = this.buf ? `${this.buf} ` : '';
       transcript += result.channel.alternatives[0].transcript;
       if (transcript) {
