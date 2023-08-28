@@ -28,7 +28,5 @@ async function App({ corpusId }: { corpusId: string }) {
   return results.map((chunk) => <ChunkFormatter doc={chunk} />);
 }
 
-(async () => {
   const corpusId = await prompt('Fixie Corpus ID: ');
   showInspector(<App corpusId={corpusId} />);
-})();
