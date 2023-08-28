@@ -1,3 +1,5 @@
+import type { Jsonifiable } from 'type-fest';
+
 /**
  * A client to the Fixie AI platform.
  */
@@ -6,26 +8,26 @@ export class FixieClient {
   apiKey!: string;
 
   /** Use Create() instead. */
-  constructor() {}
+  private constructor() {}
 
   /**
-   * Create a new Octopus Farmer client.
+   * Create a new Fixie client.
    * @param url The URL of the Fixie API server.
    */
-  public static async Create(url: string): Promise<FixieClient> {
+  public static Create(url: string): FixieClient {
     const client = new FixieClient();
     client.url = url;
     const apiKey = process.env.FIXIE_API_KEY;
     if (!apiKey) {
       throw new Error(
-        'Must set the FIXIE_API_KEY environment variable. This can be found at: https://app.fixie.ai/profile'
+        'You must set the FIXIE_API_KEY environment variable. This can be found at: https://app.fixie.ai/profile'
       );
     }
     client.apiKey = apiKey;
     return client;
   }
 
-  async request(path: string, body?: any): Promise<any> {
+  async request(path: string, body?: any): Promise<Jsonifiable> {
     let res;
     if (body) {
       body = JSON.stringify(body);
@@ -51,20 +53,19 @@ export class FixieClient {
     return res.json();
   }
 
-  // Read the state of the current game.
-  async userInfo(): Promise<any> {
+  async userInfo(): Promise<Jsonifiable> {
     return this.request('/api/user');
   }
 
-  async listCorpora(): Promise<any> {
+  async listCorpora(): Promise<Jsonifiable> {
     return this.request('/api/v1/corpora');
   }
 
-  async getCorpus(corpusId: string): Promise<any> {
+  async getCorpus(corpusId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}`);
   }
 
-  async createCorpus(name?: string): Promise<any> {
+  async createCorpus(name?: string): Promise<Jsonifiable> {
     const body = {
       name,
       sources: [],
@@ -72,7 +73,7 @@ export class FixieClient {
     return this.request(`/api/v1/corpora`, body);
   }
 
-  async queryCorpus(corpusId: string, query: string, pageSize?: number): Promise<any> {
+  async queryCorpus(corpusId: string, query: string, pageSize?: number): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
       query,
@@ -81,15 +82,15 @@ export class FixieClient {
     return this.request(`/api/v1/corpora/${corpusId}:query`, body);
   }
 
-  async listCorpusSources(corpusId: string): Promise<any> {
+  async listCorpusSources(corpusId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources`);
   }
 
-  async getCorpusSource(corpusId: string, sourceId: string): Promise<any> {
+  async getCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}`);
   }
 
-  async addCorpusSource(corpusId: string, urlPattern: string): Promise<any> {
+  async addCorpusSource(corpusId: string, urlPattern: string): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
       source: {
@@ -130,7 +131,7 @@ export class FixieClient {
     return this.request(`/api/v1/corpora/${corpusId}/sources`, body);
   }
 
-  async refreshCorpusSource(corpusId: string, sourceId: string): Promise<any> {
+  async refreshCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
       source_id: sourceId,
@@ -138,19 +139,19 @@ export class FixieClient {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, body);
   }
 
-  async listCorpusSourceJobs(corpusId: string, sourceId: string): Promise<any> {
+  async listCorpusSourceJobs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs`);
   }
 
-  async getCorpusSourceJob(corpusId: string, sourceId: string, jobId: string): Promise<any> {
+  async getCorpusSourceJob(corpusId: string, sourceId: string, jobId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs/${jobId}`);
   }
 
-  async listCorpusDocs(corpusId: string): Promise<any> {
+  async listCorpusDocs(corpusId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/documents`);
   }
 
-  async getCorpusDoc(corpusId: string, docId: string): Promise<any> {
+  async getCorpusDoc(corpusId: string, docId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/documents/${docId}`);
   }
 }

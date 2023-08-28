@@ -1,4 +1,5 @@
 {
+	"extends": "@tsconfig/node18/tsconfig.json",
 	"compilerOptions": {
 		"target": "ES2020", // Node.js 14
 		"strict": true,
@@ -9,7 +10,8 @@
 		"moduleResolution": "nodenext",
 		"jsx": "react",
 		"esModuleInterop": true,
-		"outDir": "dist"
+		"outDir": "dist",
+		"lib": ["DOM"],
 	},
 	"include": ["src"]
 }
