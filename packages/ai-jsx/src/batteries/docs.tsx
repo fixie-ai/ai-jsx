@@ -625,7 +625,7 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
       this.fixieApiKey = getEnvVar('FIXIE_API_KEY', false);
       if (!this.fixieApiKey) {
         throw new AIJSXError(
-          'You must provide a Fixie API key to access Fixie corpora. Find yours at https://app.fixie.ai/profile.',
+          'You must provide a Fixie API key to access Fixie corpora. Find yours at https://beta.fixie.ai/profile.',
           ErrorCode.MissingFixieAPIKey,
           'user'
         );
