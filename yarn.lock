@@ -5940,6 +5940,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/promptly@npm:^3.0.2":
+  version: 3.0.2
+  resolution: "@types/promptly@npm:3.0.2"
+  dependencies:
+    "@types/node": "*"
+  checksum: dd431c6a7a9d0306254a4435eb7cf9526689846c8b65920c1f56bb79f47e94d0498a95bfc9c7df6002a6bcfb5c4b527b0710e408b9097e8c19c92ea79970bc13
+  languageName: node
+  linkType: hard
+
 "@types/prop-types@npm:*":
   version: 15.7.5
   resolution: "@types/prop-types@npm:15.7.5"
@@ -11579,6 +11588,7 @@ __metadata:
     "@types/lodash": ^4.14.195
     "@types/node": ^20.3.1
     "@types/prompt-sync": ^4.2.0
+    "@types/promptly": ^3.0.2
     "@types/uuid": ^9.0.2
     "@typescript-eslint/eslint-plugin": ^5.60.0
     "@typescript-eslint/parser": ^5.60.0
@@ -11605,6 +11615,7 @@ __metadata:
     pino: ^8.14.1
     pino-pretty: ^10.0.0
     prompt-sync: ^4.2.0
+    promptly: ^3.2.0
     react: ^18.2.0
     ts-jest: ^29.1.0
     ts-node: ^10.9.1
@@ -17602,6 +17613,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mute-stream@npm:~0.0.4":
+  version: 0.0.8
+  resolution: "mute-stream@npm:0.0.8"
+  checksum: ff48d251fc3f827e5b1206cda0ffdaec885e56057ee86a3155e1951bc940fd5f33531774b1cc8414d7668c10a8907f863f6561875ee6e8768931a62121a531a1
+  languageName: node
+  linkType: hard
+
 "mz@npm:^2.4.0, mz@npm:^2.7.0":
   version: 2.7.0
   resolution: "mz@npm:2.7.0"
@@ -19970,6 +19988,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"promptly@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "promptly@npm:3.2.0"
+  dependencies:
+    read: ^1.0.4
+  checksum: 8bf4f346726c36ac96fbc0f52d810172b53dc61607ed884fa78bb7b57164070900a72e6525a480721d339001615450c37656caba37e4e7f1f9ec9b2c0bda7e19
+  languageName: node
+  linkType: hard
+
 "prompts@npm:^2.0.1, prompts@npm:^2.4.2":
   version: 2.4.2
   resolution: "prompts@npm:2.4.2"
@@ -20561,6 +20588,15 @@ __metadata:
   dependencies:
     pify: ^2.3.0
   checksum: cffc728b9ede1e0667399903f9ecaf3789888b041c46ca53382fa3a06303e5132774dc0a96d0c16aa702dbac1ea0833d5a868d414f5ab2af1e1438e19e6657c6
+  languageName: node
+  linkType: hard
+
+"read@npm:^1.0.4":
+  version: 1.0.7
+  resolution: "read@npm:1.0.7"
+  dependencies:
+    mute-stream: ~0.0.4
+  checksum: 2777c254e5732cac96f5d0a1c0f6b836c89ae23d8febd405b206f6f24d5de1873420f1a0795e0e3721066650d19adf802c7882c4027143ee0acf942a4f34f97b
   languageName: node
   linkType: hard
 
