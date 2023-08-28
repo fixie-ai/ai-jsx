@@ -13,6 +13,7 @@ export default function NavBar() {
     'Basic Chat': '/basic-chat',
     'Docs Chat': '/docs-chat',
     'Recipe JIT UI': '/recipe',
+    'Building Blocks JIT UI': '/building-blocks',
     'Speech-to-Text': '/asr',
   };
 

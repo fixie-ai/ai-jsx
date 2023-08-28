@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.7.2
+## 0.8.0
+
+- Move `MdxChatCompletion` to be `MdxSystemMessage`. You can now put this `SystemMessage` in any `ChatCompletion` to prompt the model to give MDX output.
+
+## [0.7.3](https://github.com/fixie-ai/ai-jsx/commit/670ea52647138052cb116cbc56b6cc4bb49512a0)
+
+- Update readme.
+
+## [0.7.2](https://github.com/fixie-ai/ai-jsx/commit/203574abdbdce22c876a0c5a3a94dcc093b753cb)
 
 - Add `Converse` and `ShowConversation` components facilitate streaming conversations.
 

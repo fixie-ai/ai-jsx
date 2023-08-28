@@ -1,6 +1,6 @@
 /** @jsxImportSource ai-jsx */
 import { NextRequest, NextResponse } from 'next/server';
-// TODO(juberti): figure out why this packages make node unhappy
+// TODO(juberti): figure out why these packages make node unhappy
 // import { Deepgram  } from "@deepgram/sdk";
 // import { SpeechClient } from "@soniox/soniox-node";
 
