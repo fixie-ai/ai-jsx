@@ -616,7 +616,7 @@ export class LocalCorpus<
 
 /** A fully mananged {@link Corpus} served by Fixie. */
 export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implements Corpus<ChunkMetadata> {
-  private static readonly DEFAULT_FIXIE_API_URL = 'https://app.fixie.ai/api';
+  private static readonly DEFAULT_FIXIE_API_URL = 'https://beta.fixie.ai/api/v1';
 
   private readonly fixieApiUrl: string;
 
@@ -625,7 +625,7 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
       this.fixieApiKey = getEnvVar('FIXIE_API_KEY', false);
       if (!this.fixieApiKey) {
         throw new AIJSXError(
-          'You must provide a Fixie API key to access Fixie corpora. Find yours at https://app.fixie.ai/profile.',
+          'You must provide a Fixie API key to access Fixie corpora. Find yours at https://beta.fixie.ai/profile.',
           ErrorCode.MissingFixieAPIKey,
           'user'
         );
@@ -635,27 +635,30 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
   }
 
   async search(query: string, params?: { limit?: number }): Promise<ScoredChunk<ChunkMetadata>[]> {
-    const response = await fetch(`${this.fixieApiUrl}/corpora/${this.corpusId}:query`, {
+    const url = `${this.fixieApiUrl}/corpora/${this.corpusId}:query`;
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.fixieApiKey}`,
       },
-      body: JSON.stringify({ query_string: query, chunk_limit: params?.limit }),
+      body: JSON.stringify({
+        corpus_id: this.corpusId,
+        query,
+        page_size: params?.limit ?? 10,
+      }),
     });
     if (response.status !== 200) {
       throw new AIJSXError(
-        `Fixie API returned status ${response.status}: ${await response.text()}`,
+        `Fixie API call to ${url} returned status ${response.status}: ${await response.text()}`,
         ErrorCode.FixieStatusNotOk,
         'runtime'
       );
     }
-    const apiResults = await response.json();
-    return apiResults.chunks.map((result: any) => ({
+    const apiResult = await response.json();
+    return apiResult.results.map((result: any) => ({
       chunk: {
-        content: result.content,
-        metadata: result.metadata,
-        documentName: result.document_name,
+        content: result.snippet,
       },
       score: result.score,
     }));
