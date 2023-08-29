@@ -36,6 +36,15 @@
         "default": "./dist/cjs/jsx-runtime.cjs"
       }
     },
+    "./sidekick": {
+      "import": {
+        "types": "./dist/esm/batteries/sidekick/index.d.ts",
+        "default": "./dist/esm/batteries/sidekick/index.js"
+      },
+      "require": {
+        "default": "./dist/cjs/batteries/sidekick/index.cjs"
+      }
+    },
     "./batteries/docs": {
       "import": {
         "types": "./dist/esm/batteries/docs.d.ts",
