@@ -1,5 +1,5 @@
 /** @jsxImportSource ai-jsx/react */
-import { UseToolsProps } from 'ai-jsx/batteries/use-tools'
+import { UseToolsProps } from 'ai-jsx/batteries/use-tools';
 import {
   Shrinkable,
   ConversationMessage,
@@ -8,77 +8,63 @@ import {
   FunctionCall,
   UserMessage,
   renderToConversation,
-  SystemMessage
-} from 'ai-jsx/core/conversation'
-import { ChatCompletion } from 'ai-jsx/core/completion'
-import _ from 'lodash'
-import { ConversationTurn } from '@/lib/sidekick'
+  SystemMessage,
+} from 'ai-jsx/core/conversation';
+import { ChatCompletion } from 'ai-jsx/core/completion';
+import _ from 'lodash';
+import { ConversationTurn } from '@/lib/sidekick';
 import {
   Message,
   FunctionCall as FunctionCallMessage,
-  FunctionResponse as FunctionResponseMessage
-} from '@/lib/sidekick'
-import * as AI from 'ai-jsx'
-import remarkGfm from 'remark-gfm'
-import remarkMath from 'remark-math'
-import { compile } from '@mdx-js/mdx'
+  FunctionResponse as FunctionResponseMessage,
+} from '@/lib/sidekick';
+import * as AI from 'ai-jsx';
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import { compile } from '@mdx-js/mdx';
 
 export function getConversationHistory(turnsNewestFirst: ConversationTurn[]) {
   return _.reverse(turnsNewestFirst).flatMap(({ messages, role }) => {
     if (role === 'metadata') {
       // This is a bit hacky. We only want to show the "what can you do" message if
       // this is the first turn. Maybe we'll find a better pattern for this later.
-      return turnsNewestFirst.length === 1
-        ? [<UserMessage>What can you do?</UserMessage>]
-        : []
+      return turnsNewestFirst.length === 1 ? [<UserMessage>What can you do?</UserMessage>] : [];
     }
 
-    return messages.map(message => {
+    return messages.map((message) => {
       switch (message.kind) {
         case 'text':
           return role === 'user' ? (
             <UserMessage>{message.content}</UserMessage>
           ) : (
             <AssistantMessage>{message.content}</AssistantMessage>
-          )
+          );
         case 'functionCall':
-          return <FunctionCall name={message.name!} args={message.args!} />
+          return <FunctionCall name={message.name!} args={message.args!} />;
         case 'functionResponse':
-          return (
-            <FunctionResponse name={message.name!}>
-              {message.response}
-            </FunctionResponse>
-          )
+          return <FunctionResponse name={message.name!}>{message.response}</FunctionResponse>;
         default:
-          throw new Error(
-            `Unrecognized message kind: ${JSON.stringify(message)}`
-          )
+          throw new Error(`Unrecognized message kind: ${JSON.stringify(message)}`);
       }
-    })
-  })
+    });
+  });
 }
 
 /**
  * This function defines the shrinking policy. It's activated when the conversation history overflows the context
  * window.
  */
-export function getShrinkableConversation(
-  messages: ConversationMessage[],
-  fullConversation: ConversationMessage[]
-) {
+export function getShrinkableConversation(messages: ConversationMessage[], fullConversation: ConversationMessage[]) {
   return fullConversation.map((message, messageIndex) => {
     // Ensure that nothing in the most recent batch of messages gets dropped.
-    if (
-      messages.length !== fullConversation.length &&
-      messages.includes(message)
-    ) {
-      return message.element
+    if (messages.length !== fullConversation.length && messages.includes(message)) {
+      return message.element;
     }
 
     switch (message.type) {
       case 'system':
         // Never drop system messages.
-        return message.element
+        return message.element;
       case 'functionResponse':
         // As a first pass, elide FunctionResponses.
         return (
@@ -86,67 +72,51 @@ export function getShrinkableConversation(
             importance={0}
             replacement={
               <Shrinkable importance={messageIndex + 1}>
-                <FunctionResponse name={message.element.props.name}>
-                  [snip...]
-                </FunctionResponse>
+                <FunctionResponse name={message.element.props.name}>[snip...]</FunctionResponse>
               </Shrinkable>
             }
           >
             {message.element}
           </Shrinkable>
-        )
+        );
       case 'user':
       case 'assistant':
       case 'functionCall':
         // Then prune oldest -> newest messages.
-        return (
-          <Shrinkable importance={messageIndex + 1}>
-            {message.element}
-          </Shrinkable>
-        )
+        return <Shrinkable importance={messageIndex + 1}>{message.element}</Shrinkable>;
     }
-  })
+  });
 }
 
-function stringifiedMessage<T extends Message>(
-  message: Omit<T, 'id' | 'timeStamp'>
-): string {
-  return JSON.stringify(message)
+function stringifiedMessage<T extends Message>(message: Omit<T, 'id' | 'timeStamp'>): string {
+  return JSON.stringify(message);
 }
 
-async function* Jsonify(
-  { children }: { children: AI.Node },
-  { render }: AI.ComponentContext
-) {
-  const renderResult = render(children)
+async function* Jsonify({ children }: { children: AI.Node }, { render }: AI.ComponentContext) {
+  const renderResult = render(children);
   for await (const frame of renderResult) {
-    yield JSON.stringify(frame)
+    yield JSON.stringify(frame);
   }
-  return JSON.stringify(await renderResult)
+  return JSON.stringify(await renderResult);
 }
 
-export function present(
-  conversationElement: ConversationMessage,
-  index: number
-) {
+export function present(conversationElement: ConversationMessage, index: number) {
   function getLine() {
     switch (conversationElement.type) {
       case 'functionCall':
         return stringifiedMessage<FunctionCallMessage>({
           kind: 'functionCall',
-          state: conversationElement.element.props.partial
-            ? 'in-progress'
-            : 'done',
-          ..._.pick(conversationElement.element.props, 'name', 'args')
-        })
+          state: conversationElement.element.props.partial ? 'in-progress' : 'done',
+          ..._.pick(conversationElement.element.props, 'name', 'args'),
+        });
       case 'functionResponse':
         return stringifiedMessage<FunctionResponseMessage>({
           kind: 'functionResponse',
           state: 'done',
           response: conversationElement.element.props.children as string,
           failed: conversationElement.element.props.failed,
-          name: conversationElement.element.props.name
-        })
+          name: conversationElement.element.props.name,
+        });
       case 'assistant':
         return (
           /* prettier-ignore */
@@ -161,19 +131,19 @@ export function present(
             </Jsonify>
           {'}'}
         </>
-        )
+        );
       default:
-        return null
+        return null;
     }
   }
 
-  const delimiter = index === 0 ? '' : ','
+  const delimiter = index === 0 ? '' : ',';
   return (
     <>
       {delimiter}
       {getLine()}
     </>
-  )
+  );
 }
 
 /**
@@ -192,26 +162,19 @@ export async function getNextConversationStep(
   finalSystemMessageBeforeResponse: AI.Node,
   tools: UseToolsProps['tools']
 ) {
-  const shrinkableConversation = getShrinkableConversation(
-    messages,
-    fullConversation
-  )
-  const lastMessage = messages[messages.length - 1]
+  const shrinkableConversation = getShrinkableConversation(messages, fullConversation);
+  const lastMessage = messages[messages.length - 1];
   switch (lastMessage.type) {
     case 'functionCall': {
-      const { name, args } = lastMessage.element.props
+      const { name, args } = lastMessage.element.props;
       try {
-        return (
-          <FunctionResponse name={name}>
-            {await tools[name].func(args)}
-          </FunctionResponse>
-        )
+        return <FunctionResponse name={name}>{await tools[name].func(args)}</FunctionResponse>;
       } catch (e: any) {
         return (
           <FunctionResponse failed name={name}>
             {e.message}
           </FunctionResponse>
-        )
+        );
       }
     }
     case 'functionResponse':
@@ -222,17 +185,15 @@ export async function getNextConversationStep(
             {finalSystemMessageBeforeResponse}
           </ChatCompletion>
         </RepairMdxInConversation>
-      )
+      );
     case 'user':
       return (
         <RepairMdxInConversation>
-          <ChatCompletion functionDefinitions={tools}>
-            {shrinkableConversation}
-          </ChatCompletion>
+          <ChatCompletion functionDefinitions={tools}>{shrinkableConversation}</ChatCompletion>
         </RepairMdxInConversation>
-      )
+      );
     default:
-      return null
+      return null;
   }
 }
 
@@ -240,11 +201,11 @@ async function getMdxCompileError(mdx: string) {
   try {
     await compile(mdx, {
       // I'm not sure if we actually need to specify these plugins just to check validity.
-      remarkPlugins: [remarkGfm, remarkMath]
-    })
-    return null
+      remarkPlugins: [remarkGfm, remarkMath],
+    });
+    return null;
   } catch (e) {
-    return e
+    return e;
   }
 }
 
@@ -257,18 +218,18 @@ async function* RepairMdxInConversation(
    * but now I can't repro.
    */
 
-  const memoChildren = memo(children)
-  yield memoChildren
-  const conversation = await renderToConversation(memoChildren, render)
+  const memoChildren = memo(children);
+  yield memoChildren;
+  const conversation = await renderToConversation(memoChildren, render);
   return Promise.all(
     conversation.map(async ({ element }) => {
       if (element.tag !== AssistantMessage) {
-        return element
+        return element;
       }
-      const content = await render(element)
-      const mdxCompileError = await getMdxCompileError(content)
+      const content = await render(element);
+      const mdxCompileError = await getMdxCompileError(content);
       if (mdxCompileError) {
-        logger.info({ mdx: content, mdxCompileError }, 'Repairing invalid MDX')
+        logger.info({ mdx: content, mdxCompileError }, 'Repairing invalid MDX');
 
         /**
          * This will stream back the entire response, which can be inefficient if the response is
@@ -276,11 +237,11 @@ async function* RepairMdxInConversation(
          * to be more clever, we could try to figure out what the invalid MDX subset was, and just
          * repair that. Or have the model give us some sort of diff format to apply.
          */
-        return <RepairMdx>{content}</RepairMdx>
+        return <RepairMdx>{content}</RepairMdx>;
       }
-      return element
+      return element;
     })
-  )
+  );
 }
 
 // TODO: what if the MDX is still invalid? We should either retry or give a clear error message to the user.
@@ -291,13 +252,11 @@ function RepairMdx({ children }: { children: string }) {
           to try to share because I'm skeptical overall on the value of sharing prompts.
        */}
       <SystemMessage>
-        You are an expert with MDX. which is Markdown For the Component Era.
-        Here are instructions for how to use MDX: === Begin instructions MDX
-        allows you to use JSX in your markdown content. You can import
-        components, such as interactive charts or alerts, and embed them within
-        your content. This makes writing long-form content with components a
-        blast. More practically MDX can be explained as a format that combines
-        markdown with JSX and looks as follows: === Begin example
+        You are an expert with MDX. which is Markdown For the Component Era. Here are instructions for how to use MDX:
+        === Begin instructions MDX allows you to use JSX in your markdown content. You can import components, such as
+        interactive charts or alerts, and embed them within your content. This makes writing long-form content with
+        components a blast. More practically MDX can be explained as a format that combines markdown with JSX and looks
+        as follows: === Begin example
         {`
         Here is some markdown text
         <MyComponent id="123" />
@@ -310,62 +269,48 @@ function RepairMdx({ children }: { children: string }) {
           label={'this is a string, *not* markdown!'}
           icon={<Icon />}
         />`}
-        * Markdown list item 1 * Markdown list item 2 * Markdown list item 3 ===
-        end example === end instructions Do not include a starting ```mdx and
-        closing ``` line. Just respond with the MDX itself. Do not include extra
-        whitespace that is not needed for the markdown interpretation. For
-        instance, if your component has a prop that's a JSON object, put it all
-        on one line:
+        * Markdown list item 1 * Markdown list item 2 * Markdown list item 3 === end example === end instructions Do not
+        include a starting ```mdx and closing ``` line. Just respond with the MDX itself. Do not include extra
+        whitespace that is not needed for the markdown interpretation. For instance, if your component has a prop that's
+        a JSON object, put it all on one line:
         {`<Component prop={[[{ key: 'value' }, { long: 'field' }]]} />`}
-        This doc tells you the differences between MDX and markdown. === Start
-        doc ### 7.2 Deviations from Markdown MDX adds constructs to Markdown but
-        also prohibits certain normal Markdown constructs. #### 7.2.2 Indented
-        code Indentation to create code blocks is not supported. Instead, use
-        fenced code blocks. The reason for this change is so that elements can
-        be indented. Correct: ```js console.log(1) ``` #### 7.2.3 Autolinks
-        Autolinks are not supported. Instead, use links or references. The
-        reason for this change is because whether something is an element
-        (whether HTML or JSX) or an autolink is ambiguous{' '}
-        {
-          '(Markdown normally treats `<svg:rect>`, `<xml:lang/>`, or `<svg:circle{...props}>` as links)'
-        }
-        . ## Quotes In MDX, be sure to use the proper quote type so quote
-        characters in the string do not break the syntax. For instance:
+        This doc tells you the differences between MDX and markdown. === Start doc ### 7.2 Deviations from Markdown MDX
+        adds constructs to Markdown but also prohibits certain normal Markdown constructs. #### 7.2.2 Indented code
+        Indentation to create code blocks is not supported. Instead, use fenced code blocks. The reason for this change
+        is so that elements can be indented. Correct: ```js console.log(1) ``` #### 7.2.3 Autolinks Autolinks are not
+        supported. Instead, use links or references. The reason for this change is because whether something is an
+        element (whether HTML or JSX) or an autolink is ambiguous{' '}
+        {'(Markdown normally treats `<svg:rect>`, `<xml:lang/>`, or `<svg:circle{...props}>` as links)'}. ## Quotes In
+        MDX, be sure to use the proper quote type so quote characters in the string do not break the syntax. For
+        instance:
         {`
           <A foo='bar " baz' />
           <A foo="I'm" />
           <A foo={\`I'm "good"\`} />
         `}
-        You cannot escape quotes with a \. You must use the proper quote type.
-        ## {'{'} and {'}'} characters In MDX, the {'{'} and {'}'} characters are
-        used to refer to variables, but you don't have any variables available,
-        so you shouldn't use those characters. If you use them because they're
-        otherwise necessary in prose, you must escape them: Example 1: The
-        handlebars template language looks like: \`\{'{'}\{'{'}foo\{'}'}\{'}'}\`
-        Example 2: The handlebars template language looks like: `{'{{'}foo{'}}'}
-        ` The user will give you a message that has invalid MDX. Return the MDX,
-        fixed to be valid. Do not include any other prose. Respond only with the
-        MDX.
+        You cannot escape quotes with a \. You must use the proper quote type. ## {'{'} and {'}'} characters In MDX, the{' '}
+        {'{'} and {'}'} characters are used to refer to variables, but you don't have any variables available, so you
+        shouldn't use those characters. If you use them because they're otherwise necessary in prose, you must escape
+        them: Example 1: The handlebars template language looks like: \`\{'{'}\{'{'}foo\{'}'}\{'}'}\` Example 2: The
+        handlebars template language looks like: `{'{{'}foo{'}}'}` The user will give you a message that has invalid
+        MDX. Return the MDX, fixed to be valid. Do not include any other prose. Respond only with the MDX.
       </SystemMessage>
       <UserMessage>{children}</UserMessage>
     </ChatCompletion>
-  )
+  );
 }
 
-async function* LimitToValidMdx(
-  { children }: { children: AI.Node },
-  { render, logger }: AI.ComponentContext
-) {
-  yield ' '
-  const rendered = render(children)
+async function* LimitToValidMdx({ children }: { children: AI.Node }, { render, logger }: AI.ComponentContext) {
+  yield ' ';
+  const rendered = render(children);
   for await (const frame of rendered) {
-    const mdxCompileError = await getMdxCompileError(frame)
+    const mdxCompileError = await getMdxCompileError(frame);
     if (mdxCompileError) {
-      logger.debug({ mdx: frame, mdxCompileError }, 'Holding back invalid MDX')
-      continue
+      logger.debug({ mdx: frame, mdxCompileError }, 'Holding back invalid MDX');
+      continue;
     }
-    logger.debug({ mdx: frame }, 'Streaming valid MDX')
-    yield frame
+    logger.debug({ mdx: frame }, 'Streaming valid MDX');
+    yield frame;
   }
-  return rendered
+  return rendered;
 }
