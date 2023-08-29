@@ -1,8 +1,10 @@
 {
   "name": "fixie",
   "version": "1.0.0",
-  "private": true,
   "license": "MIT",
+  "repository": "fixie-ai/ai-jsx",
+  "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
+  "homepage": "https://fixie.ai",
   "type": "module",
   "scripts": {
     "build": "tsc",
