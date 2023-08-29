@@ -1,13 +1,17 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
-  "include": ["src/**/*", ".eslintrc.cjs"],
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "jsxImportSource": "ai-jsx",
-    "moduleResolution": "node16",
-    "module": "esnext",
-    "resolveJsonModule": true,
+    "target": "ES2020", // Node.js 14
+    "strict": true,
+    "noEmitOnError": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "module": "node16",
+    "moduleResolution": "nodenext",
+    "jsx": "react",
+    "esModuleInterop": true,
     "outDir": "dist",
-    "declaration": true
-  }
+    "lib": ["DOM"]
+  },
+  "include": ["src/*", "jest.config.ts", ".eslintrc.cjs"]
 }
