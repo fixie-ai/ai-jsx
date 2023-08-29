@@ -320,7 +320,7 @@ export async function* ShowConversation(
     onComplete,
   }: {
     children: AI.Node;
-    present?: (message: ConversationMessage) => AI.Node;
+    present?: (message: ConversationMessage, index: number) => AI.Node;
     onComplete?: (conversation: ConversationMessage[], render: AI.RenderContext['render']) => Promise<void> | void;
   },
   { render, isAppendOnlyRender }: AI.ComponentContext
