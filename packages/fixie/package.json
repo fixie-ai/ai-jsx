@@ -11,8 +11,7 @@
     "start": "node dist/main.js",
     "build-start": "yarn run build && yarn run start",
     "format": "prettier --write .",
-    "lint": "eslint .",
-    "publish": "npm publish --access public"
+    "lint": "eslint ."
   },
   "files": [
     "dist"
