@@ -1,7 +1,6 @@
-/** @jsxImportSource ai-jsx/react */
-import { present } from './conversation';
-import { UseTools } from './use-tools-eject';
-import { SidekickSystemMessage } from './system-message';
+import { present } from './conversation.js';
+import { UseTools } from './use-tools-eject.js';
+import { SidekickSystemMessage } from './system-message.js';
 import _ from 'lodash';
 import { OpenAI } from '../../../lib/openai.js';
 import { UseToolsProps } from '../../use-tools.js';
@@ -65,6 +64,7 @@ export interface SidekickProps extends PlatformProvidedSidekickProps {
   systemMessage?: AI.Node;
   finalSystemMessageBeforeResponse?: AI.Node;
   genUIExamples?: AI.Node;
+  genUIComponentNames?: string[];
 
   /**
    * The role the model should take, like "a customer service agent for Help Scout".
@@ -108,6 +108,7 @@ export function Sidekick(props: SidekickProps, { logger }: AI.ComponentContext) 
               timeZoneOffset={props.timeZoneOffset}
               role={props.role}
               userProvidedGenUIUsageExamples={props.genUIExamples}
+              userProvidedGenUIComponentNames={props.genUIComponentNames}
             />
             {props.systemMessage}
             {props.conversationHistory}

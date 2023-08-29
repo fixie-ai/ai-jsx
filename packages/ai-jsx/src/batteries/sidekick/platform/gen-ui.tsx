@@ -1,5 +1,3 @@
-/** @jsxImportSource ai-jsx/react */
-
 // prettier-ignore
 export const mdxUsageExamples = <>
   Respond concisely, using MDX formatting to make your response
