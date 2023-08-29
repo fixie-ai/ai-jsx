@@ -349,6 +349,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.5.10",
+    "@mdx-js/mdx": "^2.3.0",
     "@nick.heiner/wandb-fork": "^0.5.2-5",
     "@opentelemetry/api": "^1.4.1",
     "@opentelemetry/api-logs": "^0.41.1",
@@ -363,6 +364,8 @@
     "ml-distance": "^4.0.1",
     "openai": "^4.1.0",
     "pino": "^8.14.1",
+    "remark-gfm": "^3.0.1",
+    "remark-math": "^5.1.1",
     "replicate": "^0.12.3",
     "server-only": "^0.0.1",
     "untruncate-json": "^0.0.1",

@@ -1,29 +1,22 @@
-/** @jsxImportSource ai-jsx/react */
-import { UseToolsProps } from 'ai-jsx/batteries/use-tools';
-import {
-  Shrinkable,
-  ConversationMessage,
-  FunctionResponse,
-  AssistantMessage,
-  FunctionCall,
-  UserMessage,
-  renderToConversation,
-  SystemMessage,
-} from 'ai-jsx/core/conversation';
-import { ChatCompletion } from 'ai-jsx/core/completion';
 import _ from 'lodash';
-import { ConversationTurn } from '@/lib/sidekick';
-import {
-  Message,
-  FunctionCall as FunctionCallMessage,
-  FunctionResponse as FunctionResponseMessage,
-} from '@/lib/sidekick';
-import * as AI from 'ai-jsx';
+import * as AI from '../../../index.js';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import { compile } from '@mdx-js/mdx';
+import { ChatCompletion } from '../../../core/completion.js';
+import {
+  UserMessage,
+  AssistantMessage,
+  FunctionCall,
+  FunctionResponse,
+  ConversationMessage,
+  Shrinkable,
+  renderToConversation,
+  SystemMessage,
+} from '../../../core/conversation.js';
+import { UseToolsProps } from '../../use-tools.js';
 
-export function getConversationHistory(turnsNewestFirst: ConversationTurn[]) {
+export function getConversationHistory(turnsNewestFirst: any[]) {
   return _.reverse(turnsNewestFirst).flatMap(({ messages, role }) => {
     if (role === 'metadata') {
       // This is a bit hacky. We only want to show the "what can you do" message if
@@ -31,7 +24,7 @@ export function getConversationHistory(turnsNewestFirst: ConversationTurn[]) {
       return turnsNewestFirst.length === 1 ? [<UserMessage>What can you do?</UserMessage>] : [];
     }
 
-    return messages.map((message) => {
+    return messages.map((message: any) => {
       switch (message.kind) {
         case 'text':
           return role === 'user' ? (

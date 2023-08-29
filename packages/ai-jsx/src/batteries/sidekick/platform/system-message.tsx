@@ -1,15 +1,14 @@
-/** @jsxImportSource ai-jsx/react */
-
 import { SystemMessage } from '../../../core/conversation.js';
 import { MdxSystemMessage } from '../../../react/jit-ui/mdx.js';
 import { Prompt } from '../../prompts.js';
 import { mdxUsageExamples } from './gen-ui.js';
-import { Node } from 'ai-jsx';
+import { Node } from '../../../index.js';
 
 export interface SidekickSystemMessageProps {
   timeZone: string;
   timeZoneOffset: string;
   userProvidedGenUIUsageExamples?: Node;
+  userProvidedGenUIComponentNames?: string[];
   role: string;
 }
 
@@ -17,6 +16,7 @@ export function SidekickSystemMessage({
   timeZone,
   timeZoneOffset,
   userProvidedGenUIUsageExamples,
+  userProvidedGenUIComponentNames,
   role,
 }: SidekickSystemMessageProps) {
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -61,6 +61,7 @@ export function SidekickSystemMessage({
         relevant helpful comments, but do not lead the user to think something can be done when it cannot be.
       </SystemMessage>
       <MdxSystemMessage
+        componentNames={['Card', 'Citation', 'NextStepsButton', ...(userProvidedGenUIComponentNames ?? [])]}
         usageExamples={
           <>
             {mdxUsageExamples}
