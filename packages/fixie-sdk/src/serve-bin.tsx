@@ -4,7 +4,7 @@ import './instrument.js';
 import 'dotenv/config';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { fastify, FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { fastify } from 'fastify';
 import { Readable } from 'stream';
 import { createRenderContext } from 'ai-jsx';
 import { InvokeAgentRequest } from './types.js';
@@ -22,41 +22,40 @@ async function serve({
   port: number;
   silentStartup: boolean;
 }): Promise<void> {
-  const Handler = (await import(path.join(process.cwd(), packagePath))).default;
-  const app: FastifyInstance = fastify();
+  const Handler = (await import(path.resolve(packagePath))).default;
+  const app = fastify();
 
-  const fixieApiHost = process.env.FIXIE_API_HOST ?? 'https://app.fixie.ai';
+  const fixieApiHost = process.env.FIXIE_API_URL ?? 'https://app.fixie.ai';
 
   const getJwks = createRemoteJWKSet(new URL(`${fixieApiHost}/.well-known/jwks.json`));
 
-  app.addHook('onRequest', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.addHook('onRequest', async (request, reply) => {
     try {
       const token = request.headers.authorization?.split(' ')[1];
       if (typeof token !== 'string') {
-        reply.send(new Error('No authorization header'));
+        throw new Error('Missing Authorization header');
         return;
       }
-      (request as any).verifiedToken = await jwtVerify(token, getJwks);
+      (request as any).fixieAuthToken = token;
+      (request as any).fixieVerifiedToken = await jwtVerify(token, getJwks);
     } catch (err) {
       console.error(err);
-      reply.send(err);
+      reply.code(401).send(err);
     }
   });
 
-  app.get('/', (req: FastifyRequest, res: FastifyReply) => {
+  app.get('/', (_, res) => {
     res.type('application/json').send({ type: 'standalone' });
   });
-  app.post('/', (req: FastifyRequest, res: FastifyReply) => {
-    const body = req.body as InvokeAgentRequest;
-    const authToken = req.headers.authorization!.split(' ')[1];
 
+  app.post('/', (req, res) => {
     try {
       const renderable = (
         <FixieRequestWrapper
-          request={body}
-          agentId={(req as any).verifiedToken.payload.aid}
+          request={req.body as InvokeAgentRequest}
           fixieApiHost={fixieApiHost}
-          authToken={authToken}
+          agentId={(req as any).fixieVerifiedToken.payload.aid}
+          authToken={(req as any).fixieAuthToken}
         >
           <Handler />
         </FixieRequestWrapper>
@@ -86,7 +85,7 @@ async function serve({
         );
     } catch (e: any) {
       console.error(e);
-      res.status(500).send(e.message);
+      res.status(500).send(e);
     }
   });
 
@@ -111,7 +110,7 @@ const { argv } = yargs(hideBin(process.argv))
     },
     packagePath: {
       describe:
-        'Path to the package to serve functions from. If this is a relative path, it will be interpreted relative to the current working directory.',
+        'Path to the package exporting the AI.JSX program. If this is a relative path, it will be interpreted relative to the current working directory.',
       type: 'string',
       default: './index.js',
     },
