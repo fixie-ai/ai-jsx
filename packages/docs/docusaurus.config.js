@@ -88,10 +88,19 @@ const config = {
         },
         items: [
           {
-            type: 'docSidebar',
-            sidebarId: 'tutorialSidebar',
+            to: 'tutorial/sidekickTutorial/part1-intro',
+            position: 'left',
+            label: 'Tutorials',
+          },
+          {
+            to: 'aboutAIJSX',
             position: 'left',
             label: 'Docs',
+          },
+          {
+            to: 'api/',
+            position: 'left',
+            label: 'API',
           },
           {
             href: 'https://github.com/fixie-ai/ai-jsx',
