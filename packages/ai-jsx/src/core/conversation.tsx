@@ -1,4 +1,3 @@
-import { ChatCompletionResponseMessage } from 'openai';
 import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
@@ -59,21 +58,16 @@ export function AssistantMessage({ children }: { children: Node }) {
   return children;
 }
 
-export function ConversationHistory({ messages }: { messages: ChatCompletionResponseMessage[] }) {
-  return messages.map((message) => {
-    switch (message.role) {
-      case 'system':
-        return <SystemMessage>{message.content}</SystemMessage>;
-      case 'user':
-        return <UserMessage>{message.content}</UserMessage>;
-      case 'assistant':
-        return <AssistantMessage>{message.content}</AssistantMessage>;
-      case 'function':
-        return (
-          <FunctionCall name={message.function_call!.name!} args={JSON.parse(message.function_call!.arguments!)} />
-        );
-    }
-  });
+/**
+ * Sets the node that the <ConversationHistory /> component will resolve to.
+ */
+export const ConversationHistoryContext = AI.createContext<AI.Node>(null);
+
+/**
+ * Renders to the conversation history provided through ConversationHistoryContext.
+ */
+export function ConversationHistory(_: {}, { getContext }: AI.ComponentContext) {
+  return getContext(ConversationHistoryContext);
 }
 
 /**

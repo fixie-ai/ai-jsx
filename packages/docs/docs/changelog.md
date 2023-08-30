@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.11.0
+## 0.12.0
+
+- Change the `<ConversationHistory>` component to render to a node from a `ConversationHistoryContext` provider, rather
+  than from OpenAI message types.
+
+## [0.11.0](https://github.com/fixie-ai/ai-jsx/commit/44e7702a449861c1f5435215000b6fc3e1a95171)
 
 - Updated the `<FixieCorpus>` component to use the new Fixie Corpus REST API.
   This is currently only available to users on `beta.fixie.ai` but will be brought

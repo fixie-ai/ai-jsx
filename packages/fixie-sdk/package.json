@@ -1,0 +1,54 @@
+{
+  "name": "@fixieai/sdk",
+  "version": "1.0.0-9",
+  "license": "MIT",
+  "repository": "fixie-ai/ai-jsx",
+  "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
+  "homepage": "https://fixie.ai",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "yarn run typecheck"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
+  "bin": {
+    "serve-bin": "dist/serve-bin.js"
+  },
+  "peerDependencies": {
+    "ai-jsx": "<1.0.0"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.4.1",
+    "@opentelemetry/api-logs": "^0.41.1",
+    "@opentelemetry/exporter-logs-otlp-grpc": "^0.41.1",
+    "@opentelemetry/exporter-trace-otlp-grpc": "^0.41.1",
+    "@opentelemetry/instrumentation-fastify": "^0.32.0",
+    "@opentelemetry/instrumentation-fetch": "^0.41.1",
+    "@opentelemetry/instrumentation-http": "^0.41.2",
+    "@opentelemetry/sdk-logs": "^0.41.1",
+    "@opentelemetry/sdk-node": "^0.41.1",
+    "dotenv": "^16.3.1",
+    "fastify": "^4.20.0",
+    "jose": "^4.14.4",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@tsconfig/node18": "^2.0.1",
+    "@types/lodash": "^4.14.195",
+    "@types/node": "^20.3.1",
+    "@types/prompt-sync": "^4.2.0",
+    "@types/uuid": "^9.0.2",
+    "@types/yargs": "^17.0.24",
+    "@typescript-eslint/eslint-plugin": "^5.60.0",
+    "@typescript-eslint/parser": "^5.60.0",
+    "ai-jsx": "workspace:*",
+    "eslint": "^8.40.0",
+    "eslint-config-nth": "^2.0.1",
+    "typescript": "^5.1.3"
+  }
+}
