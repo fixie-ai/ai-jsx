@@ -38,11 +38,11 @@
     },
     "./sidekick": {
       "import": {
-        "types": "./dist/esm/batteries/sidekick/index.d.ts",
-        "default": "./dist/esm/batteries/sidekick/index.js"
+        "types": "./dist/esm/batteries/sidekick/platform/sidekick.d.ts",
+        "default": "./dist/esm/batteries/sidekick/platform/sidekick.js"
       },
       "require": {
-        "default": "./dist/cjs/batteries/sidekick/index.cjs"
+        "default": "./dist/cjs/batteries/sidekick/platform/sidekick.cjs"
       }
     },
     "./batteries/docs": {

@@ -5,7 +5,7 @@ import _ from 'lodash';
 import { OpenAI } from '../../../lib/openai.js';
 import { UseToolsProps } from '../../use-tools.js';
 import * as AI from '../../../index.js';
-import { ShowConversation } from '../../../core/conversation.js';
+import { ConversationHistory, ShowConversation } from '../../../core/conversation.js';
 
 export type OpenAIChatModel = Exclude<Parameters<typeof OpenAI>[0]['chatModel'], undefined>;
 export type ModelProvider = 'openai';
@@ -39,27 +39,7 @@ export function ModelProvider({
   }
 }
 
-/**
- * Data provided by the Fixie platform to drive your Sidekick. In the simple
- * case, you can pass this through to the Sidekick directly. If you have
- * advanced needs, you can either modify these values, or disregard the
- * Fixie-provided values entirely and provide your own.
- */
-export interface PlatformProvidedSidekickProps {
-  /** Provided by the Fixie service, this array contains 
-      the previous conversation the agent had with the user in this thread. */
-  // TODO: find a better type for this
-  conversationHistory: AI.Node[];
-
-  /** In hours, the offset from UTC */
-  timeZoneOffset: string;
-  timeZone: string;
-
-  model: ChatModel;
-  modelProvider: ModelProvider;
-}
-
-export interface SidekickProps extends PlatformProvidedSidekickProps {
+export interface SidekickProps {
   tools?: UseToolsProps['tools'];
   systemMessage?: AI.Node;
   finalSystemMessageBeforeResponse?: AI.Node;
@@ -95,30 +75,22 @@ export function Sidekick(props: SidekickProps, { logger }: AI.ComponentContext) 
   const observedTools = makeObservedTools(props.tools ?? {}, logger);
 
   return (
-    <JsonifyWrapper>
-      <ShowConversation present={present}>
-        <ModelProvider model={props.model} modelProvider={props.modelProvider}>
+        <ModelProvider model='gpt-4-32k' modelProvider='openai'>
           <UseTools
             tools={observedTools}
             showSteps
             finalSystemMessageBeforeResponse={props.finalSystemMessageBeforeResponse}
           >
             <SidekickSystemMessage
-              timeZone={props.timeZone}
-              timeZoneOffset={props.timeZoneOffset}
+              timeZone='America/Los_Angeles'
+              timeZoneOffset='420'
               role={props.role}
               userProvidedGenUIUsageExamples={props.genUIExamples}
               userProvidedGenUIComponentNames={props.genUIComponentNames}
             />
             {props.systemMessage}
-            {props.conversationHistory}
+            <ConversationHistory />
           </UseTools>
         </ModelProvider>
-      </ShowConversation>
-    </JsonifyWrapper>
   );
-}
-
-function JsonifyWrapper({ children }: { children: AI.Node }) {
-  return <>[{children}]</>;
 }
