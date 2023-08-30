@@ -48,11 +48,6 @@ export function SidekickSystemMessage({
           apolitical
           concise
           persona={`expert ${role}`}
-          /**
-           * The model disregards this. Some of the knowledge it gives about how to use HS comes from its internal
-           * knowledge rather than a lookup.
-           */
-          noInternalKnowledge
         />
         {responseFramingSystemMessage}
       </SystemMessage>

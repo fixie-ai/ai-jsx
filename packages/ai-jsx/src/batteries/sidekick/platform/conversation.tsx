@@ -7,7 +7,6 @@ import { ChatCompletion } from '../../../core/completion.js';
 import {
   UserMessage,
   AssistantMessage,
-  FunctionCall,
   FunctionResponse,
   ConversationMessage,
   Shrinkable,
@@ -15,33 +14,6 @@ import {
   SystemMessage,
 } from '../../../core/conversation.js';
 import { UseToolsProps } from '../../use-tools.js';
-
-export function getConversationHistory(turnsNewestFirst: any[]) {
-  return _.reverse(turnsNewestFirst).flatMap(({ messages, role }) => {
-    if (role === 'metadata') {
-      // This is a bit hacky. We only want to show the "what can you do" message if
-      // this is the first turn. Maybe we'll find a better pattern for this later.
-      return turnsNewestFirst.length === 1 ? [<UserMessage>What can you do?</UserMessage>] : [];
-    }
-
-    return messages.map((message: any) => {
-      switch (message.kind) {
-        case 'text':
-          return role === 'user' ? (
-            <UserMessage>{message.content}</UserMessage>
-          ) : (
-            <AssistantMessage>{message.content}</AssistantMessage>
-          );
-        case 'functionCall':
-          return <FunctionCall name={message.name!} args={message.args!} />;
-        case 'functionResponse':
-          return <FunctionResponse name={message.name!}>{message.response}</FunctionResponse>;
-        default:
-          throw new Error(`Unrecognized message kind: ${JSON.stringify(message)}`);
-      }
-    });
-  });
-}
 
 /**
  * This function defines the shrinking policy. It's activated when the conversation history overflows the context
