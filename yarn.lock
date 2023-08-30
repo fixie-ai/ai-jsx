@@ -3016,6 +3016,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fixieai/fixie@workspace:packages/fixie":
+  version: 0.0.0-use.local
+  resolution: "@fixieai/fixie@workspace:packages/fixie"
+  dependencies:
+    "@tsconfig/node18": ^2.0.1
+    "@types/node": ^20.4.1
+    "@types/terminal-kit": ^2.5.1
+    "@typescript-eslint/eslint-plugin": ^5.60.0
+    "@typescript-eslint/parser": ^5.60.0
+    commander: ^11.0.0
+    eslint: ^8.40.0
+    eslint-config-nth: ^2.0.1
+    open: ^9.1.0
+    prettier: ^3.0.0
+    terminal-kit: ^3.0.0
+    type-fest: ^4.3.1
+    typescript: 5.1.3
+  bin:
+    fixie: ./dist/main.js
+  languageName: unknown
+  linkType: soft
+
 "@fixieai/sdk@workspace:*, @fixieai/sdk@workspace:packages/fixie-sdk":
   version: 0.0.0-use.local
   resolution: "@fixieai/sdk@workspace:packages/fixie-sdk"
@@ -3037,7 +3059,7 @@ __metadata:
     "@types/yargs": ^17.0.24
     "@typescript-eslint/eslint-plugin": ^5.60.0
     "@typescript-eslint/parser": ^5.60.0
-    ai-jsx: "*"
+    ai-jsx: "workspace:*"
     dotenv: ^16.3.1
     eslint: ^8.40.0
     eslint-config-nth: ^2.0.1
@@ -12215,28 +12237,6 @@ __metadata:
     "@tsconfig/node18": ^2.0.1
     ai-jsx: "*"
     typescript: ^5.1.3
-  languageName: unknown
-  linkType: soft
-
-"fixie@workspace:packages/fixie":
-  version: 0.0.0-use.local
-  resolution: "fixie@workspace:packages/fixie"
-  dependencies:
-    "@tsconfig/node18": ^2.0.1
-    "@types/node": ^20.4.1
-    "@types/terminal-kit": ^2.5.1
-    "@typescript-eslint/eslint-plugin": ^5.60.0
-    "@typescript-eslint/parser": ^5.60.0
-    commander: ^11.0.0
-    eslint: ^8.40.0
-    eslint-config-nth: ^2.0.1
-    open: ^9.1.0
-    prettier: ^3.0.0
-    terminal-kit: ^3.0.0
-    type-fest: ^4.3.1
-    typescript: 5.1.3
-  bin:
-    fixie: ./dist/main.js
   languageName: unknown
   linkType: soft
 

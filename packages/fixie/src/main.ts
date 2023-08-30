@@ -22,7 +22,7 @@ program
   .name('fixie')
   .version('1.0.0')
   .description('A command-line client to the Fixie AI platform.')
-  .option('-u, --url <string>', 'URL of the Fixie API endpoint', 'https://app.fixie.ai')
+  .option('-u, --url <string>', 'URL of the Fixie API endpoint', process.env.FIXIE_API_URL ?? 'https://app.fixie.ai')
   .option('-r --raw', 'Output raw JSON instead of pretty-printing.');
 
 program.command('user').action(async () => {
