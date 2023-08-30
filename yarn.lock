@@ -3059,7 +3059,7 @@ __metadata:
     "@types/yargs": ^17.0.24
     "@typescript-eslint/eslint-plugin": ^5.60.0
     "@typescript-eslint/parser": ^5.60.0
-    ai-jsx: "workspace:*"
+    ai-jsx: "*"
     dotenv: ^16.3.1
     eslint: ^8.40.0
     eslint-config-nth: ^2.0.1
