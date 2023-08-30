@@ -9,7 +9,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "yarn build && npx --package=@fixieai/sdk serve-bin --packagePath ./dist/index.js --port 8080",
+    "dev": "yarn build && npx --package=@fixieai/sdk fixie-serve-bin --packagePath ./dist/index.js --port 8080",
     "typecheck": "tsc -p tsconfig.json",
     "build": "yarn run typecheck"
   },

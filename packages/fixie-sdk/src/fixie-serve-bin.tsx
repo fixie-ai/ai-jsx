@@ -22,9 +22,8 @@ async function serve({
   port: number;
   silentStartup: boolean;
 }): Promise<void> {
-  let Handler: Component<any>;
   const module = await import(path.resolve(packagePath));
-  Handler = module.default;
+  const Handler: Component<any> | undefined = module.default;
   if (!Handler) {
     throw new Error(`Module at ${packagePath} has no default export. An AI.JSX component must be the default export.`);
   }
@@ -35,9 +34,9 @@ async function serve({
   }
   const app = fastify();
 
-  const fixieApiHost = process.env.FIXIE_API_URL ?? 'https://app.fixie.ai';
+  const fixieApiUrl = process.env.FIXIE_API_URL ?? 'https://app.fixie.ai';
 
-  const getJwks = createRemoteJWKSet(new URL(`${fixieApiHost}/.well-known/jwks.json`));
+  const getJwks = createRemoteJWKSet(new URL(`${fixieApiUrl}/.well-known/jwks.json`));
 
   app.addHook('onRequest', async (request, reply) => {
     try {
@@ -63,7 +62,7 @@ async function serve({
       const renderable = (
         <FixieRequestWrapper
           request={req.body as InvokeAgentRequest}
-          fixieApiHost={fixieApiHost}
+          apiBaseUrl={fixieApiUrl}
           agentId={(req as any).fixieVerifiedToken.payload.aid}
           authToken={(req as any).fixieAuthToken}
         >
@@ -106,7 +105,7 @@ async function serve({
 }
 
 const { argv } = yargs(hideBin(process.argv))
-  .scriptName('cli-tool')
+  .scriptName('fixie-serve-bin')
   .options({
     port: {
       describe: 'Port to listen on',

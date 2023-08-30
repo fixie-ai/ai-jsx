@@ -7,7 +7,7 @@ import { FixieConversation } from './conversation.js';
 export interface FixieRequestContext {
   request: InvokeAgentRequest;
   agentId: string;
-  fixieApiHost: string;
+  apiBaseUrl: string;
   authToken: string;
 }
 
@@ -21,14 +21,14 @@ export const fixieContext = AI.createContext<FixieRequestContext | null>(null);
 export function FixieRequestWrapper({
   request,
   agentId,
-  fixieApiHost,
+  apiBaseUrl,
   authToken,
   children,
 }: FixieRequestContext & {
   children: AI.Node;
 }) {
   return (
-    <fixieContext.Provider value={{ request, agentId, authToken, fixieApiHost }}>
+    <fixieContext.Provider value={{ request, agentId, authToken, apiBaseUrl }}>
       <ConversationHistoryContext.Provider value={<FixieConversation />}>
         <ShowConversation
           present={(message) => {

@@ -11,7 +11,7 @@ export async function FixieConversation(_: {}, { getContext }: AI.ComponentConte
   }
 
   const response = await fetch(
-    `${fixieContextValue.fixieApiHost}/api/conversations/${fixieContextValue.agentId}/${fixieContextValue.request.conversation_id}`,
+    `${fixieContextValue.apiBaseUrl}/api/conversations/${fixieContextValue.agentId}/${fixieContextValue.request.conversation_id}`,
     { headers: { Authorization: `Bearer ${fixieContextValue.authToken}` } }
   );
 
