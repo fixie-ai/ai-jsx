@@ -81,6 +81,9 @@ export function getShrinkableConversation(messages: ConversationMessage[], fullC
   });
 }
 
+type Message = any
+type FunctionCallMessage = any
+type FunctionResponseMessage = any
 function stringifiedMessage<T extends Message>(message: Omit<T, 'id' | 'timeStamp'>): string {
   return JSON.stringify(message);
 }
