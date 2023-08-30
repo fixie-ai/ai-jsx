@@ -1,0 +1,14 @@
+.illustration {
+  height: auto;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--image-shadow);
+}
+
+@media (max-width: 996px) {
+  .illustration {
+    max-width: calc(100% - 2.5rem);
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+  }
+}

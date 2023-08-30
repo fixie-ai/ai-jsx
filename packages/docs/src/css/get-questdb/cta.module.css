@@ -1,0 +1,37 @@
+.cta {
+  display: flex;
+  margin-top: 2.9rem;
+}
+
+.cta__details {
+  display: flex;
+  height: 55px;
+  padding: 0 2rem;
+  align-items: center;
+  border-radius: calc(var(--ifm-global-border-radius) / 2);
+  color: var(--palette-pale-blue);
+  background: var(--theme-input-bg-color);
+  font-size: var(--font-size-normal);
+}
+
+.cta__details--download {
+  margin-right: 1rem;
+}
+
+.cta__version {
+  color: var(--palette-pink);
+}
+
+@media (max-width: 996px) {
+  .cta {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .cta__details {
+    margin: 0;
+    margin-bottom: 1rem;
+  }
+}

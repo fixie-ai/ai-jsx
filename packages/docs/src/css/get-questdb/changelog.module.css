@@ -1,0 +1,19 @@
+.changelog {
+  display: flex;
+  margin-top: 2rem;
+}
+
+.changelog__link {
+  text-decoration: underline;
+  color: var(--palette-pale-blue);
+}
+
+.changelog__link:not(:last-child) {
+  margin-right: 2.5rem;
+}
+
+@media (max-width: 996px) {
+  .changelog__link:not(:last-child) {
+    margin-right: 1.5rem;
+  }
+}
