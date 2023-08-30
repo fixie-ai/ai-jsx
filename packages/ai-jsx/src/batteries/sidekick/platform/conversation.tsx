@@ -83,9 +83,11 @@ export function getShrinkableConversation(messages: ConversationMessage[], fullC
 
 export function present(conversationElement: ConversationMessage) {
   if (conversationElement.type === 'assistant') {
-    return <AssistantMessage>
-      <LimitToValidMdx>{conversationElement.element}</LimitToValidMdx>
-    </AssistantMessage>
+    return (
+      <AssistantMessage>
+        <LimitToValidMdx>{conversationElement.element}</LimitToValidMdx>
+      </AssistantMessage>
+    );
   }
   return conversationElement.element;
 }

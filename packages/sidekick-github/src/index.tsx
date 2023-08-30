@@ -34,25 +34,28 @@ const tools: Record<string, Tool> = {
   },
 };
 
-const finalSystemMessageBeforeResponse = (<SystemMessage>
-  Respond with a `Card`.
-
-  If your API call produced a 4xx error, see if you can fix the request and try again. Otherwise:
-  
-  Give the user suggested next queries, using `NextStepsButton`. Only suggest things you can actually do.
-  Here's an example of what the final outcome should look like:
-  {`
+const finalSystemMessageBeforeResponse = (
+  <SystemMessage>
+    Respond with a `Card`. If your API call produced a 4xx error, see if you can fix the request and try again.
+    Otherwise: Give the user suggested next queries, using `NextStepsButton`. Only suggest things you can actually do.
+    Here's an example of what the final outcome should look like:
+    {`
   <NextStepsButton prompt='See more about this issue' />
   <NextStepsButton prompt='See pull requests linked to this issue' />
   `}
-
-  When you give next steps, phrase them as things the user would say to you. 
-
-  {/* This is disregarded. */}
-  Also, only give next steps that are fully actionable by you. You cannot call any write APIs, so do not make suggestions like `create a new issue`.
-</SystemMessage>
-)
+    When you give next steps, phrase them as things the user would say to you.
+    {/* This is disregarded. */}
+    Also, only give next steps that are fully actionable by you. You cannot call any write APIs, so do not make
+    suggestions like `create a new issue`.
+  </SystemMessage>
+);
 
 export default function SidekickGH() {
-  return <Sidekick role="Github assistant" tools={tools} finalSystemMessageBeforeResponse={finalSystemMessageBeforeResponse} />;
+  return (
+    <Sidekick
+      role="Github assistant"
+      tools={tools}
+      finalSystemMessageBeforeResponse={finalSystemMessageBeforeResponse}
+    />
+  );
 }
