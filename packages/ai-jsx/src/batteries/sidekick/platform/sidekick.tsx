@@ -73,22 +73,24 @@ export function Sidekick(props: SidekickProps, { logger }: AI.ComponentContext) 
   const observedTools = makeObservedTools(props.tools ?? {}, logger);
 
   return (
-        <ModelProvider model='gpt-4-32k' modelProvider='openai'>
-          <UseTools
-            tools={observedTools}
-            showSteps
-            finalSystemMessageBeforeResponse={props.finalSystemMessageBeforeResponse}
-          >
-            <SidekickSystemMessage
-              timeZone='America/Los_Angeles'
-              timeZoneOffset='420'
-              role={props.role}
-              userProvidedGenUIUsageExamples={props.genUIExamples}
-              userProvidedGenUIComponentNames={props.genUIComponentNames}
-            />
-            {props.systemMessage}
-            <ConversationHistory />
-          </UseTools>
-        </ModelProvider>
+    <ModelProvider model="gpt-4-32k" modelProvider="openai">
+      <ShowConversation present={present}>
+        <UseTools
+          tools={observedTools}
+          showSteps
+          finalSystemMessageBeforeResponse={props.finalSystemMessageBeforeResponse}
+        >
+          <SidekickSystemMessage
+            timeZone="America/Los_Angeles"
+            timeZoneOffset="420"
+            role={props.role}
+            userProvidedGenUIUsageExamples={props.genUIExamples}
+            userProvidedGenUIComponentNames={props.genUIComponentNames}
+          />
+          {props.systemMessage}
+          <ConversationHistory />
+        </UseTools>
+      </ShowConversation>
+    </ModelProvider>
   );
 }

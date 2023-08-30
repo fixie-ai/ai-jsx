@@ -81,65 +81,13 @@ export function getShrinkableConversation(messages: ConversationMessage[], fullC
   });
 }
 
-type Message = any;
-type FunctionCallMessage = any;
-type FunctionResponseMessage = any;
-function stringifiedMessage<T extends Message>(message: Omit<T, 'id' | 'timeStamp'>): string {
-  return JSON.stringify(message);
-}
-
-async function* Jsonify({ children }: { children: AI.Node }, { render }: AI.ComponentContext) {
-  const renderResult = render(children);
-  for await (const frame of renderResult) {
-    yield JSON.stringify(frame);
+export function present(conversationElement: ConversationMessage) {
+  if (conversationElement.type === 'assistant') {
+    return <AssistantMessage>
+      <LimitToValidMdx>{conversationElement.element}</LimitToValidMdx>
+    </AssistantMessage>
   }
-  return JSON.stringify(await renderResult);
-}
-
-export function present(conversationElement: ConversationMessage, index: number) {
-  function getLine() {
-    switch (conversationElement.type) {
-      case 'functionCall':
-        return stringifiedMessage<FunctionCallMessage>({
-          kind: 'functionCall',
-          state: conversationElement.element.props.partial ? 'in-progress' : 'done',
-          ..._.pick(conversationElement.element.props, 'name', 'args'),
-        });
-      case 'functionResponse':
-        return stringifiedMessage<FunctionResponseMessage>({
-          kind: 'functionResponse',
-          state: 'done',
-          response: conversationElement.element.props.children as string,
-          failed: conversationElement.element.props.failed,
-          name: conversationElement.element.props.name,
-        });
-      case 'assistant':
-        return (
-          /* prettier-ignore */
-          <>
-          {'{'} 
-            "kind": "text", 
-            "state": "in-progress",
-            "content": <Jsonify>
-              <LimitToValidMdx>
-                {conversationElement.element}
-              </LimitToValidMdx>
-            </Jsonify>
-          {'}'}
-        </>
-        );
-      default:
-        return null;
-    }
-  }
-
-  const delimiter = index === 0 ? '' : ',';
-  return (
-    <>
-      {delimiter}
-      {getLine()}
-    </>
-  );
+  return conversationElement.element;
 }
 
 /**
