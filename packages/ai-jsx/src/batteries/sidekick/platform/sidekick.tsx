@@ -55,14 +55,12 @@ export interface SidekickProps {
 function makeObservedTools(tools: UseToolsProps['tools'], logger: AI.ComponentContext['logger']) {
   return _.mapValues(tools, (tool, toolName) => ({
     ...tool,
-    func: (...args: Parameters<typeof tool.func>) => {
+    func: async (...args: Parameters<typeof tool.func>) => {
       logger.info({ toolName, args }, 'Calling tool');
       try {
-        const result = tool.func(...args);
-        Promise.resolve(result).then((result) => {
-          logger.info({ toolName, args, result }, 'Got result from tool');
-        });
-        return result;
+        const result = await Promise.resolve(tool.func(...args));
+        logger.info({ toolName, args, result }, 'Got result from tool');
+        return typeof result === 'string' ? result : JSON.stringify(result);
       } catch (e) {
         logger.error({ toolName, args, e }, 'Got error calling tool');
         throw e;

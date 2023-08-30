@@ -17,16 +17,19 @@ const tools: Record<string, Tool> = {
         required: true,
       },
     },
-    func: async (query: string) => {
+    func: async ({query}: {query: string}) => {
       const response = await fetch('https://api.github.com/graphql', {
         method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           Authorization: `bearer ${ghToken}`,
         },
         body: JSON.stringify({ query }),
       });
-      const json = await response.json();
-      return json.data;
+      if (!response.ok) {
+        throw new Error(`GH request failed: ${response.status} ${response.statusText} ${response.body}`)
+      }
+      return response.json()
     },
   },
 };
