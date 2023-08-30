@@ -6,7 +6,7 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { fastify } from 'fastify';
 import { Readable } from 'stream';
-import { createRenderContext } from 'ai-jsx';
+import { createRenderContext, Component } from 'ai-jsx';
 import { InvokeAgentRequest } from './types.js';
 import { FixieRequestWrapper } from './request-wrapper.js';
 
@@ -22,7 +22,17 @@ async function serve({
   port: number;
   silentStartup: boolean;
 }): Promise<void> {
-  const Handler = (await import(path.resolve(packagePath))).default;
+  let Handler: Component<any>;
+  const module = await import(path.resolve(packagePath));
+  Handler = module.default;
+  if (!Handler) {
+    throw new Error(`Module at ${packagePath} has no default export. An AI.JSX component must be the default export.`);
+  }
+  if (typeof Handler !== 'function') {
+    throw new Error(
+      `Default export of module at ${packagePath} is not a function. An AI.JSX component must be the default export.`
+    );
+  }
   const app = fastify();
 
   const fixieApiHost = process.env.FIXIE_API_URL ?? 'https://app.fixie.ai';
