@@ -1,56 +1,37 @@
 {
-  "name": "fixie",
-  "version": "1.0.0",
+  "name": "@fixieai/fixie",
+  "version": "1.0.1",
+  "license": "MIT",
+  "repository": "fixie-ai/ai-jsx",
+  "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
+  "homepage": "https://fixie.ai",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "build-start": "yarn run build && yarn run start",
+    "format": "prettier --write .",
+    "lint": "eslint ."
+  },
+  "files": [
+    "dist"
+  ],
+  "bin": "./dist/main.js",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "open": "^9.1.0",
+    "terminal-kit": "^3.0.0"
+  },
   "devDependencies": {
     "@tsconfig/node18": "^2.0.1",
-    "@types/lodash": "^4.14.195",
-    "@types/node": "^20.3.1",
-    "@types/prompt-sync": "^4.2.0",
-    "@types/uuid": "^9.0.2",
-    "@types/yargs": "^17.0.24",
+    "@types/node": "^20.4.1",
+    "@types/terminal-kit": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "^5.60.0",
     "@typescript-eslint/parser": "^5.60.0",
     "eslint": "^8.40.0",
     "eslint-config-nth": "^2.0.1",
-    "typescript": "^5.1.3"
-  },
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "yarn build && npx ts-node dist/serve-bin.js --port 8080 --package-path fixie",
-    "lint": "eslint . --max-warnings 0",
-    "lint:fix": "eslint . --fix",
-    "typecheck": "tsc -p tsconfig.json",
-    "build": "yarn run typecheck",
-    "bin:dev": "npx ts-node dist/serve-bin.js --port 8080 --package-path fixie"
-  },
-  "dependencies": {
-    "@opentelemetry/api": "^1.4.1",
-    "@opentelemetry/api-logs": "^0.41.1",
-    "@opentelemetry/exporter-logs-otlp-grpc": "^0.41.1",
-    "@opentelemetry/exporter-trace-otlp-grpc": "^0.41.1",
-    "@opentelemetry/instrumentation-fastify": "^0.32.0",
-    "@opentelemetry/instrumentation-fetch": "^0.41.1",
-    "@opentelemetry/instrumentation-http": "^0.41.2",
-    "@opentelemetry/sdk-logs": "^0.41.1",
-    "@opentelemetry/sdk-node": "^0.41.1",
-    "ai-jsx": "*",
-    "dotenv": "^16.3.1",
-    "fastify": "^4.20.0",
-    "yargs": "^17.7.2"
-  },
-  "bin": {
-    "serve-bin": "dist/serve-bin.js"
-  },
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "default": "./dist/index.cjs"
-      }
-    }
+    "prettier": "^3.0.0",
+    "type-fest": "^4.3.1",
+    "typescript": "5.1.3"
   }
 }

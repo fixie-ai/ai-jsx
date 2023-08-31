@@ -38,6 +38,8 @@ export enum ErrorCode {
   UnexpectedPartialRenderResult = 1030,
   ChatCompletionInvalidInput = 1031,
 
+  OpenAIAPIError = 1032,
+
   ModelOutputDidNotMatchConstraint = 2000,
 
   UnsupportedMimeType = 2001,
@@ -98,20 +100,5 @@ Need help?
 * Discord: https://discord.com/channels/1065011484125569147/1121125525142904862
 * Docs: https://docs.ai-jsx.com/
 * GH: https://github.com/fixie-ai/ai-jsx/issues`;
-  }
-}
-
-/**
- * Represents an error that occurs while invoking an HTTP request to a Large Language Model.
- */
-export class HttpError extends AIJSXError {
-  constructor(
-    message: string,
-    readonly statusCode: number,
-    readonly errorCode: number,
-    readonly responseBody?: string,
-    readonly responseHeaders?: Record<string, string>
-  ) {
-    super(message || `HTTP request failed with status code ${statusCode}`, errorCode, 'runtime');
   }
 }

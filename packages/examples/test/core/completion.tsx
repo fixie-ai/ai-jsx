@@ -36,7 +36,7 @@ import nock from 'nock';
 import * as AI from 'ai-jsx';
 import { ChatCompletion } from 'ai-jsx/core/completion';
 import { FunctionCall, FunctionResponse, UserMessage, SystemMessage, Shrinkable } from 'ai-jsx/core/conversation';
-import { ChatCompletionDelta, OpenAI, SSE_FINAL_EVENT, SSE_PREFIX, SSE_TERMINATOR } from 'ai-jsx/lib/openai';
+import { OpenAI } from 'ai-jsx/lib/openai';
 import { Tool } from 'ai-jsx/batteries/use-tools';
 import { Anthropic } from 'ai-jsx/lib/anthropic';
 import { CompletionCreateParams } from '@anthropic-ai/sdk/resources/completions';
@@ -45,6 +45,7 @@ import { Jsonifiable } from 'type-fest';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { SimpleSpanProcessor, InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
 import _ from 'lodash';
+import { type OpenAI as OpenAIClient } from 'openai';
 
 afterEach(() => {
   fetchMock.resetMocks();
@@ -467,6 +468,10 @@ describe('anthropic', () => {
 });
 
 function mockOpenAIResponse(message: string, handleRequest?: jest.MockedFn<(req: Jsonifiable) => Promise<void>>) {
+  const SSE_PREFIX = 'data: ';
+  const SSE_TERMINATOR = '\n\n';
+  const SSE_FINAL_EVENT = '[DONE]';
+
   fetchMock.mockIf(
     /^https:\/\/api.openai.com\/v1\/chat\/completions/,
     // This is a hack to let jest-fetch-mock handle response streams.
@@ -477,7 +482,7 @@ function mockOpenAIResponse(message: string, handleRequest?: jest.MockedFn<(req:
       const stringStream = new ReadableStream({
         start(controller) {
           function sendDelta(messagePart: string) {
-            const response: ChatCompletionDelta = {
+            const response: OpenAIClient.Chat.Completions.ChatCompletionChunk = {
               id: 'cmpl-3QJ8ZjX1J5Z5X',
               object: 'text_completion',
               created: 1624430979,
@@ -488,6 +493,8 @@ function mockOpenAIResponse(message: string, handleRequest?: jest.MockedFn<(req:
                     role: 'assistant',
                     content: messagePart,
                   },
+                  index: 0,
+                  finish_reason: 'stop',
                 },
               ],
             };
@@ -514,6 +521,9 @@ function mockAnthropicResponse(
   message: string,
   handleRequest?: jest.MockedFn<(req: CompletionCreateParams) => Promise<void>>
 ) {
+  const SSE_PREFIX = 'data: ';
+  const SSE_TERMINATOR = '\n\n';
+
   nock('https://api.anthropic.com')
     .post('/v1/complete')
     .reply(200, (_uri: string, requestBody: CompletionCreateParams) => {
