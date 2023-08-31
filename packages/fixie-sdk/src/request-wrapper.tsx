@@ -78,7 +78,13 @@ export function FixieRequestWrapper({
   if (!request.generationParams.modelProvider || request.generationParams.modelProvider.toLowerCase() === 'openai') {
     wrappedNode = (
       <OpenAI
-        client={new OpenAIClient({ apiKey: authToken, baseURL: new URL('api/openai-proxy/v1', apiBaseUrl).toString() })}
+        client={
+          new OpenAIClient({
+            apiKey: authToken,
+            baseURL: new URL('api/openai-proxy/v1', apiBaseUrl).toString(),
+            fetch: globalThis.fetch,
+          })
+        }
         chatModel={(request.generationParams.model as ValidChatModel) ?? 'gpt-3.5-turbo'}
       >
         {wrappedNode}
