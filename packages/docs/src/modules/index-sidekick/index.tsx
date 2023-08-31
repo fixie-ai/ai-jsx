@@ -1,13 +1,12 @@
-import React from "react"
-import Link from "@docusaurus/Link"
-import { Section } from "../../components/Section"
-import { ActionCard } from "../../components/ActionCard"
-import SvgImage from "../../components/SvgImage"
-import SKFlowImage from "../../assets/img/pages/index/sidekickFlow.svg"
-import styles from "./styles.module.css"
+import React from 'react';
+import Link from '@docusaurus/Link';
+import { Section } from '../../components/Section';
+import { ActionCard } from '../../components/ActionCard';
+import SvgImage from '../../components/SvgImage';
+import SKFlowImage from '../../assets/img/pages/index/sidekickFlow.svg';
+import styles from './styles.module.css';
 
 export const Sidekick = () => {
-
   return (
     <Section>
       <div className={styles.titles}>
@@ -16,10 +15,9 @@ export const Sidekick = () => {
         </Section.Title>
 
         <Section.Subtitle className={styles.subheader} left>
-        AI.JSX enables you to easily create Sidekicks, embeddable 
-        conversational assistants that live alongside your application. 
-        Sidekicks harness the power of DocsQA, Tools, and GenUI and 
-        bring everything together in a seamless experience.
+          AI.JSX enables you to easily create Sidekicks, embeddable conversational assistants that live alongside your
+          application. Sidekicks harness the power of DocsQA, Tools, and GenUI and bring everything together in a
+          seamless experience.
         </Section.Subtitle>
 
         <Section.Subtitle className={styles.subheader} left>
@@ -33,9 +31,5 @@ export const Sidekick = () => {
         </Section.Subtitle>
       </div>
     </Section>
-  )
-}
-
-
-
-
+  );
+};

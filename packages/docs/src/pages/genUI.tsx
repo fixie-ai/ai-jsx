@@ -9,7 +9,7 @@ export default function GenUI() {
       <Section fullWidth left>
         <div className={styles.titles}>
           <Section.Title level={1} className={styles.header}>
-          GenUI
+            GenUI
           </Section.Title>
 
           <Section.Subtitle className={styles.subheader} left>

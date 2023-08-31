@@ -29,7 +29,6 @@
   --font-size-big-3: 32px;
   --font-size-big-4: 46px;
   --font-size-big-5: 64px;
-
 }
 
 [data-theme='light'] {
@@ -37,7 +36,7 @@
   --ifm-font-color-base: #333;
   --theme-text-color: var(--ifm-font-color-base);
 
-    /* Feature Cards */
+  /* Feature Cards */
   --theme-card-text-color: #21222c;
   --theme-card-title-color: #21222c;
   --theme-card-bg-color: #f0f1f5;
@@ -74,12 +73,6 @@
   --theme-card-secondary-bg-color: #21222c;
   --theme-card-secondary-text-color: #21222c;
   --theme-card-illustration-bg-color: var(--palette-midnight);
-
-
- 
-
-
-
 }
 
 /* If you want to change the base font... */
@@ -88,8 +81,6 @@
 :root {
   --ifm-font-family-base: 'Lato', sans-serif;
 }
-
-
 
 :root {
   --palette-charade: #21222c;
@@ -120,23 +111,16 @@
   --transition-fastest: 100ms;
  */
 
-
-
-
-
   --ifm-code-background: var(--palette-gray);
   --ifm-code-color: var(--palette-white);
   --ifm-code-font-size: var(--font-size-small);
-
 
   --ifm-color-info: var(--palette-sky);
   --ifm-color-success: var(--palette-green);
   --ifm-color-warning: var(--palette-yellow);
   --ifm-dropdown-background-color: var(--palette-rock);
 
-
-  --ifm-font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  --ifm-font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
   --ifm-font-size-base: var(--font-size-small);
   --ifm-global-border-radius: 8px;
   --ifm-h1-font-size: var(--font-size-big-4);
@@ -157,8 +141,6 @@
   --ifm-toc-border-color: var(--palette-white-10);
   --ifm-heading-line-height: 1.5;
 
-
-
   --theme-navbar-inner-padding: 2rem;
   --theme-navbar-background-color: rgba(33, 34, 44, 0.8);
 
@@ -168,10 +150,6 @@
   /* Section Component */
   --theme-section-odd-bg-color: var(--palette-rock);
   --theme-section-title-color: var(--palette-white);
-
-
-
- 
 
   --theme-attention-card-bg-color: var(--palette-gray);
   --theme-attention-card-text-color: var(--palette-white);
@@ -187,8 +165,7 @@
   --z-index-dialog: 101;
 }
 
-
-html[data-theme="light"] {
+html[data-theme='light'] {
   --palette-rock: #262833;
   --palette-gray: #4b4e5d;
 
@@ -204,9 +181,6 @@ html[data-theme="light"] {
   --palette-white-darker: #d9d9d9;
   --palette-yellow: #ffd54f;
 
-
-
-
   --ifm-navbar-background-color: white;
   --ifm-dropdown-background-color: var(--palette-white);
   --ifm-navbar-shadow: 0 1px 0 0 var(--palette-dark-10);
@@ -216,25 +190,18 @@ html[data-theme="light"] {
   --ifm-code-color: var(--palette-charade);
 
   --docsearch-footer-background: var(--ifm-background-color);
-  --docsearch-key-gradient: linear-gradient(
-    -26.5deg,
-    var(--palette-gray) 0%,
-    var(--palette-rock) 100%
-  );
+  --docsearch-key-gradient: linear-gradient(-26.5deg, var(--palette-gray) 0%, var(--palette-rock) 100%);
   --docsearch-key-shadow: 0 3px 3px var(--palette-dark-30);
 
   --image-shadow: 0 10px 20px 5px var(--palette-dark-20);
-
 
   --theme-navbar-background-color: rgba(250, 250, 250, 0.8);
 
   --theme-section-odd-bg-color: #f0f1f5;
   --theme-section-title-color: var(--palette-dark-80);
-  
+
   --theme-input-bg-color: #f0f1f5;
   --theme-input-text-color: #555b88;
-
-
 
   --theme-attention-card-bg-color: #f0f1f5;
 
@@ -248,7 +215,7 @@ html[data-theme="light"] {
   --ifm-hr-border-color: var(--palette-black-10);
 }
 
-html[data-theme="dark"] .DocSearch {
+html[data-theme='dark'] .DocSearch {
   --docsearch-text-color: var(--ifm-font-color-base);
   --docsearch-muted-color: var(--ifm-color-secondary-darkest);
   --docsearch-container-background: rgba(0, 0, 0, 0.5);
@@ -263,16 +230,12 @@ html[data-theme="dark"] .DocSearch {
   --docsearch-hit-background: var(--palette-rock);
   /* Footer */
   --docsearch-footer-background: var(--ifm-background-color);
-  --docsearch-key-gradient: linear-gradient(
-    -26.5deg,
-    var(--palette-gray) 0%,
-    var(--palette-rock) 100%
-  );
+  --docsearch-key-gradient: linear-gradient(-26.5deg, var(--palette-gray) 0%, var(--palette-rock) 100%);
 }
 
 /* syntax railroad charts in documentation */
-html[data-theme="light"] .markdown img[src*="data:image/svg+xml"][alt*="chart"],
-html[data-theme="light"] .markdown img[src$=".svg"][alt*="chart"] {
+html[data-theme='light'] .markdown img[src*='data:image/svg+xml'][alt*='chart'],
+html[data-theme='light'] .markdown img[src$='.svg'][alt*='chart'] {
   filter: invert(1) hue-rotate(200deg);
 }
 
@@ -280,7 +243,6 @@ html[data-theme="light"] .markdown img[src$=".svg"][alt*="chart"] {
   display: inline-block;
   max-width: 25ch;
 }
-
 
 /**
  *
@@ -303,9 +265,6 @@ body {
   display: flex;
   flex-direction: column;
 }
-
-
-
 
 /**
  *
