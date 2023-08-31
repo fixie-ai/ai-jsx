@@ -1,4 +1,5 @@
 import type { Jsonifiable } from 'type-fest';
+import { ApolloClient, InMemoryCache } from '@apollo/client/core';
 
 /**
  * A client to the Fixie AI platform.
@@ -51,6 +52,16 @@ export class FixieClient {
       throw new Error(`Failed to access Fixie API ${this.url}${path}: ${res.statusText}`);
     }
     return res.json();
+  }
+
+  gqlClient(): ApolloClient<any> {
+    return new ApolloClient({
+      uri: `${this.url}/graphql`,
+      cache: new InMemoryCache(),
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+    });
   }
 
   userInfo(): Promise<Jsonifiable> {

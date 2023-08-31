@@ -7,6 +7,7 @@
 import { program } from 'commander';
 import terminal from 'terminal-kit';
 import { FixieClient } from './client.js';
+import { FixieAgent } from './agent.js';
 
 const { terminal: term } = terminal;
 
@@ -145,6 +146,45 @@ jobs
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.getCorpusDoc(corpusId, docId);
     showResult(result, program.opts().raw);
+  });
+
+const agents = program.command('agents').description('Agent related commands');
+
+agents
+  .command('list')
+  .description('List all agents.')
+  .action(async () => {
+    const client = await FixieClient.Create(program.opts().url);
+    const result = await FixieAgent.ListAgents(client);
+    showResult(await Promise.all(result.map((agent) => agent.agentId)), program.opts().raw);
+  });
+
+agents
+  .command('get <agentId>')
+  .description('Get information about the given agent.')
+  .action(async (agentId: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const result = await FixieAgent.GetAgent(client, agentId);
+    showResult(result.metadata, program.opts().raw);
+  });
+
+agents
+  .command('delete <agentHandle>')
+  .description('Delete the given agent.')
+  .action(async (agentHandle: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentHandle);
+    const result = agent.delete();
+    showResult(result, program.opts().raw);
+  });
+
+agents
+  .command('create <agentHandle> [agentName] [agentDescription] [agentMoreInfoUrl]')
+  .description('Create an agent.')
+  .action(async (agentHandle: string, agentName?: string, agentDescription?: string, agentMoreInfoUrl?: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const result = await FixieAgent.CreateAgent(client, agentHandle, agentName, agentDescription, agentMoreInfoUrl);
+    showResult(result.metadata, program.opts().raw);
   });
 
 program.parse(process.argv);

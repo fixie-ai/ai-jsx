@@ -18,7 +18,9 @@
   ],
   "bin": "./dist/main.js",
   "dependencies": {
+    "@apollo/client": "^3.8.1",
     "commander": "^11.0.0",
+    "graphql": "^16.8.0",
     "open": "^9.1.0",
     "terminal-kit": "^3.0.0"
   },
