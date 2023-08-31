@@ -7,6 +7,7 @@
 import { program } from 'commander';
 import terminal from 'terminal-kit';
 import { FixieClient } from './client.js';
+import { LIB_VERSION } from './version.js';
 
 const { terminal: term } = terminal;
 
@@ -20,7 +21,7 @@ function showResult(result: any, raw: boolean) {
 
 program
   .name('fixie')
-  .version('1.0.0')
+  .version(LIB_VERSION)
   .description('A command-line client to the Fixie AI platform.')
   .option('-u, --url <string>', 'URL of the Fixie API endpoint', process.env.FIXIE_API_URL ?? 'https://app.fixie.ai')
   .option('-r --raw', 'Output raw JSON instead of pretty-printing.');

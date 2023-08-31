@@ -1,12 +1,13 @@
 {
   "name": "@fixieai/fixie",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://fixie.ai",
   "type": "module",
   "scripts": {
+    "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts",
     "build": "tsc",
     "start": "node dist/main.js",
     "build-start": "yarn run build && yarn run start",
