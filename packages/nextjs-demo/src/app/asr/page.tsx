@@ -87,25 +87,26 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, link, id, costPerMinu
     setFinalLatency([]);
     element.value = '';
     recognizer.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
+      const transcriptObj = event.detail!;
       const currData = element.value;
       const lastNewlineIndex = currData.lastIndexOf('\n');
       const oldData = lastNewlineIndex != -1 ? currData.slice(0, lastNewlineIndex + 1) : '';
-      let newData = oldData + event.detail!.text;
-      if (!event.detail!.final) {
-        if (event.detail!.latency) {
-          setPartialLatency((partialLatency) => [...partialLatency, event.detail!.latency]);
+      let newData = oldData + transcriptObj.text;
+      if (!transcriptObj.final) {
+        if (transcriptObj.latency) {
+          setPartialLatency((partialLatency) => [...partialLatency, transcriptObj.latency!]);
         }
       } else {
         newData += '\n';
         setOutput(newData);
-        if (event.detail!.latency) {
-          setFinalLatency((finalLatency) => [...finalLatency, event.detail!.latency]);
+        if (transcriptObj.latency) {
+          setFinalLatency((finalLatency) => [...finalLatency, transcriptObj.latency!]);
         }
       }
       element.value = newData;
       element.scrollTop = element.scrollHeight;
       console.log(
-        `[${id}] ${event.detail.timestamp.toFixed(0)} ${event.detail!.text} (${event.detail!.latency} ms) ${
+        `[${id}] ${transcriptObj.timestamp.toFixed(0)} ${event.detail!.text} (${event.detail!.latency} ms) ${
           event.detail!.final ? 'FINAL' : ''
         }`
       );
