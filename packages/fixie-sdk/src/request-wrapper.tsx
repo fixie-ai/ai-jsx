@@ -85,7 +85,7 @@ export function FixieRequestWrapper({
             fetch: globalThis.fetch,
           })
         }
-        chatModel={(request.generationParams.model as ValidChatModel) ?? 'gpt-3.5-turbo'}
+        chatModel={(request.generationParams.model as ValidChatModel | undefined) ?? 'gpt-3.5-turbo'}
       >
         {wrappedNode}
       </OpenAI>
