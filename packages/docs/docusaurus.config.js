@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
@@ -11,7 +13,7 @@ const config = {
   favicon: 'img/foxie.png',
 
   // Set the production url of your site here
-  url: 'https://docs.ai-jsx.com/',
+  url: process.env.DOCS_URL,
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
@@ -84,7 +86,7 @@ const config = {
           alt: 'AI.JSX Logo',
           src: 'img/foxie.png',
           srcDark: 'img/foxie.png',
-          href: 'https://docs.ai-jsx.com/',
+          href: process.env.DOCS_URL,
         },
         items: [
           {
@@ -103,48 +105,82 @@ const config = {
             label: 'API',
           },
           {
-            href: 'https://github.com/fixie-ai/ai-jsx',
+            href: process.env.GITHUB_URL,
             label: 'GitHub',
             position: 'right',
           },
           {
-            href: 'https://discord.gg/MsKAeKF8kU',
+            href: process.env.DISCORD_URL,
             label: 'Discord',
             position: 'right',
           },
         ],
       },
       footer: {
+        logo: {
+          alt: 'Fixie Logo',
+          src: 'img/foxie-charcoal.svg',
+          href: process.env.FIXIE_URL,
+          width: 160,
+          height: 51,
+        },
         style: 'dark',
         links: [
           {
-            title: 'Community',
+            title: 'Resources',
             items: [
               {
+                label: 'Docs',
+                href: '/aboutAIJSX/',
+              },
+              {
+                label: 'Learn',
+                href: '/aboutAIJSX/',
+              },
+              {
                 label: 'Discord',
-                href: 'https://discord.gg/MsKAeKF8kU',
+                href: process.env.DISCORD_URL,
               },
               {
-                label: 'Twitter',
-                href: 'https://twitter.com/fixieai?lang=en',
+                label: 'GitHub',
+                href: process.env.GITHUB_URL,
               },
               {
-                label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/ai-jsx',
+                label: 'Releases',
+                href: '/changelog',
               },
             ],
           },
           {
-            title: 'More',
+            title: 'About Fixie',
             items: [
               {
-                label: 'GitHub',
-                href: 'https://github.com/fixie-ai/ai-jsx/',
+                label: 'About',
+                href: process.env.FIXIE_ABOUT,
+              },
+              {
+                label: 'Blog',
+                href: process.env.FIXIE_BLOG,
+              },
+              {
+                label: 'Careers',
+                href: process.env.FIXIE_CAREERS,
+              },
+              {
+                html: `<a href="mailto:hello@fixie.ai">Get in Touch</a>`,
+              },
+              {
+                label: 'Privacy Policy',
+                href: process.env.FIXIE_PRIVACY,
+              },
+              {
+                label: 'Twitter',
+                href: process.env.TWITTER_URL,
               },
             ],
           },
         ],
-        copyright: `Copyright © 2023 Fixie.ai`,
+        copyright: process.env.COPYRIGHT_FIXIE,
       },
       prism: {
         theme: lightCodeTheme,
@@ -184,8 +220,8 @@ const config = {
   },
 
   customFields: {
-    gitHubUrl: "https://github.com/fixie-ai/ai-jsx/",
-    discordUrl: "https://discord.gg/MsKAeKF8kU",
+    gitHubUrl: process.env.GITHUB_URL,
+    discordUrl: process.env.DISCORD_URL,
   },
 };
 
