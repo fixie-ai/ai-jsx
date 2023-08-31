@@ -62,13 +62,23 @@ export function AssistantMessage({ children }: { children: Node }) {
 /**
  * Sets the node that the <ConversationHistory /> component will resolve to.
  */
-export const ConversationHistoryContext = AI.createContext<AI.Node>(null);
+export const ConversationHistoryContext = AI.createContext<AI.Node>(undefined);
 
 /**
  * Renders to the conversation history provided through ConversationHistoryContext.
  */
 export function ConversationHistory(_: {}, { getContext }: AI.ComponentContext) {
-  return getContext(ConversationHistoryContext);
+  const fromContext = getContext(ConversationHistoryContext);
+
+  if (fromContext === undefined) {
+    throw new AIJSXError(
+      'No conversation history was present on the context. Use the ConversationHistoryContext.Provider component to set the conversation history.',
+      ErrorCode.ConversationHistoryComponentRequiresContext,
+      'user'
+    );
+  }
+
+  return fromContext;
 }
 
 /**
@@ -254,7 +264,7 @@ export async function renderToConversation(
  *
  *        return null;
  *      }>
- *      <ConversationHistory messages={jsonMessages} />
+ *      <ConversationHistory />
  *    </ChatCompletion>
  *
  *    ==> 'Hello there!'

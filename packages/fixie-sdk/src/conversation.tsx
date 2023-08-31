@@ -12,7 +12,7 @@ export async function FixieConversation(_: {}, { getContext }: AI.ComponentConte
 
   const response = await fetch(
     new URL(
-      `/api/conversations/${fixieContextValue.agentId}/${fixieContextValue.request.conversationId}`,
+      `/api/v1/agents/${fixieContextValue.agentId}/conversations/${fixieContextValue.request.conversationId}`,
       fixieContextValue.apiBaseUrl
     ),
     { headers: { Authorization: `Bearer ${fixieContextValue.authToken}` } }

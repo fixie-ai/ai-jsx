@@ -49,6 +49,8 @@ export enum ErrorCode {
 
   ModelOutputCouldNotBeParsedForTool = 2005,
   ModelHallucinatedTool = 2006,
+
+  ConversationHistoryComponentRequiresContext = 2007,
 }
 
 export type ErrorBlame =
