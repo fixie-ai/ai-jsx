@@ -3038,7 +3038,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@fixieai/sdk@workspace:*, @fixieai/sdk@workspace:packages/fixie-sdk":
+"@fixieai/sdk@*, @fixieai/sdk@workspace:packages/fixie-sdk":
   version: 0.0.0-use.local
   resolution: "@fixieai/sdk@workspace:packages/fixie-sdk"
   dependencies:
@@ -12232,7 +12232,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "fixie-hello-world@workspace:packages/fixie-hello-world"
   dependencies:
-    "@fixieai/sdk": "workspace:*"
+    "@fixieai/sdk": "*"
     "@tsconfig/node18": ^2.0.1
     ai-jsx: "*"
     typescript: ^5.1.3
