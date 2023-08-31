@@ -60,10 +60,18 @@ Follow these steps to make a new demo.
 To publish:
 
 1. During your PR:
+
    1. Make sure the `version` field in `packages/ai-jsx/package.json` has been incremented in accordance with [semver](https://semver.org/).
-   1. Update the [changelog](../changelog.md). Make sure to find the commit for the currently published version and add that URL to the version number.
-1. After your PR is merged:
+   1. Update the [changelog](../changelog.md). In addition to adding a section describing
+      the changes in the new version, be sure to update the heading for the previous version
+      with a link to the commit for that version, for example:
+
+   ```
+   ## [0.9.2](https://github.com/fixie-ai/ai-jsx/commit/219aebeb5e062bf3470a239443626915e0503ad9)
+   ```
+
+2. After your PR is merged:
    1. `cd packages/ai-jsx`
-   1. `npm publish`
+   2. `npm publish`
 
 This will create a bunch of temp files in your current working directory. To remove them, run `git clean -fd`.

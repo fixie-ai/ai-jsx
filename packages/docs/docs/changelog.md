@@ -1,6 +1,19 @@
 # Changelog
 
-## 0.9.2
+## 0.11.0
+
+- Updated the `<FixieCorpus>` component to use the new Fixie Corpus REST API.
+  This is currently only available to users on `beta.fixie.ai` but will be brought
+  to `app.fixie.ai` soon.
+
+## [0.10.0](https://github.com/fixie-ai/ai-jsx/commit/b758fe62c2d4c645e3a6271772d78116a97bc64a)
+
+- Memoized streaming elements no longer replay their entire stream with every render. Instead, they start with the last rendered frame.
+- Elements returned by partial rendering are automatically memoized to ensure they only render once.
+- Streaming components can no longer yield promises or generators. Only `Node`s or `AI.AppendOnlyStream` values can be yielded.
+- The `AI.AppendOnlyStream` value is now a function that can be called with a non-empty value to append.
+
+## [0.9.2](https://github.com/fixie-ai/ai-jsx/commit/219aebeb5e062bf3470a239443626915e0503ad9)
 
 - In the [OpenTelemetry integration](./guides/observability.md#opentelemetry-integration):
   - Add prompt/completion attributes with token counts for `<OpenAIChatModel>`. This replaces the `tokenCount` attribute added in 0.9.1.

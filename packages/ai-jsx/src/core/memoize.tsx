@@ -1,9 +1,17 @@
-import { Renderable, RenderContext, AppendOnlyStream, RenderableStream } from './render.js';
-import { Node, getReferencedNode, isIndirectNode, makeIndirectNode, isElement } from './node.js';
+import {
+  Renderable,
+  RenderContext,
+  AppendOnlyStream,
+  RenderableStream,
+  AppendOnlyStreamValue,
+  isAppendOnlyStreamValue,
+  valueToAppend,
+} from './render.js';
+import { Node, Element, getReferencedNode, isIndirectNode, makeIndirectNode, isElement } from './node.js';
 import { Logger } from './log.js';
 import { bindAsyncGeneratorToActiveContext } from './opentelemetry.js';
+import _ from 'lodash';
 
-let lastMemoizedId = 0;
 /** @hidden */
 export const memoizedIdSymbol = Symbol('memoizedId');
 
@@ -12,10 +20,10 @@ export const memoizedIdSymbol = Symbol('memoizedId');
  * "Partially" memoizes a renderable such that it will only be rendered once in any
  * single `RenderContext`.
  */
-export function partialMemo(node: Node, existingId?: number): Node;
-export function partialMemo(renderable: Renderable, existingId?: number): Renderable;
-export function partialMemo(renderable: Renderable, existingId?: number): Node | Renderable {
-  const id = existingId ?? ++lastMemoizedId;
+export function partialMemo<T>(element: Element<T>, id: number): Element<T>;
+export function partialMemo(node: Node, id: number): Node;
+export function partialMemo(renderable: Renderable, id: number): Renderable;
+export function partialMemo(renderable: Renderable, id: number): Node | Renderable {
   if (typeof renderable !== 'object' || renderable === null) {
     return renderable;
   }
@@ -76,32 +84,54 @@ export function partialMemo(renderable: Renderable, existingId?: number): Node |
 
     // N.B. Async context doesn't get bound to the generator, so we need to do that manually.
     const generator = bindAsyncGeneratorToActiveContext(unboundGenerator);
-    const sink: (Renderable | typeof AppendOnlyStream)[] = [];
-    let finalResult: Renderable | typeof AppendOnlyStream = null;
+    const sink: (Node | AppendOnlyStreamValue)[] = [];
+
     let completed = false;
     let nextPromise: Promise<void> | null = null;
 
     return {
       [memoizedIdSymbol]: id,
-      async *[Symbol.asyncIterator](): AsyncGenerator<
-        Renderable | typeof AppendOnlyStream,
-        Renderable | typeof AppendOnlyStream
-      > {
+      async *[Symbol.asyncIterator](): AsyncGenerator<Node | AppendOnlyStreamValue, Node | AppendOnlyStreamValue> {
         let index = 0;
+        let isAppendOnly = false;
+
         while (true) {
           if (index < sink.length) {
-            yield sink[index++];
+            // There's something we can yield/return right away.
+            let concatenatedNodes = [] as Node[];
+            while (index < sink.length) {
+              let value = sink[index++];
+              if (isAppendOnlyStreamValue(value)) {
+                isAppendOnly = true;
+                value = valueToAppend(value);
+              }
+
+              if (isAppendOnly) {
+                concatenatedNodes.push(value);
+              } else {
+                // In case the stream changes to append-only, reset the concatenated nodes.
+                concatenatedNodes = [value];
+              }
+            }
+
+            const valueToYield = isAppendOnly ? AppendOnlyStream(concatenatedNodes) : _.last(sink);
+            if (completed) {
+              return valueToYield;
+            }
+
+            yield valueToYield;
             continue;
-          } else if (completed) {
-            return finalResult;
-          } else if (nextPromise == null) {
+          }
+
+          if (nextPromise == null) {
             nextPromise = generator.next().then((result) => {
-              const memoized = result.value === AppendOnlyStream ? result.value : partialMemo(result.value, id);
+              const memoized = isAppendOnlyStreamValue(result.value)
+                ? AppendOnlyStream(partialMemo(valueToAppend(result.value), id))
+                : partialMemo(result.value, id);
+
+              sink.push(memoized);
               if (result.done) {
                 completed = true;
-                finalResult = memoized;
-              } else {
-                sink.push(memoized);
               }
               nextPromise = null;
             });
