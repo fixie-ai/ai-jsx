@@ -1,3 +1,4 @@
+import { type OpenAI as OpenAIClient } from 'openai';
 import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';

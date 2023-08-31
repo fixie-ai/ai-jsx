@@ -5,7 +5,8 @@
       "dependsOn": ["^build"]
     },
     "build": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "//#format-for-turbo": {},
     "//#format:check": {},
