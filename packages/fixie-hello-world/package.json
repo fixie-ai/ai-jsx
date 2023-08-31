@@ -11,10 +11,14 @@
   "scripts": {
     "dev": "yarn build && npx --package=@fixieai/sdk fixie-serve-bin --packagePath ./dist/index.js --port 8080",
     "typecheck": "tsc -p tsconfig.json",
-    "build": "yarn run typecheck"
+    "build": "yarn run typecheck",
+    "prepack": "yarn build"
   },
   "dependencies": {
     "ai-jsx": "*"
   },
+  "files": [
+    "dist"
+  ],
   "main": "dist/index.js"
 }

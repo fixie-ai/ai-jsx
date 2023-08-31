@@ -85,7 +85,7 @@ async function serve({
                     break;
                   }
                 } catch (ex) {
-                  console.error(`Error during generation: ${ex}`);
+                  console.error(`Error during generation: ${ex}${ex instanceof Error ? ' ' + ex.stack : ''}`);
                   break;
                 }
               }

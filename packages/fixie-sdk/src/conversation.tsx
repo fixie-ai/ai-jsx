@@ -11,14 +11,17 @@ export async function FixieConversation(_: {}, { getContext }: AI.ComponentConte
   }
 
   const response = await fetch(
-    `${fixieContextValue.apiBaseUrl}/api/conversations/${fixieContextValue.agentId}/${fixieContextValue.request.conversation_id}`,
+    new URL(
+      `/api/conversations/${fixieContextValue.agentId}/${fixieContextValue.request.conversationId}`,
+      fixieContextValue.apiBaseUrl
+    ),
     { headers: { Authorization: `Bearer ${fixieContextValue.authToken}` } }
   );
 
   const json: GetConversationResponse = await response.json();
 
   // If we're replying to a specific message, trim the history to exclude everything after that message.
-  const replyToTurnId = fixieContextValue.request.reply_to_turn_id;
+  const replyToTurnId = fixieContextValue.request.replyToTurnId;
   let turns = json.turns;
   if (replyToTurnId) {
     const index = turns.findIndex((turn) => turn.id === replyToTurnId);

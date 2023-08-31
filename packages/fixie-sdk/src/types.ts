@@ -26,15 +26,23 @@ export interface ConversationTurn {
   id: string;
   timestamp: string;
   role: 'user' | 'assistant';
+  generationParams?: GenerationParams | null;
   messages: Message[];
   state: 'in-progress' | 'done' | 'stopped' | 'error';
   metadata?: Record<string, string | number | boolean | object | null> | null;
-  error_detail?: string | null;
+  errorDetail?: string | null;
+}
+
+export interface GenerationParams {
+  userTimeZoneOffset: number;
+  model: string | null;
+  modelProvider: string | null;
 }
 
 export interface InvokeAgentRequest {
-  conversation_id: string;
-  reply_to_turn_id?: string;
+  conversationId: string;
+  replyToTurnId?: string;
+  generationParams: GenerationParams;
 }
 
 export interface InvokeAgentResponse {

@@ -1,6 +1,6 @@
 {
   "name": "@fixieai/sdk",
-  "version": "1.0.0-9",
+  "version": "1.0.0",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
@@ -10,7 +10,8 @@
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.json",
-    "build": "yarn run typecheck"
+    "build": "yarn run typecheck",
+    "prepack": "yarn build"
   },
   "files": [
     "dist"
@@ -20,7 +21,7 @@
     "fixie-serve-bin": "dist/fixie-serve-bin.js"
   },
   "peerDependencies": {
-    "ai-jsx": "<1.0.0"
+    "ai-jsx": ">=0.12.0 <1.0.0"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.4.1",
@@ -46,7 +47,7 @@
     "@types/yargs": "^17.0.24",
     "@typescript-eslint/eslint-plugin": "^5.60.0",
     "@typescript-eslint/parser": "^5.60.0",
-    "ai-jsx": "*",
+    "ai-jsx": ">=0.12.0 <1.0.0",
     "eslint": "^8.40.0",
     "eslint-config-nth": "^2.0.1",
     "typescript": "^5.1.3"

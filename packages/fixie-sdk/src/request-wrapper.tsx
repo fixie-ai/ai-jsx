@@ -63,7 +63,7 @@ export function FixieRequestWrapper({
                     {{
                       kind: 'functionResponse',
                       name: message.element.props.name,
-                      response: message.element.props.children,
+                      response: <>{message.element.props.children}</>,
                     }}
                   </Json>,
                   '\n',
