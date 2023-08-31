@@ -53,10 +53,10 @@ export class MicManager extends EventTarget {
   private stream?: MediaStream;
   private processorNode?: AudioWorkletNode;
   private numSilentFrames = 0;
-  async startMic(timeslice: number) {
-    this.startGraph(await navigator.mediaDevices.getUserMedia({ audio: true }), timeslice);
+  async startMic(timeslice: number, onEnded: () => void) {
+    this.startGraph(await navigator.mediaDevices.getUserMedia({ audio: true }), timeslice, onEnded);
   }
-  async startFile(url: string, timeslice: number) {
+  async startFile(url: string, timeslice: number, onEnded: () => void) {
     const response = await fetch(url);
     const blob = await response.blob();
     this.streamElement = new Audio();
@@ -64,9 +64,13 @@ export class MicManager extends EventTarget {
     await this.streamElement.play();
     // TODO(juberti): replace use of this API (not present in Safari) with Web Audio.
     const stream = await (this.streamElement as any).captureStream();
-    await this.startGraph(stream, timeslice);
+    this.streamElement.onpause = () => {
+      console.log('MicManager audio element paused');
+      stream.getAudioTracks()[0].onended();
+    };
+    await this.startGraph(stream, timeslice, onEnded);
   }
-  private async startGraph(stream: MediaStream, timeslice: number) {
+  private async startGraph(stream: MediaStream, timeslice: number, onEnded?: () => void) {
     this.outBuffer = [];
     this.context = new window.AudioContext();
     this.stream = stream;
@@ -89,6 +93,13 @@ export class MicManager extends EventTarget {
     };
     const source = this.context.createMediaStreamSource(stream);
     source.connect(this.processorNode);
+    this.stream.getAudioTracks()[0].onended = () => {
+      console.log('MicManager stream ended');
+      this.stop();
+      if (onEnded) {
+        onEnded();
+      }
+    };
     this.numSilentFrames = 0;
   }
   stop() {
@@ -166,9 +177,10 @@ export type GetTokenFunction = (provider: string) => Promise<string>;
  * between when VAD detected silence and the transcript was received.
  */
 export class Transcript {
-  constructor(public text: string, public final: boolean, public latency?: number) {
+  constructor(public text: string, public final: boolean, public timestamp: number, public latency?: number) {
     this.text = text;
     this.final = final;
+    this.timestamp = timestamp;
     this.latency = latency;
   }
 }
@@ -180,11 +192,12 @@ export class Transcript {
  * speech recognition service.
  */
 export class SpeechRecognitionBase extends EventTarget {
-<<<<<<< Updated upstream
-=======
-  private lastSentTimestamp: number = 0;
->>>>>>> Stashed changes
-  private lastUtteranceEndTime: number = 0;
+  // A wall time representing when the first chunk was sent.
+  private initialChunkMillis: number = 0;
+  // A relative time indicating how much audio data has been sent.
+  private streamSentMillis: number = 0;
+  // A relative time indicating how much audio data has been recognized.
+  protected streamRecognizedMillis: number = 0;
   private outBuffer: ArrayBuffer[] = [];
   protected socket?: WebSocket;
 
@@ -208,13 +221,13 @@ export class SpeechRecognitionBase extends EventTarget {
   }
   protected startInternal(url: string, protocols?: string[]) {
     const startTime = performance.now();
-    console.log(`${this.name} socket connecting...`);
+    console.log(`[${this.name}] socket connecting...`);
     this.outBuffer = [];
     this.socket = new WebSocket(url, protocols);
     this.socket.binaryType = 'arraybuffer';
     this.socket.onopen = (_event) => {
       const elapsed = performance.now() - startTime;
-      console.log(`${this.name} socket opened, elapsed=${elapsed.toFixed(0)}`);
+      console.log(`[${this.name}] socket opened, elapsed=${elapsed.toFixed(0)}`);
       this.handleOpen();
       this.flush();
     };
@@ -229,52 +242,45 @@ export class SpeechRecognitionBase extends EventTarget {
       this.handleMessage(result);
     };
     this.socket.onerror = (_event) => {
-      console.log(`${this.name} socket error`);
+      console.log(`[${this.name}] socket error`);
     };
     this.socket.onclose = (event) => {
-      console.log(`${this.name} socket closed, code=${event.code} reason=${event.reason}`);
+      console.log(`[${this.name}] socket closed, code=${event.code} reason=${event.reason}`);
     };
     this.manager.addEventListener('chunk', (evt: CustomEventInit<ArrayBuffer>) => {
+      const chunk = evt.detail!;
       if (this.socket!.readyState == 1) {
-        this.sendChunk(evt.detail!);
-<<<<<<< Updated upstream
-=======
-        this.incrementSentTimestamp(evt.detail!);
->>>>>>> Stashed changes
+        this.sendChunk(chunk);
+        // Set our reference time for computing latency when sending our first unbuffered chunk.
+        if (this.initialChunkMillis == 0) {
+          this.initialChunkMillis = performance.now() - this.streamSentMillis;
+        }
       } else if (this.socket!.readyState == 0) {
-        this.outBuffer.push(evt.detail!);
+        // If the web socket isn't open yet, buffer the chunk.s
+        this.outBuffer.push(chunk);
       } else {
-        console.error(`${this.name} socket closed`);
+        console.error(`[${this.name}] socket closed`);
       }
-    });
-    this.manager.addEventListener('vad', (evt: CustomEventInit<boolean>) => {
-      if (!evt.detail) {
-        this.lastUtteranceEndTime = performance.now();
-      } else {
-        this.lastUtteranceEndTime = 0;
-      }
+      this.streamSentMillis += (chunk.byteLength / (2 * this.manager.sampleRate()!)) * 1000;
     });
   }
-<<<<<<< Updated upstream
-=======
-  private incrementSentTimestamp(chunk: ArrayBuffer) {
-    const chunkDuration = chunk.byteLength / 2 / this.manager.sampleRate()!;
-    this.lastSentTimestamp += chunkDuration;
-  }
-  protected updateRecognitionTimestamp(timestamp: number) {}
->>>>>>> Stashed changes
-  protected dispatchTranscript(transcript: string, final: boolean) {
-    let latency;
-    if (final) {
-      if (this.lastUtteranceEndTime == 0) {
-        console.warn(`${this.name} final transcript while VAD is still active`);
-      }
-      latency = performance.now() - this.lastUtteranceEndTime;
+  private computeLatency(recognitionMillis: number) {
+    if (!this.initialChunkMillis) {
+      return undefined;
     }
+    return performance.now() - (this.initialChunkMillis + recognitionMillis);
+  }
+  protected dispatchTranscript(transcript: string, final: boolean, recognizedMillis: number) {
+    if (!final && recognizedMillis < this.streamRecognizedMillis) {
+      console.warn(`[${this.name}] recognition time ${recognizedMillis} < ${this.streamRecognizedMillis}, ignoring`);
+      return;
+    }
+    const latency = this.computeLatency(recognizedMillis);
     const event = new CustomEvent('transcript', {
-      detail: new Transcript(transcript, final, latency),
+      detail: new Transcript(transcript, final, recognizedMillis, latency),
     });
     this.dispatchEvent(event);
+    this.streamRecognizedMillis = recognizedMillis;
   }
   protected handleOpen() {}
   protected handleMessage(_result: any) {}
@@ -282,14 +288,8 @@ export class SpeechRecognitionBase extends EventTarget {
     this.socket!.send(chunk);
   }
   protected flush() {
-<<<<<<< Updated upstream
+    console.log(`[${this.name}] flushing ${this.outBuffer.length} chunks`);
     this.outBuffer.forEach((chunk) => this.sendChunk(chunk));
-=======
-    this.outBuffer.forEach((chunk) => {
-      this.sendChunk(chunk);
-      this.incrementSentTimestamp(chunk);
-    });
->>>>>>> Stashed changes
     this.outBuffer = [];
   }
   protected sendClose() {}
@@ -323,16 +323,38 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
     const url = `wss://api.deepgram.com/v1/listen?${params.toString()}`;
     super.startInternal(url, ['token', await this.fetchToken()]);
   }
+  /**
+   * Parses a transcript message in the following format:
+   * {
+   *   "type":"Results",
+   *   "channel_index":[0,1],
+   *   "duration":1.03,
+   *   "start":0,
+   *   "is_final":true,
+   *   "speech_final":true,
+   *   "channel":{
+   *     "alternatives":[{
+   *       "transcript":"Number one.",
+   *       "confidence":0.9888439,
+   *       "words":[
+   *         ...
+   *       ]
+   *     }],
+   *     "metadata":{
+   *       "request_id":"8f415d00-e883-4949-83d7-9b3f34c8f0aa",
+   *       "model_info":{"name":"general-nova","version":"2023-07-06.22746","arch":"nova"},
+   *       "model_uuid":"aa274f3c-e8b3-456a-ac08-dfd797d45514"
+   *     }
+   *   }
+   * }
+   */
   protected handleMessage(result: any) {
     if (result.type == 'Results') {
-<<<<<<< Updated upstream
-=======
-      this.updateRecognitionTimestamp(result.start + result.duration);
->>>>>>> Stashed changes
+      const recognizedMillis = (result.start + result.duration) * 1000;
       let transcript = this.buf ? `${this.buf} ` : '';
       transcript += result.channel.alternatives[0].transcript;
       if (transcript) {
-        this.dispatchTranscript(transcript, result.is_final && result.speech_final);
+        this.dispatchTranscript(transcript, result.is_final && result.speech_final, recognizedMillis);
         if (result.speech_final) {
           this.buf = '';
         } else if (result.is_final) {
@@ -357,8 +379,8 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
     super('soniox', manager, tokenFunc, language);
   }
   async start() {
-    super.startInternal('wss://api.soniox.com/transcribe-websocket');
     this.token = await this.fetchToken();
+    super.startInternal('wss://api.soniox.com/transcribe-websocket');
   }
   protected handleOpen() {
     const obj = {
@@ -371,6 +393,19 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
     };
     this.socket!.send(JSON.stringify(obj));
   }
+  /**
+   * Parses a transcript message in the following format:
+   * {
+   *   "fw": [],
+   *   "nfw": [
+   *     ...
+   *   ],
+   *   "fpt": 3120,
+   *   "tpt": 5040,
+   *   "dbg": "",
+   *   "spks": []
+   * }
+   */
   protected handleMessage(result: any) {
     const append = (transcript: string, w: any) => {
       if (w.t == '<end>') {
@@ -385,11 +420,11 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
     };
     const partialTranscript = result.nfw.reduce(append, '');
     if (partialTranscript) {
-      this.dispatchTranscript(partialTranscript, false);
+      this.dispatchTranscript(partialTranscript, false, result.tpt);
     }
     const finalTranscript = result.fw.reduce(append, '');
     if (finalTranscript) {
-      this.dispatchTranscript(finalTranscript, true);
+      this.dispatchTranscript(finalTranscript, true, result.tpt);
     }
   }
   protected sendClose() {
@@ -406,8 +441,8 @@ export class GladiaSpeechRecognition extends SpeechRecognitionBase {
     super('gladia', manager, tokenFunc, language);
   }
   async start() {
-    super.startInternal('wss://api.gladia.io/audio/text/audio-transcription');
     this.token = await this.fetchToken();
+    super.startInternal('wss://api.gladia.io/audio/text/audio-transcription');
   }
   protected handleOpen() {
     const obj = {
@@ -419,9 +454,21 @@ export class GladiaSpeechRecognition extends SpeechRecognitionBase {
     };
     this.socket!.send(JSON.stringify(obj));
   }
+  /**
+   * Parses a transcript message in the following format:
+   * {
+   *   "transcription": " Burt canoes.",
+   *   "confidence": 0.26,
+   *   "language": "cy",
+   *   "type": "partial",
+   *   "time_begin": 2.146,
+   *   "time_end": 2.8375625,
+   *   "duration": 2.8375625
+   * }
+   */
   protected handleMessage(result: any) {
     if (result.transcription) {
-      this.dispatchTranscript(result.transcription, result.type == 'final');
+      this.dispatchTranscript(result.transcription.trim(), result.type == 'final', result.time_end * 1000);
     }
     if (result.error) {
       console.error(result);
@@ -444,9 +491,27 @@ export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
       `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=${this.manager.sampleRate()}&token=${await this.fetchToken()}`
     );
   }
+  /**
+   * Parses a transcript message in the following format:
+   * {
+   *   "audio_start": 3550,
+   *   "audio_end": 6220,
+   *   "confidence": 0.808775927873343,
+   *   "text": "the birch canoe slid",
+   *   "words": [
+   *     ...
+   *   ],
+   *   "created": "2023-08-29T21:54:22.530192",
+   *   "message_type": "PartialTranscript"
+   * }
+   */
   protected handleMessage(result: any) {
-    if (result.text) {
-      this.dispatchTranscript(result.text, result.message_type == 'FinalTranscript');
+    if (result.message_type == 'PartialTranscript' || result.message_type == 'FinalTranscript') {
+      if (result.text) {
+        this.dispatchTranscript(result.text, result.message_type == 'FinalTranscript', result.audio_end);
+      }
+    } else if (result.message_type != 'SessionBegins') {
+      console.log(`aai: unhandled message type: ${result.message_type}`);
     }
   }
   protected sendChunk(chunk: ArrayBuffer) {
@@ -487,21 +552,37 @@ export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
     };
     this.socket!.send(JSON.stringify(obj));
   }
+  /**
+   * Parses a transcript message in the following format:
+   * {
+   *   "message": "AddTranscript",
+   *   "format": "2.9",
+   *   "results": [
+   *     ...
+   *   ],
+   *   "metadata": {
+   *     "end_time": 4.71,
+   *     "start_time": 2.88,
+   *     "transcript": ". The birch canoe "
+   *   }
+   * }
+   */
   protected handleMessage(result: any) {
     if (result.message == 'AddPartialTranscript') {
       if (result.metadata.transcript) {
-        this.dispatchTranscript(this.buf + result.metadata.transcript, false);
+        this.dispatchTranscript(this.buf + result.metadata.transcript, false, result.metadata.end_time * 1000);
       }
     } else if (result.message == 'AddTranscript') {
       if (result.metadata.transcript) {
-        console.log(result);
         if (!('is_eos' in result.results[0])) {
           this.buf += result.metadata.transcript;
         } else {
-          this.dispatchTranscript(this.buf, true);
+          this.dispatchTranscript(this.buf, true, result.metadata.end_time * 1000);
           this.buf = result.metadata.transcript;
         }
       }
+    } else if (result.message != 'AudioAdded' && result.message != 'RecognitionStarted' && result.message != 'Info') {
+      console.log(`speechmatics: unhandled message type: ${result.message}`);
     }
   }
 }
@@ -524,14 +605,27 @@ export class RevAISpeechRecognition extends SpeechRecognitionBase {
     const url = `wss://api.rev.ai/speechtotext/v1/stream?${params.toString()}`;
     super.startInternal(url);
   }
+  /**
+   * Parses a transcript message in the following format:
+   * {
+   *   "type": "final",
+   *   "ts": 0.11,
+   *   "end_ts": 4.19,
+   *   "elements": [
+   *     ...
+   *   ]
+   * }
+   */
   protected handleMessage(result: any) {
     // console.log(result);
     if (result.type == 'partial') {
       const text = result.elements.reduce((t: string, w: any) => `${t}${w.value} `, '');
-      this.dispatchTranscript(text, false);
+      this.dispatchTranscript(text, false, result.end_ts * 1000);
     } else if (result.type == 'final') {
       const text = result.elements.reduce((t: string, w: any) => t + w.value, '');
-      this.dispatchTranscript(text, true);
+      this.dispatchTranscript(text, true, result.end_ts * 1000);
+    } else {
+      console.log(`revai: unhandled message type: ${result.type}`);
     }
   }
 }

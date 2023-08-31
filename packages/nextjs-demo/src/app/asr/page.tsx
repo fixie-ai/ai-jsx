@@ -36,15 +36,34 @@ interface AsrComponentProps {
   language?: string;
   costPerMinute: number;
   manager: MicManager | null;
+  transcript?: string;
 }
 
-const AsrComponent: React.FC<AsrComponentProps> = ({ name, link, id, costPerMinute, manager }) => {
-  const [count, setCount] = useState(0);
-  const [wer, setWer] = useState(0.0);
-  const [latency, setLatency] = useState(0);
+const AsrComponent: React.FC<AsrComponentProps> = ({ name, link, id, costPerMinute, manager, transcript }) => {
+  const [output, setOutput] = useState('');
+  const [partialLatency, setPartialLatency] = useState<number[]>([]);
+  const [finalLatency, setFinalLatency] = useState<number[]>([]);
   const [recognizer, setRecognizer] = useState<SpeechRecognitionBase | null>(null);
   const textarea = useRef(null);
-  const computeWer = (inText: string, refText: string) => {
+  const computeCostColor = (cost: number) => {
+    if (cost < 0.01) {
+      return 'text-green-700';
+    }
+    if (cost < 0.02) {
+      return 'text-yellow-700';
+    }
+    return 'text-red-700';
+  };
+  const computeLatency = (values: number[]) => {
+    if (!values.length) {
+      return 0;
+    }
+    return values.reduce((prev, curr) => prev + curr, 0) / values.length;
+  };
+  const computeWer = (inText: string, refText?: string) => {
+    if (!inText || !refText) {
+      return 0;
+    }
     const numLines = inText.split('\n').length - 1;
     const refClean = refText
       .split('\n')
@@ -63,21 +82,33 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, link, id, costPerMinu
     const recognizer = createSpeechRecognition(id, manager!, GetToken);
     const element = textarea.current! as HTMLTextAreaElement;
     setRecognizer(recognizer);
+    setOutput('');
+    setPartialLatency([]);
+    setFinalLatency([]);
     element.value = '';
     recognizer.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const currData = element.value;
       const lastNewlineIndex = currData.lastIndexOf('\n');
       const oldData = lastNewlineIndex != -1 ? currData.slice(0, lastNewlineIndex + 1) : '';
       let newData = oldData + event.detail!.text;
-      if (event.detail!.final) {
+      if (!event.detail!.final) {
+        if (event.detail!.latency) {
+          setPartialLatency((partialLatency) => [...partialLatency, event.detail!.latency]);
+        }
+      } else {
         newData += '\n';
-        setLatency((latency * count + event.detail!.latency!) / (count + 1));
-        setCount(count + 1);
-        const wer = computeWer(newData, HARVARD_SENTENCES_01_TRANSCRIPT);
-        setWer(wer);
+        setOutput(newData);
+        if (event.detail!.latency) {
+          setFinalLatency((finalLatency) => [...finalLatency, event.detail!.latency]);
+        }
       }
       element.value = newData;
       element.scrollTop = element.scrollHeight;
+      console.log(
+        `[${id}] ${event.detail.timestamp.toFixed(0)} ${event.detail!.text} (${event.detail!.latency} ms) ${
+          event.detail!.final ? 'FINAL' : ''
+        }`
+      );
     });
     recognizer.start();
   };
@@ -97,35 +128,62 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, link, id, costPerMinu
   return (
     <div className="ml-2">
       <p className="text-xl font-bold mt-2">
-        <a href={link}>{name}</a>
+        <a className="underline" href={link}>
+          {name}
+        </a>
       </p>
       <div className="text-sm">
         <span className="font-bold">Cost: </span>
-        <a href={`${link}/pricing`}>${costPerMinute}/min</a>
+        <a className={`underline ${computeCostColor(costPerMinute)}`} href={`${link}/pricing`}>
+          ${costPerMinute}/min
+        </a>
       </div>
       <div className="text-sm">
-        <span className="font-bold">Latency: </span>
-        {latency.toFixed(0)} ms
+        <span className="font-bold">Partial Latency: </span>
+        {computeLatency(partialLatency).toFixed(0)} ms
+      </div>
+      <div className="text-sm">
+        <span className="font-bold">Final Latency: </span>
+        {computeLatency(finalLatency).toFixed(0)} ms
       </div>
       <div className="text-sm">
         <span className="font-bold">WER: </span>
-        {wer.toFixed(3)}
+        {computeWer(output, transcript).toFixed(3)}
       </div>
       <textarea cols={80} rows={5} ref={textarea}></textarea>
     </div>
   );
 };
 
+const ButtonComponent: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
+  onClick,
+  disabled,
+  children,
+}) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`ml-2 rounded-md ${
+      disabled ? 'bg-gray-300' : 'bg-fixie-fresh-salmon hover:bg-fixie-ripe-salmon'
+    } px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon`}
+  >
+    {children}
+  </button>
+);
+
 const PageComponent: React.FC = () => {
   const [manager, setManager] = useState<MicManager | null>(null);
+  const [transcript, setTranscript] = useState('');
   const handleStartFile = async () => {
+    setTranscript(HARVARD_SENTENCES_01_TRANSCRIPT);
     const manager = new MicManager();
-    await manager.startFile('/audio/harvard01.m4a', 100);
+    await manager.startFile('/audio/harvard01.m4a', 100, () => setManager(null));
     setManager(manager);
   };
   const handleStartMic = async () => {
+    setTranscript('');
     const manager = new MicManager();
-    await manager.startMic(100);
+    await manager.startMic(100, () => setManager(null));
     setManager(manager);
   };
   const handleStop = () => {
@@ -136,20 +194,31 @@ const PageComponent: React.FC = () => {
     <>
       <p className="font-sm ml-2 mb-2">
         This demo exercises several real-time ASR (speech-to-text) implementations. You can see how they do on a stock
-        text recording using Start File, or you can use Start Mic to try with your own voice.
+        text recording using <b>Start File</b>, or you can use <b>Start Mic</b> to try with your own voice.
       </p>
-      <div className="font-bold">
-        <button onClick={handleStartFile}>Start File</button>
-        <button onClick={handleStartMic}>Start Mic</button>
-        <button onClick={handleStop}>Stop</button>
+      <p className="font-sm ml-2 mb-2">
+        Latency is computed for each partial and final transcript, and the average value is displayed. When using a
+        file, Word Error Rate (WER) is computed against the ground truth transcript, ignoring punctuation.
+      </p>
+      <div className="font-bold mt-3 mb-3">
+        <ButtonComponent disabled={Boolean(manager)} onClick={handleStartFile}>
+          Start File
+        </ButtonComponent>
+        <ButtonComponent disabled={Boolean(manager)} onClick={handleStartMic}>
+          Start Mic
+        </ButtonComponent>
+        <ButtonComponent disabled={!manager} onClick={handleStop}>
+          Stop
+        </ButtonComponent>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2">
         <AsrComponent
           name="Deepgram"
-          link="https://deegram.com"
+          link="https://deepgram.com"
           id="deepgram"
           costPerMinute={0.0059}
           manager={manager}
+          transcript={transcript}
         />
         <AsrComponent
           name="AssemblyAI"
@@ -157,6 +226,7 @@ const PageComponent: React.FC = () => {
           id="aai"
           costPerMinute={0.015}
           manager={manager}
+          transcript={transcript}
         />
         <AsrComponent
           name="Speechmatics"
@@ -164,10 +234,32 @@ const PageComponent: React.FC = () => {
           id="speechmatics"
           costPerMinute={0.0173}
           manager={manager}
+          transcript={transcript}
         />
-        <AsrComponent name="Rev AI" link="https://rev.ai" id="revai" costPerMinute={0.02} manager={manager} />
-        <AsrComponent name="Soniox" link="https://soniox.com" id="soniox" costPerMinute={0.0067} manager={manager} />
-        <AsrComponent name="Gladia" link="https://gladia.io" id="gladia" costPerMinute={0.0126} manager={manager} />
+        <AsrComponent
+          name="Rev AI"
+          link="https://rev.ai"
+          id="revai"
+          costPerMinute={0.02}
+          manager={manager}
+          transcript={transcript}
+        />
+        <AsrComponent
+          name="Soniox"
+          link="https://soniox.com"
+          id="soniox"
+          costPerMinute={0.0067}
+          manager={manager}
+          transcript={transcript}
+        />
+        <AsrComponent
+          name="Gladia"
+          link="https://gladia.io"
+          id="gladia"
+          costPerMinute={0.0126}
+          manager={manager}
+          transcript={transcript}
+        />
       </div>
     </>
   );
