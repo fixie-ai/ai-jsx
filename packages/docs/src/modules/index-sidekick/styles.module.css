@@ -1,0 +1,46 @@
+.root {
+  display: grid;
+  gap: 4rem;
+  grid-template-columns: 1fr;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.header {
+  text-align: center;
+}
+
+.subheader {
+  margin-bottom: 2rem;
+  max-width: 38rem;
+}
+
+@media screen and (min-width: 800px) and (max-width: 999px) {
+  .root {
+    grid-template-columns: 2fr 3fr;
+  }
+
+  .titles {
+    height: 420px;
+  }
+
+  .header {
+    text-align: left;
+  }
+
+  .subheader {
+    text-align: left;
+  }
+
+}
+
+@media screen and (min-width: 1000px) {
+  .subheader {
+    max-width: 53rem;
+  }
+}

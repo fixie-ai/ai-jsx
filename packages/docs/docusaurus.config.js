@@ -88,7 +88,7 @@ const config = {
         },
         items: [
           {
-            to: 'tutorial/sidekickTutorial/part1-intro',
+            to: 'tutorials/sidekickTutorial/part1-intro',
             position: 'left',
             label: 'Tutorials',
           },
@@ -181,6 +181,11 @@ const config = {
 
   markdown: {
     mermaid: true,
+  },
+
+  customFields: {
+    gitHubUrl: "https://github.com/fixie-ai/ai-jsx/",
+    discordUrl: "https://discord.gg/MsKAeKF8kU",
   },
 };
 
