@@ -264,7 +264,7 @@ export class SpeechRecognitionBase extends EventTarget {
   }
   private computeLatency(recognitionMillis: number) {
     if (!this.initialChunkMillis) {
-      return undefined;
+      return;
     }
     return performance.now() - (this.initialChunkMillis + recognitionMillis);
   }
