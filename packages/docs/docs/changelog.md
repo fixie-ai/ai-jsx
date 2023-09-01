@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.12.0
+## 0.12.1
+
+- Add a `metadata` prop to conversational components such as `<AssistantMessage>`
+
+## [0.12.0](https://github.com/fixie-ai/ai-jsx/commit/348294ed38be6b6b185f95bb543bc91a40bcf0c4)
 
 - Change the `<ConversationHistory>` component to render to a node from a `ConversationHistoryContext` provider, rather
   than from OpenAI message types.

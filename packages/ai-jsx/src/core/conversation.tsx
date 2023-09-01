@@ -3,6 +3,7 @@ import { Node } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { debug } from './debug.js';
 import _ from 'lodash';
+import { Jsonifiable } from 'type-fest';
 
 /**
  * Provide a System Message to the LLM, for use within a {@link ChatCompletion}.
@@ -16,7 +17,7 @@ import _ from 'lodash';
  *    </ChatCompletion>
  * ```
  */
-export function SystemMessage({ children }: { children: Node }) {
+export function SystemMessage({ children }: { children: Node; metadata?: Record<string, Jsonifiable> }) {
   return children;
 }
 
@@ -34,7 +35,7 @@ export function SystemMessage({ children }: { children: Node }) {
  *    ==> 'Sorry to hear that. Can you tell me why?
  * ```
  */
-export function UserMessage({ children }: { name?: string; children: Node }) {
+export function UserMessage({ children }: { name?: string; children: Node; metadata?: Record<string, Jsonifiable> }) {
   return children;
 }
 
@@ -54,7 +55,7 @@ export function UserMessage({ children }: { name?: string; children: Node }) {
  *
  *    ==> "Ok, thanks for that feedback. I'll cancel your account."
  */
-export function AssistantMessage({ children }: { children: Node }) {
+export function AssistantMessage({ children }: { children: Node; metadata?: Record<string, Jsonifiable> }) {
   return children;
 }
 
@@ -105,6 +106,7 @@ export function FunctionCall({
   name: string;
   partial?: boolean;
   args: Record<string, string | number | boolean | null>;
+  metadata?: Record<string, Jsonifiable>;
 }) {
   return `Call function ${name} with ${partial ? '(incomplete) ' : ''}${JSON.stringify(args)}`;
 }
@@ -125,7 +127,16 @@ export function FunctionCall({
  *    ==> "That would be 83,076."
  * ```
  */
-export function FunctionResponse({ name, failed, children }: { name: string; failed?: boolean; children: Node }) {
+export function FunctionResponse({
+  name,
+  failed,
+  children,
+}: {
+  name: string;
+  failed?: boolean;
+  children: Node;
+  metadata?: Record<string, Jsonifiable>;
+}) {
   if (failed) {
     return (
       <>
@@ -307,7 +318,7 @@ export async function* Converse(
  * ```tsx
  *     <ShowConversation present={(msg) => msg.type === "assistant" && <>Assistant: {msg.element}</>}>
  *         <UserMessage>This is not visible.</UserMessage>
- *         <Assistant>This is visible!</UserMessage>
+ *         <AssistantMessage>This is visible!</AssistantMessage>
  *     </ShowConversation>
  *
  *     ==> 'Assistant: This is visible!'
