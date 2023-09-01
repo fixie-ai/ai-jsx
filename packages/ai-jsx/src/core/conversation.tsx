@@ -1,4 +1,3 @@
-import { type OpenAI as OpenAIClient } from 'openai';
 import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
@@ -59,25 +58,26 @@ export function AssistantMessage({ children }: { children: Node }) {
   return children;
 }
 
-export function ConversationHistory({
-  messages,
-}: {
-  messages: OpenAIClient.Chat.CreateChatCompletionRequestMessage[];
-}) {
-  return messages.map((message) => {
-    switch (message.role) {
-      case 'system':
-        return <SystemMessage>{message.content}</SystemMessage>;
-      case 'user':
-        return <UserMessage>{message.content}</UserMessage>;
-      case 'assistant':
-        return <AssistantMessage>{message.content}</AssistantMessage>;
-      case 'function':
-        return (
-          <FunctionCall name={message.function_call!.name!} args={JSON.parse(message.function_call!.arguments!)} />
-        );
-    }
-  });
+/**
+ * Sets the node that the <ConversationHistory /> component will resolve to.
+ */
+export const ConversationHistoryContext = AI.createContext<AI.Node>(undefined);
+
+/**
+ * Renders to the conversation history provided through ConversationHistoryContext.
+ */
+export function ConversationHistory(_: {}, { getContext }: AI.ComponentContext) {
+  const fromContext = getContext(ConversationHistoryContext);
+
+  if (fromContext === undefined) {
+    throw new AIJSXError(
+      'No conversation history was present on the context. Use the ConversationHistoryContext.Provider component to set the conversation history.',
+      ErrorCode.ConversationHistoryComponentRequiresContext,
+      'user'
+    );
+  }
+
+  return fromContext;
 }
 
 /**
@@ -263,7 +263,7 @@ export async function renderToConversation(
  *
  *        return null;
  *      }>
- *      <ConversationHistory messages={jsonMessages} />
+ *      <ConversationHistory />
  *    </ChatCompletion>
  *
  *    ==> 'Hello there!'

@@ -20,19 +20,20 @@ import { Node } from '../index.js';
 import { ChatOrCompletionModelOrBoth } from './model.js';
 import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { OpenAI as OpenAIClient } from 'openai';
+export { OpenAI as OpenAIClient } from 'openai';
 import { debugRepresentation } from '../core/debug.js';
 import { getEncoding } from 'js-tiktoken';
 import _ from 'lodash';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
-type ValidCompletionModel =
+export type ValidCompletionModel =
   | 'text-davinci-003'
   | 'text-davinci-002'
   | 'text-curie-001'
   | 'text-babbage-001'
   | 'text-ada-001';
 
-type ValidChatModel =
+export type ValidChatModel =
   | 'gpt-4'
   | 'gpt-4-0314' // discontinue on 06/13/2024
   | 'gpt-4-0613'

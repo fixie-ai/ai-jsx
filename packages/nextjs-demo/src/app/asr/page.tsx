@@ -3,6 +3,7 @@ import '../globals.css';
 import React, { useState, useEffect, useRef } from 'react';
 import { MicManager, createSpeechRecognition, SpeechRecognitionBase, Transcript } from 'ai-jsx/lib/asr/asr';
 import { wordErrorRate } from 'word-error-rate';
+import _ from 'lodash';
 
 const HARVARD_SENTENCES_01_TRANSCRIPT = `Harvard list number one.
      The birch canoe slid on the smooth planks.
@@ -54,12 +55,7 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, link, id, costPerMinu
     }
     return 'text-red-700';
   };
-  const computeLatency = (values: number[]) => {
-    if (!values.length) {
-      return 0;
-    }
-    return values.reduce((prev, curr) => prev + curr, 0) / values.length;
-  };
+  const computeLatency = (values: number[]) => _.mean(values);
   const computeWer = (inText: string, refText?: string) => {
     if (!inText || !refText) {
       return 0;
