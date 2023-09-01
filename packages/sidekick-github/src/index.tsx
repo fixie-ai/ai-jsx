@@ -1,10 +1,9 @@
 /// <reference lib="dom" />
 
 import { Tool } from 'ai-jsx/batteries/use-tools';
-import { ChatCompletion, SystemMessage, ConversationHistory } from 'ai-jsx/core/completion';
+import { SystemMessage } from 'ai-jsx/core/completion';
 import { Sidekick } from 'ai-jsx/sidekick';
 
-// @ts-expect-error
 const ghToken = process.env.GITHUB_TOKEN;
 
 const tools: Record<string, Tool> = {
