@@ -3,6 +3,7 @@ import yaml from 'js-yaml';
 import fs from 'fs';
 import terminal from 'terminal-kit';
 import { execSync } from 'child_process';
+import ora from 'ora';
 
 const { terminal: term } = terminal;
 
@@ -28,6 +29,11 @@ export interface AgentConfig {
   moreInfoUrl?: string;
 }
 
+export interface AgentRevision {
+  id: string;
+  created: Date;
+}
+
 /**
  * This class provides an interface to the Fixie Agent API.
  */
@@ -40,6 +46,10 @@ export class FixieAgent {
     const parts = agentId.split('/');
     this.owner = parts[0];
     this.handle = parts[1];
+  }
+
+  public agentUrl(): string {
+    return `${this.client.url}/agents/${this.agentId}`;
   }
 
   /** Get the agent with the given agent ID. */
@@ -166,12 +176,14 @@ export class FixieAgent {
 
     // Create a temporary directory and run `npm pack` inside.
     const tempdir = fs.mkdtempSync(`fixie-tmp-${packageJson.name}-${packageJson.version}-`);
-    const commandline = `npm pack ${path}`;
+    const commandline = `npm pack ${path} --silent >/dev/null`;
     execSync(commandline, { cwd: tempdir });
     return `${tempdir}/${packageJson.name}-${packageJson.version}.tgz`;
   }
 
-  private async createRevision(tarball: string) {
+  private async createRevision(tarball: string): Promise<string> {
+    const uploadFile = fs.readFileSync(fs.realpathSync(tarball));
+
     const result = await this.client.gqlClient().mutate({
       mutation: gql`
         mutation CreateAgentRevision($handle: String!, $codePackage: Upload!) {
@@ -187,14 +199,15 @@ export class FixieAgent {
       `,
       variables: {
         handle: this.handle,
-        codePackage: fs.openAsBlob(tarball),
+        codePackage: new Blob([uploadFile], { type: 'application/gzip' }),
       },
+      fetchPolicy: 'no-cache',
     });
 
-    console.log(result);
+    return result.data.createAgentRevision.revision.id;
   }
 
-  public static async DeployAgent(client: FixieClient, path: string) {
+  public static async DeployAgent(client: FixieClient, path: string): Promise<string> {
     const config = await FixieAgent.LoadConfig(path);
     const agentId = `${(await client.userInfo()).username}/${config.handle}`;
     term('🦊 Deploying agent ').green(agentId)('...\n');
@@ -211,11 +224,29 @@ export class FixieAgent {
       // Try to create the agent instead.
       agent = await FixieAgent.CreateAgent(client, config.handle, config.name, config.description, config.moreInfoUrl);
     }
-    console.log(`Got agent ${agent.metadata.agentId}`);
-
     const tarball = FixieAgent.getCodePackage(path);
+    const spinner = ora('Deploying...').start();
+    const revision = await agent.createRevision(tarball);
+    spinner.succeed(`Revision ${revision} was deployed to ${agent.agentUrl()}`);
+    return revision;
+  }
 
-    console.log(`Code package is: ${tarball}`);
-    agent.createRevision(tarball);
+  public async getCurrentRevision(): Promise<AgentRevision> {
+    const result = await this.client.gqlClient().query({
+      fetchPolicy: 'no-cache',
+      query: gql`
+        query GetRevisionId($agentId: String!) {
+          agentById(agentId: $agentId) {
+            currentRevision {
+              id
+              created
+            }
+          }
+        }
+      `,
+      variables: { agentId: this.agentId },
+    });
+
+    return result.data.agentById.currentRevision as AgentRevision;
   }
 }

@@ -8,6 +8,9 @@ import { program } from 'commander';
 import terminal from 'terminal-kit';
 import { FixieClient } from './client.js';
 import { FixieAgent } from './agent.js';
+import { fileURLToPath } from 'url';
+import path from 'path';
+import fs from 'fs';
 
 const { terminal: term } = terminal;
 
@@ -23,25 +26,36 @@ function showResult(result: any, raw: boolean) {
 /** Deploy an agent from the current directory. */
 async function deployAgent(path?: string) {
   const client = await FixieClient.Create(program.opts().url);
-  FixieAgent.DeployAgent(client, path ?? process.cwd());
+  await FixieAgent.DeployAgent(client, path ?? process.cwd());
 }
+
+// Get current version of this package.
+const currentPath = path.dirname(fileURLToPath(import.meta.url));
+const packageJsonPath = path.resolve(currentPath, '../package.json');
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
 program
   .name('fixie')
-  .version('1.0.0')
+  .version(packageJson.version)
   .description('A command-line client to the Fixie AI platform.')
   .option('-u, --url <string>', 'URL of the Fixie API endpoint', process.env.FIXIE_API_URL ?? 'https://app.fixie.ai')
   .option('-r --raw', 'Output raw JSON instead of pretty-printing.');
 
-program.command('user').action(async () => {
-  const client = await FixieClient.Create(program.opts().url);
-  const result = await client.userInfo();
-  showResult(result, program.opts().raw);
-});
+program
+  .command('user')
+  .description('Get information on the current user')
+  .action(async () => {
+    const client = await FixieClient.Create(program.opts().url);
+    const result = await client.userInfo();
+    showResult(result, program.opts().raw);
+  });
 
-program.command('deploy [path]').action(async (path: string) => {
-  await deployAgent(path);
-});
+program
+  .command('deploy [path]')
+  .description('Deploy an agent')
+  .action(async (path: string) => {
+    await deployAgent(path);
+  });
 
 const corpus = program.command('corpus').description('Corpus related commands');
 
@@ -196,6 +210,25 @@ agents
     const client = await FixieClient.Create(program.opts().url);
     const result = await FixieAgent.CreateAgent(client, agentHandle, agentName, agentDescription, agentMoreInfoUrl);
     showResult(result.metadata, program.opts().raw);
+  });
+
+agents
+  .command('deploy [path]')
+  .description('Deploy an agent')
+  .action(async (path: string) => {
+    await deployAgent(path);
+  });
+
+const revisions = agents.command('revisions').description('Agent revision-related commands');
+
+revisions
+  .command('get <agentId>')
+  .description('Get current revision for the given agent.')
+  .action(async (agentId: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentId);
+    const result = await agent.getCurrentRevision();
+    showResult(result, program.opts().raw);
   });
 
 program.parse(process.argv);
