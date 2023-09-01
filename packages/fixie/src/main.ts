@@ -11,12 +11,19 @@ import { FixieAgent } from './agent.js';
 
 const { terminal: term } = terminal;
 
+/** Pretty-print a result as JSON. */
 function showResult(result: any, raw: boolean) {
   if (raw) {
     console.log(JSON.stringify(result));
   } else {
     term.green(JSON.stringify(result, null, 2));
   }
+}
+
+/** Deploy an agent from the current directory. */
+async function deployAgent(path?: string) {
+  const client = await FixieClient.Create(program.opts().url);
+  FixieAgent.DeployAgent(client, path ?? process.cwd());
 }
 
 program
@@ -30,6 +37,10 @@ program.command('user').action(async () => {
   const client = await FixieClient.Create(program.opts().url);
   const result = await client.userInfo();
   showResult(result, program.opts().raw);
+});
+
+program.command('deploy [path]').action(async (path: string) => {
+  await deployAgent(path);
 });
 
 const corpus = program.command('corpus').description('Corpus related commands');

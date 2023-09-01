@@ -1,5 +1,24 @@
 import type { Jsonifiable } from 'type-fest';
 import { ApolloClient, InMemoryCache } from '@apollo/client/core';
+import createUploadLink from 'apollo-upload-client/public/createUploadLink.js';
+
+export interface UserInfo {
+  id: number;
+  username: string;
+  is_authenticated: boolean;
+  is_superuser: boolean;
+  is_staff: boolean;
+  is_active: boolean;
+  is_anonymous: boolean;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  last_login?: Date;
+  date_joined?: Date;
+  api_token?: string;
+  avatar?: string;
+  organization?: string;
+}
 
 /**
  * A client to the Fixie AI platform.
@@ -56,16 +75,19 @@ export class FixieClient {
 
   gqlClient(): ApolloClient<any> {
     return new ApolloClient({
-      uri: `${this.url}/graphql`,
       cache: new InMemoryCache(),
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-      },
+      link: createUploadLink({
+        uri: `${this.url}/graphql`,
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+      }),
     });
   }
 
-  userInfo(): Promise<Jsonifiable> {
-    return this.request('/api/user');
+  userInfo(): Promise<UserInfo> {
+    const rawUserInfo: unknown = this.request('/api/user');
+    return rawUserInfo as Promise<UserInfo>;
   }
 
   listCorpora(): Promise<Jsonifiable> {
