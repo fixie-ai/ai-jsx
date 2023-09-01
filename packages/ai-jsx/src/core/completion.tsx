@@ -8,7 +8,6 @@ import { Node, Component, RenderContext } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
-import { ChatCompletionFunctions } from 'openai';
 import { AnthropicChatModel } from '../lib/anthropic.js';
 import z from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
@@ -58,7 +57,7 @@ export type ModelComponent<T extends ModelPropsWithChildren> = Component<T>;
  * Represents a function definition that can be invoked using the {@link FunctionCall} component.
  */
 export interface FunctionDefinition {
-  description?: ChatCompletionFunctions['description'];
+  description?: string;
   parameters: FunctionParameters;
 }
 
