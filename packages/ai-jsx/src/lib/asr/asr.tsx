@@ -96,9 +96,7 @@ export class MicManager extends EventTarget {
     this.stream.getAudioTracks()[0].onended = () => {
       console.log('MicManager stream ended');
       this.stop();
-      if (onEnded) {
-        onEnded();
-      }
+        onEnded?.();
     };
     this.numSilentFrames = 0;
   }
