@@ -176,10 +176,6 @@ export type GetTokenFunction = (provider: string) => Promise<string>;
  */
 export class Transcript {
   constructor(public text: string, public final: boolean, public timestamp: number, public latency?: number) {
-    this.text = text;
-    this.final = final;
-    this.timestamp = timestamp;
-    this.latency = latency;
   }
 }
 
@@ -190,11 +186,11 @@ export class Transcript {
  * speech recognition service.
  */
 export class SpeechRecognitionBase extends EventTarget {
-  // A wall time representing when the first chunk was sent.
+  /** A wall time representing when the first chunk was sent. */
   private initialChunkMillis: number = 0;
-  // A relative time indicating how much audio data has been sent.
+  /** A relative time indicating how much audio data has been sent. */
   private streamSentMillis: number = 0;
-  // A relative time indicating how much audio data has been recognized.
+  /** A relative time indicating how much audio data has been recognized. */
   protected streamRecognizedMillis: number = 0;
   private outBuffer: ArrayBuffer[] = [];
   protected socket?: WebSocket;
