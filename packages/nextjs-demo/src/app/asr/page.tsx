@@ -55,7 +55,7 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, link, id, costPerMinu
     }
     return 'text-red-700';
   };
-  const computeLatency = (values: number[]) =>  _.mean(values);
+  const computeLatency = (values: number[]) => _.mean(values);
   const computeWer = (inText: string, refText?: string) => {
     if (!inText || !refText) {
       return 0;

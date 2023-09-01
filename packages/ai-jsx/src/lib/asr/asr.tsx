@@ -96,7 +96,7 @@ export class MicManager extends EventTarget {
     this.stream.getAudioTracks()[0].onended = () => {
       console.log('MicManager stream ended');
       this.stop();
-        onEnded?.();
+      onEnded?.();
     };
     this.numSilentFrames = 0;
   }
@@ -175,8 +175,7 @@ export type GetTokenFunction = (provider: string) => Promise<string>;
  * between when VAD detected silence and the transcript was received.
  */
 export class Transcript {
-  constructor(public text: string, public final: boolean, public timestamp: number, public latency?: number) {
-  }
+  constructor(public text: string, public final: boolean, public timestamp: number, public latency?: number) {}
 }
 
 /**
