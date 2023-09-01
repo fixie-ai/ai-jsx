@@ -4,6 +4,8 @@ import fs from 'fs';
 import terminal from 'terminal-kit';
 import { execSync } from 'child_process';
 import ora from 'ora';
+import os from 'os';
+import path from 'path';
 
 const { terminal: term } = terminal;
 
@@ -29,6 +31,7 @@ export interface AgentConfig {
   moreInfoUrl?: string;
 }
 
+/** Represents metadata about an agent revision. */
 export interface AgentRevision {
   id: string;
   created: Date;
@@ -42,12 +45,13 @@ export class FixieAgent {
   handle: string;
 
   /** Use GetAgent or CreateAgent instead. */
-  private constructor(readonly client: FixieClient, readonly agentId: string, readonly metadata: AgentMetadata) {
+  private constructor(readonly client: FixieClient, readonly agentId: string, public metadata: AgentMetadata) {
     const parts = agentId.split('/');
     this.owner = parts[0];
     this.handle = parts[1];
   }
 
+  /** Return the URL for this agent's page on Fixie. */
   public agentUrl(): string {
     return `${this.client.url}/agents/${this.agentId}`;
   }
@@ -165,22 +169,49 @@ export class FixieAgent {
     });
   }
 
-  public static LoadConfig(path: string): AgentConfig {
-    const config = yaml.load(fs.readFileSync(`${path}/agent.yaml`, 'utf8')) as AgentConfig;
+  /** Update this agent. */
+  async update(name?: string, description?: string, moreInfoUrl?: string) {
+    this.client.gqlClient().mutate({
+      mutation: gql`
+        mutation UpdateAgent($handle: String!, $name: String, $description: String, $moreInfoUrl: String) {
+          updateAgent(
+            agentData: { handle: $handle, name: $name, description: $description, moreInfoUrl: $moreInfoUrl }
+          ) {
+            agent {
+              agentId
+            }
+          }
+        }
+      `,
+      variables: {
+        handle: this.handle,
+        name,
+        description,
+        moreInfoUrl,
+      },
+    });
+    this.metadata = await FixieAgent.getAgentById(this.client, this.agentId);
+  }
+
+  /** Load an agent configuration from the given directory. */
+  public static LoadConfig(agentPath: string): AgentConfig {
+    const config = yaml.load(fs.readFileSync(`${agentPath}/agent.yaml`, 'utf8')) as AgentConfig;
     return config;
   }
 
-  private static getCodePackage(path: string): string {
+  /** Package the code in the given directory and return the path to the tarball. */
+  private static getCodePackage(agentPath: string): string {
     // Read the package.json file to get the package name and version.
-    const packageJson = JSON.parse(fs.readFileSync(`${path}/package.json`, 'utf8'));
+    const packageJson = JSON.parse(fs.readFileSync(`${agentPath}/package.json`, 'utf8'));
 
     // Create a temporary directory and run `npm pack` inside.
-    const tempdir = fs.mkdtempSync(`fixie-tmp-${packageJson.name}-${packageJson.version}-`);
-    const commandline = `npm pack ${path} --silent >/dev/null`;
+    const tempdir = fs.mkdtempSync(path.join(os.tmpdir(), `fixie-tmp-${packageJson.name}-${packageJson.version}-`));
+    const commandline = `npm pack ${agentPath} --silent >/dev/null`;
     execSync(commandline, { cwd: tempdir });
     return `${tempdir}/${packageJson.name}-${packageJson.version}.tgz`;
   }
 
+  /** Create a new agent revision, which deploys the agent. */
   private async createRevision(tarball: string): Promise<string> {
     const uploadFile = fs.readFileSync(fs.realpathSync(tarball));
 
@@ -207,30 +238,35 @@ export class FixieAgent {
     return result.data.createAgentRevision.revision.id;
   }
 
-  public static async DeployAgent(client: FixieClient, path: string): Promise<string> {
-    const config = await FixieAgent.LoadConfig(path);
+  /** Deploy an agent from the given directory. */
+  public static async DeployAgent(client: FixieClient, agentPath: string): Promise<string> {
+    const config = await FixieAgent.LoadConfig(agentPath);
     const agentId = `${(await client.userInfo()).username}/${config.handle}`;
     term('🦊 Deploying agent ').green(agentId)('...\n');
 
     // Check if the package.json path exists in this directory.
-    if (!fs.existsSync(`${path}/package.json`)) {
-      throw Error(`No package.json found in ${path}. Only JS-based agents are supported.`);
+    if (!fs.existsSync(`${agentPath}/package.json`)) {
+      throw Error(`No package.json found in ${agentPath}. Only JS-based agents are supported.`);
     }
 
     let agent: FixieAgent;
     try {
       agent = await FixieAgent.GetAgent(client, agentId);
+      term('👽 Updating agent ').green(agentId)('...\n');
+      agent.update(config.name, config.description, config.moreInfoUrl);
     } catch (e) {
       // Try to create the agent instead.
+      term('🌲 Creating new agent ').green(agentId)('...\n');
       agent = await FixieAgent.CreateAgent(client, config.handle, config.name, config.description, config.moreInfoUrl);
     }
-    const tarball = FixieAgent.getCodePackage(path);
-    const spinner = ora('Deploying...').start();
+    const tarball = FixieAgent.getCodePackage(agentPath);
+    const spinner = ora(' 🚀 Deploying...').start();
     const revision = await agent.createRevision(tarball);
     spinner.succeed(`Revision ${revision} was deployed to ${agent.agentUrl()}`);
     return revision;
   }
 
+  /** Get the current agent revision. */
   public async getCurrentRevision(): Promise<AgentRevision> {
     const result = await this.client.gqlClient().query({
       fetchPolicy: 'no-cache',

@@ -50,6 +50,7 @@ export class FixieClient {
     return client;
   }
 
+  /** Send a request to the Fixie API with the appropriate auth headers. */
   async request(path: string, bodyData?: any): Promise<Jsonifiable> {
     let res;
     if (bodyData) {
@@ -76,11 +77,13 @@ export class FixieClient {
     return res.json();
   }
 
+  /** Return a GraphQL client for the Fixie API. */
   gqlClient(): ApolloClient<any> {
     // For GraphQL operations, we use an ApolloClient with the apollo-upload-client
     // extension to allow for file uploads.
     return new ApolloClient({
       cache: new InMemoryCache(),
+      // We're using the apollo-upload-client extension to allow for file uploads.
       // See: https://stackoverflow.com/questions/69627539/uploading-a-local-file-from-nodejs-to-rails-graphql-backend-server-to-server
       link: createUploadLink({
         uri: `${this.url}/graphql`,
@@ -94,19 +97,23 @@ export class FixieClient {
     });
   }
 
+  /** Return information on the currently logged-in user. */
   userInfo(): Promise<UserInfo> {
     const rawUserInfo: unknown = this.request('/api/user');
     return rawUserInfo as Promise<UserInfo>;
   }
 
+  /** List Corpora visible to this user. */
   listCorpora(): Promise<Jsonifiable> {
     return this.request('/api/v1/corpora');
   }
 
+  /** Get information about a given Corpus. */
   getCorpus(corpusId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}`);
   }
 
+  /** Create a new Corpus. */
   createCorpus(name?: string): Promise<Jsonifiable> {
     const body = {
       name,
@@ -115,6 +122,7 @@ export class FixieClient {
     return this.request('/api/v1/corpora', body);
   }
 
+  /** Query a given Corpus. */
   queryCorpus(corpusId: string, query: string, pageSize?: number): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
@@ -124,14 +132,17 @@ export class FixieClient {
     return this.request(`/api/v1/corpora/${corpusId}:query`, body);
   }
 
+  /** List the Sources in a given Corpus. */
   listCorpusSources(corpusId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources`);
   }
 
+  /** Get information about a given Source. */
   getCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}`);
   }
 
+  /** Add a new Source to a Corpus. */
   addCorpusSource(corpusId: string, urlPattern: string): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
@@ -173,6 +184,7 @@ export class FixieClient {
     return this.request(`/api/v1/corpora/${corpusId}/sources`, body);
   }
 
+  /** Refresh the given Source. */
   refreshCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
@@ -181,18 +193,22 @@ export class FixieClient {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, body);
   }
 
+  /** List Jobs associated with a given Source. */
   listCorpusSourceJobs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs`);
   }
 
+  /** Get information about a given Job. */
   getCorpusSourceJob(corpusId: string, sourceId: string, jobId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs/${jobId}`);
   }
 
+  /** List Documents in a given Corpus. */
   listCorpusDocs(corpusId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/documents`);
   }
 
+  /** Get information about a given Document. */
   getCorpusDoc(corpusId: string, docId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/documents/${docId}`);
   }
