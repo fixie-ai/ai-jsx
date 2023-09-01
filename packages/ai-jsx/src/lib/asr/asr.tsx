@@ -254,7 +254,7 @@ export class SpeechRecognitionBase extends EventTarget {
           this.initialChunkMillis = performance.now() - this.streamSentMillis;
         }
       } else if (this.socket!.readyState == 0) {
-        // If the web socket isn't open yet, buffer the chunk.s
+        // If the web socket isn't open yet, buffer the chunk.
         this.outBuffer.push(chunk);
       } else {
         console.error(`[${this.name}] socket closed`);
