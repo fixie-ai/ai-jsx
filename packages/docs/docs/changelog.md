@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.13.0
+
 - Add Sidekick component. Sidekicks are a high-level abstraction for combining tool use, docs QA, and generated UI.
 - Change `MdxSystemMessage` to no longer automatically infer component names from the `usageExamples`. Instead, `usageExamples` is now a plain string, and component names are passed separately via the `componentNames` prop.
 
