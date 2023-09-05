@@ -1,5 +1,6 @@
 import type { Jsonifiable } from 'type-fest';
-import { ApolloClient, InMemoryCache } from '@apollo/client/core';
+import { ApolloClient } from '@apollo/client/core/ApolloClient.js';
+import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache.js';
 import createUploadLink from 'apollo-upload-client/public/createUploadLink.js';
 import isExtractableFile from 'apollo-upload-client/public/isExtractableFile.js';
 import { ExtractableFile } from 'extract-files';
