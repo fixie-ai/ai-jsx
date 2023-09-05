@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.12.0
+## 0.13.0
+- Add Sidekick component. Sidekicks are a high-level abstraction for combining tool use, docs QA, and generated UI.
+- Change `MdxSystemMessage` to no longer automatically infer component names from the `usageExamples`. Instead, `usageExamples` is now a plain string, and component names are passed separately via the `componentNames` prop.
+
+## [0.12.0](https://github.com/fixie-ai/ai-jsx/commit/348294ed38be6b6b185f95bb543bc91a40bcf0c4)
 
 - Change the `<ConversationHistory>` component to render to a node from a `ConversationHistoryContext` provider, rather
   than from OpenAI message types.
