@@ -196,7 +196,7 @@ function toConversationMessages(partialRendering: AI.PartiallyRendered[]): Conve
         return { type: 'functionResponse', element: e };
       default:
         throw new AIJSXError(
-          `Unexpected tag (${e.tag.name}) in conversation`,
+          `Unexpected tag (${e.tag}) in conversation`,
           ErrorCode.UnexpectedPartialRenderResult,
           'internal'
         );
@@ -320,7 +320,7 @@ export async function* ShowConversation(
     onComplete,
   }: {
     children: AI.Node;
-    present?: (message: ConversationMessage) => AI.Node;
+    present?: (message: ConversationMessage, index: number) => AI.Node;
     onComplete?: (conversation: ConversationMessage[], render: AI.RenderContext['render']) => Promise<void> | void;
   },
   { render, isAppendOnlyRender }: AI.ComponentContext
