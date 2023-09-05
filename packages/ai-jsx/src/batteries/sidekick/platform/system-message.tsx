@@ -44,11 +44,7 @@ export function SidekickSystemMessage({
       {dateTimeSystemMessage}
       {responseFramingSystemMessage}
       <SystemMessage>
-        <Prompt
-          apolitical
-          concise
-          persona={`expert ${role}`}
-        />
+        <Prompt apolitical concise persona={`expert ${role}`} />
         {responseFramingSystemMessage}
       </SystemMessage>
       <SystemMessage>

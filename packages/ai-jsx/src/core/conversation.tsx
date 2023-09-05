@@ -196,7 +196,7 @@ function toConversationMessages(partialRendering: AI.PartiallyRendered[]): Conve
         return { type: 'functionResponse', element: e };
       default:
         throw new AIJSXError(
-          `Unexpected tag (${e.tag?.name}) in conversation`,
+          `Unexpected tag (${e.tag}) in conversation`,
           ErrorCode.UnexpectedPartialRenderResult,
           'internal'
         );

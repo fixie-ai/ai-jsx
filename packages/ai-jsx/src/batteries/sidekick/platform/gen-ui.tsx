@@ -54,4 +54,4 @@ export const mdxUsageExamples = <>
 
   Example 1: The handlebars template language looks like: \`\{'{'}\{'{'}foo\{'}'}\{'}'}\`
   Example 2: The handlebars template language looks like: `{'{{'}foo{'}}'}`
-</>
+</>;

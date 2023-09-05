@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import * as AI from '../../../index.js';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -191,7 +190,7 @@ function RepairMdx({ children }: { children: string }) {
         include a starting ```mdx and closing ``` line. Just respond with the MDX itself. Do not include extra
         whitespace that is not needed for the markdown interpretation. For instance, if your component has a prop that's
         a JSON object, put it all on one line:
-        {`<Component prop={[[{ key: 'value' }, { long: 'field' }]]} />`}
+        {"<Component prop={[[{ key: 'value' }, { long: 'field' }]]} />"}
         This doc tells you the differences between MDX and markdown. === Start doc ### 7.2 Deviations from Markdown MDX
         adds constructs to Markdown but also prohibits certain normal Markdown constructs. #### 7.2.2 Indented code
         Indentation to create code blocks is not supported. Instead, use fenced code blocks. The reason for this change
