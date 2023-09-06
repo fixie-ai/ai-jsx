@@ -139,8 +139,10 @@ export class FixieAgent {
   ): Promise<FixieAgent> {
     const result = await client.gqlClient().mutate({
       mutation: gql`
-        mutation CreateAgent($handle: String!, $description: String, $moreInfoUrl: String, $published: Boolean)) {
-          createAgent(agentData: { handle: $handle, description: $description, moreInfoUrl: $moreInfoUrl, published: $published }) {
+        mutation CreateAgent($handle: String!, $description: String, $moreInfoUrl: String, $published: Boolean) {
+          createAgent(
+            agentData: { handle: $handle, description: $description, moreInfoUrl: $moreInfoUrl, published: $published }
+          ) {
             agent {
               agentId
             }
@@ -179,9 +181,21 @@ export class FixieAgent {
   async update(name?: string, description?: string, moreInfoUrl?: string, published?: boolean) {
     this.client.gqlClient().mutate({
       mutation: gql`
-        mutation UpdateAgent($handle: String!, $name: String, $description: String, $moreInfoUrl: String, $published: Boolean)) {
+        mutation UpdateAgent(
+          $handle: String!
+          $name: String
+          $description: String
+          $moreInfoUrl: String
+          $published: Boolean
+        ) {
           updateAgent(
-            agentData: { handle: $handle, name: $name, description: $description, moreInfoUrl: $moreInfoUrl, published: $published }
+            agentData: {
+              handle: $handle
+              name: $name
+              description: $description
+              moreInfoUrl: $moreInfoUrl
+              published: $published
+            }
           ) {
             agent {
               agentId

@@ -616,7 +616,7 @@ export class LocalCorpus<
 
 /** A fully mananged {@link Corpus} served by Fixie. */
 export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implements Corpus<ChunkMetadata> {
-  private static readonly DEFAULT_FIXIE_API_URL = 'https://beta.fixie.ai/api/v1';
+  private static readonly DEFAULT_FIXIE_API_URL = 'https://beta.fixie.ai';
 
   private readonly fixieApiUrl: string;
 
@@ -635,7 +635,7 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
   }
 
   async search(query: string, params?: { limit?: number }): Promise<ScoredChunk<ChunkMetadata>[]> {
-    const url = `${this.fixieApiUrl}/corpora/${this.corpusId}:query`;
+    const url = `${this.fixieApiUrl}/api/v1/corpora/${this.corpusId}:query`;
     const response = await fetch(url, {
       method: 'POST',
       headers: {
