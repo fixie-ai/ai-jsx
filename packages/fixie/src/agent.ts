@@ -227,21 +227,31 @@ export class FixieAgent {
 
     // Create a temporary directory and run `npm pack` inside.
     const tempdir = fs.mkdtempSync(path.join(os.tmpdir(), `fixie-tmp-${packageJson.name}-${packageJson.version}-`));
-    const commandline = `npm pack ${agentPath} --silent >/dev/null`;
+    const commandline = `npm pack ${path.resolve(agentPath)} --silent >/dev/null`;
     execSync(commandline, { cwd: tempdir });
     return `${tempdir}/${packageJson.name}-${packageJson.version}.tgz`;
   }
 
   /** Create a new agent revision, which deploys the agent. */
-  private async createRevision(tarball: string): Promise<string> {
+  private async createRevision(tarball: string, environmentVariables: Record<string, string>): Promise<string> {
     const uploadFile = fs.readFileSync(fs.realpathSync(tarball));
 
     const result = await this.client.gqlClient().mutate({
       mutation: gql`
-        mutation CreateAgentRevision($handle: String!, $codePackage: Upload!) {
+        mutation CreateAgentRevision(
+          $handle: String!
+          $codePackage: Upload!
+          $environmentVariables: [EnvironmentVariableInput!]
+        ) {
           createAgentRevision(
             agentHandle: $handle
-            revision: { managedDeployment: { environment: NODEJS, codePackage: $codePackage } }
+            revision: {
+              managedDeployment: {
+                environment: NODEJS
+                codePackage: $codePackage
+                environmentVariables: $environmentVariables
+              }
+            }
           ) {
             revision {
               id
@@ -252,6 +262,7 @@ export class FixieAgent {
       variables: {
         handle: this.handle,
         codePackage: new Blob([uploadFile], { type: 'application/gzip' }),
+        environmentVariables: Object.entries(environmentVariables).map(([key, value]) => ({ name: key, value })),
       },
       fetchPolicy: 'no-cache',
     });
@@ -260,7 +271,11 @@ export class FixieAgent {
   }
 
   /** Deploy an agent from the given directory. */
-  public static async DeployAgent(client: FixieClient, agentPath: string): Promise<string> {
+  public static async DeployAgent(
+    client: FixieClient,
+    agentPath: string,
+    environmentVariables: Record<string, string> = {}
+  ): Promise<string> {
     const config = await FixieAgent.LoadConfig(agentPath);
     const agentId = `${(await client.userInfo()).username}/${config.handle}`;
     term('🦊 Deploying agent ').green(agentId)('...\n');
@@ -289,7 +304,7 @@ export class FixieAgent {
     }
     const tarball = FixieAgent.getCodePackage(agentPath);
     const spinner = ora(' 🚀 Deploying...').start();
-    const revision = await agent.createRevision(tarball);
+    const revision = await agent.createRevision(tarball, environmentVariables);
     spinner.succeed(`Revision ${revision} was deployed to ${agent.agentUrl()}`);
     return revision;
   }
