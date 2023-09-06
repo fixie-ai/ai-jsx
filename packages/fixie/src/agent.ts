@@ -118,10 +118,7 @@ export class FixieAgent {
     return {
       agentId: result.data.agent.agentId,
       handle: result.data.agent.handle,
-      name: result.data.agent.name,
-      description: result.data.agent.description,
-      moreInfoUrl: result.data.agent.moreInfoUrl,
-      published: result.data.agent.published,
+..._.pick(result.data.agent, 'name', 'description', 'moreInfoUrl', 'published')
       created: new Date(result.data.agent.created),
       modified: new Date(result.data.agent.modified),
       owner: result.data.agent.owner.username || result.data.agent.owner.handle,
