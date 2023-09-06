@@ -118,7 +118,10 @@ export class FixieAgent {
     return {
       agentId: result.data.agent.agentId,
       handle: result.data.agent.handle,
-..._.pick(result.data.agent, 'name', 'description', 'moreInfoUrl', 'published')
+      name: result.data.agent.name,
+      description: result.data.agent.description,
+      moreInfoUrl: result.data.agent.moreInfoUrl,
+      published: result.data.agent.published,
       created: new Date(result.data.agent.created),
       modified: new Date(result.data.agent.modified),
       owner: result.data.agent.owner.username || result.data.agent.owner.handle,
@@ -191,7 +194,7 @@ export class FixieAgent {
         name,
         description,
         moreInfoUrl,
-        published: published ?? false,
+        published,
       },
     });
     this.metadata = await FixieAgent.getAgentById(this.client, this.agentId);
