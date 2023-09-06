@@ -18,6 +18,7 @@ export interface AgentMetadata {
   name?: string;
   description?: string;
   moreInfoUrl?: string;
+  published?: boolean;
   created: Date;
   modified: Date;
   owner: string;
@@ -29,6 +30,7 @@ export interface AgentConfig {
   name?: string;
   description?: string;
   moreInfoUrl?: string;
+  public?: boolean;
 }
 
 /** Represents metadata about an agent revision. */
@@ -97,6 +99,7 @@ export class FixieAgent {
             moreInfoUrl
             created
             modified
+            published
             owner {
               __typename
               ... on UserType {
@@ -118,6 +121,7 @@ export class FixieAgent {
       name: result.data.agent.name,
       description: result.data.agent.description,
       moreInfoUrl: result.data.agent.moreInfoUrl,
+      published: result.data.agent.published,
       created: new Date(result.data.agent.created),
       modified: new Date(result.data.agent.modified),
       owner: result.data.agent.owner.username || result.data.agent.owner.handle,
@@ -130,12 +134,13 @@ export class FixieAgent {
     handle: string,
     name?: string,
     description?: string,
-    moreInfoUrl?: string
+    moreInfoUrl?: string,
+    published?: boolean
   ): Promise<FixieAgent> {
     const result = await client.gqlClient().mutate({
       mutation: gql`
-        mutation CreateAgent($handle: String!, $description: String, $moreInfoUrl: String) {
-          createAgent(agentData: { handle: $handle, description: $description, moreInfoUrl: $moreInfoUrl }) {
+        mutation CreateAgent($handle: String!, $description: String, $moreInfoUrl: String, $published: Boolean)) {
+          createAgent(agentData: { handle: $handle, description: $description, moreInfoUrl: $moreInfoUrl, published: $published }) {
             agent {
               agentId
             }
@@ -147,6 +152,7 @@ export class FixieAgent {
         name,
         description,
         moreInfoUrl,
+        published: published ?? false,
       },
     });
     const agentId = result.data.createAgent.agent.agentId;
@@ -170,12 +176,12 @@ export class FixieAgent {
   }
 
   /** Update this agent. */
-  async update(name?: string, description?: string, moreInfoUrl?: string) {
+  async update(name?: string, description?: string, moreInfoUrl?: string, published?: boolean) {
     this.client.gqlClient().mutate({
       mutation: gql`
-        mutation UpdateAgent($handle: String!, $name: String, $description: String, $moreInfoUrl: String) {
+        mutation UpdateAgent($handle: String!, $name: String, $description: String, $moreInfoUrl: String, $published: Boolean)) {
           updateAgent(
-            agentData: { handle: $handle, name: $name, description: $description, moreInfoUrl: $moreInfoUrl }
+            agentData: { handle: $handle, name: $name, description: $description, moreInfoUrl: $moreInfoUrl, published: $published }
           ) {
             agent {
               agentId
@@ -188,6 +194,7 @@ export class FixieAgent {
         name,
         description,
         moreInfoUrl,
+        published,
       },
     });
     this.metadata = await FixieAgent.getAgentById(this.client, this.agentId);
@@ -253,11 +260,18 @@ export class FixieAgent {
     try {
       agent = await FixieAgent.GetAgent(client, agentId);
       term('👽 Updating agent ').green(agentId)('...\n');
-      agent.update(config.name, config.description, config.moreInfoUrl);
+      agent.update(config.name, config.description, config.moreInfoUrl, config.public);
     } catch (e) {
       // Try to create the agent instead.
       term('🌲 Creating new agent ').green(agentId)('...\n');
-      agent = await FixieAgent.CreateAgent(client, config.handle, config.name, config.description, config.moreInfoUrl);
+      agent = await FixieAgent.CreateAgent(
+        client,
+        config.handle,
+        config.name,
+        config.description,
+        config.moreInfoUrl,
+        config.public
+      );
     }
     const tarball = FixieAgent.getCodePackage(agentPath);
     const spinner = ora(' 🚀 Deploying...').start();
