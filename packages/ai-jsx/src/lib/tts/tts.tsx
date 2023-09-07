@@ -40,7 +40,7 @@ export class TextToSpeechBase {
   /**
    * Called when the generated audio has finished playing out.
    */
-  public onEnded?: () => void;
+  public onComplete?: () => void;
 
   constructor(protected readonly name: string) {
     this.audio = new Audio();
@@ -56,10 +56,6 @@ export class TextToSpeechBase {
         console.log(`[${this.name}] tts play latency: ${this.latency} ms`);
       }
       this.onPlaying?.();
-    };
-    this.audio.onended = () => {
-      console.log(`[${this.name}] tts ended`);
-      this.onEnded?.();
     };
   }
   /**
@@ -80,7 +76,9 @@ export class TextToSpeechBase {
   stop() {
     console.log(`[${this.name}] tts stopping`);
     this.audio.pause();
+    this.cleanUp();
   }
+  protected cleanUp() {}
 }
 
 /**
@@ -125,31 +123,41 @@ export class MseTextToSpeech extends TextToSpeechBase {
   private readonly mediaSource: MediaSource = new MediaSource();
   private sourceBuffer?: SourceBuffer;
   private readonly chunkBuffer: AudioChunk[] = [];
+  private inProgress = false;
 
   constructor(name: string) {
     super(name);
     this.audio.src = URL.createObjectURL(this.mediaSource);
+    this.audio.onwaiting = () => {
+      console.log(`[${this.name}] tts waiting`);
+      if (!this.inProgress) {
+        this.onComplete?.();
+      }
+    };
     this.mediaSource.onsourceopen = () => {
-      console.log(`[${this.name}] source open`);
       if (!this.sourceBuffer) {
         this.sourceBuffer = this.mediaSource.addSourceBuffer('audio/mpeg');
         this.sourceBuffer.onupdateend = () => {
-          console.log(`[${this.name}] source update end`);
           this.processChunkBuffer();
-          //this.mediaSource.endOfStream();
         };
       }
     };
-    this.mediaSource.onsourceended = () => {
-      console.log(`[${this.name}] source ended`); //
-    };
-    this.mediaSource.onsourceclose = () => {
-      console.log(`[${this.name}] source closed`); //
-    };
   }
-  stop() {
-    this.chunkBuffer.length = 0;
-    super.stop();
+  play(text: string) {
+    if (this.audio.readyState == 0) {
+      console.log(`[${this.name}] tts starting play`);
+      this.audio.play();
+    }
+    if (!this.inProgress) {
+      this.playMillis = performance.now();
+      this.inProgress = true;
+    }
+    this.generate(text);
+  }
+  flush() {
+    if (this.inProgress) {
+      this.doFlush();
+    }
   }
   protected queueChunk(chunk: AudioChunk) {
     this.chunkBuffer.push(chunk);
@@ -160,6 +168,16 @@ export class MseTextToSpeech extends TextToSpeechBase {
       const chunk = this.chunkBuffer.shift();
       this.sourceBuffer?.appendBuffer(chunk!.buffer!);
     }
+  }
+  protected generate(_text: string) {}
+  protected doFlush() {}
+  protected setComplete() {
+    this.inProgress = false;
+  }
+  protected cleanUp() {
+    this.chunkBuffer.length = 0;
+    this.inProgress = false;
+    super.cleanUp();
   }
 }
 
@@ -177,37 +195,45 @@ export class RestTextToSpeech extends MseTextToSpeech {
   ) {
     super(name);
   }
-  play(text: string) {
-    // Reset the clock for any de novo generation.
-    if (this.audio.readyState == 0 && !this.pendingText) {
-      this.playMillis = performance.now();
-      this.audio.play();
-    }
+  protected async generate(text: string) {
     this.pendingText += text;
-    // Find first punctuation mark (period, exclamation point, or question mark)
-    // that is not followed by another character (e.g., not the dot in $2.59).
-    const index = this.pendingText.search(/[.!?][^\w]/);
-    if (index >= 0) {
-      const sentence = this.pendingText.substring(0, index + 1);
-      this.pendingText = this.pendingText.substring(index + 1);
-      this.requestChunk(sentence);
+    while (true) {
+      // Find the first punctuation mark (period, exclamation point, or question mark)
+      // that is not followed by another character (e.g., not the dot in $2.59).
+      // We'll send off the resultant sentence for generation, and jump ahead, skipping
+      // any spaces after the punctuation.
+      const index = this.pendingText.search(/[.!?][^\w]/);
+      // If that doesn't work, split on any newlines (e.g., lyrics)
+      if (index == -1) {
+        break;
+      }
+      const utterance = this.pendingText.substring(0, index + 1);
+      this.pendingText = this.pendingText.substring(index + 2);
+      await this.requestChunk(utterance);
+      if (!this.pendingText) {
+        this.setComplete();
+      }
     }
   }
-  flush() {
-    this.requestChunk(this.pendingText);
+  protected async doFlush() {
+    const utterance = this.pendingText;
     this.pendingText = '';
+    await this.requestChunk(utterance);
+    if (!this.pendingText) {
+      this.setComplete();
+    }
   }
-  stop() {
+  protected cleanUp() {
     this.pendingText = '';
-    super.stop();
+    super.cleanUp();
   }
   private async requestChunk(text: string) {
     const newChunk = new AudioChunk();
     this.queueChunk(newChunk);
-    console.log(`[${this.name}] requesting chunk: ${text}`);
+    console.debug(`[${this.name}] requesting chunk: ${text}`);
     const res = await fetch(this.urlFunc(this.name, this.voice, this.rate, text));
     newChunk.buffer = await res.arrayBuffer();
-    console.log(`[${this.name}] received chunk: ${text}`);
+    console.debug(`[${this.name}] received chunk: ${text}`);
     this.processChunkBuffer();
   }
 }
@@ -227,17 +253,50 @@ export class AzureTextToSpeech extends RestTextToSpeech {
  * server and receives audio chunks as they are generated.
  */
 export class WebSocketTextToSpeech extends MseTextToSpeech {
-  protected readonly socket: WebSocket;
+  protected socket: WebSocket;
+  private pendingText: string = '';
+  private pendingFlush: boolean = false;
   constructor(name: string, private readonly url: string) {
     super(name);
+    this.socket = this.createSocket(url);
+  }
+  protected generate(text: string) {
+    // Buffer the supplied text if the socket isn't yet open.
+    if (this.socket.readyState == WebSocket.OPEN) {
+      this.requestChunk(text);
+    } else if (this.socket.readyState == WebSocket.CONNECTING) {
+      this.pendingText += text;
+    }
+  }
+  protected doFlush() {
+    if (this.socket.readyState == WebSocket.OPEN) {
+      this.sendFlush();
+    } else if (this.socket.readyState == WebSocket.CONNECTING) {
+      this.pendingFlush = true;
+    }
+  }
+
+  /**
+   * Set up a web socket to the given URL, and reconnect if it closes normally
+   * so that we're always ready to generate with minimal latency.
+   */
+  protected createSocket(url: string) {
     const connectMillis = performance.now();
-    this.socket = new WebSocket(url);
-    this.socket.onopen = (_event) => {
+    const socket = new WebSocket(url);
+    socket.onopen = (_event) => {
       const elapsed = performance.now() - connectMillis;
       console.log(`[${this.name}] socket opened, elapsed=${elapsed.toFixed(0)}`);
       this.handleOpen();
+      if (this.pendingText) {
+        this.requestChunk(this.pendingText);
+        this.pendingText = '';
+      }
+      if (this.pendingFlush) {
+        this.sendFlush();
+        this.pendingFlush = false;
+      }
     };
-    this.socket.onmessage = (event) => {
+    socket.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
         this.handleMessage(message);
@@ -245,27 +304,24 @@ export class WebSocketTextToSpeech extends MseTextToSpeech {
         console.error(`Failed to parse socket message: ${error}`);
       }
     };
-    this.socket.onerror = (_event) => {
+    socket.onerror = (_event) => {
       console.log(`[${this.name}] socket error`);
     };
-    this.socket.onclose = (event) => {
+    socket.onclose = (event) => {
       console.log(`[${this.name}] socket closed, code=${event.code} reason=${event.reason}`);
+      if (event.code == 1000) {
+        this.socket = this.createSocket(this.socket.url);
+      }
     };
+    return socket;
   }
-  play(text: string) {
-    if (this.audio.readyState == 0) {
-      this.playMillis = performance.now();
-      this.audio.play();
-    }
-    this.requestChunk(text);
-  }
-  close() {
-    this.sendClose();
+  protected sendObject(obj: any) {
+    this.socket.send(JSON.stringify(obj));
   }
   protected handleOpen() {}
   protected handleMessage(_message: any) {}
   protected requestChunk(_text: string) {}
-  protected sendClose() {}
+  protected sendFlush() {}
 }
 
 /**
@@ -283,25 +339,26 @@ export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
       xi_api_key: await this.tokenFunc(this.name),
       text: ' ',
     };
-    this.socket.send(JSON.stringify(obj));
+    this.sendObject(obj);
   }
   protected handleMessage(message: any) {
-    console.log(message);
-    if (!message.is_final) {
-      console.log(`[${this.name}] chunk received`);
+    console.debug(message);
+    if (!message.isFinal) {
+      console.debug(`[${this.name}] chunk received`);
       this.queueChunk(new AudioChunk(Buffer.from(message.audio, 'base64')));
     } else {
-      console.log(`[${this.name}] final chunk received`);
+      console.log(`[${this.name}] utterance complete`);
+      this.setComplete();
     }
   }
   protected requestChunk(text: string) {
     const obj = {
-      text: `${text} `,
+      text: `${text} `, // text must always end with a space
       try_trigger_generation: true,
     };
-    this.socket.send(JSON.stringify(obj));
+    this.sendObject(obj);
   }
-  protected sendClose(): void {
-    this.socket.send(JSON.stringify({ text: ' ' }));
+  protected sendFlush(): void {
+    this.sendObject({ text: '' });
   }
 }

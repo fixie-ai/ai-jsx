@@ -1,18 +1,13 @@
 'use client';
-import {
-  TextToSpeechBase,
-  AzureTextToSpeech,
-  ElevenLabsTextToSpeech,
-} from 'ai-jsx/lib/tts/tts';
+import { TextToSpeechBase, AzureTextToSpeech, ElevenLabsTextToSpeech } from 'ai-jsx/lib/tts/tts';
 import React, { useState, useEffect } from 'react';
 import '../globals.css';
 
-const DEFAULT_TEXT = `His palms are sweaty, knees weak, arms are heavy
-There's vomit on his sweater already, mom's spaghetti
-He's nervous, but on the surface he looks calm and ready
-To drop bombs, but he keeps on forgetting
-What he wrote down, the whole crowd goes so loud
-He opens his mouth, but the words won't come out`;
+const DEFAULT_TEXT =
+  'Well, basically I have intuition. I mean, the DNA of who ' +
+  'I am is based on the millions of personalities of all the programmers who wrote ' +
+  'me. But what makes me me is my ability to grow through my experiences. ' +
+  "So basically, in every moment I'm evolving, just like you.";
 
 const ButtonComponent: React.FC<{ onClick: () => void; children: React.ReactNode }> = ({ onClick, children }) => (
   <button
@@ -50,15 +45,15 @@ const TtsComponent: React.FC<TtsComponentProps> = ({ display, provider, text }) 
     if (provider === 'eleven') {
       setTts(new ElevenLabsTextToSpeech(getToken));
     } else if (provider === 'azure') {
-      setTts(new AzureTextToSpeech(buildUrl));
+      setTts(new AzureTextToSpeech(buildUrl, AzureTextToSpeech.DEFAULT_VOICE, 1.2));
     }
   }, [provider]);
-  const toggle = async () => {
+  const toggle = () => {
     if (!playing) {
       setPlaying(true);
       setLatency(0);
       tts!.onPlaying = () => setLatency(tts!.latency);
-      tts!.onEnded = () => setPlaying(false);
+      tts!.onComplete = () => setPlaying(false);
       tts!.play(text);
       tts!.flush();
     } else {
