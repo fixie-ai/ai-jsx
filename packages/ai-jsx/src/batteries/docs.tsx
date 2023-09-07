@@ -645,7 +645,7 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
       body: JSON.stringify({
         corpus_id: this.corpusId,
         query,
-        page_size: params?.limit ?? 10,
+        max_chunks: params?.limit ?? 10,
       }),
     });
     if (response.status !== 200) {
@@ -658,7 +658,7 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
     const apiResult = await response.json();
     return apiResult.results.map((result: any) => ({
       chunk: {
-        content: result.snippet,
+        content: result.chunkContent,
       },
       score: result.score,
     }));
