@@ -208,6 +208,15 @@
         "default": "./dist/cjs/lib/asr/asr.cjs"
       }
     },
+    "./lib/tts/tts": {
+      "import": {
+        "types": "./dist/esm/lib/tts/tts.d.ts",
+        "default": "./dist/esm/lib/tts/tts.js"
+      },
+      "require": {
+        "default": "./dist/cjs/lib/tts/tts.cjs"
+      }
+    },
     "./react": {
       "import": {
         "types": "./dist/esm/react/index.d.ts",
