@@ -14,10 +14,6 @@ export type BuildUrlFunction = (provider: string, voice: string, rate: number, t
  */
 export type GetTokenFunction = (provider: string) => Promise<string>;
 
-//if (typeof Audio !== 'function') {
-//  return;
-//}
-
 /**
  * Defines a base class for text-to-speech services. This class provides
  * a common interface for text-to-speech services, as well as some basic
