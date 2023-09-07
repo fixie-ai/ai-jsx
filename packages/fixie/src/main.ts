@@ -28,13 +28,17 @@ function registerDeployCommand(command: Command) {
   command
     .command('deploy [path]')
     .description('Deploy an agent')
-    .option('-e, --env <key=value>', 'Environment variables to set', (v, m: Record<string, string> | undefined) => {
-      const [key, value] = v.split('=');
-      return {
-        ...m,
-        [key]: value ?? '',
-      };
-    })
+    .option(
+      '-e, --env <key=value>',
+      'Environment variables to set for this deployment. Variables in a .env file take precedence over those on the command line.',
+      (v, m: Record<string, string> | undefined) => {
+        const [key, value] = v.split('=');
+        return {
+          ...m,
+          [key]: value ?? '',
+        };
+      }
+    )
     .action(async (path: string | undefined, options: { env: Record<string, string> }) => {
       const client = await FixieClient.Create(program.opts().url);
       await FixieAgent.DeployAgent(client, path ?? process.cwd(), {
