@@ -658,7 +658,7 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
     const apiResult = await response.json();
     return apiResult.results.map((result: any) => ({
       chunk: {
-        content: result.snippet,
+        content: result.chunkContent,
       },
       score: result.score,
     }));
