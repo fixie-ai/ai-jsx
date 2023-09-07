@@ -4,7 +4,7 @@
  * This is a command-line tool to interact with the Fixie platform.
  */
 
-import { program } from 'commander';
+import { Command, program } from 'commander';
 import terminal from 'terminal-kit';
 import { FixieClient } from './client.js';
 import { FixieAgent } from './agent.js';
@@ -24,9 +24,28 @@ function showResult(result: any, raw: boolean) {
 }
 
 /** Deploy an agent from the current directory. */
-async function deployAgent(path?: string) {
-  const client = await FixieClient.Create(program.opts().url);
-  await FixieAgent.DeployAgent(client, path ?? process.cwd());
+function registerDeployCommand(command: Command) {
+  command
+    .command('deploy [path]')
+    .description('Deploy an agent')
+    .option(
+      '-e, --env <key=value>',
+      'Environment variables to set for this deployment. Variables in a .env file take precedence over those on the command line.',
+      (v, m: Record<string, string> | undefined) => {
+        const [key, value] = v.split('=');
+        return {
+          ...m,
+          [key]: value ?? '',
+        };
+      }
+    )
+    .action(async (path: string | undefined, options: { env: Record<string, string> }) => {
+      const client = await FixieClient.Create(program.opts().url);
+      await FixieAgent.DeployAgent(client, path ?? process.cwd(), {
+        FIXIE_API_URL: program.opts().url,
+        ...options.env,
+      });
+    });
 }
 
 // Get current version of this package.
@@ -50,12 +69,7 @@ program
     showResult(result, program.opts().raw);
   });
 
-program
-  .command('deploy [path]')
-  .description('Deploy an agent')
-  .action(async (path: string) => {
-    await deployAgent(path);
-  });
+registerDeployCommand(program);
 
 const corpus = program.command('corpus').description('Corpus related commands');
 
@@ -212,12 +226,7 @@ agents
     showResult(result.metadata, program.opts().raw);
   });
 
-agents
-  .command('deploy [path]')
-  .description('Deploy an agent')
-  .action(async (path: string) => {
-    await deployAgent(path);
-  });
+registerDeployCommand(agents);
 
 const revisions = agents.command('revisions').description('Agent revision-related commands');
 
