@@ -97,8 +97,6 @@ function ttsAzure(voice: string, rate: number, text: string): Promise<Response> 
   headers.append('Content-Type', 'application/ssml+xml');
   headers.append('X-Microsoft-OutputFormat', outputFormat);
   headers.append('User-Agent', 'MyTTS');
-  console.log(headers);
-  console.log(makeSsml(voice, rate, text));
   return fetch(url, {
     method: 'POST',
     headers,
