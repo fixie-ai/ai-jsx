@@ -122,7 +122,8 @@ function ttsAws(voice: string, rate: number, text: string) {
 
 /**
  * Returns a temporary API key for use in a WebSocket connection to the given provider.
- * Currently, this is only configured for Eleven Labs.
+ * Currently, this is only configured for Eleven Labs, and even then, we're mostly 
+ * faking it because Eleven doesn't support temporary API keys yet.
  */
 export async function POST(request: NextRequest) {
   const inJson = await request.json();
