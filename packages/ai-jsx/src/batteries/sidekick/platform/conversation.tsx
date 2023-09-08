@@ -78,14 +78,15 @@ export async function getNextConversationStep(
   messages: ConversationMessage[],
   fullConversation: ConversationMessage[],
   finalSystemMessageBeforeResponse: AI.Node,
-  tools: UseToolsProps['tools']
+  tools: UseToolsProps['tools'],
+  componentContext: AI.ComponentContext
 ) {
   const shrinkableConversation = getShrinkableConversation(messages, fullConversation);
   const lastMessage = messages[messages.length - 1];
 
   // TODO: only use messages to focus on last round of conversation?
   // Q: doess messages have all the messages from current round?
-  const updatedTools = { ...tools, ...redactedFunctionTools(fullConversation) };
+  const updatedTools = { ...tools, ...redactedFunctionTools(fullConversation, componentContext) };
 
   switch (lastMessage.type) {
     case 'functionCall': {

@@ -6,7 +6,7 @@ import { getEncoding } from 'js-tiktoken';
 import yaml from 'js-yaml';
 import _ from 'lodash';
 import { UseToolsProps } from '../../use-tools.js';
-import { getEnvVar } from '../../../lib/util.js';
+import { cohereContext, reranker } from '../../../lib/cohere.js';
 
 export type LengthFunction = ((text: string) => number) | ((text: string) => Promise<number>);
 export interface RedactedFuncionResponseMetadata {
@@ -50,15 +50,11 @@ export async function LargeFunctionResponseHandler(
     numChunks?: number;
     lengthFunction?: LengthFunction;
   },
-  { render }: AI.ComponentContext
+  { render, logger, getContext }: AI.ComponentContext
 ) {
   let stringified = await render(children);
 
   console.log('typeof stringified: ', typeof stringified);
-
-  // if (typeof stringified !== 'string') {
-  //   stringified = JSON.stringify(stringified);
-  // }
 
   // Option 1: do nothing if it's already small enough
   if ((await lengthFunction(stringified)) <= maxLength) {
@@ -72,10 +68,19 @@ export async function LargeFunctionResponseHandler(
     return <FunctionResponse {...props}>{stringified}</FunctionResponse>;
   }
 
-  // TODO: only split if reranker is available
   // Option 3 (last reosrt): split into chunks and allow LLM to query by similarity
+  // Requires Cohere API key for doing similarity search
+  const ctx = getContext(cohereContext);
+
+  if (!ctx.api_key) {
+    // Not yet an error, but this is an error just waiting to happen
+    logger.warn(
+      { CohereContext: ctx },
+      'FunctionResponse is too big, but Cohere API key is not set. Please set it in the context.'
+    );
+  }
+
   const splitter = new RecursiveCharacterTextSplitter({
-    // TODO: replace magic numbers (4, 4000, etc)
     chunkSize: maxLength / numChunks,
     chunkOverlap: maxLength / numChunks / 10,
     lengthFunction,
@@ -113,7 +118,10 @@ function getLastRedactedFnResponseData(messages: ConversationMessage[]): Redacte
   return lastFnResData;
 }
 
-export function redactedFunctionTools(messages: ConversationMessage[]): UseToolsProps['tools'] {
+export function redactedFunctionTools(
+  messages: ConversationMessage[],
+  componentContext: AI.ComponentContext
+): UseToolsProps['tools'] {
   const responseContent = getLastRedactedFnResponseData(messages);
   if (!responseContent) {
     return {};
@@ -130,11 +138,14 @@ export function redactedFunctionTools(messages: ConversationMessage[]): UseTools
       },
       func: async ({ query }) => {
         console.log(`calling loadBySimilarity with ${query}`);
-        const response = await reranker({
-          query,
-          documents: responseContent.chunks,
-          top_n: 2,
-        });
+        const response = await reranker(
+          {
+            query,
+            documents: responseContent.chunks,
+            top_n: 2,
+          },
+          componentContext
+        );
         return response
           .map(
             (chunk) => `
@@ -181,43 +192,4 @@ function yamlOptimizeIfPossible(possiblyObjectText: string) {
     }
   }
   return yaml.dump(content, { lineWidth: 200, flowLevel: 4 });
-}
-
-interface RerankerResponse {
-  results: { index: number; relevance_score: number }[];
-}
-
-async function reranker({
-  query,
-  documents,
-  top_n,
-  model = 'rerank-multilingual-v2.0',
-  api_url = 'https://api.cohere.ai/v1', // to point to FIXIE: 'https://farzad-cohere-reranker-proxy-pgaenaxiea-uc.a.run.app/api/cohere-proxy/v1',
-  api_key = getEnvVar('COHERE_API_KEY'), // to point to FIXIE AGENT_KEY
-}: {
-  query: string;
-  documents: string[];
-  top_n: number;
-  model?: string;
-  api_url?: string;
-  api_key?: string;
-}): Promise<RerankerResponse['results']> {
-  const response = await fetch(`${api_url}/rerank`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${api_key}`,
-    },
-    body: JSON.stringify({
-      query,
-      documents,
-      model,
-      top_n,
-    }),
-  });
-
-  if (response.status != 200) {
-    throw new Error(await response.text());
-  }
-  return (await response.json()).results as RerankerResponse['results'];
 }

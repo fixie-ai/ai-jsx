@@ -189,6 +189,15 @@
         "default": "./dist/cjs/lib/openai.cjs"
       }
     },
+    "./lib/cohere": {
+      "import": {
+        "types": "./dist/esm/lib/cohere.d.ts",
+        "default": "./dist/esm/lib/cohere.js"
+      },
+      "require": {
+        "default": "./dist/cjs/lib/cohere.cjs"
+      }
+    },
     "./lib/anthropic": {
       "import": {
         "types": "./dist/esm/lib/anthropic.d.ts",

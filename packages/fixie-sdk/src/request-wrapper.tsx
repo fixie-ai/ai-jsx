@@ -4,6 +4,7 @@ import { ShowConversation, ConversationHistoryContext } from 'ai-jsx/core/conver
 import { Json } from './json.js';
 import { FixieConversation } from './conversation.js';
 import { OpenAI, OpenAIClient, ValidChatModel } from 'ai-jsx/lib/openai';
+import { cohereContext } from 'ai-jsx/lib/cohere';
 
 export interface FixieRequestContext {
   request: InvokeAgentRequest;
@@ -98,10 +99,14 @@ export function FixieRequestWrapper({
   }
 
   return (
-    <fixieContext.Provider value={{ request, agentId, authToken, apiBaseUrl }}>
-      <ConversationHistoryContext.Provider value={<FixieConversation />}>
-        {wrappedNode}
-      </ConversationHistoryContext.Provider>
-    </fixieContext.Provider>
+    <cohereContext.Provider
+      value={{ api_key: authToken, api_url: new URL('api/cohere-proxy/v1', apiBaseUrl).toString() }}
+    >
+      <fixieContext.Provider value={{ request, agentId, authToken, apiBaseUrl }}>
+        <ConversationHistoryContext.Provider value={<FixieConversation />}>
+          {wrappedNode}
+        </ConversationHistoryContext.Provider>
+      </fixieContext.Provider>
+    </cohereContext.Provider>
   );
 }
