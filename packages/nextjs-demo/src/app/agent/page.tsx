@@ -4,8 +4,12 @@ import { DeepgramSpeechRecognition, MicManager, Transcript } from 'ai-jsx/lib/as
 import { AzureTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import '../globals.css';
 
+class ClientMessage {
+  constructor(public readonly role: string, public readonly content: string) {}
+}
+
 const pending: { [key: string]: AssistantRequest } = {};
-const messages: string[] = [];
+const messages: ClientMessage[] = [];
 
 const ButtonComponent: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
   onClick,
@@ -45,12 +49,11 @@ function BuildUrl(provider: string, voice: string, rate: number, text: string) {
 class AssistantRequest {
   public outMessage = '';
   public done = false;
-  public onupdate?: (request: AssistantRequest, newText: string) => void;
-  public oncomplete?: (request: AssistantRequest) => void;
-  constructor(private readonly inMessages: string[], public active: boolean, public tts: TextToSpeechBase) {}
-
+  public onUpdate?: (request: AssistantRequest, newText: string) => void;
+  public onComplete?: (request: AssistantRequest) => void;
+  constructor(private readonly inMessages: ClientMessage[], public active: boolean, public tts: TextToSpeechBase) {}
   async start() {
-    console.log(`calling LLM for ${this.inMessages[this.inMessages.length - 1]}`);
+    console.log(`calling LLM for ${this.inMessages[this.inMessages.length - 1].content}`);
     const startTime = performance.now();
     const res = await fetch('/agent/api', {
       method: 'POST',
@@ -66,15 +69,12 @@ class AssistantRequest {
       const { done, value } = await reader.read();
       if (done) {
         this.done = true;
-        this.oncomplete?.(this);
+        this.onComplete?.(this);
         break;
-      }
-      if (!this.outMessage) {
-        console.log(`first token: ${this.outMessage} latency=${(performance.now() - startTime).toFixed(0)}`);
       }
       const newText = new TextDecoder().decode(value);
       this.outMessage += newText;
-      this.onupdate?.(this, newText);
+      this.onUpdate?.(this, newText);
     }
   }
 }
@@ -87,34 +87,47 @@ const PageComponent: React.FC = () => {
   const [output, setOutput] = useState('');
   const active = () => Boolean(manager);
   const handleRequestUpdate = (request: AssistantRequest, newText: string) => {
-    console.log(`request update, active=${request.active}`);
     if (request.active) {
       setOutput(request.outMessage);
       request.tts.play(newText);
     }
   };
+  const finishRequest = (request: AssistantRequest) => {
+    request.tts.flush();
+    const assistantMessage = new ClientMessage('assistant', request.outMessage);
+    messages.push(assistantMessage);
+    console.log(`updating messages, messages=${messages}`);
+    setInput('');
+    for (const x in pending) {
+      delete pending[x];
+    }
+  };
   const handleRequestDone = (request: AssistantRequest) => {
     console.log(`request done, active=${request.active}`);
     if (request.active) {
-      messages.push(request.outMessage);
-      setInput('');
-    } //++++ handle weird timing case where this happens before active
+      finishRequest(request);
+    }
   };
   const handleInputUpdate = (text: string, final: boolean, tts: TextToSpeechBase) => {
-    const newMessages = [...messages, text];
+    const userMessage = new ClientMessage('user', text);
+    const newMessages = [...messages, userMessage];
     const hit = text in pending;
     console.log(`${final ? 'final' : 'partial'}: ${text} ${hit ? 'HIT' : 'MISS'}`);
     if (!hit) {
       const request = new AssistantRequest(newMessages, final, tts);
-      request.onupdate = handleRequestUpdate;
-      request.oncomplete = handleRequestDone;
+      request.onUpdate = handleRequestUpdate;
+      request.onComplete = handleRequestDone;
       pending[text] = request;
       request.start();
-    } else {
+    } else if (final) {
+      messages.push(userMessage);
       const request = pending[text];
       request.active = true;
       setOutput(request.outMessage);
       tts.play(request.outMessage);
+      if (request.done) {
+        finishRequest(request);
+      }
     }
   };
   const handleStop = () => {
@@ -122,6 +135,7 @@ const PageComponent: React.FC = () => {
       return;
     }
     console.log('stopping');
+    setInput('');
     tts?.stop();
     asr?.close();
     manager?.stop();
@@ -133,7 +147,8 @@ const PageComponent: React.FC = () => {
     const _manager = new MicManager();
     const _asr = new DeepgramSpeechRecognition(_manager, GetToken);
     // const _tts = new ElevenLabsTextToSpeech(ELEVEN_VOICE, 1.2);
-    const _tts = new AzureTextToSpeech(BuildUrl, AzureTextToSpeech.DEFAULT_VOICE, 1.4);
+    const _tts = new AzureTextToSpeech(BuildUrl, AzureTextToSpeech.DEFAULT_VOICE, 1.2);
+    //_tts.play('');
     setManager(_manager);
     setAsr(_asr);
     setTts(_tts);
@@ -153,8 +168,47 @@ const PageComponent: React.FC = () => {
     <>
       <div className="w-full">
         <p className="font-sm ml-2 mb-2">
-          This demo allows you to chat (via voice) with a knowledgeable fox 🦊. Click Start to begin.
+        This demo allows you to chat (via voice) with a drive-thru agent at a Krispy Kreme. Click Start to begin.
         </p>
+        <div className="grid grid-cols-2">
+          <div className="p-4">
+          <p className="text-lg font-bold">🍩 DONUTS</p>
+          <ul className="text-sm">
+            <li>PUMPKIN SPICE ORIGINAL GLAZED® DOUGHNUT $1.29</li>
+            <ul>
+              <li>PUMPKIN SPICE CAKE DOUGHNUT $1.29</li>
+              <li>PUMPKIN SPICE CHEESECAKE SWIRL DOUGHNUT $1.29</li>
+              <li>PUMPKIN SPICE MAPLE PECAN DOUGHNUT $1.29</li>
+              <li>ORIGINAL GLAZED® DOUGHNUT $0.99</li>
+              <li>CHOCOLATE ICED GLAZED DOUGHNUT $1.09</li>
+              <li>CHOCOLATE ICED GLAZED DOUGHNUT WITH SPRINKLES $1.09</li>
+              <li>GLAZED RASPBERRY FILLED DOUGHNUT $1.09</li>
+              <li>GLAZED BLUEBERRY CAKE DOUGHNUT $1.09</li>
+              <li>STRAWBERRY ICED DOUGHNUT WITH SPRINKLES $1.09</li>
+              <li>GLAZED LEMON FILLED DOUGHNUT $1.09</li>
+              <li>CHOCOLATE ICED CUSTARD FILLED DOUGHNUT $1.09</li>
+              <li>CHOCOLATE ICED DOUGHNUT WITH KREME™ FILLING $1.09</li>
+              <li>CAKE BATTER DOUGHNUT $1.09</li>
+              <li>ORIGINAL GLAZED® DOUGHNUT HOLES $3.99</li>
+            </ul>
+          </ul>
+          </div>
+          <div className="p-4">
+          <p className="text-lg font-bold">☕️ COFFEE & DRINKS</p>
+          <ul className="text-sm">
+            <li>PUMPKIN SPICE COFFEE $2.59</li>
+            <li>PUMPKIN SPICE LATTE $4.59</li>
+            <li>CLASSIC BREWED COFFEE $1.79</li>
+            <li>CLASSIC DECAF BREWED COFFEE $1.79</li>
+            <li>LATTE $3.49</li>
+            <li>VANILLA SPECIALTY LATTE $3.49</li>
+            <li>ORIGINAL GLAZED® LATTE $3.49</li>
+            <li>CARAMEL SPECIALTY LATTE $3.49</li>
+            <li>CARAMEL MOCHA SPECIALTY LATTE $3.49</li>
+            <li>MOCHA SPECIALTY LATTE $3.49</li>
+          </ul>
+          </div>
+        </div>
         <div>
           <textarea className="m-2 w-full" readOnly id="output" rows={10} cols={80} value={output}></textarea>
         </div>

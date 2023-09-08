@@ -14,10 +14,6 @@ export type BuildUrlFunction = (provider: string, voice: string, rate: number, t
  */
 export type GetTokenFunction = (provider: string) => Promise<string>;
 
-//if (typeof Audio !== 'function') {
-//  return;
-//}
-
 /**
  * Defines a base class for text-to-speech services. This class provides
  * a common interface for text-to-speech services, as well as some basic
@@ -202,7 +198,7 @@ export class RestTextToSpeech extends MseTextToSpeech {
       // that is not followed by another character (e.g., not the dot in $2.59).
       // We'll send off the resultant sentence for generation, and jump ahead, skipping
       // any spaces after the punctuation.
-      const index = this.pendingText.search(/[.!?][^\w]/);
+      const index = this.pendingText.search(/[.!?]\s/);
       // If that doesn't work, split on any newlines (e.g., lyrics)
       if (index == -1) {
         break;
