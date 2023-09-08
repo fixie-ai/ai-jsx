@@ -117,18 +117,19 @@ export class FixieClient {
   /** Create a new Corpus. */
   createCorpus(name?: string): Promise<Jsonifiable> {
     const body = {
-      name,
-      sources: [],
+      corpus: {
+        display_name: name,
+      },
     };
     return this.request('/api/v1/corpora', body);
   }
 
   /** Query a given Corpus. */
-  queryCorpus(corpusId: string, query: string, pageSize?: number): Promise<Jsonifiable> {
+  queryCorpus(corpusId: string, query: string, maxChunks?: number): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
       query,
-      page_size: pageSize,
+      max_chunks: maxChunks,
     };
     return this.request(`/api/v1/corpora/${corpusId}:query`, body);
   }
@@ -152,7 +153,7 @@ export class FixieClient {
         load_spec: { web: { start_urls: [urlPattern] } },
         process_steps: [
           {
-            name: 'markdownify',
+            step_name: 'markdownify',
             relevant_document_types: {
               include: { mime_types: ['text/html'] },
             },
@@ -161,7 +162,7 @@ export class FixieClient {
         ],
         embed_specs: [
           {
-            name: 'markdown',
+            spec_name: 'markdown',
             relevant_document_types: {
               include: { mime_types: ['text/markdown'] },
             },
@@ -170,7 +171,7 @@ export class FixieClient {
             splits: ['\n\n', '\n', ' ', ''],
           },
           {
-            name: 'plain',
+            spec_name: 'plain',
             relevant_document_types: {
               include: { mime_types: ['text/plain'] },
             },

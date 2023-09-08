@@ -1,10 +1,14 @@
 # Changelog
 
-## 0.13.1
+## 0.15.0
 
-- Add a `metadata` prop to conversational components such as `<AssistantMessage>`
+- Updated DocsQA battery to use the new version of the Fixie corpus REST API.
 
-## 0.13.0
+## [0.14.0](https://github.com/fixie-ai/ai-jsx/commit/f46df6cc40198b82062d61029e47c9d38ef6abf3)
+
+- Updated DocsQA battery to use the new Fixie corpus REST API.
+
+## [0.13.0](https://github.com/fixie-ai/ai-jsx/commit/3f97b9bd030c15c65892ce8bdb409874e3487d13)
 
 - Add Sidekick component. Sidekicks are a high-level abstraction for combining tool use, docs QA, and generated UI.
 - Change `MdxSystemMessage` to no longer automatically infer component names from the `usageExamples`. Instead, `usageExamples` is now a plain string, and component names are passed separately via the `componentNames` prop.

@@ -36,14 +36,13 @@ async function serve({
 
   const fixieApiUrl = process.env.FIXIE_API_URL ?? 'https://app.fixie.ai';
 
-  const getJwks = createRemoteJWKSet(new URL(`${fixieApiUrl}/.well-known/jwks.json`));
+  const getJwks = createRemoteJWKSet(new URL('/.well-known/jwks.json', fixieApiUrl));
 
   app.addHook('onRequest', async (request, reply) => {
     try {
       const token = request.headers.authorization?.split(' ')[1];
       if (typeof token !== 'string') {
         throw new Error('Missing Authorization header');
-        return;
       }
       (request as any).fixieAuthToken = token;
       (request as any).fixieVerifiedToken = await jwtVerify(token, getJwks);
@@ -76,16 +75,22 @@ async function serve({
         .send(
           Readable.from(
             (async function* () {
+              let lastMessages = [];
               while (true) {
                 try {
                   const next = await generator.next();
-                  const messages = next.value.split('\n').slice(0, -1);
-                  yield `${JSON.stringify({ messages: messages.map((msg) => JSON.parse(msg)) })}\n`;
+                  lastMessages = next.value
+                    .split('\n')
+                    .slice(0, -1)
+                    .map((msg) => JSON.parse(msg));
+                  yield `${JSON.stringify({ messages: lastMessages, state: next.done ? 'done' : 'in-progress' })}\n`;
                   if (next.done) {
                     break;
                   }
                 } catch (ex) {
-                  console.error(`Error during generation: ${ex}${ex instanceof Error ? ` ${ex.stack}` : ''}`);
+                  const errorDetail = `Error during generation: ${ex}${ex instanceof Error ? ` ${ex.stack}` : ''}`;
+                  yield `${JSON.stringify({ messages: lastMessages, errorDetail, state: 'error' })}\n`;
+                  await generator.return?.();
                   break;
                 }
               }
