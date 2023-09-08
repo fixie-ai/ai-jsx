@@ -28,27 +28,27 @@ export interface UserInfo {
  * A client to the Fixie AI platform.
  */
 export class FixieClient {
-  url!: string;
-  apiKey!: string;
-
-  /** Use Create() instead. */
-  private constructor() {}
-
   /**
-   * Create a new Fixie client.
-   * @param url The URL of the Fixie API server.
+   * Use the `Create*` methods instead.
    */
-  public static Create(url: string): FixieClient {
-    const client = new FixieClient();
-    client.url = url;
-    const apiKey = process.env.FIXIE_API_KEY;
-    if (!apiKey) {
+  private constructor(private readonly url: string, private readonly apiKey?: string) {}
+
+  static Create(url: string, apiKey?: string) {
+    const apiKeyToUse = apiKey ?? process.env.FIXIE_API_KEY;
+    if (!apiKeyToUse) {
       throw new Error(
-        'You must set the FIXIE_API_KEY environment variable. This can be found at: https://beta.fixie.ai/profile'
+        'You must pass apiKey to the constructor, or set the FIXIE_API_KEY environment variable. The API key can be found at: https://beta.fixie.ai/profile'
       );
     }
-    client.apiKey = apiKey;
-    return client;
+    return new FixieClient(url, apiKey);
+  }
+
+  /**
+   * Create a new FixieClient without an API key. You probably don't want this. This is only useful if you're running 
+   * code in the browser on the same domain as the Fixie service; e.g. app.fixie.ai.
+   */
+  static CreateWithoutApiKey(url: string) {
+    return new FixieClient(url);
   }
 
   /** Send a request to the Fixie API with the appropriate auth headers. */
