@@ -13,6 +13,7 @@ import {
   SystemMessage,
 } from '../../../core/conversation.js';
 import { UseToolsProps } from '../../use-tools.js';
+import { LargeFunctionResponseHandler, TruncateByChars, redactedFunctionTools } from './large-response-handler.js';
 
 /**
  * This function defines the shrinking policy. It's activated when the conversation history overflows the context
@@ -81,23 +82,42 @@ export async function getNextConversationStep(
 ) {
   const shrinkableConversation = getShrinkableConversation(messages, fullConversation);
   const lastMessage = messages[messages.length - 1];
+
+  // TODO: only use messages to focus on last round of conversation?
+  // Q: doess messages have all the messages from current round?
+  const updatedTools = { ...tools, ...redactedFunctionTools(fullConversation) };
+
   switch (lastMessage.type) {
     case 'functionCall': {
       const { name, args } = lastMessage.element.props;
+      let response;
       try {
-        return <FunctionResponse name={name}>{await tools[name].func(args)}</FunctionResponse>;
+        response = await updatedTools[name].func(args);
       } catch (e: any) {
         return (
           <FunctionResponse failed name={name}>
-            {e.message}
+            <TruncateByChars maxLength={2000}>{e.message}</TruncateByChars>
           </FunctionResponse>
         );
       }
+      // If using a tool based on redacted functions, we don't want to redact it further
+      if (!(name in tools)) {
+        <FunctionResponse name={name}>{response}</FunctionResponse>;
+      }
+      // Function responses can potentially be very large. In that case, we need
+      // some way of handling that so the context window doesn't blow up.
+      return (
+        // TODO: magic number (4000 and 2000) + token vs chars distinction
+        // TODO: pass query to handler?
+        <LargeFunctionResponseHandler name={name} maxLength={4000}>
+          {response}
+        </LargeFunctionResponseHandler>
+      );
     }
     case 'functionResponse':
       return (
         <RepairMdxInConversation>
-          <ChatCompletion functionDefinitions={tools}>
+          <ChatCompletion functionDefinitions={updatedTools}>
             {shrinkableConversation}
             {finalSystemMessageBeforeResponse}
           </ChatCompletion>
@@ -106,7 +126,7 @@ export async function getNextConversationStep(
     case 'user':
       return (
         <RepairMdxInConversation>
-          <ChatCompletion functionDefinitions={tools}>{shrinkableConversation}</ChatCompletion>
+          <ChatCompletion functionDefinitions={updatedTools}>{shrinkableConversation}</ChatCompletion>
         </RepairMdxInConversation>
       );
     default:

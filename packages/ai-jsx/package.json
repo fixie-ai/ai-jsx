@@ -368,7 +368,7 @@
     "ink": "^4.2.0",
     "js-tiktoken": "^1.0.7",
     "js-yaml": "^4.1.0",
-    "langchain": "^0.0.81",
+    "langchain": "^0.0.143",
     "lodash": "^4.17.21",
     "ml-distance": "^4.0.1",
     "openai": "^4.1.0",
