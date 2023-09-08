@@ -1,0 +1,25 @@
+{
+  "name": "sidekick-github",
+  "version": "1.0.0",
+  "devDependencies": {
+    "@fixieai/sdk": "*",
+    "@tsconfig/node18": "^2.0.1",
+    "typescript": "^5.1.3"
+  },
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "yarn build && fixie-serve-bin --packagePath ./dist/index.js --port 8080",
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "yarn run typecheck",
+    "prepack": "yarn build"
+  },
+  "dependencies": {
+    "ai-jsx": "*"
+  },
+  "files": [
+    "dist",
+    ".env"
+  ],
+  "main": "dist/index.js"
+}

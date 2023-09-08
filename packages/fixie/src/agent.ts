@@ -18,6 +18,7 @@ export interface AgentMetadata {
   name?: string;
   description?: string;
   moreInfoUrl?: string;
+  published?: boolean;
   created: Date;
   modified: Date;
   owner: string;
@@ -29,6 +30,7 @@ export interface AgentConfig {
   name?: string;
   description?: string;
   moreInfoUrl?: string;
+  public?: boolean;
 }
 
 /** Represents metadata about an agent revision. */
@@ -97,6 +99,7 @@ export class FixieAgent {
             moreInfoUrl
             created
             modified
+            published
             owner {
               __typename
               ... on UserType {
@@ -118,6 +121,7 @@ export class FixieAgent {
       name: result.data.agent.name,
       description: result.data.agent.description,
       moreInfoUrl: result.data.agent.moreInfoUrl,
+      published: result.data.agent.published,
       created: new Date(result.data.agent.created),
       modified: new Date(result.data.agent.modified),
       owner: result.data.agent.owner.username || result.data.agent.owner.handle,
@@ -130,12 +134,15 @@ export class FixieAgent {
     handle: string,
     name?: string,
     description?: string,
-    moreInfoUrl?: string
+    moreInfoUrl?: string,
+    published?: boolean
   ): Promise<FixieAgent> {
     const result = await client.gqlClient().mutate({
       mutation: gql`
-        mutation CreateAgent($handle: String!, $description: String, $moreInfoUrl: String) {
-          createAgent(agentData: { handle: $handle, description: $description, moreInfoUrl: $moreInfoUrl }) {
+        mutation CreateAgent($handle: String!, $description: String, $moreInfoUrl: String, $published: Boolean) {
+          createAgent(
+            agentData: { handle: $handle, description: $description, moreInfoUrl: $moreInfoUrl, published: $published }
+          ) {
             agent {
               agentId
             }
@@ -147,6 +154,7 @@ export class FixieAgent {
         name,
         description,
         moreInfoUrl,
+        published: published ?? false,
       },
     });
     const agentId = result.data.createAgent.agent.agentId;
@@ -170,12 +178,24 @@ export class FixieAgent {
   }
 
   /** Update this agent. */
-  async update(name?: string, description?: string, moreInfoUrl?: string) {
+  async update(name?: string, description?: string, moreInfoUrl?: string, published?: boolean) {
     this.client.gqlClient().mutate({
       mutation: gql`
-        mutation UpdateAgent($handle: String!, $name: String, $description: String, $moreInfoUrl: String) {
+        mutation UpdateAgent(
+          $handle: String!
+          $name: String
+          $description: String
+          $moreInfoUrl: String
+          $published: Boolean
+        ) {
           updateAgent(
-            agentData: { handle: $handle, name: $name, description: $description, moreInfoUrl: $moreInfoUrl }
+            agentData: {
+              handle: $handle
+              name: $name
+              description: $description
+              moreInfoUrl: $moreInfoUrl
+              published: $published
+            }
           ) {
             agent {
               agentId
@@ -188,6 +208,7 @@ export class FixieAgent {
         name,
         description,
         moreInfoUrl,
+        published,
       },
     });
     this.metadata = await FixieAgent.getAgentById(this.client, this.agentId);
@@ -206,21 +227,31 @@ export class FixieAgent {
 
     // Create a temporary directory and run `npm pack` inside.
     const tempdir = fs.mkdtempSync(path.join(os.tmpdir(), `fixie-tmp-${packageJson.name}-${packageJson.version}-`));
-    const commandline = `npm pack ${agentPath} --silent >/dev/null`;
+    const commandline = `npm pack ${path.resolve(agentPath)} --silent >/dev/null`;
     execSync(commandline, { cwd: tempdir });
     return `${tempdir}/${packageJson.name}-${packageJson.version}.tgz`;
   }
 
   /** Create a new agent revision, which deploys the agent. */
-  private async createRevision(tarball: string): Promise<string> {
+  private async createRevision(tarball: string, environmentVariables: Record<string, string>): Promise<string> {
     const uploadFile = fs.readFileSync(fs.realpathSync(tarball));
 
     const result = await this.client.gqlClient().mutate({
       mutation: gql`
-        mutation CreateAgentRevision($handle: String!, $codePackage: Upload!) {
+        mutation CreateAgentRevision(
+          $handle: String!
+          $codePackage: Upload!
+          $environmentVariables: [EnvironmentVariableInput!]
+        ) {
           createAgentRevision(
             agentHandle: $handle
-            revision: { managedDeployment: { environment: NODEJS, codePackage: $codePackage } }
+            revision: {
+              managedDeployment: {
+                environment: NODEJS
+                codePackage: $codePackage
+                environmentVariables: $environmentVariables
+              }
+            }
           ) {
             revision {
               id
@@ -231,6 +262,7 @@ export class FixieAgent {
       variables: {
         handle: this.handle,
         codePackage: new Blob([uploadFile], { type: 'application/gzip' }),
+        environmentVariables: Object.entries(environmentVariables).map(([key, value]) => ({ name: key, value })),
       },
       fetchPolicy: 'no-cache',
     });
@@ -239,7 +271,11 @@ export class FixieAgent {
   }
 
   /** Deploy an agent from the given directory. */
-  public static async DeployAgent(client: FixieClient, agentPath: string): Promise<string> {
+  public static async DeployAgent(
+    client: FixieClient,
+    agentPath: string,
+    environmentVariables: Record<string, string> = {}
+  ): Promise<string> {
     const config = await FixieAgent.LoadConfig(agentPath);
     const agentId = `${(await client.userInfo()).username}/${config.handle}`;
     term('🦊 Deploying agent ').green(agentId)('...\n');
@@ -253,15 +289,22 @@ export class FixieAgent {
     try {
       agent = await FixieAgent.GetAgent(client, agentId);
       term('👽 Updating agent ').green(agentId)('...\n');
-      agent.update(config.name, config.description, config.moreInfoUrl);
+      agent.update(config.name, config.description, config.moreInfoUrl, config.public);
     } catch (e) {
       // Try to create the agent instead.
       term('🌲 Creating new agent ').green(agentId)('...\n');
-      agent = await FixieAgent.CreateAgent(client, config.handle, config.name, config.description, config.moreInfoUrl);
+      agent = await FixieAgent.CreateAgent(
+        client,
+        config.handle,
+        config.name,
+        config.description,
+        config.moreInfoUrl,
+        config.public
+      );
     }
     const tarball = FixieAgent.getCodePackage(agentPath);
     const spinner = ora(' 🚀 Deploying...').start();
-    const revision = await agent.createRevision(tarball);
+    const revision = await agent.createRevision(tarball, environmentVariables);
     spinner.succeed(`Revision ${revision} was deployed to ${agent.agentUrl()}`);
     return revision;
   }

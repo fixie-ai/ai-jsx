@@ -36,7 +36,7 @@ async function serve({
 
   const fixieApiUrl = process.env.FIXIE_API_URL ?? 'https://app.fixie.ai';
 
-  const getJwks = createRemoteJWKSet(new URL(`${fixieApiUrl}/.well-known/jwks.json`));
+  const getJwks = createRemoteJWKSet(new URL('/.well-known/jwks.json', fixieApiUrl));
 
   app.addHook('onRequest', async (request, reply) => {
     try {
