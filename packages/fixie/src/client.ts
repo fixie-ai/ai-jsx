@@ -20,7 +20,7 @@ export class FixieClient extends IsomorphicFixieClient {
         'You must pass apiKey to the constructor, or set the FIXIE_API_KEY environment variable. The API key can be found at: https://beta.fixie.ai/profile'
       );
     }
-    return new this(url, apiKey);
+    return new this(url, apiKeyToUse);
   }
 
   static CreateWithoutApiKey(url: string): FixieClient {
