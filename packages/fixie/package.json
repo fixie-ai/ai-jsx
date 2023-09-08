@@ -7,7 +7,7 @@
   "homepage": "https://fixie.ai",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "start": "node --no-warnings dist/main.js",
     "build-start": "yarn run build && yarn run start",
     "format": "prettier --write .",
@@ -19,7 +19,9 @@
   "volta": {
     "extends": "../../package.json"
   },
-  "bin": "./dist/main.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": "./dist/src/main.js",
   "dependencies": {
     "@apollo/client": "^3.8.1",
     "apollo-upload-client": "^17.0.0",

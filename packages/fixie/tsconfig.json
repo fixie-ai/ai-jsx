@@ -13,5 +13,5 @@
     "declaration": true,
     "lib": ["dom", "dom.iterable", "esnext"]
   },
-  "include": ["src/*", "jest.config.ts", ".eslintrc.cjs"]
+  "include": ["src/*", "jest.config.ts", ".eslintrc.cjs", "index.ts"]
 }
