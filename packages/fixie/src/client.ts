@@ -13,12 +13,18 @@ import { IsomorphicFixieClient } from './isomorphic-client.js';
  */
 export class FixieClient extends IsomorphicFixieClient {
 
-  static Create(url: string, apiKey?: string) {
-    return IsomorphicFixieClient.Create(url, apiKey);
+  static Create(url: string, apiKey?: string): FixieClient {
+    const apiKeyToUse = apiKey ?? process.env.FIXIE_API_KEY;
+    if (!apiKeyToUse) {
+      throw new Error(
+        'You must pass apiKey to the constructor, or set the FIXIE_API_KEY environment variable. The API key can be found at: https://beta.fixie.ai/profile'
+      );
+    }
+    return new this(url, apiKey);
   }
 
-  static CreateWithoutApiKey(url: string) {
-    return IsomorphicFixieClient.CreateWithoutApiKey(url);
+  static CreateWithoutApiKey(url: string): FixieClient {
+    return new this(url);
   }
 
   /** Return a GraphQL client for the Fixie API. */
