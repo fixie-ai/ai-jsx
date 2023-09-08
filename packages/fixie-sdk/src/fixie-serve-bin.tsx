@@ -90,6 +90,7 @@ async function serve({
                 } catch (ex) {
                   const errorDetail = `Error during generation: ${ex}${ex instanceof Error ? ` ${ex.stack}` : ''}`;
                   yield `${JSON.stringify({ messages: lastMessages, errorDetail, state: 'error' })}\n`;
+                  await generator.return?.();
                   break;
                 }
               }
