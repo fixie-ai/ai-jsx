@@ -51,6 +51,7 @@ const sidebars = {
   ],
   docsSidebar: [
     'aboutAIJSX',
+    'sidekicks-quickstart',
     'getting-started',
     'guides/brand-new',
     {

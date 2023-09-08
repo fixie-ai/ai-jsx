@@ -78,6 +78,12 @@ const config = {
       colorMode: {
         respectPrefersColorScheme: true,
       },
+      docs: {
+        sidebar: {
+          hideable: true,
+          autoCollapseCategories: true,
+        },
+      },
       // We'll replace this with our own soon
       //image: 'img/docusaurus-social-card.jpg',
       navbar: {
@@ -92,7 +98,7 @@ const config = {
           {
             to: 'tutorials/sidekickTutorial/part1-intro',
             position: 'left',
-            label: 'Tutorials',
+            label: 'Learn',
           },
           {
             to: 'aboutAIJSX',
@@ -167,7 +173,8 @@ const config = {
                 href: process.env.FIXIE_CAREERS,
               },
               {
-                html: `<a href="mailto:hello@fixie.ai">Get in Touch</a>`,
+                label: 'Get in Touch',
+                href: 'mailto:hello@fixie.ai',
               },
               {
                 label: 'Privacy Policy',
@@ -222,6 +229,7 @@ const config = {
   customFields: {
     gitHubUrl: process.env.GITHUB_URL,
     discordUrl: process.env.DISCORD_URL,
+    twitterUrl: process.env.TWITTER_URL,
   },
 };
 

@@ -14,13 +14,16 @@ export default function Community(): JSX.Element {
       <ActionCard
         icon={<SvgImage image={<DeveloperIcon />} title="An icon showing wave propagation" />}
         title="Join our community"
-        description="AI.JSX is open source. Follow us on Twitter, star our GitHub repo, and join our developer community on Discord!"
+        description="AI.JSX is open source. Star us on GitHub. Join our developer community on Discord. Follow us on Twitter."
       >
         <a className={styles.card__link} href={customFields.gitHubUrl} rel="noopener noreferrer" target="_blank">
-          Go to GitHub&nbsp;&nbsp;&gt;
+          GitHub&nbsp;&nbsp;&gt;
         </a>
         <a className={styles.card__link} href={customFields.discordUrl}>
-          Join Discord&nbsp;&nbsp;&gt;
+          Discord&nbsp;&nbsp;&gt;
+        </a>
+        <a className={styles.card__link} href={customFields.twitterUrl}>
+          Twitter&nbsp;&nbsp;&gt;
         </a>
       </ActionCard>
       <ActionCard
