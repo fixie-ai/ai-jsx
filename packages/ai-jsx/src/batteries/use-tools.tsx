@@ -5,7 +5,7 @@
  */
 
 import { ChatCompletion, FunctionParameters, FunctionResponse } from '../core/completion.js';
-import { Node, RenderContext } from '../index.js';
+import { Component, ComponentContext, Node, RenderContext } from '../index.js';
 import { Converse, renderToConversation } from '../core/conversation.js';
 
 /**
@@ -23,12 +23,10 @@ export interface Tool {
   parameters: FunctionParameters;
 
   /**
-   * A function to invoke the tool.
+   * A function/component that invokes the tool.
    */
-  // Can we use Zod to do better than any[]?
-  func: (
-    ...args: any[]
-  ) => string | number | boolean | null | undefined | Promise<string | number | boolean | null | undefined>;
+  // Can we use Zod to do better than any?
+  func: Component<any>;
 }
 
 /**
@@ -56,6 +54,29 @@ export interface UseToolsProps {
    * For instance, if the user's query can be "what's the weather like at my current location", you might pass `userData` as { "location": "Seattle" }.
    */
   userData?: string;
+}
+
+/**
+ * Executes a function during rendering and wraps the result in a `<FunctionResponse>`.
+ */
+export async function ExecuteFunction<T>(
+  { name, func, args }: { name: string; func: Component<T>; args: T },
+  { render }: ComponentContext
+) {
+  if (typeof func !== 'function') {
+    return (
+      <FunctionResponse failed name={name}>
+        Error: unknown function {name}
+      </FunctionResponse>
+    );
+  }
+
+  try {
+    const Func = func;
+    return <FunctionResponse name={name}>{await render(<Func {...args} />)}</FunctionResponse>;
+  } catch (e) {
+    return <FunctionResponse failed name={name}>{`${e}`}</FunctionResponse>;
+  }
 }
 
 /**
@@ -108,20 +129,12 @@ export interface UseToolsProps {
 export async function UseTools(props: UseToolsProps, { render }: RenderContext) {
   const converse = (
     <Converse
-      reply={async (messages, fullConversation) => {
+      reply={(messages, fullConversation) => {
         const lastMessage = messages[messages.length - 1];
         switch (lastMessage.type) {
           case 'functionCall': {
             const { name, args } = lastMessage.element.props;
-            try {
-              return <FunctionResponse name={name}>{await props.tools[name].func(args)}</FunctionResponse>;
-            } catch (e: any) {
-              return (
-                <FunctionResponse failed name={name}>
-                  {e.message}
-                </FunctionResponse>
-              );
-            }
+            return <ExecuteFunction func={props.tools[name].func} name={name} args={args} />;
           }
           case 'functionResponse':
           case 'user':
