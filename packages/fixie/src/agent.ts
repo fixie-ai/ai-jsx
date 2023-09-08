@@ -78,10 +78,7 @@ export class FixieAgent {
       `,
     });
     return Promise.all(
-      result.data.allAgents.map(async (agent: any) => {
-        const retAgent = await this.GetAgent(client, agent.agentId);
-        return retAgent;
-      })
+      result.data.allAgents.map((agent: any) => this.GetAgent(client, agent.agentId))
     );
   }
 
