@@ -71,14 +71,14 @@ export class FixieAgent {
       fetchPolicy: 'no-cache',
       query: gql`
         {
-          allAgents {
+          allAgentsForUser {
             agentId
           }
         }
       `,
     });
     return Promise.all(
-      result.data.allAgents.map(async (agent: any) => {
+      result.data.allAgentsForUser.map(async (agent: any) => {
         const retAgent = await this.GetAgent(client, agent.agentId);
         return retAgent;
       })
@@ -178,7 +178,17 @@ export class FixieAgent {
   }
 
   /** Update this agent. */
-  async update(name?: string, description?: string, moreInfoUrl?: string, published?: boolean) {
+  async update({
+    name,
+    description,
+    moreInfoUrl,
+    published,
+  }: {
+    name?: string;
+    description?: string;
+    moreInfoUrl?: string;
+    published?: boolean;
+  }) {
     this.client.gqlClient().mutate({
       mutation: gql`
         mutation UpdateAgent(
@@ -289,7 +299,12 @@ export class FixieAgent {
     try {
       agent = await FixieAgent.GetAgent(client, agentId);
       term('👽 Updating agent ').green(agentId)('...\n');
-      agent.update(config.name, config.description, config.moreInfoUrl, config.public);
+      agent.update({
+        name: config.name,
+        description: config.description,
+        moreInfoUrl: config.moreInfoUrl,
+        published: config.public,
+      });
     } catch (e) {
       // Try to create the agent instead.
       term('🌲 Creating new agent ').green(agentId)('...\n');

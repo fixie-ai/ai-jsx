@@ -37,15 +37,15 @@ export async function FixieConversation(_: {}, { getContext }: AI.ComponentConte
       switch (message.kind) {
         case 'text':
           return turn.role === 'assistant' ? (
-            <AssistantMessage>{message.content}</AssistantMessage>
+            <AssistantMessage metadata={message.metadata}>{message.content}</AssistantMessage>
           ) : (
-            <UserMessage>{message.content}</UserMessage>
+            <UserMessage metadata={message.metadata}>{message.content}</UserMessage>
           );
         case 'functionCall':
-          return <FunctionCall name={message.name} args={message.args} />;
+          return <FunctionCall name={message.name} args={message.args} metadata={message.metadata} />;
         case 'functionResponse':
           return (
-            <FunctionResponse name={message.name} failed={message.failed}>
+            <FunctionResponse name={message.name} failed={message.failed} metadata={message.metadata}>
               {message.response}
             </FunctionResponse>
           );

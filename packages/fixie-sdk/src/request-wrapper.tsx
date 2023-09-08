@@ -28,6 +28,7 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
                 {{
                   kind: 'text',
                   content: message.element,
+                  metadata: message.element.props.metadata,
                 }}
               </Json>,
               '\n',
@@ -41,6 +42,7 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
                   kind: 'functionCall',
                   name: message.element.props.name,
                   args: message.element.props.args,
+                  metadata: message.element.props.metadata,
                 }}
               </Json>,
               '\n',
@@ -52,6 +54,7 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
                   kind: 'functionResponse',
                   name: message.element.props.name,
                   response: <>{message.element.props.children}</>,
+                  metadata: message.element.props.metadata,
                 }}
               </Json>,
               '\n',
