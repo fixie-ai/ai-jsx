@@ -52,10 +52,10 @@ export async function reranker(
   },
   { getContext, logger }: Pick<AI.ComponentContext, 'getContext' | 'logger'>
 ): Promise<{ index: number; relevance_score: number }[]> {
-  const ctx = getContext(cohereContext);
-  if (!ctx.api_key) {
+  const cohereConfig = getContext(cohereContext);
+  if (!cohereConfig.api_key) {
     logger.error(
-      { CohereContext: ctx },
+      { CohereContext: cohereConfig },
       'Cohere API key is not set, but it is needed for doing reranking (e.g. loadBySimilarity).' +
         ' Please set it in the context.'
     );
@@ -63,16 +63,16 @@ export async function reranker(
     // TODO: maybe try OpenAI too?
     return [...Array(Math.min(documents.length, top_n)).keys()].map((index) => ({ index, relevance_score: 0 }));
   }
-  const response = await fetch(`${ctx.api_url}/rerank`, {
+  const response = await fetch(`${cohereConfig.api_url}/rerank`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${ctx.api_key}`,
+      Authorization: `Bearer ${cohereConfig.api_key}`,
     },
     body: JSON.stringify({
       query,
       documents,
-      model: model ?? ctx.reranker_model_name ?? 'rerank-multilingual-v2.0',
+      model: model ?? cohereConfig.reranker_model_name ?? 'rerank-multilingual-v2.0',
       top_n,
     }),
   });

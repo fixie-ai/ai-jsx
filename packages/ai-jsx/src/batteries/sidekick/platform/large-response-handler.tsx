@@ -54,8 +54,6 @@ export async function LargeFunctionResponseHandler(
 ) {
   let stringified = await render(children);
 
-  console.log('typeof stringified: ', typeof stringified);
-
   // Option 1: do nothing if it's already small enough
   if ((await lengthFunction(stringified)) <= maxLength) {
     return <FunctionResponse {...props}>{stringified}</FunctionResponse>;
@@ -70,12 +68,12 @@ export async function LargeFunctionResponseHandler(
 
   // Option 3 (last reosrt): split into chunks and allow LLM to query by similarity
   // Requires Cohere API key for doing similarity search
-  const ctx = getContext(cohereContext);
+  const cohereConfig = getContext(cohereContext);
 
-  if (!ctx.api_key) {
+  if (!cohereConfig.api_key) {
     // Not yet an error, but this is an error just waiting to happen
     logger.warn(
-      { CohereContext: ctx },
+      { CohereContext: cohereConfig },
       'FunctionResponse is too big, but Cohere API key is not set. Please set it in the context.'
     );
   }
@@ -137,7 +135,6 @@ export function redactedFunctionTools(
         },
       },
       func: async ({ query }) => {
-        console.log(`calling loadBySimilarity with ${query}`);
         const response = await reranker(
           {
             query,
