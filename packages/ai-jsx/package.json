@@ -45,6 +45,15 @@
         "default": "./dist/cjs/batteries/sidekick/platform/sidekick.cjs"
       }
     },
+    "./batteries/fixie": {
+      "import": {
+        "types": "./dist/esm/batteries/fixie.d.ts",
+        "default": "./dist/esm/batteries/fixie.js"
+      },
+      "require": {
+        "default": "./dist/cjs/batteries/fixie.cjs"
+      }
+    },
     "./batteries/docs": {
       "import": {
         "types": "./dist/esm/batteries/docs.d.ts",

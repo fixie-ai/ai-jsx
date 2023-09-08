@@ -7,8 +7,9 @@ import { hideBin } from 'yargs/helpers';
 import { fastify } from 'fastify';
 import { Readable } from 'stream';
 import { createRenderContext, Component } from 'ai-jsx';
+import { FixieAPIContext } from 'ai-jsx/batteries/fixie';
 import { InvokeAgentRequest } from './types.js';
-import { FixieRequestWrapper } from './request-wrapper.js';
+import { FixieRequestWrapper, RequestContext } from './request-wrapper.js';
 
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import path from 'path';
@@ -60,14 +61,15 @@ async function serve({
   app.post('/', (req, res) => {
     try {
       const renderable = (
-        <FixieRequestWrapper
-          request={req.body as InvokeAgentRequest}
-          apiBaseUrl={fixieApiUrl}
-          agentId={(req as any).fixieVerifiedToken.payload.aid}
-          authToken={(req as any).fixieAuthToken}
-        >
-          <Handler />
-        </FixieRequestWrapper>
+        <FixieAPIContext.Provider value={{ url: fixieApiUrl, authToken: (req as any).fixieAuthToken }}>
+          <RequestContext.Provider
+            value={{ request: req.body as InvokeAgentRequest, agentId: (req as any).fixieVerifiedToken.payload.aid }}
+          >
+            <FixieRequestWrapper>
+              <Handler />
+            </FixieRequestWrapper>
+          </RequestContext.Provider>
+        </FixieAPIContext.Provider>
       );
       const generator = createRenderContext({ enableOpenTelemetry: true }).render(renderable)[Symbol.asyncIterator]();
       return res
