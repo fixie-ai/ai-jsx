@@ -1,4 +1,28 @@
 import type { Jsonifiable } from 'type-fest';
+import { ApolloClient } from '@apollo/client/core/ApolloClient.js';
+import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache.js';
+import createUploadLink from 'apollo-upload-client/public/createUploadLink.js';
+import isExtractableFile from 'apollo-upload-client/public/isExtractableFile.js';
+import { ExtractableFile } from 'extract-files';
+import { ReadStream } from 'fs';
+
+export interface UserInfo {
+  id: number;
+  username: string;
+  is_authenticated: boolean;
+  is_superuser: boolean;
+  is_staff: boolean;
+  is_active: boolean;
+  is_anonymous: boolean;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  last_login?: Date;
+  date_joined?: Date;
+  api_token?: string;
+  avatar?: string;
+  organization?: string;
+}
 
 /**
  * A client to the Fixie AI platform.
@@ -27,6 +51,7 @@ export class FixieClient {
     return client;
   }
 
+  /** Send a request to the Fixie API with the appropriate auth headers. */
   async request(path: string, bodyData?: any): Promise<Jsonifiable> {
     let res;
     if (bodyData) {
@@ -53,43 +78,73 @@ export class FixieClient {
     return res.json();
   }
 
-  userInfo(): Promise<Jsonifiable> {
-    return this.request('/api/user');
+  /** Return a GraphQL client for the Fixie API. */
+  gqlClient(): ApolloClient<any> {
+    // For GraphQL operations, we use an ApolloClient with the apollo-upload-client
+    // extension to allow for file uploads.
+    return new ApolloClient({
+      cache: new InMemoryCache(),
+      // We're using the apollo-upload-client extension to allow for file uploads.
+      // See: https://stackoverflow.com/questions/69627539/uploading-a-local-file-from-nodejs-to-rails-graphql-backend-server-to-server
+      link: createUploadLink({
+        uri: `${this.url}/graphql`,
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        FormData,
+        isExtractableFile: (value): value is ExtractableFile =>
+          isExtractableFile(value) || (typeof ReadStream !== 'undefined' && value instanceof ReadStream),
+      }),
+    });
   }
 
+  /** Return information on the currently logged-in user. */
+  userInfo(): Promise<UserInfo> {
+    const rawUserInfo: unknown = this.request('/api/user');
+    return rawUserInfo as Promise<UserInfo>;
+  }
+
+  /** List Corpora visible to this user. */
   listCorpora(): Promise<Jsonifiable> {
     return this.request('/api/v1/corpora');
   }
 
+  /** Get information about a given Corpus. */
   getCorpus(corpusId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}`);
   }
 
+  /** Create a new Corpus. */
   createCorpus(name?: string): Promise<Jsonifiable> {
     const body = {
-      name,
-      sources: [],
+      corpus: {
+        display_name: name,
+      },
     };
     return this.request('/api/v1/corpora', body);
   }
 
-  queryCorpus(corpusId: string, query: string, pageSize?: number): Promise<Jsonifiable> {
+  /** Query a given Corpus. */
+  queryCorpus(corpusId: string, query: string, maxChunks?: number): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
       query,
-      page_size: pageSize,
+      max_chunks: maxChunks,
     };
     return this.request(`/api/v1/corpora/${corpusId}:query`, body);
   }
 
+  /** List the Sources in a given Corpus. */
   listCorpusSources(corpusId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources`);
   }
 
+  /** Get information about a given Source. */
   getCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}`);
   }
 
+  /** Add a new Source to a Corpus. */
   addCorpusSource(corpusId: string, urlPattern: string): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
@@ -98,7 +153,7 @@ export class FixieClient {
         load_spec: { web: { start_urls: [urlPattern] } },
         process_steps: [
           {
-            name: 'markdownify',
+            step_name: 'markdownify',
             relevant_document_types: {
               include: { mime_types: ['text/html'] },
             },
@@ -107,7 +162,7 @@ export class FixieClient {
         ],
         embed_specs: [
           {
-            name: 'markdown',
+            spec_name: 'markdown',
             relevant_document_types: {
               include: { mime_types: ['text/markdown'] },
             },
@@ -116,7 +171,7 @@ export class FixieClient {
             splits: ['\n\n', '\n', ' ', ''],
           },
           {
-            name: 'plain',
+            spec_name: 'plain',
             relevant_document_types: {
               include: { mime_types: ['text/plain'] },
             },
@@ -131,6 +186,7 @@ export class FixieClient {
     return this.request(`/api/v1/corpora/${corpusId}/sources`, body);
   }
 
+  /** Refresh the given Source. */
   refreshCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
@@ -139,18 +195,22 @@ export class FixieClient {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, body);
   }
 
+  /** List Jobs associated with a given Source. */
   listCorpusSourceJobs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs`);
   }
 
+  /** Get information about a given Job. */
   getCorpusSourceJob(corpusId: string, sourceId: string, jobId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs/${jobId}`);
   }
 
+  /** List Documents in a given Corpus. */
   listCorpusDocs(corpusId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/documents`);
   }
 
+  /** Get information about a given Document. */
   getCorpusDoc(corpusId: string, docId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/documents/${docId}`);
   }
