@@ -218,6 +218,26 @@ agents
   });
 
 agents
+  .command('publish <agentId>')
+  .description('Publish the given agent.')
+  .action(async (agentHandle: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentHandle);
+    const result = agent.update({ published: true });
+    showResult(result, program.opts().raw);
+  });
+
+agents
+  .command('unpublish <agentId>')
+  .description('Unpublish the given agent.')
+  .action(async (agentHandle: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentHandle);
+    const result = agent.update({ published: false });
+    showResult(result, program.opts().raw);
+  });
+
+agents
   .command('create <agentHandle> [agentName] [agentDescription] [agentMoreInfoUrl]')
   .description('Create an agent.')
   .action(async (agentHandle: string, agentName?: string, agentDescription?: string, agentMoreInfoUrl?: string) => {
