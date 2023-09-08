@@ -17,6 +17,7 @@
     "yarn": "3.6.0"
   },
   "scripts": {
+    "nd": "cd packages/ai-jsx && yarn build && cd ../../packages/nextjs-demo && yarn dev",
     "format-for-turbo": "prettier --write .",
     "format:check": "prettier . --check",
     "format": "turbo format-for-turbo",

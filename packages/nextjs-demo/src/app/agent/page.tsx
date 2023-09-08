@@ -96,7 +96,7 @@ const PageComponent: React.FC = () => {
     request.tts.flush();
     const assistantMessage = new ClientMessage('assistant', request.outMessage);
     messages.push(assistantMessage);
-    console.log(`updating messages, messages=${messages}`);
+    // messages.forEach(message => console.log(`role=${message.role}, content=${message.content}`));
     setInput('');
     for (const x in pending) {
       delete pending[x];
@@ -109,8 +109,16 @@ const PageComponent: React.FC = () => {
     }
   };
   const handleInputUpdate = (text: string, final: boolean, tts: TextToSpeechBase) => {
+    // If the input text has been finalized, add it to the message history.
     const userMessage = new ClientMessage('user', text);
     const newMessages = [...messages, userMessage];
+    if (final) {
+      messages.push(userMessage);
+    }
+
+    // If it doesn't match an existing request, kick off a new one.
+    // If it matches an existing request and the text is finalized, speculative
+    // execution worked! Snap forward to the current state of that request.
     const hit = text in pending;
     console.log(`${final ? 'final' : 'partial'}: ${text} ${hit ? 'HIT' : 'MISS'}`);
     if (!hit) {
@@ -120,7 +128,6 @@ const PageComponent: React.FC = () => {
       pending[text] = request;
       request.start();
     } else if (final) {
-      messages.push(userMessage);
       const request = pending[text];
       request.active = true;
       setOutput(request.outMessage);
@@ -142,13 +149,17 @@ const PageComponent: React.FC = () => {
     setTts(null);
     setAsr(null);
     setManager(null);
+    messages.length = 0;
+    for (const x in pending) {
+      delete pending[x];
+    }
   };
   const handleStart = async () => {
     const _manager = new MicManager();
     const _asr = new DeepgramSpeechRecognition(_manager, GetToken);
-    // const _tts = new ElevenLabsTextToSpeech(ELEVEN_VOICE, 1.2);
+    // Note that we pass around _tts because of the annoying fact that useState
+    // can't update the tts value once it's captured in closures.
     const _tts = new AzureTextToSpeech(BuildUrl, AzureTextToSpeech.DEFAULT_VOICE, 1.2);
-    //_tts.play('');
     setManager(_manager);
     setAsr(_asr);
     setTts(_tts);
@@ -168,45 +179,45 @@ const PageComponent: React.FC = () => {
     <>
       <div className="w-full">
         <p className="font-sm ml-2 mb-2">
-        This demo allows you to chat (via voice) with a drive-thru agent at a Krispy Kreme. Click Start to begin.
+          This demo allows you to chat (via voice) with a drive-thru agent at a Krispy Kreme. Click Start to begin.
         </p>
         <div className="grid grid-cols-2">
           <div className="p-4">
-          <p className="text-lg font-bold">🍩 DONUTS</p>
-          <ul className="text-sm">
-            <li>PUMPKIN SPICE ORIGINAL GLAZED® DOUGHNUT $1.29</li>
-            <ul>
-              <li>PUMPKIN SPICE CAKE DOUGHNUT $1.29</li>
-              <li>PUMPKIN SPICE CHEESECAKE SWIRL DOUGHNUT $1.29</li>
-              <li>PUMPKIN SPICE MAPLE PECAN DOUGHNUT $1.29</li>
-              <li>ORIGINAL GLAZED® DOUGHNUT $0.99</li>
-              <li>CHOCOLATE ICED GLAZED DOUGHNUT $1.09</li>
-              <li>CHOCOLATE ICED GLAZED DOUGHNUT WITH SPRINKLES $1.09</li>
-              <li>GLAZED RASPBERRY FILLED DOUGHNUT $1.09</li>
-              <li>GLAZED BLUEBERRY CAKE DOUGHNUT $1.09</li>
-              <li>STRAWBERRY ICED DOUGHNUT WITH SPRINKLES $1.09</li>
-              <li>GLAZED LEMON FILLED DOUGHNUT $1.09</li>
-              <li>CHOCOLATE ICED CUSTARD FILLED DOUGHNUT $1.09</li>
-              <li>CHOCOLATE ICED DOUGHNUT WITH KREME™ FILLING $1.09</li>
-              <li>CAKE BATTER DOUGHNUT $1.09</li>
-              <li>ORIGINAL GLAZED® DOUGHNUT HOLES $3.99</li>
+            <p className="text-lg font-bold">🍩 DONUTS</p>
+            <ul className="text-sm">
+              <li>PUMPKIN SPICE ORIGINAL GLAZED® DOUGHNUT $1.29</li>
+              <ul>
+                <li>PUMPKIN SPICE CAKE DOUGHNUT $1.29</li>
+                <li>PUMPKIN SPICE CHEESECAKE SWIRL DOUGHNUT $1.29</li>
+                <li>PUMPKIN SPICE MAPLE PECAN DOUGHNUT $1.29</li>
+                <li>ORIGINAL GLAZED® DOUGHNUT $0.99</li>
+                <li>CHOCOLATE ICED GLAZED DOUGHNUT $1.09</li>
+                <li>CHOCOLATE ICED GLAZED DOUGHNUT WITH SPRINKLES $1.09</li>
+                <li>GLAZED RASPBERRY FILLED DOUGHNUT $1.09</li>
+                <li>GLAZED BLUEBERRY CAKE DOUGHNUT $1.09</li>
+                <li>STRAWBERRY ICED DOUGHNUT WITH SPRINKLES $1.09</li>
+                <li>GLAZED LEMON FILLED DOUGHNUT $1.09</li>
+                <li>CHOCOLATE ICED CUSTARD FILLED DOUGHNUT $1.09</li>
+                <li>CHOCOLATE ICED DOUGHNUT WITH KREME™ FILLING $1.09</li>
+                <li>CAKE BATTER DOUGHNUT $1.09</li>
+                <li>ORIGINAL GLAZED® DOUGHNUT HOLES $3.99</li>
+              </ul>
             </ul>
-          </ul>
           </div>
           <div className="p-4">
-          <p className="text-lg font-bold">☕️ COFFEE & DRINKS</p>
-          <ul className="text-sm">
-            <li>PUMPKIN SPICE COFFEE $2.59</li>
-            <li>PUMPKIN SPICE LATTE $4.59</li>
-            <li>CLASSIC BREWED COFFEE $1.79</li>
-            <li>CLASSIC DECAF BREWED COFFEE $1.79</li>
-            <li>LATTE $3.49</li>
-            <li>VANILLA SPECIALTY LATTE $3.49</li>
-            <li>ORIGINAL GLAZED® LATTE $3.49</li>
-            <li>CARAMEL SPECIALTY LATTE $3.49</li>
-            <li>CARAMEL MOCHA SPECIALTY LATTE $3.49</li>
-            <li>MOCHA SPECIALTY LATTE $3.49</li>
-          </ul>
+            <p className="text-lg font-bold">☕️ COFFEE & DRINKS</p>
+            <ul className="text-sm">
+              <li>PUMPKIN SPICE COFFEE $2.59</li>
+              <li>PUMPKIN SPICE LATTE $4.59</li>
+              <li>CLASSIC BREWED COFFEE $1.79</li>
+              <li>CLASSIC DECAF BREWED COFFEE $1.79</li>
+              <li>LATTE $3.49</li>
+              <li>VANILLA SPECIALTY LATTE $3.49</li>
+              <li>ORIGINAL GLAZED® LATTE $3.49</li>
+              <li>CARAMEL SPECIALTY LATTE $3.49</li>
+              <li>CARAMEL MOCHA SPECIALTY LATTE $3.49</li>
+              <li>MOCHA SPECIALTY LATTE $3.49</li>
+            </ul>
           </div>
         </div>
         <div>

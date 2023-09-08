@@ -58,13 +58,21 @@ CARAMEL MOCHA SPECIALTY LATTE $3.49
 MOCHA SPECIALTY LATTE $3.49
 `;
 
-function ChatAgent({ conversation }: { conversation: string[] }) {
+class ClientMessage {
+  constructor(public role: string, public content: string) {}
+}
+
+function ChatAgent({ conversation }: { conversation: ClientMessage[] }) {
   return (
-    <OpenAI chatModel="gpt-3.5-turbo">
+    <OpenAI chatModel="gpt-4">
       <ChatCompletion>
         <SystemMessage>{KK_PROMPT}</SystemMessage>
-        {conversation.map((message, index) =>
-          index % 2 ? <AssistantMessage>{message}</AssistantMessage> : <UserMessage>{message}</UserMessage>
+        {conversation.map((message) =>
+          message.role == 'assistant' ? (
+            <AssistantMessage>{message.content}</AssistantMessage>
+          ) : (
+            <UserMessage>{message.content}</UserMessage>
+          )
         )}
       </ChatCompletion>
     </OpenAI>
@@ -73,6 +81,7 @@ function ChatAgent({ conversation }: { conversation: string[] }) {
 
 export async function POST(request: NextRequest) {
   const json = await request.json();
-  console.log(`messages=${json.messages}`);
+  console.log('New request:');
+  json.messages.forEach((message: ClientMessage) => console.log(`role=${message.role} content=${message.content}`));
   return new StreamingTextResponse(toTextStream(<ChatAgent conversation={json.messages} />));
 }
