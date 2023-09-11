@@ -348,8 +348,9 @@ export class FixieAgent {
 
   static spawnAgentProcess(agentPath: string, port: number): ChildProcess {
     term(`🌱 Starting local agent process on port ${port}...\n`);
-    if (!fs.existsSync(`${agentPath}/dist/index.js`)) {
-      throw Error(`No dist/index.js found in ${agentPath}. Do you need to build your agent code first?`);
+    const pathToCheck = path.resolve(path.join(agentPath, 'dist', 'index.js`));
+    if (!fs.existsSync(pathToCheck)) {
+      throw Error(`Your agent was not found at ${pathToCheck}. Do you need to build your agent code first?`);
     }
 
     // Ensure we kill child process on exit.
