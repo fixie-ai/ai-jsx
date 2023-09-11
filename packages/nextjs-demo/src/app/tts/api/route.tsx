@@ -69,7 +69,7 @@ function ttsEleven(voiceId: string, rate: number, text: string): Promise<Respons
     'xi-api-key': apiKey,
     'Content-Type': 'application/json',
   };
-  const body: string = JSON.stringify({
+  const body = JSON.stringify({
     text,
     model_id: 'eleven_monolingual_v1',
     voice_settings: {
