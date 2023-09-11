@@ -234,7 +234,9 @@ export class FixieAgent {
   /** Package the code in the given directory and return the path to the tarball. */
   private static getCodePackage(agentPath: string): string {
     // Read the package.json file to get the package name and version.
-    const packageJson = JSON.parse(fs.readFileSync(`${agentPath}/package.json`, 'utf8'));
+
+    const packageJsonPath = path.resolve(path.join(agentPath, 'package.json'));
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
     // Create a temporary directory and run `npm pack` inside.
     const tempdir = fs.mkdtempSync(path.join(os.tmpdir(), `fixie-tmp-${packageJson.name}-${packageJson.version}-`));
@@ -348,7 +350,7 @@ export class FixieAgent {
 
   static spawnAgentProcess(agentPath: string, port: number): ChildProcess {
     term(`🌱 Starting local agent process on port ${port}...\n`);
-    const pathToCheck = path.resolve(path.join(agentPath, 'dist', 'index.js`));
+    const pathToCheck = path.resolve(path.join(agentPath, 'dist', 'index.js'));
     if (!fs.existsSync(pathToCheck)) {
       throw Error(`Your agent was not found at ${pathToCheck}. Do you need to build your agent code first?`);
     }
@@ -389,7 +391,7 @@ export class FixieAgent {
     term('🦊 Deploying agent ').green(agentId)('...\n');
 
     // Check that the package.json path exists in this directory.
-    if (!fs.existsSync(`${agentPath}/package.json`)) {
+    if (!fs.existsSync(path.resolve(path.join(agentPath, 'package.json')))) {
       throw Error(`No package.json found in ${agentPath}. Only JS-based agents are supported.`);
     }
     const agent = await this.ensureAgent(client, agentId, config);
