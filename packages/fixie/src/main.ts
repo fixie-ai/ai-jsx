@@ -48,6 +48,39 @@ function registerDeployCommand(command: Command) {
     });
 }
 
+/** Run an agent locally. */
+function registerServeCommand(command: Command) {
+  command
+    .command('serve [path]')
+    .description('Run an agent locally')
+    .option('-p, --port <number>', 'Port to run the agent on', '8181')
+    .option(
+      '-e, --env <key=value>',
+      'Environment variables to set for this agent. Variables in a .env file take precedence over those on the command line.',
+      (v, m: Record<string, string> | undefined) => {
+        const [key, value] = v.split('=');
+        return {
+          ...m,
+          [key]: value ?? '',
+        };
+      }
+    )
+    .action(async (path: string | undefined, options: { port: string; env: Record<string, string> }) => {
+      const client = await FixieClient.Create(program.opts().url);
+      await FixieAgent.ServeAgent({
+        client,
+        agentPath: path ?? process.cwd(),
+        port: parseInt(options.port),
+        tunnel: true,
+        reload: true,
+        environmentVariables: {
+          FIXIE_API_URL: program.opts().url,
+          ...options.env,
+        },
+      });
+    });
+}
+
 // Get current version of this package.
 const currentPath = path.dirname(fileURLToPath(import.meta.url));
 const packageJsonPath = path.resolve(currentPath, '../package.json');
@@ -70,6 +103,7 @@ program
   });
 
 registerDeployCommand(program);
+registerServeCommand(program);
 
 const corpus = program.command('corpus').description('Corpus related commands');
 
@@ -247,6 +281,7 @@ agents
   });
 
 registerDeployCommand(agents);
+registerServeCommand(agents);
 
 const revisions = agents.command('revisions').description('Agent revision-related commands');
 

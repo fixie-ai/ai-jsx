@@ -2,7 +2,7 @@ import { gql } from '@apollo/client/core/index.js';
 import yaml from 'js-yaml';
 import fs from 'fs';
 import terminal from 'terminal-kit';
-import { execSync } from 'child_process';
+import { execSync, spawn, ChildProcess } from 'child_process';
 import ora from 'ora';
 import os from 'os';
 import path from 'path';
@@ -31,6 +31,7 @@ export interface AgentConfig {
   description?: string;
   moreInfoUrl?: string;
   public?: boolean;
+  deploymentUrl?: string;
 }
 
 /** Represents metadata about an agent revision. */
@@ -243,24 +244,33 @@ export class FixieAgent {
   }
 
   /** Create a new agent revision, which deploys the agent. */
-  private async createRevision(tarball: string, environmentVariables: Record<string, string>): Promise<string> {
-    const uploadFile = fs.readFileSync(fs.realpathSync(tarball));
+  private async createRevision({
+    externalUrl,
+    tarball,
+    environmentVariables,
+  }: {
+    externalUrl?: string;
+    tarball?: string;
+    environmentVariables: Record<string, string>;
+  }): Promise<string> {
+    const uploadFile = tarball ? fs.readFileSync(fs.realpathSync(tarball)) : undefined;
 
     const result = await this.client.gqlClient().mutate({
       mutation: gql`
         mutation CreateAgentRevision(
           $handle: String!
-          $codePackage: Upload!
-          $environmentVariables: [EnvironmentVariableInput!]
+          $metadata: [RevisionMetadataKeyValuePairInput!]!
+          $makeCurrent: Boolean!
+          $externalDeployment: ExternalDeploymentInput
+          $managedDeployment: ManagedDeploymentInput
         ) {
           createAgentRevision(
             agentHandle: $handle
+            makeCurrent: $makeCurrent
             revision: {
-              managedDeployment: {
-                environment: NODEJS
-                codePackage: $codePackage
-                environmentVariables: $environmentVariables
-              }
+              metadata: $metadata
+              externalDeployment: $externalDeployment
+              managedDeployment: $managedDeployment
             }
           ) {
             revision {
@@ -271,8 +281,15 @@ export class FixieAgent {
       `,
       variables: {
         handle: this.handle,
-        codePackage: new Blob([uploadFile], { type: 'application/gzip' }),
-        environmentVariables: Object.entries(environmentVariables).map(([key, value]) => ({ name: key, value })),
+        metadata: [],
+        makeCurrent: true,
+        externalDeployment: externalUrl && { url: externalUrl },
+        managedDeployment: tarball &&
+          uploadFile && {
+            environment: 'NODEJS',
+            codePackage: new Blob([uploadFile], { type: 'application/gzip' }),
+            environmentVariables: Object.entries(environmentVariables).map(([key, value]) => ({ name: key, value })),
+          },
       },
       fetchPolicy: 'no-cache',
     });
@@ -280,21 +297,28 @@ export class FixieAgent {
     return result.data.createAgentRevision.revision.id;
   }
 
-  /** Deploy an agent from the given directory. */
-  public static async DeployAgent(
-    client: FixieClient,
-    agentPath: string,
-    environmentVariables: Record<string, string> = {}
-  ): Promise<string> {
-    const config = await FixieAgent.LoadConfig(agentPath);
-    const agentId = `${(await client.userInfo()).username}/${config.handle}`;
-    term('🦊 Deploying agent ').green(agentId)('...\n');
+  /** Get the current agent revision. */
+  public async getCurrentRevision(): Promise<AgentRevision> {
+    const result = await this.client.gqlClient().query({
+      fetchPolicy: 'no-cache',
+      query: gql`
+        query GetRevisionId($agentId: String!) {
+          agentById(agentId: $agentId) {
+            currentRevision {
+              id
+              created
+            }
+          }
+        }
+      `,
+      variables: { agentId: this.agentId },
+    });
 
-    // Check if the package.json path exists in this directory.
-    if (!fs.existsSync(`${agentPath}/package.json`)) {
-      throw Error(`No package.json found in ${agentPath}. Only JS-based agents are supported.`);
-    }
+    return result.data.agentById.currentRevision as AgentRevision;
+  }
 
+  /** Ensure that the agent is created or updated. */
+  private static async ensureAgent(client: FixieClient, agentId: string, config: AgentConfig): Promise<FixieAgent> {
     let agent: FixieAgent;
     try {
       agent = await FixieAgent.GetAgent(client, agentId);
@@ -317,30 +341,150 @@ export class FixieAgent {
         config.public
       );
     }
+    return agent;
+  }
+
+  static spawnAgentProcess(agentPath: string, port: number): ChildProcess {
+    const spinner = ora(' 🌱 Starting local agent process...').start();
+    const subProcess = spawn('npx', ['ts-node', `${agentPath}/dist/service-bin.js`, '--port', port.toString()]);
+    subProcess.stdout.on('data', (sdata: string) => {
+      console.log(`Agent stdout: ${sdata}`);
+    });
+    subProcess.stderr.on('data', (sdata: string) => {
+      console.error(`Agent stderr: ${sdata}`);
+    });
+    subProcess.on('close', (returnCode: number) => {
+      console.log(`Agent child process exited with code ${returnCode}`);
+    });
+    spinner.succeed(` 🌱 Local agent process started on port ${port}`);
+    return subProcess;
+  }
+
+  /** Deploy an agent from the given directory. */
+  public static async DeployAgent(
+    client: FixieClient,
+    agentPath: string,
+    environmentVariables: Record<string, string> = {}
+  ): Promise<string> {
+    const config = await FixieAgent.LoadConfig(agentPath);
+    const agentId = `${(await client.userInfo()).username}/${config.handle}`;
+    term('🦊 Deploying agent ').green(agentId)('...\n');
+
+    // Check that the package.json path exists in this directory.
+    if (!fs.existsSync(`${agentPath}/package.json`)) {
+      throw Error(`No package.json found in ${agentPath}. Only JS-based agents are supported.`);
+    }
+    const agent = await this.ensureAgent(client, agentId, config);
     const tarball = FixieAgent.getCodePackage(agentPath);
     const spinner = ora(' 🚀 Deploying...').start();
-    const revision = await agent.createRevision(tarball, environmentVariables);
+    const revision = await agent.createRevision({ tarball, environmentVariables });
     spinner.succeed(`Revision ${revision} was deployed to ${agent.agentUrl()}`);
     return revision;
   }
 
-  /** Get the current agent revision. */
-  public async getCurrentRevision(): Promise<AgentRevision> {
-    const result = await this.client.gqlClient().query({
-      fetchPolicy: 'no-cache',
-      query: gql`
-        query GetRevisionId($agentId: String!) {
-          agentById(agentId: $agentId) {
-            currentRevision {
-              id
-              created
-            }
+  /** Run an agent locally from the given directory. */
+  public static async ServeAgent({
+    client,
+    agentPath,
+    tunnel,
+    reload,
+    port,
+    environmentVariables,
+  }: {
+    client: FixieClient;
+    agentPath: string;
+    tunnel?: boolean;
+    reload?: boolean;
+    port: number;
+    environmentVariables: Record<string, string>;
+  }) {
+    const config = await FixieAgent.LoadConfig(agentPath);
+    const agentId = `${(await client.userInfo()).username}/${config.handle}`;
+    term('🦊 Serving agent ').green(agentId)('...\n');
+
+    // Check if the package.json path exists in this directory.
+    if (!fs.existsSync(`${agentPath}/package.json`)) {
+      throw Error(`No package.json found in ${agentPath}. Only JS-based agents are supported.`);
+    }
+
+    type AsyncGeneratorYield<T> = (value: T) => void;
+
+    async function* spawnTunnel(port: number): AsyncGenerator<string> {
+      let yieldValue: AsyncGeneratorYield<string> | null = null;
+      let whenYielded = new Promise<AsyncGeneratorYield<string>>((resolve) => {
+        yieldValue = resolve;
+      });
+
+      const tunnelSpinner = ora(' 🚇 Starting tunnel process...').start();
+      const subProcess = spawn('ssh', [
+        '-R',
+        // N.B. 127.0.0.1 must be used on Windows (not localhost or 0.0.0.0)
+        `80:127.0.0.1:${port}`,
+        '-o',
+        // Need to send keepalives to prevent the connection from getting chopped
+        // (see https://localhost.run/docs/faq#my-connection-is-unstable-tunnels-go-down-often)
+        'ServerAliveInterval=59',
+        '-o',
+        'StrictHostKeyChecking=accept-new',
+        'nokey@localhost.run',
+        '--',
+        '--output=json',
+      ]);
+      subProcess.stdout.setEncoding('utf8');
+      yield subProcess.stdout.on('data', (sdata: string) => {
+        // Parse sdata as JSON.
+        const pdata = JSON.parse(sdata);
+        // If pdata has the 'address' field, yield it.
+        if (pdata.address) {
+          if (yieldValue) {
+            yieldValue(pdata.address);
           }
         }
-      `,
-      variables: { agentId: this.agentId },
-    });
+      });
+      subProcess.stderr.on('data', (sdata: string) => {
+        console.error(`Tunnel stderr: ${sdata}`);
+      });
+      subProcess.on('close', (returnCode: number) => {
+        console.log(`Tunnel child process exited with code ${returnCode}`);
+      });
 
-    return result.data.agentById.currentRevision as AgentRevision;
+      while (true) {
+        const tunnelAddress = await whenYielded;
+        if (tunnelAddress === '') {
+          break;
+        }
+        yield tunnelAddress;
+        yieldValue = null;
+        whenYielded = new Promise((resolve) => {
+          yieldValue = resolve;
+        });
+      }
+
+      tunnelSpinner.succeed(` 🚇 Tunnel started on port ${port}`);
+    }
+
+    let deployment_urls_iter;
+    if (tunnel) {
+      deployment_urls_iter = spawnTunnel(port);
+    } else {
+      if (!config.deploymentUrl) {
+        throw Error('No deployment URL specified in agent.yaml');
+      }
+      deployment_urls_iter = [
+        (async function* () {
+          yield config.deploymentUrl;
+        })(),
+      ];
+    }
+
+    // TODO(mdw): We need to restore the original agent deployment if one existed
+    // after the serve process finishes.
+    const agent = await this.ensureAgent(client, agentId, config);
+
+    for await (const currentUrl of deployment_urls_iter) {
+      term('👨‍🍳  Serving agent at ').green(currentUrl)('\n');
+      const revision = await agent.createRevision({ externalUrl: currentUrl as string, environmentVariables });
+      term('🥡 Revision ').green(revision)(' was deployed to ').green(agent.agentUrl())('\n');
+    }
   }
 }
