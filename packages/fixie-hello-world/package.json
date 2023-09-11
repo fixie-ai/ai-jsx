@@ -9,15 +9,14 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "fixie-serve": "yarn build && npx --package=@fixieai/sdk fixie-serve-bin --packagePath ./dist/index.js",
     "dev": "yarn build && npx --package=@fixieai/sdk fixie-serve-bin --packagePath ./dist/index.js --port 8080",
     "typecheck": "tsc -p tsconfig.json",
     "build": "yarn run typecheck",
     "prepack": "yarn build"
   },
   "dependencies": {
-    "ai-jsx": "*",
-    "dotenv": "^16.3.1",
-    "yargs": "^17.7.2"
+    "ai-jsx": "*"
   },
   "files": [
     "dist"

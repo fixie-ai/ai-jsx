@@ -351,10 +351,12 @@ export class FixieAgent {
     if (!fs.existsSync(`${agentPath}/dist/serve-bin.js`)) {
       throw Error(`No dist/serve-bin.js found in ${agentPath}. Do you need to build your agent code first?`);
     }
+    // XXX MDW: This is a bit of a hack to see if I can get things working locally.
+    // We try running "yarn fixie-serve" in the agent directory.
+    const cmdline = `yarn fixie-serve --port ${port}`;
 
-    // TODO(matt): This is not working yet; I am getting errors from the agent
-    // subprocess about missing packages.
-    const cmdline = `npx ts-node ./dist/serve-bin.js --port ${port}`;
+    //const cmdline = `npx --package=@fixieai/sdk fixie-serve-bin --packagePath ./dist/index.js --port ${port}`;
+    //const cmdline = `npx ts-node ./dist/serve-bin.js --port ${port}`;
     term('🌱 Running: ').green(cmdline)('\n');
     const subProcess = spawn(cmdline, [], { cwd: agentPath, shell: true });
     subProcess.stdout.on('data', (sdata: string) => {
