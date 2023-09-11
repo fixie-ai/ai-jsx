@@ -89,7 +89,7 @@ program
   .name('fixie')
   .version(packageJson.version)
   .description('A command-line client to the Fixie AI platform.')
-  .option('-u, --url <string>', 'URL of the Fixie API endpoint', process.env.FIXIE_API_URL ?? 'https://app.fixie.ai')
+  .option('-u, --url <string>', 'URL of the Fixie API endpoint', process.env.FIXIE_API_URL ?? 'https://api.fixie.ai')
   .option('-r --raw', 'Output raw JSON instead of pretty-printing.');
 
 program
