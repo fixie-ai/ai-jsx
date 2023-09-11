@@ -25,6 +25,7 @@
     "@fixieai/sdk": "*",
     "apollo-upload-client": "^17.0.0",
     "commander": "^11.0.0",
+    "execa": "^8.0.1",
     "extract-files": "^13.0.0",
     "graphql": "^16.8.0",
     "js-yaml": "^4.1.0",

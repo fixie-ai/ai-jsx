@@ -6,6 +6,7 @@ import { execSync, spawn, ChildProcess } from 'child_process';
 import ora from 'ora';
 import os from 'os';
 import path from 'path';
+import { execa } from 'execa';
 
 const { terminal: term } = terminal;
 
@@ -257,8 +258,6 @@ export class FixieAgent {
   }): Promise<string> {
     const uploadFile = tarball ? fs.readFileSync(fs.realpathSync(tarball)) : undefined;
 
-    console.log(`🌱 Creating agent revision at external URL ${externalUrl}`);
-
     const result = await this.client.gqlClient().mutate({
       mutation: gql`
         mutation CreateAgentRevision(
@@ -355,27 +354,22 @@ export class FixieAgent {
       throw Error(`Your agent was not found at ${pathToCheck}. Do you need to build your agent code first?`);
     }
 
-    // Ensure we kill child process on exit.
-    const controller = new AbortController();
-    const { signal } = controller;
-    process.on('exit', () => {
-      console.log('🌱 Terminating agent process');
-      controller.abort();
-    });
-
     const cmdline = `npx --package=@fixieai/sdk fixie-serve-bin --packagePath ./dist/index.js --port ${port}`;
     // Split cmdline into the first value (argv0) and a list of arguments separated by spaces.
     term('🌱 Running: ').green(cmdline)('\n');
+
     const [argv0, ...args] = cmdline.split(' ');
-    const subProcess = spawn(argv0, args, { cwd: agentPath, signal });
-    subProcess.stdout.on('data', (sdata: string) => {
+    const subProcess = execa(argv0, args, { cwd: agentPath });
+
+    subProcess.stdout?.on('data', (sdata: string) => {
       console.log(`🌱 Agent stdout: ${sdata}`);
     });
-    subProcess.stderr.on('data', (sdata: string) => {
+    subProcess.stderr?.on('data', (sdata: string) => {
       console.error(`🌱 Agent stdout: ${sdata}`);
     });
     subProcess.on('close', (returnCode: number) => {
       term(`🌱 Agent child process exited with code ${returnCode} - `).red('exiting.\n');
+      process.exit(returnCode);
     });
     return subProcess;
   }
@@ -391,8 +385,9 @@ export class FixieAgent {
     term('🦊 Deploying agent ').green(agentId)('...\n');
 
     // Check that the package.json path exists in this directory.
-    if (!fs.existsSync(path.resolve(path.join(agentPath, 'package.json')))) {
-      throw Error(`No package.json found in ${agentPath}. Only JS-based agents are supported.`);
+    const packageJsonPath = path.resolve(path.join(agentPath, 'package.json'));
+    if (!fs.existsSync(packageJsonPath)) {
+      throw Error(`No package.json found in ${packageJsonPath}. Only JS-based agents are supported.`);
     }
     const agent = await this.ensureAgent(client, agentId, config);
     const tarball = FixieAgent.getCodePackage(agentPath);
@@ -423,8 +418,9 @@ export class FixieAgent {
     term('🦊 Serving agent ').green(agentId)('...\n');
 
     // Check if the package.json path exists in this directory.
-    if (!fs.existsSync(`${agentPath}/package.json`)) {
-      throw Error(`No package.json found in ${agentPath}. Only JS-based agents are supported.`);
+    const packageJsonPath = path.resolve(path.join(agentPath, 'package.json'));
+    if (!fs.existsSync(packageJsonPath)) {
+      throw Error(`No package.json found in ${packageJsonPath}. Only JS-based agents are supported.`);
     }
 
     // Start the agent process locally.
@@ -443,41 +439,30 @@ export class FixieAgent {
       });
 
       term('🚇 Starting tunnel process...\n');
-      // Ensure we kill child process on exit.
-      const controller = new AbortController();
-      const { signal } = controller;
-      process.on('exit', () => {
-        term('🚇 Terminating tunnel process\n');
-        controller.abort();
-      });
       // We use localhost.run as a tunneling service. This sets up an SSH tunnel
       // to the provided local port via localhost.run. The subprocess returns a
       // stream of JSON responses, one per line, with the external URL of the tunnel
       // as it changes.
-      const subProcess = spawn(
-        'ssh',
-        [
-          '-R',
-          // N.B. 127.0.0.1 must be used on Windows (not localhost or 0.0.0.0)
-          `80:127.0.0.1:${port}`,
-          '-o',
-          // Need to send keepalives to prevent the connection from getting chopped
-          // (see https://localhost.run/docs/faq#my-connection-is-unstable-tunnels-go-down-often)
-          'ServerAliveInterval=59',
-          '-o',
-          'StrictHostKeyChecking=accept-new',
-          'nokey@localhost.run',
-          '--',
-          '--output=json',
-        ],
-        { signal }
-      );
-      subProcess.stdout.setEncoding('utf8');
+      const subProcess = execa('ssh', [
+        '-R',
+        // N.B. 127.0.0.1 must be used on Windows (not localhost or 0.0.0.0)
+        `80:127.0.0.1:${port}`,
+        '-o',
+        // Need to send keepalives to prevent the connection from getting chopped
+        // (see https://localhost.run/docs/faq#my-connection-is-unstable-tunnels-go-down-often)
+        'ServerAliveInterval=59',
+        '-o',
+        'StrictHostKeyChecking=accept-new',
+        'nokey@localhost.run',
+        '--',
+        '--output=json',
+      ]);
+      subProcess.stdout?.setEncoding('utf8');
 
       // Every time the subprocess emits a new line, we parse it as JSON ans
       // extract the 'address' field.
       let currentLine = '';
-      subProcess.stdout.on('data', (chunk: any) => {
+      subProcess.stdout?.on('data', (chunk: string) => {
         // We need to do buffering since the data we get from stdout
         // will not necessarily be line-buffered. We can get 0, 1, or more complete
         // lines in a single chunk.
@@ -486,19 +471,16 @@ export class FixieAgent {
         while ((newlineIndex = currentLine.indexOf('\n')) !== -1) {
           const line = currentLine.slice(0, newlineIndex);
           currentLine = currentLine.slice(newlineIndex + 1);
-          // Parse sdata as JSON.
+          // Parse data as JSON.
           const pdata = JSON.parse(line);
           // If pdata has the 'address' field, yield it.
           if (pdata.address) {
-            // We can't yield until the parent has set up the yieldValue callback.
-            if (yieldValue) {
-              yieldValue(`https://${pdata.address}`);
-            }
+            yieldValue?.(`https://${pdata.address}`);
           }
         }
       });
       if (debug) {
-        subProcess.stderr.on('data', (sdata: string) => {
+        subProcess.stderr?.on('data', (sdata: string) => {
           console.error(`🚇 Tunnel stderr: ${sdata}`);
         });
         subProcess.on('close', (returnCode: number) => {
@@ -522,14 +504,14 @@ export class FixieAgent {
 
     // This is an iterator which yields the public URL of the tunnel where the agent
     // can be reached by the Fixie service. The tunnel address can change over time.
-    let deployment_urls_iter;
+    let deploymentUrlsIter;
     if (tunnel) {
-      deployment_urls_iter = spawnTunnel(port);
+      deploymentUrlsIter = spawnTunnel(port);
     } else {
       if (!config.deploymentUrl) {
         throw Error('No deployment URL specified in agent.yaml');
       }
-      deployment_urls_iter = [
+      deploymentUrlsIter = [
         (async function* () {
           yield config.deploymentUrl;
         })(),
@@ -540,7 +522,7 @@ export class FixieAgent {
     // after the process finishes.
     const agent = await this.ensureAgent(client, agentId, config);
 
-    for await (const currentUrl of deployment_urls_iter) {
+    for await (const currentUrl of deploymentUrlsIter) {
       term('🥡 Serving agent at ').green(currentUrl)('\n');
       try {
         // Wait 3 seconds to ensure the tunnel is set up.
