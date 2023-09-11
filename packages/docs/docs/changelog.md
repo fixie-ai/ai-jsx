@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.15.0
+## 0.16.0
+
+- Updated default URL for `<FixieCorpus>` to `api.fixie.ai`.
+
+## [0.15.0](https://github.com/fixie-ai/ai-jsx/commit/9b215e0ea927152ebddc53a800828a4031a3825a)
 
 - Updated DocsQA battery to use the new version of the Fixie corpus REST API.
 
