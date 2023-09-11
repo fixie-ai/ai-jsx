@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const text = params.get('text');
   const rate = params.get('rate') ? parseFloat(params.get('rate')!) : 1.0;
   if (!voice || !text) {
-    return new NextResponse(JSON.stringify({ error: 'bad request' }));
+    return new NextResponse(JSON.stringify({ error: 'You must specify params `voice` and `text`.' }));
   }
 
   let response;
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
 function getApiKey(keyName: string) {
   const key = process.env[keyName];
   if (!key) {
-    throw new Error('API key not provided ');
+    throw new Error(`API key "${keyName}" not provided. Please set it as an env var.`);
   }
   return new Promise<string>((resolve) => {
     setTimeout(() => resolve(key), 0);

@@ -88,7 +88,7 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
     name: string,
     protected readonly urlFunc: BuildUrlFunction,
     private readonly voice: string,
-    private readonly rate: number = 1.0
+    private readonly rate = 1.0
   ) {
     super(name);
   }
@@ -311,7 +311,7 @@ export class WebSocketTextToSpeech extends MseTextToSpeech {
     };
     return socket;
   }
-  protected sendObject(obj: any) {
+  protected sendObject(obj: unknown) {
     this.socket.send(JSON.stringify(obj));
   }
   protected handleOpen() {}
