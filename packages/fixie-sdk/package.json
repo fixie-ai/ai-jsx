@@ -11,16 +11,14 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.json",
     "build": "yarn run typecheck",
-    "prepack": "yarn build",
-    "start": "node --no-warnings dist/fixie-serve-bin.js",
-    "build-start": "yarn run build && yarn run start"
+    "prepack": "yarn build"
   },
   "files": [
     "dist"
   ],
-  "main": "./dist/index.js",
+  "main": "dist/index.js",
   "bin": {
-    "fixie-serve-bin": "./dist/fixie-serve-bin.js"
+    "fixie-serve-bin": "dist/fixie-serve-bin.js"
   },
   "peerDependencies": {
     "ai-jsx": ">=0.12.0 <1.0.0"
