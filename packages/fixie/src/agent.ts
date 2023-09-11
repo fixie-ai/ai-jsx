@@ -404,7 +404,6 @@ export class FixieAgent {
     client,
     agentPath,
     tunnel,
-    reload,
     port,
     environmentVariables,
     debug,
@@ -412,7 +411,6 @@ export class FixieAgent {
     client: FixieClient;
     agentPath: string;
     tunnel?: boolean;
-    reload?: boolean;
     port: number;
     environmentVariables: Record<string, string>;
     debug?: boolean;

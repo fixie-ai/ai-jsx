@@ -72,7 +72,6 @@ function registerServeCommand(command: Command) {
         agentPath: path ?? process.cwd(),
         port: parseInt(options.port),
         tunnel: true,
-        reload: true,
         environmentVariables: {
           FIXIE_API_URL: program.opts().url,
           ...options.env,
