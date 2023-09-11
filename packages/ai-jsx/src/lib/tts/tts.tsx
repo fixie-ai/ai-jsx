@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Defines a function that can be used to build a URL for a text-to-speech
+ * A function that can be used to build a URL for a text-to-speech
  * service. This URL will be used to retrieve an audio file that can be
  * played by an HTML5 audio element.
  */
