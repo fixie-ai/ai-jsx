@@ -3116,7 +3116,7 @@ __metadata:
   peerDependencies:
     ai-jsx: ">=0.12.0 <1.0.0"
   bin:
-    fixie-serve-bin: ./dist/fixie-serve-bin.js
+    fixie-serve-bin: dist/fixie-serve-bin.js
   languageName: unknown
   linkType: soft
 
