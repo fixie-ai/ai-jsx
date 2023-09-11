@@ -351,9 +351,9 @@ export class FixieAgent {
     if (!fs.existsSync(`${agentPath}/dist/serve-bin.js`)) {
       throw Error(`No dist/serve-bin.js found in ${agentPath}. Do you need to build your agent code first?`);
     }
-    const cmdline = `npx ts-node ${agentPath}/dist/serve-bin.js --port ${port}`;
+    const cmdline = `npx ts-node ./dist/serve-bin.js --port ${port}`;
     term('🌱 Running: ').green(cmdline)('\n');
-    const subProcess = spawn(cmdline, [], { shell: true });
+    const subProcess = spawn(cmdline, [], { cwd: agentPath, shell: true });
     subProcess.stdout.on('data', (sdata: string) => {
       console.log(`🌱 Agent stdout: ${sdata}`);
     });
