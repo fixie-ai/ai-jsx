@@ -15,7 +15,9 @@
     "prepack": "yarn build"
   },
   "dependencies": {
-    "ai-jsx": "*"
+    "ai-jsx": "*",
+    "dotenv": "^16.3.1",
+    "yargs": "^17.7.2"
   },
   "files": [
     "dist"

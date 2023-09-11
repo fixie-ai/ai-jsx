@@ -255,6 +255,8 @@ export class FixieAgent {
   }): Promise<string> {
     const uploadFile = tarball ? fs.readFileSync(fs.realpathSync(tarball)) : undefined;
 
+    console.log(`Creating agent revision at external URL ${externalUrl}`);
+
     const result = await this.client.gqlClient().mutate({
       mutation: gql`
         mutation CreateAgentRevision(
@@ -346,15 +348,21 @@ export class FixieAgent {
 
   static spawnAgentProcess(agentPath: string, port: number): ChildProcess {
     const spinner = ora(' 🌱 Starting local agent process...').start();
-    const subProcess = spawn('npx', ['ts-node', `${agentPath}/dist/service-bin.js`, '--port', port.toString()]);
+    if (!fs.existsSync(`${agentPath}/dist/serve-bin.js`)) {
+      throw Error(`No dist/serve-bin.js found in ${agentPath}. Do you need to build your agent code first?`);
+    }
+    const cmdline = `npx ts-node ${agentPath}/dist/serve-bin.js --port ${port}`;
+    term('🌱 Running: ').green(cmdline)('\n');
+    const subProcess = spawn(cmdline, [], { shell: true });
     subProcess.stdout.on('data', (sdata: string) => {
-      console.log(`Agent stdout: ${sdata}`);
+      console.log(`🌱 Agent stdout: ${sdata}`);
     });
     subProcess.stderr.on('data', (sdata: string) => {
-      console.error(`Agent stderr: ${sdata}`);
+      console.error(`🌱 Agent stdout: ${sdata}`);
     });
     subProcess.on('close', (returnCode: number) => {
-      console.log(`Agent child process exited with code ${returnCode}`);
+      term(`🌱 Agent child process exited with code ${returnCode} - `).red('exiting.\n');
+      process.exit(returnCode);
     });
     spinner.succeed(` 🌱 Local agent process started on port ${port}`);
     return subProcess;
@@ -390,6 +398,7 @@ export class FixieAgent {
     reload,
     port,
     environmentVariables,
+    debug,
   }: {
     client: FixieClient;
     agentPath: string;
@@ -397,6 +406,7 @@ export class FixieAgent {
     reload?: boolean;
     port: number;
     environmentVariables: Record<string, string>;
+    debug?: boolean;
   }) {
     const config = await FixieAgent.LoadConfig(agentPath);
     const agentId = `${(await client.userInfo()).username}/${config.handle}`;
@@ -407,15 +417,26 @@ export class FixieAgent {
       throw Error(`No package.json found in ${agentPath}. Only JS-based agents are supported.`);
     }
 
-    type AsyncGeneratorYield<T> = (value: T) => void;
+    // Start the agent process locally.
+    const agentProcess = FixieAgent.spawnAgentProcess(agentPath, port);
+
+    // Wait for 5 seconds for it to start up.
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     async function* spawnTunnel(port: number): AsyncGenerator<string> {
+      type AsyncGeneratorYield<T> = (value: T) => void;
+      // Represents the value yielded by the subprocess.
       let yieldValue: AsyncGeneratorYield<string> | null = null;
-      let whenYielded = new Promise<AsyncGeneratorYield<string>>((resolve) => {
+      // This Promise is resolved when the tunnel subprocess yields a new address.
+      let whenYielded = new Promise<string>((resolve) => {
         yieldValue = resolve;
       });
 
-      const tunnelSpinner = ora(' 🚇 Starting tunnel process...').start();
+      term('🚇 Starting tunnel process...\n');
+      // We use localhost.run as a tunneling service. This sets up an SSH tunnel
+      // to the provided local port via localhost.run. The subprocess returns a
+      // stream of JSON responses, one per line, with the external URL of the tunnel
+      // as it changes.
       const subProcess = spawn('ssh', [
         '-R',
         // N.B. 127.0.0.1 must be used on Windows (not localhost or 0.0.0.0)
@@ -431,23 +452,40 @@ export class FixieAgent {
         '--output=json',
       ]);
       subProcess.stdout.setEncoding('utf8');
-      yield subProcess.stdout.on('data', (sdata: string) => {
-        // Parse sdata as JSON.
-        const pdata = JSON.parse(sdata);
-        // If pdata has the 'address' field, yield it.
-        if (pdata.address) {
-          if (yieldValue) {
-            yieldValue(pdata.address);
+
+      // Every time the subprocess emits a new line, we parse it as JSON ans
+      // extract the 'address' field.
+      let currentLine = '';
+      subProcess.stdout.on('data', (chunk: any) => {
+        // We need to do buffering since the data we get from stdout
+        // will not necessarily be line-buffered. We can get 0, 1, or more complete
+        // lines in a single chunk.
+        currentLine += chunk;
+        let newlineIndex;
+        while ((newlineIndex = currentLine.indexOf('\n')) !== -1) {
+          const line = currentLine.slice(0, newlineIndex);
+          currentLine = currentLine.slice(newlineIndex + 1);
+          // Parse sdata as JSON.
+          const pdata = JSON.parse(line);
+          // If pdata has the 'address' field, yield it.
+          if (pdata.address) {
+            // We can't yield until the parent has set up the yieldValue callback.
+            if (yieldValue) {
+              yieldValue(pdata.address);
+            }
           }
         }
       });
-      subProcess.stderr.on('data', (sdata: string) => {
-        console.error(`Tunnel stderr: ${sdata}`);
-      });
-      subProcess.on('close', (returnCode: number) => {
-        console.log(`Tunnel child process exited with code ${returnCode}`);
-      });
-
+      if (debug) {
+        subProcess.stderr.on('data', (sdata: string) => {
+          console.error(`🚇 Tunnel stderr: ${sdata}`);
+        });
+        subProcess.on('close', (returnCode: number) => {
+          console.log(`🚇 Tunnel child process exited with code ${returnCode}`);
+        });
+      }
+      // Now we wait for the subprocess to yield a new address, which we then
+      // re-yield to the caller of this function.
       while (true) {
         const tunnelAddress = await whenYielded;
         if (tunnelAddress === '') {
@@ -455,14 +493,14 @@ export class FixieAgent {
         }
         yield tunnelAddress;
         yieldValue = null;
-        whenYielded = new Promise((resolve) => {
+        whenYielded = new Promise<string>((resolve) => {
           yieldValue = resolve;
         });
       }
-
-      tunnelSpinner.succeed(` 🚇 Tunnel started on port ${port}`);
     }
 
+    // This is an iterator which yields the public URL of the tunnel where the agent
+    // can be reached by the Fixie service. The tunnel address can change over time.
     let deployment_urls_iter;
     if (tunnel) {
       deployment_urls_iter = spawnTunnel(port);
@@ -477,8 +515,8 @@ export class FixieAgent {
       ];
     }
 
-    // TODO(mdw): We need to restore the original agent deployment if one existed
-    // after the serve process finishes.
+    // TODO(mdw): We need to restore the original agent deployment (if one existed)
+    // after the process finishes.
     const agent = await this.ensureAgent(client, agentId, config);
 
     for await (const currentUrl of deployment_urls_iter) {

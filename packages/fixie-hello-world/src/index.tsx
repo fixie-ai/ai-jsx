@@ -1,5 +1,7 @@
 import { ChatCompletion, SystemMessage, ConversationHistory } from 'ai-jsx/core/completion';
 
+console.log('Fixie Hello World agent starting.');
+
 export default function HelloWorld() {
   return (
     <ChatCompletion temperature={1}>
