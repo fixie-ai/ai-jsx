@@ -387,7 +387,7 @@ export class FixieAgent {
     // Check that the package.json path exists in this directory.
     const packageJsonPath = path.resolve(path.join(agentPath, 'package.json'));
     if (!fs.existsSync(packageJsonPath)) {
-      throw Error(`No package.json found in ${packageJsonPath}. Only JS-based agents are supported.`);
+      throw Error(`No package.json found at ${packageJsonPath}. Only JS-based agents are supported.`);
     }
     const agent = await this.ensureAgent(client, agentId, config);
     const tarball = FixieAgent.getCodePackage(agentPath);
