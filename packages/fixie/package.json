@@ -22,7 +22,6 @@
   "bin": "./dist/main.js",
   "dependencies": {
     "@apollo/client": "^3.8.1",
-    "@fixieai/sdk": "*",
     "apollo-upload-client": "^17.0.0",
     "commander": "^11.0.0",
     "execa": "^8.0.1",
@@ -34,6 +33,7 @@
     "terminal-kit": "^3.0.0"
   },
   "devDependencies": {
+    "@fixieai/sdk": "*",
     "@tsconfig/node18": "^2.0.1",
     "@types/apollo-upload-client": "^17.0.2",
     "@types/extract-files": "^8.1.1",
