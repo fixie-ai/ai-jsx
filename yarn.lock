@@ -3057,6 +3057,7 @@ __metadata:
   resolution: "@fixieai/fixie@workspace:packages/fixie"
   dependencies:
     "@apollo/client": ^3.8.1
+    "@fixieai/sdk": "*"
     "@tsconfig/node18": ^2.0.1
     "@types/apollo-upload-client": ^17.0.2
     "@types/extract-files": ^8.1.1

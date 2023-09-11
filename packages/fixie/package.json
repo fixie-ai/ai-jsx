@@ -22,6 +22,7 @@
   "bin": "./dist/main.js",
   "dependencies": {
     "@apollo/client": "^3.8.1",
+    "@fixieai/sdk": "*",
     "apollo-upload-client": "^17.0.0",
     "commander": "^11.0.0",
     "extract-files": "^13.0.0",
