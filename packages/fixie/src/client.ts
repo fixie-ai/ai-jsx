@@ -44,7 +44,7 @@ export class FixieClient {
     const apiKey = process.env.FIXIE_API_KEY;
     if (!apiKey) {
       throw new Error(
-        'You must set the FIXIE_API_KEY environment variable. This can be found at: https://beta.fixie.ai/profile'
+        'You must set the FIXIE_API_KEY environment variable. This can be found at: https://console.fixie.ai/profile'
       );
     }
     client.apiKey = apiKey;
