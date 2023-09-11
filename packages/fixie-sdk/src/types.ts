@@ -48,6 +48,7 @@ export interface InvokeAgentRequest {
 export interface InvokeAgentResponse {
   messages: Message[];
   metadata?: Record<string, string | number | boolean | object | null> | null;
+  errorDetail: string | null;
 }
 
 export interface GetConversationResponse {
