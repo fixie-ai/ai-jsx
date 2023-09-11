@@ -324,7 +324,7 @@ export class FixieAgent {
     let agent: FixieAgent;
     try {
       agent = await FixieAgent.GetAgent(client, agentId);
-      term('👽 Updating agent ').green(agentId)('...\n');
+      term('🦊 Updating agent ').green(agentId)('...\n');
       agent.update({
         name: config.name,
         description: config.description,
@@ -333,7 +333,7 @@ export class FixieAgent {
       });
     } catch (e) {
       // Try to create the agent instead.
-      term('🌲 Creating new agent ').green(agentId)('...\n');
+      term('🦊 Creating new agent ').green(agentId)('...\n');
       agent = await FixieAgent.CreateAgent(
         client,
         config.handle,
@@ -347,9 +347,9 @@ export class FixieAgent {
   }
 
   static spawnAgentProcess(agentPath: string, port: number): ChildProcess {
-    const spinner = ora(' 🌱 Starting local agent process...').start();
-    if (!fs.existsSync(`${agentPath}/dist/serve-bin.js`)) {
-      throw Error(`No dist/serve-bin.js found in ${agentPath}. Do you need to build your agent code first?`);
+    term(`🌱 Starting local agent process on port ${port}...\n`);
+    if (!fs.existsSync(`${agentPath}/dist/index.js`)) {
+      throw Error(`No dist/index.js found in ${agentPath}. Do you need to build your agent code first?`);
     }
 
     // Ensure we kill child process on exit.
@@ -362,7 +362,7 @@ export class FixieAgent {
 
     const cmdline = `npx --package=@fixieai/sdk fixie-serve-bin --packagePath ./dist/index.js --port ${port}`;
     // Split cmdline into the first value (argv0) and a list of arguments separated by spaces.
-    term('\n🌱 Running: ').green(cmdline)('\n');
+    term('🌱 Running: ').green(cmdline)('\n');
     const [argv0, ...args] = cmdline.split(' ');
     const subProcess = spawn(argv0, args, { cwd: agentPath, signal });
     subProcess.stdout.on('data', (sdata: string) => {
@@ -374,7 +374,6 @@ export class FixieAgent {
     subProcess.on('close', (returnCode: number) => {
       term(`🌱 Agent child process exited with code ${returnCode} - `).red('exiting.\n');
     });
-    spinner.succeed(`Local agent process started on port ${port}`);
     return subProcess;
   }
 
@@ -541,7 +540,7 @@ export class FixieAgent {
     const agent = await this.ensureAgent(client, agentId, config);
 
     for await (const currentUrl of deployment_urls_iter) {
-      term('👨‍🍳  Serving agent at ').green(currentUrl)('\n');
+      term('🥡 Serving agent at ').green(currentUrl)('\n');
       try {
         // Wait 3 seconds to ensure the tunnel is set up.
         await new Promise((resolve) => setTimeout(resolve, 3000));
