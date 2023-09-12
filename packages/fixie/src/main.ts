@@ -35,6 +35,8 @@ function registerDeployCommand(command: Command) {
         const [key, value] = v.split('=');
         return {
           ...m,
+          // This condition is necessary; the types are wrong.
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           [key]: value ?? '',
         };
       }
@@ -48,16 +50,50 @@ function registerDeployCommand(command: Command) {
     });
 }
 
+/** Run an agent locally. */
+function registerServeCommand(command: Command) {
+  command
+    .command('serve [path]')
+    .description('Run an agent locally')
+    .option('-p, --port <number>', 'Port to run the agent on', '8181')
+    .option(
+      '-e, --env <key=value>',
+      'Environment variables to set for this agent. Variables in a .env file take precedence over those on the command line.',
+      (v, m: Record<string, string> | undefined) => {
+        const [key, value] = v.split('=');
+        return {
+          ...m,
+          // This condition is necessary; the types are wrong.
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          [key]: value ?? '',
+        };
+      }
+    )
+    .action(async (path: string | undefined, options: { port: string; env: Record<string, string> }) => {
+      const client = await FixieClient.Create(program.opts().url);
+      await FixieAgent.ServeAgent({
+        client,
+        agentPath: path ?? process.cwd(),
+        port: parseInt(options.port),
+        tunnel: true,
+        environmentVariables: {
+          FIXIE_API_URL: program.opts().url,
+          ...options.env,
+        },
+      });
+    });
+}
+
 // Get current version of this package.
 const currentPath = path.dirname(fileURLToPath(import.meta.url));
-const packageJsonPath = path.resolve(currentPath, '../package.json');
+const packageJsonPath = path.resolve(currentPath, path.join('..', '..', 'package.json'));
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
 program
   .name('fixie')
   .version(packageJson.version)
   .description('A command-line client to the Fixie AI platform.')
-  .option('-u, --url <string>', 'URL of the Fixie API endpoint', process.env.FIXIE_API_URL ?? 'https://app.fixie.ai')
+  .option('-u, --url <string>', 'URL of the Fixie API endpoint', process.env.FIXIE_API_URL ?? 'https://api.fixie.ai')
   .option('-r --raw', 'Output raw JSON instead of pretty-printing.');
 
 program
@@ -70,6 +106,7 @@ program
   });
 
 registerDeployCommand(program);
+registerServeCommand(program);
 
 const corpus = program.command('corpus').description('Corpus related commands');
 
@@ -247,6 +284,7 @@ agents
   });
 
 registerDeployCommand(agents);
+registerServeCommand(agents);
 
 const revisions = agents.command('revisions').description('Agent revision-related commands');
 

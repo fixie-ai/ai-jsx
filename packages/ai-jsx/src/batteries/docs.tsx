@@ -616,7 +616,7 @@ export class LocalCorpus<
 
 /** A fully mananged {@link Corpus} served by Fixie. */
 export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implements Corpus<ChunkMetadata> {
-  private static readonly DEFAULT_FIXIE_API_URL = 'https://beta.fixie.ai';
+  private static readonly DEFAULT_FIXIE_API_URL = 'https://api.fixie.ai';
 
   private readonly fixieApiUrl: string;
 
@@ -625,7 +625,7 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
       this.fixieApiKey = getEnvVar('FIXIE_API_KEY', false);
       if (!this.fixieApiKey) {
         throw new AIJSXError(
-          'You must provide a Fixie API key to access Fixie corpora. Find yours at https://beta.fixie.ai/profile.',
+          'You must provide a Fixie API key to access Fixie corpora. Find yours at https://api.fixie.ai/profile.',
           ErrorCode.MissingFixieAPIKey,
           'user'
         );
