@@ -7,8 +7,9 @@ import { hideBin } from 'yargs/helpers';
 import { fastify } from 'fastify';
 import { Readable } from 'stream';
 import { createRenderContext, Component } from 'ai-jsx';
+import { FixieAPIContext } from 'ai-jsx/batteries/fixie';
 import { InvokeAgentRequest } from './types.js';
-import { FixieRequestWrapper } from './request-wrapper.js';
+import { FixieRequestWrapper, RequestContext } from './request-wrapper.js';
 
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import path from 'path';
@@ -34,7 +35,7 @@ async function serve({
   }
   const app = fastify();
 
-  const fixieApiUrl = process.env.FIXIE_API_URL ?? 'https://app.fixie.ai';
+  const fixieApiUrl = process.env.FIXIE_API_URL ?? 'https://api.fixie.ai';
 
   const getJwks = createRemoteJWKSet(new URL('/.well-known/jwks.json', fixieApiUrl));
 
@@ -59,14 +60,15 @@ async function serve({
   app.post('/', (req, res) => {
     try {
       const renderable = (
-        <FixieRequestWrapper
-          request={req.body as InvokeAgentRequest}
-          apiBaseUrl={fixieApiUrl}
-          agentId={(req as any).fixieVerifiedToken.payload.aid}
-          authToken={(req as any).fixieAuthToken}
-        >
-          <Handler />
-        </FixieRequestWrapper>
+        <FixieAPIContext.Provider value={{ url: fixieApiUrl, authToken: (req as any).fixieAuthToken }}>
+          <RequestContext.Provider
+            value={{ request: req.body as InvokeAgentRequest, agentId: (req as any).fixieVerifiedToken.payload.aid }}
+          >
+            <FixieRequestWrapper>
+              <Handler />
+            </FixieRequestWrapper>
+          </RequestContext.Provider>
+        </FixieAPIContext.Provider>
       );
       const generator = createRenderContext({ enableOpenTelemetry: true }).render(renderable)[Symbol.asyncIterator]();
       return res
@@ -77,9 +79,11 @@ async function serve({
             (async function* () {
               let lastMessages = [];
               while (true) {
+                let currentValue = undefined as string | undefined;
                 try {
                   const next = await generator.next();
-                  lastMessages = next.value
+                  currentValue = next.value;
+                  lastMessages = currentValue
                     .split('\n')
                     .slice(0, -1)
                     .map((msg) => JSON.parse(msg));
@@ -89,6 +93,7 @@ async function serve({
                   }
                 } catch (ex) {
                   const errorDetail = `Error during generation: ${ex}${ex instanceof Error ? ` ${ex.stack}` : ''}`;
+                  console.error({ currentValue, errorDetail });
                   yield `${JSON.stringify({ messages: lastMessages, errorDetail, state: 'error' })}\n`;
                   await generator.return?.();
                   break;

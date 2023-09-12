@@ -1,17 +1,18 @@
 {
   "name": "@fixieai/fixie",
-  "version": "1.0.14",
+  "version": "1.1.2",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://fixie.ai",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "start": "node --no-warnings dist/main.js",
+    "build": "rm -rf dist && tsc",
+    "start": "node --no-warnings dist/src/main.js",
     "build-start": "yarn run build && yarn run start",
     "format": "prettier --write .",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "lint:fix": "eslint ."
   },
   "files": [
     "dist"
@@ -19,11 +20,14 @@
   "volta": {
     "extends": "../../package.json"
   },
-  "bin": "./dist/main.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": "./dist/src/main.js",
   "dependencies": {
     "@apollo/client": "^3.8.1",
     "apollo-upload-client": "^17.0.0",
     "commander": "^11.0.0",
+    "execa": "^8.0.1",
     "extract-files": "^13.0.0",
     "graphql": "^16.8.0",
     "js-yaml": "^4.1.0",
@@ -32,6 +36,7 @@
     "terminal-kit": "^3.0.0"
   },
   "devDependencies": {
+    "@fixieai/sdk": "*",
     "@tsconfig/node18": "^2.0.1",
     "@types/apollo-upload-client": "^17.0.2",
     "@types/extract-files": "^8.1.1",

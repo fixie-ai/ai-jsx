@@ -5,30 +5,19 @@ import { Json } from './json.js';
 import { FixieConversation } from './conversation.js';
 import { OpenAI, OpenAIClient, ValidChatModel } from 'ai-jsx/lib/openai';
 import { cohereContext } from 'ai-jsx/lib/cohere';
+import { FixieAPIContext } from 'ai-jsx/batteries/fixie';
 
-export interface FixieRequestContext {
+export const RequestContext = AI.createContext<{
   request: InvokeAgentRequest;
   agentId: string;
-  apiBaseUrl: string;
-  authToken: string;
-}
-
-export const fixieContext = AI.createContext<FixieRequestContext | null>(null);
+} | null>(null);
 
 /**
  * Wraps a conversational AI.JSX component to be used as a Fixie request handler.
  *
  * Emits newline-delimited JSON for each message.
  */
-export function FixieRequestWrapper({
-  request,
-  agentId,
-  apiBaseUrl,
-  authToken,
-  children,
-}: FixieRequestContext & {
-  children: AI.Node;
-}) {
+export function FixieRequestWrapper({ children }: { children: AI.Node }, { getContext, memo }: AI.ComponentContext) {
   let wrappedNode: AI.Node = (
     <ShowConversation
       present={(message) => {
@@ -78,6 +67,14 @@ export function FixieRequestWrapper({
     </ShowConversation>
   );
 
+  const { url: apiBaseUrl, authToken } = getContext(FixieAPIContext);
+
+  const requestContext = getContext(RequestContext);
+  if (!requestContext) {
+    throw new Error('RequestContext must be provided to FixieRequestWrapper.');
+  }
+  const { request } = requestContext;
+
   // If we're using OpenAI (or default), enable the OpenAI proxy.
   if (!request.generationParams.modelProvider || request.generationParams.modelProvider.toLowerCase() === 'openai') {
     wrappedNode = (
@@ -102,11 +99,9 @@ export function FixieRequestWrapper({
     <cohereContext.Provider
       value={{ api_key: authToken, api_url: new URL('api/cohere-proxy/v1', apiBaseUrl).toString() }}
     >
-      <fixieContext.Provider value={{ request, agentId, authToken, apiBaseUrl }}>
-        <ConversationHistoryContext.Provider value={<FixieConversation />}>
-          {wrappedNode}
-        </ConversationHistoryContext.Provider>
-      </fixieContext.Provider>
+      <ConversationHistoryContext.Provider value={memo(<FixieConversation />)}>
+        {wrappedNode}
+      </ConversationHistoryContext.Provider>
     </cohereContext.Provider>
   );
 }

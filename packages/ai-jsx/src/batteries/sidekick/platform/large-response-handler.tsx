@@ -25,7 +25,7 @@ export async function TruncateByChars(
     children,
     maxLength,
   }: {
-    children: string;
+    children: AI.Node;
     maxLength: number;
   },
   { render }: AI.ComponentContext
@@ -40,18 +40,27 @@ export async function TruncateByChars(
 export async function LargeFunctionResponseHandler(
   {
     children,
-    maxLength,
+    maxLength = 4000,
     numChunks = 4,
     // use Cohere token counter?
     lengthFunction = openAITokenCount,
     ...props
   }: AI.PropsOfComponent<typeof FunctionResponse> & {
-    maxLength: number;
+    maxLength?: number;
     numChunks?: number;
     lengthFunction?: LengthFunction;
   },
   { render, logger, getContext }: AI.ComponentContext
 ) {
+  if (props.failed) {
+    return (
+      // TODO: fix issue between maxLength chars and tokens
+      <FunctionResponse {...props}>
+        <TruncateByChars maxLength={maxLength}>{children}</TruncateByChars>
+      </FunctionResponse>
+    );
+  }
+
   let stringified = await render(children);
 
   // Option 1: do nothing if it's already small enough

@@ -111,6 +111,13 @@ export function FunctionCall({
   return `Call function ${name} with ${partial ? '(incomplete) ' : ''}${JSON.stringify(args)}`;
 }
 
+export interface FunctionResponseProps {
+  name: string;
+  failed?: boolean;
+  children: Node;
+  metadata?: Record<string, Jsonifiable>;
+}
+
 /**
  * Renders to the output of a previous {@link FunctionCall} component, for use within a {@link ChatCompletion}.
  *
@@ -127,16 +134,7 @@ export function FunctionCall({
  *    ==> "That would be 83,076."
  * ```
  */
-export function FunctionResponse({
-  name,
-  failed,
-  children,
-}: {
-  name: string;
-  failed?: boolean;
-  children: Node;
-  metadata?: Record<string, Jsonifiable>;
-}) {
+export function FunctionResponse({ name, failed, children }: FunctionResponseProps) {
   if (failed) {
     return (
       <>

@@ -12,8 +12,8 @@ import {
   renderToConversation,
   SystemMessage,
 } from '../../../core/conversation.js';
-import { UseToolsProps } from '../../use-tools.js';
-import { LargeFunctionResponseHandler, TruncateByChars, redactedFunctionTools } from './large-response-handler.js';
+import { LargeFunctionResponseHandler, redactedFunctionTools } from './large-response-handler.js';
+import { ExecuteFunction, UseToolsProps } from '../../use-tools.js';
 
 /**
  * This function defines the shrinking policy. It's activated when the conversation history overflows the context
@@ -74,7 +74,7 @@ export function present(conversationElement: ConversationMessage) {
  * without using tools. For example, this is how the model is able to call `listConversations`, followed by
  * `getConversation`, and then finally write a response.
  */
-export async function getNextConversationStep(
+export function getNextConversationStep(
   messages: ConversationMessage[],
   fullConversation: ConversationMessage[],
   finalSystemMessageBeforeResponse: AI.Node,
@@ -91,28 +91,16 @@ export async function getNextConversationStep(
   switch (lastMessage.type) {
     case 'functionCall': {
       const { name, args } = lastMessage.element.props;
-      let response;
-      try {
-        response = await updatedTools[name].func(args);
-      } catch (e: any) {
-        return (
-          <FunctionResponse failed name={name}>
-            <TruncateByChars maxLength={2000}>{e.message}</TruncateByChars>
-          </FunctionResponse>
-        );
-      }
-      // If using a tool based on redacted functions, we don't want to redact it further
-      if (!(name in tools)) {
-        <FunctionResponse name={name}>{response}</FunctionResponse>;
-      }
-      // Function responses can potentially be very large. In that case, we need
-      // some way of handling that so the context window doesn't blow up.
       return (
-        // TODO: magic number (4000 and 2000) + token vs chars distinction
-        // TODO: pass query to handler?
-        <LargeFunctionResponseHandler name={name} maxLength={4000}>
-          {response}
-        </LargeFunctionResponseHandler>
+        <ExecuteFunction
+          func={tools[name].func}
+          name={name}
+          args={args}
+          // Function responses can potentially be very large. In that case, we need
+          // some way of handling that so the context window doesn't blow up.
+          // But if we are using a tool based on redacted functions, we don't want to redact it further
+          ResponseWrapper={name in tools ? LargeFunctionResponseHandler : FunctionResponse}
+        />
       );
     }
     case 'functionResponse':

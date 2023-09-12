@@ -2,4 +2,3 @@ handle: sidekick-github
 public: true
 description: Sidekick to navigate GitHub
 more_info_url: ''
-entry_point: .
