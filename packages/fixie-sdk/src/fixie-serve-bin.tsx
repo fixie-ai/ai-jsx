@@ -79,9 +79,11 @@ async function serve({
             (async function* () {
               let lastMessages = [];
               while (true) {
+                let currentValue = undefined as string | undefined;
                 try {
                   const next = await generator.next();
-                  lastMessages = next.value
+                  currentValue = next.value;
+                  lastMessages = currentValue
                     .split('\n')
                     .slice(0, -1)
                     .map((msg) => JSON.parse(msg));
@@ -91,6 +93,7 @@ async function serve({
                   }
                 } catch (ex) {
                   const errorDetail = `Error during generation: ${ex}${ex instanceof Error ? ` ${ex.stack}` : ''}`;
+                  console.error({ currentValue, errorDetail });
                   yield `${JSON.stringify({ messages: lastMessages, errorDetail, state: 'error' })}\n`;
                   await generator.return?.();
                   break;
