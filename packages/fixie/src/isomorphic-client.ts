@@ -1,10 +1,4 @@
 import type { Jsonifiable } from 'type-fest';
-import { ApolloClient } from '@apollo/client/core/ApolloClient.js';
-import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache.js';
-import createUploadLink from 'apollo-upload-client/public/createUploadLink.js';
-import isExtractableFile from 'apollo-upload-client/public/isExtractableFile.js';
-import { ExtractableFile } from 'extract-files';
-import { ReadStream } from 'fs';
 
 export interface UserInfo {
   id: number;
