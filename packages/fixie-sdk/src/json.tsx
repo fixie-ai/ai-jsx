@@ -6,14 +6,15 @@ async function* JsonString({ children }: { children: AI.Node }, { render }: AI.C
 }
 
 export function Json({ children }: { children: unknown }): AI.Node {
-  if (typeof children !== 'object') {
+  if (typeof children !== 'object' || children === null) {
     return JSON.stringify(children);
   }
 
   if (Array.isArray(children)) {
     const mapped = children.map((value, i, array) => (
       <>
-        <Json>{value}</Json>
+        {/* In arrays, undefined gets serialized as null. */}
+        <Json>{value ?? null}</Json>
         {i < array.length - 1 ? ',' : ''}
       </>
     ));
@@ -25,13 +26,15 @@ export function Json({ children }: { children: unknown }): AI.Node {
     return <JsonString>{children}</JsonString>;
   }
 
-  const keys = Object.getOwnPropertyNames(children);
-  const mapped = keys.map((value, i, array) => (
-    <>
-      {JSON.stringify(value)}: <Json>{(children as any)[value]}</Json>
-      {i < array.length - 1 ? ',' : ''}
-    </>
-  ));
+  // In objects, undefined fields get omitted.
+  const mapped = Object.entries(children as Record<string, unknown>)
+    .filter(([_, value]) => value !== undefined)
+    .map(([key, value], i, array) => (
+      <>
+        {JSON.stringify(key)}: <Json>{value}</Json>
+        {i < array.length - 1 ? ',' : ''}
+      </>
+    ));
 
   return (
     <>

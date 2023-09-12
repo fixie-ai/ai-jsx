@@ -34,7 +34,7 @@ async function serve({
   }
   const app = fastify();
 
-  const fixieApiUrl = process.env.FIXIE_API_URL ?? 'https://app.fixie.ai';
+  const fixieApiUrl = process.env.FIXIE_API_URL ?? 'https://api.fixie.ai';
 
   const getJwks = createRemoteJWKSet(new URL('/.well-known/jwks.json', fixieApiUrl));
 
@@ -43,7 +43,6 @@ async function serve({
       const token = request.headers.authorization?.split(' ')[1];
       if (typeof token !== 'string') {
         throw new Error('Missing Authorization header');
-        return;
       }
       (request as any).fixieAuthToken = token;
       (request as any).fixieVerifiedToken = await jwtVerify(token, getJwks);
@@ -76,16 +75,25 @@ async function serve({
         .send(
           Readable.from(
             (async function* () {
+              let lastMessages = [];
               while (true) {
+                let currentValue = undefined as string | undefined;
                 try {
                   const next = await generator.next();
-                  const messages = next.value.split('\n').slice(0, -1);
-                  yield `${JSON.stringify({ messages: messages.map((msg) => JSON.parse(msg)) })}\n`;
+                  currentValue = next.value;
+                  lastMessages = currentValue
+                    .split('\n')
+                    .slice(0, -1)
+                    .map((msg) => JSON.parse(msg));
+                  yield `${JSON.stringify({ messages: lastMessages, state: next.done ? 'done' : 'in-progress' })}\n`;
                   if (next.done) {
                     break;
                   }
                 } catch (ex) {
-                  console.error(`Error during generation: ${ex}${ex instanceof Error ? ` ${ex.stack}` : ''}`);
+                  const errorDetail = `Error during generation: ${ex}${ex instanceof Error ? ` ${ex.stack}` : ''}`;
+                  console.error({ currentValue, errorDetail });
+                  yield `${JSON.stringify({ messages: lastMessages, errorDetail, state: 'error' })}\n`;
+                  await generator.return?.();
                   break;
                 }
               }
