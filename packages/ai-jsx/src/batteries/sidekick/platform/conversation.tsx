@@ -65,6 +65,18 @@ export function present(conversationElement: ConversationMessage) {
 }
 
 /**
+ * Will filter the conversation to only include the current round of messages
+ * @returns A subset of the full conversation, starting from the last user message.
+ */
+function getCurrentRound(fullConversation: ConversationMessage[]) {
+  const lastUserMessage = fullConversation.findLastIndex((m) => m.type === 'user');
+  if (lastUserMessage === -1) {
+    return fullConversation;
+  }
+  return fullConversation.slice(lastUserMessage);
+}
+
+/**
  * This is the conversation state machine. It takes the current conversation and decides how to respond.
  *
  * For instance, if the most recent message is a function call, it will call the function and return a FunctionResponse.
@@ -83,16 +95,18 @@ export function getNextConversationStep(
   const shrinkableConversation = getShrinkableConversation(messages, fullConversation);
   const lastMessage = messages[messages.length - 1];
 
-  // TODO: only use messages to focus on last round of conversation?
-  // Q: doess messages have all the messages from current round?
-  const updatedTools = { ...tools, ...redactedFunctionTools(fullConversation) };
+  // Add tools for interacting with redacted function responses (if one exists).
+  // Will only take into account the current round of messages. After that the LLM
+  // will need to call the function again. This is to prevent the LLM from accessing stale data.
+  const updatedTools = { ...tools, ...redactedFunctionTools(getCurrentRound(fullConversation)) };
 
   switch (lastMessage.type) {
     case 'functionCall': {
       const { name, args } = lastMessage.element.props;
       return (
         <ExecuteFunction
-          func={tools[name].func}
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          func={updatedTools[name]?.func}
           name={name}
           args={args}
           // Function responses can potentially be very large. In that case, we need
