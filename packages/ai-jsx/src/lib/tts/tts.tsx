@@ -1,4 +1,5 @@
 'use client';
+import { split, TxtParentNodeWithSentenceNode } from 'sentence-splitter';
 
 /**
  * A function that can be used to build a URL for a text-to-speech
@@ -22,7 +23,7 @@ export type GetToken = (provider: string) => Promise<string>;
 export abstract class TextToSpeechBase {
   protected audio: HTMLAudioElement;
   /**
-   * The time when the play() method was first called.
+   * The time (performance.now()) when the play() method was first called.
    */
   protected playMillis: number = 0;
   /**
@@ -224,33 +225,26 @@ export class RestTextToSpeech extends MseTextToSpeech {
   ) {
     super(name);
   }
-  protected async generate(text: string) {
+  protected generate(text: string) {
     this.pendingText += text;
-    while (true) {
-      // Find the first punctuation mark (period, exclamation point, or question mark)
-      // that is not followed by another character (e.g., not the dot in $2.59).
-      // We'll send off the resultant sentence for generation, and jump ahead, skipping
-      // any spaces after the punctuation.
-      const index = this.pendingText.search(/[.!?][^\w]/);
-      // If that doesn't work, split on any newlines (e.g., lyrics)
-      if (index == -1) {
-        break;
+    split(this.pendingText).forEach((piece: TxtParentNodeWithSentenceNode['children']) => {
+      if (piece.type == 'Sentence') {
+        if (piece.children.length == 2 && piece.children[1].type == 'Punctuation') {
+          const utterance = this.pendingText.substring(piece.raw);
+          this.requestChunk(utterance);
+        } else {
+          this.pendingText = piece.raw;
+        }
       }
-      const utterance = this.pendingText.substring(0, index + 1);
-      this.pendingText = this.pendingText.substring(index + 2);
-      await this.requestChunk(utterance);
-      if (!this.pendingText) {
-        this.setComplete();
-      }
-    }
+    });
   }
   protected async doFlush() {
-    const utterance = this.pendingText;
+    const utterance = this.pendingText.trim();
     this.pendingText = '';
-    await this.requestChunk(utterance);
-    if (!this.pendingText) {
-      this.setComplete();
+    if (utterance) {
+      await this.requestChunk(utterance);
     }
+    setTimeout(() => this.setComplete(), 0);
   }
   protected cleanUp() {
     this.pendingText = '';
