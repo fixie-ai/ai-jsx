@@ -7,7 +7,7 @@ export interface FixieAPIConfiguration {
 }
 
 export const DEFAULT_API_CONFIGURATION: FixieAPIConfiguration = {
-  url: getEnvVar('FIXIE_API_URL', false) ?? 'https://app.fixie.ai',
+  url: getEnvVar('FIXIE_API_URL', false) ?? 'https://api.fixie.ai',
   authToken: getEnvVar('FIXIE_API_KEY', false),
 };
 

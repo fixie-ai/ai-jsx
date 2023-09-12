@@ -35,7 +35,7 @@ async function serve({
   }
   const app = fastify();
 
-  const fixieApiUrl = process.env.FIXIE_API_URL ?? 'https://app.fixie.ai';
+  const fixieApiUrl = process.env.FIXIE_API_URL ?? 'https://api.fixie.ai';
 
   const getJwks = createRemoteJWKSet(new URL('/.well-known/jwks.json', fixieApiUrl));
 
