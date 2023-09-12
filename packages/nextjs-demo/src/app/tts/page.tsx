@@ -65,9 +65,8 @@ const TtsComponent: React.FC<TtsComponentProps> = ({ display, provider, text }) 
       tts!.play(text);
       tts!.flush();
     } else {
-      console.log('stopping');
       setPlaying(false);
-      tts!.skip();
+      tts!.stop();
     }
   };
   const caption = playing ? 'Stop' : `Play ${display}`;

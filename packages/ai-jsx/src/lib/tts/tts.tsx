@@ -70,14 +70,14 @@ export abstract class TextToSpeechBase {
   abstract flush(): void;
 
   /**
-   * Skips to the end of any generated audio, but keeps
-   * the audio element in a playing state.
+   * Discards any generated audio, but remains in an active state so
+   * that additional text can be provided and played.
    */
-  abstract skip(): void;
+  abstract stop(): void;
   /**
    * Stops playing any generated audio and ends generation.
    */
-  abstract stop(): void;
+  abstract close(): void;
 }
 
 /**
@@ -101,11 +101,12 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
     this.audio.play();
   }
   flush() {}
-  skip() {
-    this.audio.src = '';
-  }
   stop() {
     console.log(`[${this.name}] tts stopping`);
+    this.audio.src = '';
+  }
+  close() {
+    console.log(`[${this.name}] tts closing`);
     this.audio.pause();
   }
 }
@@ -167,17 +168,20 @@ class MseTextToSpeech extends TextToSpeechBase {
     }
   }
 
-  skip() {
+  stop() {
     console.log(`[${this.name}] tts skipping`);
+    // Cancel any pending requests, discard any chunks in our queue, and 
+    // skip over any audio data already buffered by the audio element.
     this.sourceBuffer?.abort();
     this.chunkBuffer.length = 0;
-    this.setComplete();
+    this.audio.currentTime = this.audio.buffered.end(0);
+    this.inProgress = false;
+    this.stopGeneration();
   }
-  stop() {
+  close() {
     console.log(`[${this.name}] tts stopping`);
-    this.skip();
     this.audio.pause();
-    this.cleanUp();
+    this.tearDown();
   }
 
   /**
@@ -186,8 +190,12 @@ class MseTextToSpeech extends TextToSpeechBase {
    * this is useful to ensure chunks are played in the correct order.
    */
   protected queueChunk(chunk: AudioChunk) {
-    this.chunkBuffer.push(chunk);
-    this.processChunkBuffer();
+    if (this.inProgress) {
+      this.chunkBuffer.push(chunk);
+      this.processChunkBuffer();
+    } else {
+      console.warn(`[${this.name}] chunk received inProgress=false, ignoring`);
+    }
   }
   /**
    * Processes the first chunk in the ordered chunk buffer, appending it to the
@@ -205,7 +213,8 @@ class MseTextToSpeech extends TextToSpeechBase {
   protected setComplete() {
     this.inProgress = false;
   }
-  protected cleanUp() {
+  protected stopGeneration() {}
+  protected tearDown() {
     this.chunkBuffer.length = 0;
     this.inProgress = false;
   }
@@ -249,9 +258,9 @@ export class RestTextToSpeech extends MseTextToSpeech {
     }
     setTimeout(() => this.setComplete(), 0);
   }
-  protected cleanUp() {
+  protected tearDown() {
     this.pendingText = '';
-    super.cleanUp();
+    super.tearDown();
   }
   private async requestChunk(text: string) {
     const newChunk = new AudioChunk();
@@ -291,10 +300,15 @@ export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
   protected doFlush() {
     this.sendObject(this.createFlushRequest());
   }
-  protected cleanUp() {
-    this.sendBuffer.length = 0;
+  protected stopGeneration() {
+    // Close our socket and create a new one so that we're not blocked by stale generation.
     this.socket.close();
-    super.cleanUp();
+    this.sendBuffer.length = 0;
+    this.socket = this.createSocket(this.url);
+  }
+  protected tearDown() {
+    this.socket.close();
+    super.tearDown();
   }
 
   /**
