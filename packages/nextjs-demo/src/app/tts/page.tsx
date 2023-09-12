@@ -26,8 +26,16 @@ type TtsComponentProps = {
   text: string;
 };
 
-const buildUrl = (provider: string, voice: string, rate: number, text: string) =>
-  `/tts/api?provider=${provider}&voice=${voice}&rate=${rate}&text=${text}`;
+const buildUrl = (provider: string, voice: string, rate: number, text: string) => {
+  const params = new URLSearchParams({
+    provider,
+    voice,
+    rate: rate.toString(),
+    text,
+  });
+  return `/tts/api?${params}`;
+};
+
 const getToken = async (provider: string) => {
   const response = await fetch('/tts/api', {
     method: 'POST',
@@ -59,7 +67,7 @@ const TtsComponent: React.FC<TtsComponentProps> = ({ display, provider, text }) 
     } else {
       console.log('stopping');
       setPlaying(false);
-      tts!.stop();
+      tts!.skip();
     }
   };
   const caption = playing ? 'Stop' : `Play ${display}`;

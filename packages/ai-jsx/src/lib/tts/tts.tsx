@@ -5,14 +5,14 @@
  * service. This URL will be used to retrieve an audio file that can be
  * played by an HTML5 audio element.
  */
-export type BuildUrlFunction = (provider: string, voice: string, rate: number, text: string) => string;
+export type BuildUrl = (provider: string, voice: string, rate: number, text: string) => string;
 
 /**
  * Defines a function that can be used to retrieve an ephemeral access token
  * for us with a text-to-speech service. Typically, this will be a
  * fetch request to a server that will return an opaque token.
  */
-export type GetTokenFunction = (provider: string) => Promise<string>;
+export type GetToken = (provider: string) => Promise<string>;
 
 /**
  * Defines a base class for text-to-speech services. This class provides
@@ -58,6 +58,9 @@ export abstract class TextToSpeechBase {
    * Converts the given text to speech and plays it using the HTML5 audio element.
    * This method may be called multiple times, and the audio will be played serially.
    * Generation may be buffered, use the flush() method to indicate all text has been provided.
+   * During playout, use skip() to stop the current playout, or stop() to end all generation
+   * and close any resources.
+
    */
   abstract play(_text: string): void;
   /**
@@ -85,7 +88,7 @@ export abstract class TextToSpeechBase {
 export class SimpleTextToSpeech extends TextToSpeechBase {
   constructor(
     name: string,
-    protected readonly urlFunc: BuildUrlFunction,
+    protected readonly urlFunc: BuildUrl,
     private readonly voice: string,
     private readonly rate = 1.0
   ) {
@@ -166,10 +169,12 @@ class MseTextToSpeech extends TextToSpeechBase {
   skip() {
     console.log(`[${this.name}] tts skipping`);
     this.sourceBuffer?.abort();
-    this.cleanUp();
+    this.chunkBuffer.length = 0;
+    this.setComplete();
   }
   stop() {
     console.log(`[${this.name}] tts stopping`);
+    this.skip();
     this.audio.pause();
     this.cleanUp();
   }
@@ -213,7 +218,7 @@ export class RestTextToSpeech extends MseTextToSpeech {
   private pendingText: string = '';
   constructor(
     name: string,
-    private readonly urlFunc: BuildUrlFunction,
+    private readonly urlFunc: BuildUrl,
     private readonly voice: string,
     private readonly rate: number = 1.0
   ) {
@@ -267,7 +272,7 @@ export class RestTextToSpeech extends MseTextToSpeech {
  */
 export class AzureTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE = 'en-US-JennyNeural';
-  constructor(urlFunc: BuildUrlFunction, voice: string = AzureTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+  constructor(urlFunc: BuildUrl, voice: string = AzureTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('azure', urlFunc, voice, rate);
   }
 }
@@ -289,6 +294,11 @@ export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
   protected doFlush() {
     this.sendObject(this.createFlushRequest());
   }
+  protected cleanUp() {
+    this.sendBuffer.length = 0;
+    this.socket.close();
+    super.cleanUp();
+  }
 
   /**
    * Set up a web socket to the given URL, and reconnect if it closes normally
@@ -302,6 +312,7 @@ export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
       console.log(`[${this.name}] socket opened, elapsed=${elapsed.toFixed(0)}`);
       this.handleOpen();
       this.sendBuffer.forEach((json) => this.socket.send(json));
+      this.sendBuffer.length = 0;
     };
     socket.onmessage = (event) => {
       try {
@@ -357,7 +368,7 @@ class ElevenLabsOutboundMessage {
  */
 export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
   static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM';
-  constructor(private readonly tokenFunc: GetTokenFunction, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
+  constructor(private readonly tokenFunc: GetToken, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
     const model = 'eleven_monolingual_v1';
     const url = `wss://api.elevenlabs.io/v1/text-to-speech/${voice}/stream-input?model_type=${model}`;
     super('eleven', url);
