@@ -66,27 +66,22 @@ export interface UseToolsProps {
  * Executes a function during rendering and wraps the result in a `<FunctionResponse>`.
  */
 export async function ExecuteFunction<T>(
-  {
-    name,
-    func,
-    args,
-    ResponseWrapper = FunctionResponse,
-  }: { name: string; func: Component<T>; args: T; ResponseWrapper?: Component<FunctionResponseProps> },
+  { name, func, args }: { name: string; func: Component<T>; args: T },
   { render }: ComponentContext
 ) {
   if (typeof func !== 'function') {
     return (
-      <ResponseWrapper failed name={name}>
+      <FunctionResponse failed name={name}>
         Error: unknown function {name}
-      </ResponseWrapper>
+      </FunctionResponse>
     );
   }
 
   try {
     const Func = func;
-    return <ResponseWrapper name={name}>{await render(<Func {...args} />)}</ResponseWrapper>;
+    return <FunctionResponse name={name}>{await render(<Func {...args} />)}</FunctionResponse>;
   } catch (e) {
-    return <ResponseWrapper failed name={name}>{`${e}`}</ResponseWrapper>;
+    return <FunctionResponse failed name={name}>{`${e}`}</FunctionResponse>;
   }
 }
 

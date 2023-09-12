@@ -12,7 +12,7 @@ import {
   renderToConversation,
   SystemMessage,
 } from '../../../core/conversation.js';
-import { LargeFunctionResponseHandler, redactedFunctionTools } from './large-response-handler.js';
+import { LargeFunctionResponseWrapper, redactedFunctionTools } from './large-response-handler.js';
 import { ExecuteFunction, UseToolsProps } from '../../use-tools.js';
 
 /**
@@ -103,17 +103,24 @@ export function getNextConversationStep(
   switch (lastMessage.type) {
     case 'functionCall': {
       const { name, args } = lastMessage.element.props;
-      return (
+      const executedFunction = (
         <ExecuteFunction
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           func={updatedTools[name]?.func}
           name={name}
           args={args}
-          // Function responses can potentially be very large. In that case, we need
-          // some way of handling that so the context window doesn't blow up.
-          // But if we are using a tool based on redacted functions, we don't want to redact it further
-          ResponseWrapper={name in tools ? LargeFunctionResponseHandler : FunctionResponse}
         />
+      );
+      // If we are using a tool based on redacted functions, we don't want to redact it further
+      if (!(name in tools)) {
+        return executedFunction;
+      }
+      // Function responses can potentially be very large. In that case, we need
+      // some way of handling that so the context window doesn't blow up.
+      return (
+        <LargeFunctionResponseWrapper numChunks={4} maxLength={4000} failedMaxLength={2000}>
+          {executedFunction}
+        </LargeFunctionResponseWrapper>
       );
     }
     case 'functionResponse':

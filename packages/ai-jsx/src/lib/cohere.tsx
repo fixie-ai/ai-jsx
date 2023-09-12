@@ -90,7 +90,7 @@ export async function reranker(
  * Since {@link reranker} output is a list of indices, it cannot be used as an {@link AI.Component} directly.
  * This function takes care of that by formatting the output.
  *
- * @usage
+ * @example
  * ```tsx
  *   <RerankerFormatted
  *    query={query}

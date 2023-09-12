@@ -1,5 +1,5 @@
 import * as AI from '../../../index.js';
-import { ConversationMessage, FunctionResponse } from '../../../core/conversation.js';
+import { ConversationMessage, FunctionResponse, FunctionResponseProps } from '../../../core/conversation.js';
 
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { getEncoding } from 'js-tiktoken';
@@ -37,26 +37,30 @@ export async function TruncateByChars(
   return `${stringified.slice(0, maxLength - 3)}...`;
 }
 
-export async function LargeFunctionResponseHandler(
+export interface LargeFunctionResponseProps {
+  maxLength: number;
+  failedMaxLength: number;
+  numChunks: number;
+  lengthFunction?: LengthFunction;
+}
+
+async function LargeFunctionResponseHandler(
   {
     children,
     maxLength = 4000,
+    failedMaxLength = 1000,
     numChunks = 4,
     // use Cohere token counter?
     lengthFunction = openAITokenCount,
     ...props
-  }: AI.PropsOfComponent<typeof FunctionResponse> & {
-    maxLength?: number;
-    numChunks?: number;
-    lengthFunction?: LengthFunction;
-  },
+  }: AI.PropsOfComponent<typeof FunctionResponse> & LargeFunctionResponseProps,
   { render, logger, getContext }: AI.ComponentContext
 ) {
   if (props.failed) {
     return (
       // TODO: fix issue between maxLength chars and tokens
       <FunctionResponse {...props}>
-        <TruncateByChars maxLength={maxLength}>{children}</TruncateByChars>
+        <TruncateByChars maxLength={failedMaxLength}>{children}</TruncateByChars>
       </FunctionResponse>
     );
   }
@@ -101,6 +105,43 @@ export async function LargeFunctionResponseHandler(
     </FunctionResponse>
   );
   // TODO: return a chunk based on query (gotta get it from conversation)
+}
+
+/**
+ * This function allows wrapping {@link FunctionResponse} elements that can possibly be too large.
+ * It will replace FunctionResponse elements with {@link LargeFunctionResponseHandler}s that know how to handle large responses.
+ *
+ * {@link LargeFunctionResponseHandler} will not modify responses that are not large. If they are, it will first try
+ * to optimize the response by dumping it as YAML, which is more token-efficient than JSON.
+ * If that doesn't work, it will split the response into chunks and allows the LLM to query it using semantic similarity
+ * search by exposing a dynamic function called `loadBySimilarity(query)`.
+ *
+ * Note that failed responses are not optimized and will simply be truncated to `failedMaxLength` characters.
+ *
+ * @see {@link redactedFunctionTools} to see how to add the `loadBySimilarity` function.
+ *
+ * @example
+ * ```tsx
+ *    <LargeFunctionResponseWrapper maxLength={4000} failedMaxLength={1000} numChunks={4}>
+ *      <ExecuteFunction func={tool[name].func} name={name} args={args} />
+ *    </LargeFunctionResponseWrapper>
+ * ```
+ */
+export async function LargeFunctionResponseWrapper(
+  { children, ...props }: { children: AI.Node } & LargeFunctionResponseProps,
+  { render }: AI.ComponentContext
+) {
+  // We need to render the children to get the FunctionResponse elements
+  const elements = await render(children, { stop: (e) => e.tag == FunctionResponse });
+
+  // We expect elements to just contain a single FunctionResponse but we handle multiple just in case
+  return elements.map((element) =>
+    AI.isElement(element) && element.tag == FunctionResponse ? (
+      <LargeFunctionResponseHandler {...props} {...(element.props as FunctionResponseProps)} />
+    ) : (
+      element
+    )
+  );
 }
 
 function getLastRedactedFnResponseData(messages: ConversationMessage[]): RedactedFuncionResponseMetadata | undefined {
