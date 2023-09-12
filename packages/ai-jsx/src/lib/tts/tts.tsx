@@ -1,5 +1,5 @@
 'use client';
-import { split, TxtParentNodeWithSentenceNode } from 'sentence-splitter';
+import { split } from 'sentence-splitter';
 
 /**
  * A function that can be used to build a URL for a text-to-speech
@@ -227,16 +227,19 @@ export class RestTextToSpeech extends MseTextToSpeech {
   }
   protected generate(text: string) {
     this.pendingText += text;
-    split(this.pendingText).forEach((piece: TxtParentNodeWithSentenceNode['children']) => {
+    let pendingText = '';
+    split(this.pendingText).forEach((piece: any) => {
       if (piece.type == 'Sentence') {
         if (piece.children.length == 2 && piece.children[1].type == 'Punctuation') {
-          const utterance = this.pendingText.substring(piece.raw);
-          this.requestChunk(utterance);
+          this.requestChunk(piece.raw);
+        } else if (!pendingText) {
+          pendingText = piece.raw;
         } else {
-          this.pendingText = piece.raw;
+          console.warn(`[${this.name}] found incomplete sentence ${piece.raw} after prior incomplete sentence ${pendingText}`);
         }
       }
     });
+    this.pendingText = pendingText;
   }
   protected async doFlush() {
     const utterance = this.pendingText.trim();
@@ -309,12 +312,14 @@ export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
       this.sendBuffer.length = 0;
     };
     socket.onmessage = (event) => {
+      let message;
       try {
-        const message = JSON.parse(event.data);
-        this.handleMessage(message);
+        message = JSON.parse(event.data);
       } catch (error) {
         console.error(`Failed to parse socket message: ${error}, data=${event.data}`);
+        return;
       }
+      this.handleMessage(message);
     };
     socket.onerror = (_event) => {
       console.log(`[${this.name}] socket error`);
@@ -345,6 +350,9 @@ export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
 class ElevenLabsInboundMessage {
   audio?: string;
   isFinal?: boolean;
+  message?: string;
+  error?: string;
+  code?: number;
 }
 class ElevenLabsOutboundMessage {
   constructor({ text, try_trigger_generation, xi_api_key }: ElevenLabsOutboundMessage) {
@@ -363,8 +371,10 @@ class ElevenLabsOutboundMessage {
 export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
   static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM';
   constructor(private readonly tokenFunc: GetToken, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
-    const model = 'eleven_monolingual_v1';
-    const url = `wss://api.elevenlabs.io/v1/text-to-speech/${voice}/stream-input?model_type=${model}`;
+    const model_id = 'eleven_monolingual_v1';
+    const optimize_streaming_latency = '22';
+    const params = new URLSearchParams({ model_id, optimize_streaming_latency });
+    const url = `wss://api.elevenlabs.io/v1/text-to-speech/${voice}/stream-input?${params}`;
     super('eleven', url);
   }
   protected async handleOpen() {
@@ -374,16 +384,20 @@ export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
   protected handleMessage(inMessage: unknown) {
     const message = inMessage as ElevenLabsInboundMessage;
     console.debug(message);
-    if (!message.isFinal) {
-      console.debug(`[${this.name}] chunk received`);
-      this.queueChunk(new AudioChunk(Buffer.from(message.audio!, 'base64')));
-    } else {
-      console.log(`[${this.name}] utterance complete`);
-      this.setComplete();
+    if (message.audio) {
+      if (!message.isFinal) {
+        console.debug(`[${this.name}] chunk received`);
+        this.queueChunk(new AudioChunk(Buffer.from(message.audio!, 'base64')));
+      } else {
+        console.log(`[${this.name}] utterance complete`);
+        this.setComplete();
+      }
+    } else if (message.error) {
+      console.error(`[${this.name}] error: ${message.message}`);
     }
   }
   protected createChunkRequest(text: string): ElevenLabsOutboundMessage {
-    return new ElevenLabsOutboundMessage({ text, try_trigger_generation: true });
+    return new ElevenLabsOutboundMessage({ text: `${text} `, try_trigger_generation: true });
   }
   protected createFlushRequest(): ElevenLabsOutboundMessage {
     return new ElevenLabsOutboundMessage({ text: '' });

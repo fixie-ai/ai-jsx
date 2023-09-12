@@ -7012,6 +7012,7 @@ __metadata:
     remark-gfm: ^3.0.1
     remark-math: ^5.1.1
     replicate: ^0.12.3
+    sentence-splitter: ^4.2.1
     server-only: ^0.0.1
     ts-jest: ^29.1.0
     ts-node: ^10.9.1
