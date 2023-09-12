@@ -2,7 +2,7 @@ import { gql } from '@apollo/client/core/index.js';
 import yaml from 'js-yaml';
 import fs from 'fs';
 import terminal from 'terminal-kit';
-import { execSync, spawn, ChildProcess } from 'child_process';
+import { execSync, ChildProcess } from 'child_process';
 import ora from 'ora';
 import os from 'os';
 import path from 'path';
@@ -31,7 +31,6 @@ export interface AgentConfig {
   name?: string;
   description?: string;
   moreInfoUrl?: string;
-  public?: boolean;
   deploymentUrl?: string;
 }
 
@@ -57,7 +56,10 @@ export class FixieAgent {
 
   /** Return the URL for this agent's page on Fixie. */
   public agentUrl(): string {
-    return `${this.client.url}/agents/${this.agentId}`;
+    // TODO(mdw): We need a way to know what the appropriate 'console' URL
+    // is for a given API URL. Since for now this is always console.fixie.ai,
+    // we can just hardcode it.
+    return `https://console.fixie.ai/agents/${this.agentId}`;
   }
 
   /** Get the agent with the given agent ID. */
@@ -79,12 +81,7 @@ export class FixieAgent {
         }
       `,
     });
-    return Promise.all(
-      result.data.allAgentsForUser.map(async (agent: any) => {
-        const retAgent = await this.GetAgent(client, agent.agentId);
-        return retAgent;
-      })
-    );
+    return Promise.all(result.data.allAgentsForUser.map((agent: any) => this.GetAgent(client, agent.agentId)));
   }
 
   /** Return the metadata associated with the given agent. */
@@ -156,7 +153,7 @@ export class FixieAgent {
         name,
         description,
         moreInfoUrl,
-        published: published ?? false,
+        published: published ?? true,
       },
     });
     const agentId = result.data.createAgent.agent.agentId;
@@ -228,8 +225,24 @@ export class FixieAgent {
 
   /** Load an agent configuration from the given directory. */
   public static LoadConfig(agentPath: string): AgentConfig {
-    const config = yaml.load(fs.readFileSync(`${agentPath}/agent.yaml`, 'utf8')) as AgentConfig;
-    return config;
+    const fullPath = path.resolve(path.join(agentPath, 'agent.yaml'));
+    const config = yaml.load(fs.readFileSync(fullPath, 'utf8')) as object;
+
+    // Warn if any fields are present in config that are not supported.
+    const validKeys = [
+      'handle',
+      'name',
+      'description',
+      'moreInfoUrl',
+      'more_info_url',
+      'deploymentUrl',
+      'deployment_url',
+    ];
+    const invalidKeys = Object.keys(config).filter((key) => !validKeys.includes(key));
+    for (const key of invalidKeys) {
+      term('❓ Ignoring invalid key ').yellow(key)(' in agent.yaml\n');
+    }
+    return config as AgentConfig;
   }
 
   /** Package the code in the given directory and return the path to the tarball. */
@@ -325,24 +338,15 @@ export class FixieAgent {
     let agent: FixieAgent;
     try {
       agent = await FixieAgent.GetAgent(client, agentId);
-      term('🦊 Updating agent ').green(agentId)('...\n');
       agent.update({
         name: config.name,
         description: config.description,
         moreInfoUrl: config.moreInfoUrl,
-        published: config.public,
       });
     } catch (e) {
       // Try to create the agent instead.
       term('🦊 Creating new agent ').green(agentId)('...\n');
-      agent = await FixieAgent.CreateAgent(
-        client,
-        config.handle,
-        config.name,
-        config.description,
-        config.moreInfoUrl,
-        config.public
-      );
+      agent = await FixieAgent.CreateAgent(client, config.handle, config.name, config.description, config.moreInfoUrl);
     }
     return agent;
   }
@@ -391,9 +395,9 @@ export class FixieAgent {
     }
     const agent = await this.ensureAgent(client, agentId, config);
     const tarball = FixieAgent.getCodePackage(agentPath);
-    const spinner = ora(' 🚀 Deploying...').start();
+    const spinner = ora(' 🚀 Deploying... (hang tight, this takes a minute or two!)').start();
     const revision = await agent.createRevision({ tarball, environmentVariables });
-    spinner.succeed(`Revision ${revision} was deployed to ${agent.agentUrl()}`);
+    spinner.succeed(`Agent ${config.handle} is running at: ${agent.agentUrl()}`);
     return revision;
   }
 
@@ -523,12 +527,12 @@ export class FixieAgent {
     const agent = await this.ensureAgent(client, agentId, config);
 
     for await (const currentUrl of deploymentUrlsIter) {
-      term('🥡 Serving agent at ').green(currentUrl)('\n');
+      term('🚇 Current tunnel URL is: ').green(currentUrl)('\n');
       try {
         // Wait 3 seconds to ensure the tunnel is set up.
         await new Promise((resolve) => setTimeout(resolve, 3000));
-        const revision = await agent.createRevision({ externalUrl: currentUrl as string, environmentVariables });
-        term('🥡 Revision ').green(revision)(' was deployed to ').green(agent.agentUrl())('\n');
+        await agent.createRevision({ externalUrl: currentUrl as string, environmentVariables });
+        term('🥡 Agent ').green(config.handle)(' is running at: ').green(agent.agentUrl())('\n');
       } catch (e: any) {
         term('🥡 Got error trying to create agent revision: ').red(e.message)('\n');
         console.error(e);
