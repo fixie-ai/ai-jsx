@@ -28,7 +28,7 @@ const tools: Record<string, Tool> = {
       if (!response.ok) {
         throw new Error(`GH request failed: ${response.status} ${response.statusText} ${response.body}`);
       }
-      return response.json();
+      return response.text();
     },
   },
 };

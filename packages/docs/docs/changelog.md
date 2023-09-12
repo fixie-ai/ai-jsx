@@ -1,6 +1,13 @@
 # Changelog
 
-## 0.16.0
+## 0.17.0
+
+- Changed `<UseTools>` to allow AI.JSX components to be tools.
+- Added `FixieAPIConfiguration` context.
+- Changed `FixieCorpus` to take a `FixieAPIConfiguration`.
+- Added the `FixieCorpus.createTool` helper to create a tool that consults a Fixie corpus.
+
+## [0.16.0](https://github.com/fixie-ai/ai-jsx/commit/c951b4695c97230016b1ae2763649f67089adf92)
 
 - Updated default URL for `<FixieCorpus>` to `api.fixie.ai`.
 

@@ -33,7 +33,7 @@ export class IsomorphicFixieClient {
     const apiKeyToUse = apiKey ?? process.env.FIXIE_API_KEY;
     if (!apiKeyToUse) {
       throw new Error(
-        'You must pass apiKey to the constructor, or set the FIXIE_API_KEY environment variable. The API key can be found at: https://beta.fixie.ai/profile'
+        'You must pass apiKey to the constructor, or set the FIXIE_API_KEY environment variable. The API key can be found at: https://console.fixie.ai/profile'
       );
     }
     return new this(url, apiKey);
@@ -121,41 +121,23 @@ export class IsomorphicFixieClient {
   }
 
   /** Add a new Source to a Corpus. */
-  addCorpusSource(corpusId: string, urlPattern: string): Promise<Jsonifiable> {
+  addCorpusSource(
+    corpusId: string,
+    startUrls: string[],
+    maxDocuments?: number,
+    maxDepth?: number
+  ): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
       source: {
         corpus_id: corpusId,
-        load_spec: { web: { start_urls: [urlPattern] } },
-        process_steps: [
-          {
-            step_name: 'markdownify',
-            relevant_document_types: {
-              include: { mime_types: ['text/html'] },
-            },
-            html_to_markdown: {},
+        load_spec: {
+          max_documents: maxDocuments,
+          web: {
+            start_urls: startUrls,
+            max_depth: maxDepth,
           },
-        ],
-        embed_specs: [
-          {
-            spec_name: 'markdown',
-            relevant_document_types: {
-              include: { mime_types: ['text/markdown'] },
-            },
-            max_chunk_size: 1000,
-            chunk_overlap: 100,
-            splits: ['\n\n', '\n', ' ', ''],
-          },
-          {
-            spec_name: 'plain',
-            relevant_document_types: {
-              include: { mime_types: ['text/plain'] },
-            },
-            max_chunk_size: 1000,
-            chunk_overlap: 100,
-            splits: ['\n\n', '\n', ' ', ''],
-          },
-        ],
+        },
       },
     };
 

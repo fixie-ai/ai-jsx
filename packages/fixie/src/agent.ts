@@ -23,6 +23,8 @@ export interface AgentMetadata {
   created: Date;
   modified: Date;
   owner: string;
+  currentRevision?: AgentRevision;
+  allRevisions?: AgentRevision[];
 }
 
 /** Represents the contents of an agent.yaml configuration file. */
@@ -31,7 +33,6 @@ export interface AgentConfig {
   name?: string;
   description?: string;
   moreInfoUrl?: string;
-  public?: boolean;
   deploymentUrl?: string;
 }
 
@@ -57,7 +58,10 @@ export class FixieAgent {
 
   /** Return the URL for this agent's page on Fixie. */
   public agentUrl(): string {
-    return `${this.client.url}/agents/${this.agentId}`;
+    // TODO(mdw): We need a way to know what the appropriate 'console' URL
+    // is for a given API URL. Since for now this is always console.fixie.ai,
+    // we can just hardcode it.
+    return `https://console.fixie.ai/agents/${this.agentId}`;
   }
 
   /** Get the agent with the given agent ID. */
@@ -97,6 +101,14 @@ export class FixieAgent {
             created
             modified
             published
+            currentRevision {
+              id
+              created
+            }
+            allRevisions {
+              id
+              created
+            }
             owner {
               __typename
               ... on UserType {
@@ -122,6 +134,8 @@ export class FixieAgent {
       created: new Date(result.data.agent.created),
       modified: new Date(result.data.agent.modified),
       owner: result.data.agent.owner.username || result.data.agent.owner.handle,
+      currentRevision: result.data.agent.currentRevision,
+      allRevisions: result.data.agent.allRevisions,
     };
   }
 
@@ -151,7 +165,7 @@ export class FixieAgent {
         name,
         description,
         moreInfoUrl,
-        published: published ?? false,
+        published: published ?? true,
       },
     });
     const agentId = result.data.createAgent.agent.agentId;
@@ -223,8 +237,24 @@ export class FixieAgent {
 
   /** Load an agent configuration from the given directory. */
   public static LoadConfig(agentPath: string): AgentConfig {
-    const config = yaml.load(fs.readFileSync(`${agentPath}/agent.yaml`, 'utf8')) as AgentConfig;
-    return config;
+    const fullPath = path.resolve(path.join(agentPath, 'agent.yaml'));
+    const config = yaml.load(fs.readFileSync(fullPath, 'utf8')) as object;
+
+    // Warn if any fields are present in config that are not supported.
+    const validKeys = [
+      'handle',
+      'name',
+      'description',
+      'moreInfoUrl',
+      'more_info_url',
+      'deploymentUrl',
+      'deployment_url',
+    ];
+    const invalidKeys = Object.keys(config).filter((key) => !validKeys.includes(key));
+    for (const key of invalidKeys) {
+      term('❓ Ignoring invalid key ').yellow(key)(' in agent.yaml\n');
+    }
+    return config as AgentConfig;
   }
 
   /** Package the code in the given directory and return the path to the tarball. */
@@ -250,7 +280,7 @@ export class FixieAgent {
     externalUrl?: string;
     tarball?: string;
     environmentVariables: Record<string, string>;
-  }): Promise<string> {
+  }): Promise<AgentRevision> {
     const uploadFile = tarball ? fs.readFileSync(fs.realpathSync(tarball)) : undefined;
 
     const result = await this.client.gqlClient().mutate({
@@ -273,6 +303,7 @@ export class FixieAgent {
           ) {
             revision {
               id
+              created
             }
           }
         }
@@ -292,11 +323,11 @@ export class FixieAgent {
       fetchPolicy: 'no-cache',
     });
 
-    return result.data.createAgentRevision.revision.id;
+    return result.data.createAgentRevision.revision;
   }
 
   /** Get the current agent revision. */
-  public async getCurrentRevision(): Promise<AgentRevision> {
+  public async getCurrentRevision(): Promise<AgentRevision | null> {
     const result = await this.client.gqlClient().query({
       fetchPolicy: 'no-cache',
       query: gql`
@@ -311,8 +342,44 @@ export class FixieAgent {
       `,
       variables: { agentId: this.agentId },
     });
-
     return result.data.agentById.currentRevision as AgentRevision;
+  }
+
+  /** Set the current agent revision. */
+  public async setCurrentRevision(revisionId: string): Promise<AgentRevision> {
+    const result = await this.client.gqlClient().mutate({
+      mutation: gql`
+        mutation SetCurrentAgentRevision($handle: String!, $currentRevisionId: ID!) {
+          updateAgent(agentData: { handle: $handle, currentRevisionId: $currentRevisionId }) {
+            agent {
+              currentRevision {
+                id
+                created
+              }
+            }
+          }
+        }
+      `,
+      variables: { handle: this.handle, currentRevisionId: revisionId },
+      fetchPolicy: 'no-cache',
+    });
+    return result.data.updateAgent.agent.currentRevision as AgentRevision;
+  }
+
+  public async deleteRevision(revisionId: string): Promise<void> {
+    await this.client.gqlClient().mutate({
+      mutation: gql`
+        mutation DeleteAgentRevision($handle: String!, $revisionId: ID!) {
+          deleteAgentRevision(agentHandle: $handle, revisionId: $revisionId) {
+            agent {
+              agentId
+            }
+          }
+        }
+      `,
+      variables: { handle: this.handle, revisionId },
+      fetchPolicy: 'no-cache',
+    });
   }
 
   /** Ensure that the agent is created or updated. */
@@ -320,24 +387,15 @@ export class FixieAgent {
     let agent: FixieAgent;
     try {
       agent = await FixieAgent.GetAgent(client, agentId);
-      term('🦊 Updating agent ').green(agentId)('...\n');
       agent.update({
         name: config.name,
         description: config.description,
         moreInfoUrl: config.moreInfoUrl,
-        published: config.public,
       });
     } catch (e) {
       // Try to create the agent instead.
       term('🦊 Creating new agent ').green(agentId)('...\n');
-      agent = await FixieAgent.CreateAgent(
-        client,
-        config.handle,
-        config.name,
-        config.description,
-        config.moreInfoUrl,
-        config.public
-      );
+      agent = await FixieAgent.CreateAgent(client, config.handle, config.name, config.description, config.moreInfoUrl);
     }
     return agent;
   }
@@ -363,8 +421,7 @@ export class FixieAgent {
       console.error(`🌱 Agent stdout: ${sdata}`);
     });
     subProcess.on('close', (returnCode: number) => {
-      term(`🌱 Agent child process exited with code ${returnCode} - `).red('exiting.\n');
-      process.exit(returnCode);
+      term('🌱 ').red(`Agent child process exited with code ${returnCode}\n`);
     });
     return subProcess;
   }
@@ -374,7 +431,7 @@ export class FixieAgent {
     client: FixieClient,
     agentPath: string,
     environmentVariables: Record<string, string> = {}
-  ): Promise<string> {
+  ): Promise<AgentRevision> {
     const config = await FixieAgent.LoadConfig(agentPath);
     const agentId = `${(await client.userInfo()).username}/${config.handle}`;
     term('🦊 Deploying agent ').green(agentId)('...\n');
@@ -386,9 +443,9 @@ export class FixieAgent {
     }
     const agent = await this.ensureAgent(client, agentId, config);
     const tarball = FixieAgent.getCodePackage(agentPath);
-    const spinner = ora(' 🚀 Deploying...').start();
+    const spinner = ora(' 🚀 Deploying... (hang tight, this takes a minute or two!)').start();
     const revision = await agent.createRevision({ tarball, environmentVariables });
-    spinner.succeed(`Revision ${revision} was deployed to ${agent.agentUrl()}`);
+    spinner.succeed(`Agent ${config.handle} is running at: ${agent.agentUrl()}`);
     return revision;
   }
 
@@ -513,17 +570,50 @@ export class FixieAgent {
       ];
     }
 
-    // TODO(mdw): We need to restore the original agent deployment (if one existed)
-    // after the process finishes.
     const agent = await this.ensureAgent(client, agentId, config);
+    const originalRevision = await agent.getCurrentRevision();
+    if (originalRevision) {
+      term('🥡 Replacing current agent revision ').green(originalRevision.id)('\n');
+    }
+    let currentRevision: AgentRevision | null = null;
+    const doCleanup = async () => {
+      if (originalRevision) {
+        try {
+          await agent.setCurrentRevision(originalRevision.id);
+          term('🥡 Restoring original agent revision ').green(originalRevision.id)('\n');
+        } catch (e: any) {
+          term('🥡 Failed to restore original agent revision: ').red(e.message)('\n');
+        }
+      }
+      if (currentRevision) {
+        try {
+          await agent.deleteRevision(currentRevision.id);
+          term('🥡 Deleting temporary agent revision ').green(currentRevision.id)('\n');
+        } catch (e: any) {
+          term('🥡 Failed to delete temporary agent revision: ').red(e.message)('\n');
+        }
+      }
+    };
+    process.on('SIGINT', async () => {
+      console.log('Got Ctrl-C - cleaning up and exiting.');
+      await doCleanup();
+    });
 
+    // The tunnel may yield different URLs over time. We need to create a new
+    // agent revision each time.
     for await (const currentUrl of deploymentUrlsIter) {
-      term('🥡 Serving agent at ').green(currentUrl)('\n');
+      term('🚇 Current tunnel URL is: ').green(currentUrl)('\n');
       try {
         // Wait 3 seconds to ensure the tunnel is set up.
         await new Promise((resolve) => setTimeout(resolve, 3000));
-        const revision = await agent.createRevision({ externalUrl: currentUrl as string, environmentVariables });
-        term('🥡 Revision ').green(revision)(' was deployed to ').green(agent.agentUrl())('\n');
+        if (currentRevision) {
+          term('🥡 Deleting temporary agent revision ').green(currentRevision.id)('\n');
+          await agent.deleteRevision(currentRevision.id);
+          currentRevision = null;
+        }
+        currentRevision = await agent.createRevision({ externalUrl: currentUrl as string, environmentVariables });
+        term('🥡 Created temporary agent revision ').green(currentRevision.id)('\n');
+        term('🥡 Agent ').green(config.handle)(' is running at: ').green(agent.agentUrl())('\n');
       } catch (e: any) {
         term('🥡 Got error trying to create agent revision: ').red(e.message)('\n');
         console.error(e);

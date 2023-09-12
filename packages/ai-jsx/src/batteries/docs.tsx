@@ -18,6 +18,8 @@ import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { getEnvVar } from '../lib/util.js';
 import { JsonChatCompletion } from './constrained-output.js';
+import { DEFAULT_API_CONFIGURATION, FixieAPIConfiguration, FixieAPIContext } from './fixie.js';
+import { Tool } from './use-tools.js';
 
 /**
  * A raw document loaded from an arbitrary source that has not yet been parsed.
@@ -616,31 +618,29 @@ export class LocalCorpus<
 
 /** A fully mananged {@link Corpus} served by Fixie. */
 export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implements Corpus<ChunkMetadata> {
-  private static readonly DEFAULT_FIXIE_API_URL = 'https://api.fixie.ai';
+  private readonly fixieApiConfiguration: FixieAPIConfiguration;
 
-  private readonly fixieApiUrl: string;
-
-  constructor(private readonly corpusId: string, private readonly fixieApiKey?: string) {
-    if (!fixieApiKey) {
-      this.fixieApiKey = getEnvVar('FIXIE_API_KEY', false);
-      if (!this.fixieApiKey) {
-        throw new AIJSXError(
-          'You must provide a Fixie API key to access Fixie corpora. Find yours at https://api.fixie.ai/profile.',
-          ErrorCode.MissingFixieAPIKey,
-          'user'
-        );
-      }
+  constructor(
+    private readonly corpusId: string,
+    fixieApiConfiguration: FixieAPIConfiguration = DEFAULT_API_CONFIGURATION
+  ) {
+    this.fixieApiConfiguration = fixieApiConfiguration;
+    if (!this.fixieApiConfiguration.authToken) {
+      throw new AIJSXError(
+        `You must provide a Fixie API key to access Fixie corpora. Find yours at ${this.fixieApiConfiguration.url}/profile.`,
+        ErrorCode.MissingFixieAPIKey,
+        'user'
+      );
     }
-    this.fixieApiUrl = getEnvVar('FIXIE_API_URL', false) ?? FixieCorpus.DEFAULT_FIXIE_API_URL;
   }
 
   async search(query: string, params?: { limit?: number }): Promise<ScoredChunk<ChunkMetadata>[]> {
-    const url = `${this.fixieApiUrl}/api/v1/corpora/${this.corpusId}:query`;
+    const url = new URL(`/api/v1/corpora/${this.corpusId}:query`, this.fixieApiConfiguration.url);
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.fixieApiKey}`,
+        Authorization: `Bearer ${this.fixieApiConfiguration.authToken}`,
       },
       body: JSON.stringify({
         corpus_id: this.corpusId,
@@ -662,6 +662,36 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
       },
       score: result.score,
     }));
+  }
+
+  static createTool(corpusId: string, description: string): Tool {
+    return {
+      description,
+      parameters: {
+        query: {
+          description: 'The search query. It will be embedded and used in a vector search against the corpus.',
+          type: 'string',
+          required: true,
+        },
+      },
+      func: async function FixieCorpusQuery({ query }: { query: string }, { getContext }) {
+        const corpus = new FixieCorpus(corpusId, getContext(FixieAPIContext));
+
+        const results = await corpus.search(query);
+
+        /**
+         * Reverse the array so the closest chunk is listed last.
+         *
+         * N.B.: The results will not be sorted by `score` because the Fixie API reranks the chunks.
+         */
+        results.reverse();
+
+        return JSON.stringify({
+          kind: 'docs',
+          results: _.uniqBy(results, (result) => result.chunk.content),
+        });
+      },
+    };
   }
 }
 
