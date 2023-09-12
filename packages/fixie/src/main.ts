@@ -5,12 +5,12 @@
  */
 
 import { Command, program } from 'commander';
-import terminal from 'terminal-kit';
-import { FixieClient } from './client.js';
-import { FixieAgent } from './agent.js';
-import { fileURLToPath } from 'url';
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
+import terminal from 'terminal-kit';
+import { fileURLToPath } from 'url';
+import { FixieAgent } from './agent.js';
+import { FixieClient } from './client.js';
 
 const { terminal: term } = terminal;
 
@@ -145,13 +145,21 @@ corpus
 const sources = corpus.command('sources').description('Corpus source related commands');
 
 sources
-  .command('add <corpusId> <urlPattern>')
+  .command('add <corpusId> <urls...>')
   .description('Add a source to a corpus.')
-  .action(async (corpusId: string, urlPattern: string) => {
-    const client = await FixieClient.Create(program.opts().url);
-    const result = await client.addCorpusSource(corpusId, urlPattern);
-    showResult(result, program.opts().raw);
-  });
+  .option('--max-documents <number>', 'Maximum number of documents to crawl')
+  .option('--max-depth <number>', 'Maximum depth to crawl')
+  .action(
+    async (
+      corpusId: string,
+      urls: string[],
+      { maxDocuments, maxDepth }: { maxDocuments?: number; maxDepth?: number }
+    ) => {
+      const client = await FixieClient.Create(program.opts().url);
+      const result = await client.addCorpusSource(corpusId, urls, maxDocuments, maxDepth);
+      showResult(result, program.opts().raw);
+    }
+  );
 
 sources
   .command('list <corpusId>')

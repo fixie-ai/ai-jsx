@@ -1,10 +1,10 @@
-import type { Jsonifiable } from 'type-fest';
-import { ApolloClient } from '@apollo/client/core/ApolloClient.js';
 import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache.js';
+import { ApolloClient } from '@apollo/client/core/ApolloClient.js';
 import createUploadLink from 'apollo-upload-client/public/createUploadLink.js';
 import isExtractableFile from 'apollo-upload-client/public/isExtractableFile.js';
 import { ExtractableFile } from 'extract-files';
 import { ReadStream } from 'fs';
+import type { Jsonifiable } from 'type-fest';
 
 export interface UserInfo {
   id: number;
@@ -145,41 +145,23 @@ export class FixieClient {
   }
 
   /** Add a new Source to a Corpus. */
-  addCorpusSource(corpusId: string, urlPattern: string): Promise<Jsonifiable> {
+  addCorpusSource(
+    corpusId: string,
+    urlPatterns: string[],
+    maxDocuments?: number,
+    maxDepth?: number
+  ): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
       source: {
         corpus_id: corpusId,
-        load_spec: { web: { start_urls: [urlPattern] } },
-        process_steps: [
-          {
-            step_name: 'markdownify',
-            relevant_document_types: {
-              include: { mime_types: ['text/html'] },
-            },
-            html_to_markdown: {},
+        load_spec: {
+          max_documents: maxDocuments,
+          web: {
+            start_urls: urlPatterns,
+            max_depth: maxDepth,
           },
-        ],
-        embed_specs: [
-          {
-            spec_name: 'markdown',
-            relevant_document_types: {
-              include: { mime_types: ['text/markdown'] },
-            },
-            max_chunk_size: 1000,
-            chunk_overlap: 100,
-            splits: ['\n\n', '\n', ' ', ''],
-          },
-          {
-            spec_name: 'plain',
-            relevant_document_types: {
-              include: { mime_types: ['text/plain'] },
-            },
-            max_chunk_size: 1000,
-            chunk_overlap: 100,
-            splits: ['\n\n', '\n', ' ', ''],
-          },
-        ],
+        },
       },
     };
 
