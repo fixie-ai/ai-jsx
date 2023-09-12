@@ -260,28 +260,31 @@ export class FixieAgent {
   /** Package the code in the given directory and return the path to the tarball. */
   private static getCodePackage(agentPath: string): string {
     // Read the package.json file to get the package name and version.
-
     const packageJsonPath = path.resolve(path.join(agentPath, 'package.json'));
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
     // Create a temporary directory and run `npm pack` inside.
     const tempdir = fs.mkdtempSync(path.join(os.tmpdir(), `fixie-tmp-${packageJson.name}-${packageJson.version}-`));
-    const commandline = `npm pack ${path.resolve(agentPath)} --silent >/dev/null`;
-    execSync(commandline, { cwd: tempdir });
+    const commandline = `npm pack ${path.resolve(agentPath)}`;
+    try {
+      execSync(commandline, { cwd: tempdir, stdio: 'inherit' });
+    } catch (ex) {
+      throw new Error(`\`${commandline}\` failed. Check for build errors above and retry.`);
+    }
     return `${tempdir}/${packageJson.name}-${packageJson.version}.tgz`;
   }
 
   /** Create a new agent revision, which deploys the agent. */
-  private async createRevision({
-    externalUrl,
-    tarball,
-    environmentVariables,
-  }: {
-    externalUrl?: string;
-    tarball?: string;
-    environmentVariables: Record<string, string>;
-  }): Promise<AgentRevision> {
-    const uploadFile = tarball ? fs.readFileSync(fs.realpathSync(tarball)) : undefined;
+  private async createRevision(
+    opts:
+      | { externalUrl: string; tarball?: undefined }
+      | {
+          externalUrl?: undefined;
+          tarball: string;
+          environmentVariables: Record<string, string>;
+        }
+  ): Promise<AgentRevision> {
+    const uploadFile = opts.tarball ? fs.readFileSync(fs.realpathSync(opts.tarball)) : undefined;
 
     const result = await this.client.gqlClient().mutate({
       mutation: gql`
@@ -312,12 +315,15 @@ export class FixieAgent {
         handle: this.handle,
         metadata: [],
         makeCurrent: true,
-        externalDeployment: externalUrl && { url: externalUrl },
-        managedDeployment: tarball &&
+        externalDeployment: opts.externalUrl && { url: opts.externalUrl },
+        managedDeployment: opts.tarball &&
           uploadFile && {
             environment: 'NODEJS',
             codePackage: new Blob([uploadFile], { type: 'application/gzip' }),
-            environmentVariables: Object.entries(environmentVariables).map(([key, value]) => ({ name: key, value })),
+            environmentVariables: Object.entries(opts.environmentVariables).map(([key, value]) => ({
+              name: key,
+              value,
+            })),
           },
       },
       fetchPolicy: 'no-cache',
@@ -400,7 +406,7 @@ export class FixieAgent {
     return agent;
   }
 
-  static spawnAgentProcess(agentPath: string, port: number): ChildProcess {
+  static spawnAgentProcess(agentPath: string, port: number, env: Record<string, string>): ChildProcess {
     term(`🌱 Starting local agent process on port ${port}...\n`);
     const pathToCheck = path.resolve(path.join(agentPath, 'dist', 'index.js'));
     if (!fs.existsSync(pathToCheck)) {
@@ -412,7 +418,7 @@ export class FixieAgent {
     term('🌱 Running: ').green(cmdline)('\n');
 
     const [argv0, ...args] = cmdline.split(' ');
-    const subProcess = execa(argv0, args, { cwd: agentPath });
+    const subProcess = execa(argv0, args, { cwd: agentPath, env });
 
     subProcess.stdout?.on('data', (sdata: string) => {
       console.log(`🌱 Agent stdout: ${sdata}`);
@@ -475,8 +481,28 @@ export class FixieAgent {
       throw Error(`No package.json found in ${packageJsonPath}. Only JS-based agents are supported.`);
     }
 
+    const packageJson = fs.readFileSync(packageJsonPath, 'utf8');
+    let json;
+    try {
+      json = JSON.parse(packageJson);
+    } catch (ex) {
+      throw Error(`Error parsing package.json: ${ex}`);
+    }
+
+    if (json.scripts) {
+      const scriptName = json.scripts.prepack ? 'prepack' : json.scripts.build ? 'build' : undefined;
+      if (scriptName) {
+        const commandLine = `npm run ${scriptName}`;
+        try {
+          execSync(commandLine, { cwd: agentPath, stdio: 'inherit' });
+        } catch (ex) {
+          throw new Error(`\`${commandLine}\` failed. Check for build errors above and retry.`);
+        }
+      }
+    }
+
     // Start the agent process locally.
-    const agentProcess = FixieAgent.spawnAgentProcess(agentPath, port);
+    const agentProcess = FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
 
     // Wait for 5 seconds for it to start up.
     await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -611,7 +637,7 @@ export class FixieAgent {
           await agent.deleteRevision(currentRevision.id);
           currentRevision = null;
         }
-        currentRevision = await agent.createRevision({ externalUrl: currentUrl as string, environmentVariables });
+        currentRevision = await agent.createRevision({ externalUrl: currentUrl as string });
         term('🥡 Created temporary agent revision ').green(currentRevision.id)('\n');
         term('🥡 Agent ').green(config.handle)(' is running at: ').green(agent.agentUrl())('\n');
       } catch (e: any) {
