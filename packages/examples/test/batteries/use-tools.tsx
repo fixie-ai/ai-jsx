@@ -17,108 +17,148 @@ async function FakeChatCompletion({ children }: { children: AI.Node }, { render 
   return <FunctionCall name="myFunc" args={{ parameter: 'test parameter value' }} />;
 }
 
-describe('useTools', () => {
-  it('should give tools access to context', async () => {
-    const myContext = AI.createContext(0);
-
-    function MyTool({ parameter }: { parameter: string }, { getContext }: AI.ComponentContext) {
-      return (
+it('should call a tool', async () => {
+  const renderCtx = AI.createRenderContext();
+  const result = await renderCtx.render(
+    <ShowConversation
+      present={(m) => (
         <>
-          {parameter}: {getContext(myContext)}
+          {m.type}: {m.element}
+          {'\n'}
         </>
-      );
-    }
-
-    const renderCtx = AI.createRenderContext();
-    const result = await renderCtx.render(
-      <ShowConversation
-        present={(m) => (
-          <>
-            {m.type}: {m.element}
-            {'\n'}
-          </>
-        )}
-      >
-        <myContext.Provider value={42}>
-          <ChatProvider component={FakeChatCompletion}>
-            <UseTools
-              showSteps
-              tools={{
-                myFunc: {
-                  description: 'Test tool',
-                  parameters: {
-                    parameter: {
-                      description: 'Test parameter',
-                      type: 'string',
-                      required: true,
-                    },
-                  },
-                  func: MyTool,
+      )}
+    >
+      <ChatProvider component={FakeChatCompletion}>
+        <UseTools
+          showSteps
+          tools={{
+            myFunc: {
+              description: 'Test tool',
+              parameters: {
+                parameter: {
+                  description: 'Test parameter',
+                  type: 'string',
+                  required: true,
                 },
-              }}
-            >
-              <UserMessage>Hello!</UserMessage>
-            </UseTools>
-          </ChatProvider>
-        </myContext.Provider>
-      </ShowConversation>
+              },
+              func: ({ parameter }: { parameter: string }) => parameter.toLocaleUpperCase(),
+            },
+          }}
+        >
+          <UserMessage>Hello!</UserMessage>
+        </UseTools>
+      </ChatProvider>
+    </ShowConversation>
+  );
+
+  expect(result).toMatchInlineSnapshot(`
+    "functionCall: Call function myFunc with {"parameter":"test parameter value"}
+    functionResponse: function myFunc returned TEST PARAMETER VALUE
+    assistant: DONE
+    "
+  `);
+});
+
+it('should give tools access to context', async () => {
+  const myContext = AI.createContext(0);
+
+  function MyTool({ parameter }: { parameter: string }, { getContext }: AI.ComponentContext) {
+    return (
+      <>
+        {parameter}: {getContext(myContext)}
+      </>
     );
+  }
 
-    expect(result).toMatchInlineSnapshot(`
-      "functionCall: Call function myFunc with {"parameter":"test parameter value"}
-      functionResponse: function myFunc returned test parameter value: 42
-      assistant: DONE
-      "
-    `);
-  });
-
-  it('should handle failures', async () => {
-    const myContext = AI.createContext(0);
-
-    function MyTool(_: { parameter: string }): AI.Node {
-      throw new Error('ERROR!');
-    }
-
-    const renderCtx = AI.createRenderContext();
-    const result = await renderCtx.render(
-      <ShowConversation
-        present={(m) => (
-          <>
-            {m.type}: {m.element}
-            {'\n'}
-          </>
-        )}
-      >
-        <myContext.Provider value={42}>
-          <ChatProvider component={FakeChatCompletion}>
-            <UseTools
-              showSteps
-              tools={{
-                myFunc: {
-                  description: 'Test tool',
-                  parameters: {
-                    parameter: {
-                      description: 'Test parameter',
-                      type: 'string',
-                      required: true,
-                    },
+  const renderCtx = AI.createRenderContext();
+  const result = await renderCtx.render(
+    <ShowConversation
+      present={(m) => (
+        <>
+          {m.type}: {m.element}
+          {'\n'}
+        </>
+      )}
+    >
+      <myContext.Provider value={42}>
+        <ChatProvider component={FakeChatCompletion}>
+          <UseTools
+            showSteps
+            tools={{
+              myFunc: {
+                description: 'Test tool',
+                parameters: {
+                  parameter: {
+                    description: 'Test parameter',
+                    type: 'string',
+                    required: true,
                   },
-                  func: MyTool,
                 },
-              }}
-            >
-              <UserMessage>Hello!</UserMessage>
-            </UseTools>
-          </ChatProvider>
-        </myContext.Provider>
-      </ShowConversation>
-    );
+                func: MyTool,
+              },
+            }}
+          >
+            <UserMessage>Hello!</UserMessage>
+          </UseTools>
+        </ChatProvider>
+      </myContext.Provider>
+    </ShowConversation>
+  );
 
-    expect(result).toMatchInlineSnapshot(`
-      "functionCall: Call function myFunc with {"parameter":"test parameter value"}
-      functionResponse: function myFunc failed with Error: ERROR!
-      assistant: DONE
-      "
-    `);
-  });
+  expect(result).toMatchInlineSnapshot(`
+    "functionCall: Call function myFunc with {"parameter":"test parameter value"}
+    functionResponse: function myFunc returned test parameter value: 42
+    assistant: DONE
+    "
+  `);
+});
+
+it('should handle failures', async () => {
+  const myContext = AI.createContext(0);
+
+  function MyTool(_: { parameter: string }): AI.Node {
+    throw new Error('ERROR!');
+  }
+
+  const renderCtx = AI.createRenderContext();
+  const result = await renderCtx.render(
+    <ShowConversation
+      present={(m) => (
+        <>
+          {m.type}: {m.element}
+          {'\n'}
+        </>
+      )}
+    >
+      <myContext.Provider value={42}>
+        <ChatProvider component={FakeChatCompletion}>
+          <UseTools
+            showSteps
+            tools={{
+              myFunc: {
+                description: 'Test tool',
+                parameters: {
+                  parameter: {
+                    description: 'Test parameter',
+                    type: 'string',
+                    required: true,
+                  },
+                },
+                func: MyTool,
+              },
+            }}
+          >
+            <UserMessage>Hello!</UserMessage>
+          </UseTools>
+        </ChatProvider>
+      </myContext.Provider>
+    </ShowConversation>
+  );
+
+  expect(result).toMatchInlineSnapshot(`
+    "functionCall: Call function myFunc with {"parameter":"test parameter value"}
+    functionResponse: function myFunc failed with Error: ERROR!
+    assistant: DONE
+    "
+  `);
 });

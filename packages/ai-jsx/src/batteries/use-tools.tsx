@@ -23,7 +23,13 @@ export interface Tool {
   parameters: FunctionParameters;
 
   /**
-   * A function/component that invokes the tool.
+   * A function that invokes the tool.
+   *
+   * @remarks
+   * The function will be treated as an AI.JSX component: the tool parameters
+   * will be passed as fields on the first argument (props) and the function
+   * can return a `string` or any AI.JSX {@link Node}, synchronously or
+   * asynchronously.
    */
   // Can we use Zod to do better than any?
   func: Component<any>;
