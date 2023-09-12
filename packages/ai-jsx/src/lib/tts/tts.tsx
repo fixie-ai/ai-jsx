@@ -170,7 +170,7 @@ class MseTextToSpeech extends TextToSpeechBase {
 
   stop() {
     console.log(`[${this.name}] tts skipping`);
-    // Cancel any pending requests, discard any chunks in our queue, and 
+    // Cancel any pending requests, discard any chunks in our queue, and
     // skip over any audio data already buffered by the audio element.
     this.sourceBuffer?.abort();
     this.chunkBuffer.length = 0;
@@ -244,7 +244,9 @@ export class RestTextToSpeech extends MseTextToSpeech {
         } else if (!pendingText) {
           pendingText = piece.raw;
         } else {
-          console.warn(`[${this.name}] found incomplete sentence ${piece.raw} after prior incomplete sentence ${pendingText}`);
+          console.warn(
+            `[${this.name}] found incomplete sentence ${piece.raw} after prior incomplete sentence ${pendingText}`
+          );
         }
       }
     });
