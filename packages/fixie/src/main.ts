@@ -145,18 +145,18 @@ corpus
 const sources = corpus.command('sources').description('Corpus source related commands');
 
 sources
-  .command('add <corpusId> <urls...>')
+  .command('add <corpusId> <startUrls...>')
   .description('Add a source to a corpus.')
   .option('--max-documents <number>', 'Maximum number of documents to crawl')
   .option('--max-depth <number>', 'Maximum depth to crawl')
   .action(
     async (
       corpusId: string,
-      urls: string[],
+      startUrls: string[],
       { maxDocuments, maxDepth }: { maxDocuments?: number; maxDepth?: number }
     ) => {
       const client = await FixieClient.Create(program.opts().url);
-      const result = await client.addCorpusSource(corpusId, urls, maxDocuments, maxDepth);
+      const result = await client.addCorpusSource(corpusId, startUrls, maxDocuments, maxDepth);
       showResult(result, program.opts().raw);
     }
   );

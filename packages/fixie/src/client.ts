@@ -147,7 +147,7 @@ export class FixieClient {
   /** Add a new Source to a Corpus. */
   addCorpusSource(
     corpusId: string,
-    urlPatterns: string[],
+    startUrls: string[],
     maxDocuments?: number,
     maxDepth?: number
   ): Promise<Jsonifiable> {
@@ -158,7 +158,7 @@ export class FixieClient {
         load_spec: {
           max_documents: maxDocuments,
           web: {
-            start_urls: urlPatterns,
+            start_urls: startUrls,
             max_depth: maxDepth,
           },
         },
