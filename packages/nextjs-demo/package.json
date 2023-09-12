@@ -23,6 +23,7 @@
     "ai": "^2.1.8",
     "ai-jsx": "workspace:*",
     "autoprefixer": "10.4.14",
+    "aws4": "^1.12.0",
     "classnames": "^2.3.2",
     "eslint": "8.42.0",
     "eslint-config-next": "^13.4.6",
