@@ -26,7 +26,7 @@ export interface UserInfo {
 
 /**
  * A client to the Fixie AI platform.
- * 
+ *
  * This client can be used on the web or in NodeJS
  */
 export class IsomorphicFixieClient {
@@ -46,7 +46,7 @@ export class IsomorphicFixieClient {
   }
 
   /**
-   * Create a new FixieClient without an API key. You probably don't want this. This is only useful if you're running 
+   * Create a new FixieClient without an API key. You probably don't want this. This is only useful if you're running
    * code in the browser on the same domain as the Fixie service; e.g. app.fixie.ai.
    */
   static CreateWithoutApiKey(url: string) {

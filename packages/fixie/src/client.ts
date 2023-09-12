@@ -8,11 +8,10 @@ import { IsomorphicFixieClient } from './isomorphic-client.js';
 
 /**
  * A client to the Fixie AI platform.
- * 
+ *
  * This client can only be used in NodeJS.
  */
 export class FixieClient extends IsomorphicFixieClient {
-
   static Create(url: string, apiKey?: string): FixieClient {
     const apiKeyToUse = apiKey ?? process.env.FIXIE_API_KEY;
     if (!apiKeyToUse) {

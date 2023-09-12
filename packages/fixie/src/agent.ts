@@ -79,9 +79,7 @@ export class FixieAgent {
         }
       `,
     });
-    return Promise.all(
-      result.data.allAgentsForUser.map((agent: any) => this.GetAgent(client, agent.agentId))
-    );
+    return Promise.all(result.data.allAgentsForUser.map((agent: any) => this.GetAgent(client, agent.agentId)));
   }
 
   /** Return the metadata associated with the given agent. */
