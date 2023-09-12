@@ -11,7 +11,8 @@
     "start": "node --no-warnings dist/src/main.js",
     "build-start": "yarn run build && yarn run start",
     "format": "prettier --write .",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "lint:fix": "eslint ."
   },
   "files": [
     "dist"
