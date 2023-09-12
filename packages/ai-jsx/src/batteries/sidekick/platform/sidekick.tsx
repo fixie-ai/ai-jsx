@@ -1,7 +1,6 @@
 import { present } from './conversation.js';
 import { UseTools } from './use-tools-eject.js';
 import { SidekickSystemMessage } from './system-message.js';
-import _ from 'lodash';
 import { OpenAI } from '../../../lib/openai.js';
 import { UseToolsProps } from '../../use-tools.js';
 import * as AI from '../../../index.js';
@@ -52,31 +51,12 @@ export interface SidekickProps {
   role: string;
 }
 
-function makeObservedTools(tools: UseToolsProps['tools'], logger: AI.ComponentContext['logger']) {
-  return _.mapValues(tools, (tool, toolName) => ({
-    ...tool,
-    func: async (...args: Parameters<typeof tool.func>) => {
-      logger.info({ toolName, args }, 'Calling tool');
-      try {
-        const result = await Promise.resolve(tool.func(...args));
-        logger.info({ toolName, args, result }, 'Got result from tool');
-        return typeof result === 'string' ? result : JSON.stringify(result);
-      } catch (e) {
-        logger.error({ toolName, args, e }, 'Got error calling tool');
-        throw e;
-      }
-    },
-  }));
-}
-
-export function Sidekick(props: SidekickProps, { logger }: AI.ComponentContext) {
-  const observedTools = makeObservedTools(props.tools ?? {}, logger);
-
+export function Sidekick(props: SidekickProps) {
   return (
     <ModelProvider model="gpt-4-32k" modelProvider="openai">
       <ShowConversation present={present}>
         <UseTools
-          tools={observedTools}
+          tools={props.tools ?? {}}
           showSteps
           finalSystemMessageBeforeResponse={props.finalSystemMessageBeforeResponse}
         >
