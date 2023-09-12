@@ -338,7 +338,6 @@ export class FixieAgent {
     let agent: FixieAgent;
     try {
       agent = await FixieAgent.GetAgent(client, agentId);
-      term('🦊 Updating agent ').green(agentId)('...\n');
       agent.update({
         name: config.name,
         description: config.description,
@@ -396,9 +395,9 @@ export class FixieAgent {
     }
     const agent = await this.ensureAgent(client, agentId, config);
     const tarball = FixieAgent.getCodePackage(agentPath);
-    const spinner = ora(' 🚀 Deploying...').start();
+    const spinner = ora(' 🚀 Deploying... (hang tight, this takes a minute or two!)').start();
     const revision = await agent.createRevision({ tarball, environmentVariables });
-    spinner.succeed(`Revision ${revision} was deployed to ${agent.agentUrl()}`);
+    spinner.succeed(`Agent ${config.handle} is running at: ${agent.agentUrl()}`);
     return revision;
   }
 
