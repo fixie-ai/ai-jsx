@@ -186,9 +186,10 @@ sources
 sources
   .command('refresh <corpusId> <sourceId>')
   .description('Refresh a corpus source.')
-  .action(async (corpusId: string, sourceId: string) => {
+  .option('-f, --force', 'Force a refresh, cancelling any conflicting jobs.')
+  .action(async (corpusId: string, sourceId: string, { force }: { force?: boolean }) => {
     const client = await FixieClient.Create(program.opts().url);
-    const result = await client.refreshCorpusSource(corpusId, sourceId);
+    const result = await client.refreshCorpusSource(corpusId, sourceId, force);
     showResult(result, program.opts().raw);
   });
 
@@ -209,6 +210,15 @@ jobs
   .action(async (corpusId: string, sourceId: string, jobId: string) => {
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.getCorpusSourceJob(corpusId, sourceId, jobId);
+    showResult(result, program.opts().raw);
+  });
+
+jobs
+  .command('cancel <corpusId> <sourceId> <jobId>')
+  .description('Cancel a running job.')
+  .action(async (corpusId: string, sourceId: string, jobId: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const result = await client.cancelCorpusSourceJob(corpusId, sourceId, jobId);
     showResult(result, program.opts().raw);
   });
 

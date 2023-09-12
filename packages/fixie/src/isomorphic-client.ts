@@ -145,10 +145,11 @@ export class IsomorphicFixieClient {
   }
 
   /** Refresh the given Source. */
-  refreshCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
+  refreshCorpusSource(corpusId: string, sourceId: string, force: boolean = false): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
       source_id: sourceId,
+      force,
     };
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, body);
   }
@@ -161,6 +162,16 @@ export class IsomorphicFixieClient {
   /** Get information about a given Job. */
   getCorpusSourceJob(corpusId: string, sourceId: string, jobId: string): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs/${jobId}`);
+  }
+
+  /** Canel a running Job. */
+  cancelCorpusSourceJob(corpusId: string, sourceId: string, jobId: string): Promise<Jsonifiable> {
+    const body = {
+      corpusId,
+      sourceId,
+      jobId,
+    };
+    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs/${jobId}:cancel`, body);
   }
 
   /** List Documents in a given Corpus. */
