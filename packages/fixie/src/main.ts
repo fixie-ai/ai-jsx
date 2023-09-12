@@ -11,6 +11,7 @@ import terminal from 'terminal-kit';
 import { fileURLToPath } from 'url';
 import { FixieAgent } from './agent.js';
 import { FixieClient } from './client.js';
+import { LoadConfig, SaveConfig } from './auth.js';
 
 const { terminal: term } = terminal;
 
@@ -96,6 +97,9 @@ program
   .option('-u, --url <string>', 'URL of the Fixie API endpoint', process.env.FIXIE_API_URL ?? 'https://api.fixie.ai')
   .option('-r --raw', 'Output raw JSON instead of pretty-printing.');
 
+registerDeployCommand(program);
+registerServeCommand(program);
+
 program
   .command('user')
   .description('Get information on the current user')
@@ -105,8 +109,14 @@ program
     showResult(result, program.opts().raw);
   });
 
-registerDeployCommand(program);
-registerServeCommand(program);
+const config = program.command('config').description('Configuration related commands');
+config
+  .command('show')
+  .description('Show current config.')
+  .action(async () => {
+    const config = LoadConfig();
+    showResult(config, program.opts().raw);
+  });
 
 const corpus = program.command('corpus').description('Corpus related commands');
 

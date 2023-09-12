@@ -33,7 +33,8 @@
     "js-yaml": "^4.1.0",
     "open": "^9.1.0",
     "ora": "^7.0.1",
-    "terminal-kit": "^3.0.0"
+    "terminal-kit": "^3.0.0",
+    "untildify": "^5.0.0"
   },
   "devDependencies": {
     "@fixieai/sdk": "*",
