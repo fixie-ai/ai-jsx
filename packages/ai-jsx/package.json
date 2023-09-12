@@ -4,7 +4,7 @@
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://ai-jsx.com",
-  "version": "0.15.0",
+  "version": "0.17.0",
   "volta": {
     "extends": "../../package.json"
   },
@@ -43,6 +43,15 @@
       },
       "require": {
         "default": "./dist/cjs/batteries/sidekick/platform/sidekick.cjs"
+      }
+    },
+    "./batteries/fixie": {
+      "import": {
+        "types": "./dist/esm/batteries/fixie.d.ts",
+        "default": "./dist/esm/batteries/fixie.js"
+      },
+      "require": {
+        "default": "./dist/cjs/batteries/fixie.cjs"
       }
     },
     "./batteries/docs": {
@@ -385,6 +394,7 @@
     "remark-gfm": "^3.0.1",
     "remark-math": "^5.1.1",
     "replicate": "^0.12.3",
+    "sentence-splitter": "^4.2.1",
     "server-only": "^0.0.1",
     "untruncate-json": "^0.0.1",
     "uuid": "^9.0.0",

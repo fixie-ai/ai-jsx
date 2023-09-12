@@ -13,9 +13,11 @@ export async function GET(request: NextRequest) {
   const text = params.get('text');
   const rate = params.get('rate') ? parseFloat(params.get('rate')!) : 1.0;
   if (!voice || !text) {
-    return new NextResponse(JSON.stringify({ error: 'bad request' }));
+    return new NextResponse(JSON.stringify({ error: 'You must specify params `voice` and `text`.' }));
   }
 
+  const startMillis = performance.now();
+  console.log(`${startMillis} TTS for: ${provider} ${text}`);
   let response;
   if (provider == 'eleven') {
     response = await ttsEleven(voice, rate, text);
@@ -27,7 +29,8 @@ export async function GET(request: NextRequest) {
   if (!response) {
     return new NextResponse(JSON.stringify({ error: 'unknown provider' }));
   }
-
+  console.log(`${startMillis} TTS response latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
+  let firstRead = true;
   const headers = response.headers;
   const status = response.status;
   const nextStream = new ReadableStream({
@@ -35,7 +38,12 @@ export async function GET(request: NextRequest) {
       const reader = response!.body.getReader();
       async function read() {
         const { done, value } = await reader.read();
+        if (firstRead) {
+          console.log(`${startMillis} TTS first byte latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
+          firstRead = false;
+        }
         if (done) {
+          console.log(`${startMillis} TTS complete latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
           controller.close();
           return;
         }
@@ -69,7 +77,7 @@ function ttsEleven(voiceId: string, rate: number, text: string): Promise<Respons
     'xi-api-key': apiKey,
     'Content-Type': 'application/json',
   };
-  const body: string = JSON.stringify({
+  const body = JSON.stringify({
     text,
     model_id: 'eleven_monolingual_v1',
     voice_settings: {
@@ -110,12 +118,12 @@ function ttsAzure(voice: string, rate: number, text: string): Promise<Response> 
 function ttsAws(voice: string, rate: number, text: string) {
   const region = 'us-west-2';
   const outputFormat = 'mp3';
-  const queryParams = new URLSearchParams({
+  const params = new URLSearchParams({
     Text: text,
     OutputFormat: outputFormat,
     VoiceId: voice,
   });
-  const url = `https://polly.${region}.amazonaws.com/v1/speech?${queryParams.toString()}`;
+  const url = `https://polly.${region}.amazonaws.com/v1/speech?${params}`;
   const headers = new Headers();
   return fetch(url, { headers });
 }
@@ -139,7 +147,7 @@ export async function POST(request: NextRequest) {
 function getApiKey(keyName: string) {
   const key = process.env[keyName];
   if (!key) {
-    throw new Error('API key not provided ');
+    throw new Error(`API key "${keyName}" not provided. Please set it as an env var.`);
   }
   return new Promise<string>((resolve) => {
     setTimeout(() => resolve(key), 0);

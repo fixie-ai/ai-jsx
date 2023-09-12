@@ -2,10 +2,12 @@
 import * as AI from 'ai-jsx';
 import { GetConversationResponse } from './types.js';
 import { AssistantMessage, FunctionCall, FunctionResponse, UserMessage } from 'ai-jsx/core/conversation';
-import { fixieContext } from './request-wrapper.js';
+import { RequestContext } from './request-wrapper.js';
+import { FixieAPIContext } from 'ai-jsx/batteries/fixie';
 
 export async function FixieConversation(_: {}, { getContext }: AI.ComponentContext) {
-  const fixieContextValue = getContext(fixieContext);
+  const fixieApiContextValue = getContext(FixieAPIContext);
+  const fixieContextValue = getContext(RequestContext);
   if (!fixieContextValue) {
     throw new Error('FixieConversation components may only be used in the context of requests from Fixie.');
   }
@@ -13,9 +15,9 @@ export async function FixieConversation(_: {}, { getContext }: AI.ComponentConte
   const response = await fetch(
     new URL(
       `/api/v1/agents/${fixieContextValue.agentId}/conversations/${fixieContextValue.request.conversationId}`,
-      fixieContextValue.apiBaseUrl
+      fixieApiContextValue.url
     ),
-    { headers: { Authorization: `Bearer ${fixieContextValue.authToken}` } }
+    { headers: { Authorization: `Bearer ${fixieApiContextValue.authToken}` } }
   );
 
   const json: GetConversationResponse = await response.json();
@@ -35,15 +37,15 @@ export async function FixieConversation(_: {}, { getContext }: AI.ComponentConte
       switch (message.kind) {
         case 'text':
           return turn.role === 'assistant' ? (
-            <AssistantMessage>{message.content}</AssistantMessage>
+            <AssistantMessage metadata={message.metadata}>{message.content}</AssistantMessage>
           ) : (
-            <UserMessage>{message.content}</UserMessage>
+            <UserMessage metadata={message.metadata}>{message.content}</UserMessage>
           );
         case 'functionCall':
-          return <FunctionCall name={message.name} args={message.args} />;
+          return <FunctionCall name={message.name} args={message.args} metadata={message.metadata} />;
         case 'functionResponse':
           return (
-            <FunctionResponse name={message.name} failed={message.failed}>
+            <FunctionResponse name={message.name} failed={message.failed} metadata={message.metadata}>
               {message.response}
             </FunctionResponse>
           );

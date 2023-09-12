@@ -1,28 +1,29 @@
 'use client';
+import { split } from 'sentence-splitter';
 
 /**
- * Defines a function that can be used to build a URL for a text-to-speech
+ * A function that can be used to build a URL for a text-to-speech
  * service. This URL will be used to retrieve an audio file that can be
  * played by an HTML5 audio element.
  */
-export type BuildUrlFunction = (provider: string, voice: string, rate: number, text: string) => string;
+export type BuildUrl = (provider: string, voice: string, rate: number, text: string) => string;
 
 /**
  * Defines a function that can be used to retrieve an ephemeral access token
  * for us with a text-to-speech service. Typically, this will be a
  * fetch request to a server that will return an opaque token.
  */
-export type GetTokenFunction = (provider: string) => Promise<string>;
+export type GetToken = (provider: string) => Promise<string>;
 
 /**
  * Defines a base class for text-to-speech services. This class provides
  * a common interface for text-to-speech services, as well as some basic
  * infrastructure for playing audio using the HTML5 audio element.
  */
-export class TextToSpeechBase {
+export abstract class TextToSpeechBase {
   protected audio: HTMLAudioElement;
   /**
-   * The time when the play() method was first called.
+   * The time (performance.now()) when the play() method was first called.
    */
   protected playMillis: number = 0;
   /**
@@ -58,27 +59,29 @@ export class TextToSpeechBase {
    * Converts the given text to speech and plays it using the HTML5 audio element.
    * This method may be called multiple times, and the audio will be played serially.
    * Generation may be buffered, use the flush() method to indicate all text has been provided.
+   * During playout, use skip() to stop the current playout, or stop() to end all generation
+   * and close any resources.
+
    */
-  play(_text: string) {
-    throw new Error('Method not implemented.');
-  }
+  abstract play(_text: string): void;
   /**
-   * Flush any buffered text and play the audio.
+   * Flushes any text buffered by a previous play() call.
    */
-  flush() {}
+  abstract flush(): void;
+
   /**
-   * Stop playing any generated audio and discard any buffered text.
+   * Discards any generated audio, but remains in an active state so
+   * that additional text can be provided and played.
    */
-  stop() {
-    console.log(`[${this.name}] tts stopping`);
-    this.audio.pause();
-    this.cleanUp();
-  }
-  protected cleanUp() {}
+  abstract stop(): void;
+  /**
+   * Stops playing any generated audio and ends generation.
+   */
+  abstract close(): void;
 }
 
 /**
- * Defines a text-to-speech service that requests audio from a server and
+ * A text-to-speech service that requests audio from a server and
  * plays it in one shot using the HTML5 audio element. The URL to request
  * audio from the server is constructed using the provided BuildUrlFunction,
  * allowing this class to be used with a variety of text-to-speech services.
@@ -86,9 +89,9 @@ export class TextToSpeechBase {
 export class SimpleTextToSpeech extends TextToSpeechBase {
   constructor(
     name: string,
-    protected readonly urlFunc: BuildUrlFunction,
+    protected readonly urlFunc: BuildUrl,
     private readonly voice: string,
-    private readonly rate: number = 1.0
+    private readonly rate = 1.0
   ) {
     super(name);
   }
@@ -97,10 +100,19 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
     this.audio.src = this.urlFunc(this.name, this.voice, this.rate, text);
     this.audio.play();
   }
+  flush() {}
+  stop() {
+    console.log(`[${this.name}] tts stopping`);
+    this.audio.src = '';
+  }
+  close() {
+    console.log(`[${this.name}] tts closing`);
+    this.audio.pause();
+  }
 }
 
 class AudioChunk {
-  public timestamp: number;
+  public readonly timestamp: number;
   constructor(public buffer?: ArrayBuffer) {
     this.timestamp = performance.now();
   }
@@ -113,9 +125,9 @@ class AudioChunk {
  * generated, rather than waiting for the entire audio file to be generated. It also
  * allows text to be fed to the service in a stream rather than all at once. This
  * class is not meant to be used directly, but provides infrastructure for
- * RestTextToSpeech and ElevenLabsTextToSpeech.
+ * RestTextToSpeech and WebSocketTextToSpeech.
  */
-export class MseTextToSpeech extends TextToSpeechBase {
+class MseTextToSpeech extends TextToSpeechBase {
   private readonly mediaSource: MediaSource = new MediaSource();
   private sourceBuffer?: SourceBuffer;
   private readonly chunkBuffer: AudioChunk[] = [];
@@ -155,10 +167,40 @@ export class MseTextToSpeech extends TextToSpeechBase {
       this.doFlush();
     }
   }
-  protected queueChunk(chunk: AudioChunk) {
-    this.chunkBuffer.push(chunk);
-    this.processChunkBuffer();
+
+  stop() {
+    console.log(`[${this.name}] tts skipping`);
+    // Cancel any pending requests, discard any chunks in our queue, and
+    // skip over any audio data already buffered by the audio element.
+    this.sourceBuffer?.abort();
+    this.chunkBuffer.length = 0;
+    this.audio.currentTime = this.audio.buffered.end(0);
+    this.inProgress = false;
+    this.stopGeneration();
   }
+  close() {
+    console.log(`[${this.name}] tts stopping`);
+    this.audio.pause();
+    this.tearDown();
+  }
+
+  /**
+   * Adds a chunk to the pending chunk buffer, and starts processing the buffer, if possible.
+   * The chunk can be a placeholder without any data if the data will be added later;
+   * this is useful to ensure chunks are played in the correct order.
+   */
+  protected queueChunk(chunk: AudioChunk) {
+    if (this.inProgress) {
+      this.chunkBuffer.push(chunk);
+      this.processChunkBuffer();
+    } else {
+      console.warn(`[${this.name}] chunk received inProgress=false, ignoring`);
+    }
+  }
+  /**
+   * Processes the first chunk in the ordered chunk buffer, appending it to the
+   * MSE source buffer if possible. If the chunk is pending, no-op.
+   */
   protected processChunkBuffer() {
     if (!this.sourceBuffer?.updating && this.chunkBuffer.length > 0 && this.chunkBuffer[0].buffer) {
       const chunk = this.chunkBuffer.shift();
@@ -170,58 +212,56 @@ export class MseTextToSpeech extends TextToSpeechBase {
   protected setComplete() {
     this.inProgress = false;
   }
-  protected cleanUp() {
+  protected stopGeneration() {}
+  protected tearDown() {
     this.chunkBuffer.length = 0;
     this.inProgress = false;
-    super.cleanUp();
   }
 }
 
 /**
- * Defines a text-to-speech service that requests chunked audio from a server
+ * A text-to-speech service that requests chunked audio from a server
  * using REST requests for each chunk of audio.
  */
 export class RestTextToSpeech extends MseTextToSpeech {
   private pendingText: string = '';
   constructor(
     name: string,
-    private readonly urlFunc: BuildUrlFunction,
+    private readonly urlFunc: BuildUrl,
     private readonly voice: string,
     private readonly rate: number = 1.0
   ) {
     super(name);
   }
-  protected async generate(text: string) {
+  protected generate(text: string) {
     this.pendingText += text;
-    while (true) {
-      // Find the first punctuation mark (period, exclamation point, or question mark)
-      // that is not followed by another character (e.g., not the dot in $2.59).
-      // We'll send off the resultant sentence for generation, and jump ahead, skipping
-      // any spaces after the punctuation.
-      const index = this.pendingText.search(/[.!?]\s/);
-      // If that doesn't work, split on any newlines (e.g., lyrics)
-      if (index == -1) {
-        break;
+    let pendingText = '';
+    split(this.pendingText).forEach((piece: any) => {
+      if (piece.type == 'Sentence') {
+        if (piece.children.length == 2 && piece.children[1].type == 'Punctuation') {
+          this.requestChunk(piece.raw);
+        } else if (!pendingText) {
+          pendingText = piece.raw;
+        } else {
+          console.warn(
+            `[${this.name}] found incomplete sentence ${piece.raw} after prior incomplete sentence ${pendingText}`
+          );
+        }
       }
-      const utterance = this.pendingText.substring(0, index + 1);
-      this.pendingText = this.pendingText.substring(index + 2);
-      await this.requestChunk(utterance);
-      if (!this.pendingText) {
-        this.setComplete();
-      }
-    }
+    });
+    this.pendingText = pendingText;
   }
   protected async doFlush() {
-    const utterance = this.pendingText;
+    const utterance = this.pendingText.trim();
     this.pendingText = '';
-    await this.requestChunk(utterance);
-    if (!this.pendingText) {
-      this.setComplete();
+    if (utterance) {
+      await this.requestChunk(utterance);
     }
+    setTimeout(() => this.setComplete(), 0);
   }
-  protected cleanUp() {
+  protected tearDown() {
     this.pendingText = '';
-    super.cleanUp();
+    super.tearDown();
   }
   private async requestChunk(text: string) {
     const newChunk = new AudioChunk();
@@ -239,7 +279,7 @@ export class RestTextToSpeech extends MseTextToSpeech {
  */
 export class AzureTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE = 'en-US-JennyNeural';
-  constructor(urlFunc: BuildUrlFunction, voice: string = AzureTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+  constructor(urlFunc: BuildUrl, voice: string = AzureTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('azure', urlFunc, voice, rate);
   }
 }
@@ -248,28 +288,28 @@ export class AzureTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses a web socket to stream text to the
  * server and receives audio chunks as they are generated.
  */
-export class WebSocketTextToSpeech extends MseTextToSpeech {
+export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
   protected socket: WebSocket;
-  private pendingText: string = '';
-  private pendingFlush: boolean = false;
+  private readonly sendBuffer: string[] = [];
   constructor(name: string, private readonly url: string) {
     super(name);
     this.socket = this.createSocket(url);
   }
   protected generate(text: string) {
-    // Buffer the supplied text if the socket isn't yet open.
-    if (this.socket.readyState == WebSocket.OPEN) {
-      this.requestChunk(text);
-    } else if (this.socket.readyState == WebSocket.CONNECTING) {
-      this.pendingText += text;
-    }
+    this.sendObject(this.createChunkRequest(text));
   }
   protected doFlush() {
-    if (this.socket.readyState == WebSocket.OPEN) {
-      this.sendFlush();
-    } else if (this.socket.readyState == WebSocket.CONNECTING) {
-      this.pendingFlush = true;
-    }
+    this.sendObject(this.createFlushRequest());
+  }
+  protected stopGeneration() {
+    // Close our socket and create a new one so that we're not blocked by stale generation.
+    this.socket.close();
+    this.sendBuffer.length = 0;
+    this.socket = this.createSocket(this.url);
+  }
+  protected tearDown() {
+    this.socket.close();
+    super.tearDown();
   }
 
   /**
@@ -283,22 +323,18 @@ export class WebSocketTextToSpeech extends MseTextToSpeech {
       const elapsed = performance.now() - connectMillis;
       console.log(`[${this.name}] socket opened, elapsed=${elapsed.toFixed(0)}`);
       this.handleOpen();
-      if (this.pendingText) {
-        this.requestChunk(this.pendingText);
-        this.pendingText = '';
-      }
-      if (this.pendingFlush) {
-        this.sendFlush();
-        this.pendingFlush = false;
-      }
+      this.sendBuffer.forEach((json) => this.socket.send(json));
+      this.sendBuffer.length = 0;
     };
     socket.onmessage = (event) => {
+      let message;
       try {
-        const message = JSON.parse(event.data);
-        this.handleMessage(message);
+        message = JSON.parse(event.data);
       } catch (error) {
-        console.error(`Failed to parse socket message: ${error}`);
+        console.error(`Failed to parse socket message: ${error}, data=${event.data}`);
+        return;
       }
+      this.handleMessage(message);
     };
     socket.onerror = (_event) => {
       console.log(`[${this.name}] socket error`);
@@ -311,13 +347,37 @@ export class WebSocketTextToSpeech extends MseTextToSpeech {
     };
     return socket;
   }
-  protected sendObject(obj: any) {
-    this.socket.send(JSON.stringify(obj));
+  protected sendObject(obj: unknown) {
+    const json = JSON.stringify(obj);
+    if (this.socket.readyState == WebSocket.OPEN) {
+      this.socket.send(json);
+    } else {
+      this.sendBuffer.push(json);
+    }
   }
-  protected handleOpen() {}
-  protected handleMessage(_message: any) {}
-  protected requestChunk(_text: string) {}
-  protected sendFlush() {}
+
+  protected abstract handleOpen(): void;
+  protected abstract handleMessage(_message: unknown): void;
+  protected abstract createChunkRequest(_text: string): unknown;
+  protected abstract createFlushRequest(): unknown;
+}
+
+class ElevenLabsInboundMessage {
+  audio?: string;
+  isFinal?: boolean;
+  message?: string;
+  error?: string;
+  code?: number;
+}
+class ElevenLabsOutboundMessage {
+  constructor({ text, try_trigger_generation, xi_api_key }: ElevenLabsOutboundMessage) {
+    this.text = text;
+    this.try_trigger_generation = try_trigger_generation;
+    this.xi_api_key = xi_api_key;
+  }
+  text: string;
+  try_trigger_generation?: boolean;
+  xi_api_key?: string;
 }
 
 /**
@@ -325,36 +385,36 @@ export class WebSocketTextToSpeech extends MseTextToSpeech {
  */
 export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
   static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM';
-  constructor(private readonly tokenFunc: GetTokenFunction, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
-    const model = 'eleven_monolingual_v1';
-    const url = `wss://api.elevenlabs.io/v1/text-to-speech/${voice}/stream-input?model_type=${model}`;
+  constructor(private readonly tokenFunc: GetToken, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
+    const model_id = 'eleven_monolingual_v1';
+    const optimize_streaming_latency = '22';
+    const params = new URLSearchParams({ model_id, optimize_streaming_latency });
+    const url = `wss://api.elevenlabs.io/v1/text-to-speech/${voice}/stream-input?${params}`;
     super('eleven', url);
   }
   protected async handleOpen() {
-    const obj = {
-      xi_api_key: await this.tokenFunc(this.name),
-      text: ' ',
-    };
+    const obj = new ElevenLabsOutboundMessage({ text: ' ', xi_api_key: await this.tokenFunc(this.name) });
     this.sendObject(obj);
   }
-  protected handleMessage(message: any) {
+  protected handleMessage(inMessage: unknown) {
+    const message = inMessage as ElevenLabsInboundMessage;
     console.debug(message);
-    if (!message.isFinal) {
-      console.debug(`[${this.name}] chunk received`);
-      this.queueChunk(new AudioChunk(Buffer.from(message.audio, 'base64')));
-    } else {
-      console.log(`[${this.name}] utterance complete`);
-      this.setComplete();
+    if (message.audio) {
+      if (!message.isFinal) {
+        console.debug(`[${this.name}] chunk received`);
+        this.queueChunk(new AudioChunk(Buffer.from(message.audio!, 'base64')));
+      } else {
+        console.log(`[${this.name}] utterance complete`);
+        this.setComplete();
+      }
+    } else if (message.error) {
+      console.error(`[${this.name}] error: ${message.message}`);
     }
   }
-  protected requestChunk(text: string) {
-    const obj = {
-      text: `${text} `, // text must always end with a space
-      try_trigger_generation: true,
-    };
-    this.sendObject(obj);
+  protected createChunkRequest(text: string): ElevenLabsOutboundMessage {
+    return new ElevenLabsOutboundMessage({ text: `${text} `, try_trigger_generation: true });
   }
-  protected sendFlush(): void {
-    this.sendObject({ text: '' });
+  protected createFlushRequest(): ElevenLabsOutboundMessage {
+    return new ElevenLabsOutboundMessage({ text: '' });
   }
 }

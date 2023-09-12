@@ -5,12 +5,12 @@
  */
 
 import { Command, program } from 'commander';
-import terminal from 'terminal-kit';
-import { FixieClient } from './client.js';
-import { FixieAgent } from './agent.js';
-import { fileURLToPath } from 'url';
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
+import terminal from 'terminal-kit';
+import { fileURLToPath } from 'url';
+import { FixieAgent } from './agent.js';
+import { FixieClient } from './client.js';
 
 const { terminal: term } = terminal;
 
@@ -35,6 +35,8 @@ function registerDeployCommand(command: Command) {
         const [key, value] = v.split('=');
         return {
           ...m,
+          // This condition is necessary; the types are wrong.
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           [key]: value ?? '',
         };
       }
@@ -48,16 +50,50 @@ function registerDeployCommand(command: Command) {
     });
 }
 
+/** Run an agent locally. */
+function registerServeCommand(command: Command) {
+  command
+    .command('serve [path]')
+    .description('Run an agent locally')
+    .option('-p, --port <number>', 'Port to run the agent on', '8181')
+    .option(
+      '-e, --env <key=value>',
+      'Environment variables to set for this agent. Variables in a .env file take precedence over those on the command line.',
+      (v, m: Record<string, string> | undefined) => {
+        const [key, value] = v.split('=');
+        return {
+          ...m,
+          // This condition is necessary; the types are wrong.
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          [key]: value ?? '',
+        };
+      }
+    )
+    .action(async (path: string | undefined, options: { port: string; env: Record<string, string> }) => {
+      const client = await FixieClient.Create(program.opts().url);
+      await FixieAgent.ServeAgent({
+        client,
+        agentPath: path ?? process.cwd(),
+        port: parseInt(options.port),
+        tunnel: true,
+        environmentVariables: {
+          FIXIE_API_URL: program.opts().url,
+          ...options.env,
+        },
+      });
+    });
+}
+
 // Get current version of this package.
 const currentPath = path.dirname(fileURLToPath(import.meta.url));
-const packageJsonPath = path.resolve(currentPath, '../package.json');
+const packageJsonPath = path.resolve(currentPath, path.join('..', '..', 'package.json'));
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
 program
   .name('fixie')
   .version(packageJson.version)
   .description('A command-line client to the Fixie AI platform.')
-  .option('-u, --url <string>', 'URL of the Fixie API endpoint', process.env.FIXIE_API_URL ?? 'https://app.fixie.ai')
+  .option('-u, --url <string>', 'URL of the Fixie API endpoint', process.env.FIXIE_API_URL ?? 'https://api.fixie.ai')
   .option('-r --raw', 'Output raw JSON instead of pretty-printing.');
 
 program
@@ -70,6 +106,7 @@ program
   });
 
 registerDeployCommand(program);
+registerServeCommand(program);
 
 const corpus = program.command('corpus').description('Corpus related commands');
 
@@ -112,13 +149,21 @@ corpus
 const sources = corpus.command('sources').description('Corpus source related commands');
 
 sources
-  .command('add <corpusId> <urlPattern>')
+  .command('add <corpusId> <startUrls...>')
   .description('Add a source to a corpus.')
-  .action(async (corpusId: string, urlPattern: string) => {
-    const client = await FixieClient.Create(program.opts().url);
-    const result = await client.addCorpusSource(corpusId, urlPattern);
-    showResult(result, program.opts().raw);
-  });
+  .option('--max-documents <number>', 'Maximum number of documents to crawl')
+  .option('--max-depth <number>', 'Maximum depth to crawl')
+  .action(
+    async (
+      corpusId: string,
+      startUrls: string[],
+      { maxDocuments, maxDepth }: { maxDocuments?: number; maxDepth?: number }
+    ) => {
+      const client = await FixieClient.Create(program.opts().url);
+      const result = await client.addCorpusSource(corpusId, startUrls, maxDocuments, maxDepth);
+      showResult(result, program.opts().raw);
+    }
+  );
 
 sources
   .command('list <corpusId>')
@@ -218,6 +263,26 @@ agents
   });
 
 agents
+  .command('publish <agentId>')
+  .description('Publish the given agent.')
+  .action(async (agentHandle: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentHandle);
+    const result = agent.update({ published: true });
+    showResult(result, program.opts().raw);
+  });
+
+agents
+  .command('unpublish <agentId>')
+  .description('Unpublish the given agent.')
+  .action(async (agentHandle: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentHandle);
+    const result = agent.update({ published: false });
+    showResult(result, program.opts().raw);
+  });
+
+agents
   .command('create <agentHandle> [agentName] [agentDescription] [agentMoreInfoUrl]')
   .description('Create an agent.')
   .action(async (agentHandle: string, agentName?: string, agentDescription?: string, agentMoreInfoUrl?: string) => {
@@ -227,8 +292,18 @@ agents
   });
 
 registerDeployCommand(agents);
+registerServeCommand(agents);
 
 const revisions = agents.command('revisions').description('Agent revision-related commands');
+
+revisions
+  .command('list <agentId>')
+  .description('List all revisions for the given agent.')
+  .action(async (agentId: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const result = (await FixieAgent.GetAgent(client, agentId)).metadata.allRevisions;
+    showResult(result, program.opts().raw);
+  });
 
 revisions
   .command('get <agentId>')
@@ -237,6 +312,26 @@ revisions
     const client = await FixieClient.Create(program.opts().url);
     const agent = await FixieAgent.GetAgent(client, agentId);
     const result = await agent.getCurrentRevision();
+    showResult(result, program.opts().raw);
+  });
+
+revisions
+  .command('set <agentId> <revisionId>')
+  .description('Set the current revision for the given agent.')
+  .action(async (agentId: string, revisionId: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentId);
+    const result = await agent.setCurrentRevision(revisionId);
+    showResult(result, program.opts().raw);
+  });
+
+revisions
+  .command('delete <agentId> <revisionId>')
+  .description('Delete the given revision for the given agent.')
+  .action(async (agentId: string, revisionId: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentId);
+    const result = await agent.deleteRevision(revisionId);
     showResult(result, program.opts().raw);
   });
 

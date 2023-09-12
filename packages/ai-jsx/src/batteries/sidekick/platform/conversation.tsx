@@ -12,7 +12,7 @@ import {
   renderToConversation,
   SystemMessage,
 } from '../../../core/conversation.js';
-import { UseToolsProps } from '../../use-tools.js';
+import { ExecuteFunction, UseToolsProps } from '../../use-tools.js';
 
 /**
  * This function defines the shrinking policy. It's activated when the conversation history overflows the context
@@ -73,7 +73,7 @@ export function present(conversationElement: ConversationMessage) {
  * without using tools. For example, this is how the model is able to call `listConversations`, followed by
  * `getConversation`, and then finally write a response.
  */
-export async function getNextConversationStep(
+export function getNextConversationStep(
   messages: ConversationMessage[],
   fullConversation: ConversationMessage[],
   finalSystemMessageBeforeResponse: AI.Node,
@@ -84,15 +84,7 @@ export async function getNextConversationStep(
   switch (lastMessage.type) {
     case 'functionCall': {
       const { name, args } = lastMessage.element.props;
-      try {
-        return <FunctionResponse name={name}>{await tools[name].func(args)}</FunctionResponse>;
-      } catch (e: any) {
-        return (
-          <FunctionResponse failed name={name}>
-            {e.message}
-          </FunctionResponse>
-        );
-      }
+      return <ExecuteFunction func={tools[name].func} name={name} args={args} />;
     }
     case 'functionResponse':
       return (
