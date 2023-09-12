@@ -46,24 +46,20 @@ export interface AgentRevision {
 export class FixieAgent {
   owner: string;
   handle: string;
-  published: boolean;
 
   /** Use GetAgent or CreateAgent instead. */
-  private constructor(
-    readonly client: FixieClient,
-    readonly agentId: string,
-    public metadata: AgentMetadata,
-    published: boolean = false
-  ) {
+  private constructor(readonly client: FixieClient, readonly agentId: string, public metadata: AgentMetadata) {
     const parts = agentId.split('/');
     this.owner = parts[0];
     this.handle = parts[1];
-    this.published = published;
   }
 
   /** Return the URL for this agent's page on Fixie. */
   public agentUrl(): string {
-    return `${this.client.url}/agents/${this.agentId}`;
+    // TODO(mdw): We need a way to know what the appropriate 'console' URL
+    // is for a given API URL. Since for now this is always console.fixie.ai,
+    // we can just hardcode it.
+    return `https://console.fixie.ai/agents/${this.agentId}`;
   }
 
   /** Get the agent with the given agent ID. */
@@ -532,12 +528,12 @@ export class FixieAgent {
     const agent = await this.ensureAgent(client, agentId, config);
 
     for await (const currentUrl of deploymentUrlsIter) {
-      term('🥡 Serving agent at ').green(currentUrl)('\n');
+      term('🚇 Current tunnel URL is: ').green(currentUrl)('\n');
       try {
         // Wait 3 seconds to ensure the tunnel is set up.
         await new Promise((resolve) => setTimeout(resolve, 3000));
-        const revision = await agent.createRevision({ externalUrl: currentUrl as string, environmentVariables });
-        term('🥡 Revision ').green(revision)(' was deployed to ').green(agent.agentUrl())('\n');
+        await agent.createRevision({ externalUrl: currentUrl as string, environmentVariables });
+        term('🥡 Agent ').green(config.handle)(' is running at: ').green(agent.agentUrl())('\n');
       } catch (e: any) {
         term('🥡 Got error trying to create agent revision: ').red(e.message)('\n');
         console.error(e);
