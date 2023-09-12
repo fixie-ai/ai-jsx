@@ -1,4 +1,4 @@
 handle: sidekick-github
 description: Sidekick to navigate GitHub
 more_info_url: ''
-entry_point: .
+public: true

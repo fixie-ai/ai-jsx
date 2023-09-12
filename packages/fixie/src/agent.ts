@@ -2,7 +2,7 @@ import { gql } from '@apollo/client/core/index.js';
 import yaml from 'js-yaml';
 import fs from 'fs';
 import terminal from 'terminal-kit';
-import { execSync, spawn, ChildProcess } from 'child_process';
+import { execSync, ChildProcess } from 'child_process';
 import ora from 'ora';
 import os from 'os';
 import path from 'path';
@@ -31,7 +31,6 @@ export interface AgentConfig {
   name?: string;
   description?: string;
   moreInfoUrl?: string;
-  public?: boolean;
   deploymentUrl?: string;
 }
 
@@ -47,12 +46,19 @@ export interface AgentRevision {
 export class FixieAgent {
   owner: string;
   handle: string;
+  published: boolean;
 
   /** Use GetAgent or CreateAgent instead. */
-  private constructor(readonly client: FixieClient, readonly agentId: string, public metadata: AgentMetadata) {
+  private constructor(
+    readonly client: FixieClient,
+    readonly agentId: string,
+    public metadata: AgentMetadata,
+    published: boolean = false
+  ) {
     const parts = agentId.split('/');
     this.owner = parts[0];
     this.handle = parts[1];
+    this.published = published;
   }
 
   /** Return the URL for this agent's page on Fixie. */
@@ -156,7 +162,7 @@ export class FixieAgent {
         name,
         description,
         moreInfoUrl,
-        published: published ?? false,
+        published: published ?? true,
       },
     });
     const agentId = result.data.createAgent.agent.agentId;
@@ -228,8 +234,24 @@ export class FixieAgent {
 
   /** Load an agent configuration from the given directory. */
   public static LoadConfig(agentPath: string): AgentConfig {
-    const config = yaml.load(fs.readFileSync(`${agentPath}/agent.yaml`, 'utf8')) as AgentConfig;
-    return config;
+    const fullPath = path.resolve(path.join(agentPath, 'agent.yaml'));
+    const config = yaml.load(fs.readFileSync(fullPath, 'utf8')) as object;
+
+    // Warn if any fields are present in config that are not supported.
+    const validKeys = [
+      'handle',
+      'name',
+      'description',
+      'moreInfoUrl',
+      'more_info_url',
+      'deploymentUrl',
+      'deployment_url',
+    ];
+    const invalidKeys = Object.keys(config).filter((key) => !validKeys.includes(key));
+    for (const key of invalidKeys) {
+      term('❓ Ignoring invalid key ').yellow(key)(' in agent.yaml\n');
+    }
+    return config as AgentConfig;
   }
 
   /** Package the code in the given directory and return the path to the tarball. */
@@ -330,19 +352,11 @@ export class FixieAgent {
         name: config.name,
         description: config.description,
         moreInfoUrl: config.moreInfoUrl,
-        published: config.public,
       });
     } catch (e) {
       // Try to create the agent instead.
       term('🦊 Creating new agent ').green(agentId)('...\n');
-      agent = await FixieAgent.CreateAgent(
-        client,
-        config.handle,
-        config.name,
-        config.description,
-        config.moreInfoUrl,
-        config.public
-      );
+      agent = await FixieAgent.CreateAgent(client, config.handle, config.name, config.description, config.moreInfoUrl);
     }
     return agent;
   }
