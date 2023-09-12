@@ -11,7 +11,7 @@ import terminal from 'terminal-kit';
 import { fileURLToPath } from 'url';
 import { FixieAgent } from './agent.js';
 import { FixieClient } from './client.js';
-import { LoadConfig, SaveConfig } from './auth.js';
+import { AuthenticateOrLogin, LoadConfig, SaveConfig } from './auth.js';
 
 const { terminal: term } = terminal;
 
@@ -109,11 +109,21 @@ program
     showResult(result, program.opts().raw);
   });
 
+program
+  .command('auth')
+  .description('Authenticate to the Fixie service')
+  .option('--force', 'Force reauthentication.')
+  .action(async (force?: boolean) => {
+    const client = await AuthenticateOrLogin({ forceReauth: force });
+    const result = await client.userInfo();
+    showResult(result, program.opts().raw);
+  });
+
 const config = program.command('config').description('Configuration related commands');
 config
   .command('show')
   .description('Show current config.')
-  .action(async () => {
+  .action(() => {
     const config = LoadConfig();
     showResult(config, program.opts().raw);
   });
