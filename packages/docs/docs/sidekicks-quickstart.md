@@ -8,7 +8,7 @@ import Step3Profit from '../static/img/step-3-profit.png'
 
 # Quickstart: Fixie Sidekicks
 
-This is a quickstart guide to building and deploying a Fixie Sidekick. A sidekick is an embeddable, conversational 
+This is a quickstart guide to building and deploying a Fixie Sidekick. A sidekick is an embeddable, conversational
 assistant built using AI.JSX. Sidekicks harness the power of [DocsQA](/docsQA), [Tools](/tools), and [GenUI](/genUI) and bring everything together in a seamless experience.
 
 _(TODO -> Matt, I'm thinking we might want to remove this last sentence since those pages are not yet built out. Or we can populate them with content.)_
@@ -65,8 +65,8 @@ _TODO: Matt, should this be install and configure CLI? i.e. should we include au
 
 We are going to start with some demo code.
 
-* In your terminal navigate to a folder where you want to save the template code. For example, someplace like `Documents\GitHub\` or just `Documents\`.
-* Enter the following command. This will clone the template code into a directory named `fixie-sidekick-template` in the current folder.
+- In your terminal navigate to a folder where you want to save the template code. For example, someplace like `Documents\GitHub\` or just `Documents\`.
+- Enter the following command. This will clone the template code into a directory named `fixie-sidekick-template` in the current folder.
 
 ```terminal
 git clone https://github.com/fixie-ai/fixie-sidekick-template.git
@@ -90,9 +90,9 @@ Go back to the web page we left open above when signing up for a Fixie account. 
 
 <img src={FixieProfileAPIKey} alt="Fixie profile page where you can get your API key." width="600"/>
 
-* Click on the clipboard icon (the one on the far right of the API token) to copy your API key.
-* The key looks something like `FmEEMtjcHLfNGPrLhRQwQfwG9Li...` and is 175 characters long.
-* Back in your text editor, open the file named `.env`. Add your key:
+- Click on the clipboard icon (the one on the far right of the API token) to copy your API key.
+- The key looks something like `FmEEMtjcHLfNGPrLhRQwQfwG9Li...` and is 175 characters long.
+- Back in your text editor, open the file named `.env`. Add your key:
 
 ```javascript
 FIXIE_API_KEY = YOUR_KEY_HERE;
@@ -103,13 +103,14 @@ This should look something like this:
 ```javascript
 FIXIE_API_KEY=FmEEMtjcHLfNGPrLhRQwQfwG9Li...[continues]
 ```
+
 _TODO: Matt: right now the .env file is in the .gitignore which means they would have to create it. thoughts on the best route here? don't want to set ppl up to accidentally commit secrets._
 
 ### c) Deploy Sidekick to Fixie
 
 The moment of truth has arrived! Let's deploy our sidekick to Fixie!
 
-#### Deploying for Development (```fixie serve```)
+#### Deploying for Development (`fixie serve`)
 
 When developing or updating a Sidekick, we most likely will be making many changes and testing things as we go. In this case, we want
 to deploy things as quickly as possible.
@@ -135,13 +136,13 @@ sarah@computer sidekick-acme % npx @fixieai/fixie@latest serve
 🥡 Revision a1a29ee1 was deployed to https://console.fixie.ai/agents/sarah/sidekick-acme
 ```
 
-As we make changes to our sidekick, we can simply stop serving our sidekick with ```Control+C``` and then serve up our new changes with the ```serve``` command as we did above.
+As we make changes to our sidekick, we can simply stop serving our sidekick with `Control+C` and then serve up our new changes with the `serve` command as we did above.
 
 _TODO Matt: i think we need something here about serve vs. deploy and when to do each, considerations, etc._
 
-#### Deploying to Production (```fixie deploy```)
+#### Deploying to Production (`fixie deploy`)
 
-Once we are done with our development, we can deploy the Sidekick to Fixie with the ```deploy``` command.
+Once we are done with our development, we can deploy the Sidekick to Fixie with the `deploy` command.
 
 From your terminal:
 
@@ -210,9 +211,9 @@ TODO
 
 ### Method 2: Via the Fixie Dashboard
 
-* In your browser navigate to the [Fixie dashboard](https://console.fixie.ai/).
-* Click on your agent.
-* Enter a question for the sidekick. e.g. "What can you do?"
+- In your browser navigate to the [Fixie dashboard](https://console.fixie.ai/).
+- Click on your agent.
+- Enter a question for the sidekick. e.g. "What can you do?"
 
 Note: you can also access your agent directly at:
 
@@ -245,5 +246,3 @@ _TODO What should we say here/point to here?_
 ### Customize the System Prompt
 
 TODO
-
-
