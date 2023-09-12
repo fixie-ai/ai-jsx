@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-import { ChatCompletion, FunctionParameters, FunctionResponse, FunctionResponseProps } from '../core/completion.js';
+import { ChatCompletion, FunctionParameters, FunctionResponse } from '../core/completion.js';
 import { Component, ComponentContext, Node, RenderContext } from '../index.js';
 import { Converse, renderToConversation } from '../core/conversation.js';
 

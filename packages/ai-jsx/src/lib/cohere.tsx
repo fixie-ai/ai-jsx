@@ -106,7 +106,7 @@ export async function RerankerFormatted(
     documents,
     top_n,
     Formatter,
-    splitter = '\n',
+    splitter = '\n\n',
   }: {
     query: string;
     documents: string[];
