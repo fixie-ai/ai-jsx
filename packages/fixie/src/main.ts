@@ -297,12 +297,41 @@ registerServeCommand(agents);
 const revisions = agents.command('revisions').description('Agent revision-related commands');
 
 revisions
+  .command('list <agentId>')
+  .description('List all revisions for the given agent.')
+  .action(async (agentId: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const result = (await FixieAgent.GetAgent(client, agentId)).metadata.allRevisions;
+    showResult(result, program.opts().raw);
+  });
+
+revisions
   .command('get <agentId>')
   .description('Get current revision for the given agent.')
   .action(async (agentId: string) => {
     const client = await FixieClient.Create(program.opts().url);
     const agent = await FixieAgent.GetAgent(client, agentId);
     const result = await agent.getCurrentRevision();
+    showResult(result, program.opts().raw);
+  });
+
+revisions
+  .command('set <agentId> <revisionId>')
+  .description('Set the current revision for the given agent.')
+  .action(async (agentId: string, revisionId: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentId);
+    const result = await agent.setCurrentRevision(revisionId);
+    showResult(result, program.opts().raw);
+  });
+
+revisions
+  .command('delete <agentId> <revisionId>')
+  .description('Delete the given revision for the given agent.')
+  .action(async (agentId: string, revisionId: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentId);
+    const result = await agent.deleteRevision(revisionId);
     showResult(result, program.opts().raw);
   });
 
