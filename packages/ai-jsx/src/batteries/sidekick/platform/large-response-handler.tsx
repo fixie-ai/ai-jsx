@@ -6,7 +6,7 @@ import { getEncoding } from 'js-tiktoken';
 import yaml from 'js-yaml';
 import _ from 'lodash';
 import { UseToolsProps } from '../../use-tools.js';
-import { cohereContext, reranker } from '../../../lib/cohere.js';
+import { cohereContext, MarkdownChunkFormatter, RerankerFormatted } from '../../../lib/cohere.js';
 
 export type LengthFunction = ((text: string) => number) | ((text: string) => Promise<number>);
 export interface RedactedFuncionResponseMetadata {
@@ -125,10 +125,7 @@ function getLastRedactedFnResponseData(messages: ConversationMessage[]): Redacte
   return lastFnResData;
 }
 
-export function redactedFunctionTools(
-  messages: ConversationMessage[],
-  componentContext: AI.ComponentContext
-): UseToolsProps['tools'] {
+export function redactedFunctionTools(messages: ConversationMessage[]): UseToolsProps['tools'] {
   const responseContent = getLastRedactedFnResponseData(messages);
   if (!responseContent) {
     return {};
@@ -143,25 +140,14 @@ export function redactedFunctionTools(
           required: true,
         },
       },
-      func: async ({ query }) => {
-        const response = await reranker(
-          {
-            query,
-            documents: responseContent.chunks,
-            top_n: 2,
-          },
-          componentContext
-        );
-        return response
-          .map(
-            (chunk) => `
-\`\`\`chunk
-${responseContent.chunks[chunk.index].replaceAll('```', '\\`\\`\\`')}
-\`\`\`
-`
-          )
-          .join('\n');
-      },
+      func: ({ query }) => (
+        <RerankerFormatted
+          query={query}
+          documents={responseContent.chunks}
+          top_n={2}
+          Formatter={MarkdownChunkFormatter}
+        />
+      ),
     },
   };
 }

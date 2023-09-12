@@ -84,3 +84,62 @@ export async function reranker(
   }
   return (await response.json()).results;
 }
+
+/**
+ * A helper function that uses the Cohere API to rerank documents.
+ * Since {@link reranker} output is a list of indices, it cannot be used as an {@link AI.Component} directly.
+ * This function takes care of that by formatting the output.
+ *
+ * @usage
+ * ```tsx
+ *   <RerankerFormatted
+ *    query={query}
+ *    documents={documents}
+ *    top_n={top_n}
+ *    Formatter={MarkdownChunkFormatter}
+ *   />
+ * ```
+ */
+export async function RerankerFormatted(
+  {
+    query,
+    documents,
+    top_n,
+    Formatter,
+    splitter = '\n',
+  }: {
+    query: string;
+    documents: string[];
+    top_n: number;
+    Formatter: AI.Component<{ children: string }>;
+    splitter?: string;
+  },
+  componentContext: AI.ComponentContext
+) {
+  const response = await reranker({ query, documents, top_n }, componentContext);
+
+  return (
+    <>
+      {response.map((chunk, i) => (
+        <>
+          {i != 0 ? splitter : null}
+          <Formatter>{documents[chunk.index]}</Formatter>
+        </>
+      ))}
+    </>
+  );
+}
+
+/**
+ * A very basic formatter for chunks.
+ * It wraps the chunk text in a Markdown code block and escapes any Markdown code blocks in the chunk text.
+ */
+export function MarkdownChunkFormatter({ children }: { children: string }) {
+  return (
+    <>
+      {'```chunk\n'}
+      {children.replaceAll('```', '\\`\\`\\`')}
+      {'\n```'}
+    </>
+  );
+}
