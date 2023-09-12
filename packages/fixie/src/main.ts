@@ -35,6 +35,8 @@ function registerDeployCommand(command: Command) {
         const [key, value] = v.split('=');
         return {
           ...m,
+          // This condition is necessary; the types are wrong.
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           [key]: value ?? '',
         };
       }
@@ -61,6 +63,8 @@ function registerServeCommand(command: Command) {
         const [key, value] = v.split('=');
         return {
           ...m,
+          // This condition is necessary; the types are wrong.
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           [key]: value ?? '',
         };
       }
@@ -82,7 +86,7 @@ function registerServeCommand(command: Command) {
 
 // Get current version of this package.
 const currentPath = path.dirname(fileURLToPath(import.meta.url));
-const packageJsonPath = path.resolve(currentPath, '../package.json');
+const packageJsonPath = path.resolve(currentPath, path.join('..', '..', 'package.json'));
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
 program

@@ -2,7 +2,7 @@ import { gql } from '@apollo/client/core/index.js';
 import yaml from 'js-yaml';
 import fs from 'fs';
 import terminal from 'terminal-kit';
-import { execSync, spawn, ChildProcess } from 'child_process';
+import { execSync, ChildProcess } from 'child_process';
 import ora from 'ora';
 import os from 'os';
 import path from 'path';
@@ -79,12 +79,7 @@ export class FixieAgent {
         }
       `,
     });
-    return Promise.all(
-      result.data.allAgentsForUser.map(async (agent: any) => {
-        const retAgent = await this.GetAgent(client, agent.agentId);
-        return retAgent;
-      })
-    );
+    return Promise.all(result.data.allAgentsForUser.map((agent: any) => this.GetAgent(client, agent.agentId)));
   }
 
   /** Return the metadata associated with the given agent. */
