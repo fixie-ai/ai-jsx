@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+displayed_sidebar: docsSidebar
 ---
 
 # Differences from React
