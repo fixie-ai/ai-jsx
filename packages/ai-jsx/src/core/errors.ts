@@ -40,6 +40,9 @@ export enum ErrorCode {
 
   OpenAIAPIError = 1032,
 
+  CohereAPIError = 1033,
+  MissingRerankerModel = 1034,
+
   ModelOutputDidNotMatchConstraint = 2000,
 
   UnsupportedMimeType = 2001,

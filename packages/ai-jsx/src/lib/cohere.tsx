@@ -1,11 +1,14 @@
 import * as AI from '../index.js';
+import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { getEnvVar } from './util.js';
-import _ from 'lodash';
+
+import { Jsonifiable } from 'type-fest';
+import { get } from 'lodash';
 
 /**
  * Properties for a {@link cohereContext} that configure the Cohere API.
  */
-export interface CohereProps {
+export type CohereProps = Jsonifiable & {
   api_url?: string;
   api_key?: string;
 
@@ -15,7 +18,7 @@ export interface CohereProps {
    * @see https://docs.cohere.com/docs/reranking#parameters
    */
   reranker_model_name?: string;
-}
+};
 
 export const DEFAULT_COHERE_CONFIGURATION = {
   reranker_model_name: 'rerank-multilingual-v2.0',
@@ -31,40 +34,35 @@ export const DEFAULT_COHERE_CONFIGURATION = {
  */
 export const cohereContext = AI.createContext<CohereProps>(DEFAULT_COHERE_CONFIGURATION);
 
+export interface RerankerProps {
+  query: string;
+  documents: string[];
+  top_n: number;
+}
+
 /**
  * Reranker from Cohere
- * Givne a query and a list of documents, returns the top_n documents sorted by relevance
+ * Given a query and a list of documents, returns the top_n documents sorted by relevance
  *
  * @see https://docs.cohere.com/docs/reranking
  *
  * @returns An array of objects with the index of the document and its relevance score
  */
-export async function reranker(
-  {
-    query,
-    documents,
-    top_n,
-    model,
-  }: {
-    query: string;
-    documents: string[];
-    top_n: number;
-    model?: string;
-  },
-  { getContext, logger }: Pick<AI.ComponentContext, 'getContext' | 'logger'>
+export async function cohereReranker(
+  { query, documents, top_n }: RerankerProps,
+  cohereConfig: CohereProps,
+  logger?: AI.ComponentContext['logger']
 ): Promise<{ index: number; relevance_score: number }[]> {
-  const cohereConfig = getContext(cohereContext);
   if (!cohereConfig.api_key) {
-    logger.error(
-      { CohereContext: cohereConfig },
+    throw new AIJSXError(
       'Cohere API key is not set, but it is needed for doing reranking (e.g. loadBySimilarity).' +
-        ' Please set it in the context.'
+        ' Please set it in the context.',
+      ErrorCode.MissingRerankerModel,
+      'user',
+      { cohereConfig }
     );
-    // fall back to original order
-    // TODO: maybe try OpenAI too?
-    const countResultDocs = Math.min(documents.length, top_n);
-    return _.range(countResultDocs).map((index) => ({ index, relevance_score: 0 }));
   }
+
   const response = await fetch(`${cohereConfig.api_url}/rerank`, {
     method: 'POST',
     headers: {
@@ -74,16 +72,22 @@ export async function reranker(
     body: JSON.stringify({
       query,
       documents,
-      model: model ?? cohereConfig.reranker_model_name ?? 'rerank-multilingual-v2.0',
+      model: cohereConfig.reranker_model_name ?? 'rerank-multilingual-v2.0',
       top_n,
     }),
   });
 
-  logger.info({ response }, 'Got response from reranker server');
+  if (logger) {
+    logger.info({ response }, 'Got response from reranker server');
+  }
 
   if (response.status != 200) {
-    throw new Error(`Reranker responded with error${await response.text()}`);
+    throw new AIJSXError('Cohere reranker API Error', ErrorCode.CohereAPIError, 'ambiguous', {
+      status: response.status,
+      body: await response.text(),
+    });
   }
+
   return (await response.json()).results;
 }
 
@@ -104,28 +108,23 @@ export async function reranker(
  */
 export async function RerankerFormatted(
   {
-    query,
-    documents,
-    top_n,
     Formatter,
     splitter = '\n\n',
-  }: {
-    query: string;
-    documents: string[];
-    top_n: number;
+    ...rerankerProps
+  }: RerankerProps & {
     Formatter: AI.Component<{ children: string }>;
     splitter?: string;
   },
-  componentContext: AI.ComponentContext
+  { getContext, logger }: AI.ComponentContext
 ) {
-  const response = await reranker({ query, documents, top_n }, componentContext);
+  const response = await cohereReranker(rerankerProps, getContext(cohereContext), logger);
 
   return (
     <>
       {response.map((chunk, i) => (
         <>
           {i != 0 ? splitter : null}
-          <Formatter>{documents[chunk.index]}</Formatter>
+          <Formatter>{rerankerProps.documents[chunk.index]}</Formatter>
         </>
       ))}
     </>

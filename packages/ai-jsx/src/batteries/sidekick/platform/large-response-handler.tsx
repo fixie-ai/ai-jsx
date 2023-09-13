@@ -1,26 +1,26 @@
 import * as AI from '../../../index.js';
-import { ConversationMessage, FunctionResponse, FunctionResponseProps } from '../../../core/conversation.js';
+import { ConversationMessage, FunctionResponse, renderToConversation } from '../../../core/conversation.js';
 
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-import { getEncoding } from 'js-tiktoken';
+import { getEncoding, Tiktoken } from 'js-tiktoken';
 import yaml from 'js-yaml';
 import _ from 'lodash';
 import { UseToolsProps } from '../../use-tools.js';
 import { cohereContext, MarkdownChunkFormatter, RerankerFormatted } from '../../../lib/cohere.js';
 import { Jsonifiable } from 'type-fest';
 
-export type LengthFunction = ((text: string) => number) | ((text: string) => Promise<number>);
-
 export interface RedactedFuncionResponseMetadata {
   isRedacted: true;
   chunks: string[];
 }
 
-const getEncoder = _.once(() => getEncoding('cl100k_base'));
+const getOpenAIEncoder = _.once(() => getEncoding('cl100k_base'));
 
-function openAITokenCount(text: string) {
-  return getEncoder().encode(text).length;
+function tokenCount(text: string, encoder: Tiktoken) {
+  return encoder.encode(text).length;
 }
+
+const TRUNCATION_SUFFIX = ' ...[truncated]...';
 
 export async function TruncateByChars(
   {
@@ -36,14 +36,35 @@ export async function TruncateByChars(
   if (stringified.length <= maxLength) {
     return stringified;
   }
-  return `${stringified.slice(0, maxLength - 3)}...`;
+  return `${stringified.slice(0, maxLength - TRUNCATION_SUFFIX.length)}${TRUNCATION_SUFFIX}`;
+}
+
+export async function TruncateByTokens(
+  {
+    children,
+    maxLength,
+    encoder = getOpenAIEncoder(),
+  }: {
+    children: AI.Node;
+    maxLength: number;
+    encoder?: Tiktoken;
+  },
+  { render }: AI.ComponentContext
+) {
+  const stringified = await render(children);
+  if (tokenCount(stringified, encoder) <= maxLength) {
+    return stringified;
+  }
+  const budget = maxLength - tokenCount(TRUNCATION_SUFFIX, encoder);
+
+  return encoder.decode(encoder.encode(stringified).slice(0, budget)) + TRUNCATION_SUFFIX;
 }
 
 export interface LargeFunctionResponseProps {
   maxLength: number;
   failedMaxLength: number;
   numChunks: number;
-  lengthFunction?: LengthFunction;
+  encoder?: Tiktoken;
 }
 
 async function LargeFunctionResponseHandler(
@@ -52,8 +73,7 @@ async function LargeFunctionResponseHandler(
     maxLength = 4000,
     failedMaxLength = 1000,
     numChunks = 4,
-    // use Cohere token counter?
-    lengthFunction = openAITokenCount,
+    encoder = getOpenAIEncoder(),
     ...props
   }: AI.PropsOfComponent<typeof FunctionResponse> & LargeFunctionResponseProps,
   { render, logger, getContext }: AI.ComponentContext
@@ -70,33 +90,39 @@ async function LargeFunctionResponseHandler(
   let stringified = await render(children);
 
   // Option 1: do nothing if it's already small enough
-  if ((await lengthFunction(stringified)) <= maxLength) {
+  if (tokenCount(stringified, encoder) <= maxLength) {
     return <FunctionResponse {...props}>{stringified}</FunctionResponse>;
   }
 
   stringified = yamlOptimizeIfPossible(stringified);
 
   // Option 2: try dumping as YAML. If it's small enough, then we are done.
-  if ((await lengthFunction(stringified)) <= maxLength) {
+  if (tokenCount(stringified, encoder) <= maxLength) {
     return <FunctionResponse {...props}>{stringified}</FunctionResponse>;
   }
 
   // Option 3 (last reosrt): split into chunks and allow LLM to query by similarity
-  // Requires Cohere API key for doing similarity search
   const cohereConfig = getContext(cohereContext);
 
   if (!cohereConfig.api_key) {
-    // Not yet an error, but this is an error just waiting to happen
+    // We require Cohere API key for doing similarity search
+    // If it's not set, we fall back to truncating the response.
     logger.warn(
       { CohereContext: cohereConfig },
-      'FunctionResponse is too big, but Cohere API key is not set. Please set it in the context.'
+      'FunctionResponse is too big, but Cohere API key is not set. Please set it in the context.' +
+        'Falling back to truncating the response.'
+    );
+    return (
+      <TruncateByTokens maxLength={maxLength} encoder={encoder}>
+        {stringified}
+      </TruncateByTokens>
     );
   }
 
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: maxLength / numChunks,
     chunkOverlap: maxLength / numChunks / 10,
-    lengthFunction,
+    lengthFunction: (x) => tokenCount(x, encoder),
   });
   const chunks = await splitter.splitText(stringified);
 
@@ -106,7 +132,6 @@ async function LargeFunctionResponseHandler(
       calling the `loadBySimilarity` function.
     </FunctionResponse>
   );
-  // TODO: return a chunk based on query (gotta get it from conversation)
 }
 
 /**
@@ -134,15 +159,11 @@ export async function LargeFunctionResponseWrapper(
   { render }: AI.ComponentContext
 ) {
   // We need to render the children to get the FunctionResponse elements
-  const elements = await render(children, { stop: (e) => e.tag == FunctionResponse });
+  const messages = await renderToConversation(children, render);
 
-  // We expect elements to just contain a single FunctionResponse but we handle multiple just in case
-  return elements.map((element) =>
-    AI.isElement(element) && element.tag == FunctionResponse ? (
-      <LargeFunctionResponseHandler {...props} {...(element.props as FunctionResponseProps)} />
-    ) : (
-      element
-    )
+  // We expect messages to just contain a single FunctionResponse but we handle multiple just in case
+  return messages.map((msg) =>
+    msg.type == 'functionResponse' ? <LargeFunctionResponseHandler {...props} {...msg.element.props} /> : msg.element
   );
 }
 

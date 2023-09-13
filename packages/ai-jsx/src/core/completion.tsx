@@ -18,7 +18,6 @@ export {
   AssistantMessage,
   FunctionCall,
   FunctionResponse,
-  FunctionResponseProps,
   ConversationHistory,
 } from './conversation.js';
 

@@ -2,17 +2,17 @@
   "name": "sidekick-github",
   "version": "1.0.0",
   "devDependencies": {
-    "@fixieai/sdk": "workspace:^",
+    "@fixieai/sdk": "*",
     "@tsconfig/node18": "^2.0.1",
     "typescript": "^5.1.3"
   },
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "npm run build && npm run serve",
+    "dev": "yarn build && yarn serve",
     "typecheck": "tsc -p tsconfig.json",
-    "build": "npm run typecheck",
-    "prepack": "npm run build",
+    "build": "yarn typecheck",
+    "prepack": "yarn build",
     "serve": "fixie serve",
     "deploy": "fixie deploy"
   },
