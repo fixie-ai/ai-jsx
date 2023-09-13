@@ -16,6 +16,7 @@ export default function NavBar() {
     'Building Blocks JIT UI': '/building-blocks',
     'Speech-to-Text': '/asr',
     'Text-to-Speech': '/tts',
+    'Voice Agent': '/agent',
   };
 
   return (
