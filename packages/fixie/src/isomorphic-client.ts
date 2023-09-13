@@ -126,11 +126,13 @@ export class IsomorphicFixieClient {
     corpusId: string,
     startUrls: string[],
     maxDocuments?: number,
-    maxDepth?: number
+    maxDepth?: number,
+    description?: string
   ): Promise<Jsonifiable> {
     const body = {
       corpus_id: corpusId,
       source: {
+        description,
         corpus_id: corpusId,
         load_spec: {
           max_documents: maxDocuments,
