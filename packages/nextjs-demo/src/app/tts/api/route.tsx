@@ -139,7 +139,7 @@ function ttsAws(voice: string, rate: number, text: string) {
   const credentials = {
     accessKeyId: getEnvVar('AWS_ACCESS_KEY_ID'),
     secretAccessKey: getEnvVar('AWS_SECRET_ACCESS_KEY'),
-    region
+    region,
   };
   aws4.sign(opts, credentials);
   const url = `https://${opts.host}${opts.path}`;
@@ -160,13 +160,6 @@ export async function POST(request: NextRequest) {
 
   const token = getEnvVar('ELEVEN_API_KEY');
   return new NextResponse(JSON.stringify({ token }));
-}
-
-function getApiKey(keyName: string) {
-  const key = getEnvVar(keyName);
-  return new Promise<string>((resolve) => {
-    setTimeout(() => resolve(key), 0);
-  });
 }
 
 function getEnvVar(keyName: string) {
