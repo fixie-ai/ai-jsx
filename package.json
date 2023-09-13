@@ -22,6 +22,7 @@
     "format": "turbo format-for-turbo",
     "test": "turbo test",
     "build": "turbo build",
+    "demo:sidekick-github": "turbo run dev --scope sidekick-github",
     "postinstall": "turbo build",
     "publish-ai-jsx": "turbo test && turbo build && cd packages/ai-jsx && npm publish"
   },

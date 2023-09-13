@@ -1,6 +1,6 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
-  "include": ["src/**/*", ".eslintrc.cjs"],
+  "include": ["src/**/*"],
   "compilerOptions": {
     "jsx": "react-jsx",
     "jsxImportSource": "ai-jsx",
@@ -8,6 +8,7 @@
     "module": "esnext",
     "resolveJsonModule": true,
     "outDir": "dist",
-    "declaration": true
+    "declaration": true,
+    "lib": ["dom", "dom.iterable", "esnext"]
   }
 }

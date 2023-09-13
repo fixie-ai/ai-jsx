@@ -4,12 +4,17 @@
  * This is a command-line tool to interact with the Fixie platform.
  */
 
-import { program } from 'commander';
+import { Command, program } from 'commander';
+import fs from 'fs';
+import path from 'path';
 import terminal from 'terminal-kit';
+import { fileURLToPath } from 'url';
+import { FixieAgent } from './agent.js';
 import { FixieClient } from './client.js';
 
 const { terminal: term } = terminal;
 
+/** Pretty-print a result as JSON. */
 function showResult(result: any, raw: boolean) {
   if (raw) {
     console.log(JSON.stringify(result));
@@ -18,18 +23,90 @@ function showResult(result: any, raw: boolean) {
   }
 }
 
+/** Deploy an agent from the current directory. */
+function registerDeployCommand(command: Command) {
+  command
+    .command('deploy [path]')
+    .description('Deploy an agent')
+    .option(
+      '-e, --env <key=value>',
+      'Environment variables to set for this deployment. Variables in a .env file take precedence over those on the command line.',
+      (v, m: Record<string, string> | undefined) => {
+        const [key, value] = v.split('=');
+        return {
+          ...m,
+          // This condition is necessary; the types are wrong.
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          [key]: value ?? '',
+        };
+      }
+    )
+    .action(async (path: string | undefined, options: { env: Record<string, string> }) => {
+      const client = await FixieClient.Create(program.opts().url);
+      await FixieAgent.DeployAgent(client, path ?? process.cwd(), {
+        FIXIE_API_URL: program.opts().url,
+        ...options.env,
+      });
+    });
+}
+
+/** Run an agent locally. */
+function registerServeCommand(command: Command) {
+  command
+    .command('serve [path]')
+    .description('Run an agent locally')
+    .option('-p, --port <number>', 'Port to run the agent on', '8181')
+    .option(
+      '-e, --env <key=value>',
+      'Environment variables to set for this agent. Variables in a .env file take precedence over those on the command line.',
+      (v, m: Record<string, string> | undefined) => {
+        const [key, value] = v.split('=');
+        return {
+          ...m,
+          // This condition is necessary; the types are wrong.
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          [key]: value ?? '',
+        };
+      }
+    )
+    .action(async (path: string | undefined, options: { port: string; env: Record<string, string> }) => {
+      const client = await FixieClient.Create(program.opts().url);
+      await FixieAgent.ServeAgent({
+        client,
+        agentPath: path ?? process.cwd(),
+        port: parseInt(options.port),
+        tunnel: true,
+        environmentVariables: {
+          FIXIE_API_URL: program.opts().url,
+          ...options.env,
+        },
+      });
+    });
+}
+
+// Get current version of this package.
+const currentPath = path.dirname(fileURLToPath(import.meta.url));
+const packageJsonPath = path.resolve(currentPath, path.join('..', '..', 'package.json'));
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+
 program
   .name('fixie')
-  .version('1.0.0')
+  .version(packageJson.version)
   .description('A command-line client to the Fixie AI platform.')
-  .option('-u, --url <string>', 'URL of the Fixie API endpoint', process.env.FIXIE_API_URL ?? 'https://app.fixie.ai')
+  .option('-u, --url <string>', 'URL of the Fixie API endpoint', process.env.FIXIE_API_URL ?? 'https://api.fixie.ai')
   .option('-r --raw', 'Output raw JSON instead of pretty-printing.');
 
-program.command('user').action(async () => {
-  const client = await FixieClient.Create(program.opts().url);
-  const result = await client.userInfo();
-  showResult(result, program.opts().raw);
-});
+program
+  .command('user')
+  .description('Get information on the current user')
+  .action(async () => {
+    const client = await FixieClient.Create(program.opts().url);
+    const result = await client.userInfo();
+    showResult(result, program.opts().raw);
+  });
+
+registerDeployCommand(program);
+registerServeCommand(program);
 
 const corpus = program.command('corpus').description('Corpus related commands');
 
@@ -52,11 +129,11 @@ corpus
   });
 
 corpus
-  .command('create [corpusName]')
+  .command('create [name] [description]')
   .description('Create a corpus.')
-  .action(async (corpusName?: string) => {
+  .action(async (name?: string, description?: string) => {
     const client = await FixieClient.Create(program.opts().url);
-    const result = await client.createCorpus(corpusName);
+    const result = await client.createCorpus(name, description);
     showResult(result, program.opts().raw);
   });
 
@@ -72,13 +149,21 @@ corpus
 const sources = corpus.command('sources').description('Corpus source related commands');
 
 sources
-  .command('add <corpusId> <urlPattern>')
+  .command('add <corpusId> <startUrls...>')
   .description('Add a source to a corpus.')
-  .action(async (corpusId: string, urlPattern: string) => {
-    const client = await FixieClient.Create(program.opts().url);
-    const result = await client.addCorpusSource(corpusId, urlPattern);
-    showResult(result, program.opts().raw);
-  });
+  .option('--max-documents <number>', 'Maximum number of documents to crawl')
+  .option('--max-depth <number>', 'Maximum depth to crawl')
+  .action(
+    async (
+      corpusId: string,
+      startUrls: string[],
+      { maxDocuments, maxDepth }: { maxDocuments?: number; maxDepth?: number }
+    ) => {
+      const client = await FixieClient.Create(program.opts().url);
+      const result = await client.addCorpusSource(corpusId, startUrls, maxDocuments, maxDepth);
+      showResult(result, program.opts().raw);
+    }
+  );
 
 sources
   .command('list <corpusId>')
@@ -144,6 +229,109 @@ jobs
   .action(async (corpusId: string, docId: string) => {
     const client = await FixieClient.Create(program.opts().url);
     const result = await client.getCorpusDoc(corpusId, docId);
+    showResult(result, program.opts().raw);
+  });
+
+const agents = program.command('agents').description('Agent related commands');
+
+agents
+  .command('list')
+  .description('List all agents.')
+  .action(async () => {
+    const client = await FixieClient.Create(program.opts().url);
+    const result = await FixieAgent.ListAgents(client);
+    showResult(await Promise.all(result.map((agent) => agent.agentId)), program.opts().raw);
+  });
+
+agents
+  .command('get <agentId>')
+  .description('Get information about the given agent.')
+  .action(async (agentId: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const result = await FixieAgent.GetAgent(client, agentId);
+    showResult(result.metadata, program.opts().raw);
+  });
+
+agents
+  .command('delete <agentHandle>')
+  .description('Delete the given agent.')
+  .action(async (agentHandle: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentHandle);
+    const result = agent.delete();
+    showResult(result, program.opts().raw);
+  });
+
+agents
+  .command('publish <agentId>')
+  .description('Publish the given agent.')
+  .action(async (agentHandle: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentHandle);
+    const result = agent.update({ published: true });
+    showResult(result, program.opts().raw);
+  });
+
+agents
+  .command('unpublish <agentId>')
+  .description('Unpublish the given agent.')
+  .action(async (agentHandle: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentHandle);
+    const result = agent.update({ published: false });
+    showResult(result, program.opts().raw);
+  });
+
+agents
+  .command('create <agentHandle> [agentName] [agentDescription] [agentMoreInfoUrl]')
+  .description('Create an agent.')
+  .action(async (agentHandle: string, agentName?: string, agentDescription?: string, agentMoreInfoUrl?: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const result = await FixieAgent.CreateAgent(client, agentHandle, agentName, agentDescription, agentMoreInfoUrl);
+    showResult(result.metadata, program.opts().raw);
+  });
+
+registerDeployCommand(agents);
+registerServeCommand(agents);
+
+const revisions = agents.command('revisions').description('Agent revision-related commands');
+
+revisions
+  .command('list <agentId>')
+  .description('List all revisions for the given agent.')
+  .action(async (agentId: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const result = (await FixieAgent.GetAgent(client, agentId)).metadata.allRevisions;
+    showResult(result, program.opts().raw);
+  });
+
+revisions
+  .command('get <agentId>')
+  .description('Get current revision for the given agent.')
+  .action(async (agentId: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentId);
+    const result = await agent.getCurrentRevision();
+    showResult(result, program.opts().raw);
+  });
+
+revisions
+  .command('set <agentId> <revisionId>')
+  .description('Set the current revision for the given agent.')
+  .action(async (agentId: string, revisionId: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentId);
+    const result = await agent.setCurrentRevision(revisionId);
+    showResult(result, program.opts().raw);
+  });
+
+revisions
+  .command('delete <agentId> <revisionId>')
+  .description('Delete the given revision for the given agent.')
+  .action(async (agentId: string, revisionId: string) => {
+    const client = await FixieClient.Create(program.opts().url);
+    const agent = await FixieAgent.GetAgent(client, agentId);
+    const result = await agent.deleteRevision(revisionId);
     showResult(result, program.opts().raw);
   });
 

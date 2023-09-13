@@ -1,8 +1,7 @@
 import * as AI from 'ai-jsx';
 import { ChatCompletion } from 'ai-jsx/core/completion';
 import { Shrinkable, UserMessage } from 'ai-jsx/core/conversation';
-import { OpenAI, SSE_FINAL_EVENT, SSE_PREFIX, SSE_TERMINATOR } from 'ai-jsx/lib/openai';
-import { Jsonifiable } from 'type-fest';
+import { OpenAI } from 'ai-jsx/lib/openai';
 
 describe('OpenAIChatModel', () => {
   it('honors the maxTokens prop', async () => {
@@ -12,19 +11,19 @@ describe('OpenAIChatModel', () => {
         chatModel="gpt-3.5-turbo"
         client={{
           ...({} as any),
-          createChatCompletion: (req) => {
-            expect(req.max_tokens).toBe(4096);
-            expect(req.messages).toEqual([
-              expect.objectContaining({
-                content: 'Hello!',
-              }),
-            ]);
+          chat: {
+            completions: {
+              async *create(req) {
+                expect(req.max_tokens).toBe(4096);
+                expect(req.messages).toEqual([
+                  expect.objectContaining({
+                    content: 'Hello!',
+                  }),
+                ]);
 
-            return Promise.resolve(
-              new Response(jsonToOpenAIStream([{ choices: [{ delta: { role: 'assistant', content: 'Hi!' } }] }]), {
-                status: 200,
-              })
-            );
+                yield { choices: [{ delta: { role: 'assistant', content: 'Hi!' } }] };
+              },
+            },
           },
         }}
       >
@@ -46,19 +45,19 @@ describe('OpenAIChatModel', () => {
         chatModel="gpt-3.5-turbo"
         client={{
           ...({} as any),
-          createChatCompletion: (req) => {
-            expect(req.max_tokens).toBe(undefined);
-            expect(req.messages).toEqual([
-              expect.objectContaining({
-                content: 'Hello!',
-              }),
-            ]);
+          chat: {
+            completions: {
+              async *create(req) {
+                expect(req.max_tokens).toBe(undefined);
+                expect(req.messages).toEqual([
+                  expect.objectContaining({
+                    content: 'Hello!',
+                  }),
+                ]);
 
-            return Promise.resolve(
-              new Response(jsonToOpenAIStream([{ choices: [{ delta: { role: 'assistant', content: 'Hi!' } }] }]), {
-                status: 200,
-              })
-            );
+                yield { choices: [{ delta: { role: 'assistant', content: 'Hi!' } }] };
+              },
+            },
           },
         }}
       >
@@ -73,15 +72,3 @@ describe('OpenAIChatModel', () => {
     expect(result).toBe('Hi!');
   });
 });
-
-function jsonToOpenAIStream(messages: Jsonifiable[]): ReadableStream<Uint8Array> {
-  return new ReadableStream({
-    start(controller) {
-      for (const message of messages) {
-        controller.enqueue(`${SSE_PREFIX}${JSON.stringify(message)}${SSE_TERMINATOR}`);
-      }
-      controller.enqueue(`${SSE_PREFIX}${SSE_FINAL_EVENT}`);
-      controller.close();
-    },
-  }).pipeThrough(new TextEncoderStream());
-}

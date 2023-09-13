@@ -1,9 +1,9 @@
-import { ChatCompletionResponseMessage } from 'openai';
 import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { debug } from './debug.js';
 import _ from 'lodash';
+import { Jsonifiable } from 'type-fest';
 
 /**
  * Provide a System Message to the LLM, for use within a {@link ChatCompletion}.
@@ -17,7 +17,7 @@ import _ from 'lodash';
  *    </ChatCompletion>
  * ```
  */
-export function SystemMessage({ children }: { children: Node }) {
+export function SystemMessage({ children }: { children: Node; metadata?: Record<string, Jsonifiable> }) {
   return children;
 }
 
@@ -35,7 +35,7 @@ export function SystemMessage({ children }: { children: Node }) {
  *    ==> 'Sorry to hear that. Can you tell me why?
  * ```
  */
-export function UserMessage({ children }: { name?: string; children: Node }) {
+export function UserMessage({ children }: { name?: string; children: Node; metadata?: Record<string, Jsonifiable> }) {
   return children;
 }
 
@@ -55,25 +55,30 @@ export function UserMessage({ children }: { name?: string; children: Node }) {
  *
  *    ==> "Ok, thanks for that feedback. I'll cancel your account."
  */
-export function AssistantMessage({ children }: { children: Node }) {
+export function AssistantMessage({ children }: { children: Node; metadata?: Record<string, Jsonifiable> }) {
   return children;
 }
 
-export function ConversationHistory({ messages }: { messages: ChatCompletionResponseMessage[] }) {
-  return messages.map((message) => {
-    switch (message.role) {
-      case 'system':
-        return <SystemMessage>{message.content}</SystemMessage>;
-      case 'user':
-        return <UserMessage>{message.content}</UserMessage>;
-      case 'assistant':
-        return <AssistantMessage>{message.content}</AssistantMessage>;
-      case 'function':
-        return (
-          <FunctionCall name={message.function_call!.name!} args={JSON.parse(message.function_call!.arguments!)} />
-        );
-    }
-  });
+/**
+ * Sets the node that the <ConversationHistory /> component will resolve to.
+ */
+export const ConversationHistoryContext = AI.createContext<AI.Node>(undefined);
+
+/**
+ * Renders to the conversation history provided through ConversationHistoryContext.
+ */
+export function ConversationHistory(_: {}, { getContext }: AI.ComponentContext) {
+  const fromContext = getContext(ConversationHistoryContext);
+
+  if (fromContext === undefined) {
+    throw new AIJSXError(
+      'No conversation history was present on the context. Use the ConversationHistoryContext.Provider component to set the conversation history.',
+      ErrorCode.ConversationHistoryComponentRequiresContext,
+      'user'
+    );
+  }
+
+  return fromContext;
 }
 
 /**
@@ -101,6 +106,7 @@ export function FunctionCall({
   name: string;
   partial?: boolean;
   args: Record<string, string | number | boolean | null>;
+  metadata?: Record<string, Jsonifiable>;
 }) {
   return `Call function ${name} with ${partial ? '(incomplete) ' : ''}${JSON.stringify(args)}`;
 }
@@ -121,7 +127,16 @@ export function FunctionCall({
  *    ==> "That would be 83,076."
  * ```
  */
-export function FunctionResponse({ name, failed, children }: { name: string; failed?: boolean; children: Node }) {
+export function FunctionResponse({
+  name,
+  failed,
+  children,
+}: {
+  name: string;
+  failed?: boolean;
+  children: Node;
+  metadata?: Record<string, Jsonifiable>;
+}) {
   if (failed) {
     return (
       <>
@@ -192,7 +207,7 @@ function toConversationMessages(partialRendering: AI.PartiallyRendered[]): Conve
         return { type: 'functionResponse', element: e };
       default:
         throw new AIJSXError(
-          `Unexpected tag (${e.tag.name}) in conversation`,
+          `Unexpected tag (${e.tag}) in conversation`,
           ErrorCode.UnexpectedPartialRenderResult,
           'internal'
         );
@@ -259,7 +274,7 @@ export async function renderToConversation(
  *
  *        return null;
  *      }>
- *      <ConversationHistory messages={jsonMessages} />
+ *      <ConversationHistory />
  *    </ChatCompletion>
  *
  *    ==> 'Hello there!'
@@ -303,7 +318,7 @@ export async function* Converse(
  * ```tsx
  *     <ShowConversation present={(msg) => msg.type === "assistant" && <>Assistant: {msg.element}</>}>
  *         <UserMessage>This is not visible.</UserMessage>
- *         <Assistant>This is visible!</UserMessage>
+ *         <AssistantMessage>This is visible!</AssistantMessage>
  *     </ShowConversation>
  *
  *     ==> 'Assistant: This is visible!'
@@ -316,7 +331,7 @@ export async function* ShowConversation(
     onComplete,
   }: {
     children: AI.Node;
-    present?: (message: ConversationMessage) => AI.Node;
+    present?: (message: ConversationMessage, index: number) => AI.Node;
     onComplete?: (conversation: ConversationMessage[], render: AI.RenderContext['render']) => Promise<void> | void;
   },
   { render, isAppendOnlyRender }: AI.ComponentContext

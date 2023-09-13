@@ -1,6 +1,36 @@
 # Changelog
 
-## 0.11.0
+## 0.17.0
+
+- Changed `<UseTools>` to allow AI.JSX components to be tools.
+- Added `FixieAPIConfiguration` context.
+- Changed `FixieCorpus` to take a `FixieAPIConfiguration`.
+- Added the `FixieCorpus.createTool` helper to create a tool that consults a Fixie corpus.
+
+## [0.16.0](https://github.com/fixie-ai/ai-jsx/commit/c951b4695c97230016b1ae2763649f67089adf92)
+
+- Updated default URL for `<FixieCorpus>` to `api.fixie.ai`.
+
+## [0.15.0](https://github.com/fixie-ai/ai-jsx/commit/9b215e0ea927152ebddc53a800828a4031a3825a)
+
+- Updated DocsQA battery to use the new version of the Fixie corpus REST API.
+
+## [0.14.0](https://github.com/fixie-ai/ai-jsx/commit/f46df6cc40198b82062d61029e47c9d38ef6abf3)
+
+- Updated DocsQA battery to use the new Fixie corpus REST API.
+
+## [0.13.0](https://github.com/fixie-ai/ai-jsx/commit/3f97b9bd030c15c65892ce8bdb409874e3487d13)
+
+- Add Sidekick component. Sidekicks are a high-level abstraction for combining tool use, docs QA, and generated UI.
+- Change `MdxSystemMessage` to no longer automatically infer component names from the `usageExamples`. Instead, `usageExamples` is now a plain string, and component names are passed separately via the `componentNames` prop.
+
+## [0.12.0](https://github.com/fixie-ai/ai-jsx/commit/348294ed38be6b6b185f95bb543bc91a40bcf0c4)
+
+- Change the `<ConversationHistory>` component to render to a node from a `ConversationHistoryContext` provider, rather
+  than from OpenAI message types.
+- Replace usage of `openai-edge` with that of the `openai` v4 package.
+
+## [0.11.0](https://github.com/fixie-ai/ai-jsx/commit/44e7702a449861c1f5435215000b6fc3e1a95171)
 
 - Updated the `<FixieCorpus>` component to use the new Fixie Corpus REST API.
   This is currently only available to users on `beta.fixie.ai` but will be brought
