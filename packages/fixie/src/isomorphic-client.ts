@@ -27,7 +27,7 @@ export class IsomorphicFixieClient {
   /**
    * Use the `Create*` methods instead.
    */
-  protected constructor(public readonly url: string, protected readonly apiKey?: string) {}
+  protected constructor(public readonly url: string, public readonly apiKey?: string) {}
 
   static Create(url: string, apiKey?: string) {
     const apiKeyToUse = apiKey ?? process.env.FIXIE_API_KEY;
