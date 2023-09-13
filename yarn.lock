@@ -5678,6 +5678,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/aws4@npm:^1.11.3":
+  version: 1.11.3
+  resolution: "@types/aws4@npm:1.11.3"
+  dependencies:
+    "@types/node": "*"
+  checksum: 4c10ca4d7de26e031e81fd67387df51323ebea81c441330a5a733f4bace854d61b8e880ea8fbe3678f2e6e081d510cbc6b623864646519fbb4ab130a8b138a46
+  languageName: node
+  linkType: hard
+
 "@types/babel__core@npm:^7.0.0, @types/babel__core@npm:^7.1.14":
   version: 7.20.1
   resolution: "@types/babel__core@npm:7.20.1"
@@ -18314,6 +18323,7 @@ __metadata:
     "@next/eslint-plugin-next": ^13.4.6
     "@octokit/graphql": ^5.0.6
     "@tailwindcss/forms": ^0.5.3
+    "@types/aws4": ^1.11.3
     "@types/lodash": ^4.14.195
     "@types/node": 20.2.5
     "@types/react": 18.2.8
