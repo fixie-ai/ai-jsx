@@ -647,30 +647,26 @@ export class RevAISpeechRecognition extends SpeechRecognitionBase {
 export class SpeechRecognitionOptions {
   public language?: string;
   public model?: string;
-  constructor(
-    public provider: string,
-    public manager: MicManager,
-    public tokenFunc: GetToken,
-  ) {}
+  constructor(public provider: string, public manager: MicManager, public getToken: GetToken) {}
 }
 
 /**
  * Creates a speech recoginzer of the given type (e.g., 'deepgram').
  */
-export function createSpeechRecognition({ provider, manager, tokenFunc, language, model }: SpeechRecognitionOptions) {
+export function createSpeechRecognition({ provider, manager, getToken, language, model }: SpeechRecognitionOptions) {
   switch (provider) {
     case 'deepgram':
-      return new DeepgramSpeechRecognition(manager, tokenFunc, language, model);
+      return new DeepgramSpeechRecognition(manager, getToken, language, model);
     case 'soniox':
-      return new SonioxSpeechRecognition(manager, tokenFunc, language);
+      return new SonioxSpeechRecognition(manager, getToken, language);
     case 'gladia':
-      return new GladiaSpeechRecognition(manager, tokenFunc, language);
+      return new GladiaSpeechRecognition(manager, getToken, language);
     case 'aai':
-      return new AssemblyAISpeechRecognition(manager, tokenFunc, language);
+      return new AssemblyAISpeechRecognition(manager, getToken, language);
     case 'speechmatics':
-      return new SpeechmaticsSpeechRecognition(manager, tokenFunc, language);
+      return new SpeechmaticsSpeechRecognition(manager, getToken, language);
     case 'revai':
-      return new RevAISpeechRecognition(manager, tokenFunc, language);
+      return new RevAISpeechRecognition(manager, getToken, language);
     default:
       throw new Error(`Unknown speech recognition type: ${provider}`);
   }
