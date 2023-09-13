@@ -34,7 +34,7 @@ export interface ConversationTurn {
 }
 
 export interface GenerationParams {
-  userTimeZoneOffset: number;
+  userTimeZoneOffset?: number | null;
   model: string | null;
   modelProvider: string | null;
 }
@@ -42,7 +42,7 @@ export interface GenerationParams {
 export interface InvokeAgentRequest {
   conversationId: string;
   replyToTurnId?: string;
-  generationParams: GenerationParams;
+  generationParams?: GenerationParams;
 }
 
 export interface InvokeAgentResponse {
