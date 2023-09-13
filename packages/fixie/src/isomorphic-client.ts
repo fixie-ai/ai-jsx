@@ -27,7 +27,7 @@ export class IsomorphicFixieClient {
   /**
    * Use the `Create*` methods instead.
    */
-  protected constructor(public readonly url: string, protected readonly apiKey?: string) {}
+  protected constructor(public readonly url: string, public readonly apiKey?: string) {}
 
   static Create(url: string, apiKey?: string) {
     const apiKeyToUse = apiKey ?? process.env.FIXIE_API_KEY;
@@ -91,10 +91,11 @@ export class IsomorphicFixieClient {
   }
 
   /** Create a new Corpus. */
-  createCorpus(name?: string): Promise<Jsonifiable> {
+  createCorpus(name?: string, description?: string): Promise<Jsonifiable> {
     const body = {
       corpus: {
         display_name: name,
+        description,
       },
     };
     return this.request('/api/v1/corpora', body);
