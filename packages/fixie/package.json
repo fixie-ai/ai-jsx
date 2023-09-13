@@ -1,6 +1,6 @@
 {
   "name": "@fixieai/fixie",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
@@ -13,7 +13,8 @@
     "format": "prettier --write .",
     "test": "yarn run build && yarn run lint",
     "lint": "eslint .",
-    "lint:fix": "eslint ."
+    "lint:fix": "eslint .",
+    "prepack": "yarn build"
   },
   "files": [
     "dist"
