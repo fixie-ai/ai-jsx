@@ -1,5 +1,5 @@
 ---
-displayed_sidebar: docsSidebar
+displayed_sidebar: tutorialSidebar
 ---
 
 import FoxieSidekick from '../static/img/foxie-sidekick.png'
@@ -8,10 +8,18 @@ import Step3Profit from '../static/img/step-3-profit.png'
 
 # Quickstart: Fixie Sidekicks
 
-This is a quickstart guide to building and deploying a Fixie Sidekick. A sidekick is an embeddable, conversational
-assistant built using AI.JSX. Sidekicks harness the power of [DocsQA](/docsQA), [Tools](/tools), and [GenUI](/genUI) and bring everything together in a seamless experience.
+One of the best use cases for AI.JSX is to build a **Sidekick**, an AI-powered chatbot that is embedded 
+in a web page or app and is able to answer questions, call APIs,
+and more. AI.JSX makes it easy to build Sidekicks with a rich UI, access to
+documents, and the ability to fetch live data and take action via API calls.
 
-_(TODO -> Matt, I'm thinking we might want to remove this last sentence since those pages are not yet built out. Or we can populate them with content.)_
+Sidekicks can be built and deployed in minutes. This quickstart will walk you through
+the entire process of building and deploying your own Sidekick.
+
+This tutorial relies on both AI.JSX as well as the [Fixie](https://fixie.ai) cloud
+platform, which provides a suite of APIs and tools for hosting and managing
+Sidekicks. It is possible to build and deploy Sidekicks without Fixie, but
+using Fixie makes the process much easier.
 
 :::info What You Will Do
 At the end of this quickstart you will:
@@ -26,47 +34,65 @@ At the end of this quickstart you will:
 ## Step 0: Prerequisites
 
 :::warning Prerequisites
-Before you get started, you will need to have a free Fixie developer account and have some tools installed on your machine. You will also need a text editor. If you don't have a preferred text editor, we recommend [Visual Studio Code](https://code.visualstudio.com/).
-
-If you don't want to fuss with installing things on your machine, you can sign-up for a free DevZero account and use the pre-configured template for Fixie Sidekicks.
+Before you get started, you will need to have a free Fixie developer account and have some tools installed 
+on your machine. You will also need a text editor. If you don't have a preferred text editor, we 
+recommend [Visual Studio Code](https://code.visualstudio.com/).
 :::
 
 :::tip On Windows? Use WSL.
-If you are using a Windows machine, we highly recommend using the Windows Subsystem for Linux (WSL) for development with Node.js. This is optional. If you want to use WSL, follow [this guide](https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-wsl) which will get you set-up with WSL, Node, and VSCode (for your text editor).
+If you are using a Windows machine, we highly recommend using the Windows Subsystem for Linux (WSL) for 
+development with Node.js. This is optional. If you want to use WSL, 
+follow [this guide](https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-wsl) which 
+will get you set-up with WSL, Node, and VSCode (for your text editor).
 :::
 
-### a) Sign-up for Fixie
+### a) Get a Fixie developer account
 
-We will use [Fixie](https://fixie.ai) for hosting our Sidekick. Sign-up for a free Fixie developer account:
+We will use [Fixie](https://fixie.ai) for hosting and managing our Sidekick.
+Sign up for a free Fixie developer account:
 
-1. Go to the [Fixie sign-up page](https://console.fixie.ai).
+1. Go to the [Fixie Console page](https://console.fixie.ai).
 1. Create an account using either a Google or GitHub account.
 1. Navigate to your [profile page](https://console.fixie.ai/profile).
 
 <img src={FixieProfileAPIKey} alt="Fixie profile page where you can get your API key." width="600"/>
 
-Keep this page open as we will come back to this in Step 2 to grab our API key which is required for deployment.
+The Fixie Console is where you will test and manage your Sidekick once it's built.
+For now, the main thing you need is your Fixie API Key, which is found on your
+[profile page](https://console.fixie.ai/profile).
 
 ### b) Install Node.js
 
-Install the current [LTS version of Node.js](https://nodejs.org/en).
+Sidekicks are based on AI.JSX, which in turn relies on Node.js, a JavaScript
+runtime. Install the current [LTS version of Node.js](https://nodejs.org/en).
 
 ### c) Install the Fixie CLI
 
-In your terminal execute the following:
+The Fixie command-line interface is provided by the [fixie](https://www.npmjs.com/package/fixie) package in npm. Install it by running:
 
 ```terminal
-npm install -g @fixieai/fixie@latest
+npm install -g fixie@latest
 ```
 
-_TODO: Matt, should this be install and configure CLI? i.e. should we include auth/API key here?_
+This will install the `fixie` binary.
 
-## Step 1: Get Template Code
+### d) Authenticate the Fixie CLI
 
-We are going to start with some demo code.
+To configure the Fixie CLI to login to the Fixie service, just run:
+  
+```terminal
+fixie auth
+```
 
-- In your terminal navigate to a folder where you want to save the template code. For example, someplace like `Documents\GitHub\` or just `Documents\`.
-- Enter the following command. This will clone the template code into a directory named `fixie-sidekick-template` in the current folder.
+This will open a browser tab to authenticate to the Fixie Console. The Fixie
+CLI should now be configured to work with your Fixie account.
+
+## Step 1: Clone Sidekick Template Repo
+
+Now that we have the prerequisites out of the way, let's download and deploy
+the Fixie Sidekick template.
+
+Clone the `fixie-sidekick-template` repository from GitHub:
 
 ```terminal
 git clone https://github.com/fixie-ai/fixie-sidekick-template.git
@@ -76,156 +102,108 @@ If this command fails you may need to [install Git](https://github.com/fixie-ai/
 
 You can also download the code directly from [the source](https://github.com/fixie-ai/fixie-sidekick-template). While you're there, give us a star! 🦊
 
-## Step 2: Deploy Sidekick
+## Step 2: Build the Sidekick Code
 
-OK. Set-up is out of the way. Now is when we really start moving!
-
-### a) Open Project in VS Code
-
-Open Visual Studio Code (or your favorite text editor). Open the folder where you saved the template code (e.g. `Documents\GitHub\fixie-sidekick-template`)
-
-### b) Populate Fixie API Key
-
-Go back to the web page we left open above when signing up for a Fixie account. If you can't find it, it's [here](https://console.fixie.ai/profile).
-
-<img src={FixieProfileAPIKey} alt="Fixie profile page where you can get your API key." width="600"/>
-
-- Click on the clipboard icon (the one on the far right of the API token) to copy your API key.
-- The key looks something like `FmEEMtjcHLfNGPrLhRQwQfwG9Li...` and is 175 characters long.
-- Back in your text editor, open the file named `.env`. Add your key:
-
-```javascript
-FIXIE_API_KEY = YOUR_KEY_HERE;
+The Sidekick is implemented in TypeScript with AI.JSX, so you need to
+build it before it can be deployed. To do this, in the `fixie-sidekick-template`
+directory, run:
+  
+```terminal
+npm install
+npm run build
 ```
+The resulting JavaScript code should now be in the `dist/` subdirectory.
 
-This should look something like this:
+## Step 3: Deploy the Sidekick
 
-```javascript
-FIXIE_API_KEY=FmEEMtjcHLfNGPrLhRQwQfwG9Li...[continues]
-```
-
-_TODO: Matt: right now the .env file is in the .gitignore which means they would have to create it. thoughts on the best route here? don't want to set ppl up to accidentally commit secrets._
-
-### c) Deploy Sidekick to Fixie
-
-The moment of truth has arrived! Let's deploy our sidekick to Fixie!
-
-#### Deploying for Development (`fixie serve`)
-
-When developing or updating a Sidekick, we most likely will be making many changes and testing things as we go. In this case, we want
-to deploy things as quickly as possible.
-
-From the directory where you have your sidekick code, execute the following in your terminal:
+In the `fixie-sidekick-template` directory, simply run:
 
 ```terminal
-npx @fixieai/fixie@latest serve
+fixie deploy
 ```
 
-This uses the latest version of the fixie CLI and serves everything from your machine. For example, if our Fixie user is "sarah" and she is deploying a sidekick named "sidekick-acme", then we would expect to see something like this:
+This will deploy the Sidekick to the Fixie cloud service. It takes a couple of
+minutes, but once the process is done, you will see a link to the Sidekick's
+page on the Fixie Console. For example:
 
 ```terminal
-sarah@computer sidekick-acme % npx @fixieai/fixie@latest serve
-🦊 Serving agent sarah/sidekick-acme...
-🌱 Starting local agent process on port 8181...
-🌱 Running: npx --package=@fixieai/sdk fixie-serve-bin --packagePath ./dist/index.js --port 8181
-🌱 Agent stdout: AI.JSX agent listening on http://0.0.0.0:8181.
-
-🦊 Creating new agent sarah/sidekick-acme...
-🚇 Starting tunnel process...
-🥡 Serving agent at https://3fa8367c27e1337.lhr.life
-🥡 Revision a1a29ee1 was deployed to https://console.fixie.ai/agents/sarah/sidekick-acme
+❯ fixie deploy
+🦊 Deploying agent sarah/fixie-sidekick-template...
+🦊 Creating new agent sarah/fixie-sidekick-template...
+⠋  🚀 Deploying... (hang tight, this takes a minute or two!)
+✔ Agent fixie-sidekick-template is running at: https://console.fixie.ai/agents/sarah/fixie-sidekick-template
 ```
 
-As we make changes to our sidekick, we can simply stop serving our sidekick with `Control+C` and then serve up our new changes with the `serve` command as we did above.
+<img src={Step3Profit} alt="" width="300"/>
 
-_TODO Matt: i think we need something here about serve vs. deploy and when to do each, considerations, etc._
+## Step 4: Try it Out!
 
-#### Deploying to Production (`fixie deploy`)
+Surf on over to the Sidekick URL shown by the `fixie deploy` command. You should
+now be able to chat directly with your Sidekick!
 
-Once we are done with our development, we can deploy the Sidekick to Fixie with the `deploy` command.
+## Local Development and Testing
 
-From your terminal:
+The `fixie deploy` step can take a couple of minutes to build and deploy your
+Sidekick to the cloud, which is a real bummer when you're testing things locally.
+Fortunately, you can run your Sidekick locally, without needing to deploy it to
+the cloud.
+
+Instead of `fixie deploy`, you run:
 
 ```terminal
-npx @fixieai/fixie deploy
+fixie serve
 ```
 
-Deploying takes up to a couple of minutes. While deployment is running you will see status messages in your terminal. For example, if our Fixie user is "sarah" and she is deploying a sidekick named "sidekick-acme", then we would expect to see something like this:
+This starts up the Sidekick running on your local machine, and sets
+up a tunnel allowing the Fixie service to connect into your local
+Sidekick. When you quit the `fixie serve` command (for example, by
+hitting Ctrl+C), the Sidekick reverts back to the most recently
+deployed version (from `fixie deploy`). Note that you need to `fixie
+deploy` your Sidekick in order for it to run in the cloud.
 
-```terminal
-sarah@computer % FIXIE_API_URL='https://console.fixie.ai' npx @fixieai/fixie deploy
-🦊 Deploying agent sarah/sidekick-acme...
-👽 Updating agent sarah/sidekick-acme...
-```
+As we make changes to our sidekick, we can simply stop serving our sidekick with `Ctrl+C` and then 
+serve up our new changes with the `serve` command as we did above.
 
-Once complete deployment completes, we would expect to see something like this:
 
-```terminal
-sarah@computer % FIXIE_API_URL='https://console.fixie.ai' npx @fixieai/fixie deploy
-🦊 Deploying agent sarah/sidekick-acme...
-👽 Updating agent sarah/sidekick-acme...
-✔ Revision a9b5e04c was deployed to https://console.fixie.ai/agents/sarah/sidekick-acme
-```
+## Sending Messages to your Sidekick
 
-#### Troubleshooting: Verify the Sidekick Builds
+The Fixie Console page gives you a simple web interface to interact with your
+Sidekick, but you're not limited to this interface. You can chat with your
+Sidekick directly via a REST API, or embed the Sidekick chat UI in your own
+web app.
 
-If the above deploy step failed for some reason, it is a good idea to build our sidekick locally to see if there are any errors raised. Building is done from the terminal:
+### Method 1: Via the REST API
 
-```terminal
-npm build
-```
-
-_TODO Matt: Is this still needed?_
-
-## Step 3: Converse with Sidekick
-
-<img src={Step3Profit} alt="Fixie profile page where you can get your API key." width="300"/>
-
-We've got our Sidekick deployed. Let's test it out to see what it can do!
-
-We are going to test the sidekick using four different methods.
-
-### Method 1: Via curl
-
-First up, let's ask our Sidekick a question using curl. From your terminal:
+First up, let's ask our Sidekick a question through the Fixie REST API, using
+`curl`. From your terminal:
 
 ```bash
-curl 'https://console.fixie.ai/api/agents/<your user name>/<your sidekick name>' \
-  -d '{ "message": {"text": "What can you do?" }}' \
+curl 'https://console.fixie.ai/api/v1/agents/<your user name>/<your sidekick name>/conversations' \
+  -d '{ "generationParams": { "userTimeZoneOffset": 0 }, "message": {"text": "What can you do?" }}' \
   -H 'Authorization: Bearer <your Fixie API key>' \
   -H 'Content-Type: application/json'
+```
 
--- For example:
+For example:
 
-curl 'https://console.fixie.ai/api/agents/sarah/sidekick-acme' \
-  -d '{ "message": {"text": "What can you do?" }}' \
+```bash
+curl 'https://console.fixie.ai/api/v1/agents/sarah/fixie-sidekick-template/conversations' \
+  -d '{ "generationParams": { "userTimeZoneOffset": 0 }, "message": {"text": "What can you do?" }}' \
   -H 'Authorization: Bearer FmEEMtjcHLfNGPrLhRQwQfwG9Li...' \
   -H 'Content-Type: application/json'
 ```
 
-_TODO Matt: this is currently broken. not sure what the plan is to fix._
+### Method 2: Via the Fixie Console
 
-This should display something like this:
+- In your browser, navigate to the [Fixie dashboard](https://console.fixie.ai/).
+- Click on your Sidekick.
+- Enter a question for the Sidekick. e.g. "What can you do?"
 
-TODO
-
-### Method 2: Via the Fixie Dashboard
-
-- In your browser navigate to the [Fixie dashboard](https://console.fixie.ai/).
-- Click on your agent.
-- Enter a question for the sidekick. e.g. "What can you do?"
-
-Note: you can also access your agent directly at:
+You can also access your agent directly at:
 
 ```terminal
 https://console.fixie.ai/agents/<your user name>/<your sidekick name>
 ```
-
-### Method 3: Via Embedding in Another Web App
-
-TODO could we just include a simple web page in the template code that can be served up locally?
-
-_TODO Matt: need to figure out if we add this or not_
 
 <img src={FoxieSidekick} alt="Foxie, the Fixie mascot, doing a sidekick!" width="400"/>
 
@@ -235,14 +213,6 @@ You've got a template Sidekick deployed to Fixie. So what's next? Here are some 
 
 ### Create your own Document Collection
 
-This will enable you to provide your Sidekick with specialized knowledge about your company, product, or organization. Create your own collection [here](https://console.fixie.ai/documents).
+This will enable you to provide your Sidekick with specialized knowledge about your company, 
+product, or organization. Create your own collection [here](https://console.fixie.ai/documents).
 
-### Give your Sidekick Tools
-
-Tools enable your Sidekick to do more tasks in response to what the end user needs.
-
-_TODO What should we say here/point to here?_
-
-### Customize the System Prompt
-
-TODO

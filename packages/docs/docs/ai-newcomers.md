@@ -1,5 +1,5 @@
 ---
-sidebar_position: 1
+displayed_sidebar: tutorialSidebar
 ---
 
 # Guide for AI Newcomers
@@ -146,7 +146,7 @@ LLMs have "soft knowledge" of the world, but if you just ask a question without 
 
 To address this, the community has developed a variety of techniques known collectively as "Document Q&A" (DocsQA). DocsQA enables your application to provide the LLM with a set of content/documents that serve as the source of truth. This avoids hallucination and enables the model to provide better responses.
 
-For more details, see the [DocsQA Guide](./docsqa.md).
+For more details, see the [DocsQA Guide](./guides/docsqa.md).
 
 ### Streaming
 
@@ -170,7 +170,7 @@ AI.createRenderContext().render(<App />, {
 
 The "pit of success" in AI.JSX is your program being automatically parallelized and streamed to the caller.
 
-More details on streaming can be found in the [Performance Guide](./performance.md).
+More details on streaming can be found in the [Performance Guide](./guides/performance.md).
 
 ### Semantic Similarity ("Embeddings")
 
@@ -194,7 +194,7 @@ You can use embeddings for any task where you want to know how related things ar
 - Taking an emotional temperature of employees based on how they are chatting in Slack today
 - Finding all the fight scenes in a book
 
-AI.JSX automatically generates and uses embeddings in our [DocsQA](./docsqa.md) implementation.
+AI.JSX automatically generates and uses embeddings in our [DocsQA](./guides/docsqa.md) implementation.
 
 For more information on embeddings, see the [OpenAI Embeddings](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) docs.
 

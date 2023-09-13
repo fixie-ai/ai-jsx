@@ -1,5 +1,5 @@
 ---
-displayed_sidebar: docsSidebar
+displayed_sidebar: tutorialSidebar
 ---
 
 # Getting Started with AI.JSX

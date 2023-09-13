@@ -74,7 +74,7 @@ For more detail, see [Intermediate Results](./rules-of-jsx.md#intermediate-resul
 
 ## Strategy #2: Minimizing Output Length
 
-A model generation takes linearly more time as the output length increases, so the shorter your output can be, the faster the response will be completed. However, this inherently means the model is spending less time "thinking" about your result, [which could degrade accuracy](./brand-new.md#thinking-out-loud). You'll need to balance these trade-offs.
+A model generation takes linearly more time as the output length increases, so the shorter your output can be, the faster the response will be completed. However, this inherently means the model is spending less time "thinking" about your result, [which could degrade accuracy](../ai-newcomers.md#thinking-out-loud). You'll need to balance these trade-offs.
 
 For example, you may have a scenario where you instruct the model to give you output in a structured format, like JSON. If you can come up with a simpler JSON format that takes fewer characters, the model will produce it faster.
 
