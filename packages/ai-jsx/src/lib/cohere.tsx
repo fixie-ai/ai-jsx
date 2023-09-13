@@ -82,10 +82,11 @@ export async function cohereReranker(
   }
 
   if (response.status != 200) {
-    throw new AIJSXError('Cohere reranker API Error', ErrorCode.CohereAPIError, 'ambiguous', {
-      status: response.status,
-      body: await response.text(),
-    });
+    throw new AIJSXError(
+      `Cohere reranker API Error (${response.status}): ${await response.text()}`,
+      ErrorCode.CohereAPIError,
+      'ambiguous'
+    );
   }
 
   return (await response.json()).results;

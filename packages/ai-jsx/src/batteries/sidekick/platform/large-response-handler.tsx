@@ -20,7 +20,7 @@ function tokenCount(text: string, encoder: Tiktoken) {
   return encoder.encode(text).length;
 }
 
-const TRUNCATION_SUFFIX = ' ...[truncated]...';
+const TRUNCATION_SUFFIX = '\n\n...[value-truncated:too-large]...';
 
 export async function TruncateByChars(
   {
@@ -113,9 +113,11 @@ async function LargeFunctionResponseHandler(
         'Falling back to truncating the response.'
     );
     return (
-      <TruncateByTokens maxLength={maxLength} encoder={encoder}>
-        {stringified}
-      </TruncateByTokens>
+      <FunctionResponse {...props} metadata={{ isRedacted: true }}>
+        <TruncateByTokens maxLength={maxLength} encoder={encoder}>
+          {stringified}
+        </TruncateByTokens>
+      </FunctionResponse>
     );
   }
 
@@ -168,17 +170,18 @@ export async function LargeFunctionResponseWrapper(
 }
 
 function getLastRedactedFnResponseData(messages: ConversationMessage[]): RedactedFuncionResponseMetadata | undefined {
-  return _.findLast(
-    messages,
-    (msg) =>
-      msg.type == 'functionResponse' &&
-      typeof msg.element.props.metadata !== 'undefined' &&
-      'isRedacted' in msg.element.props.metadata &&
-      Boolean(msg.element.props.metadata.isRedacted) &&
-      'chunks' in msg.element.props.metadata &&
-      Array.isArray(msg.element.props.metadata.chunks) &&
-      msg.element.props.metadata.chunks.every((chunk) => typeof chunk === 'string')
-  ) as RedactedFuncionResponseMetadata | undefined;
+  const metadataOrUndefined = messages.map((msg) =>
+    msg.type == 'functionResponse' &&
+    typeof msg.element.props.metadata !== 'undefined' &&
+    'isRedacted' in msg.element.props.metadata &&
+    Boolean(msg.element.props.metadata.isRedacted) &&
+    'chunks' in msg.element.props.metadata &&
+    Array.isArray(msg.element.props.metadata.chunks) &&
+    msg.element.props.metadata.chunks.every((chunk) => typeof chunk === 'string')
+      ? (msg.element.props.metadata as unknown as RedactedFuncionResponseMetadata)
+      : undefined
+  );
+  return _.findLast(metadataOrUndefined, Boolean);
 }
 
 export function redactedFunctionTools(messages: ConversationMessage[]): UseToolsProps['tools'] {
