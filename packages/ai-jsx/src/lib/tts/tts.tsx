@@ -65,6 +65,11 @@ export abstract class TextToSpeechBase {
    */
   abstract play(_text: string): void;
   /**
+   * Whether generation is in progress, i.e., play() has been called and
+   * the resultant audio has not yet finished playing.
+   */
+  abstract playing(): boolean;
+  /**
    * Flushes any text buffered by a previous play() call.
    */
   abstract flush(): void;
@@ -99,6 +104,9 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
     this.playMillis = performance.now();
     this.audio.src = this.urlFunc(this.name, this.voice, this.rate, text);
     this.audio.play();
+  }
+  playing() {
+    return !this.audio.paused;
   }
   flush() {}
   stop() {
@@ -161,6 +169,9 @@ class MseTextToSpeech extends TextToSpeechBase {
       this.inProgress = true;
     }
     this.generate(text);
+  }
+  playing() {
+    return this.inProgress;
   }
   flush() {
     if (this.inProgress) {
@@ -417,4 +428,25 @@ export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
   protected createFlushRequest(): ElevenLabsOutboundMessage {
     return new ElevenLabsOutboundMessage({ text: '' });
   }
+}
+
+class TextToSpeechOptions {
+  rate?: number;
+  voice?: string;
+  getToken?: GetToken;
+  buildUrl?: BuildUrl;
+  constructor(public provider: string) {}
+}
+
+/**
+ * Factory function to create a text-to-speech service for the specified provider.
+ */
+export function createTextToSpeech({ provider, rate, voice, getToken, buildUrl }: TextToSpeechOptions) {
+  if (provider == 'azure') {
+    return new AzureTextToSpeech(buildUrl!, voice, rate);
+  }
+  if (provider == 'eleven') {
+    return new ElevenLabsTextToSpeech(getToken!, voice);
+  }
+  throw new Error(`unknown provider ${provider}`);
 }

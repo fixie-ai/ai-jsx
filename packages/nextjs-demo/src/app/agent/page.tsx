@@ -1,8 +1,19 @@
 'use client';
 import React, { useState } from 'react';
-import { DeepgramSpeechRecognition, MicManager, Transcript } from 'ai-jsx/lib/asr/asr';
-import { AzureTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
+import { createSpeechRecognition, SpeechRecognitionBase, MicManager, Transcript } from 'ai-jsx/lib/asr/asr';
+import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
+import { useSearchParams } from 'next/navigation';
 import '../globals.css';
+
+// pending/messages cleanup
+// tts bargein?
+// caching or other initial startup opt?
+// cleanup of other grody stuff (pending etc)
+// flashing input box
+// spacebar to start
+
+const DEFAULT_ASR_PROVIDER = 'deepgram';
+const DEFAULT_TTS_PROVIDER = 'azure';
 
 class ClientMessage {
   constructor(public readonly role: string, public readonly content: string) {}
@@ -28,10 +39,22 @@ const ButtonComponent: React.FC<{ onClick: () => void; disabled: boolean; childr
 );
 
 /**
- * Retrieves an ephemeral token from the server for use in a TTS service.
+ * Retrieves an ephemeral token from the server for use in an ASR service.
  */
-async function GetToken(provider: string) {
+async function getAsrToken(provider: string) {
   const response = await fetch('/asr/api', {
+    method: 'POST',
+    body: JSON.stringify({ provider }),
+  });
+  const json = await response.json();
+  return json.token;
+}
+
+/**
+ * Retrieves an ephemeral token from the server for use in an ASR service.
+ */
+async function getTtsToken(provider: string) {
+  const response = await fetch('/tts/api', {
     method: 'POST',
     body: JSON.stringify({ provider }),
   });
@@ -42,7 +65,7 @@ async function GetToken(provider: string) {
 /**
  * Builds a URL for use in a TTS service.
  */
-function BuildUrl(provider: string, voice: string, rate: number, text: string) {
+function buildTtsUrl(provider: string, voice: string, rate: number, text: string) {
   return `/tts/api?provider=${provider}&voice=${voice}&rate=${rate}&text=${text}`;
 }
 
@@ -80,9 +103,10 @@ class AssistantRequest {
 }
 
 const PageComponent: React.FC = () => {
+  const searchParams = useSearchParams();
   const [manager, setManager] = useState<MicManager | null>(null);
-  const [asr, setAsr] = useState<DeepgramSpeechRecognition | null>(null);
-  const [tts, setTts] = useState<AzureTextToSpeech | null>(null);
+  const [asr, setAsr] = useState<SpeechRecognitionBase | null>(null);
+  const [tts, setTts] = useState<TextToSpeechBase | null>(null);
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
   const active = () => Boolean(manager);
@@ -143,7 +167,7 @@ const PageComponent: React.FC = () => {
     }
     console.log('stopping');
     setInput('');
-    tts?.stop();
+    tts?.close();
     asr?.close();
     manager?.stop();
     setTts(null);
@@ -156,10 +180,12 @@ const PageComponent: React.FC = () => {
   };
   const handleStart = async () => {
     const _manager = new MicManager();
-    const _asr = new DeepgramSpeechRecognition(_manager, GetToken);
+    const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
+    const _asr = createSpeechRecognition(asrProvider, _manager, getAsrToken);
     // Note that we pass around _tts because of the annoying fact that useState
     // can't update the tts value once it's captured in closures.
-    const _tts = new AzureTextToSpeech(BuildUrl, AzureTextToSpeech.DEFAULT_VOICE, 1.2);
+    const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
+    const _tts = createTextToSpeech({ provider: ttsProvider, getToken: getTtsToken, buildUrl: buildTtsUrl, rate: 1.2 });
     setManager(_manager);
     setAsr(_asr);
     setTts(_tts);
@@ -221,10 +247,10 @@ const PageComponent: React.FC = () => {
           </div>
         </div>
         <div>
-          <textarea className="m-2 w-full" readOnly id="output" rows={10} cols={80} value={output}></textarea>
+          <div className="m-2 w-full h-32 border-2" id="output">{output}</div>
         </div>
         <div>
-          <input className="m-2 w-full text-lg" id="input" readOnly value={input}></input>
+          <div className="m-2 w-full text-lg h-12 border-2" id="input">{input}</div>
         </div>
         <div className="m-2 w-full flex justify-center">
           <ButtonComponent disabled={active()} onClick={handleStart}>
