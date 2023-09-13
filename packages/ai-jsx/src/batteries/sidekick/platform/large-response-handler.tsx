@@ -7,8 +7,10 @@ import yaml from 'js-yaml';
 import _ from 'lodash';
 import { UseToolsProps } from '../../use-tools.js';
 import { cohereContext, MarkdownChunkFormatter, RerankerFormatted } from '../../../lib/cohere.js';
+import { Jsonifiable } from 'type-fest';
 
 export type LengthFunction = ((text: string) => number) | ((text: string) => Promise<number>);
+
 export interface RedactedFuncionResponseMetadata {
   isRedacted: true;
   chunks: string[];
@@ -74,7 +76,7 @@ async function LargeFunctionResponseHandler(
 
   stringified = yamlOptimizeIfPossible(stringified);
 
-  // Option 2: try dumping as YAML, if it's small enough then we are done
+  // Option 2: try dumping as YAML. If it's small enough, then we are done.
   if ((await lengthFunction(stringified)) <= maxLength) {
     return <FunctionResponse {...props}>{stringified}</FunctionResponse>;
   }
@@ -145,10 +147,9 @@ export async function LargeFunctionResponseWrapper(
 }
 
 function getLastRedactedFnResponseData(messages: ConversationMessage[]): RedactedFuncionResponseMetadata | undefined {
-  let lastFnResData = undefined;
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const msg = messages[i];
-    if (
+  return _.findLast(
+    messages,
+    (msg) =>
       msg.type == 'functionResponse' &&
       typeof msg.element.props.metadata !== 'undefined' &&
       'isRedacted' in msg.element.props.metadata &&
@@ -156,14 +157,7 @@ function getLastRedactedFnResponseData(messages: ConversationMessage[]): Redacte
       'chunks' in msg.element.props.metadata &&
       Array.isArray(msg.element.props.metadata.chunks) &&
       msg.element.props.metadata.chunks.every((chunk) => typeof chunk === 'string')
-    ) {
-      lastFnResData = msg.element.props.metadata as unknown as RedactedFuncionResponseMetadata;
-    }
-  }
-  if (lastFnResData === undefined) {
-    return undefined;
-  }
-  return lastFnResData;
+  ) as RedactedFuncionResponseMetadata | undefined;
 }
 
 export function redactedFunctionTools(messages: ConversationMessage[]): UseToolsProps['tools'] {
@@ -214,12 +208,12 @@ export function redactedFunctionTools(messages: ConversationMessage[]): UseTools
  * @returns Optimized text if possible, otherwise the original text
  */
 function yamlOptimizeIfPossible(possiblyObjectText: string) {
-  let content: any;
+  let content: Jsonifiable;
   try {
     content = JSON.parse(possiblyObjectText);
   } catch (e) {
     try {
-      content = yaml.load(possiblyObjectText);
+      content = yaml.load(possiblyObjectText) as Jsonifiable;
     } catch (e) {
       return possiblyObjectText;
     }

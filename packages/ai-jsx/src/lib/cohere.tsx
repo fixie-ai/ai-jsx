@@ -1,5 +1,6 @@
 import * as AI from '../index.js';
 import { getEnvVar } from './util.js';
+import _ from 'lodash';
 
 /**
  * Properties for a {@link cohereContext} that configure the Cohere API.
@@ -59,9 +60,10 @@ export async function reranker(
       'Cohere API key is not set, but it is needed for doing reranking (e.g. loadBySimilarity).' +
         ' Please set it in the context.'
     );
-    // fallback to original order
+    // fall back to original order
     // TODO: maybe try OpenAI too?
-    return [...Array(Math.min(documents.length, top_n)).keys()].map((index) => ({ index, relevance_score: 0 }));
+    const countResultDocs = Math.min(documents.length, top_n);
+    return _.range(countResultDocs).map((index) => ({ index, relevance_score: 0 }));
   }
   const response = await fetch(`${cohereConfig.api_url}/rerank`, {
     method: 'POST',

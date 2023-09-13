@@ -14,6 +14,7 @@ import {
 } from '../../../core/conversation.js';
 import { LargeFunctionResponseWrapper, redactedFunctionTools } from './large-response-handler.js';
 import { ExecuteFunction, UseToolsProps } from '../../use-tools.js';
+import _ from 'lodash';
 
 /**
  * This function defines the shrinking policy. It's activated when the conversation history overflows the context
@@ -65,18 +66,6 @@ export function present(conversationElement: ConversationMessage) {
 }
 
 /**
- * Will filter the conversation to only include the current round of messages
- * @returns A subset of the full conversation, starting from the last user message.
- */
-function getCurrentRound(fullConversation: ConversationMessage[]) {
-  const lastUserMessage = fullConversation.findLastIndex((m) => m.type === 'user');
-  if (lastUserMessage === -1) {
-    return fullConversation;
-  }
-  return fullConversation.slice(lastUserMessage);
-}
-
-/**
  * This is the conversation state machine. It takes the current conversation and decides how to respond.
  *
  * For instance, if the most recent message is a function call, it will call the function and return a FunctionResponse.
@@ -96,9 +85,10 @@ export function getNextConversationStep(
   const lastMessage = messages[messages.length - 1];
 
   // Add tools for interacting with redacted function responses (if one exists).
-  // Will only take into account the current round of messages. After that the LLM
-  // will need to call the function again. This is to prevent the LLM from accessing stale data.
-  const updatedTools = { ...tools, ...redactedFunctionTools(getCurrentRound(fullConversation)) };
+  // We will only take into account the current round of messages (after last UserMessage). In the next round
+  // the LLM will need to call the function again. This is to prevent the LLM from accessing stale data.
+  const lastTurnMessages = _.takeRightWhile(fullConversation, ({ type }) => type !== 'user');
+  const updatedTools = { ...tools, ...redactedFunctionTools(lastTurnMessages) };
 
   switch (lastMessage.type) {
     case 'functionCall': {
