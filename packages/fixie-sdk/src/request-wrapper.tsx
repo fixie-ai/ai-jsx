@@ -75,7 +75,7 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
   const { request } = requestContext;
 
   // If we're using OpenAI (or default), enable the OpenAI proxy.
-  if (!request.generationParams?.modelProvider || request.generationParams?.modelProvider.toLowerCase() === 'openai') {
+  if (!request.generationParams?.modelProvider || request.generationParams.modelProvider.toLowerCase() === 'openai') {
     wrappedNode = (
       <OpenAI
         client={
