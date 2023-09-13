@@ -12,14 +12,15 @@ import { IsomorphicFixieClient } from './isomorphic-client.js';
  * This client can only be used in NodeJS.
  */
 export class FixieClient extends IsomorphicFixieClient {
-  static Create(url: string, apiKey?: string): FixieClient {
+  static Create(url?: string, apiKey?: string): FixieClient {
+    const urlToUse = url ?? process.env.FIXIE_API_URL ?? 'https://api.fixie.ai';
     const apiKeyToUse = apiKey ?? process.env.FIXIE_API_KEY;
     if (!apiKeyToUse) {
       throw new Error(
         'You must pass apiKey to the constructor, or set the FIXIE_API_KEY environment variable. The API key can be found at: https://console.fixie.ai/profile'
       );
     }
-    return new this(url, apiKeyToUse);
+    return new this(urlToUse, apiKeyToUse);
   }
 
   static CreateWithoutApiKey(url: string): FixieClient {

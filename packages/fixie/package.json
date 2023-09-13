@@ -1,6 +1,6 @@
 {
   "name": "@fixieai/fixie",
-  "version": "1.1.2",
+  "version": "1.2.1",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
@@ -11,8 +11,10 @@
     "start": "node --no-warnings dist/src/main.js",
     "build-start": "yarn run build && yarn run start",
     "format": "prettier --write .",
+    "test": "yarn run build && yarn run lint",
     "lint": "eslint .",
-    "lint:fix": "eslint ."
+    "lint:fix": "eslint .",
+    "prepack": "yarn build"
   },
   "files": [
     "dist"
@@ -26,6 +28,7 @@
   "dependencies": {
     "@apollo/client": "^3.8.1",
     "apollo-upload-client": "^17.0.0",
+    "axios": "^1.5.0",
     "commander": "^11.0.0",
     "execa": "^8.0.1",
     "extract-files": "^13.0.0",
@@ -33,7 +36,8 @@
     "js-yaml": "^4.1.0",
     "open": "^9.1.0",
     "ora": "^7.0.1",
-    "terminal-kit": "^3.0.0"
+    "terminal-kit": "^3.0.0",
+    "untildify": "^5.0.0"
   },
   "devDependencies": {
     "@fixieai/sdk": "*",

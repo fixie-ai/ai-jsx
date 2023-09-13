@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+displayed_sidebar: tutorialSidebar
 ---
 
 # Getting Started with AI.JSX
@@ -60,4 +60,4 @@ $ yarn workspace create-react-app-demo start
 ## Next Steps
 
 Now that you have some basic examples working, learn more about AI.JSX development
-by following the [tutorial](./tutorial/part1-completion.md).
+by following the [tutorial](./tutorials/part1-completion.md).
