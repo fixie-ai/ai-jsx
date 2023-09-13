@@ -4,7 +4,7 @@
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://ai-jsx.com",
-  "version": "0.11.0",
+  "version": "0.17.0",
   "volta": {
     "extends": "../../package.json"
   },
@@ -34,6 +34,24 @@
       },
       "require": {
         "default": "./dist/cjs/jsx-runtime.cjs"
+      }
+    },
+    "./sidekick": {
+      "import": {
+        "types": "./dist/esm/batteries/sidekick/platform/sidekick.d.ts",
+        "default": "./dist/esm/batteries/sidekick/platform/sidekick.js"
+      },
+      "require": {
+        "default": "./dist/cjs/batteries/sidekick/platform/sidekick.cjs"
+      }
+    },
+    "./batteries/fixie": {
+      "import": {
+        "types": "./dist/esm/batteries/fixie.d.ts",
+        "default": "./dist/esm/batteries/fixie.js"
+      },
+      "require": {
+        "default": "./dist/cjs/batteries/fixie.cjs"
       }
     },
     "./batteries/docs": {
@@ -208,6 +226,15 @@
         "default": "./dist/cjs/lib/asr/asr.cjs"
       }
     },
+    "./lib/tts/tts": {
+      "import": {
+        "types": "./dist/esm/lib/tts/tts.d.ts",
+        "default": "./dist/esm/lib/tts/tts.js"
+      },
+      "require": {
+        "default": "./dist/cjs/lib/tts/tts.cjs"
+      }
+    },
     "./react": {
       "import": {
         "types": "./dist/esm/react/index.d.ts",
@@ -349,6 +376,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.5.10",
+    "@mdx-js/mdx": "^2.3.0",
     "@nick.heiner/wandb-fork": "^0.5.2-5",
     "@opentelemetry/api": "^1.4.1",
     "@opentelemetry/api-logs": "^0.41.1",
@@ -361,10 +389,12 @@
     "langchain": "^0.0.81",
     "lodash": "^4.17.21",
     "ml-distance": "^4.0.1",
-    "openai": "^3.3.0",
-    "openai-edge": "^1.2.0",
+    "openai": "^4.1.0",
     "pino": "^8.14.1",
+    "remark-gfm": "^3.0.1",
+    "remark-math": "^5.1.1",
     "replicate": "^0.12.3",
+    "sentence-splitter": "^4.2.1",
     "server-only": "^0.0.1",
     "untruncate-json": "^0.0.1",
     "uuid": "^9.0.0",

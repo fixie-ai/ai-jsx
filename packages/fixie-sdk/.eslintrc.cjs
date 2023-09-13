@@ -30,6 +30,8 @@ module.exports = {
     'no-trailing-spaces': 'off',
     'no-else-return': ['warn', { allowElseIf: false }],
 
+    'spaced-comment': ['error', 'always', { markers: ['/'] }],
+
     // Disable style rules to let prettier own it
     'object-curly-spacing': 'off',
     'comma-dangle': 'off',

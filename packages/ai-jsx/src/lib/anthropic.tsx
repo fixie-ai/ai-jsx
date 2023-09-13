@@ -7,11 +7,15 @@ import { ChatProvider, ModelProps, ModelPropsWithChildren } from '../core/comple
 import { AssistantMessage, ConversationMessage, UserMessage, renderToConversation } from '../core/conversation.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { debugRepresentation } from '../core/debug.js';
+import _ from 'lodash';
 
-export const anthropicClientContext = AI.createContext<AnthropicSDK>(
-  new AnthropicSDK({
-    apiKey: getEnvVar('ANTHROPIC_API_KEY', false),
-  })
+const anthropicClientContext = AI.createContext<() => AnthropicSDK>(
+  _.once(
+    () =>
+      new AnthropicSDK({
+        apiKey: getEnvVar('ANTHROPIC_API_KEY', false),
+      })
+  )
 );
 
 type ValidCompletionModel = never;
@@ -59,7 +63,7 @@ export function Anthropic({
   let result = children;
 
   if (client) {
-    result = <anthropicClientContext.Provider value={client}>{children}</anthropicClientContext.Provider>;
+    result = <anthropicClientContext.Provider value={() => client}>{children}</anthropicClientContext.Provider>;
   }
 
   if (chatModel) {
@@ -144,7 +148,7 @@ export async function* AnthropicChatModel(
 
   messages.push(AnthropicSDK.AI_PROMPT);
 
-  const anthropic = getContext(anthropicClientContext);
+  const anthropic = getContext(anthropicClientContext)();
   const anthropicCompletionRequest: AnthropicSDK.CompletionCreateParams = {
     prompt: messages.join('\n\n'),
     max_tokens_to_sample: props.maxTokens ?? defaultMaxTokens,

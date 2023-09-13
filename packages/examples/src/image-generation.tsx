@@ -14,7 +14,7 @@ function RecipeWithImage(_: {}, { memo }: AI.ComponentContext) {
     <>
       Recipe title: {recipeTitle}
       {'\n'}
-      Recipe image link: <ImageGen>{recipeTitle}</ImageGen>
+      Recipe image link: <ImageGen>Sushi called "{recipeTitle}"</ImageGen>
     </>
   );
 }
