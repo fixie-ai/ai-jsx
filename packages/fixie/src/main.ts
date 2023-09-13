@@ -190,7 +190,7 @@ sources
         maxDepth,
         includePatterns,
         excludePatterns,
-      }: { maxDocuments?: number; maxDepth?: number; includePatterns?: string[]; excludePatterns: string[] }
+      }: { maxDocuments?: number; maxDepth?: number; includePatterns?: string[]; excludePatterns?: string[] }
     ) => {
       if (!includePatterns) {
         term.yellow('Warning: ')(
