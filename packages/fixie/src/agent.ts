@@ -11,6 +11,7 @@ import { execa } from 'execa';
 const { terminal: term } = terminal;
 
 import { FixieClient } from './client.js';
+import { MergeExclusive } from 'type-fest';
 
 /** Represents metadata about an agent managed by the Fixie service. */
 export interface AgentMetadata {
@@ -276,13 +277,7 @@ export class FixieAgent {
 
   /** Create a new agent revision, which deploys the agent. */
   private async createRevision(
-    opts:
-      | { externalUrl: string; tarball?: undefined }
-      | {
-          externalUrl?: undefined;
-          tarball: string;
-          environmentVariables: Record<string, string>;
-        }
+    opts: MergeExclusive<{ externalUrl: string }, { tarball: string; environmentVariables: Record<string, string> }>
   ): Promise<AgentRevision> {
     const uploadFile = opts.tarball ? fs.readFileSync(fs.realpathSync(opts.tarball)) : undefined;
 
@@ -481,25 +476,8 @@ export class FixieAgent {
       throw Error(`No package.json found in ${packageJsonPath}. Only JS-based agents are supported.`);
     }
 
-    const packageJson = fs.readFileSync(packageJsonPath, 'utf8');
-    let json;
-    try {
-      json = JSON.parse(packageJson);
-    } catch (ex) {
-      throw Error(`Error parsing package.json: ${ex}`);
-    }
-
-    if (json.scripts) {
-      const scriptName = json.scripts.prepack ? 'prepack' : json.scripts.build ? 'build' : undefined;
-      if (scriptName) {
-        const commandLine = `npm run ${scriptName}`;
-        try {
-          execSync(commandLine, { cwd: agentPath, stdio: 'inherit' });
-        } catch (ex) {
-          throw new Error(`\`${commandLine}\` failed. Check for build errors above and retry.`);
-        }
-      }
-    }
+    // Trigger an `npm pack` to run a build.
+    this.getCodePackage(agentPath);
 
     // Start the agent process locally.
     const agentProcess = FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
