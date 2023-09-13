@@ -3,7 +3,6 @@ import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { getEnvVar } from './util.js';
 
 import { Jsonifiable } from 'type-fest';
-import { get } from 'lodash';
 
 /**
  * Properties for a {@link cohereContext} that configure the Cohere API.
