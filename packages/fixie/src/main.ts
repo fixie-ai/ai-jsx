@@ -129,11 +129,11 @@ corpus
   });
 
 corpus
-  .command('create [corpusName]')
+  .command('create [name] [description]')
   .description('Create a corpus.')
-  .action(async (corpusName?: string) => {
+  .action(async (name?: string, description?: string) => {
     const client = await FixieClient.Create(program.opts().url);
-    const result = await client.createCorpus(corpusName);
+    const result = await client.createCorpus(name, description);
     showResult(result, program.opts().raw);
   });
 

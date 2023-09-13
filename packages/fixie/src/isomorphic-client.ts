@@ -91,10 +91,11 @@ export class IsomorphicFixieClient {
   }
 
   /** Create a new Corpus. */
-  createCorpus(name?: string): Promise<Jsonifiable> {
+  createCorpus(name?: string, description?: string): Promise<Jsonifiable> {
     const body = {
       corpus: {
         display_name: name,
+        description
       },
     };
     return this.request('/api/v1/corpora', body);
