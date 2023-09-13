@@ -476,7 +476,7 @@ export class FixieAgent {
     }
 
     // Start the agent process locally.
-    const agentProcess = FixieAgent.spawnAgentProcess(agentPath, port);
+    FixieAgent.spawnAgentProcess(agentPath, port);
 
     // Wait for 5 seconds for it to start up.
     await new Promise((resolve) => setTimeout(resolve, 5000));
