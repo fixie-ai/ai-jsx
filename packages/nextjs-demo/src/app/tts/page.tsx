@@ -1,5 +1,5 @@
 'use client';
-import { TextToSpeechBase, AzureTextToSpeech, ElevenLabsTextToSpeech } from 'ai-jsx/lib/tts/tts';
+import { TextToSpeechBase, AzureTextToSpeech, AwsTextToSpeech, ElevenLabsTextToSpeech } from 'ai-jsx/lib/tts/tts';
 import React, { useState, useEffect } from 'react';
 import '../globals.css';
 
@@ -54,6 +54,8 @@ const TtsComponent: React.FC<TtsComponentProps> = ({ display, provider, text }) 
       setTts(new ElevenLabsTextToSpeech(getToken));
     } else if (provider === 'azure') {
       setTts(new AzureTextToSpeech(buildUrl, AzureTextToSpeech.DEFAULT_VOICE, 1.2));
+    } else if (provider === 'aws') {
+      setTts(new AwsTextToSpeech(buildUrl, AwsTextToSpeech.DEFAULT_VOICE, 1.2));
     }
   }, [provider]);
   const toggle = () => {
@@ -99,6 +101,7 @@ const PageComponent: React.FC = () => {
       <p className="ml-2 mb-2 text-sm">{countWords(text)} words</p>
       <TtsComponent display="ElevenLabs" provider="eleven" text={text}></TtsComponent>
       <TtsComponent display="Azure" provider="azure" text={text}></TtsComponent>
+      <TtsComponent display="AWS Polly" provider="aws" text={text}></TtsComponent>
     </>
   );
 };

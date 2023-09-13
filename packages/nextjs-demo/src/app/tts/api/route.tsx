@@ -1,5 +1,6 @@
 /** @jsxImportSource ai-jsx */
 import { NextRequest, NextResponse } from 'next/server';
+import aws4 from 'aws4';
 
 /**
  * Calls out to the requested TTS provider to generate speech with the given parameters.
@@ -118,14 +119,31 @@ function ttsAzure(voice: string, rate: number, text: string): Promise<Response> 
 function ttsAws(voice: string, rate: number, text: string) {
   const region = 'us-west-2';
   const outputFormat = 'mp3';
-  const params = new URLSearchParams({
+  const params = {
     Text: text,
     OutputFormat: outputFormat,
     VoiceId: voice,
-  });
-  const url = `https://polly.${region}.amazonaws.com/v1/speech?${params}`;
-  const headers = new Headers();
-  return fetch(url, { headers });
+    Engine: 'neural',
+  };
+  const opts = {
+    method: 'POST',
+    host: `polly.${region}.amazonaws.com`,
+    path: '/v1/speech',
+    service: 'polly',
+    region,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(params),
+  };
+  const credentials = {
+    accessKeyId: getEnvVar('AWS_ACCESS_KEY_ID'),
+    secretAccessKey: getEnvVar('AWS_SECRET_ACCESS_KEY'),
+    region,
+  };
+  aws4.sign(opts, credentials);
+  const url = `https://${opts.host}${opts.path}`;
+  return fetch(url, opts);
 }
 
 /**
@@ -140,16 +158,14 @@ export async function POST(request: NextRequest) {
     return new NextResponse(JSON.stringify({ error: 'unknown provider' }));
   }
 
-  const func = () => getApiKey('ELEVEN_API_KEY');
-  return new NextResponse(JSON.stringify({ token: await func() }));
+  const token = getEnvVar('ELEVEN_API_KEY');
+  return new NextResponse(JSON.stringify({ token }));
 }
 
-function getApiKey(keyName: string) {
+function getEnvVar(keyName: string) {
   const key = process.env[keyName];
   if (!key) {
     throw new Error(`API key "${keyName}" not provided. Please set it as an env var.`);
   }
-  return new Promise<string>((resolve) => {
-    setTimeout(() => resolve(key), 0);
-  });
+  return key;
 }

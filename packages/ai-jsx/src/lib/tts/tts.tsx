@@ -286,6 +286,16 @@ export class AzureTextToSpeech extends RestTextToSpeech {
 }
 
 /**
+ * Text-to-speech implementation that uses the AWS Polly text-to-speech service.
+ */
+export class AwsTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = 'Joanna';
+  constructor(urlFunc: BuildUrl, voice: string = AwsTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('aws', urlFunc, voice, rate);
+  }
+}
+
+/**
  * Text-to-speech implementation that uses a web socket to stream text to the
  * server and receives audio chunks as they are generated.
  */
