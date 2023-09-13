@@ -8,7 +8,7 @@ import Step3Profit from '../static/img/step-3-profit.png'
 
 # Quickstart: Fixie Sidekicks
 
-One of the best use cases for AI.JSX is to build a **Sidekick**, an AI-powered chatbot that is embedded 
+One of the best use cases for AI.JSX is to build a **Sidekick**, an AI-powered chatbot that is embedded
 in a web page or app and is able to answer questions, call APIs,
 and more. AI.JSX makes it easy to build Sidekicks with a rich UI, access to
 documents, and the ability to fetch live data and take action via API calls.
@@ -34,15 +34,15 @@ At the end of this quickstart you will:
 ## Step 0: Prerequisites
 
 :::warning Prerequisites
-Before you get started, you will need to have a free Fixie developer account and have some tools installed 
-on your machine. You will also need a text editor. If you don't have a preferred text editor, we 
+Before you get started, you will need to have a free Fixie developer account and have some tools installed
+on your machine. You will also need a text editor. If you don't have a preferred text editor, we
 recommend [Visual Studio Code](https://code.visualstudio.com/).
 :::
 
 :::tip On Windows? Use WSL.
-If you are using a Windows machine, we highly recommend using the Windows Subsystem for Linux (WSL) for 
-development with Node.js. This is optional. If you want to use WSL, 
-follow [this guide](https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-wsl) which 
+If you are using a Windows machine, we highly recommend using the Windows Subsystem for Linux (WSL) for
+development with Node.js. This is optional. If you want to use WSL,
+follow [this guide](https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-wsl) which
 will get you set-up with WSL, Node, and VSCode (for your text editor).
 :::
 
@@ -79,7 +79,7 @@ This will install the `fixie` binary.
 ### d) Authenticate the Fixie CLI
 
 To configure the Fixie CLI to login to the Fixie service, just run:
-  
+
 ```terminal
 fixie auth
 ```
@@ -107,11 +107,12 @@ You can also download the code directly from [the source](https://github.com/fix
 The Sidekick is implemented in TypeScript with AI.JSX, so you need to
 build it before it can be deployed. To do this, in the `fixie-sidekick-template`
 directory, run:
-  
+
 ```terminal
 npm install
 npm run build
 ```
+
 The resulting JavaScript code should now be in the `dist/` subdirectory.
 
 ## Step 3: Deploy the Sidekick
@@ -161,9 +162,8 @@ hitting Ctrl+C), the Sidekick reverts back to the most recently
 deployed version (from `fixie deploy`). Note that you need to `fixie
 deploy` your Sidekick in order for it to run in the cloud.
 
-As we make changes to our sidekick, we can simply stop serving our sidekick with `Ctrl+C` and then 
+As we make changes to our sidekick, we can simply stop serving our sidekick with `Ctrl+C` and then
 serve up our new changes with the `serve` command as we did above.
-
 
 ## Sending Messages to your Sidekick
 
@@ -213,6 +213,5 @@ You've got a template Sidekick deployed to Fixie. So what's next? Here are some 
 
 ### Create your own Document Collection
 
-This will enable you to provide your Sidekick with specialized knowledge about your company, 
+This will enable you to provide your Sidekick with specialized knowledge about your company,
 product, or organization. Create your own collection [here](https://console.fixie.ai/documents).
-

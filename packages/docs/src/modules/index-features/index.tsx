@@ -12,8 +12,8 @@ const features = [
       'Fully hosted or bring your own',
     ],
     cta: {
-      label: '',  // update to 'Try DocsQA Now' once page is built
-      url: '',  // update to '/docsqa/' once page is built
+      label: '', // update to 'Try DocsQA Now' once page is built
+      url: '', // update to '/docsqa/' once page is built
     },
   },
   {
@@ -21,8 +21,8 @@ const features = [
     uses: ['Give your app new capabilities', 'Action-oriented through APIs', 'Enable end-users to close the loop'],
 
     cta: {
-      label: '',       // update to 'More on Tools' once page is built
-      url: '',         // update to '/tools/' once page is built
+      label: '', // update to 'More on Tools' once page is built
+      url: '', // update to '/tools/' once page is built
     },
   },
   {
@@ -30,8 +30,8 @@ const features = [
     uses: ['Move beyond simple text chat', 'JSX components enable the LLM to build UI dynamically at runtime'],
 
     cta: {
-      label: '',          // update to 'See GenUI In Action' once page is built
-      url: '',     // update to '/genUI/' once page is built
+      label: '', // update to 'See GenUI In Action' once page is built
+      url: '', // update to '/genUI/' once page is built
     },
   },
 ];

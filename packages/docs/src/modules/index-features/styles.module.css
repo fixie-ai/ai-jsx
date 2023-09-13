@@ -69,6 +69,6 @@
 }
 
 .link::after {
-  /* content: '>'; */      /* TODO: implement this once we add sub-pages */
+  /* content: '>'; */ /* TODO: implement this once we add sub-pages */
   margin-left: 0.5rem;
 }
