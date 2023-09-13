@@ -1,6 +1,6 @@
 /** @jsxImportSource ai-jsx */
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
-import { OpenAI } from 'ai-jsx/lib/openai';
+import { OpenAI, ValidChatModel } from 'ai-jsx/lib/openai';
 import { StreamingTextResponse } from 'ai';
 import { toTextStream } from 'ai-jsx/stream';
 import { NextRequest } from 'next/server';
@@ -62,9 +62,10 @@ class ClientMessage {
   constructor(public role: string, public content: string) {}
 }
 
-function ChatAgent({ conversation }: { conversation: ClientMessage[] }) {
+function ChatAgent({ conversation, model }: { conversation: ClientMessage[]; model: string }) {
+  const chatModel = model as ValidChatModel;
   return (
-    <OpenAI chatModel="gpt-4">
+    <OpenAI chatModel={chatModel}>
       <ChatCompletion>
         <SystemMessage>{KK_PROMPT}</SystemMessage>
         {conversation.map((message) =>
@@ -81,7 +82,7 @@ function ChatAgent({ conversation }: { conversation: ClientMessage[] }) {
 
 export async function POST(request: NextRequest) {
   const json = await request.json();
-  console.log('New request:');
+  console.log(`New request (model=${json.model})`);
   json.messages.forEach((message: ClientMessage) => console.log(`role=${message.role} content=${message.content}`));
-  return new StreamingTextResponse(toTextStream(<ChatAgent conversation={json.messages} />));
+  return new StreamingTextResponse(toTextStream(<ChatAgent conversation={json.messages} model={json.model} />));
 }

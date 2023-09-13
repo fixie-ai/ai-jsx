@@ -311,21 +311,39 @@ export class AwsTextToSpeech extends RestTextToSpeech {
  */
 export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
   protected socket: WebSocket;
-  private readonly sendBuffer: string[] = [];
+  // Message buffer for when the socket is not yet open.
+  private readonly socketBuffer: string[] = [];
+  private pendingText: string = '';
   constructor(name: string, private readonly url: string) {
     super(name);
     this.socket = this.createSocket(url);
   }
   protected generate(text: string) {
-    this.sendObject(this.createChunkRequest(text));
+    // Only send complete words (i.e., followed by a space) to the server.
+    this.pendingText += text;
+    const index = this.pendingText.lastIndexOf(' ');
+    if (index == -1) {
+      return;
+    }
+
+    const completeText = this.pendingText.substring(0, index);
+    this.sendObject(this.createChunkRequest(completeText));
+    this.pendingText = this.pendingText.substring(index + 1);
   }
   protected doFlush() {
+    // Flush any pending text (all generation requests have to be followed by a space),
+    // and send a flush request to the server.
+    if (this.pendingText) {
+      this.sendObject(this.createChunkRequest(`${this.pendingText} `));
+    }
     this.sendObject(this.createFlushRequest());
+    this.pendingText = '';
   }
   protected stopGeneration() {
     // Close our socket and create a new one so that we're not blocked by stale generation.
     this.socket.close();
-    this.sendBuffer.length = 0;
+    this.socketBuffer.length = 0;
+    this.pendingText = '';
     this.socket = this.createSocket(this.url);
   }
   protected tearDown() {
@@ -344,8 +362,8 @@ export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
       const elapsed = performance.now() - connectMillis;
       console.log(`[${this.name}] socket opened, elapsed=${elapsed.toFixed(0)}`);
       this.handleOpen();
-      this.sendBuffer.forEach((json) => this.socket.send(json));
-      this.sendBuffer.length = 0;
+      this.socketBuffer.forEach((json) => this.socket.send(json));
+      this.socketBuffer.length = 0;
     };
     socket.onmessage = (event) => {
       let message;
@@ -361,6 +379,7 @@ export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
       console.log(`[${this.name}] socket error`);
     };
     socket.onclose = (event) => {
+      // Reopen the socket if it closed normally, i.e., not due to an error.
       console.log(`[${this.name}] socket closed, code=${event.code} reason=${event.reason}`);
       if (event.code == 1000) {
         this.socket = this.createSocket(this.socket.url);
@@ -373,7 +392,7 @@ export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
     if (this.socket.readyState == WebSocket.OPEN) {
       this.socket.send(json);
     } else {
-      this.sendBuffer.push(json);
+      this.socketBuffer.push(json);
     }
   }
 
@@ -391,12 +410,16 @@ class ElevenLabsInboundMessage {
   code?: number;
 }
 class ElevenLabsOutboundMessage {
-  constructor({ text, try_trigger_generation, xi_api_key }: ElevenLabsOutboundMessage) {
+  constructor({ text, try_trigger_generation, generation_config, xi_api_key }: ElevenLabsOutboundMessage) {
     this.text = text;
     this.try_trigger_generation = try_trigger_generation;
+    this.generation_config = generation_config;
     this.xi_api_key = xi_api_key;
   }
   text: string;
+  generation_config?: {
+    chunk_length_schedule: number[];
+  };
   try_trigger_generation?: boolean;
   xi_api_key?: string;
 }
@@ -408,13 +431,21 @@ export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
   static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM';
   constructor(private readonly tokenFunc: GetToken, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
     const model_id = 'eleven_monolingual_v1';
-    const optimize_streaming_latency = '22';
+    const optimize_streaming_latency = '22'; // doesn't seem to have any effect
     const params = new URLSearchParams({ model_id, optimize_streaming_latency });
     const url = `wss://api.elevenlabs.io/v1/text-to-speech/${voice}/stream-input?${params}`;
     super('eleven', url);
   }
   protected async handleOpen() {
-    const obj = new ElevenLabsOutboundMessage({ text: ' ', xi_api_key: await this.tokenFunc(this.name) });
+    // A chunk_length_schedule of [50] means we'll try to generate a chunk
+    // once we have 50 characters of text buffered.
+    const obj = new ElevenLabsOutboundMessage({
+      text: ' ',
+      generation_config: {
+        chunk_length_schedule: [50],
+      },
+      xi_api_key: await this.tokenFunc(this.name),
+    });
     this.sendObject(obj);
   }
   protected handleMessage(inMessage: unknown) {
@@ -433,6 +464,7 @@ export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
     }
   }
   protected createChunkRequest(text: string): ElevenLabsOutboundMessage {
+    // try_trigger_generation tries to force generation of chunks as soon as possible.
     return new ElevenLabsOutboundMessage({ text: `${text} `, try_trigger_generation: true });
   }
   protected createFlushRequest(): ElevenLabsOutboundMessage {

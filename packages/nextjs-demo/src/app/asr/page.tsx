@@ -20,7 +20,7 @@ const HARVARD_SENTENCES_01_TRANSCRIPT = `Harvard list number one.
 /**
  * Retrieves an ephemeral token from the server for the given recognition service.
  */
-async function GetToken(provider: string) {
+async function getToken(provider: string) {
   const response = await fetch('/asr/api', {
     method: 'POST',
     body: JSON.stringify({ provider }),
@@ -75,7 +75,7 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, link, id, costPerMinu
     return wordErrorRate(refClean, inClean);
   };
   const start = () => {
-    const recognizer = createSpeechRecognition(id, manager!, GetToken);
+    const recognizer = createSpeechRecognition(id, manager!, getToken);
     const element = textarea.current! as HTMLTextAreaElement;
     setRecognizer(recognizer);
     setOutput('');
