@@ -15,6 +15,7 @@ export default function NavBar() {
     'Recipe JIT UI': '/recipe',
     'Building Blocks JIT UI': '/building-blocks',
     'Speech-to-Text': '/asr',
+    'Text-to-Speech': '/tts',
   };
 
   return (

@@ -3117,7 +3117,7 @@ __metadata:
     typescript: ^5.1.3
     yargs: ^17.7.2
   peerDependencies:
-    ai-jsx: ">=0.16.0 <1.0.0"
+    ai-jsx: ">=0.17.0 <1.0.0"
   bin:
     fixie-serve-bin: dist/fixie-serve-bin.js
   languageName: unknown
@@ -5576,6 +5576,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@textlint/ast-node-types@npm:^13.2.0":
+  version: 13.3.3
+  resolution: "@textlint/ast-node-types@npm:13.3.3"
+  checksum: 52ac2f04c0c30e19f2910e8c0a4920b3d2159107478cbca49c962419fcb2cdd3d03b504f33f364c884b5e16466e97376f989873be16865e327aa289b5b394cfc
+  languageName: node
+  linkType: hard
+
 "@tootallnate/once@npm:1":
   version: 1.1.2
   resolution: "@tootallnate/once@npm:1.1.2"
@@ -5670,6 +5677,15 @@ __metadata:
   version: 1.5.6
   resolution: "@types/asciichart@npm:1.5.6"
   checksum: bcb95d68a758eb7d1b09f9ce52b96ebf030931661ef5ba06fc2a80d33a4a8352264594426237e96f8988ff41da6745749aab3e902ad7103b2b01cf40dccd86e9
+  languageName: node
+  linkType: hard
+
+"@types/aws4@npm:^1.11.3":
+  version: 1.11.3
+  resolution: "@types/aws4@npm:1.11.3"
+  dependencies:
+    "@types/node": "*"
+  checksum: 4c10ca4d7de26e031e81fd67387df51323ebea81c441330a5a733f4bace854d61b8e880ea8fbe3678f2e6e081d510cbc6b623864646519fbb4ab130a8b138a46
   languageName: node
   linkType: hard
 
@@ -7006,6 +7022,7 @@ __metadata:
     remark-gfm: ^3.0.1
     remark-math: ^5.1.1
     replicate: ^0.12.3
+    sentence-splitter: ^4.2.1
     server-only: ^0.0.1
     ts-jest: ^29.1.0
     ts-node: ^10.9.1
@@ -7566,6 +7583,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"aws4@npm:^1.12.0":
+  version: 1.12.0
+  resolution: "aws4@npm:1.12.0"
+  checksum: 68f79708ac7c335992730bf638286a3ee0a645cf12575d557860100767c500c08b30e24726b9f03265d74116417f628af78509e1333575e9f8d52a80edfe8cbc
+  languageName: node
+  linkType: hard
+
 "axe-core@npm:^4.6.2":
   version: 4.7.2
   resolution: "axe-core@npm:4.7.2"
@@ -8029,6 +8053,13 @@ __metadata:
   version: 1.0.0
   resolution: "boolbase@npm:1.0.0"
   checksum: 3e25c80ef626c3a3487c73dbfc70ac322ec830666c9ad915d11b701142fab25ec1e63eff2c450c74347acfd2de854ccde865cd79ef4db1683f7c7b046ea43bb0
+  languageName: node
+  linkType: hard
+
+"boundary@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "boundary@npm:2.0.0"
+  checksum: 0dda2b4adda5f5ed0b35f22296fe586d96b70719e9d25bff1b565b55e4e3e9bb822a384746f2f0145bf194128486e6a3709e87b90b47195616005d2cf776d132
   languageName: node
   linkType: hard
 
@@ -10467,10 +10498,12 @@ __metadata:
     asciinema-player: ^3.4.0
     clsx: ^1.2.1
     docusaurus-plugin-typedoc: ^0.19.2
+    dotenv: ^16.3.1
     mixpanel-browser: ^2.47.0
     prism-react-renderer: ^1.3.5
     react: ^17.0.2
     react-dom: ^17.0.2
+    throttle-debounce: ^5.0.0
     typedoc: ^0.24.8
     typedoc-plugin-markdown: ^3.15.3
     typescript: ^5.1.3
@@ -18305,6 +18338,7 @@ __metadata:
     "@next/eslint-plugin-next": ^13.4.6
     "@octokit/graphql": ^5.0.6
     "@tailwindcss/forms": ^0.5.3
+    "@types/aws4": ^1.11.3
     "@types/lodash": ^4.14.195
     "@types/node": 20.2.5
     "@types/react": 18.2.8
@@ -18314,6 +18348,7 @@ __metadata:
     ai: ^2.1.8
     ai-jsx: "workspace:*"
     autoprefixer: 10.4.14
+    aws4: ^1.12.0
     classnames: ^2.3.2
     eslint: 8.42.0
     eslint-config-next: ^13.4.6
@@ -22083,6 +22118,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sentence-splitter@npm:^4.2.1":
+  version: 4.2.1
+  resolution: "sentence-splitter@npm:4.2.1"
+  dependencies:
+    "@textlint/ast-node-types": ^13.2.0
+    structured-source: ^4.0.0
+  checksum: 9bdb83f3f22ab349bdcfad46c001675519efef30d691b888abe459e8ed3bab3338176d64d83b89d06ef110bdee1efd3649d55122521e9bd0fb8744debfcba7c5
+  languageName: node
+  linkType: hard
+
 "serialize-javascript@npm:^4.0.0":
   version: 4.0.0
   resolution: "serialize-javascript@npm:4.0.0"
@@ -22996,6 +23041,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"structured-source@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "structured-source@npm:4.0.0"
+  dependencies:
+    boundary: ^2.0.0
+  checksum: 83871c9912d4f0ab27b557959132a85286f1d554eb8395a37642ca5845baf8a2e81ee376d86bdf6d20a2627efd21dc2db2056f6d631bc5a557d37e48068e8e40
+  languageName: node
+  linkType: hard
+
 "style-loader@npm:^3.3.1":
   version: 3.3.3
   resolution: "style-loader@npm:3.3.3"
@@ -23430,6 +23484,13 @@ __metadata:
   version: 3.0.1
   resolution: "throttle-debounce@npm:3.0.1"
   checksum: e34ef638e8df3a9154249101b68afcbf2652a139c803415ef8a2f6a8bc577bcd4d79e4bb914ad3cd206523ac78b9fb7e80885bfa049f64fbb1927f99d98b5736
+  languageName: node
+  linkType: hard
+
+"throttle-debounce@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "throttle-debounce@npm:5.0.0"
+  checksum: aa8bf25828b4f8645ce863589de05d6807ea3debc147ce7d89624638ff8a16792d6d0baa0f8a32a260f0b163444d74020c6087b713ae561fde594b97b6e51f28
   languageName: node
   linkType: hard
 

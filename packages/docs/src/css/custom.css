@@ -15,6 +15,37 @@
   --ifm-color-primary-lightest: #2e4585;
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+
+  /* TODO These aren't working for links */
+  --ifm-link-hover-color: var(--ifm-color-primary-dark);
+  --ifm-link-color: var(--ifm-color-primary);
+
+  /* Modifications for new components */
+  --font-size-small: 15px;
+  --font-size-normal: 16px;
+  --font-size-large: 17px;
+  --font-size-big-1: 22px;
+  --font-size-big-2: 24px;
+  --font-size-big-3: 32px;
+  --font-size-big-4: 46px;
+  --font-size-big-5: 64px;
+}
+
+[data-theme='light'] {
+  --ifm-background-color: white;
+  --ifm-font-color-base: #333;
+  --theme-text-color: var(--ifm-font-color-base);
+
+  /* Feature Cards */
+  --theme-card-text-color: #21222c;
+  --theme-card-title-color: #21222c;
+  --theme-card-bg-color: #f0f1f5;
+  --theme-card-bg-color-hover: rgb(225, 227, 235);
+  --theme-card-border-color: #b7b9c3;
+  --theme-card-border-radius: 8px;
+  --theme-card-secondary-bg-color: #dde0e9;
+  --theme-card-secondary-text-color: #21222c;
+  --theme-card-illustration-bg-color: transparent;
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
@@ -27,6 +58,21 @@
   --ifm-color-primary-lighter: #587cde;
   --ifm-color-primary-lightest: #587cde;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+
+  --ifm-background-color: var(black);
+  --ifm-font-color-base: var(white);
+  --theme-text-color: var(--ifm-font-color-base);
+
+  /* Feature Cards */
+  --theme-card-text-color: var(white);
+  --theme-card-title-color: var(white);
+  --theme-card-bg-color: var(#de6350);
+  --theme-card-bg-color-hover: rgb(47, 49, 63);
+  --theme-card-border-color: #51535f;
+  --theme-card-border-radius: 8px;
+  --theme-card-secondary-bg-color: #21222c;
+  --theme-card-secondary-text-color: #21222c;
+  --theme-card-illustration-bg-color: var(--palette-midnight);
 }
 
 /* If you want to change the base font... */
@@ -34,4 +80,233 @@
 
 :root {
   --ifm-font-family-base: 'Lato', sans-serif;
+}
+
+:root {
+  --palette-charade: #21222c;
+  --palette-gray: #32343e;
+  --palette-green: #66bb6a;
+  --palette-midnight: #141725;
+  --palette-pink: #d14671;
+  --palette-pink-darker: #be2f5b;
+  --palette-rock: rgb(var(--palette-rock-raw));
+  --palette-rock-raw: 38, 40, 51;
+  --palette-sky: #81d3f9;
+  --palette-turquoise: #0cc0df;
+  --palette-black-10: rgba(0, 0, 0, 0.1);
+  --palette-white: #fff;
+  --palette-white-03: rgba(255, 255, 255, 0.03);
+  --palette-white-05: rgba(255, 255, 255, 0.05);
+  --palette-white-10: rgba(255, 255, 255, 0.1);
+  --palette-white-20: rgba(255, 255, 255, 0.2);
+  --palette-white-30: rgba(255, 255, 255, 0.3);
+  --palette-white-40: rgba(255, 255, 255, 0.4);
+  --palette-white-60: rgba(255, 255, 255, 0.6);
+  --palette-white-darker: #d9d9d9;
+  --palette-yellow: #ffd54f;
+
+  /* --image-shadow: 0 15px 61px 5px rgba(20, 23, 37, 0.94);
+
+  --transition-bezier: cubic-bezier(0.17, 0.67, 0.83, 0.67);
+  --transition-fastest: 100ms;
+ */
+
+  --ifm-code-background: var(--palette-gray);
+  --ifm-code-color: var(--palette-white);
+  --ifm-code-font-size: var(--font-size-small);
+
+  --ifm-color-info: var(--palette-sky);
+  --ifm-color-success: var(--palette-green);
+  --ifm-color-warning: var(--palette-yellow);
+  --ifm-dropdown-background-color: var(--palette-rock);
+
+  --ifm-font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --ifm-font-size-base: var(--font-size-small);
+  --ifm-global-border-radius: 8px;
+  --ifm-h1-font-size: var(--font-size-big-4);
+  --ifm-h2-font-size: var(--font-size-big-2);
+  --ifm-h3-font-size: var(--font-size-big-1);
+  --ifm-h4-font-size: var(--font-size-large);
+  --ifm-heading-margin-bottom: 1.5rem;
+  --ifm-hr-border-color: var(--palette-white-20);
+
+  --ifm-list-paragraph-margin: 0.5rem;
+  /* --ifm-menu-link-sublist-icon: url("/img/infima/arrow.svg"); */
+  --ifm-navbar-background-color: var(--palette-charade);
+  --ifm-navbar-height: 80px;
+  --ifm-navbar-item-padding-horizontal: 20px;
+  --ifm-navbar-shadow: 0 1px 0 0 var(--palette-white-10);
+  --ifm-pre-background: var(--palette-midnight);
+  --ifm-table-cell-padding: 0.15rem 1rem;
+  --ifm-toc-border-color: var(--palette-white-10);
+  --ifm-heading-line-height: 1.5;
+
+  --theme-navbar-inner-padding: 2rem;
+  --theme-navbar-background-color: rgba(33, 34, 44, 0.8);
+
+  --theme-input-bg-color: #44475a;
+  --theme-input-text-color: #b1b5d3;
+
+  /* Section Component */
+  --theme-section-odd-bg-color: var(--palette-rock);
+  --theme-section-title-color: var(--palette-white);
+
+  --theme-attention-card-bg-color: var(--palette-gray);
+  --theme-attention-card-text-color: var(--palette-white);
+
+  --theme-team-article-title-color: var(--palette-white);
+
+  --theme-contribute-text-color: var(--palette-white);
+
+  --theme-tutorial-post-card-border: 1px solid transparent;
+  --theme-tutorial-post-card-hover-border: 1px solid var(--palette-white);
+
+  --z-index-navbar: 100;
+  --z-index-dialog: 101;
+}
+
+html[data-theme='light'] {
+  --palette-rock: #262833;
+  --palette-gray: #4b4e5d;
+
+  --palette-dark-03: rgba(0, 0, 0, 0.03);
+  --palette-dark-05: rgba(0, 0, 0, 0.05);
+  --palette-dark-10: rgba(0, 0, 0, 0.1);
+  --palette-dark-20: rgba(0, 0, 0, 0.2);
+  --palette-dark-30: rgba(0, 0, 0, 0.3);
+  --palette-dark-40: rgba(0, 0, 0, 0.4);
+  --palette-dark-40: rgba(0, 0, 0, 0.4);
+  --palette-dark-80: rgba(0, 0, 0, 0.8);
+
+  --palette-white-darker: #d9d9d9;
+  --palette-yellow: #ffd54f;
+
+  --ifm-navbar-background-color: white;
+  --ifm-dropdown-background-color: var(--palette-white);
+  --ifm-navbar-shadow: 0 1px 0 0 var(--palette-dark-10);
+  --ifm-toc-border-color: var(--palette-dark-10);
+
+  --ifm-code-background: #dadada;
+  --ifm-code-color: var(--palette-charade);
+
+  --docsearch-footer-background: var(--ifm-background-color);
+  --docsearch-key-gradient: linear-gradient(-26.5deg, var(--palette-gray) 0%, var(--palette-rock) 100%);
+  --docsearch-key-shadow: 0 3px 3px var(--palette-dark-30);
+
+  --image-shadow: 0 10px 20px 5px var(--palette-dark-20);
+
+  --theme-navbar-background-color: rgba(250, 250, 250, 0.8);
+
+  --theme-section-odd-bg-color: #f0f1f5;
+  --theme-section-title-color: var(--palette-dark-80);
+
+  --theme-input-bg-color: #f0f1f5;
+  --theme-input-text-color: #555b88;
+
+  --theme-attention-card-bg-color: #f0f1f5;
+
+  --theme-team-article-title-color: var(--ifm-heading-color);
+
+  --theme-contribute-text-color: var(--palette-dark-80);
+
+  --theme-tutorial-post-card-border: 1px solid transparent;
+  --theme-tutorial-post-card-hover-border: 1px solid var(--palette-dark-10);
+
+  --ifm-hr-border-color: var(--palette-black-10);
+}
+
+html[data-theme='dark'] .DocSearch {
+  --docsearch-text-color: var(--ifm-font-color-base);
+  --docsearch-muted-color: var(--ifm-color-secondary-darkest);
+  --docsearch-container-background: rgba(0, 0, 0, 0.5);
+  /* Modal */
+  --docsearch-modal-background: var(--ifm-background-color);
+  /* Search box */
+  --docsearch-searchbox-background: var(--palette-white-10);
+  --docsearch-searchbox-focus-background: var(--palette-midnight);
+  /* Hit */
+  --docsearch-hit-color: var(--ifm-font-color-base);
+  --docsearch-hit-active-color: var(--ifm-color-white);
+  --docsearch-hit-background: var(--palette-rock);
+  /* Footer */
+  --docsearch-footer-background: var(--ifm-background-color);
+  --docsearch-key-gradient: linear-gradient(-26.5deg, var(--palette-gray) 0%, var(--palette-rock) 100%);
+}
+
+/* syntax railroad charts in documentation */
+html[data-theme='light'] .markdown img[src*='data:image/svg+xml'][alt*='chart'],
+html[data-theme='light'] .markdown img[src$='.svg'][alt*='chart'] {
+  filter: invert(1) hue-rotate(200deg);
+}
+
+.markdown table code {
+  display: inline-block;
+  max-width: 25ch;
+}
+
+/**
+ *
+ * Globals
+ *
+ **/
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  transition: var(--ifm-transition-fast) ease color;
+}
+
+#__docusaurus {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/**
+ *
+ * Pagination
+ *
+ **/
+/* 
+.pagination-nav__item--next .pagination-nav__link {
+  background: var(--palette-pink);
+}
+
+.pagination-nav__link {
+  background: var(--palette-white-05);
+}
+
+html[data-theme="light"] .pagination-nav__item--next .pagination-nav__link {
+  background: var(--palette-pink);
+  color: var(--palette-white);
+}
+
+html[data-theme="light"] .pagination-nav__item--next .pagination-nav__sublabel {
+  color: var(--palette-white);
+}
+
+html[data-theme="light"] .pagination-nav__link {
+  background: var(--palette-dark-10);
+  color: var(--palette-dark-80);
+}
+
+html[data-theme="light"] .pagination-nav__sublabel {
+  color: var(--palette-dark-80);
+} */
+
+/**
+ *
+ * Hide the "See all ## results" link at the bottom of the search widget.
+ * See https://github.com/facebook/docusaurus/issues/5084 for context.
+ *
+ **/
+.DocSearch-Dropdown-Container .DocSearch-HitsFooter {
+  display: none;
+}
+.DocSearch-Dropdown-Container {
+  padding-bottom: var(--docsearch-spacing);
 }

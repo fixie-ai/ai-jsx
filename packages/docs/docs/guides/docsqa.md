@@ -37,7 +37,7 @@ When using a Fixie corpus, Fixie can handle parsing for most common documents ty
 
 ### Step 2: Vectorizing
 
-Now that you have text documents, you'll need to split them into "chunks" so that several can fit in your LLM's [context window](./brand-new.md#context-window) and you'll need to [embed](./brand-new.md#semantic-similarity-embeddings) them into your corpus's vector space. These are done with a [`Chunker`](../api/modules/batteries_docs#chunker) and an [`Embedding`](../api/interfaces/batteries_docs.Embedding.md) respectively. AI.JSX provides defaults for each of these, but you're free to swap these out however you'd like. This could be especially useful when combined with a custom loader and parser for non-text documents since there may be semantic meaning that could be inferred from the document structure itself that wouldn't necessarily be captured by the defaults.
+Now that you have text documents, you'll need to split them into "chunks" so that several can fit in your LLM's [context window](../ai-newcomers.md#context-window) and you'll need to [embed](../ai-newcomers.md#semantic-similarity-embeddings) them into your corpus's vector space. These are done with a [`Chunker`](../api/modules/batteries_docs#chunker) and an [`Embedding`](../api/interfaces/batteries_docs.Embedding.md) respectively. AI.JSX provides defaults for each of these, but you're free to swap these out however you'd like. This could be especially useful when combined with a custom loader and parser for non-text documents since there may be semantic meaning that could be inferred from the document structure itself that wouldn't necessarily be captured by the defaults.
 
 See also: [Pinecone Guidance on Chunking Strategies](https://www.pinecone.io/learn/chunking-strategies/).
 
