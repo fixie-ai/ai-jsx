@@ -472,7 +472,7 @@ export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
   }
 }
 
-class TextToSpeechOptions {
+export class TextToSpeechOptions {
   rate?: number;
   voice?: string;
   getToken?: GetToken;

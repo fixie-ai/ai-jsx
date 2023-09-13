@@ -111,7 +111,7 @@ class ChatManager {
   onError?: () => void;
   constructor({ asrProvider, ttsProvider, model }: ChatManagerInit) {
     this.micManager = new MicManager();
-    this.asr = createSpeechRecognition(asrProvider, this.micManager, getAsrToken);
+    this.asr = createSpeechRecognition({ provider: asrProvider, manager: this.micManager, getToken: getAsrToken });
     this.tts = createTextToSpeech({ provider: ttsProvider, getToken: getTtsToken, buildUrl: buildTtsUrl, rate: 1.2 });
     this.model = model;
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {

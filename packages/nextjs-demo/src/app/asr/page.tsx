@@ -75,7 +75,7 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, link, id, costPerMinu
     return wordErrorRate(refClean, inClean);
   };
   const start = () => {
-    const recognizer = createSpeechRecognition(id, manager!, getToken);
+    const recognizer = createSpeechRecognition({provider: id, manager, getToken});
     const element = textarea.current! as HTMLTextAreaElement;
     setRecognizer(recognizer);
     setOutput('');

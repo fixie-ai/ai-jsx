@@ -644,11 +644,11 @@ export class RevAISpeechRecognition extends SpeechRecognitionBase {
   }
 }
 
-class SpeechRecognitionOptions {
+export class SpeechRecognitionOptions {
   public language?: string;
   public model?: string;
   constructor(
-    public type: string,
+    public provider: string,
     public manager: MicManager,
     public tokenFunc: GetToken,
   ) {}
@@ -657,8 +657,8 @@ class SpeechRecognitionOptions {
 /**
  * Creates a speech recoginzer of the given type (e.g., 'deepgram').
  */
-export function createSpeechRecognition({ type, manager, tokenFunc, language, model }: SpeechRecognitionOptions) {
-  switch (type) {
+export function createSpeechRecognition({ provider, manager, tokenFunc, language, model }: SpeechRecognitionOptions) {
+  switch (provider) {
     case 'deepgram':
       return new DeepgramSpeechRecognition(manager, tokenFunc, language, model);
     case 'soniox':
@@ -672,6 +672,6 @@ export function createSpeechRecognition({ type, manager, tokenFunc, language, mo
     case 'revai':
       return new RevAISpeechRecognition(manager, tokenFunc, language);
     default:
-      throw new Error(`Unknown speech recognition type: ${type}`);
+      throw new Error(`Unknown speech recognition type: ${provider}`);
   }
 }
