@@ -95,7 +95,7 @@ export class IsomorphicFixieClient {
     const body = {
       corpus: {
         display_name: name,
-        description
+        description,
       },
     };
     return this.request('/api/v1/corpora', body);
