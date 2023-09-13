@@ -1,14 +1,12 @@
 import yaml from 'js-yaml';
 import fs from 'fs';
 import terminal from 'terminal-kit';
-import os from 'os';
 import path from 'path';
 import untildify from 'untildify';
 import axios from 'axios';
 import open from 'open';
 import http from 'http';
 import crypto from 'crypto';
-import readline from 'readline';
 import net from 'net';
 
 const { terminal: term } = terminal;
@@ -25,12 +23,12 @@ export const FIXIE_API_URL = 'https://api.fixie.ai';
 export const FIXIE_CONFIG_FILE = '~/.config/fixie/config.yaml';
 
 /** Load the client configuration from the given file. */
-export function LoadConfig(configFile: string): FixieConfig {
+export function loadConfig(configFile: string): FixieConfig {
   const fullPath = untildify(configFile);
   if (!fs.existsSync(fullPath)) {
     return {};
   }
-  const config: object = yaml.load(fs.readFileSync(fullPath, 'utf8')) as object;
+  const config = yaml.load(fs.readFileSync(fullPath, 'utf8')) as object;
   // Warn if any fields are present in config that are not supported.
   const validKeys = ['apiUrl', 'apiKey'];
   const invalidKeys = Object.keys(config).filter((key) => !validKeys.includes(key));
@@ -41,7 +39,7 @@ export function LoadConfig(configFile: string): FixieConfig {
 }
 
 /** Save the client configuration to the given file. */
-export function SaveConfig(config: FixieConfig, configFile: string) {
+export function saveConfig(config: FixieConfig, configFile: string) {
   const fullPath = untildify(configFile);
   const dirName = path.dirname(fullPath);
   if (!fs.existsSync(dirName)) {
@@ -71,7 +69,7 @@ export async function Authenticate({
   //   2. FIXIE_API_URL and FIXIE_API_KEY environment variables.
   //   3. apiUrl and apiKey fields in the config file.
   //   4. Fallback value for apiUrl (constant defined above).
-  const config = LoadConfig(configFile ?? FIXIE_CONFIG_FILE);
+  const config = loadConfig(configFile ?? FIXIE_CONFIG_FILE);
   const useApiUrl = apiUrl ?? process.env.FIXIE_API_URL ?? config.apiUrl ?? FIXIE_API_URL;
   const useApiKey = process.env.FIXIE_API_KEY ?? config.apiKey;
   if (!useApiKey) {
@@ -87,7 +85,7 @@ export async function Authenticate({
 }
 
 /** Returns an authenticated FixieClient, starting an OAuth flow to authenticate the user if necessary. */
-export async function AuthenticateOrLogin({
+export async function AuthenticateOrLogIn({
   apiUrl,
   configFile,
   forceReauth,
@@ -114,10 +112,10 @@ export async function AuthenticateOrLogin({
     apiUrl: apiUrl ?? FIXIE_API_URL,
     apiKey,
   };
-  SaveConfig(config, configFile ?? FIXIE_CONFIG_FILE);
+  saveConfig(config, configFile ?? FIXIE_CONFIG_FILE);
   const client = await Authenticate({ apiUrl, configFile: configFile ?? FIXIE_CONFIG_FILE });
   if (!client) {
-    throw new Error('Failed to authenticate');
+    throw new Error('Failed to authenticate - please try logging in at https://console.fixie.ai on the web.');
   }
   const userInfo = await client.userInfo();
   term('🎉 Successfully logged into ')
