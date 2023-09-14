@@ -125,6 +125,8 @@ export class IsomorphicFixieClient {
   addCorpusSource(
     corpusId: string,
     startUrls: string[],
+    includeGlobs?: string[],
+    excludeGlobs?: string[],
     maxDocuments?: number,
     maxDepth?: number
   ): Promise<Jsonifiable> {
@@ -137,11 +139,12 @@ export class IsomorphicFixieClient {
           web: {
             start_urls: startUrls,
             max_depth: maxDepth,
+            include_glob_patterns: includeGlobs,
+            exclude_glob_patterns: excludeGlobs,
           },
         },
       },
     };
-
     return this.request(`/api/v1/corpora/${corpusId}/sources`, body);
   }
 
