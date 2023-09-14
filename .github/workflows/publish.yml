@@ -22,4 +22,3 @@ jobs:
       - run: ~/.volta/bin/yarn workspace @fixieai/sdk npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
