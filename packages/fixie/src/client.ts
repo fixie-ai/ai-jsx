@@ -3,8 +3,9 @@ import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache.js';
 import createUploadLink from 'apollo-upload-client/public/createUploadLink.js';
 import isExtractableFile from 'apollo-upload-client/public/isExtractableFile.js';
 import { ExtractableFile } from 'extract-files';
-import { ReadStream } from 'fs';
+import fs, { ReadStream } from 'fs';
 import { IsomorphicFixieClient } from './isomorphic-client.js';
+import type { Jsonifiable } from 'type-fest';
 
 /**
  * A client to the Fixie AI platform.
@@ -45,5 +46,26 @@ export class FixieClient extends IsomorphicFixieClient {
           isExtractableFile(value) || (typeof ReadStream !== 'undefined' && value instanceof ReadStream),
       }),
     });
+  }
+
+  /** Add a new static file Source to a Corpus. */
+  addFileCorpusSource(corpusId: string, filenames: string[], mimeType: string): Promise<Jsonifiable> {
+    const body = {
+      corpus_id: corpusId,
+      source: {
+        corpus_id: corpusId,
+        load_spec: {
+          max_documents: filenames.length,
+          static: {
+            documents: filenames.map((filename) => ({
+              filename,
+              mime_type: mimeType,
+              contents: Buffer.from(fs.readFileSync(filename, 'utf8')).toString('base64'),
+            })),
+          },
+        },
+      },
+    };
+    return this.request(`/api/v1/corpora/${corpusId}/sources`, body);
   }
 }
