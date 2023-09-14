@@ -189,6 +189,8 @@ export function redactedFunctionTools(messages: ConversationMessage[]): UseTools
   if (!responseContent) {
     return {};
   }
+  // TODO: it is possible for this formulation to confuse the model when multiple redacted responses are present.
+  // We should consider adding an argument or improve prompts to disambiguate if the need arises.
   return {
     loadBySimilarity: {
       description: 'Query the response of the "latest redacted function call" by using semantic similarity search.',
