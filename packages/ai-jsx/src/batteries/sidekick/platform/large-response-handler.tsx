@@ -191,7 +191,7 @@ export function redactedFunctionTools(messages: ConversationMessage[]): UseTools
   }
   return {
     loadBySimilarity: {
-      description: 'Query the response by using semantic similarity search.',
+      description: 'Query the response of the latest redacted function call by using semantic similarity search.',
       parameters: {
         query: {
           type: 'string',
