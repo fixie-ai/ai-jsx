@@ -66,8 +66,6 @@ export class FixieClient extends IsomorphicFixieClient {
         },
       },
     };
-    console.log('SENDING BODY: ');
-    console.log(JSON.stringify(body));
     return this.request(`/api/v1/corpora/${corpusId}/sources`, body);
   }
 }
