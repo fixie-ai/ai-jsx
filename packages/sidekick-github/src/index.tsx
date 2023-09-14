@@ -8,7 +8,7 @@ const ghToken = process.env.GITHUB_TOKEN;
 
 const tools: Record<string, Tool> = {
   runGithubGraphqlQuery: {
-    description: 'Run a GraphQL query against the Github API',
+    description: 'Run a   GraphQL query against the Github API',
     parameters: {
       query: {
         description: 'The GraphQL query to run',

@@ -7,6 +7,7 @@ import ora from 'ora';
 import os from 'os';
 import path from 'path';
 import { execa } from 'execa';
+import Watcher from 'watcher';
 
 const { terminal: term } = terminal;
 
@@ -574,6 +575,15 @@ export class FixieAgent {
       ];
     }
 
+    // Watch files in the agent directory for agents.
+    const watchPath = path.resolve(agentPath);
+    console.log(`🌱 Watching ${watchPath} for changes...`);
+
+    const watcher = new Watcher(watchPath);
+    watcher.on('all', (event, targetPath, targetPathNext) => {
+      console.log(`🌱 Got watcher event ${event} on ${targetPath} -> ${targetPathNext}`);
+    });
+
     const agent = await this.ensureAgent(client, agentId, config);
     const originalRevision = await agent.getCurrentRevision();
     if (originalRevision) {
@@ -581,6 +591,7 @@ export class FixieAgent {
     }
     let currentRevision: AgentRevision | null = null;
     const doCleanup = async () => {
+      watcher.close();
       if (originalRevision) {
         try {
           await agent.setCurrentRevision(originalRevision.id);
