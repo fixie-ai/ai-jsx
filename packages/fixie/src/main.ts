@@ -135,6 +135,7 @@ config
   });
 
 const corpus = program.command('corpus').description('Corpus related commands');
+corpus.alias('corpora');
 
 corpus
   .command('list')
@@ -173,6 +174,7 @@ corpus
   });
 
 const source = corpus.command('source').description('Corpus source related commands');
+source.alias('sources');
 
 source
   .command('add <corpusId> <startUrls...>')
@@ -219,6 +221,7 @@ source
   });
 
 const job = source.command('job').description('Job-related commands');
+job.alias('jobs');
 
 job
   .command('list <corpusId> <sourceId>')
@@ -238,9 +241,10 @@ job
     showResult(result, program.opts().raw);
   });
 
-const docs = corpus.command('docs').description('Document-related commands');
+const doc = corpus.command('doc').description('Document-related commands');
+doc.alias('docs');
 
-docs
+doc
   .command('list <corpusId>')
   .description('List documents for a given corpus.')
   .action(async (corpusId: string) => {
@@ -249,7 +253,7 @@ docs
     showResult(result, program.opts().raw);
   });
 
-job
+doc
   .command('get <corpusId> <docId>')
   .description('Get a document for a corpus.')
   .action(async (corpusId: string, docId: string) => {
@@ -259,6 +263,7 @@ job
   });
 
 const agent = program.command('agent').description('Agent related commands');
+agent.alias('agents');
 
 agent
   .command('list')
@@ -321,6 +326,7 @@ registerDeployCommand(agent);
 registerServeCommand(agent);
 
 const revision = agent.command('revision').description('Agent revision-related commands');
+revision.alias('revisions');
 
 revision
   .command('list <agentId>')
