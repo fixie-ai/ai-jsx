@@ -181,14 +181,36 @@ source
   .description('Add a source to a corpus.')
   .option('--max-documents <number>', 'Maximum number of documents to crawl')
   .option('--max-depth <number>', 'Maximum depth to crawl')
+  .option('--include-patterns <pattern...>', 'URL patterns to include in the crawl')
+  .option('--exclude-patterns <pattern...>', 'URL patterns to exclude from the crawl')
   .action(
     async (
       corpusId: string,
       startUrls: string[],
-      { maxDocuments, maxDepth }: { maxDocuments?: number; maxDepth?: number }
+      {
+        maxDocuments,
+        maxDepth,
+        includePatterns,
+        excludePatterns,
+      }: { maxDocuments?: number; maxDepth?: number; includePatterns?: string[]; excludePatterns?: string[] }
     ) => {
+      if (!includePatterns) {
+        term.yellow('Warning: ')(
+          'No --include-patterns specfied. This is equivalent to only crawling the URLs specified as startUrls.\n'
+        );
+        term.yellow('Warning: ')('Use ').red("--include-patterns '*'")(
+          ' if you want to allow all URLs in the crawl.\n'
+        );
+      }
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.addCorpusSource(corpusId, startUrls, maxDocuments, maxDepth);
+      const result = await client.addCorpusSource(
+        corpusId,
+        startUrls,
+        includePatterns,
+        excludePatterns,
+        maxDocuments,
+        maxDepth
+      );
       showResult(result, program.opts().raw);
     }
   );
