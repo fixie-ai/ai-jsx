@@ -5,10 +5,6 @@ import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
 import '../globals.css';
 
-// anthropic llms
-// spacebar text
-// $4. thing
-// center content
 // latency map
 // shorter initial messages
 // caching or other initial startup opt?
