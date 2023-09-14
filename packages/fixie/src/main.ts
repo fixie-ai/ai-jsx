@@ -181,6 +181,7 @@ source
   .description('Add a source to a corpus.')
   .option('--max-documents <number>', 'Maximum number of documents to crawl')
   .option('--max-depth <number>', 'Maximum depth to crawl')
+  .option('--description <string>', 'A human-readable description for the source')
   .option('--include-patterns <pattern...>', 'URL patterns to include in the crawl')
   .option('--exclude-patterns <pattern...>', 'URL patterns to exclude from the crawl')
   .action(
@@ -192,7 +193,14 @@ source
         maxDepth,
         includePatterns,
         excludePatterns,
-      }: { maxDocuments?: number; maxDepth?: number; includePatterns?: string[]; excludePatterns?: string[] }
+        description,
+      }: {
+        maxDocuments?: number;
+        maxDepth?: number;
+        includePatterns?: string[];
+        excludePatterns?: string[];
+        description: string;
+      }
     ) => {
       if (!includePatterns) {
         term.yellow('Warning: ')(
@@ -209,7 +217,8 @@ source
         includePatterns,
         excludePatterns,
         maxDocuments,
-        maxDepth
+        maxDepth,
+        description
       );
       showResult(result, program.opts().raw);
     }
