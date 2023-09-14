@@ -71,7 +71,7 @@ runtime. Install the current [LTS version of Node.js](https://nodejs.org/en).
 The Fixie command-line interface is provided by the [fixie](https://www.npmjs.com/package/fixie) package in npm. Install it by running:
 
 ```terminal
-npm install -g fixie@latest
+npx fixie@latest
 ```
 
 This will install the `fixie` binary.
