@@ -1,0 +1,24 @@
+name: Publish to npm
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: curl https://get.volta.sh | bash
+      - run: ~/.volta/bin/volta list
+      - run: YARN_CHECKSUM_BEHAVIOR=ignore ~/.volta/bin/yarn install --immutable
+      - run: ~/.volta/bin/yarn build
+      - run: ~/.volta/bin/yarn workspace ai-jsx npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: ~/.volta/bin/yarn workspace fixie npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: ~/.volta/bin/yarn workspace @fixieai/sdk npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
