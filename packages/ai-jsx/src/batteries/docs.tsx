@@ -739,21 +739,23 @@ const defaultLangchainChunkLimit = 4;
 async function searchVectorStore<ChunkMetadata extends Jsonifiable = Jsonifiable>(
   vectorStore: VectorStore,
   query: string,
-  params?: { limit?: number; score_threshold?: number }
+  params?: { limit?: number; score_threshold?: number; filter?: any }
 ): Promise<ScoredChunk<ChunkMetadata>[]> {
   const k = params?.limit ?? defaultLangchainChunkLimit;
-  const scoredLcDocs = await vectorStore.similaritySearchWithScore(query, k, _.omit(params, 'limit'));
-  return scoredLcDocs.map((lcDocAndScore) => {
-    const lcDoc = lcDocAndScore[0];
-    return {
-      score: lcDocAndScore[1],
-      chunk: {
-        // TODO: Wrap chunker to track document name in ChunkMetadata in a way we can pull back out here.
-        content: lcDoc.pageContent,
-        metadata: lcDoc.metadata as ChunkMetadata,
-      },
-    } as ScoredChunk<ChunkMetadata>;
-  });
+  const scoredLcDocs = await vectorStore.similaritySearchWithScore(query, k, params?.filter);
+  return scoredLcDocs
+    .map((lcDocAndScore) => {
+      const lcDoc = lcDocAndScore[0];
+      return {
+        score: lcDocAndScore[1],
+        chunk: {
+          // TODO: Wrap chunker to track document name in ChunkMetadata in a way we can pull back out here.
+          content: lcDoc.pageContent,
+          metadata: lcDoc.metadata as ChunkMetadata,
+        },
+      } as ScoredChunk<ChunkMetadata>;
+    })
+    .filter((chunk) => chunk.score >= (params?.score_threshold ?? Number.MIN_VALUE));
 }
 
 /** A default component for formatting document chunks. */

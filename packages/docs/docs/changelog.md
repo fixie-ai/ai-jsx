@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.17.0
+## 0.17.1
+
+- API token limiting: long API responses in `Sidekick` are now automatically truncated. If this happens, the response is chunked and the LLM is given a new function `loadBySimilarity` to query the last function response.
+
+## [0.17.0](https://github.com/fixie-ai/ai-jsx/commit/4ae89b6883660be06854ddd535b82e2d174513fa)
 
 - Changed `<UseTools>` to allow AI.JSX components to be tools.
 - Added `FixieAPIConfiguration` context.

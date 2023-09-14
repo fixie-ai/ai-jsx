@@ -40,7 +40,7 @@
     "asciichart": "^1.5.25",
     "axios": "^1.4.0",
     "enquirer": "^2.3.6",
-    "langchain": "^0.0.81",
+    "langchain": "^0.0.143",
     "node-fetch": "^3.3.1",
     "pino": "^8.14.1",
     "pino-pretty": "^10.0.0",
