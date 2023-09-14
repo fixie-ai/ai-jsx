@@ -33,6 +33,7 @@ export type ValidChatModel =
   | 'claude-1.3-100k'
   | 'claude-1.2'
   | 'claude-1.0'
+  | 'claude-instant-1.2'
   | 'claude-instant-1.1'
   | 'claude-instant-1.1-100k'
   | 'claude-instant-1.0'
