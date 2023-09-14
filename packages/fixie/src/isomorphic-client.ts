@@ -27,7 +27,7 @@ export class IsomorphicFixieClient {
   /**
    * Use the `Create*` methods instead.
    */
-  protected constructor(public readonly url: string, protected readonly apiKey?: string) {}
+  protected constructor(public readonly url: string, public readonly apiKey?: string) {}
 
   static Create(url: string, apiKey?: string) {
     const apiKeyToUse = apiKey ?? process.env.FIXIE_API_KEY;
@@ -125,23 +125,39 @@ export class IsomorphicFixieClient {
   addCorpusSource(
     corpusId: string,
     startUrls: string[],
+    includeGlobs?: string[],
+    excludeGlobs?: string[],
     maxDocuments?: number,
-    maxDepth?: number
+    maxDepth?: number,
+    description?: string
   ): Promise<Jsonifiable> {
+    /**
+     * Mike says Apify won't like the querystring and fragment, so we'll remove them.
+     */
+    const sanitizedStartUrls = startUrls.map((url) => {
+      // Delete the query and fragment from the URL.
+      const urlObj = new URL(url);
+      urlObj.search = '';
+      urlObj.hash = '';
+      return urlObj.toString();
+    });
+
     const body = {
       corpus_id: corpusId,
       source: {
+        description,
         corpus_id: corpusId,
         load_spec: {
           max_documents: maxDocuments,
           web: {
-            start_urls: startUrls,
+            start_urls: sanitizedStartUrls,
             max_depth: maxDepth,
+            include_glob_patterns: includeGlobs,
+            exclude_glob_patterns: excludeGlobs,
           },
         },
       },
     };
-
     return this.request(`/api/v1/corpora/${corpusId}/sources`, body);
   }
 
