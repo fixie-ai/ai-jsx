@@ -194,7 +194,13 @@ source
         includePatterns,
         excludePatterns,
         description,
-      }: { maxDocuments?: number; maxDepth?: number; includePatterns?: string[]; excludePatterns?: string[], description: string }
+      }: {
+        maxDocuments?: number;
+        maxDepth?: number;
+        includePatterns?: string[];
+        excludePatterns?: string[];
+        description: string;
+      }
     ) => {
       if (!includePatterns) {
         term.yellow('Warning: ')(
