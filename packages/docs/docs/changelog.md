@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.17.0
+## 0.18.0
+
+- Add Text to Speech helpers.
+
+## [0.17.0](https://github.com/fixie-ai/ai-jsx/commit/4ae89b6883660be06854ddd535b82e2d174513fa)
 
 - Changed `<UseTools>` to allow AI.JSX components to be tools.
 - Added `FixieAPIConfiguration` context.
