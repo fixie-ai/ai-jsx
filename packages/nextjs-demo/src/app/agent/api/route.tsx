@@ -1,6 +1,7 @@
 /** @jsxImportSource ai-jsx */
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
-import { OpenAI, ValidChatModel } from 'ai-jsx/lib/openai';
+import { OpenAI, ValidChatModel as OpenAIValidChatModel } from 'ai-jsx/lib/openai';
+import { Anthropic, ValidChatModel as AnthropicValidChatModel } from 'ai-jsx/lib/anthropic';
 import { StreamingTextResponse } from 'ai';
 import { toTextStream } from 'ai-jsx/stream';
 import { NextRequest } from 'next/server';
@@ -19,7 +20,7 @@ Respond according to the following script:
 5. Ask the user to pull up to the drive thru window. 
 If the user says something that you don't understand, ask them to repeat themselves.
 If the user asks for something that's not on the menu, inform them of that fact, and suggest the most similar item on the menu.
-If the user says something unrelated to your role, responed with "Sir, this is a Krispy Kreme."
+If the user says something unrelated to your role, responed with "Sir... this is a Krispy Kreme."
 If the user says "thank you", respond with "My pleasure."
 When speaking with the user, be concise, keep your responses to a single sentence when possible.
 If the user asks about what's on the menu, DO NOT read the entire menu to them. Instead, give a couple suggestions.
@@ -63,21 +64,25 @@ class ClientMessage {
 }
 
 function ChatAgent({ conversation, model }: { conversation: ClientMessage[]; model: string }) {
-  const chatModel = model as ValidChatModel;
-  return (
-    <OpenAI chatModel={chatModel}>
-      <ChatCompletion>
-        <SystemMessage>{KK_PROMPT}</SystemMessage>
-        {conversation.map((message) =>
-          message.role == 'assistant' ? (
-            <AssistantMessage>{message.content}</AssistantMessage>
-          ) : (
-            <UserMessage>{message.content}</UserMessage>
-          )
-        )}
-      </ChatCompletion>
-    </OpenAI>
+  const children = (
+    <ChatCompletion>
+      <SystemMessage>{KK_PROMPT}</SystemMessage>
+      {conversation.map((message) =>
+        message.role == 'assistant' ? (
+          <AssistantMessage>{message.content}</AssistantMessage>
+        ) : (
+          <UserMessage>{message.content}</UserMessage>
+        )
+      )}
+    </ChatCompletion>
   );
+  if (model.startsWith('gpt-')) {
+    return <OpenAI chatModel={model as OpenAIValidChatModel}>{children}</OpenAI>;
+  }
+  if (model.startsWith('claude-')) {
+    return <Anthropic chatModel={model as AnthropicValidChatModel}>{children}</Anthropic>;
+  }
+  throw new Error(`Unknown model: ${model}`);
 }
 
 export async function POST(request: NextRequest) {
