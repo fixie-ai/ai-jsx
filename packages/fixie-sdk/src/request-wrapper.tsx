@@ -76,7 +76,7 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
   const { request } = requestContext;
 
   // If we're using OpenAI (or default), enable the OpenAI proxy.
-  if (!request.generationParams.modelProvider || request.generationParams.modelProvider.toLowerCase() === 'openai') {
+  if (!request.generationParams?.modelProvider || request.generationParams.modelProvider.toLowerCase() === 'openai') {
     wrappedNode = (
       <OpenAI
         client={
@@ -86,7 +86,7 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
             fetch: globalThis.fetch,
           })
         }
-        chatModel={(request.generationParams.model as ValidChatModel | undefined) ?? 'gpt-3.5-turbo'}
+        chatModel={(request.generationParams?.model as ValidChatModel | undefined) ?? 'gpt-3.5-turbo'}
       >
         {wrappedNode}
       </OpenAI>

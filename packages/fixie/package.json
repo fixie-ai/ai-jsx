@@ -1,6 +1,6 @@
 {
-  "name": "@fixieai/fixie",
-  "version": "1.2.1",
+  "name": "fixie",
+  "version": "1.2.2",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
