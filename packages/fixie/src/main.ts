@@ -135,6 +135,7 @@ config
   });
 
 const corpus = program.command('corpus').description('Corpus related commands');
+corpus.alias('corpora');
 
 corpus
   .command('list')
@@ -172,9 +173,10 @@ corpus
     showResult(result, program.opts().raw);
   });
 
-const sources = corpus.command('sources').description('Corpus source related commands');
+const source = corpus.command('source').description('Corpus source related commands');
+source.alias('sources');
 
-sources
+source
   .command('add <corpusId> <startUrls...>')
   .description('Add a source to a corpus.')
   .option('--max-documents <number>', 'Maximum number of documents to crawl')
@@ -191,7 +193,7 @@ sources
     }
   );
 
-sources
+source
   .command('list <corpusId>')
   .description('List sources of a corpus.')
   .action(async (corpusId: string) => {
@@ -200,7 +202,7 @@ sources
     showResult(result, program.opts().raw);
   });
 
-sources
+source
   .command('get <corpusId> <sourceId>')
   .description('Get a source for a corpus.')
   .action(async (corpusId: string, sourceId: string) => {
@@ -209,7 +211,7 @@ sources
     showResult(result, program.opts().raw);
   });
 
-sources
+source
   .command('refresh <corpusId> <sourceId>')
   .description('Refresh a corpus source.')
   .action(async (corpusId: string, sourceId: string) => {
@@ -218,9 +220,10 @@ sources
     showResult(result, program.opts().raw);
   });
 
-const jobs = sources.command('jobs').description('Job-related commands');
+const job = source.command('job').description('Job-related commands');
+job.alias('jobs');
 
-jobs
+job
   .command('list <corpusId> <sourceId>')
   .description('List jobs for a given source.')
   .action(async (corpusId: string, sourceId: string) => {
@@ -229,7 +232,7 @@ jobs
     showResult(result, program.opts().raw);
   });
 
-jobs
+job
   .command('get <corpusId> <sourceId> <jobId>')
   .description('Get a job for a source.')
   .action(async (corpusId: string, sourceId: string, jobId: string) => {
@@ -238,9 +241,10 @@ jobs
     showResult(result, program.opts().raw);
   });
 
-const docs = corpus.command('docs').description('Document-related commands');
+const doc = corpus.command('doc').description('Document-related commands');
+doc.alias('docs');
 
-docs
+doc
   .command('list <corpusId>')
   .description('List documents for a given corpus.')
   .action(async (corpusId: string) => {
@@ -249,7 +253,7 @@ docs
     showResult(result, program.opts().raw);
   });
 
-jobs
+doc
   .command('get <corpusId> <docId>')
   .description('Get a document for a corpus.')
   .action(async (corpusId: string, docId: string) => {
@@ -258,9 +262,10 @@ jobs
     showResult(result, program.opts().raw);
   });
 
-const agents = program.command('agents').description('Agent related commands');
+const agent = program.command('agent').description('Agent related commands');
+agent.alias('agents');
 
-agents
+agent
   .command('list')
   .description('List all agents.')
   .action(async () => {
@@ -269,7 +274,7 @@ agents
     showResult(await Promise.all(result.map((agent) => agent.agentId)), program.opts().raw);
   });
 
-agents
+agent
   .command('get <agentId>')
   .description('Get information about the given agent.')
   .action(async (agentId: string) => {
@@ -278,7 +283,7 @@ agents
     showResult(result.metadata, program.opts().raw);
   });
 
-agents
+agent
   .command('delete <agentHandle>')
   .description('Delete the given agent.')
   .action(async (agentHandle: string) => {
@@ -288,7 +293,7 @@ agents
     showResult(result, program.opts().raw);
   });
 
-agents
+agent
   .command('publish <agentId>')
   .description('Publish the given agent.')
   .action(async (agentHandle: string) => {
@@ -298,7 +303,7 @@ agents
     showResult(result, program.opts().raw);
   });
 
-agents
+agent
   .command('unpublish <agentId>')
   .description('Unpublish the given agent.')
   .action(async (agentHandle: string) => {
@@ -308,7 +313,7 @@ agents
     showResult(result, program.opts().raw);
   });
 
-agents
+agent
   .command('create <agentHandle> [agentName] [agentDescription] [agentMoreInfoUrl]')
   .description('Create an agent.')
   .action(async (agentHandle: string, agentName?: string, agentDescription?: string, agentMoreInfoUrl?: string) => {
@@ -317,12 +322,13 @@ agents
     showResult(result.metadata, program.opts().raw);
   });
 
-registerDeployCommand(agents);
-registerServeCommand(agents);
+registerDeployCommand(agent);
+registerServeCommand(agent);
 
-const revisions = agents.command('revisions').description('Agent revision-related commands');
+const revision = agent.command('revision').description('Agent revision-related commands');
+revision.alias('revisions');
 
-revisions
+revision
   .command('list <agentId>')
   .description('List all revisions for the given agent.')
   .action(async (agentId: string) => {
@@ -331,7 +337,7 @@ revisions
     showResult(result, program.opts().raw);
   });
 
-revisions
+revision
   .command('get <agentId>')
   .description('Get current revision for the given agent.')
   .action(async (agentId: string) => {
@@ -341,7 +347,7 @@ revisions
     showResult(result, program.opts().raw);
   });
 
-revisions
+revision
   .command('set <agentId> <revisionId>')
   .description('Set the current revision for the given agent.')
   .action(async (agentId: string, revisionId: string) => {
@@ -351,7 +357,7 @@ revisions
     showResult(result, program.opts().raw);
   });
 
-revisions
+revision
   .command('delete <agentId> <revisionId>')
   .description('Delete the given revision for the given agent.')
   .action(async (agentId: string, revisionId: string) => {
