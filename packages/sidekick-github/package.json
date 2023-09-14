@@ -9,10 +9,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "yarn build && fixie-serve-bin --packagePath ./dist/index.js --port 8080",
+    "dev": "yarn build && yarn serve",
     "typecheck": "tsc -p tsconfig.json",
     "build": "yarn run typecheck",
-    "prepack": "yarn build"
+    "prepack": "yarn build",
+    "serve": "fixie serve",
+    "deploy": "fixie deploy"
   },
   "dependencies": {
     "ai-jsx": "*"

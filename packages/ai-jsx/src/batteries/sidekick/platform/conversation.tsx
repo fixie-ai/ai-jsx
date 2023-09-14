@@ -12,7 +12,9 @@ import {
   renderToConversation,
   SystemMessage,
 } from '../../../core/conversation.js';
+import { LargeFunctionResponseWrapper, redactedFunctionTools } from './large-response-handler.js';
 import { ExecuteFunction, UseToolsProps } from '../../use-tools.js';
+import _ from 'lodash';
 
 /**
  * This function defines the shrinking policy. It's activated when the conversation history overflows the context
@@ -81,15 +83,40 @@ export function getNextConversationStep(
 ) {
   const shrinkableConversation = getShrinkableConversation(messages, fullConversation);
   const lastMessage = messages[messages.length - 1];
+
+  // Add tools for interacting with redacted function responses (if one exists).
+  // We will only take into account the current round of messages (after last UserMessage). In the next round
+  // the LLM will need to call the function again. This is to prevent the LLM from accessing stale data.
+  const lastTurnMessages = _.takeRightWhile(fullConversation, ({ type }) => type !== 'user');
+  const updatedTools = { ...tools, ...redactedFunctionTools(lastTurnMessages) };
+
   switch (lastMessage.type) {
     case 'functionCall': {
       const { name, args } = lastMessage.element.props;
-      return <ExecuteFunction func={tools[name].func} name={name} args={args} />;
+      const executedFunction = (
+        <ExecuteFunction
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          func={updatedTools[name]?.func}
+          name={name}
+          args={args}
+        />
+      );
+      // If we are using a tool based on redacted functions, we don't want to redact it further
+      if (!(name in tools)) {
+        return executedFunction;
+      }
+      // Function responses can potentially be very large. In that case, we need
+      // some way of handling that so the context window doesn't blow up.
+      return (
+        <LargeFunctionResponseWrapper numChunks={4} maxLength={4000} failedMaxLength={2000}>
+          {executedFunction}
+        </LargeFunctionResponseWrapper>
+      );
     }
     case 'functionResponse':
       return (
         <RepairMdxInConversation>
-          <ChatCompletion functionDefinitions={tools}>
+          <ChatCompletion functionDefinitions={updatedTools}>
             {shrinkableConversation}
             {finalSystemMessageBeforeResponse}
           </ChatCompletion>
@@ -98,7 +125,7 @@ export function getNextConversationStep(
     case 'user':
       return (
         <RepairMdxInConversation>
-          <ChatCompletion functionDefinitions={tools}>{shrinkableConversation}</ChatCompletion>
+          <ChatCompletion functionDefinitions={updatedTools}>{shrinkableConversation}</ChatCompletion>
         </RepairMdxInConversation>
       );
     default:
