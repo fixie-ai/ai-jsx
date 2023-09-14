@@ -77,7 +77,7 @@ export async function cohereReranker(
   });
 
   if (logger) {
-    logger.info({ response }, 'Got response from reranker server');
+    logger.trace({ response }, 'Got response from reranker server');
   }
 
   if (response.status != 200) {
