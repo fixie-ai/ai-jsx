@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "yarn build && yarn serve",
     "typecheck": "tsc -p tsconfig.json",
-    "build": "yarn typecheck",
+    "build": "yarn run typecheck",
     "prepack": "yarn build",
     "serve": "fixie serve",
     "deploy": "fixie deploy"
