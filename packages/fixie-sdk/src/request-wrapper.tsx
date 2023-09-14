@@ -4,6 +4,7 @@ import { ShowConversation, ConversationHistoryContext } from 'ai-jsx/core/conver
 import { Json } from './json.js';
 import { FixieConversation } from './conversation.js';
 import { OpenAI, OpenAIClient, ValidChatModel } from 'ai-jsx/lib/openai';
+import { cohereContext } from 'ai-jsx/lib/cohere';
 import { FixieAPIContext } from 'ai-jsx/batteries/fixie';
 
 export const RequestContext = AI.createContext<{
@@ -95,8 +96,12 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
   }
 
   return (
-    <ConversationHistoryContext.Provider value={memo(<FixieConversation />)}>
-      {wrappedNode}
-    </ConversationHistoryContext.Provider>
+    <cohereContext.Provider
+      value={{ api_key: authToken, api_url: new URL('api/cohere-proxy/v1', apiBaseUrl).toString() }}
+    >
+      <ConversationHistoryContext.Provider value={memo(<FixieConversation />)}>
+        {wrappedNode}
+      </ConversationHistoryContext.Provider>
+    </cohereContext.Provider>
   );
 }

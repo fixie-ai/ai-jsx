@@ -90,7 +90,7 @@
     "globby": "^13.1.4",
     "graphql": "^16.6.0",
     "ink": "^4.2.0",
-    "langchain": "^0.0.95",
+    "langchain": "^0.0.143",
     "load-json-file": "^7.0.1",
     "lodash": "^4.17.21",
     "mathjs": "^11.8.1",
