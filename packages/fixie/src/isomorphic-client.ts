@@ -131,6 +131,17 @@ export class IsomorphicFixieClient {
     maxDepth?: number,
     description?: string
   ): Promise<Jsonifiable> {
+    /**
+     * Mike says Apify won't like the querystring and fragment, so we'll remove them.
+     */
+    const sanitizedStartUrls = startUrls.map((url) => {
+      // Delete the query and fragment from the URL.
+      const urlObj = new URL(url);
+      urlObj.search = '';
+      urlObj.hash = '';
+      return urlObj.toString();
+    });
+
     const body = {
       corpus_id: corpusId,
       source: {
@@ -139,7 +150,7 @@ export class IsomorphicFixieClient {
         load_spec: {
           max_documents: maxDocuments,
           web: {
-            start_urls: startUrls,
+            start_urls: sanitizedStartUrls,
             max_depth: maxDepth,
             include_glob_patterns: includeGlobs,
             exclude_glob_patterns: excludeGlobs,
