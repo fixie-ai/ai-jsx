@@ -158,7 +158,7 @@ sources
     async (
       corpusId: string,
       startUrls: string[],
-      { maxDocuments, maxDepth, description }: { maxDocuments?: number; maxDepth?: number, description: string }
+      { maxDocuments, maxDepth, description }: { maxDocuments?: number; maxDepth?: number; description: string }
     ) => {
       const client = await FixieClient.Create(program.opts().url);
       const result = await client.addCorpusSource(corpusId, startUrls, maxDocuments, maxDepth, description);
