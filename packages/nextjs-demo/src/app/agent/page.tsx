@@ -60,10 +60,12 @@ class ChatRequest {
   public done = false;
   public onUpdate?: (request: ChatRequest, newText: string) => void;
   public onComplete?: (request: ChatRequest) => void;
+  private startTime?: number;
+  public latency?: number;
   constructor(private readonly inMessages: ChatMessage[], private readonly model: string, public active: boolean) {}
   async start() {
     console.log(`calling LLM for ${this.inMessages[this.inMessages.length - 1].content}`);
-    const startTime = performance.now();
+    this.startTime = performance.now();
     const res = await fetch('/agent/api', {
       method: 'POST',
       headers: {
@@ -71,13 +73,14 @@ class ChatRequest {
       },
       body: JSON.stringify({ messages: this.inMessages, model: this.model }),
     });
-    console.log(`Got LLM response, latency=${(performance.now() - startTime).toFixed(0)}`);
+    console.log(`Got LLM response, latency=${(performance.now() - this.startTime).toFixed(0)}`);
     const reader = res.body!.getReader();
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
         this.done = true;
+        this.latency = performance.now() - this.startTime;
         this.onComplete?.(this);
         break;
       }
@@ -106,6 +109,10 @@ class ChatManager {
   private readonly asr: SpeechRecognitionBase;
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
+  public asrLatency?: number;
+  public llmLatency?: number;
+  public ttsLatency?: number;
+  public totalLatency?: number;
   onInputChange?: (text: string, final: boolean) => void;
   onOutputChange?: (text: string, final: boolean) => void;
   onError?: () => void;
@@ -116,9 +123,13 @@ class ChatManager {
     this.model = model;
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const obj = event.detail!;
-      this.handleInputUpdate(obj.text, obj.final);
+      this.handleInputUpdate(obj.text, obj.final, obj.latency);
       this.onInputChange?.(obj.text, obj.final);
     });
+    this.tts.onPlaying = () => {
+      this.ttsLatency = this.tts.latency;
+      this.totalLatency = this.asrLatency! + this.llmLatency! + this.ttsLatency!;
+    };
   }
   /**
    * Starts the chat.
@@ -147,12 +158,13 @@ class ChatManager {
   /**
    * Handle new input from the ASR.
    */
-  private handleInputUpdate(text: string, final: boolean) {
+  private handleInputUpdate(text: string, final: boolean, latency?: number) {
     // If the input text has been finalized, add it to the message history.
     const userMessage = new ChatMessage('user', text);
     const newMessages = [...this.history, userMessage];
     if (final) {
       this.history = newMessages;
+      this.asrLatency = latency ?? 0;
     }
 
     // If it doesn't match an existing request, kick off a new one.
@@ -207,6 +219,7 @@ class ChatManager {
     this.history.push(assistantMessage);
     this.pendingRequests = {};
     this.onOutputChange?.(request.outMessage, true);
+    this.llmLatency = request.latency; //++++ spec ex correction
   }
 }
 
@@ -344,6 +357,9 @@ const PageComponent: React.FC = () => {
           <ButtonComponent disabled={!active()} onClick={handleStop}>
             Stop Chatting
           </ButtonComponent>
+        </div>
+        <div>
+          Latency: ASR {chatManager?.asrLatency}ms, LLM {chatManager?.llmLatency}ms, TTS {chatManager?.ttsLatency}ms, Total {chatManager?.totalLatency}ms
         </div>
       </div>
     </>
