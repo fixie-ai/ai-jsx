@@ -415,15 +415,22 @@ export class FixieAgent {
 
     const [argv0, ...args] = cmdline.split(' ');
     const subProcess = execa(argv0, args, { cwd: agentPath, env });
+    term('🌱 Agent process running at PID: ').green(subProcess.pid)('\n');
 
+    subProcess.on('spawn', () => {
+      console.log(`🌱 Agent child process started with PID [${subProcess.pid}]`);
+    });
     subProcess.stdout?.on('data', (sdata: string) => {
       console.log(`🌱 Agent stdout: ${sdata}`);
     });
     subProcess.stderr?.on('data', (sdata: string) => {
       console.error(`🌱 Agent stdout: ${sdata}`);
     });
+    subProcess.on('error', (err: any) => {
+      term('🌱 ').red(`Agent child process [${subProcess.pid}] exited with error: ${err.message}\n`);
+    });
     subProcess.on('close', (returnCode: number) => {
-      term('🌱 ').red(`Agent child process exited with code ${returnCode}\n`);
+      term('🌱 ').red(`Agent child process [${subProcess.pid}] exited with code ${returnCode}\n`);
     });
     return subProcess;
   }
@@ -481,7 +488,19 @@ export class FixieAgent {
     this.getCodePackage(agentPath);
 
     // Start the agent process locally.
-    FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
+    let agentProcess = FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
+
+    // Watch files in the agent directory for changes.
+    const watchPath = path.resolve(agentPath);
+    console.log(`🌱 Watching ${watchPath} for changes...`);
+    const watcher = new Watcher(watchPath, { ignoreInitial: true, recursive: true });
+    watcher.on('all', async (event: any, targetPath: string, _targetPathNext: any) => {
+      console.log(`🌱 Restarting local agent process due to ${event}: ${targetPath}`);
+      agentProcess.kill();
+      // Let it shut down gracefully.
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      agentProcess = FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
+    });
 
     // Wait for 5 seconds for it to start up.
     await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -574,15 +593,6 @@ export class FixieAgent {
         })(),
       ];
     }
-
-    // Watch files in the agent directory for agents.
-    const watchPath = path.resolve(agentPath);
-    console.log(`🌱 Watching ${watchPath} for changes...`);
-
-    const watcher = new Watcher(watchPath);
-    watcher.on('all', (event, targetPath, targetPathNext) => {
-      console.log(`🌱 Got watcher event ${event} on ${targetPath} -> ${targetPathNext}`);
-    });
 
     const agent = await this.ensureAgent(client, agentId, config);
     const originalRevision = await agent.getCurrentRevision();
