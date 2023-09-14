@@ -1,0 +1,32 @@
+.root {
+  font-size: var(--font-size-big-3);
+  line-height: 1.2;
+}
+
+.center {
+  text-align: center;
+}
+
+.size-small {
+  font-size: var(--font-size-big-2);
+}
+
+@media screen and (min-width: 600px) {
+  .root {
+    font-size: var(--font-size-big-4);
+  }
+
+  .size-small {
+    font-size: var(--font-size-big-3);
+  }
+}
+
+@media screen and (min-width: 1000px) {
+  .root {
+    font-size: var(--font-size-big-5);
+  }
+
+  .size-small {
+    font-size: var(--font-size-big-4);
+  }
+}

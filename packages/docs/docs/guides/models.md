@@ -3,7 +3,7 @@
 :::tip Getting started?
 AI.JSX supports models from [OpenAI](https://openai.com/) and [Anthropic](https://www.anthropic.com/). Most people should start with OpenAI's GPT-4 model. If you need a very long context window, use Anthropic's Claude 100k.
 
-See the [recommended dev workflow](./brand-new.md#recommended-dev-workflow) guide for tips on model selection.
+See the [recommended dev workflow](../ai-newcomers.md#recommended-dev-workflow) guide for tips on model selection.
 
 :::
 

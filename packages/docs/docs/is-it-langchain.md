@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+displayed_sidebar: docsSidebar
 ---
 
 # AI.JSX & LangChain
