@@ -206,7 +206,7 @@ source
         term.yellow('Warning: ')(
           'No --include-patterns specfied. This is equivalent to only crawling the URLs specified as startUrls.\n'
         );
-        term.yellow('Warning: ')('Use ').red("--include-patterns '**'")(
+        term.yellow('Warning: ')('Use ').red("--include-patterns '*'")(
           ' if you want to allow all URLs in the crawl.\n'
         );
       }
