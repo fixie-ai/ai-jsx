@@ -178,7 +178,7 @@ source.alias('sources');
 
 source
   .command('add <corpusId> <startUrls...>')
-  .description('Add a source to a corpus.')
+  .description('Add a web source to a corpus.')
   .option('--max-documents <number>', 'Maximum number of documents to crawl')
   .option('--max-depth <number>', 'Maximum depth to crawl')
   .option('--description <string>', 'A human-readable description for the source')
@@ -223,6 +223,15 @@ source
       showResult(result, program.opts().raw);
     }
   );
+
+source
+  .command('upload <corpusId> <mimeType> <filenames...>')
+  .description('Upload local files to a corpus.')
+  .action(async (corpusId: string, mimeType: string, filenames: string[]) => {
+    const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+    const result = await client.addFileCorpusSource(corpusId, filenames, mimeType);
+    showResult(result, program.opts().raw);
+  });
 
 source
   .command('list <corpusId>')
