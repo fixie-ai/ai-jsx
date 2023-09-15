@@ -18,7 +18,11 @@ export interface UserInfo {
   organization?: string;
 }
 
-const debug = typeof process !== 'undefined' && process.env?.FIXIE_DEBUG === 'true';
+const debug =
+  typeof process !== 'undefined' &&
+  // Don't make any assumptions about the environment.
+  /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */
+  process.env?.FIXIE_DEBUG === 'true';
 
 /**
  * A client to the Fixie AI platform.
