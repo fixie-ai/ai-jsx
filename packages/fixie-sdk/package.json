@@ -1,6 +1,6 @@
 {
   "name": "@fixieai/sdk",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
@@ -24,6 +24,7 @@
     "ai-jsx": ">=0.17.0 <1.0.0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.5.10",
     "@opentelemetry/api": "^1.4.1",
     "@opentelemetry/api-logs": "^0.41.1",
     "@opentelemetry/exporter-logs-otlp-grpc": "^0.41.1",

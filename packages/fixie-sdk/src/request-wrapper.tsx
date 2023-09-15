@@ -5,7 +5,10 @@ import { Json } from './json.js';
 import { FixieConversation } from './conversation.js';
 import { OpenAI, OpenAIClient, ValidChatModel } from 'ai-jsx/lib/openai';
 import { cohereContext } from 'ai-jsx/lib/cohere';
+import { anthropicClientContext } from 'ai-jsx/lib/anthropic';
 import { FixieAPIContext } from 'ai-jsx/batteries/fixie';
+
+import AnthropicSDK from '@anthropic-ai/sdk';
 
 export const RequestContext = AI.createContext<{
   request: InvokeAgentRequest;
@@ -95,13 +98,26 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
     throw new Error(`The model provider ("${request.generationParams.modelProvider}") is not supported.`);
   }
 
+  const anthropicContext = () =>
+    new AnthropicSDK({
+      apiKey: '...', // The proxy uses Authorization header instead of X-API-Key
+      baseURL: new URL('/api/anthropic-proxy/', apiBaseUrl).toString(),
+      fetch: (url, init) =>
+        fetch(url, {
+          ...init,
+          headers: { ...init?.headers, Authorization: `Bearer ${authToken}` },
+        }),
+    });
+
   return (
-    <cohereContext.Provider
-      value={{ api_key: authToken, api_url: new URL('api/cohere-proxy/v1', apiBaseUrl).toString() }}
-    >
-      <ConversationHistoryContext.Provider value={memo(<FixieConversation />)}>
-        {wrappedNode}
-      </ConversationHistoryContext.Provider>
-    </cohereContext.Provider>
+    <anthropicClientContext.Provider value={anthropicContext}>
+      <cohereContext.Provider
+        value={{ api_key: authToken, api_url: new URL('api/cohere-proxy/v1', apiBaseUrl).toString() }}
+      >
+        <ConversationHistoryContext.Provider value={memo(<FixieConversation />)}>
+          {wrappedNode}
+        </ConversationHistoryContext.Provider>
+      </cohereContext.Provider>
+    </anthropicClientContext.Provider>
   );
 }

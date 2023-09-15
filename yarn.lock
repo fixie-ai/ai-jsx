@@ -3062,6 +3062,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@fixieai/sdk@workspace:packages/fixie-sdk"
   dependencies:
+    "@anthropic-ai/sdk": ^0.5.10
     "@opentelemetry/api": ^1.4.1
     "@opentelemetry/api-logs": ^0.41.1
     "@opentelemetry/exporter-logs-otlp-grpc": ^0.41.1

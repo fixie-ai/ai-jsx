@@ -9,7 +9,7 @@ import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { debugRepresentation } from '../core/debug.js';
 import _ from 'lodash';
 
-const anthropicClientContext = AI.createContext<() => AnthropicSDK>(
+export const anthropicClientContext = AI.createContext<() => AnthropicSDK>(
   _.once(
     () =>
       new AnthropicSDK({
