@@ -205,7 +205,7 @@ export function redactedFunctionTools(messages: ConversationMessage[]): UseTools
         <RerankerFormatted
           query={query}
           documents={responseContent.chunks}
-          top_n={2}
+          top_n={6}
           Formatter={MarkdownChunkFormatter}
         />
       ),
