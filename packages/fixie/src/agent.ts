@@ -447,10 +447,14 @@ export class FixieAgent {
     const pnpmLockPath = path.resolve(path.join(agentPath, 'pnpm-lock.yaml'));
 
     if (fs.existsSync(yarnLockPath)) {
-      term.yellow('⚠️ Detected yarn.lock file, but Fixie only supports npm. Fixie will try to install your package with npm, which may produce unexpected results.');
+      term.yellow(
+        '⚠️ Detected yarn.lock file, but Fixie only supports npm. Fixie will try to install your package with npm, which may produce unexpected results.'
+      );
     }
     if (fs.existsSync(pnpmLockPath)) {
-      term.yellow('⚠️ Detected pnpm-lock.yaml file, but Fixie only supports npm. Fixie will try to install your package with npm, which may produce unexpected results.');
+      term.yellow(
+        '⚠️ Detected pnpm-lock.yaml file, but Fixie only supports npm. Fixie will try to install your package with npm, which may produce unexpected results.'
+      );
     }
 
     const agent = await this.ensureAgent(client, agentId, config);
