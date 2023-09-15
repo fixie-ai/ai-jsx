@@ -18,6 +18,8 @@ export interface UserInfo {
   organization?: string;
 }
 
+const debug = typeof process !== 'undefined' && process.env?.FIXIE_DEBUG === 'true';
+
 /**
  * A client to the Fixie AI platform.
  *
@@ -50,6 +52,9 @@ export class IsomorphicFixieClient {
   /** Send a request to the Fixie API with the appropriate auth headers. */
   async request(path: string, bodyData?: any): Promise<Jsonifiable> {
     let res;
+    if (debug) {
+      console.log(`[Fixie request] ${this.url}${path}`, bodyData)
+    }
     if (bodyData) {
       const body = JSON.stringify(bodyData);
       res = await fetch(`${this.url}${path}`, {
