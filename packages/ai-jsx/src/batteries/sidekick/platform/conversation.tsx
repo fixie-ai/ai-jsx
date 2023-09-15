@@ -108,7 +108,7 @@ export function getNextConversationStep(
       // Function responses can potentially be very large. In that case, we need
       // some way of handling that so the context window doesn't blow up.
       return (
-        <LargeFunctionResponseWrapper numChunks={4} maxLength={4000} failedMaxLength={2000}>
+        <LargeFunctionResponseWrapper numChunks={10} maxLength={10500} failedMaxLength={4000}>
           {executedFunction}
         </LargeFunctionResponseWrapper>
       );
