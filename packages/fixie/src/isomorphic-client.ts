@@ -161,13 +161,14 @@ export class IsomorphicFixieClient {
     return this.request(`/api/v1/corpora/${corpusId}/sources`, body);
   }
 
-  /** Refresh the given Source. */
-  refreshCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
-    const body = {
-      corpus_id: corpusId,
-      source_id: sourceId,
-    };
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, body);
+  /**
+   * Refresh the given Source.
+   *
+   * If a job is already running to refresh this source, and force = false, this call will return an error.
+   * If a job is already running to refresh this source, and force = true, that job will be killed and restarted.
+   */
+  refreshCorpusSource(corpusId: string, sourceId: string, force?: boolean): Promise<Jsonifiable> {
+    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, { force });
   }
 
   /** List Jobs associated with a given Source. */
