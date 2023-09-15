@@ -88,7 +88,7 @@ export abstract class TextToSpeechBase {
 /**
  * A text-to-speech service that requests audio from a server and
  * plays it in one shot using the HTML5 audio element. The URL to request
- * audio from the server is constructed using the provided BuildUrlFunction,
+ * audio from the server is constructed using the provided BuildUrl function,
  * allowing this class to be used with a variety of text-to-speech services.
  */
 export class SimpleTextToSpeech extends TextToSpeechBase {
@@ -245,11 +245,13 @@ export class RestTextToSpeech extends MseTextToSpeech {
     super(name);
   }
   protected generate(text: string) {
+    // Only send complete sentences to the server. We only know if a sentence is complete if
+    // a sentence fragment comes after it. We'll buffer that fragment.
     this.pendingText += text;
     let pendingText = '';
     split(this.pendingText).forEach((piece: any) => {
       if (piece.type == 'Sentence') {
-        if (piece.children.length == 2 && piece.children[1].type == 'Punctuation') {
+        if (piece.range[1] < this.pendingText.length) {
           this.requestChunk(piece.raw);
         } else if (!pendingText) {
           pendingText = piece.raw;
