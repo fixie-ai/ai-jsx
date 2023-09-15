@@ -254,8 +254,11 @@ source
 source
   .command('refresh <corpusId> <sourceId>')
   .description('Refresh a corpus source.')
-  .option('--force', "If a job is already running to refresh this source, kill it and start a new one. If a job is already running and you don't pass --force, the command will fail.")
-  .action(async (corpusId: string, sourceId: string, {force}) => {
+  .option(
+    '--force',
+    "If a job is already running to refresh this source, kill it and start a new one. If a job is already running and you don't pass --force, the command will fail."
+  )
+  .action(async (corpusId: string, sourceId: string, { force }) => {
     const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
     const result = await client.refreshCorpusSource(corpusId, sourceId, force);
     showResult(result, program.opts().raw);

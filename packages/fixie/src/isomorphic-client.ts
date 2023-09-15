@@ -53,7 +53,7 @@ export class IsomorphicFixieClient {
   async request(path: string, bodyData?: any): Promise<Jsonifiable> {
     let res;
     if (debug) {
-      console.log(`[Fixie request] ${this.url}${path}`, bodyData)
+      console.log(`[Fixie request] ${this.url}${path}`, bodyData);
     }
     if (bodyData) {
       const body = JSON.stringify(bodyData);
