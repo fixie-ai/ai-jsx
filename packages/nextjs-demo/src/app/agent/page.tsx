@@ -238,7 +238,7 @@ class ChatManager {
     const assistantMessage = new ChatMessage('assistant', request.outMessage);
     this.history.push(assistantMessage);
     this.pendingRequests = {};
-    this.onOutputChange?.(request.outMessage, true, request.requestLatency!); //++++ correct for spec execution
+    this.onOutputChange?.(request.outMessage, true, request.requestLatency!);
   }
 }
 
