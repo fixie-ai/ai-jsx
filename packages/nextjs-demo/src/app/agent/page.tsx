@@ -129,6 +129,7 @@ class ChatManager {
     this.tts.onPlaying = () => {
       this.ttsLatency = this.tts.latency;
       this.totalLatency = this.asrLatency! + this.llmLatency! + this.ttsLatency!;
+      console.log(`LATENCY: asr=${this.asrLatency}ms, llm=${this.llmLatency}ms, tts=${this.ttsLatency}ms, total=${this.totalLatency}ms`);
     };
   }
   /**
