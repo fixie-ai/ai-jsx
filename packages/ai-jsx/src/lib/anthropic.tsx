@@ -2,12 +2,13 @@ import AnthropicSDK from '@anthropic-ai/sdk';
 import { getEnvVar } from './util.js';
 import * as AI from '../index.js';
 import { Node } from '../index.js';
-import { ChatOrCompletionModelOrBoth } from './model.js';
 import { ChatProvider, ModelProps, ModelPropsWithChildren } from '../core/completion.js';
 import { AssistantMessage, ConversationMessage, UserMessage, renderToConversation } from '../core/conversation.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { debugRepresentation } from '../core/debug.js';
 import _ from 'lodash';
+
+export const AnthropicClient = AnthropicSDK;
 
 const anthropicClientContext = AI.createContext<() => AnthropicSDK>(
   _.once(
@@ -18,7 +19,6 @@ const anthropicClientContext = AI.createContext<() => AnthropicSDK>(
   )
 );
 
-type ValidCompletionModel = never;
 /**
  * The set of valid Claude models.
  *
@@ -40,8 +40,6 @@ export type ValidChatModel =
   | 'claude-2'
   | 'claude-2.0';
 
-type AnthropicModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
-
 /**
  * If you use an Anthropic model without specifying the max tokens for the completion, this value will be used as the default.
  */
@@ -57,10 +55,10 @@ export const defaultMaxTokens = 1000;
 export function Anthropic({
   children,
   chatModel,
-  completionModel,
   client,
+  completionModel,
   ...defaults
-}: { children: Node; client?: AnthropicSDK } & AnthropicModelChoices & ModelProps) {
+}: { children: Node; client?: AnthropicSDK; chatModel?: ValidChatModel; completionModel?: never } & ModelProps) {
   let result = children;
 
   if (client) {

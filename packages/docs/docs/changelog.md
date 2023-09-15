@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.17.1
+## 0.17.3
+
+- Added the ability to set Anthropic/OpenAI clients without setting the default model
+
+## [0.17.2](https://github.com/fixie-ai/ai-jsx/commit/5d7b202d384fd26a313271ae9f474fb074d938bd)
+
+- Increase the default token limit for automatic API response trimming.
+
+## [0.17.1](https://github.com/fixie-ai/ai-jsx/commit/49ecdada32d7fbea547ca1d7fd6fd9c82617ea00)
 
 - API token limiting: long API responses in `Sidekick` are now automatically truncated. If this happens, the response is chunked and the LLM is given a new function `loadBySimilarity` to query the last function response.
 
