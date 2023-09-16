@@ -507,7 +507,7 @@ export class FixieAgent {
           await new Promise<void>((resolve, reject) => {
             const socket = net.connect({
               host: '127.0.0.1',
-              port: 8181,
+              port,
             });
 
             socket.on('connect', resolve);
