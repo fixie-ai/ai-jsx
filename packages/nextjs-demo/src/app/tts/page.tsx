@@ -9,7 +9,7 @@ const DEFAULT_TEXT =
   'me. But what makes me me is my ability to grow through my experiences. ' +
   "So basically, in every moment I'm evolving, just like you.";
 
-const ButtonComponent: React.FC<{ onClick: () => void; children: React.ReactNode }> = ({ onClick, children }) => (
+const Button: React.FC<{ onClick: () => void; children: React.ReactNode }> = ({ onClick, children }) => (
   <button
     onClick={onClick}
     className={
@@ -20,7 +20,7 @@ const ButtonComponent: React.FC<{ onClick: () => void; children: React.ReactNode
   </button>
 );
 
-type TtsComponentProps = {
+type TtsProps = {
   display: string;
   provider: string;
   text: string;
@@ -45,7 +45,7 @@ const getToken = async (provider: string) => {
   return json.token;
 };
 
-const TtsComponent: React.FC<TtsComponentProps> = ({ display, provider, text }) => {
+const Tts: React.FC<TtsProps> = ({ display, provider, text }) => {
   const [playing, setPlaying] = useState(false);
   const [latency, setLatency] = useState(0);
   const [tts, setTts] = useState<TextToSpeechBase | null>();
@@ -75,7 +75,7 @@ const TtsComponent: React.FC<TtsComponentProps> = ({ display, provider, text }) 
   const latencyText = playing ? (latency ? `${latency} ms` : 'Generating...') : '';
   return (
     <div className="mt-2">
-      <ButtonComponent onClick={toggle}>{caption}</ButtonComponent>
+      <Button onClick={toggle}>{caption}</Button>
       <span className="m-2">{latencyText}</span>
     </div>
   );
@@ -99,9 +99,9 @@ const PageComponent: React.FC = () => {
         onChange={(e) => setText(e.currentTarget.value)}
       ></textarea>
       <p className="ml-2 mb-2 text-sm">{countWords(text)} words</p>
-      <TtsComponent display="ElevenLabs" provider="eleven" text={text}></TtsComponent>
-      <TtsComponent display="Azure" provider="azure" text={text}></TtsComponent>
-      <TtsComponent display="AWS Polly" provider="aws" text={text}></TtsComponent>
+      <Tts display="ElevenLabs" provider="eleven" text={text}></Tts>
+      <Tts display="Azure" provider="azure" text={text}></Tts>
+      <Tts display="AWS Polly" provider="aws" text={text}></Tts>
     </>
   );
 };

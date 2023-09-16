@@ -242,7 +242,7 @@ class ChatManager {
   }
 }
 
-const ButtonComponent: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
+const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
   onClick,
   disabled,
   children,
@@ -258,7 +258,7 @@ const ButtonComponent: React.FC<{ onClick: () => void; disabled: boolean; childr
   </button>
 );
 
-const LatencyComponent: React.FC<{ name: string; latency: number }> = ({ name, latency }) => (
+const Latency: React.FC<{ name: string; latency: number }> = ({ name, latency }) => (
   <>
     {' '}
     {name} <span className="font-bold">{latency ? latency.toFixed(0) : '-'}</span> ms
@@ -398,19 +398,19 @@ const PageComponent: React.FC = () => {
           </div>
         </div>
         <div className="m-3 w-full flex justify-center">
-          <ButtonComponent disabled={active()} onClick={handleStart}>
+          <Button disabled={active()} onClick={handleStart}>
             Start Chatting
-          </ButtonComponent>
-          <ButtonComponent disabled={!active()} onClick={handleStop}>
+          </Button>
+          <Button disabled={!active()} onClick={handleStop}>
             Stop Chatting
-          </ButtonComponent>
+          </Button>
         </div>
         <div className="flex justify-center">
           <span className="text-sm font-mono">
-            <LatencyComponent name="ASR" latency={asrLatency} /> |
-            <LatencyComponent name="LLM" latency={llmLatency} /> |
-            <LatencyComponent name="TTS" latency={ttsLatency} /> |
-            <LatencyComponent name="" latency={asrLatency + llmLatency + ttsLatency} />
+            <Latency name="ASR" latency={asrLatency} /> |
+            <Latency name="LLM" latency={llmLatency} /> |
+            <Latency name="TTS" latency={ttsLatency} /> |
+            <Latency name="" latency={asrLatency + llmLatency + ttsLatency} />
           </span>
         </div>
       </div>
