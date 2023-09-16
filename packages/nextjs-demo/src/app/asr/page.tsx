@@ -125,13 +125,13 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
   return (
     <div className="ml-2">
       <p className="text-xl font-bold mt-2">
-        <a className="underline" href={link}>
+        <a className="hover:underline" href={link}>
           {name}
         </a>
       </p>
       <div className="text-sm">
         <span className="font-bold">Cost: </span>
-        <a className={`underline ${computeCostColor(costPerMinute)}`} href={`${link}/pricing`}>
+        <a className={`hover:underline ${computeCostColor(costPerMinute)}`} href={`${link}/pricing`}>
           ${costPerMinute}/min
         </a>
       </div>
