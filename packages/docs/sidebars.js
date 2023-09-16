@@ -23,10 +23,7 @@ const sidebars = {
       label: 'Sidekicks',
       collapsible: true,
       collapsed: false,
-      items: [
-        'sidekicks/sidekicks-quickstart',
-        'sidekicks/sidekicks-docsqa',
-      ],
+      items: ['sidekicks/sidekicks-quickstart', 'sidekicks/sidekicks-docsqa'],
     },
     {
       type: 'category',
