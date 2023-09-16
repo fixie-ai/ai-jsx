@@ -143,7 +143,7 @@ class ChatManager {
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const obj = event.detail!;
       this.handleInputUpdate(obj.text, obj.final);
-      this.onInputChange?.(obj.text, obj.final, obj.latency);
+      this.onInputChange?.(obj.text, obj.final, obj.latency!);
     });
     this.tts.onPlaying = () => {
       this.onAudioStart?.(this.tts.latency!);
