@@ -177,7 +177,7 @@ First up, let's ask our Sidekick a question through the Fixie REST API, using
 
 ```bash
 curl 'https://console.fixie.ai/api/v1/agents/<your user name>/<your sidekick name>/conversations' \
-  -d '{ "generationParams": { "userTimeZoneOffset": 0 }, "message": {"text": "What can you do?" }}' \
+  -d '{ "message": "What can you do?" }' \
   -H 'Authorization: Bearer <your Fixie API key>' \
   -H 'Content-Type: application/json'
 ```
@@ -186,7 +186,7 @@ For example:
 
 ```bash
 curl 'https://console.fixie.ai/api/v1/agents/sarah/fixie-sidekick-template/conversations' \
-  -d '{ "generationParams": { "userTimeZoneOffset": 0 }, "message": {"text": "What can you do?" }}' \
+  -d '{ "message": "What can you do?" }' \
   -H 'Authorization: Bearer FmEEMtjcHLfNGPrLhRQwQfwG9Li...' \
   -H 'Content-Type: application/json'
 ```
