@@ -59,11 +59,13 @@ CARAMEL MOCHA SPECIALTY LATTE $3.49
 MOCHA SPECIALTY LATTE $3.49
 `;
 
+const KK_CORPUS_ID = 'bd69dce6-7b56-4d0b-8b2f-226500780ebd';
+
 class ClientMessage {
   constructor(public role: string, public content: string) {}
 }
 
-function ChatAgent({ conversation, model }: { conversation: ClientMessage[]; model: string }) {
+function ChatAgent({ conversation, model, docs? }: { conversation: ClientMessage[]; model: string, docs?: number }) {
   const children = (
     <ChatCompletion>
       <SystemMessage>{KK_PROMPT}</SystemMessage>
@@ -89,5 +91,28 @@ export async function POST(request: NextRequest) {
   const json = await request.json();
   console.log(`New request (model=${json.model})`);
   json.messages.forEach((message: ClientMessage) => console.log(`role=${message.role} content=${message.content}`));
-  return new StreamingTextResponse(toTextStream(<ChatAgent conversation={json.messages} model={json.model} />));
+  return new StreamingTextResponse(toTextStream(<ChatAgent conversation={json.messages} model={json.model} docs={json.docs}/>));
 }
+
+function ChunkFormatter({ doc }: { doc: ScoredChunk<any> }) {
+  return (
+    <>
+      {'\n'}```chunk{'\n'}
+      {doc.chunk.content.replaceAll('```', '\\`\\`\\`')}
+      {'\n'}```{'\n'}
+    </>
+  );
+}
+
+async function App({ corpusId }: { corpusId: string }) {
+  const corpus = new FixieCorpus(corpusId);
+
+  const query = 'How do I write a chatbot in AI.JSX?';
+  const results = await corpus.search(query, { limit: 4 });
+
+  return results.map((chunk) => <ChunkFormatter doc={chunk} />);
+}
+
+
+
+3a68874a-1363-419f-adff-1732550c4f20
