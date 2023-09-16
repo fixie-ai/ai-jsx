@@ -442,6 +442,21 @@ export class FixieAgent {
     if (!fs.existsSync(packageJsonPath)) {
       throw Error(`No package.json found at ${packageJsonPath}. Only JS-based agents are supported.`);
     }
+
+    const yarnLockPath = path.resolve(path.join(agentPath, 'yarn.lock'));
+    const pnpmLockPath = path.resolve(path.join(agentPath, 'pnpm-lock.yaml'));
+
+    if (fs.existsSync(yarnLockPath)) {
+      term.yellow(
+        '⚠️ Detected yarn.lock file, but Fixie only supports npm. Fixie will try to install your package with npm, which may produce unexpected results.'
+      );
+    }
+    if (fs.existsSync(pnpmLockPath)) {
+      term.yellow(
+        '⚠️ Detected pnpm-lock.yaml file, but Fixie only supports npm. Fixie will try to install your package with npm, which may produce unexpected results.'
+      );
+    }
+
     const agent = await this.ensureAgent(client, agentId, config);
     const tarball = FixieAgent.getCodePackage(agentPath);
     const spinner = ora(' 🚀 Deploying... (hang tight, this takes a minute or two!)').start();
