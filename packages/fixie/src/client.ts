@@ -6,6 +6,7 @@ import { ExtractableFile } from 'extract-files';
 import fs, { ReadStream } from 'fs';
 import { IsomorphicFixieClient } from './isomorphic-client.js';
 import type { Jsonifiable } from 'type-fest';
+import path from 'path';
 
 /**
  * A client to the Fixie AI platform.
@@ -58,9 +59,9 @@ export class FixieClient extends IsomorphicFixieClient {
           max_documents: filenames.length,
           static: {
             documents: filenames.map((filename) => ({
-              filename,
+              filename: path.resolve(filename),
               mime_type: mimeType,
-              contents: Buffer.from(fs.readFileSync(filename, 'utf8')).toString('base64'),
+              contents: fs.readFileSync(path.resolve(filename)).toString('base64'),
             })),
           },
         },

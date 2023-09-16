@@ -238,6 +238,8 @@ const PageComponent: React.FC = () => {
   const active = () => Boolean(chatManager);
   const handleStart = () => {
     const manager = new ChatManager({ asrProvider, ttsProvider, model });
+    setInput('');
+    setOutput('');
     setChatManager(manager);
     manager.start('Hi!');
     manager.onInputChange = (text) => {
@@ -283,7 +285,8 @@ const PageComponent: React.FC = () => {
     <>
       <div className="w-full">
         <p className="font-sm ml-2 mb-2">
-          This demo allows you to chat (via voice) with a drive-thru agent at a Krispy Kreme. Click Start to begin.
+          This demo allows you to chat (via voice) with a drive-thru agent at a Krispy Kreme. Click Start Chatting (or
+          tap the spacebar) to begin.
         </p>
         <div className="grid grid-cols-2">
           <div className="p-4">
@@ -325,19 +328,24 @@ const PageComponent: React.FC = () => {
           </div>
         </div>
         <div>
-          <div className="m-2 w-full h-32 border-2" id="output">
+          <div
+            className="m-2 w-full text-xl h-32 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center"
+            id="output"
+          >
             {output}
           </div>
         </div>
         <div>
           <div
-            className={`m-2 w-full text-lg h-12 border-2 ${active() ? 'animate-pulse border-red-400' : ''}`}
+            className={`m-2 w-full text-xl h-12 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center ${
+              active() ? 'border-red-400' : ''
+            }`}
             id="input"
           >
             {input}
           </div>
         </div>
-        <div className="m-2 w-full flex justify-center">
+        <div className="m-3 w-full flex justify-center">
           <ButtonComponent disabled={active()} onClick={handleStart}>
             Start Chatting
           </ButtonComponent>
