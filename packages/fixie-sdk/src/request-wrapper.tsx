@@ -103,7 +103,9 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
 
   wrappedNode = (
     <Anthropic
-      client={new AnthropicClient({ authToken, baseURL: new URL('api/anthropic-proxy', apiBaseUrl).toString() })}
+      client={
+        new AnthropicClient({ authToken, apiKey: null, baseURL: new URL('api/anthropic-proxy', apiBaseUrl).toString() })
+      }
       chatModel={
         request.generationParams?.modelProvider?.toLowerCase() === 'anthropic'
           ? (request.generationParams.model as AnthropicChatModel | undefined) ?? 'claude-instant-1'
