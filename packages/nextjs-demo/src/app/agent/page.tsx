@@ -11,6 +11,8 @@ import '../globals.css';
 // shorter initial messages
 // caching or other initial startup opt?
 // explore Piper via WASM/python
+// TTS voice selection
+// dropdowns for control in main page
 
 // 1. VAD triggers silence. (Latency here is frame size + VAD delay)
 // 2. ASR sends partial transcript. ASR latency = 2-1.

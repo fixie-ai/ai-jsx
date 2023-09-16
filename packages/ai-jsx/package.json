@@ -389,6 +389,7 @@
     "@nick.heiner/wandb-fork": "^0.5.2-5",
     "@opentelemetry/api": "^1.4.1",
     "@opentelemetry/api-logs": "^0.41.1",
+    "@ricky0123/vad-web": "^0.0.12",
     "axios": "^1.4.0",
     "cli-highlight": "^2.1.11",
     "cli-spinners": "^2.9.0",

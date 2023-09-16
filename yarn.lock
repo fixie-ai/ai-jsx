@@ -4998,6 +4998,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ricky0123/vad-web@npm:^0.0.12":
+  version: 0.0.12
+  resolution: "@ricky0123/vad-web@npm:0.0.12"
+  dependencies:
+    onnxruntime-web: ^1.14.0
+  checksum: e767e0043e79e327d51fe2fba05e817c235239a31f9ef718eaec264cedb6729d0328dea48eb38a2b7701063a36f2621b7891860a7c6135504a321efb566cfd9c
+  languageName: node
+  linkType: hard
+
 "@rollup/plugin-babel@npm:^5.2.0":
   version: 5.3.1
   resolution: "@rollup/plugin-babel@npm:5.3.1"
@@ -6929,6 +6938,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "ai-jsx-monorepo-root@workspace:."
   dependencies:
+    "@ricky0123/vad-web": ^0.0.12
     "@types/prettier": ^2
     eslint: ^8.42.0
     eslint-import-resolver-node: ^0.3.7
@@ -6950,6 +6960,7 @@ __metadata:
     "@nick.heiner/wandb-fork": ^0.5.2-5
     "@opentelemetry/api": ^1.4.1
     "@opentelemetry/api-logs": ^0.41.1
+    "@ricky0123/vad-web": ^0.0.12
     "@tsconfig/node16": ^1.0.4
     "@tsconfig/node18": ^2.0.1
     "@types/eslint": ^8
@@ -12467,6 +12478,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"flatbuffers@npm:^1.12.0":
+  version: 1.12.0
+  resolution: "flatbuffers@npm:1.12.0"
+  checksum: 8a6461ec80a8f850c623439fbc3d031bac52dfd7dee27fbadf1d850e96fd92cbd782c28bf2a08f2d852a3ac329cc31e2ad21e133ab68993cf0df69d3dd32fd12
+  languageName: node
+  linkType: hard
+
 "flatted@npm:^3.1.0":
   version: 3.2.7
   resolution: "flatted@npm:3.2.7"
@@ -13102,6 +13120,13 @@ __metadata:
     section-matter: ^1.0.0
     strip-bom-string: ^1.0.0
   checksum: 37717bd424344487d655392251ce8d8878a1275ee087003e61208fba3bfd59cbb73a85b2159abf742ae95e23db04964813fdc33ae18b074208428b2528205222
+  languageName: node
+  linkType: hard
+
+"guid-typescript@npm:^1.0.9":
+  version: 1.0.9
+  resolution: "guid-typescript@npm:1.0.9"
+  checksum: 829dd87866800a5138aafa0873994028bbc446eb20ff4cae6452d471a2a3d26f7025bed3eb980692c0f022fd22f95ea7396122b46b45a4b5084958505a4fc50c
   languageName: node
   linkType: hard
 
@@ -18761,6 +18786,36 @@ __metadata:
   languageName: node
   linkType: hard
 
+"onnx-proto@npm:^4.0.4":
+  version: 4.0.4
+  resolution: "onnx-proto@npm:4.0.4"
+  dependencies:
+    protobufjs: ^6.8.8
+  checksum: 4122ea200bb4a7c93a464c5a49351025537f5b2c9a5848a9b090700437e6c458a44491096502324a3d7e6fb388be4967a824d12ac18d7be6721d0d5779400fd5
+  languageName: node
+  linkType: hard
+
+"onnxruntime-common@npm:~1.15.1":
+  version: 1.15.1
+  resolution: "onnxruntime-common@npm:1.15.1"
+  checksum: 693bd969ef9ec786bf969c8de9bd928c3c569afdca4303e91d3473d8cf3daeed89673af5ce6d5dacc1e7bba0dacd952c3e6ea5506c305b2db0370dbf214dc911
+  languageName: node
+  linkType: hard
+
+"onnxruntime-web@npm:^1.14.0":
+  version: 1.15.1
+  resolution: "onnxruntime-web@npm:1.15.1"
+  dependencies:
+    flatbuffers: ^1.12.0
+    guid-typescript: ^1.0.9
+    long: ^4.0.0
+    onnx-proto: ^4.0.4
+    onnxruntime-common: ~1.15.1
+    platform: ^1.3.6
+  checksum: b1521fb0b73b3f71ab0de8f5975f4cdf02cdc0ff1ee862965dc5a9dc838778d675602d76000ef525201609d4b4ec3b7908b1b3a0a4c4ffe384cb7ba31720bea1
+  languageName: node
+  linkType: hard
+
 "open@npm:^8.0.9, open@npm:^8.4.0":
   version: 8.4.2
   resolution: "open@npm:8.4.2"
@@ -19375,6 +19430,13 @@ __metadata:
   dependencies:
     find-up: ^3.0.0
   checksum: 5bac346b7c7c903613c057ae3ab722f320716199d753f4a7d053d38f2b5955460f3e6ab73b4762c62fd3e947f58e04f1343e92089e7bb6091c90877406fcd8c8
+  languageName: node
+  linkType: hard
+
+"platform@npm:^1.3.6":
+  version: 1.3.6
+  resolution: "platform@npm:1.3.6"
+  checksum: 6f472a09c61d418c7e26c1c16d0bdc029549d512dbec6526216a1e59ec68100d07007d0097dcba69dddad883d6f2a83361b4bdfe0094a3d9a2af24158643d85e
   languageName: node
   linkType: hard
 
@@ -20540,6 +20602,30 @@ __metadata:
   version: 6.2.0
   resolution: "property-information@npm:6.2.0"
   checksum: 23afce07ba821cbe7d926e63cdd680991961c82be4bbb6c0b17c47f48894359c1be6e51cd74485fc10a9d3fd361b475388e1e39311ed2b53127718f72aab1955
+  languageName: node
+  linkType: hard
+
+"protobufjs@npm:^6.8.8":
+  version: 6.11.4
+  resolution: "protobufjs@npm:6.11.4"
+  dependencies:
+    "@protobufjs/aspromise": ^1.1.2
+    "@protobufjs/base64": ^1.1.2
+    "@protobufjs/codegen": ^2.0.4
+    "@protobufjs/eventemitter": ^1.1.0
+    "@protobufjs/fetch": ^1.1.0
+    "@protobufjs/float": ^1.0.2
+    "@protobufjs/inquire": ^1.1.0
+    "@protobufjs/path": ^1.1.2
+    "@protobufjs/pool": ^1.1.0
+    "@protobufjs/utf8": ^1.1.0
+    "@types/long": ^4.0.1
+    "@types/node": ">=13.7.0"
+    long: ^4.0.0
+  bin:
+    pbjs: bin/pbjs
+    pbts: bin/pbts
+  checksum: b2fc6a01897b016c2a7e43a854ab4a3c57080f61be41e552235436e7a730711b8e89e47cb4ae52f0f065b5ab5d5989fc932f390337ce3a8ccf07203415700850
   languageName: node
   linkType: hard
 
