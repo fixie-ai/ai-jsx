@@ -38,14 +38,14 @@ be fed back into the LLM to generate a final response to the query.
 
 ## How RAG works in Fixie
 
-While you don't need to fully understand the details of how Fixie implements RAG, 
+While you don't need to fully understand the details of how Fixie implements RAG,
 it is helpful to understand the process at a high level.
 
 In Fixie, you create a Corpus and add one or more Sources to it.
 Once a Source has been added to a Corpus, Fixie takes care of
 fetching the documents from that Source (which might involve crawling
-web pages and following links).  Documents are then processed in
-various ways -- for example, HTML contents are converted to Markdown, 
+web pages and following links). Documents are then processed in
+various ways -- for example, HTML contents are converted to Markdown,
 and raw text is extracted from PDF files.
 
 Next, the processed documents are then converted into a set of **Chunks**. Each Chunk
@@ -63,7 +63,7 @@ Say we have stored a bunch of Chunks in the vector database representing pieces 
 documents about, say, foxes. One Chunk might contain:
 
 > There are 37 species of foxes, but only 12 belong to the genus “vulpes” or “true foxes”.
-> The best known of them are: Red Fox, Arctic Fox, Kit Fox, Fennec Fox, and the Gray Fox. 
+> The best known of them are: Red Fox, Arctic Fox, Kit Fox, Fennec Fox, and the Gray Fox.
 
 and another Chunk might contain:
 
@@ -168,6 +168,7 @@ might take only a couple of minutes, but a large web crawl could take many hours
 
 You can check on the progress of your Corpus build by running `npx fixie corpus get <corpus-id>`,
 like so:
+
 ```terminal
 ❯ npx fixie corpus get 44094d5a-f817-4c2e-a2a4-8f8a0c936d0f
 {
@@ -184,6 +185,7 @@ like so:
   }
 }
 ```
+
 This shows that the corpus status is `CORPUS_STATUS_READY` and has 762 chunks ready to be
 queried!
 
@@ -197,6 +199,7 @@ which describes each of the fields in the API responses in detail.
 You can run a manual corpus query on the Fixie Console, by navigating to the page
 for the Corpus you want to test, an selecting the **Query Test** tab. Alternately,
 you can use the `npx fixie corpus query` command:
+
 ```json
 ❯ npx fixie corpus query 44094d5a-f817-4c2e-a2a4-8f8a0c936d0f "What is a fennec fox?"
 {
@@ -210,6 +213,7 @@ you can use the `npx fixie corpus query` command:
   ]
 }
 ```
+
 The query operation returns the set of chunks that are most relevant to the query,
 according to the vector database. The `chunkContent` field contains the contents of
 the chunk, `score` is the similiary measure, and the `sourceId` and `documentId` fields
@@ -220,7 +224,7 @@ to generate a final response to a question.
 
 ## Using Documents in your Sidekick
 
-Okay! Now that we have the fundamentals out of the way, we can show you how to 
+Okay! Now that we have the fundamentals out of the way, we can show you how to
 add the ability to query a corpus of documents from your Sidekick. Fortunately,
 it's very easy, once you have the corpus built.
 
