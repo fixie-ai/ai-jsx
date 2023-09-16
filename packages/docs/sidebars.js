@@ -24,29 +24,15 @@ const sidebars = {
       collapsible: true,
       collapsed: false,
       items: [
-        'sidekicks-quickstart',
-        // {
-        //   type: 'category',
-        //   label: 'Sidekick Tutorials',
-        //   collapsible: true,
-        //   collapsed: false,
-        //   items: [
-        //     'tutorials/sidekickTutorial/part1-intro',
-        //     'tutorials/sidekickTutorial/part2-docsQA',
-        //     'tutorials/sidekickTutorial/part3-systemPrompt',
-        //     'tutorials/sidekickTutorial/part4-tools',
-        //     'tutorials/sidekickTutorial/part5-genUI',
-        //     'tutorials/sidekickTutorial/part6-deploying',
-        //     'tutorials/sidekickTutorial/part7-conclusion',
-        //   ],
-        // },
+        'sidekicks/sidekicks-quickstart',
+        'sidekicks/sidekicks-docsqa',
       ],
     },
     {
       type: 'category',
       label: 'AI.JSX',
       collapsible: true,
-      collapsed: true,
+      collapsed: false,
       items: [
         'getting-started',
         'ai-newcomers',
