@@ -403,7 +403,7 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
       include_nonfinal: true,
       enable_endpoint_detection: true,
       speech_context: null,
-      model: this.language ? `${this.language.slice(0, 2)}_precision` : null,
+      model: this.language ? `${this.language.slice(0, 2)}_v2_lowlatency` : null,
     };
     this.socket!.send(JSON.stringify(obj));
   }
