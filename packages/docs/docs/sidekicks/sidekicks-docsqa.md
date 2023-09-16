@@ -36,18 +36,16 @@ processed documents, you can **query** the Corpus to get back the most relevant
 information from the documents in the Corpus to that query. This information can then
 be fed back into the LLM to generate a final response to the query.
 
-
-
 ## How RAG works in Fixie
 
-While you don't need to fully understand the details of how Fixie implements RAG,
+While you don't need to fully understand the details of how Fixie implements RAG, 
 it is helpful to understand the process at a high level.
 
 In Fixie, you create a Corpus and add one or more Sources to it.
 Once a Source has been added to a Corpus, Fixie takes care of
 fetching the documents from that Source (which might involve crawling
 web pages and following links).  Documents are then processed in
-various ways -- for example, HTML contents are converted to Markdown,
+various ways -- for example, HTML contents are converted to Markdown, 
 and raw text is extracted from PDF files.
 
 Next, the processed documents are then converted into a set of **Chunks**. Each Chunk
@@ -85,235 +83,171 @@ Model to provide a final answer to the user's question. The LLM can then generat
 using both its internal knowledge as well as that drawn from the data provided in the
 Chunks.
 
-Don't worry! All of the above is handled automatically by the Fixie platform and the
-Sidekicks SDK, as we'll explain below.
+Don't worry! All of the steps above are handled automatically for you by the Fixie platform
+and the Sidekicks SDK, as we'll explain below.
 
+## Creating a Corpus
 
+The first step is to create an empty Corpus. You can do this on the
+[Fixie Console](https://console.fixie.ai/) by navigating to "Documents"
+and clicking on "New Document Collection". You can also do this via the Fixie CLI:
 
+```terminal
+$ npx fixie corpus create "My test corpus"
+```
 
+This will give you back a Corpus ID, which you will need for the later steps, so
+jot it down:
 
+```json
+{
+  "corpus": {
+    "corpusId": "66cd8b74-155f-45c8-83ed-28814ae7be89",
+    "displayName": "My test corpus",
+    "created": "2023-09-15T23:55:06.863527Z",
+    "modified": "2023-09-15T23:55:06.891968Z",
+    "stats": {
+      "status": "CORPUS_STATUS_EMPTY"
+    }
+  }
+}
+```
 
+You can use `npx fixie corpus list` to see the list of corpora you have created.
 
-
-
-and generating a set of **Chunks** from those Documents. Think of a Chunk as 
-
-A Corpus is identified
-by a unique ID, using the UUIDv4 format. We have a sample Corpus, which anyone
-can query, that contains a collection of web pages about foxes. The Corpus ID is:
-  
-  ```
-  44094d5a-f817-4c2e-a2a4-8f8a0c936d0f
-  ```
-
-
-
-
-
-
-
-One of the best use cases for AI.JSX is to build a **Sidekick**, an AI-powered chatbot that is embedded
-in a web page or app and is able to answer questions, call APIs,
-and more. AI.JSX makes it easy to build Sidekicks with a rich UI, access to
-documents, and the ability to fetch live data and take action via API calls.
-
-Sidekicks can be built and deployed in minutes. This quickstart will walk you through
-the entire process of building and deploying your own Sidekick.
-
-This tutorial relies on both AI.JSX as well as the [Fixie](https://fixie.ai) cloud
-platform, which provides a suite of APIs and tools for hosting and managing
-Sidekicks. It is possible to build and deploy Sidekicks without Fixie, but
-using Fixie makes the process much easier.
-
-:::info What You Will Do
-At the end of this quickstart you will:
-
-1. **Be Up & Running** → Prereq's installed, accounts set-up, demo Sidekick up and running.
-1. **Be Ready to Customize** → Take the demo code and start customizing it for a custom Sidekick.
-1. **Feel Amazing** → You will feel so good you might try attempting a jumping, flying sidekick.\*
-
-\*_Consult your medical and/or physical fitness professional first. Do not attempt in tight pants._
+:::tip Example corpus
+Rather than creating a corpus from scratch, you can also query the existing
+corpus with ID `44094d5a-f817-4c2e-a2a4-8f8a0c936d0f` from your own code.
+This corpus contains a bunch of web pages with exciting facts about foxes, so it
+makes for a good place to test out the query functionality!
 :::
 
-## Step 0: Prerequisites
+## Adding Sources to the Corpus
 
-:::warning Prerequisites
-Before you get started, you will need to have a free Fixie developer account and have some tools installed
-on your machine. You will also need a text editor. If you don't have a preferred text editor, we
-recommend [Visual Studio Code](https://code.visualstudio.com/).
+The next step is to add one or more Sources to the Corpus. Again, you can do this
+via the Fixie web UI, or using the CLI:
+
+```terminal
+$ npx fixie corpus sources add 66cd8b74-155f-45c8-83ed-28814ae7be89 https://en.wikipedia.org/wiki/Fox
+```
+
+Here, the string `66cd8b74...` is the corpus ID returned when you first created the Corpus.
+
+This adds a single web page Source to the Corpus. A Corpus can have multiple Sources, or a single
+Source can have multiple web pages -- this is just a simple example.
+See the [Fixie API Documentation](https://docs.fixie.ai/) for more details on the underlying APIs.
+
+The above command creates a Source with one web page. If you wanted to include more documents --
+say, all of the pages linked to by the above Wikipedia page, but from the same domain -- you could
+use:
+
+```terminal
+$ npx fixie corpus sources add \
+   66cd8b74-155f-45c8-83ed-28814ae7be89 \
+   https://en.wikipedia.org/wiki/Fox \
+   --max-depth 1 \
+   --include-patterns 'https://en.wikipedia.org/**'
+```
+
+Here, we're indicating that the Source should include only web pages within one "hop"
+from the original page, and only with URLs that match the
+[glob pattern](https://github.com/isaacs/minimatch)
+provided on the command line.
+
+You could, in principle, create a Source which crawls, say, the entire web -- but Fixie
+imposes a default cap on the maximum number of documents that can be included in a single
+Source, currently set to 200.
+
+## Checking the status of the Corpus
+
+:::tip Be patient!
+Note that building a Corpus from a Source can take a while, depending on the number of
+documents, web pages, etc. defined by the Source. Processing a single web page or document
+might take only a couple of minutes, but a large web crawl could take many hours.
 :::
 
-:::tip On Windows? Use WSL.
-If you are using a Windows machine, we highly recommend using the Windows Subsystem for Linux (WSL) for
-development with Node.js. This is optional. If you want to use WSL,
-follow [this guide](https://learn.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-wsl) which
-will get you set-up with WSL, Node, and VSCode (for your text editor).
+You can check on the progress of your Corpus build by running `npx fixie corpus get <corpus-id>`,
+like so:
+```terminal
+❯ npx fixie corpus get 44094d5a-f817-4c2e-a2a4-8f8a0c936d0f
+{
+  "corpus": {
+    "corpusId": "44094d5a-f817-4c2e-a2a4-8f8a0c936d0f",
+    "displayName": "FoxesWorld.com",
+    "created": "2023-09-15T20:15:45.549089Z",
+    "modified": "2023-09-15T20:15:45.581481Z",
+    "stats": {
+      "status": "CORPUS_STATUS_READY",
+      "lastUpdated": "2023-09-15T21:11:53.788270Z",
+      "numChunks": "762"
+    }
+  }
+}
+```
+This shows that the corpus status is `CORPUS_STATUS_READY` and has 762 chunks ready to be
+queried!
+
+:::tip Understanding the API
+You can check out the Fixie API Documentation at [docs.fixie.ai](https://docs.fixie.ai/),
+which describes each of the fields in the API responses in detail.
 :::
 
-### a) Get a Fixie developer account
+## Querying the corpus
 
-We will use [Fixie](https://fixie.ai) for hosting and managing our Sidekick.
-Sign up for a free Fixie developer account:
+You can run a manual corpus query on the Fixie Console, by navigating to the page
+for the Corpus you want to test, an selecting the **Query Test** tab. Alternately,
+you can use the `npx fixie corpus query` command:
+```json
+❯ npx fixie corpus query 44094d5a-f817-4c2e-a2a4-8f8a0c936d0f "What is a fennec fox?"
+{
+  "results": [
+    {
+      "chunkContent": "Fennec Fox - Fox Facts and Information ...",
+      "score": 0.897228,
+      "sourceId": "29c0999a-821b-4888-b838-49d7c028a667",
+      "documentId": "6aa96dd7-5bdb-468b-b7f6-04702246ebd5"
+    }
+  ]
+}
+```
+The query operation returns the set of chunks that are most relevant to the query,
+according to the vector database. The `chunkContent` field contains the contents of
+the chunk, `score` is the similiary measure, and the `sourceId` and `documentId` fields
+identify the source and document that the chunk came from.
 
-1. Go to the [Fixie Console page](https://console.fixie.ai).
-1. Create an account using either a Google or GitHub account.
-1. Navigate to your [profile page](https://console.fixie.ai/profile).
+Typically, the chunks returned from a query will be used in a subsequent call to an LLM
+to generate a final response to a question.
 
-<img src={FixieProfileAPIKey} alt="Fixie profile page where you can get your API key." width="600"/>
+## Using Documents in your Sidekick
 
-The Fixie Console is where you will test and manage your Sidekick once it's built.
-For now, the main thing you need is your Fixie API Key, which is found on your
-[profile page](https://console.fixie.ai/profile).
+Okay! Now that we have the fundamentals out of the way, we can show you how to 
+add the ability to query a corpus of documents from your Sidekick. Fortunately,
+it's very easy, once you have the corpus built.
 
-### b) Install Node.js
+### Step 1: Create a Sidekick
 
-Sidekicks are based on AI.JSX, which in turn relies on Node.js, a JavaScript
-runtime. Install the current [LTS version of Node.js](https://nodejs.org/en).
+You've already done this, we hope, as part of the [Quickstart](./sidekicks-quickstart.md).
 
-### c) Install the Fixie CLI
+### Step 2: Create a `FixieCorpus`
 
-The Fixie command-line interface is provided by the [fixie](https://www.npmjs.com/package/fixie) package in npm. You can run it directly using `npx`:
+You can directly query a corpus from an AI.JSX app using the `FixieCorpus` class to query
+the corpus, and a `<DocsQA>` element in AI.JSX to use the results of the corpus query to
+answer a question. Here is a simple example of a function that returns an AI.JSX
+component that queries a given corpus:
 
-```terminal
-npx fixie@latest
+```js
+import { FixieCorpus } from 'ai-jsx/batteries/docs';
+
+function DoCorpusQuery() {
+  const corpus = new FixieCorpus("44094d5a-f817-4c2e-a2a4-8f8a0c936d0f");
+  const question = 'What is a Fennec fox?'
+  const results = await corpus.search(query, { limit: 4 });
+  return (
+    <DocsQA question={question} corpus={corpus} chunkLimit={5} />
+  );
 ```
 
-### d) Authenticate the Fixie CLI
-
-To configure the Fixie CLI to login to the Fixie service, just run:
-
-```terminal
-npx fixie auth
-```
-
-This will open a browser tab to authenticate to the Fixie Console. The Fixie
-CLI should now be configured to work with your Fixie account.
-
-## Step 1: Clone Sidekick Template Repo
-
-Now that we have the prerequisites out of the way, let's download and deploy
-the Fixie Sidekick template.
-
-Clone the `fixie-sidekick-template` repository from GitHub:
-
-```terminal
-git clone https://github.com/fixie-ai/fixie-sidekick-template.git
-```
-
-If this command fails you may need to [install Git](https://github.com/fixie-ai/fixie-sidekick-template.git).
-
-You can also download the code directly from [the source](https://github.com/fixie-ai/fixie-sidekick-template). While you're there, give us a star! 🦊
-
-## Step 2: Build the Sidekick Code
-
-The Sidekick is implemented in TypeScript with AI.JSX, so you need to
-build it before it can be deployed. To do this, in the `fixie-sidekick-template`
-directory, run:
-
-```terminal
-npm install
-npm run build
-```
-
-The resulting JavaScript code should now be in the `dist/` subdirectory.
-
-## Step 3: Deploy the Sidekick
-
-In the `fixie-sidekick-template` directory, simply run:
-
-```terminal
-npx fixie deploy
-```
-
-This will deploy the Sidekick to the Fixie cloud service. It takes a couple of
-minutes, but once the process is done, you will see a link to the Sidekick's
-page on the Fixie Console. For example:
-
-```terminal
-❯ npx fixie deploy
-🦊 Deploying agent sarah/fixie-sidekick-template...
-🦊 Creating new agent sarah/fixie-sidekick-template...
-⠋  🚀 Deploying... (hang tight, this takes a minute or two!)
-✔ Agent fixie-sidekick-template is running at: https://console.fixie.ai/agents/sarah/fixie-sidekick-template
-```
-
-<img src={Step3Profit} alt="" width="300"/>
-
-## Step 4: Try it Out!
-
-Surf on over to the Sidekick URL shown by the `fixie deploy` command. You should
-now be able to chat directly with your Sidekick!
-
-## Local Development and Testing
-
-The `fixie deploy` step can take a couple of minutes to build and deploy your
-Sidekick to the cloud, which is a real bummer when you're testing things locally.
-Fortunately, you can run your Sidekick locally, without needing to deploy it to
-the cloud.
-
-Instead of `fixie deploy`, you run:
-
-```terminal
-npx fixie serve
-```
-
-This starts up the Sidekick running on your local machine, and sets
-up a tunnel allowing the Fixie service to connect into your local
-Sidekick. When you quit the `fixie serve` command (for example, by
-hitting Ctrl+C), the Sidekick reverts back to the most recently
-deployed version (from `fixie deploy`). Note that you need to `fixie
-deploy` your Sidekick in order for it to run in the cloud.
-
-As we make changes to our sidekick, we can simply stop serving our sidekick with `Ctrl+C` and then
-serve up our new changes with the `serve` command as we did above.
-
-## Sending Messages to your Sidekick
-
-The Fixie Console page gives you a simple web interface to interact with your
-Sidekick, but you're not limited to this interface. You can chat with your
-Sidekick directly via a REST API, or embed the Sidekick chat UI in your own
-web app.
-
-### Method 1: Via the REST API
-
-First up, let's ask our Sidekick a question through the Fixie REST API, using
-`curl`. From your terminal:
-
-```bash
-curl 'https://console.fixie.ai/api/v1/agents/<your user name>/<your sidekick name>/conversations' \
-  -d '{ "generationParams": { "userTimeZoneOffset": 0 }, "message": {"text": "What can you do?" }}' \
-  -H 'Authorization: Bearer <your Fixie API key>' \
-  -H 'Content-Type: application/json'
-```
-
-For example:
-
-```bash
-curl 'https://console.fixie.ai/api/v1/agents/sarah/fixie-sidekick-template/conversations' \
-  -d '{ "generationParams": { "userTimeZoneOffset": 0 }, "message": {"text": "What can you do?" }}' \
-  -H 'Authorization: Bearer FmEEMtjcHLfNGPrLhRQwQfwG9Li...' \
-  -H 'Content-Type: application/json'
-```
-
-### Method 2: Via the Fixie Console
-
-- In your browser, navigate to the [Fixie dashboard](https://console.fixie.ai/).
-- Click on your Sidekick.
-- Enter a question for the Sidekick. e.g. "What can you do?"
-
-You can also access your agent directly at:
-
-```terminal
-https://console.fixie.ai/agents/<your user name>/<your sidekick name>
-```
-
-<img src={FoxieSidekick} alt="Foxie, the Fixie mascot, doing a sidekick!" width="400"/>
-
-## Additional Resources and Next Steps
-
-You've got a template Sidekick deployed to Fixie. So what's next? Here are some suggestions:
-
-### Create your own Document Collection
-
-This will enable you to provide your Sidekick with specialized knowledge about your company,
-product, or organization. Create your own collection [here](https://console.fixie.ai/documents).
+The [fixie-sidekick-template](https://github.com/fixie-ai/fixie-sidekick-template) example
+uses a slightly different approach, in which the `FixieCorpus.createTool()` method is used
+to provide a `Tool` to the AI.JSX `<Sidekick>` component to query the corpus. This is
+functionally the same as the use of `<DocsQA>` above.

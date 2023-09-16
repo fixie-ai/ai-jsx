@@ -2,9 +2,9 @@
 displayed_sidebar: tutorialSidebar
 ---
 
-import FoxieSidekick from '../static/img/foxie-sidekick.png'
-import FixieProfileAPIKey from '../static/img/fixie-profile-api-key.png'
-import Step3Profit from '../static/img/step-3-profit.png'
+import FoxieSidekick from '../../static/img/foxie-sidekick.png'
+import FixieProfileAPIKey from '../../static/img/fixie-profile-api-key.png'
+import Step3Profit from '../../static/img/step-3-profit.png'
 
 # Quickstart: Fixie Sidekicks
 
