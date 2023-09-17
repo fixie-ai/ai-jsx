@@ -60,7 +60,12 @@ class ChatRequest {
   public done = false;
   public onUpdate?: (request: ChatRequest, newText: string) => void;
   public onComplete?: (request: ChatRequest) => void;
-  constructor(private readonly inMessages: ChatMessage[], private readonly model: string, private readonly docs: boolean, public active: boolean) {}
+  constructor(
+    private readonly inMessages: ChatMessage[],
+    private readonly model: string,
+    private readonly docs: boolean,
+    public active: boolean
+  ) {}
   async start() {
     console.log(`calling LLM for ${this.inMessages[this.inMessages.length - 1].content}`);
     const startTime = performance.now();
