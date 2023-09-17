@@ -93,7 +93,7 @@ class ChatManagerInit {
     public readonly asrProvider: string,
     public readonly ttsProvider: string,
     public readonly model: string,
-    public readonly docs?: number
+    public readonly docs: boolean
   ) {}
 }
 
@@ -132,7 +132,7 @@ class ChatManager {
       this.onError?.();
     });
     this.asr.start();
-    if (initialMessage) {
+    if (initialMessage !== undefined) {
       this.handleInputUpdate(initialMessage, true);
     }
   }
@@ -245,7 +245,7 @@ const PageComponent: React.FC = () => {
     setInput('');
     setOutput('');
     setChatManager(manager);
-    manager.start('Hi!');
+    manager.start('');
     manager.onInputChange = (text) => {
       setInput(text);
     };
