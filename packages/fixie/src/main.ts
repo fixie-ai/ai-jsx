@@ -254,9 +254,13 @@ source
 source
   .command('refresh <corpusId> <sourceId>')
   .description('Refresh a corpus source.')
-  .action(async (corpusId: string, sourceId: string) => {
+  .option(
+    '--force',
+    "If a job is already running to refresh this source, kill it and start a new one. If a job is already running and you don't pass --force, the command will fail."
+  )
+  .action(async (corpusId: string, sourceId: string, { force }) => {
     const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-    const result = await client.refreshCorpusSource(corpusId, sourceId);
+    const result = await client.refreshCorpusSource(corpusId, sourceId, force);
     showResult(result, program.opts().raw);
   });
 
@@ -281,24 +285,24 @@ job
     showResult(result, program.opts().raw);
   });
 
-const doc = corpus.command('doc').description('Document-related commands');
+const doc = source.command('doc').description('Document-related commands');
 doc.alias('docs');
 
 doc
-  .command('list <corpusId>')
-  .description('List documents for a given corpus.')
-  .action(async (corpusId: string) => {
+  .command('list <corpusId> <sourceId>')
+  .description('List documents for a given corpus source.')
+  .action(async (corpusId: string, sourceId: string) => {
     const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-    const result = await client.listCorpusDocs(corpusId);
+    const result = await client.listCorpusSourceDocs(corpusId, sourceId);
     showResult(result, program.opts().raw);
   });
 
 doc
-  .command('get <corpusId> <docId>')
-  .description('Get a document for a corpus.')
-  .action(async (corpusId: string, docId: string) => {
+  .command('get <corpusId> <sourceId> <docId>')
+  .description('Get a document from a corpus source.')
+  .action(async (corpusId: string, sourceId: string, docId: string) => {
     const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-    const result = await client.getCorpusDoc(corpusId, docId);
+    const result = await client.getCorpusSourceDoc(corpusId, sourceId, docId);
     showResult(result, program.opts().raw);
   });
 

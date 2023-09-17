@@ -18,6 +18,12 @@ export interface UserInfo {
   organization?: string;
 }
 
+const debug =
+  typeof process !== 'undefined' &&
+  // Don't make any assumptions about the environment.
+  /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */
+  process.env?.FIXIE_DEBUG === 'true';
+
 /**
  * A client to the Fixie AI platform.
  *
@@ -50,6 +56,9 @@ export class IsomorphicFixieClient {
   /** Send a request to the Fixie API with the appropriate auth headers. */
   async request(path: string, bodyData?: any): Promise<Jsonifiable> {
     let res;
+    if (debug) {
+      console.log(`[Fixie request] ${this.url}${path}`, bodyData);
+    }
     if (bodyData) {
       const body = JSON.stringify(bodyData);
       res = await fetch(`${this.url}${path}`, {
@@ -161,13 +170,14 @@ export class IsomorphicFixieClient {
     return this.request(`/api/v1/corpora/${corpusId}/sources`, body);
   }
 
-  /** Refresh the given Source. */
-  refreshCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
-    const body = {
-      corpus_id: corpusId,
-      source_id: sourceId,
-    };
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, body);
+  /**
+   * Refresh the given Source.
+   *
+   * If a job is already running to refresh this source, and force = false, this call will return an error.
+   * If a job is already running to refresh this source, and force = true, that job will be killed and restarted.
+   */
+  refreshCorpusSource(corpusId: string, sourceId: string, force?: boolean): Promise<Jsonifiable> {
+    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, { force });
   }
 
   /** List Jobs associated with a given Source. */
@@ -180,13 +190,13 @@ export class IsomorphicFixieClient {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs/${jobId}`);
   }
 
-  /** List Documents in a given Corpus. */
-  listCorpusDocs(corpusId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/documents`);
+  /** List Documents in a given Corpus Source. */
+  listCorpusSourceDocs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
+    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents`);
   }
 
   /** Get information about a given Document. */
-  getCorpusDoc(corpusId: string, docId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/documents/${docId}`);
+  getCorpusSourceDoc(corpusId: string, sourceId: string, docId: string): Promise<Jsonifiable> {
+    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents/${docId}`);
   }
 }

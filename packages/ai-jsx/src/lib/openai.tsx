@@ -17,7 +17,6 @@ import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { Image, ImageGenPropsWithChildren } from '../core/image-gen.js';
 import * as AI from '../index.js';
 import { Node } from '../index.js';
-import { ChatOrCompletionModelOrBoth } from './model.js';
 import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { OpenAI as OpenAIClient } from 'openai';
 export { OpenAI as OpenAIClient } from 'openai';
@@ -46,8 +45,6 @@ export type ValidChatModel =
   | 'gpt-3.5-turbo-16k'
   | 'gpt-3.5-turbo-16k-0613';
 
-type OpenAIModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
-
 const openAiClientContext = AI.createContext<() => OpenAIClient>(
   _.once(() => {
     const baseURL = getEnvVar('OPENAI_API_BASE', false);
@@ -75,7 +72,12 @@ export function OpenAI({
   completionModel,
   client,
   ...defaults
-}: { children: Node; client?: OpenAIClient } & OpenAIModelChoices & ModelProps) {
+}: {
+  children: Node;
+  client?: OpenAIClient;
+  chatModel?: ValidChatModel;
+  completionModel?: ValidCompletionModel;
+} & ModelProps) {
   let result = children;
 
   if (client) {

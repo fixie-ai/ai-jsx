@@ -5,10 +5,29 @@ import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
 import '../globals.css';
 
-// latency map
+// latency map and report based on findings
+// tts bargein?
+// vad
 // shorter initial messages
 // caching or other initial startup opt?
-// tts bargein?
+// explore Piper via WASM/python
+
+// 1. VAD triggers silence. (Latency here is frame size + VAD delay)
+// 2. ASR sends partial transcript. ASR latency = 2-1.
+// 3. ASR sends final transcript. ASR latency = 3-1.
+// 4. LLM request is made. This can happen before 3 is complete, in which case the speculative execution savings is 3-2.
+// 5. LLM starts streaming tokens. LLM base latency = 5-4.
+// 6. LLM sends enough tokens for TTS to start (full sentence, or 50 chars). LLM token latency = 6-5, LLM total latency = 6-4.
+// 7. TTS requests chunk of audio.
+// 8. TTS chunk is received.
+// 9. TTS playout starts (usually just about instantaneous after 8). TTS latency = 9-7.
+// Total latency = 9-1 = ASR latency + LLM base latency + LLM token latency TTS latency - speculative execution savings.
+
+// Token per second rules of thumb:
+// GPT-4: 12 tps (approx 1s for 50 chars)
+// GPT-3.5: 70 tps (approx 0.2s for 50 chars)
+// Claude v1: 40 tps (approx 0.4s for 50 chars)
+// Claude Instant v1: 70 tps (approx 0.2s for 50 chars)
 
 const DEFAULT_ASR_FRAME_SIZE = 100;
 const DEFAULT_ASR_PROVIDER = 'deepgram';
@@ -60,6 +79,9 @@ class ChatRequest {
   public done = false;
   public onUpdate?: (request: ChatRequest, newText: string) => void;
   public onComplete?: (request: ChatRequest) => void;
+  private startMillis?: number;
+  public requestLatency?: number;
+  public streamLatency?: number;
   constructor(
     private readonly inMessages: ChatMessage[],
     private readonly model: string,
@@ -68,7 +90,7 @@ class ChatRequest {
   ) {}
   async start() {
     console.log(`calling LLM for ${this.inMessages[this.inMessages.length - 1].content}`);
-    const startTime = performance.now();
+    this.startMillis = performance.now();
     const res = await fetch('/agent/api', {
       method: 'POST',
       headers: {
@@ -76,13 +98,15 @@ class ChatRequest {
       },
       body: JSON.stringify({ messages: this.inMessages, model: this.model, docs: this.docs }),
     });
-    console.log(`Got LLM response, latency=${(performance.now() - startTime).toFixed(0)}`);
+    this.requestLatency = performance.now() - this.startMillis;
+    console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
     const reader = res.body!.getReader();
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
         this.done = true;
+        this.streamLatency = performance.now() - this.startMillis - this.requestLatency;
         this.onComplete?.(this);
         break;
       }
@@ -113,8 +137,10 @@ class ChatManager {
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
   private readonly docs: boolean;
-  onInputChange?: (text: string, final: boolean) => void;
-  onOutputChange?: (text: string, final: boolean) => void;
+  onInputChange?: (text: string, final: boolean, latency: number) => void;
+  onOutputChange?: (text: string, final: boolean, latency: number) => void;
+  onAudioStart?: (latency: number) => void;
+  onAudioEnd?: () => void;
   onError?: () => void;
   constructor({ asrProvider, ttsProvider, model, docs }: ChatManagerInit) {
     this.micManager = new MicManager();
@@ -125,8 +151,14 @@ class ChatManager {
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const obj = event.detail!;
       this.handleInputUpdate(obj.text, obj.final);
-      this.onInputChange?.(obj.text, obj.final);
+      this.onInputChange?.(obj.text, obj.final, obj.latency!);
     });
+    this.tts.onPlaying = () => {
+      this.onAudioStart?.(this.tts.latency!);
+    };
+    this.tts.onComplete = () => {
+      this.onAudioEnd?.();
+    };
   }
   /**
    * Starts the chat.
@@ -179,7 +211,7 @@ class ChatManager {
       request.active = true;
       this.tts.play(request.outMessage);
       if (!request.done) {
-        this.onOutputChange?.(request.outMessage, false);
+        this.onOutputChange?.(request.outMessage, false, request.requestLatency!);
       } else {
         this.finishRequest(request);
       }
@@ -191,7 +223,7 @@ class ChatManager {
    */
   private handleRequestUpdate(request: ChatRequest, newText: string) {
     if (request.active) {
-      this.onOutputChange?.(request.outMessage, false);
+      this.onOutputChange?.(request.outMessage, false, request.requestLatency!);
       this.tts.play(newText);
     }
   }
@@ -214,11 +246,11 @@ class ChatManager {
     const assistantMessage = new ChatMessage('assistant', request.outMessage);
     this.history.push(assistantMessage);
     this.pendingRequests = {};
-    this.onOutputChange?.(request.outMessage, true);
+    this.onOutputChange?.(request.outMessage, true, request.requestLatency!);
   }
 }
 
-const ButtonComponent: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
+const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
   onClick,
   disabled,
   children,
@@ -234,6 +266,13 @@ const ButtonComponent: React.FC<{ onClick: () => void; disabled: boolean; childr
   </button>
 );
 
+const Latency: React.FC<{ name: string; latency: number }> = ({ name, latency }) => (
+  <>
+    {' '}
+    {name} <span className="font-bold">{latency ? latency.toFixed(0) : '-'}</span> ms
+  </>
+);
+
 const PageComponent: React.FC = () => {
   const searchParams = useSearchParams();
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
@@ -243,22 +282,35 @@ const PageComponent: React.FC = () => {
   const [chatManager, setChatManager] = useState<ChatManager | null>(null);
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
+  const [asrLatency, setAsrLatency] = useState(0);
+  const [llmLatency, setLlmLatency] = useState(0);
+  const [ttsLatency, setTtsLatency] = useState(0);
 
   const active = () => Boolean(chatManager);
   const handleStart = () => {
     const manager = new ChatManager({ asrProvider, ttsProvider, model, docs });
     setInput('');
     setOutput('');
+    setAsrLatency(0);
+    setLlmLatency(0);
+    setTtsLatency(0);
     setChatManager(manager);
     manager.start('');
-    manager.onInputChange = (text) => {
+    manager.onInputChange = (text, final, latency) => {
       setInput(text);
+      setAsrLatency(latency);
+      setLlmLatency(0);
+      setTtsLatency(0);
     };
-    manager.onOutputChange = (text, final) => {
+    manager.onOutputChange = (text, final, latency) => {
       setOutput(text);
       if (final) {
         setInput('');
       }
+      setLlmLatency((prev) => (prev ? prev : latency));
+    };
+    manager.onAudioStart = (latency) => {
+      setTtsLatency(latency);
     };
     manager.onError = () => {
       chatManager!.stop();
@@ -355,12 +407,20 @@ const PageComponent: React.FC = () => {
           </div>
         </div>
         <div className="m-3 w-full flex justify-center">
-          <ButtonComponent disabled={active()} onClick={handleStart}>
+          <Button disabled={active()} onClick={handleStart}>
             Start Chatting
-          </ButtonComponent>
-          <ButtonComponent disabled={!active()} onClick={handleStop}>
+          </Button>
+          <Button disabled={!active()} onClick={handleStop}>
             Stop Chatting
-          </ButtonComponent>
+          </Button>
+        </div>
+        <div className="flex justify-center">
+          <span className="text-sm font-mono">
+            <Latency name="ASR" latency={asrLatency} /> |
+            <Latency name="LLM" latency={llmLatency} /> |
+            <Latency name="TTS" latency={ttsLatency} /> |
+            <Latency name="" latency={asrLatency + llmLatency + ttsLatency} />
+          </span>
         </div>
       </div>
     </>

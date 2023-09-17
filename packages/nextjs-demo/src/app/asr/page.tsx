@@ -29,7 +29,7 @@ async function getToken(provider: string) {
   return json.token;
 }
 
-interface AsrComponentProps {
+interface AsrProps {
   name: string;
   link: string;
   id: string;
@@ -40,7 +40,7 @@ interface AsrComponentProps {
   transcript?: string;
 }
 
-const AsrComponent: React.FC<AsrComponentProps> = ({ name, link, id, costPerMinute, manager, transcript }) => {
+const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, transcript }) => {
   const [output, setOutput] = useState('');
   const [partialLatency, setPartialLatency] = useState<number[]>([]);
   const [finalLatency, setFinalLatency] = useState<number[]>([]);
@@ -152,7 +152,7 @@ const AsrComponent: React.FC<AsrComponentProps> = ({ name, link, id, costPerMinu
   );
 };
 
-const ButtonComponent: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
+const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
   onClick,
   disabled,
   children,
@@ -198,18 +198,18 @@ const PageComponent: React.FC = () => {
         file, Word Error Rate (WER) is computed against the ground truth transcript, ignoring punctuation.
       </p>
       <div className="font-bold mt-3 mb-3">
-        <ButtonComponent disabled={Boolean(manager)} onClick={handleStartFile}>
+        <Button disabled={Boolean(manager)} onClick={handleStartFile}>
           Start File
-        </ButtonComponent>
-        <ButtonComponent disabled={Boolean(manager)} onClick={handleStartMic}>
+        </Button>
+        <Button disabled={Boolean(manager)} onClick={handleStartMic}>
           Start Mic
-        </ButtonComponent>
-        <ButtonComponent disabled={!manager} onClick={handleStop}>
+        </Button>
+        <Button disabled={!manager} onClick={handleStop}>
           Stop
-        </ButtonComponent>
+        </Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2">
-        <AsrComponent
+        <Asr
           name="Deepgram"
           link="https://deepgram.com"
           id="deepgram"
@@ -217,7 +217,7 @@ const PageComponent: React.FC = () => {
           manager={manager}
           transcript={transcript}
         />
-        <AsrComponent
+        <Asr
           name="AssemblyAI"
           link="https://assemblyai.com"
           id="aai"
@@ -225,7 +225,7 @@ const PageComponent: React.FC = () => {
           manager={manager}
           transcript={transcript}
         />
-        <AsrComponent
+        <Asr
           name="Speechmatics"
           link="https://speechmatics.com"
           id="speechmatics"
@@ -233,7 +233,7 @@ const PageComponent: React.FC = () => {
           manager={manager}
           transcript={transcript}
         />
-        <AsrComponent
+        <Asr
           name="Rev AI"
           link="https://rev.ai"
           id="revai"
@@ -241,7 +241,7 @@ const PageComponent: React.FC = () => {
           manager={manager}
           transcript={transcript}
         />
-        <AsrComponent
+        <Asr
           name="Soniox"
           link="https://soniox.com"
           id="soniox"
@@ -249,7 +249,7 @@ const PageComponent: React.FC = () => {
           manager={manager}
           transcript={transcript}
         />
-        <AsrComponent
+        <Asr
           name="Gladia"
           link="https://gladia.io"
           id="gladia"

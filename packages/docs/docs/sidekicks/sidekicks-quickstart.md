@@ -2,9 +2,9 @@
 displayed_sidebar: tutorialSidebar
 ---
 
-import FoxieSidekick from '../static/img/foxie-sidekick.png'
-import FixieProfileAPIKey from '../static/img/fixie-profile-api-key.png'
-import Step3Profit from '../static/img/step-3-profit.png'
+import FoxieSidekick from '../../static/img/foxie-sidekick.png'
+import FixieProfileAPIKey from '../../static/img/fixie-profile-api-key.png'
+import Step3Profit from '../../static/img/step-3-profit.png'
 
 # Quickstart: Fixie Sidekicks
 
@@ -68,20 +68,18 @@ runtime. Install the current [LTS version of Node.js](https://nodejs.org/en).
 
 ### c) Install the Fixie CLI
 
-The Fixie command-line interface is provided by the [fixie](https://www.npmjs.com/package/fixie) package in npm. Install it by running:
+The Fixie command-line interface is provided by the [fixie](https://www.npmjs.com/package/fixie) package in npm. You can run it directly using `npx`:
 
 ```terminal
 npx fixie@latest
 ```
-
-This will install the `fixie` binary.
 
 ### d) Authenticate the Fixie CLI
 
 To configure the Fixie CLI to login to the Fixie service, just run:
 
 ```terminal
-fixie auth
+npx fixie auth
 ```
 
 This will open a browser tab to authenticate to the Fixie Console. The Fixie
@@ -120,7 +118,7 @@ The resulting JavaScript code should now be in the `dist/` subdirectory.
 In the `fixie-sidekick-template` directory, simply run:
 
 ```terminal
-fixie deploy
+npx fixie deploy
 ```
 
 This will deploy the Sidekick to the Fixie cloud service. It takes a couple of
@@ -128,7 +126,7 @@ minutes, but once the process is done, you will see a link to the Sidekick's
 page on the Fixie Console. For example:
 
 ```terminal
-❯ fixie deploy
+❯ npx fixie deploy
 🦊 Deploying agent sarah/fixie-sidekick-template...
 🦊 Creating new agent sarah/fixie-sidekick-template...
 ⠋  🚀 Deploying... (hang tight, this takes a minute or two!)
@@ -152,7 +150,7 @@ the cloud.
 Instead of `fixie deploy`, you run:
 
 ```terminal
-fixie serve
+npx fixie serve
 ```
 
 This starts up the Sidekick running on your local machine, and sets
@@ -179,7 +177,7 @@ First up, let's ask our Sidekick a question through the Fixie REST API, using
 
 ```bash
 curl 'https://console.fixie.ai/api/v1/agents/<your user name>/<your sidekick name>/conversations' \
-  -d '{ "generationParams": { "userTimeZoneOffset": 0 }, "message": {"text": "What can you do?" }}' \
+  -d '{ "message": "What can you do?" }' \
   -H 'Authorization: Bearer <your Fixie API key>' \
   -H 'Content-Type: application/json'
 ```
@@ -188,7 +186,7 @@ For example:
 
 ```bash
 curl 'https://console.fixie.ai/api/v1/agents/sarah/fixie-sidekick-template/conversations' \
-  -d '{ "generationParams": { "userTimeZoneOffset": 0 }, "message": {"text": "What can you do?" }}' \
+  -d '{ "message": "What can you do?" }' \
   -H 'Authorization: Bearer FmEEMtjcHLfNGPrLhRQwQfwG9Li...' \
   -H 'Content-Type: application/json'
 ```
