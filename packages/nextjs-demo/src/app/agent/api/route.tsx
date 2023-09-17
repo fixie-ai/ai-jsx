@@ -87,6 +87,7 @@ async function ChatAgent({
     prompt += '\nHere is some relevant information that you can use to compose your response:\n';
     prompt += chunks.map((chunk) => chunk.chunk.content).join('\n');
   }
+  console.log(`Prompt:\n${prompt}`);
   const children = (
     <ChatCompletion>
       <SystemMessage>{prompt}</SystemMessage>
