@@ -243,10 +243,10 @@ class ChatManager {
 }
 
 const MenuItem: React.FC<{ name: string; price: number }> = ({ name, price }) => (
-  <div className="flex justify-between">
+  <li className="flex justify-between">
     <span className="text-left">{name}</span>
     <span className="text-right">${price}</span>
-  </div>
+  </li>
 );
 
 const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
@@ -350,7 +350,7 @@ const PageComponent: React.FC = () => {
         <div className="grid grid-cols-2">
           <div className="p-4">
             <p className="text-lg font-bold">🍩 DONUTS</p>
-            <div className="text-sm">
+            <ul className="text-sm">
               <MenuItem name="PUMPKIN SPICE ORIGINAL GLAZED® DOUGHNUT" price={1.29} />
               <MenuItem name="PUMPKIN SPICE CAKE DOUGHNUT" price={1.29} />
               <MenuItem name="PUMPKIN SPICE CHEESECAKE SWIRL DOUGHNUT" price={1.29} />
@@ -363,11 +363,11 @@ const PageComponent: React.FC = () => {
               <MenuItem name="STRAWBERRY ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
               <MenuItem name="GLAZED LEMON FILLED DOUGHNUT" price={1.09} />
               <MenuItem name="ORIGINAL GLAZED® DOUGHNUT HOLES" price={3.99} />
-            </div>
+            </ul>
           </div>
           <div className="p-4">
             <p className="text-lg font-bold">☕️ COFFEE & DRINKS</p>
-            <div className="text-sm">
+            <ul className="text-sm">
               <MenuItem name="PUMPKIN SPICE COFFEE" price={2.59} />
               <MenuItem name="PUMPKIN SPICE LATTE" price={4.59} />
               <MenuItem name="CLASSIC BREWED COFFEE" price={1.79} />
@@ -378,7 +378,7 @@ const PageComponent: React.FC = () => {
               <MenuItem name="CARAMEL SPECIALTY LATTE" price={3.49} />
               <MenuItem name="CARAMEL MOCHA SPECIALTY LATTE" price={3.49} />
               <MenuItem name="MOCHA SPECIALTY LATTE" price={3.49} />
-            </div>
+            </ul>
           </div>
         </div>
         <div>
