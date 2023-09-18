@@ -250,6 +250,13 @@ class ChatManager {
   }
 }
 
+const MenuItem: React.FC<{ name: string; price: number }> = ({ name, price }) => (
+  <li className="flex justify-between">
+    <span className="text-left">{name}</span>
+    <span className="text-right">${price}</span>
+  </li>
+);
+
 const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
   onClick,
   disabled,
@@ -353,38 +360,33 @@ const PageComponent: React.FC = () => {
           <div className="p-4">
             <p className="text-lg font-bold">🍩 DONUTS</p>
             <ul className="text-sm">
-              <li>PUMPKIN SPICE ORIGINAL GLAZED® DOUGHNUT $1.29</li>
-              <ul>
-                <li>PUMPKIN SPICE CAKE DOUGHNUT $1.29</li>
-                <li>PUMPKIN SPICE CHEESECAKE SWIRL DOUGHNUT $1.29</li>
-                <li>PUMPKIN SPICE MAPLE PECAN DOUGHNUT $1.29</li>
-                <li>ORIGINAL GLAZED® DOUGHNUT $0.99</li>
-                <li>CHOCOLATE ICED GLAZED DOUGHNUT $1.09</li>
-                <li>CHOCOLATE ICED GLAZED DOUGHNUT WITH SPRINKLES $1.09</li>
-                <li>GLAZED RASPBERRY FILLED DOUGHNUT $1.09</li>
-                <li>GLAZED BLUEBERRY CAKE DOUGHNUT $1.09</li>
-                <li>STRAWBERRY ICED DOUGHNUT WITH SPRINKLES $1.09</li>
-                <li>GLAZED LEMON FILLED DOUGHNUT $1.09</li>
-                <li>CHOCOLATE ICED CUSTARD FILLED DOUGHNUT $1.09</li>
-                <li>CHOCOLATE ICED DOUGHNUT WITH KREME™ FILLING $1.09</li>
-                <li>CAKE BATTER DOUGHNUT $1.09</li>
-                <li>ORIGINAL GLAZED® DOUGHNUT HOLES $3.99</li>
-              </ul>
+              <MenuItem name="PUMPKIN SPICE ORIGINAL GLAZED® DOUGHNUT" price={1.29} />
+              <MenuItem name="PUMPKIN SPICE CAKE DOUGHNUT" price={1.29} />
+              <MenuItem name="PUMPKIN SPICE CHEESECAKE SWIRL DOUGHNUT" price={1.29} />
+              <MenuItem name="PUMPKIN SPICE MAPLE PECAN DOUGHNUT" price={1.29} />
+              <MenuItem name="ORIGINAL GLAZED® DOUGHNUT" price={0.99} />
+              <MenuItem name="CHOCOLATE ICED GLAZED DOUGHNUT" price={1.09} />
+              <MenuItem name="CHOCOLATE ICED GLAZED DOUGHNUT WITH SPRINKLES" price={1.09} />
+              <MenuItem name="GLAZED RASPBERRY FILLED DOUGHNUT" price={1.09} />
+              <MenuItem name="GLAZED BLUEBERRY CAKE DOUGHNUT" price={1.09} />
+              <MenuItem name="STRAWBERRY ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
+              <MenuItem name="GLAZED LEMON FILLED DOUGHNUT" price={1.09} />
+              <MenuItem name="ORIGINAL GLAZED® DOUGHNUT HOLES" price={3.99} />
             </ul>
           </div>
           <div className="p-4">
             <p className="text-lg font-bold">☕️ COFFEE & DRINKS</p>
             <ul className="text-sm">
-              <li>PUMPKIN SPICE COFFEE $2.59</li>
-              <li>PUMPKIN SPICE LATTE $4.59</li>
-              <li>CLASSIC BREWED COFFEE $1.79</li>
-              <li>CLASSIC DECAF BREWED COFFEE $1.79</li>
-              <li>LATTE $3.49</li>
-              <li>VANILLA SPECIALTY LATTE $3.49</li>
-              <li>ORIGINAL GLAZED® LATTE $3.49</li>
-              <li>CARAMEL SPECIALTY LATTE $3.49</li>
-              <li>CARAMEL MOCHA SPECIALTY LATTE $3.49</li>
-              <li>MOCHA SPECIALTY LATTE $3.49</li>
+              <MenuItem name="PUMPKIN SPICE COFFEE" price={2.59} />
+              <MenuItem name="PUMPKIN SPICE LATTE" price={4.59} />
+              <MenuItem name="CLASSIC BREWED COFFEE" price={1.79} />
+              <MenuItem name="CLASSIC DECAF BREWED COFFEE" price={1.79} />
+              <MenuItem name="LATTE" price={3.49} />
+              <MenuItem name="VANILLA SPECIALTY LATTE" price={3.49} />
+              <MenuItem name="ORIGINAL GLAZED® LATTE" price={3.49} />
+              <MenuItem name="CARAMEL SPECIALTY LATTE" price={3.49} />
+              <MenuItem name="CARAMEL MOCHA SPECIALTY LATTE" price={3.49} />
+              <MenuItem name="MOCHA SPECIALTY LATTE" price={3.49} />
             </ul>
           </div>
         </div>
