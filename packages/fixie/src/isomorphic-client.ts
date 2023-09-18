@@ -190,13 +190,13 @@ export class IsomorphicFixieClient {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs/${jobId}`);
   }
 
-  /** List Documents in a given Corpus. */
-  listCorpusDocs(corpusId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/documents`);
+  /** List Documents in a given Corpus Source. */
+  listCorpusSourceDocs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
+    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents`);
   }
 
   /** Get information about a given Document. */
-  getCorpusDoc(corpusId: string, docId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/documents/${docId}`);
+  getCorpusSourceDoc(corpusId: string, sourceId: string, docId: string): Promise<Jsonifiable> {
+    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents/${docId}`);
   }
 }

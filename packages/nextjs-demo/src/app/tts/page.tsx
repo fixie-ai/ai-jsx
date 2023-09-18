@@ -1,5 +1,5 @@
 'use client';
-import { TextToSpeechBase, AzureTextToSpeech, AwsTextToSpeech, ElevenLabsTextToSpeech } from 'ai-jsx/lib/tts/tts';
+import { TextToSpeechBase, createTextToSpeech } from 'ai-jsx/lib/tts/tts';
 import React, { useState, useEffect } from 'react';
 import '../globals.css';
 
@@ -23,6 +23,8 @@ const Button: React.FC<{ onClick: () => void; children: React.ReactNode }> = ({ 
 type TtsProps = {
   display: string;
   provider: string;
+  link: string;
+  costPerMChar: number;
   text: string;
 };
 
@@ -45,18 +47,12 @@ const getToken = async (provider: string) => {
   return json.token;
 };
 
-const Tts: React.FC<TtsProps> = ({ display, provider, text }) => {
+const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, text }) => {
   const [playing, setPlaying] = useState(false);
   const [latency, setLatency] = useState(0);
   const [tts, setTts] = useState<TextToSpeechBase | null>();
   useEffect(() => {
-    if (provider === 'eleven') {
-      setTts(new ElevenLabsTextToSpeech(getToken));
-    } else if (provider === 'azure') {
-      setTts(new AzureTextToSpeech(buildUrl, AzureTextToSpeech.DEFAULT_VOICE, 1.2));
-    } else if (provider === 'aws') {
-      setTts(new AwsTextToSpeech(buildUrl, AwsTextToSpeech.DEFAULT_VOICE, 1.2));
-    }
+    setTts(createTextToSpeech({ provider, buildUrl, getToken, rate: 1.2 }));
   }, [provider]);
   const toggle = () => {
     if (!playing) {
@@ -71,10 +67,21 @@ const Tts: React.FC<TtsProps> = ({ display, provider, text }) => {
       tts!.stop();
     }
   };
-  const caption = playing ? 'Stop' : `Play ${display}`;
+  const caption = playing ? 'Stop' : 'Play';
   const latencyText = playing ? (latency ? `${latency} ms` : 'Generating...') : '';
   return (
     <div className="mt-2">
+      <p className="text-xl font-bold mt-2 ml-2">
+        <a className="hover:underline" href={link}>
+          {display}
+        </a>
+      </p>
+      <div className="text-sm ml-2 mb-1">
+        <span className="font-bold">Cost: </span>
+        <a className="hover:underline" href={`${link}/pricing`}>
+          ${costPerMChar}/million chars
+        </a>
+      </div>
       <Button onClick={toggle}>{caption}</Button>
       <span className="m-2">{latencyText}</span>
     </div>
@@ -99,9 +106,24 @@ const PageComponent: React.FC = () => {
         onChange={(e) => setText(e.currentTarget.value)}
       ></textarea>
       <p className="ml-2 mb-2 text-sm">{countWords(text)} words</p>
-      <Tts display="ElevenLabs" provider="eleven" text={text}></Tts>
-      <Tts display="Azure" provider="azure" text={text}></Tts>
-      <Tts display="AWS Polly" provider="aws" text={text}></Tts>
+      <div className="grid grid-cols-1 md:grid-cols-2 w-full">
+        <Tts display="ElevenLabs" provider="eleven" link="https://elevenlabs.io" costPerMChar={180} text={text}></Tts>
+        <Tts
+          display="Azure"
+          provider="azure"
+          link="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services"
+          costPerMChar={16}
+          text={text}
+        ></Tts>
+        <Tts display="AWS Polly" provider="aws" link="https://aws.amazon.com/polly" costPerMChar={16} text={text}></Tts>
+        <Tts
+          display="Google"
+          provider="gcp"
+          link="https://cloud.google.com/text-to-speech"
+          costPerMChar={16}
+          text={text}
+        ></Tts>
+      </div>
     </>
   );
 };

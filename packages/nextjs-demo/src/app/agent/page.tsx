@@ -84,7 +84,12 @@ class ChatRequest {
   private startMillis?: number;
   public requestLatency?: number;
   public streamLatency?: number;
-  constructor(private readonly inMessages: ChatMessage[], private readonly model: string, public active: boolean) {}
+  constructor(
+    private readonly inMessages: ChatMessage[],
+    private readonly model: string,
+    private readonly docs: boolean,
+    public active: boolean
+  ) {}
   async start() {
     console.log(`calling LLM for ${this.inMessages[this.inMessages.length - 1].content}`);
     this.startMillis = performance.now();
@@ -93,7 +98,7 @@ class ChatRequest {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ messages: this.inMessages, model: this.model }),
+      body: JSON.stringify({ messages: this.inMessages, model: this.model, docs: this.docs }),
     });
     this.requestLatency = performance.now() - this.startMillis;
     console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
@@ -118,7 +123,8 @@ class ChatManagerInit {
   constructor(
     public readonly asrProvider: string,
     public readonly ttsProvider: string,
-    public readonly model: string
+    public readonly model: string,
+    public readonly docs: boolean
   ) {}
 }
 
@@ -132,16 +138,18 @@ class ChatManager {
   private readonly asr: SpeechRecognitionBase;
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
+  private readonly docs: boolean;
   onInputChange?: (text: string, final: boolean, latency: number) => void;
   onOutputChange?: (text: string, final: boolean, latency: number) => void;
   onAudioStart?: (latency: number) => void;
   onAudioEnd?: () => void;
   onError?: () => void;
-  constructor({ asrProvider, ttsProvider, model }: ChatManagerInit) {
+  constructor({ asrProvider, ttsProvider, model, docs }: ChatManagerInit) {
     this.micManager = new MicManager();
     this.asr = createSpeechRecognition({ provider: asrProvider, manager: this.micManager, getToken: getAsrToken });
     this.tts = createTextToSpeech({ provider: ttsProvider, getToken: getTtsToken, buildUrl: buildTtsUrl, rate: 1.2 });
     this.model = model;
+    this.docs = docs;
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const obj = event.detail!;
       this.handleInputUpdate(obj.text, obj.final);
@@ -163,7 +171,7 @@ class ChatManager {
       this.onError?.();
     });
     this.asr.start();
-    if (initialMessage) {
+    if (initialMessage !== undefined) {
       this.handleInputUpdate(initialMessage, true);
     }
   }
@@ -195,7 +203,7 @@ class ChatManager {
     const hit = text in this.pendingRequests;
     console.log(`${final ? 'final' : 'partial'}: ${text} ${hit ? 'HIT' : 'MISS'}`);
     if (!hit) {
-      const request = new ChatRequest(newMessages, this.model, final);
+      const request = new ChatRequest(newMessages, this.model, this.docs, final);
       request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
       request.onComplete = (request) => this.handleRequestDone(request);
       this.pendingRequests[text] = request;
@@ -244,6 +252,13 @@ class ChatManager {
   }
 }
 
+const MenuItem: React.FC<{ name: string; price: number }> = ({ name, price }) => (
+  <li className="flex justify-between">
+    <span className="text-left">{name}</span>
+    <span className="text-right">${price}</span>
+  </li>
+);
+
 const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
   onClick,
   disabled,
@@ -272,6 +287,7 @@ const PageComponent: React.FC = () => {
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
   const model = searchParams.get('llm') || 'gpt-4';
+  const docs = Boolean(searchParams.get('docs'));
   const [chatManager, setChatManager] = useState<ChatManager | null>(null);
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
@@ -281,14 +297,14 @@ const PageComponent: React.FC = () => {
 
   const active = () => Boolean(chatManager);
   const handleStart = () => {
-    const manager = new ChatManager({ asrProvider, ttsProvider, model });
+    const manager = new ChatManager({ asrProvider, ttsProvider, model, docs });
     setInput('');
     setOutput('');
     setAsrLatency(0);
     setLlmLatency(0);
     setTtsLatency(0);
     setChatManager(manager);
-    manager.start('Hi!');
+    manager.start('');
     manager.onInputChange = (text, final, latency) => {
       setInput(text);
       setAsrLatency(latency);
@@ -346,38 +362,33 @@ const PageComponent: React.FC = () => {
           <div className="p-4">
             <p className="text-lg font-bold">🍩 DONUTS</p>
             <ul className="text-sm">
-              <li>PUMPKIN SPICE ORIGINAL GLAZED® DOUGHNUT $1.29</li>
-              <ul>
-                <li>PUMPKIN SPICE CAKE DOUGHNUT $1.29</li>
-                <li>PUMPKIN SPICE CHEESECAKE SWIRL DOUGHNUT $1.29</li>
-                <li>PUMPKIN SPICE MAPLE PECAN DOUGHNUT $1.29</li>
-                <li>ORIGINAL GLAZED® DOUGHNUT $0.99</li>
-                <li>CHOCOLATE ICED GLAZED DOUGHNUT $1.09</li>
-                <li>CHOCOLATE ICED GLAZED DOUGHNUT WITH SPRINKLES $1.09</li>
-                <li>GLAZED RASPBERRY FILLED DOUGHNUT $1.09</li>
-                <li>GLAZED BLUEBERRY CAKE DOUGHNUT $1.09</li>
-                <li>STRAWBERRY ICED DOUGHNUT WITH SPRINKLES $1.09</li>
-                <li>GLAZED LEMON FILLED DOUGHNUT $1.09</li>
-                <li>CHOCOLATE ICED CUSTARD FILLED DOUGHNUT $1.09</li>
-                <li>CHOCOLATE ICED DOUGHNUT WITH KREME™ FILLING $1.09</li>
-                <li>CAKE BATTER DOUGHNUT $1.09</li>
-                <li>ORIGINAL GLAZED® DOUGHNUT HOLES $3.99</li>
-              </ul>
+              <MenuItem name="PUMPKIN SPICE ORIGINAL GLAZED® DOUGHNUT" price={1.29} />
+              <MenuItem name="PUMPKIN SPICE CAKE DOUGHNUT" price={1.29} />
+              <MenuItem name="PUMPKIN SPICE CHEESECAKE SWIRL DOUGHNUT" price={1.29} />
+              <MenuItem name="PUMPKIN SPICE MAPLE PECAN DOUGHNUT" price={1.29} />
+              <MenuItem name="ORIGINAL GLAZED® DOUGHNUT" price={0.99} />
+              <MenuItem name="CHOCOLATE ICED GLAZED DOUGHNUT" price={1.09} />
+              <MenuItem name="CHOCOLATE ICED GLAZED DOUGHNUT WITH SPRINKLES" price={1.09} />
+              <MenuItem name="GLAZED RASPBERRY FILLED DOUGHNUT" price={1.09} />
+              <MenuItem name="GLAZED BLUEBERRY CAKE DOUGHNUT" price={1.09} />
+              <MenuItem name="STRAWBERRY ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
+              <MenuItem name="GLAZED LEMON FILLED DOUGHNUT" price={1.09} />
+              <MenuItem name="ORIGINAL GLAZED® DOUGHNUT HOLES" price={3.99} />
             </ul>
           </div>
           <div className="p-4">
             <p className="text-lg font-bold">☕️ COFFEE & DRINKS</p>
             <ul className="text-sm">
-              <li>PUMPKIN SPICE COFFEE $2.59</li>
-              <li>PUMPKIN SPICE LATTE $4.59</li>
-              <li>CLASSIC BREWED COFFEE $1.79</li>
-              <li>CLASSIC DECAF BREWED COFFEE $1.79</li>
-              <li>LATTE $3.49</li>
-              <li>VANILLA SPECIALTY LATTE $3.49</li>
-              <li>ORIGINAL GLAZED® LATTE $3.49</li>
-              <li>CARAMEL SPECIALTY LATTE $3.49</li>
-              <li>CARAMEL MOCHA SPECIALTY LATTE $3.49</li>
-              <li>MOCHA SPECIALTY LATTE $3.49</li>
+              <MenuItem name="PUMPKIN SPICE COFFEE" price={2.59} />
+              <MenuItem name="PUMPKIN SPICE LATTE" price={4.59} />
+              <MenuItem name="CLASSIC BREWED COFFEE" price={1.79} />
+              <MenuItem name="CLASSIC DECAF BREWED COFFEE" price={1.79} />
+              <MenuItem name="LATTE" price={3.49} />
+              <MenuItem name="VANILLA SPECIALTY LATTE" price={3.49} />
+              <MenuItem name="ORIGINAL GLAZED® LATTE" price={3.49} />
+              <MenuItem name="CARAMEL SPECIALTY LATTE" price={3.49} />
+              <MenuItem name="CARAMEL MOCHA SPECIALTY LATTE" price={3.49} />
+              <MenuItem name="MOCHA SPECIALTY LATTE" price={3.49} />
             </ul>
           </div>
         </div>
