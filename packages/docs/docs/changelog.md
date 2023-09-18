@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.18.0
+
+- Added components for Automatic Speech Recognition (ASR) in `lib/asr/asr.tsx`.
+- Addec components for Text-to-Speech (TTS) in `lib/tts/tts.tsx`.
+- ASR providers include Deepgram, Speechmatics, Assembly AI, Rev AI, Soniox, and Gladia.
+- TTS providers include Google Cloud, AWS, Azure, and ElevenLabs.
+
 ## 0.17.3
 
 - Added the ability to set Anthropic/OpenAI clients without setting the default model
