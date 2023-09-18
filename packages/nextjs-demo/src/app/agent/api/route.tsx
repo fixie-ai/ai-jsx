@@ -84,10 +84,10 @@ async function ChatAgent({
   if (docs && query) {
     const corpus = new FixieCorpus(KK_CORPUS_ID);
     const chunks = await corpus.search(query, { limit: MAX_CHUNKS });
-    prompt += '\nHere is some relevant information that you can use to compose your response:\n';
-    prompt += chunks.map((chunk) => chunk.chunk.content).join('\n');
+    const chunkText = chunks.map((chunk) => chunk.chunk.content).join('\n');
+    console.log(`Chunks:\n${chunkText}`);
+    prompt += `\nHere is some relevant information that you can use to compose your response:\n\n${chunkText}\n`;
   }
-  console.log(`Prompt:\n${prompt}`);
   const children = (
     <ChatCompletion>
       <SystemMessage>{prompt}</SystemMessage>
