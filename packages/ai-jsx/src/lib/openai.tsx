@@ -353,7 +353,7 @@ export async function* OpenAIChatModel(
   }
 
   const openaiFunctions = !props.functionDefinitions
-    ? undefined
+    ? []
     : Object.entries(props.functionDefinitions).map(([functionName, functionDefinition]) => ({
         name: functionName,
         description: functionDefinition.description,
@@ -367,7 +367,7 @@ export async function* OpenAIChatModel(
     temperature: props.temperature,
     top_p: props.topP,
     messages,
-    functions: openaiFunctions,
+    functions: openaiFunctions.length > 0 ? openaiFunctions : undefined,
     function_call: props.forcedFunction ? { name: props.forcedFunction } : undefined,
     stop: props.stop,
     logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
