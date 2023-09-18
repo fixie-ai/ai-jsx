@@ -2,11 +2,12 @@ import { gql } from '@apollo/client/core/index.js';
 import yaml from 'js-yaml';
 import fs from 'fs';
 import terminal from 'terminal-kit';
-import { execSync, ChildProcess } from 'child_process';
+import { execSync } from 'child_process';
 import ora from 'ora';
 import os from 'os';
 import path from 'path';
 import { execa } from 'execa';
+import net from 'node:net';
 
 const { terminal: term } = terminal;
 
@@ -401,7 +402,7 @@ export class FixieAgent {
     return agent;
   }
 
-  static spawnAgentProcess(agentPath: string, port: number, env: Record<string, string>): ChildProcess {
+  static spawnAgentProcess(agentPath: string, port: number, env: Record<string, string>) {
     term(`🌱 Starting local agent process on port ${port}...\n`);
     const pathToCheck = path.resolve(path.join(agentPath, 'dist', 'index.js'));
     if (!fs.existsSync(pathToCheck)) {
@@ -414,12 +415,14 @@ export class FixieAgent {
 
     const [argv0, ...args] = cmdline.split(' ');
     const subProcess = execa(argv0, args, { cwd: agentPath, env });
+    subProcess.stdout?.setEncoding('utf8');
+    subProcess.stderr?.setEncoding('utf8');
 
     subProcess.stdout?.on('data', (sdata: string) => {
-      console.log(`🌱 Agent stdout: ${sdata}`);
+      console.log(`🌱 Agent stdout: ${sdata.trimEnd()}`);
     });
     subProcess.stderr?.on('data', (sdata: string) => {
-      console.error(`🌱 Agent stdout: ${sdata}`);
+      console.error(`🌱 Agent stdout: ${sdata.trimEnd()}`);
     });
     subProcess.on('close', (returnCode: number) => {
       term('🌱 ').red(`Agent child process exited with code ${returnCode}\n`);
@@ -497,8 +500,25 @@ export class FixieAgent {
     // Start the agent process locally.
     FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
 
-    // Wait for 5 seconds for it to start up.
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    // Poll the port until it's listening.
+    async function waitForAgentToBeReady() {
+      while (true) {
+        try {
+          await new Promise<void>((resolve, reject) => {
+            const socket = net.connect({
+              host: '127.0.0.1',
+              port,
+            });
+
+            socket.on('connect', resolve);
+            socket.on('error', reject);
+          });
+          break;
+        } catch {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+    }
 
     async function* spawnTunnel(port: number): AsyncGenerator<string> {
       type AsyncGeneratorYield<T> = (value: T) => void;
@@ -621,10 +641,10 @@ export class FixieAgent {
     // The tunnel may yield different URLs over time. We need to create a new
     // agent revision each time.
     for await (const currentUrl of deploymentUrlsIter) {
+      await waitForAgentToBeReady();
+
       term('🚇 Current tunnel URL is: ').green(currentUrl)('\n');
       try {
-        // Wait 3 seconds to ensure the tunnel is set up.
-        await new Promise((resolve) => setTimeout(resolve, 3000));
         if (currentRevision) {
           term('🥡 Deleting temporary agent revision ').green(currentRevision.id)('\n');
           await agent.deleteRevision(currentRevision.id);
