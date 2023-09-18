@@ -285,24 +285,24 @@ job
     showResult(result, program.opts().raw);
   });
 
-const doc = corpus.command('doc').description('Document-related commands');
+const doc = source.command('doc').description('Document-related commands');
 doc.alias('docs');
 
 doc
-  .command('list <corpusId>')
-  .description('List documents for a given corpus.')
-  .action(async (corpusId: string) => {
+  .command('list <corpusId> <sourceId>')
+  .description('List documents for a given corpus source.')
+  .action(async (corpusId: string, sourceId: string) => {
     const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-    const result = await client.listCorpusDocs(corpusId);
+    const result = await client.listCorpusSourceDocs(corpusId, sourceId);
     showResult(result, program.opts().raw);
   });
 
 doc
-  .command('get <corpusId> <docId>')
-  .description('Get a document for a corpus.')
-  .action(async (corpusId: string, docId: string) => {
+  .command('get <corpusId> <sourceId> <docId>')
+  .description('Get a document from a corpus source.')
+  .action(async (corpusId: string, sourceId: string, docId: string) => {
     const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-    const result = await client.getCorpusDoc(corpusId, docId);
+    const result = await client.getCorpusSourceDoc(corpusId, sourceId, docId);
     showResult(result, program.opts().raw);
   });
 
