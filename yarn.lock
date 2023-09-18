@@ -6938,7 +6938,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "ai-jsx-monorepo-root@workspace:."
   dependencies:
-    "@ricky0123/vad-web": ^0.0.12
     "@types/prettier": ^2
     eslint: ^8.42.0
     eslint-import-resolver-node: ^0.3.7
@@ -6990,6 +6989,7 @@ __metadata:
     lodash: ^4.17.21
     ml-distance: ^4.0.1
     node-fetch: ^3.3.1
+    onnxruntime-web: ^1.15.1
     openai: ^4.1.0
     pino: ^8.14.1
     pino-pretty: ^10.0.0
@@ -18802,7 +18802,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"onnxruntime-web@npm:^1.14.0":
+"onnxruntime-web@npm:^1.14.0, onnxruntime-web@npm:^1.15.1":
   version: 1.15.1
   resolution: "onnxruntime-web@npm:1.15.1"
   dependencies:

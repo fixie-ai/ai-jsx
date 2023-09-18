@@ -1,5 +1,5 @@
 'use client';
-import { MicVAD } from '@ricky0123/vad-web';
+import { SileroVoiceActivityDetector, VoiceActivityDetectorBase } from "./vad.js";
 
 const AUDIO_WORKLET_SRC = `
 class InputProcessor extends AudioWorkletProcessor {
@@ -53,8 +53,7 @@ export class MicManager extends EventTarget {
   private streamElement?: HTMLAudioElement;
   private stream?: MediaStream;
   private processorNode?: AudioWorkletNode;
-  //private numSilentFrames = 0;
-  private vad?: MicVAD;
+  private vad?: VoiceActivityDetectorBase;
 
   /**
    * Starts capture from the microphone.
@@ -101,7 +100,8 @@ export class MicManager extends EventTarget {
 
   private async startGraph(stream: MediaStream, timeslice: number, onEnded?: () => void) {
     this.outBuffer = [];
-    this.context = new window.AudioContext();
+    this.context = new window.AudioContext({sampleRate: 16000});
+    console.log(`MicManager sample rate: ${this.context.sampleRate}`);
     this.stream = stream;
     const workletSrcBlob = new Blob([AUDIO_WORKLET_SRC], {
       type: 'application/javascript',
@@ -119,6 +119,7 @@ export class MicManager extends EventTarget {
         this.dispatchEvent(chunkEvent);
         this.outBuffer = [];
       }
+      this.vad?.processFrame(event.data);
     };
     const source = this.context.createMediaStreamSource(stream);
     source.connect(this.processorNode);
@@ -128,16 +129,16 @@ export class MicManager extends EventTarget {
       onEnded?.();
     };
 
-    this.vad = await MicVAD.new({
-      onSpeechStart: () => {
-        console.log("Speech start detected")
-      },
-      onSpeechEnd: (audio) => {
-        console.log("Speech end detected")
-        // do something with `audio` (Float32Array of audio samples at sample rate 16000)...
-      }
-    });
-    //this.numSilentFrames = 0;
+    this.vad = await SileroVoiceActivityDetector.create(512);
+    this.vad.onSpeechStart = () => {
+      console.log('Speech start detected');
+    };
+    this.vad.onSpeechEnd = () => {
+      console.log('Speech end detected');
+    };
+    this.vad.onSpeechCancel = () => {
+      console.log('Speech cancel detected');
+    };
   }
   /**
    * Converts a list of Float32Arrays to a single ArrayBuffer of 16-bit
@@ -151,38 +152,15 @@ export class MicManager extends EventTarget {
     const outBuffer = new ArrayBuffer(byteLength);
     const view = new DataView(outBuffer);
     let index = 0;
-    //let energy = 0.0;
     inBuffers.forEach((inBuffer) => {
       inBuffer.forEach((sample) => {
-        //energy += sample * sample;
         const i16 = Math.max(-32768, Math.min(32767, Math.floor(sample * 32768)));
         view.setInt16(index, i16, true);
         index += 2;
       });
-      //this.updateVad(energy / (index / 2));
     });
     return outBuffer;
   }
-  /**
-   * Updates the Voice Activity Detection (VAD) state based on the
-   * average energy of a single audio buffer. This is a very primitive
-   * VAD that simply checks if the average energy is above a threshold
-   * for a certain amount of time (12800 samples @ 48KHz = 266ms)
-   */
-  /*private updateVad(energy: number) {
-    const dbfs = 10 * Math.log10(energy);
-    if (dbfs < -50) {
-      this.numSilentFrames++;
-      if (this.numSilentFrames == 100) {
-        this.dispatchEvent(new CustomEvent('vad', { detail: false }));
-      }
-    } else {
-      if (this.numSilentFrames >= 100) {
-        this.dispatchEvent(new CustomEvent('vad', { detail: true }));
-      }
-      this.numSilentFrames = 0;
-    }
-  }*/
 }
 
 /**
