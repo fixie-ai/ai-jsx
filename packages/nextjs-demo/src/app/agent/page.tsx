@@ -82,7 +82,12 @@ class ChatRequest {
   private startMillis?: number;
   public requestLatency?: number;
   public streamLatency?: number;
-  constructor(private readonly inMessages: ChatMessage[], private readonly model: string, public active: boolean) {}
+  constructor(
+    private readonly inMessages: ChatMessage[],
+    private readonly model: string,
+    private readonly docs: boolean,
+    public active: boolean
+  ) {}
   async start() {
     console.log(`calling LLM for ${this.inMessages[this.inMessages.length - 1].content}`);
     this.startMillis = performance.now();
@@ -91,7 +96,7 @@ class ChatRequest {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ messages: this.inMessages, model: this.model }),
+      body: JSON.stringify({ messages: this.inMessages, model: this.model, docs: this.docs }),
     });
     this.requestLatency = performance.now() - this.startMillis;
     console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
@@ -116,7 +121,8 @@ class ChatManagerInit {
   constructor(
     public readonly asrProvider: string,
     public readonly ttsProvider: string,
-    public readonly model: string
+    public readonly model: string,
+    public readonly docs: boolean
   ) {}
 }
 
@@ -130,16 +136,18 @@ class ChatManager {
   private readonly asr: SpeechRecognitionBase;
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
+  private readonly docs: boolean;
   onInputChange?: (text: string, final: boolean, latency: number) => void;
   onOutputChange?: (text: string, final: boolean, latency: number) => void;
   onAudioStart?: (latency: number) => void;
   onAudioEnd?: () => void;
   onError?: () => void;
-  constructor({ asrProvider, ttsProvider, model }: ChatManagerInit) {
+  constructor({ asrProvider, ttsProvider, model, docs }: ChatManagerInit) {
     this.micManager = new MicManager();
     this.asr = createSpeechRecognition({ provider: asrProvider, manager: this.micManager, getToken: getAsrToken });
     this.tts = createTextToSpeech({ provider: ttsProvider, getToken: getTtsToken, buildUrl: buildTtsUrl, rate: 1.2 });
     this.model = model;
+    this.docs = docs;
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const obj = event.detail!;
       this.handleInputUpdate(obj.text, obj.final);
@@ -161,7 +169,7 @@ class ChatManager {
       this.onError?.();
     });
     this.asr.start();
-    if (initialMessage) {
+    if (initialMessage !== undefined) {
       this.handleInputUpdate(initialMessage, true);
     }
   }
@@ -193,7 +201,7 @@ class ChatManager {
     const hit = text in this.pendingRequests;
     console.log(`${final ? 'final' : 'partial'}: ${text} ${hit ? 'HIT' : 'MISS'}`);
     if (!hit) {
-      const request = new ChatRequest(newMessages, this.model, final);
+      const request = new ChatRequest(newMessages, this.model, this.docs, final);
       request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
       request.onComplete = (request) => this.handleRequestDone(request);
       this.pendingRequests[text] = request;
@@ -277,6 +285,7 @@ const PageComponent: React.FC = () => {
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
   const model = searchParams.get('llm') || 'gpt-4';
+  const docs = Boolean(searchParams.get('docs'));
   const [chatManager, setChatManager] = useState<ChatManager | null>(null);
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
@@ -286,14 +295,14 @@ const PageComponent: React.FC = () => {
 
   const active = () => Boolean(chatManager);
   const handleStart = () => {
-    const manager = new ChatManager({ asrProvider, ttsProvider, model });
+    const manager = new ChatManager({ asrProvider, ttsProvider, model, docs });
     setInput('');
     setOutput('');
     setAsrLatency(0);
     setLlmLatency(0);
     setTtsLatency(0);
     setChatManager(manager);
-    manager.start('Hi!');
+    manager.start('');
     manager.onInputChange = (text, final, latency) => {
       setInput(text);
       setAsrLatency(latency);

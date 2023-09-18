@@ -1,5 +1,6 @@
 /** @jsxImportSource ai-jsx */
 import { AssistantMessage, ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
+import { FixieCorpus } from 'ai-jsx/batteries/docs';
 import { OpenAI, ValidChatModel as OpenAIValidChatModel } from 'ai-jsx/lib/openai';
 import { Anthropic, ValidChatModel as AnthropicValidChatModel } from 'ai-jsx/lib/anthropic';
 import { StreamingTextResponse } from 'ai';
@@ -56,15 +57,38 @@ CARAMEL MOCHA SPECIALTY LATTE $3.49
 MOCHA SPECIALTY LATTE $3.49
 `;
 
+/**
+ * The id of the Krispy Kreme corpus, from https://www.krispykreme.com
+ */
+const KK_CORPUS_ID = 'bd69dce6-7b56-4d0b-8b2f-226500780ebd';
+const MAX_CHUNKS = 4;
+
 class ClientMessage {
   constructor(public role: string, public content: string) {}
 }
 
-function ChatAgent({ conversation, model }: { conversation: ClientMessage[]; model: string }) {
+async function ChatAgent({
+  conversation,
+  model,
+  docs,
+}: {
+  conversation: ClientMessage[];
+  model: string;
+  docs?: number;
+}) {
+  let prompt = KK_PROMPT;
+  const query = conversation[conversation.length - 1].content;
+  if (docs && query) {
+    const corpus = new FixieCorpus(KK_CORPUS_ID);
+    const chunks = await corpus.search(query, { limit: MAX_CHUNKS });
+    const chunkText = chunks.map((chunk) => chunk.chunk.content).join('\n');
+    console.log(`Chunks:\n${chunkText}`);
+    prompt += `\nHere is some relevant information that you can use to compose your response:\n\n${chunkText}\n`;
+  }
   const children = (
     <ChatCompletion>
-      <SystemMessage>{KK_PROMPT}</SystemMessage>
-      {conversation.map((message) =>
+      <SystemMessage>{prompt}</SystemMessage>
+      {conversation.map((message: ClientMessage) =>
         message.role == 'assistant' ? (
           <AssistantMessage>{message.content}</AssistantMessage>
         ) : (
@@ -84,7 +108,9 @@ function ChatAgent({ conversation, model }: { conversation: ClientMessage[]; mod
 
 export async function POST(request: NextRequest) {
   const json = await request.json();
-  console.log(`New request (model=${json.model})`);
+  console.log(`New request (model=${json.model} docs=${json.docs})`);
   json.messages.forEach((message: ClientMessage) => console.log(`role=${message.role} content=${message.content}`));
-  return new StreamingTextResponse(toTextStream(<ChatAgent conversation={json.messages} model={json.model} />));
+  return new StreamingTextResponse(
+    toTextStream(<ChatAgent conversation={json.messages} model={json.model} docs={json.docs} />)
+  );
 }
