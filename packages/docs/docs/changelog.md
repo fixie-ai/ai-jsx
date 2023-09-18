@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.17.3
+## 0.17.4
+
+- Fixed a bug where passing an empty `functionDefinitions` prop to `<OpenAIChatModel>` would cause an error.
+
+## [0.17.3](https://github.com/fixie-ai/ai-jsx/commit/cd206fc81dc4a22eb66f7d95e40cc826b6fd57f3)
 
 - Added the ability to set Anthropic/OpenAI clients without setting the default model
 
