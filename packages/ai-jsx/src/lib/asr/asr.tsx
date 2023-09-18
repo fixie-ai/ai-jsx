@@ -57,7 +57,15 @@ export class MicManager extends EventTarget {
    * Starts capture from the microphone.
    */
   async startMic(timeslice: number, onEnded: () => void) {
-    this.startGraph(await navigator.mediaDevices.getUserMedia({ audio: true }), timeslice, onEnded);
+    this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    this.startGraph(timeslice, onEnded);
+  }
+  /**
+   * Starts capture from a supplied MediaStream.
+   */
+  startStream(stream: MediaStream, timeslice: number, onEnded: () => void) {
+    this.stream = stream;
+    this.startGraph(timeslice, onEnded);
   }
   /**
    * Starts capture from an audio file at a specified URL, useful for testing.
@@ -68,13 +76,7 @@ export class MicManager extends EventTarget {
     this.streamElement = new Audio();
     this.streamElement.src = URL.createObjectURL(blob);
     await this.streamElement.play();
-    // TODO(juberti): replace use of this API (not present in Safari) with Web Audio.
-    const stream = await (this.streamElement as any).captureStream();
-    this.streamElement.onpause = () => {
-      console.log('MicManager audio element paused');
-      stream.getAudioTracks()[0].onended();
-    };
-    await this.startGraph(stream, timeslice, onEnded);
+    await this.startGraph(timeslice, onEnded);
   }
   /**
    * Stops capture.
@@ -96,10 +98,9 @@ export class MicManager extends EventTarget {
     return this.context?.sampleRate;
   }
 
-  private async startGraph(stream: MediaStream, timeslice: number, onEnded?: () => void) {
+  private async startGraph(timeslice: number, onEnded?: () => void) {
     this.outBuffer = [];
     this.context = new window.AudioContext();
-    this.stream = stream;
     const workletSrcBlob = new Blob([AUDIO_WORKLET_SRC], {
       type: 'application/javascript',
     });
@@ -117,13 +118,26 @@ export class MicManager extends EventTarget {
         this.outBuffer = [];
       }
     };
-    const source = this.context.createMediaStreamSource(stream);
+    let source;
+    if (this.stream) {
+      source = this.context.createMediaStreamSource(this.stream);
+      this.stream.getAudioTracks()[0].onended = () => {
+        console.log('MicManager stream ended');
+        this.stop();
+        onEnded?.();
+      };
+    } else if (this.streamElement) {
+      source = this.context.createMediaElementSource(this.streamElement);
+      this.streamElement.onpause = () => {
+        console.log('MicManager element paused');
+        this.stop();
+        onEnded?.();
+      };
+    } else {
+      throw new Error('No stream or streamElement');
+    }
     source.connect(this.processorNode);
-    this.stream.getAudioTracks()[0].onended = () => {
-      console.log('MicManager stream ended');
-      this.stop();
-      onEnded?.();
-    };
+    this.processorNode.connect(this.context.destination);
     this.numSilentFrames = 0;
   }
   /**
