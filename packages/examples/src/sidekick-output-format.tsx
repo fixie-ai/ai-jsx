@@ -19,7 +19,9 @@ function MySidekick({ contentType }: { contentType: SidekickProps['outputFormat'
   return <Sidekick role="Flight assistant" outputFormat={contentType} systemMessage={mySystemMessage} />;
 }
 
-const conversation = [<UserMessage>Tell me about my flight. Also, give me a list of cities near my destination.</UserMessage>];
+const conversation = [
+  <UserMessage>Tell me about my flight. Also, give me a list of cities near my destination.</UserMessage>,
+];
 
 console.log(
   await AI.createRenderContext().render(

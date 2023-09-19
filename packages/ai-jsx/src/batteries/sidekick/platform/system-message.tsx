@@ -53,9 +53,7 @@ export function SidekickSystemMessage({
         If the user asks something that is impossible, tell them **up-front** it is impossible. You can still write
         relevant helpful comments, but do not lead the user to think something can be done when it cannot be.
       </SystemMessage>
-      {outputFormat === 'text/markdown' && <SystemMessage>
-        Respond with Markdown.  
-      </SystemMessage>}
+      {outputFormat === 'text/markdown' && <SystemMessage>Respond with Markdown.</SystemMessage>}
       {outputFormat === 'text/gen-ui' && (
         <MdxSystemMessage
           componentNames={['Card', 'Citation', 'NextStepsButton', ...(userProvidedGenUIComponentNames ?? [])]}

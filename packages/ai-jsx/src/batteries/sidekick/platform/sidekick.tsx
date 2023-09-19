@@ -52,12 +52,21 @@ interface UniversalSidekickProps {
 
 type OutputFormatSidekickProps = MergeExclusive<
   {
-    outputFormat: 'text/gen-ui' | undefined;
+    /**
+     * Pass `text/gen-ui`, or omit this field, to get a Gen UI response.
+     * To render this, you'll need an MDX compiler that's aware of the Gen UI components.
+     */
+    outputFormat?: 'text/gen-ui' | undefined;
 
     genUIExamples?: AI.Node;
     genUIComponentNames?: string[];
   },
   {
+    /**
+     * Pass `text/markdown` to get a Markdown response. To render this, you'll need a Markdown compiler.
+     *
+     * Pass `text/plain` to get a plain text response.
+     */
     outputFormat: 'text/markdown' | 'text/plain';
   }
 >;
