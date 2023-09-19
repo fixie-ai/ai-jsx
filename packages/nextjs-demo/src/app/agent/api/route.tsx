@@ -57,14 +57,36 @@ CARAMEL MOCHA SPECIALTY LATTE $3.49
 MOCHA SPECIALTY LATTE $3.49
 `;
 
+const KK_INITIAL_RESPONSE = 'Welcome to Krispy Kreme! What can I get started for you today?';
+
 /**
  * The id of the Krispy Kreme corpus, from https://www.krispykreme.com
  */
 const KK_CORPUS_ID = 'bd69dce6-7b56-4d0b-8b2f-226500780ebd';
 const MAX_CHUNKS = 4;
 
+/**
+ * The user and assistant messages exchanged by client and server.
+ */
 class ClientMessage {
   constructor(public role: string, public content: string) {}
+}
+
+/**
+ * Makes a text stream that simulates LLM output from a specified string.
+ */
+function pseudoTextStream(text: string, interWordDelay = 20) {
+  return new ReadableStream({
+    async pull(controller) {
+      const words = text.split(' ');
+      for (let index = 0; index < words.length; index++) {
+        const word = words[index];
+        controller.enqueue(index > 0 ? ` ${word}` : word);
+        await new Promise((resolve) => setTimeout(resolve, interWordDelay));
+      }
+      controller.close();
+    },
+  }).pipeThrough(new TextEncoderStream());
 }
 
 async function ChatAgent({
@@ -110,7 +132,12 @@ export async function POST(request: NextRequest) {
   const json = await request.json();
   console.log(`New request (model=${json.model} docs=${json.docs})`);
   json.messages.forEach((message: ClientMessage) => console.log(`role=${message.role} content=${message.content}`));
-  return new StreamingTextResponse(
-    toTextStream(<ChatAgent conversation={json.messages} model={json.model} docs={json.docs} />)
-  );
+
+  let stream;
+  if (json.messages.length == 1 && !json.messages[0].content) {
+    stream = pseudoTextStream(KK_INITIAL_RESPONSE);
+  } else {
+    stream = toTextStream(<ChatAgent conversation={json.messages} model={json.model} docs={json.docs} />);
+  }
+  return new StreamingTextResponse(stream);
 }
