@@ -146,7 +146,13 @@ class ChatManager {
   constructor({ asrProvider, ttsProvider, ttsVoice, model, docs }: ChatManagerInit) {
     this.micManager = new MicManager();
     this.asr = createSpeechRecognition({ provider: asrProvider, manager: this.micManager, getToken: getAsrToken });
-    this.tts = createTextToSpeech({ provider: ttsProvider, getToken: getTtsToken, buildUrl: buildTtsUrl, voice: ttsVoice, rate: 1.2 });
+    this.tts = createTextToSpeech({
+      provider: ttsProvider,
+      getToken: getTtsToken,
+      buildUrl: buildTtsUrl,
+      voice: ttsVoice,
+      rate: 1.2,
+    });
     this.model = model;
     this.docs = docs;
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
