@@ -25,7 +25,7 @@ type TtsProps = {
   provider: string;
   link: string;
   costPerMChar: number;
-  voice: string;
+  defaultVoice: string;
   text: string;
 };
 
@@ -48,8 +48,8 @@ const getToken = async (provider: string) => {
   return json.token;
 };
 
-const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, voice, text }) => {
-  const [voiceName, setVoiceName] = useState(voice);
+const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaultVoice, text }) => {
+  const [voiceName, setVoiceName] = useState(defaultVoice);
   const [playing, setPlaying] = useState(false);
   const [latency, setLatency] = useState(0);
   const [tts, setTts] = useState<TextToSpeechBase | null>();
@@ -87,7 +87,13 @@ const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, voice,
       </div>
       <div className="text-sm ml-2 mb-2">
         <span className="font-bold">Voice: </span>
-        <input type="text" list="voiceName" className="text-sm h-5 bg-fixie-dust p-1 w-48" value={voiceName} onChange={(e) => setVoiceName(e.currentTarget.value)}/>
+        <input
+          type="text"
+          list="voiceName"
+          className="text-sm h-5 bg-fixie-dust p-1 w-48"
+          value={voiceName}
+          onChange={(e) => setVoiceName(e.currentTarget.value)}
+        />
       </div>
       <Button onClick={toggle}>{caption}</Button>
       <span className="m-2">{latencyText}</span>
@@ -114,23 +120,44 @@ const PageComponent: React.FC = () => {
       ></textarea>
       <p className="ml-2 mb-2 text-sm">{countWords(text)} words</p>
       <div className="grid grid-cols-1 md:grid-cols-2 w-full">
-        <Tts display="ElevenLabs" provider="eleven" link="https://elevenlabs.io" costPerMChar={180} voice='21m00Tcm4TlvDq8ikWAM' text={text}></Tts>
-        <Tts display="WellSaid Labs" provider="wellsaid" link="https://wellsaidlabs.com" costPerMChar={999} voice="43" text={text}></Tts>
+        <Tts
+          display="ElevenLabs"
+          provider="eleven"
+          link="https://elevenlabs.io"
+          costPerMChar={180}
+          defaultVoice="21m00Tcm4TlvDq8ikWAM"
+          text={text}
+        ></Tts>
+        <Tts
+          display="WellSaid Labs"
+          provider="wellsaid"
+          link="https://wellsaidlabs.com"
+          costPerMChar={999}
+          defaultVoice="43"
+          text={text}
+        ></Tts>
         <Tts
           display="Azure"
           provider="azure"
           link="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services"
           costPerMChar={16}
-          voice="en-US-JennyNeural"
+          defaultVoice="en-US-JennyNeural"
           text={text}
         ></Tts>
-        <Tts display="AWS Polly" provider="aws" link="https://aws.amazon.com/polly" costPerMChar={16} voice="Joanna" text={text}></Tts>
+        <Tts
+          display="AWS Polly"
+          provider="aws"
+          link="https://aws.amazon.com/polly"
+          costPerMChar={16}
+          defaultVoice="Joanna"
+          text={text}
+        ></Tts>
         <Tts
           display="Google"
           provider="gcp"
           link="https://cloud.google.com/text-to-speech"
           costPerMChar={16}
-          voice="en-US-Wavenet-D"
+          defaultVoice="en-US-Wavenet-D"
           text={text}
         ></Tts>
       </div>
