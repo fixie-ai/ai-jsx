@@ -5,6 +5,7 @@ import { OpenAI } from '../../../lib/openai.js';
 import { UseToolsProps } from '../../use-tools.js';
 import * as AI from '../../../index.js';
 import { ConversationHistory, ShowConversation } from '../../../core/conversation.js';
+import { MergeExclusive } from 'type-fest';
 
 export type OpenAIChatModel = Exclude<Parameters<typeof OpenAI>[0]['chatModel'], undefined>;
 export type ModelProvider = 'openai';
@@ -38,18 +39,30 @@ export function ModelProvider({
   }
 }
 
-export interface SidekickProps {
+interface UniversalSidekickProps {
   tools?: UseToolsProps['tools'];
   systemMessage?: AI.Node;
   finalSystemMessageBeforeResponse?: AI.Node;
-  genUIExamples?: AI.Node;
-  genUIComponentNames?: string[];
 
   /**
-   * The role the model should take, like "a customer service agent for Help Scout".
+   * The role the model should take, like "a customer service agent for my_company_name".
    */
   role: string;
 }
+
+type OutputFormatSidekickProps = MergeExclusive<
+  {
+    outputFormat: 'text/gen-ui' | undefined;
+
+    genUIExamples?: AI.Node;
+    genUIComponentNames?: string[];
+  },
+  {
+    outputFormat: 'text/markdown' | 'text/plain';
+  }
+>;
+
+export type SidekickProps = UniversalSidekickProps & OutputFormatSidekickProps;
 
 export function Sidekick(props: SidekickProps) {
   return (
