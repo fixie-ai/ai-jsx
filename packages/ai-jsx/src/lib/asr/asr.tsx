@@ -137,7 +137,6 @@ export class MicManager extends EventTarget {
       throw new Error('No stream or streamElement');
     }
     source.connect(this.processorNode);
-    this.processorNode.connect(this.context.destination);
     this.numSilentFrames = 0;
   }
   /**
