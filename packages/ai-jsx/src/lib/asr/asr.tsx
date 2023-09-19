@@ -1,5 +1,5 @@
 'use client';
-import { SileroVoiceActivityDetector, VoiceActivityDetectorBase } from "./vad.js";
+import { NodeVoiceActivityDetector, VoiceActivityDetectorBase } from "./vad.js";
 
 const AUDIO_WORKLET_SRC = `
 class InputProcessor extends AudioWorkletProcessor {
@@ -143,7 +143,7 @@ export class MicManager extends EventTarget {
     source.connect(this.processorNode);
     this.processorNode.connect(this.context.destination);
 
-    this.vad = await SileroVoiceActivityDetector.create(512);
+    this.vad = new NodeVoiceActivityDetector(this.sampleRate()!);
     this.vad.onSpeechStart = () => {
       console.log('Speech start detected');
     };
@@ -154,6 +154,7 @@ export class MicManager extends EventTarget {
       console.log('Speech cancel detected');
     };
   }
+  
   /**
    * Converts a list of Float32Arrays to a single ArrayBuffer of 16-bit
    * little-endian Pulse Code Modulation (PCM) audio data, which is
