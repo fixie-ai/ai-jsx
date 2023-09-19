@@ -5,9 +5,12 @@ import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
 import '../globals.css';
 
+// vad
 // latency map and report based on findings
 // tts bargein?
-// vad
+// fix failure to play/separate sources
+// echo sitch?
+
 // shorter initial messages
 // caching or other initial startup opt?
 // explore Piper via WASM/python
