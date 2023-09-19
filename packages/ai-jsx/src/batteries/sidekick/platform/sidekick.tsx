@@ -77,6 +77,7 @@ export function Sidekick(props: SidekickProps) {
             timeZone="America/Los_Angeles"
             timeZoneOffset="420"
             role={props.role}
+            outputFormat={props.outputFormat ?? 'text/gen-ui'}
             userProvidedGenUIUsageExamples={props.genUIExamples}
             userProvidedGenUIComponentNames={props.genUIComponentNames}
           />
