@@ -246,7 +246,6 @@ function TestCase({minimal}: {minimal: boolean}) {
   );
 }
 
-const trialsToRun = 10;
 
 async function doTrial(minimal: boolean) {
   const trial = {
@@ -290,7 +289,8 @@ async function doTrial(minimal: boolean) {
   }));
 }
 
+const trialsToRun = 100;
 for (let i = 0; i < trialsToRun; i++) {
-  doTrial(true);  
-  doTrial(false);  
+  await doTrial(true);  
+  await doTrial(false);  
 }
