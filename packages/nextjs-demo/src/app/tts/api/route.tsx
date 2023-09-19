@@ -5,7 +5,7 @@ import aws4 from 'aws4';
 const AUDIO_MPEG_MIME_TYPE = 'audio/mpeg';
 type ProviderMap = {
   [key: string]: (voiceId: string, rate: number, text: string) => Promise<Response>;
-}
+};
 const PROVIDER_MAP: ProviderMap = {
   eleven: ttsEleven,
   azure: ttsAzure,
@@ -196,7 +196,7 @@ function ttsWellSaid(voice: string, rate: number, text: string) {
   headers.append('X-Api-Key', getEnvVar('WELLSAID_API_KEY'));
   const body = JSON.stringify({
     speaker_id: voice,
-    text
+    text,
   });
   const url = 'https://api.wellsaidlabs.com/v1/tts/stream';
   return fetch(url, {
