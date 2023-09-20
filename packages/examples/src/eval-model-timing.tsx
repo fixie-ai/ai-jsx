@@ -289,7 +289,7 @@ async function doTrial(minimal: boolean) {
   }));
 }
 
-const trialsToRun = 100;
+const trialsToRun = 1000;
 for (let i = 0; i < trialsToRun; i++) {
   await doTrial(true);  
   await doTrial(false);  
