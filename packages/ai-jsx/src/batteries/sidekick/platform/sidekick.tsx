@@ -56,7 +56,7 @@ type OutputFormatSidekickProps = MergeExclusive<
      * Pass `text/gen-ui`, or omit this field, to get a Gen UI response.
      * To render this, you'll need an MDX compiler that's aware of the Gen UI components.
      */
-    outputFormat?: 'text/gen-ui' | undefined;
+    outputFormat?: 'text/mdx' | undefined;
 
     genUIExamples?: AI.Node;
     genUIComponentNames?: string[];
@@ -86,7 +86,7 @@ export function Sidekick(props: SidekickProps) {
             timeZone="America/Los_Angeles"
             timeZoneOffset="420"
             role={props.role}
-            outputFormat={props.outputFormat ?? 'text/gen-ui'}
+            outputFormat={props.outputFormat ?? 'text/mdx'}
             userProvidedGenUIUsageExamples={props.genUIExamples}
             userProvidedGenUIComponentNames={props.genUIComponentNames}
           />

@@ -54,7 +54,7 @@ export function SidekickSystemMessage({
         relevant helpful comments, but do not lead the user to think something can be done when it cannot be.
       </SystemMessage>
       {outputFormat === 'text/markdown' && <SystemMessage>Respond with Markdown.</SystemMessage>}
-      {outputFormat === 'text/gen-ui' && (
+      {outputFormat === 'text/mdx' && (
         <MdxSystemMessage
           componentNames={['Card', 'Citation', 'NextStepsButton', ...(userProvidedGenUIComponentNames ?? [])]}
           usageExamples={
