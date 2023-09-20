@@ -252,15 +252,37 @@ source
   });
 
 source
+  .command('delete <corpusId> <sourceId>')
+  .description('Delete a source from a corpus. The source must have no running jobs or remaining documents.')
+  .action(async (corpusId: string, sourceId: string) => {
+    const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+    const result = await client.deleteCorpusSource(corpusId, sourceId);
+    showResult(result, program.opts().raw);
+  });
+
+source
   .command('refresh <corpusId> <sourceId>')
   .description('Refresh a corpus source.')
   .option(
     '--force',
-    "If a job is already running to refresh this source, kill it and start a new one. If a job is already running and you don't pass --force, the command will fail."
+    "If a job is already running on this source, kill it and start a new one. If a job is already running and you don't pass --force, the command will fail."
   )
   .action(async (corpusId: string, sourceId: string, { force }) => {
     const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
     const result = await client.refreshCorpusSource(corpusId, sourceId, force);
+    showResult(result, program.opts().raw);
+  });
+
+source
+  .command('clear <corpusId> <sourceId>')
+  .description('Clear a corpus source.')
+  .option(
+    '--force',
+    "If a job is already running on this source, kill it and start a new one. If a job is already running and you don't pass --force, the command will fail."
+  )
+  .action(async (corpusId: string, sourceId: string, { force }) => {
+    const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+    const result = await client.clearCorpusSource(corpusId, sourceId, force);
     showResult(result, program.opts().raw);
   });
 
