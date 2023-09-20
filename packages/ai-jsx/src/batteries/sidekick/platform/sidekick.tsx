@@ -60,6 +60,19 @@ type OutputFormatSidekickProps = MergeExclusive<
 
     genUIExamples?: AI.Node;
     genUIComponentNames?: string[];
+
+    /**
+     * If true, the Sidekick will emit next steps recommendations, such as:
+     *
+     *    ...and that's some detail about your most recent order.
+     *
+     *    <NextStepsButton prompt='What other orders are there?' />
+     *    <NextStepsButton prompt='How do I cancel the order?' />
+     *    <NextStepsButton prompt='How do I resubmit the order?' />
+     *
+     * Defaults to true.
+     */
+    includeNextStepsRecommendations?: boolean;
   },
   {
     /**
@@ -86,6 +99,7 @@ export function Sidekick(props: SidekickProps) {
             timeZone="America/Los_Angeles"
             timeZoneOffset="420"
             role={props.role}
+            includeNextStepsRecommendations={props.includeNextStepsRecommendations ?? true}
             outputFormat={props.outputFormat ?? 'text/mdx'}
             userProvidedGenUIUsageExamples={props.genUIExamples}
             userProvidedGenUIComponentNames={props.genUIComponentNames}

@@ -1,11 +1,12 @@
 import { SystemMessage } from '../../../core/conversation.js';
 import { MdxSystemMessage } from '../../../react/jit-ui/mdx.js';
 import { Prompt } from '../../prompts.js';
-import { mdxUsageExamples } from './gen-ui.js';
+import { MdxUsageExamples } from './gen-ui.js';
 import { Node } from '../../../index.js';
 import { SidekickProps } from './sidekick.js';
 
-export interface SidekickSystemMessageProps extends Pick<SidekickProps, 'outputFormat'> {
+export interface SidekickSystemMessageProps
+  extends Pick<SidekickProps, 'outputFormat' | 'includeNextStepsRecommendations'> {
   timeZone: string;
   timeZoneOffset: string;
   userProvidedGenUIUsageExamples?: Node;
@@ -18,6 +19,7 @@ export function SidekickSystemMessage({
   timeZoneOffset,
   userProvidedGenUIUsageExamples,
   userProvidedGenUIComponentNames,
+  includeNextStepsRecommendations,
   outputFormat,
   role,
 }: SidekickSystemMessageProps) {
@@ -41,6 +43,11 @@ export function SidekickSystemMessage({
     </SystemMessage>
   );
 
+  const baseComponentNames = ['Card', 'Citation'];
+  if (includeNextStepsRecommendations) {
+    baseComponentNames.push('NextStepsButton');
+  }
+
   return (
     <>
       {dateTimeSystemMessage}
@@ -56,10 +63,10 @@ export function SidekickSystemMessage({
       {outputFormat === 'text/markdown' && <SystemMessage>Respond with Markdown.</SystemMessage>}
       {outputFormat === 'text/mdx' && (
         <MdxSystemMessage
-          componentNames={['Card', 'Citation', 'NextStepsButton', ...(userProvidedGenUIComponentNames ?? [])]}
+          componentNames={[...baseComponentNames, ...(userProvidedGenUIComponentNames ?? [])]}
           usageExamples={
             <>
-              {mdxUsageExamples}
+              <MdxUsageExamples includeNextStepsRecommendations={includeNextStepsRecommendations} />
               {userProvidedGenUIUsageExamples}
             </>
           }
