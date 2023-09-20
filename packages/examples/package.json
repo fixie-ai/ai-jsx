@@ -46,6 +46,7 @@
     "demo:simple-completion": "yarn build && node dist/src/simple-completion.js",
     "demo:getting-started": "yarn build && cp src/getting-started/data.json dist/src/getting-started/ && node dist/src/getting-started/index.js",
     "demo:mdx-jit": "yarn build && node dist/src/mdx.js",
+    "demo:eval-model-timing": "yarn build && node dist/src/eval-model-timing.js",
     "demo:inspector": "yarn build && node dist/src/inspector.js",
     "demo:router": "yarn build && node dist/src/router.js",
     "demo:replicate-llama2": "yarn build && node dist/src/replicate-llama2.js",
