@@ -23,9 +23,9 @@ function MySidekick({
   contentType: SidekickProps['outputFormat'];
   includeNextStepsRecommendations?: boolean;
 }) {
-  // I don't feel like making the types line up.
-  // @ts-expect-error
   return (
+    // I don't feel like making the types line up.
+    // @ts-expect-error
     <Sidekick
       role="Flight assistant"
       outputFormat={contentType}
