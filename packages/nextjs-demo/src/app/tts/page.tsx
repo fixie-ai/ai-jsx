@@ -49,13 +49,13 @@ const getToken = async (provider: string) => {
 };
 
 const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaultVoice, text }) => {
-  const [voiceName, setVoiceName] = useState(defaultVoice);
+  const [voice, setVoice] = useState(defaultVoice);
   const [playing, setPlaying] = useState(false);
   const [latency, setLatency] = useState(0);
   const [tts, setTts] = useState<TextToSpeechBase | null>();
   useEffect(() => {
-    setTts(createTextToSpeech({ provider, buildUrl, getToken, voice: voiceName, rate: 1.2 }));
-  }, [provider, voiceName]);
+    setTts(createTextToSpeech({ provider, buildUrl, getToken, voice, rate: 1.2 }));
+  }, [provider, voice]);
   const toggle = () => {
     if (!playing) {
       setPlaying(true);
@@ -91,8 +91,8 @@ const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaul
           type="text"
           list="voiceName"
           className="text-sm h-5 bg-fixie-dust p-1 w-48"
-          value={voiceName}
-          onChange={(e) => setVoiceName(e.currentTarget.value)}
+          value={voice}
+          onChange={(e) => setVoice(e.currentTarget.value)}
         />
       </div>
       <Button onClick={toggle}>{caption}</Button>
