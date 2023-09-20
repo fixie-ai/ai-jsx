@@ -317,6 +317,13 @@ export class GcpTextToSpeech extends RestTextToSpeech {
   }
 }
 
+export class WellSaidTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = '42'; // Sofia H. (Conversational)
+  constructor(urlFunc: BuildUrl, voice: string = WellSaidTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('wellsaid', urlFunc, voice, rate);
+  }
+}
+
 /**
  * Text-to-speech implementation that uses a web socket to stream text to the
  * server and receives audio chunks as they are generated.
@@ -509,6 +516,8 @@ export function createTextToSpeech({ provider, rate, voice, getToken, buildUrl }
       return new AwsTextToSpeech(buildUrl!, voice, rate);
     case 'gcp':
       return new GcpTextToSpeech(buildUrl!, voice, rate);
+    case 'wellsaid':
+      return new WellSaidTextToSpeech(buildUrl!, voice, rate);
     case 'eleven':
       return new ElevenLabsTextToSpeech(getToken!, voice);
     default:

@@ -109,6 +109,13 @@ const PageComponent: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 w-full">
         <Tts display="ElevenLabs" provider="eleven" link="https://elevenlabs.io" costPerMChar={180} text={text}></Tts>
         <Tts
+          display="WellSaid Labs"
+          provider="wellsaid"
+          link="https://wellsaidlabs.com"
+          costPerMChar={999}
+          text={text}
+        ></Tts>
+        <Tts
           display="Azure"
           provider="azure"
           link="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services"
