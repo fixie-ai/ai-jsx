@@ -196,7 +196,8 @@ class ChatManager {
    */
   private handleInputUpdate(text: string, final: boolean) {
     // If the input text has been finalized, add it to the message history.
-    const userMessage = new ChatMessage('user', text);
+    const trimmed = text.trim();
+    const userMessage = new ChatMessage('user', trimmed);
     const newMessages = [...this.history, userMessage];
     if (final) {
       this.history = newMessages;
@@ -205,13 +206,13 @@ class ChatManager {
     // If it doesn't match an existing request, kick off a new one.
     // If it matches an existing request and the text is finalized, speculative
     // execution worked! Snap forward to the current state of that request.
-    const hit = text in this.pendingRequests;
-    console.log(`${final ? 'final' : 'partial'}: ${text} ${hit ? 'HIT' : 'MISS'}`);
+    const hit = trimmed in this.pendingRequests;
+    console.log(`${final ? 'final' : 'partial'}: ${trimmed} ${hit ? 'HIT' : 'MISS'}`);
     if (!hit) {
       const request = new ChatRequest(newMessages, this.model, this.docs, final);
       request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
       request.onComplete = (request) => this.handleRequestDone(request);
-      this.pendingRequests[text] = request;
+      this.pendingRequests[trimmed] = request;
       request.start();
     } else if (final) {
       const request = this.pendingRequests[text];
