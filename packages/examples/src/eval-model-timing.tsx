@@ -6,7 +6,7 @@ import { OpenAI } from 'ai-jsx/lib/openai';
 import z from 'zod';
 
 export const tools: Record<string, Tool> = {
-  lookUpHelpScoutKnowledgeBase: {
+  lookUpAcmeCorpKnowledgeBase: {
     description: 'Look up information about Acme Corp from its customer support and developer docs',
     parameters: {
       query: {
@@ -222,11 +222,11 @@ function TestCase({ minimal }: { minimal: boolean }) {
               the user there was an error making the request. Do not tell them you will try again. You can make multiple
               API calls to satisfy a single user request. Note that these functions will return the live results about
               the user's account. If the user is asking how to call an API or for an example, you should use the
-              lookUpHelpScoutKnowledgeBase function. If you have links to API resources, do not present them to the user
+              lookUpAcmeCorpKnowledgeBase function. If you have links to API resources, do not present them to the user
               directly to be clicked on. The user will not be able to access them.
             </SystemMessage>
             <SystemMessage>
-              You have access to the Acme Corp customer support docs, via the lookUpHelpScoutKnowledgeBase function. If
+              You have access to the Acme Corp customer support docs, via the lookUpAcmeCorpKnowledgeBase function. If
               the user asks anything about how Acme Corp works, use this function. If your queries do not return good
               results, you can try more queries. If you still do not get good results, tell the user you do not know the
               answer. If the user asks a question, and based on your doc searching or function calls, you are not
@@ -237,7 +237,7 @@ function TestCase({ minimal }: { minimal: boolean }) {
               you answer a question based on docs, provide the relevant docs as links in your response. If the user asks
               you for something not related to Acme Corp, tell them you cannot help. If the user asks you for live data
               from their Acme Corp account, but you do not have a function that can fetch that data, tell them you
-              cannot help. Instead, call the lookUpHelpScoutKnowledgeBase function so you can tell the user how to
+              cannot help. Instead, call the lookUpAcmeCorpKnowledgeBase function so you can tell the user how to
               accomplish their goal on their own. If the user asks what you can do, tell them precisely based on which
               functions you have available, as well as the knowledge base. Do not give the specific names of the
               functions, but do be specific in what they do. For instance, you might say: `I can list, create, and
