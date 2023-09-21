@@ -137,20 +137,6 @@ const PageComponent: React.FC = () => {
           text={text}
         ></Tts>
         <Tts
-          display="WellSaid Labs"
-          provider="wellsaid"
-          link="https://wellsaidlabs.com"
-          costPerMChar={999}
-          text={text}
-        ></Tts>
-        <Tts
-          display="WellSaid Labs"
-          provider="wellsaid"
-          link="https://wellsaidlabs.com"
-          costPerMChar={999}
-          text={text}
-        ></Tts>
-        <Tts
           display="Azure"
           provider="azure"
           link="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services"
