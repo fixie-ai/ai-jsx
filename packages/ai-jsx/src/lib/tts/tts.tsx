@@ -526,7 +526,7 @@ export function createTextToSpeech({ provider, rate, voice, getToken, buildUrl }
     case 'wellsaid':
       return new WellSaidTextToSpeech(buildUrl!, voice, rate);
     case 'murf':
-      return new RestTextToSpeech('murf', buildUrl!, voice, rate);
+      return new MurfTextToSpeech(buildUrl!, voice, rate);
     case 'eleven':
       return new ElevenLabsTextToSpeech(getToken!, voice);
     default:
