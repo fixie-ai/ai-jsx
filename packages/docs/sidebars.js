@@ -48,7 +48,7 @@ const sidebars = {
       type: 'category',
       label: 'AI.JSX',
       collapsible: true,
-      collapsed: true,
+      collapsed: false,
       items: [
         'getting-started',
         'ai-newcomers',

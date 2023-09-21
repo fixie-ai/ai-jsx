@@ -5,6 +5,7 @@ import { OpenAI } from '../../../lib/openai.js';
 import { UseToolsProps } from '../../use-tools.js';
 import * as AI from '../../../index.js';
 import { ConversationHistory, ShowConversation } from '../../../core/conversation.js';
+import { MergeExclusive } from 'type-fest';
 
 export type OpenAIChatModel = Exclude<Parameters<typeof OpenAI>[0]['chatModel'], undefined>;
 export type ModelProvider = 'openai';
@@ -38,18 +39,52 @@ export function ModelProvider({
   }
 }
 
-export interface SidekickProps {
+interface UniversalSidekickProps {
   tools?: UseToolsProps['tools'];
   systemMessage?: AI.Node;
   finalSystemMessageBeforeResponse?: AI.Node;
-  genUIExamples?: AI.Node;
-  genUIComponentNames?: string[];
 
   /**
-   * The role the model should take, like "a customer service agent for Help Scout".
+   * The role the model should take, like "a customer service agent for my_company_name".
    */
   role: string;
 }
+
+type OutputFormatSidekickProps = MergeExclusive<
+  {
+    /**
+     * Pass `text/gen-ui`, or omit this field, to get a Gen UI response.
+     * To render this, you'll need an MDX compiler that's aware of the Gen UI components.
+     */
+    outputFormat?: 'text/mdx' | undefined;
+
+    genUIExamples?: AI.Node;
+    genUIComponentNames?: string[];
+
+    /**
+     * If true, the Sidekick will emit next steps recommendations, such as:
+     *
+     *    ...and that's some detail about your most recent order.
+     *
+     *    <NextStepsButton prompt='What other orders are there?' />
+     *    <NextStepsButton prompt='How do I cancel the order?' />
+     *    <NextStepsButton prompt='How do I resubmit the order?' />
+     *
+     * Defaults to true.
+     */
+    includeNextStepsRecommendations?: boolean;
+  },
+  {
+    /**
+     * Pass `text/markdown` to get a Markdown response. To render this, you'll need a Markdown compiler.
+     *
+     * Pass `text/plain` to get a plain text response.
+     */
+    outputFormat: 'text/markdown' | 'text/plain';
+  }
+>;
+
+export type SidekickProps = UniversalSidekickProps & OutputFormatSidekickProps;
 
 export function Sidekick(props: SidekickProps) {
   return (
@@ -64,6 +99,8 @@ export function Sidekick(props: SidekickProps) {
             timeZone="America/Los_Angeles"
             timeZoneOffset="420"
             role={props.role}
+            includeNextStepsRecommendations={props.includeNextStepsRecommendations ?? true}
+            outputFormat={props.outputFormat ?? 'text/mdx'}
             userProvidedGenUIUsageExamples={props.genUIExamples}
             userProvidedGenUIComponentNames={props.genUIComponentNames}
           />

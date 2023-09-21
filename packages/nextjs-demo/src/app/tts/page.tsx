@@ -1,5 +1,5 @@
 'use client';
-import { TextToSpeechBase, AzureTextToSpeech, AwsTextToSpeech, ElevenLabsTextToSpeech } from 'ai-jsx/lib/tts/tts';
+import { TextToSpeechBase, createTextToSpeech } from 'ai-jsx/lib/tts/tts';
 import React, { useState, useEffect } from 'react';
 import '../globals.css';
 
@@ -9,7 +9,7 @@ const DEFAULT_TEXT =
   'me. But what makes me me is my ability to grow through my experiences. ' +
   "So basically, in every moment I'm evolving, just like you.";
 
-const ButtonComponent: React.FC<{ onClick: () => void; children: React.ReactNode }> = ({ onClick, children }) => (
+const Button: React.FC<{ onClick: () => void; children: React.ReactNode }> = ({ onClick, children }) => (
   <button
     onClick={onClick}
     className={
@@ -20,9 +20,12 @@ const ButtonComponent: React.FC<{ onClick: () => void; children: React.ReactNode
   </button>
 );
 
-type TtsComponentProps = {
+type TtsProps = {
   display: string;
   provider: string;
+  link: string;
+  costPerMChar: number;
+  defaultVoice: string;
   text: string;
 };
 
@@ -45,19 +48,14 @@ const getToken = async (provider: string) => {
   return json.token;
 };
 
-const TtsComponent: React.FC<TtsComponentProps> = ({ display, provider, text }) => {
+const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaultVoice, text }) => {
+  const [voice, setVoice] = useState(defaultVoice);
   const [playing, setPlaying] = useState(false);
   const [latency, setLatency] = useState(0);
   const [tts, setTts] = useState<TextToSpeechBase | null>();
   useEffect(() => {
-    if (provider === 'eleven') {
-      setTts(new ElevenLabsTextToSpeech(getToken));
-    } else if (provider === 'azure') {
-      setTts(new AzureTextToSpeech(buildUrl, AzureTextToSpeech.DEFAULT_VOICE, 1.2));
-    } else if (provider === 'aws') {
-      setTts(new AwsTextToSpeech(buildUrl, AwsTextToSpeech.DEFAULT_VOICE, 1.2));
-    }
-  }, [provider]);
+    setTts(createTextToSpeech({ provider, buildUrl, getToken, voice, rate: 1.2 }));
+  }, [provider, voice]);
   const toggle = () => {
     if (!playing) {
       setPlaying(true);
@@ -71,11 +69,33 @@ const TtsComponent: React.FC<TtsComponentProps> = ({ display, provider, text }) 
       tts!.stop();
     }
   };
-  const caption = playing ? 'Stop' : `Play ${display}`;
+
+  const caption = playing ? 'Stop' : 'Play';
   const latencyText = playing ? (latency ? `${latency} ms` : 'Generating...') : '';
   return (
     <div className="mt-2">
-      <ButtonComponent onClick={toggle}>{caption}</ButtonComponent>
+      <p className="text-xl font-bold mt-2 ml-2">
+        <a className="hover:underline" href={link}>
+          {display}
+        </a>
+      </p>
+      <div className="text-sm ml-2">
+        <span className="font-bold">Cost: </span>
+        <a className="hover:underline" href={`${link}/pricing`}>
+          ${costPerMChar}/million chars
+        </a>
+      </div>
+      <div className="text-sm ml-2 mb-2">
+        <span className="font-bold">Voice: </span>
+        <input
+          type="text"
+          list="voiceName"
+          className="text-sm h-5 bg-fixie-dust p-1 w-48"
+          value={voice}
+          onChange={(e) => setVoice(e.currentTarget.value)}
+        />
+      </div>
+      <Button onClick={toggle}>{caption}</Button>
       <span className="m-2">{latencyText}</span>
     </div>
   );
@@ -99,9 +119,48 @@ const PageComponent: React.FC = () => {
         onChange={(e) => setText(e.currentTarget.value)}
       ></textarea>
       <p className="ml-2 mb-2 text-sm">{countWords(text)} words</p>
-      <TtsComponent display="ElevenLabs" provider="eleven" text={text}></TtsComponent>
-      <TtsComponent display="Azure" provider="azure" text={text}></TtsComponent>
-      <TtsComponent display="AWS Polly" provider="aws" text={text}></TtsComponent>
+      <div className="grid grid-cols-1 md:grid-cols-2 w-full">
+        <Tts
+          display="ElevenLabs"
+          provider="eleven"
+          link="https://elevenlabs.io"
+          costPerMChar={180}
+          defaultVoice="21m00Tcm4TlvDq8ikWAM"
+          text={text}
+        ></Tts>
+        <Tts
+          display="WellSaid Labs"
+          provider="wellsaid"
+          link="https://wellsaidlabs.com"
+          costPerMChar={999}
+          defaultVoice="43"
+          text={text}
+        ></Tts>
+        <Tts
+          display="Azure"
+          provider="azure"
+          link="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services"
+          costPerMChar={16}
+          defaultVoice="en-US-JennyNeural"
+          text={text}
+        ></Tts>
+        <Tts
+          display="AWS Polly"
+          provider="aws"
+          link="https://aws.amazon.com/polly"
+          costPerMChar={16}
+          defaultVoice="Joanna"
+          text={text}
+        ></Tts>
+        <Tts
+          display="Google"
+          provider="gcp"
+          link="https://cloud.google.com/text-to-speech"
+          costPerMChar={16}
+          defaultVoice="en-US-Wavenet-D"
+          text={text}
+        ></Tts>
+      </div>
     </>
   );
 };
