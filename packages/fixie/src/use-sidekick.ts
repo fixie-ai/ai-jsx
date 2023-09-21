@@ -110,7 +110,7 @@ export interface UseSidekickArgs {
 
   messageGenerationParams?: Partial<Pick<MessageGenerationParams, 'model' | 'modelProvider'>>;
 
-  logPerformanceTraces?: (message: string, metadata: Jsonifiable) => void;
+  logPerformanceTraces?: (message: string, metadata: object) => void;
 
   fixieAPIUrl?: string;
   fixieAPIKey?: string;

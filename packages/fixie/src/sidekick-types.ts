@@ -14,7 +14,7 @@ export type Metadata = Record<string, Jsonifiable | undefined>;
 export interface MessageRequestParams {
   message: string;
   metadata?: Metadata;
-  generationParams: MessageGenerationParams;
+  generationParams: MessageGenerationParams | null;
 }
 
 export interface BaseConversationTurn<Role extends string> {
@@ -61,7 +61,7 @@ export interface AssistantConversationTurn extends UserOrAssistantConversationTu
    */
   inReplyToId: string;
 
-  generationParams: MessageGenerationParams;
+  generationParams: MessageGenerationParams | null;
 }
 
 export interface UserConversationTurn extends UserOrAssistantConversationTurn<'user'> {}
