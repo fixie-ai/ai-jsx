@@ -51,7 +51,7 @@ const getToken = async (provider: string) => {
 const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaultVoice, text }) => {
   const [voice, setVoice] = useState(defaultVoice);
   const [playing, setPlaying] = useState(false);
-  const [latency, setLatency] = useState(0);
+  const [latency, setLatency] = useState<number>();
   const [tts, setTts] = useState<TextToSpeechBase | null>();
   useEffect(() => {
     setTts(createTextToSpeech({ provider, buildUrl, getToken, voice, rate: 1.2 }));
@@ -71,7 +71,7 @@ const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaul
   };
 
   const caption = playing ? 'Stop' : 'Play';
-  const latencyText = playing ? (latency ? `${latency} ms` : 'Generating...') : '';
+  const latencyText = latency ? `${latency} ms` : playing ? 'Generating...' : '';
   return (
     <div className="mt-2">
       <p className="text-xl font-bold mt-2 ml-2">
@@ -85,7 +85,7 @@ const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaul
           ${costPerMChar}/million chars
         </a>
       </div>
-      <div className="text-sm ml-2 mb-2">
+      <div className="text-sm ml-2">
         <span className="font-bold">Voice: </span>
         <input
           type="text"
@@ -95,8 +95,11 @@ const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaul
           onChange={(e) => setVoice(e.currentTarget.value)}
         />
       </div>
+      <div className='text-sm ml-2 mb-2'>
+        <span className="font-bold">Latency: </span>
+        {latencyText}
+      </div>
       <Button onClick={toggle}>{caption}</Button>
-      <span className="m-2">{latencyText}</span>
     </div>
   );
 };
