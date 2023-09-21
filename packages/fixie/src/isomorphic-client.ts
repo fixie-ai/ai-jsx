@@ -51,9 +51,10 @@ export class IsomorphicFixieClient {
   }
 
   /**
-   * Create a new FixieClient without an API key. You probably don't want this. This is only useful if you're running
-   * code in the browser on the same domain as the Fixie service; e.g. app.fixie.ai.
+   * Create a new FixieClient without an API key. This is only useful for accessing public APIs, such as the conversation APIs.
    */
+  // This is also useful for running in the console.fixie.ai webapp, because it's on the same host
+  // as the backend and thus doesn't need the API key, assuming we set the auth cookies to be cross-domain.
   static CreateWithoutApiKey(url: string) {
     return new this(url);
   }

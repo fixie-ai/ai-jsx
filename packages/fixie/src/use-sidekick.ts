@@ -114,7 +114,6 @@ export interface UseSidekickArgs {
 
   fixieAPIUrl?: string;
   fixieAPIKey?: string;
-  fixieClient?: IsomorphicFixieClient;
   onNewConversation?: (conversationId: ConversationId) => void;
 }
 
@@ -135,9 +134,7 @@ export function useSidekick({
   messageGenerationParams,
   logPerformanceTraces,
   agentId,
-  fixieAPIKey,
   fixieAPIUrl,
-  fixieClient: inputFixieClient,
   onNewConversation,
 }: UseSidekickArgs): UseSidekickResult {
   /**
@@ -206,8 +203,9 @@ export function useSidekick({
     turnsQuery
   );
 
+  // We don't need the API key to access the conversation API.
   const fixieClient =
-    inputFixieClient ?? IsomorphicFixieClient.Create(fixieAPIUrl ?? 'https://api.fixie.ai', fixieAPIKey);
+    IsomorphicFixieClient.CreateWithoutApiKey(fixieAPIUrl ?? 'https://api.fixie.ai');
 
   const lastSeenMostRecentAgentTextMessage = useRef('');
   async function createNewConversation() {

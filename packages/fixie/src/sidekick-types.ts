@@ -77,8 +77,6 @@ export interface BaseMessage extends StateFields {
   metadata?: Jsonifiable;
 
   id: string;
-
-  timestamp: number;
 }
 
 export interface FunctionCall extends BaseMessage {
