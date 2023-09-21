@@ -218,6 +218,7 @@ function ttsResemble(voice: string, rate: number, text: string) {
   const obj = {
     project_uuid: getEnvVar('RESEMBLE_PROJECT_ID'),
     voice_uuid: voice,
+    // eslint-disable-next-line id-blacklist
     data: text, // makeSsml(voice, rate, text),
     precision: 'PCM_16',
     sample_rate: 22050,

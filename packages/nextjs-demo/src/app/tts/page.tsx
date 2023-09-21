@@ -140,7 +140,7 @@ const PageComponent: React.FC = () => {
           display="Play.HT"
           provider="playht"
           link="https://play.ht"
-          costPerMChar={999}
+          costPerMChar={41.25}
           defaultVoice="larry"
           text={text}
         />
