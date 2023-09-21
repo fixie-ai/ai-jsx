@@ -62,23 +62,21 @@ export class IsomorphicFixieClient {
   /** Send a request to the Fixie API with the appropriate auth headers. */
   async request(path: string, bodyData?: unknown, method?: string, options: RequestInit = {}) {
     const fetchMethod = method ?? (bodyData ? 'POST' : 'GET');
-    const authHeaderValue = this.apiKey ? `Bearer ${this.apiKey}` : undefined;
-    const headers = bodyData
-      ? {
-          Authorization: authHeaderValue,
-          'Content-Type': 'application/json',
-        }
-      : {
-          Authorization: authHeaderValue,
-        };
+
+    const headers: RequestInit['headers'] = {};
+    if (bodyData) {
+      headers['Content-Type'] = 'application/json';
+    }
+    if (this.apiKey) {
+      headers.Authorization = `Bearer ${this.apiKey}`;
+    }
+
     if (debug) {
       console.log(`[Fixie request] ${this.url}${path}`, bodyData);
     }
     const res = await fetch(`${this.url}${path}`, {
       ...options,
       method: fetchMethod,
-      // The types are too strict here.
-      // @ts-expect-error
       headers,
       // This is needed so serverside NextJS doesn't cache POSTs.
       cache: 'no-store',
