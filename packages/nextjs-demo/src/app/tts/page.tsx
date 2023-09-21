@@ -95,7 +95,7 @@ const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaul
           onChange={(e) => setVoice(e.currentTarget.value)}
         />
       </div>
-      <div className='text-sm ml-2 mb-2'>
+      <div className="text-sm ml-2 mb-2">
         <span className="font-bold">Latency: </span>
         {latencyText}
       </div>

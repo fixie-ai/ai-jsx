@@ -14,6 +14,7 @@ const PROVIDER_MAP: ProviderMap = {
   wellsaid: ttsWellSaid,
   playht: ttsPlayHT,
   resemble: ttsResembleV1,
+  resemble2: ttsResembleV2,
 };
 
 function makeStreamResponse(startMillis: number, response: Response) {
@@ -223,10 +224,9 @@ function ttsResembleV1(voice: string, rate: number, text: string) {
     output_type: 'mp3',
     raw: true,
   };
-  const url = `https://app.resemble.ai/api/v2/projects/${getEnvVar('RESEMBLE_PROJECT_ID')}/clips`
+  const url = `https://app.resemble.ai/api/v2/projects/${getEnvVar('RESEMBLE_PROJECT_ID')}/clips`;
   return doPost(url, headers, obj);
 }
-
 
 /**
  * Streaming REST client for Resemble.AI TTS (https://www.resemble.ai)
