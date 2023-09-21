@@ -1,6 +1,6 @@
-import { getFirebaseApp } from '@/lib/firebase';
 import { getFirestore, collection, doc, query, orderBy, FirestoreError } from 'firebase/firestore';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { initializeApp } from 'firebase/app';
 
 import { useState, SetStateAction, Dispatch, useRef } from 'react';
 import _ from 'lodash';
@@ -105,6 +105,16 @@ export interface UseSidekickArgs {
   conversationFixtures?: ConversationTurn[];
 }
 
+const firebaseConfig = {
+  apiKey: 'AIzaSyDvFy5eMzIiq3UHfDPwYa2ro90p84-j0lg',
+  authDomain: 'fixie-frame.firebaseapp.com',
+  projectId: 'fixie-frame',
+  storageBucket: 'fixie-frame.appspot.com',
+  messagingSenderId: '548385236069',
+  appId: '1:548385236069:web:b99de8c5ebd0a66078928c',
+  measurementId: 'G-EZNCJS94S7',
+};
+
 export function useSidekick({
   conversationId,
   conversationFixtures,
@@ -118,6 +128,9 @@ export function useSidekick({
   const searchParams = useSearchParams();
 
   const [input, setInput] = useState('');
+
+  // I think using `data` as a var name is fine here.
+  /* eslint-disable id-blacklist */
   const performanceTrace = useRef<{ name: string; timeMs: number; data?: Jsonifiable }[]>([]);
   const lastGeneratedTurnId = useRef<ConversationTurn['id'] | undefined>(undefined);
   const lastTurnForWhichHandleNewTokensWasCalled = useRef<ConversationTurn['id'] | undefined>(undefined);
@@ -125,6 +138,7 @@ export function useSidekick({
   function addPerfCheckpoint(name: string, data?: Jsonifiable) {
     performanceTrace.current.push({ name, timeMs: performance.now(), data });
   }
+  /* eslint-enable id-blacklist */
 
   /**
    * We do state management for optimistic UI.
@@ -146,7 +160,7 @@ export function useSidekick({
     userTimeZoneOffset: new Date().getTimezoneOffset(),
   };
 
-  const firebaseApp = getFirebaseApp();
+  const firebaseApp = initializeApp(firebaseConfig);
 
   const conversationsRoot = collection(getFirestore(firebaseApp), 'schemas/v0/conversations');
   const conversation = doc(conversationsRoot, conversationId ?? 'fake-id');
@@ -249,7 +263,7 @@ export function useSidekick({
 
             if (newMessagePart) {
               lastTurnForWhichHandleNewTokensWasCalled.current = turn.id;
-              addPerfCheckpoint(`chat:delta:text`, { newText: newMessagePart });
+              addPerfCheckpoint('chat:delta:text', { newText: newMessagePart });
               onNewTokens?.(newMessagePart);
             }
           }

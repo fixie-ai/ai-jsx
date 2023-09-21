@@ -8,29 +8,6 @@ export type MessageGenerationParams = Partial<{
   userTimeZoneOffset: number;
 }>;
 
-const response = {
-  id: '66272467-b919-4ef3-9d31-6beda6338ccf',
-  turns: [
-    {
-      id: '753d8d3e-afbc-4e1e-9551-4d3fcaad95b0',
-      timestamp: '2023-09-21T17:31:02.466824',
-      role: 'user',
-      messages: [{ kind: 'text', content: 'Tell me about yourself' }],
-      generationParams: null,
-      state: 'done',
-    },
-    {
-      id: '74dce062-2394-4d64-b474-36da7a0dc366',
-      timestamp: '2023-09-21T17:31:02.635497+00:00',
-      role: 'assistant',
-      messages: [],
-      generationParams: null,
-      state: 'in-progress',
-      inReplyToId: '753d8d3e-afbc-4e1e-9551-4d3fcaad95b0',
-    },
-  ],
-};
-
 export type AgentId = string;
 export type ConversationId = string;
 export type Metadata = Record<string, Jsonifiable | undefined>;
