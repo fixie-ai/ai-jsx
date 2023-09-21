@@ -17,3 +17,5 @@ In this tutorial, we're going to...
 ## Debugging a Sidekick
 
 ### Need some tasks here
+
+TODO -> using another LLM...configure the app to use that model (against Replicate or Hugging Face)...use diff model for diff parts of the app...how to build a prompt from diff types of information...showing things in AI.JSX directly and not thru the convenience of Sidekick
