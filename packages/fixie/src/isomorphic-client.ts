@@ -260,7 +260,6 @@ export class IsomorphicFixieClient {
   async startConversation(agentId: AgentId, generationParams: MessageGenerationParams, message?: string) {
     const abortController = new AbortController();
     const signal = abortController.signal;
-    console.log('Initiating startConversation request');
     const conversation = await this.request(
       `/api/v1/agents/${agentId}/conversations`,
       { generationParams, message },
@@ -272,7 +271,6 @@ export class IsomorphicFixieClient {
       throw new Error('Request to start a new conversation was empty');
     }
     if (conversation.status === 404) {
-      console.log(`Agent ${agentId} does not exist, or is private.`);
       throw new AgentDoesNotExistError(`Agent ${agentId} does not exist, or is private.`);
     }
     if (!conversation.ok) {
