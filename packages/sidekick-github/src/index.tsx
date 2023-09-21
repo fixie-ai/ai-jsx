@@ -1,13 +1,13 @@
-import { Tool } from "ai-jsx/batteries/use-tools";
-import { YourSidekickSystemMessage, finalSystemMessageBeforeResponse } from "./system-message.js";
-import { FixieCorpus } from "ai-jsx/batteries/docs";
-import { Sidekick } from "ai-jsx/sidekick";
+import { Tool } from 'ai-jsx/batteries/use-tools';
+import { YourSidekickSystemMessage, finalSystemMessageBeforeResponse } from './system-message.js';
+import { FixieCorpus } from 'ai-jsx/batteries/docs';
+import { Sidekick } from 'ai-jsx/sidekick';
 
 // This Document Collection contains information from the Git and GitHub documentation.
-const FIXIE_DOC_COLLECTION_ID: string = "b72ad16f-19fc-42d0-b053-69ab84f1e121";
+const FIXIE_DOC_COLLECTION_ID: string = 'b72ad16f-19fc-42d0-b053-69ab84f1e121';
 
 if (!FIXIE_DOC_COLLECTION_ID) {
-  throw new Error("Please set a FIXIE_CORPUS_ID in src/index.tsx");
+  throw new Error('Please set a FIXIE_CORPUS_ID in src/index.tsx');
 }
 
 const GH_TOKEN = process.env.GITHUB_TOKEN;
@@ -16,7 +16,7 @@ const systemMessage = <YourSidekickSystemMessage />;
 const tools: Record<string, Tool> = {
   lookUpGitHubKnowledgeBase: FixieCorpus.createTool(
     FIXIE_DOC_COLLECTION_ID,
-    "A tool for looking additional information to help answer the user query."
+    'A tool for looking additional information to help answer the user query.'
   ),
   runGitHubGraphqlQuery: {
     description: 'Run a GraphQL query against the Github API',
