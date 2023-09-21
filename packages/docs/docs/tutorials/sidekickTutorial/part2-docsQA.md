@@ -6,11 +6,10 @@ sidebar_position: 2
 
 In [Part 1](./part1-intro) we got introduced to Sidekicks, set-up our dev machine, and deployed the template Sidekick to Fixie. In Part 2, we are going to:
 
-* Learn about Document Question + Answering (DocsQA).
-* Perform some queries against an existing document collection.
-* Add a document collection to our Sidekick.
-* Learn how to create a new docs collection.
-
+- Learn about Document Question + Answering (DocsQA).
+- Perform some queries against an existing document collection.
+- Add a document collection to our Sidekick.
+- Learn how to create a new docs collection.
 
 ## DocsQA Overview
 
@@ -41,9 +40,8 @@ TODO
 Add the following line to your project's index.tsx file:
 
 ```jsx
-const FIXIE_CORPUS_ID: string = "b72ad16f-19fc-42d0-b053-69ab84f1e121";
+const FIXIE_CORPUS_ID: string = 'b72ad16f-19fc-42d0-b053-69ab84f1e121';
 ```
-
 
 ## Extra Credit: Creating a new Document Collection
 

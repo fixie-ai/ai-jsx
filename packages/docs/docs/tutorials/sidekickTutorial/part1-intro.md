@@ -27,13 +27,12 @@ There are many reasons to build a Sidekick for your website or application:
 
 This tutorial is broken up into multiple parts. They are designed to be followed in sequence.
 
-
 In this tutorial you will:
 
-* Learn about Fixie Sidekicks, understand how they work, and when to use them.
-* Build and deploy a working Sidekick for GitHub.
-* Understand the value of DocsQA (AKA RAG), tools, and generative UI. 
-* Have resources to go deeper and start building custom Sidekicks of your own.
+- Learn about Fixie Sidekicks, understand how they work, and when to use them.
+- Build and deploy a working Sidekick for GitHub.
+- Understand the value of DocsQA (AKA RAG), tools, and generative UI.
+- Have resources to go deeper and start building custom Sidekicks of your own.
 
 :::tip Pre-requisites
 
