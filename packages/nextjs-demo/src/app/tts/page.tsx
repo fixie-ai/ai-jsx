@@ -107,29 +107,30 @@ const PageComponent: React.FC = () => {
       ></textarea>
       <p className="ml-2 mb-2 text-sm">{countWords(text)} words</p>
       <div className="grid grid-cols-1 md:grid-cols-2 w-full">
-        <Tts display="ElevenLabs" provider="eleven" link="https://elevenlabs.io" costPerMChar={180} text={text}></Tts>
+        <Tts display="ElevenLabs" provider="eleven" link="https://elevenlabs.io" costPerMChar={180} text={text} />
         <Tts
           display="WellSaid Labs"
           provider="wellsaid"
           link="https://wellsaidlabs.com"
           costPerMChar={999}
           text={text}
-        ></Tts>
+        />
+        <Tts display="Murf.ai" provider="murf" link="https://murf.ai" costPerMChar={999} text={text} />
         <Tts
           display="Azure"
           provider="azure"
           link="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services"
           costPerMChar={16}
           text={text}
-        ></Tts>
-        <Tts display="AWS Polly" provider="aws" link="https://aws.amazon.com/polly" costPerMChar={16} text={text}></Tts>
+        />
+        <Tts display="AWS Polly" provider="aws" link="https://aws.amazon.com/polly" costPerMChar={16} text={text} />
         <Tts
           display="Google"
           provider="gcp"
           link="https://cloud.google.com/text-to-speech"
           costPerMChar={16}
           text={text}
-        ></Tts>
+        />
       </div>
     </>
   );

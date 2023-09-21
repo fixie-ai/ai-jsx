@@ -324,6 +324,13 @@ export class WellSaidTextToSpeech extends RestTextToSpeech {
   }
 }
 
+export class MurfTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = 'VM016372341539042UZ'; // Natalie
+  constructor(urlFunc: BuildUrl, voice: string = MurfTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('murf', urlFunc, voice, rate);
+  }
+}
+
 /**
  * Text-to-speech implementation that uses a web socket to stream text to the
  * server and receives audio chunks as they are generated.
@@ -518,6 +525,8 @@ export function createTextToSpeech({ provider, rate, voice, getToken, buildUrl }
       return new GcpTextToSpeech(buildUrl!, voice, rate);
     case 'wellsaid':
       return new WellSaidTextToSpeech(buildUrl!, voice, rate);
+    case 'murf':
+      return new RestTextToSpeech('murf', buildUrl!, voice, rate);
     case 'eleven':
       return new ElevenLabsTextToSpeech(getToken!, voice);
     default:
