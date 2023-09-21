@@ -215,7 +215,7 @@ class ChatManager {
       this.pendingRequests[trimmed] = request;
       request.start();
     } else if (final) {
-      const request = this.pendingRequests[text];
+      const request = this.pendingRequests[trimmed];
       request.active = true;
       this.tts.play(request.outMessage);
       if (!request.done) {
@@ -297,6 +297,7 @@ const PageComponent: React.FC = () => {
   const docs = Boolean(searchParams.get('docs'));
   const [chatManager, setChatManager] = useState<ChatManager | null>(null);
   const [input, setInput] = useState('');
+  const [inputFinal, setInputFinal] = useState(false);
   const [output, setOutput] = useState('');
   const [asrLatency, setAsrLatency] = useState(0);
   const [llmLatency, setLlmLatency] = useState(0);
@@ -314,6 +315,7 @@ const PageComponent: React.FC = () => {
     manager.start('');
     manager.onInputChange = (text, final, latency) => {
       setInput(text);
+      setInputFinal(final);
       setAsrLatency(latency);
       setLlmLatency(0);
       setTtsLatency(0);
@@ -409,10 +411,9 @@ const PageComponent: React.FC = () => {
         </div>
         <div>
           <div
-            className={`m-2 w-full text-xl h-12 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center ${
-              active() ? 'border-red-400' : ''
-            }`}
-            id="input"
+            className={`m-2 w-full text-xl h-12 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center ` +
+              (active() ? 'border-red-400' : '') + (false ? 'text-black' : 'text-gray-400')}
+              id="input"
           >
             {input}
           </div>
