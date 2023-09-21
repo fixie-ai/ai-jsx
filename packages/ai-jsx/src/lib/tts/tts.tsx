@@ -311,12 +311,15 @@ export class AwsTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the Google Cloud text-to-speech service.
  */
 export class GcpTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = 'en-US-Wavenet-D';
+  static readonly DEFAULT_VOICE = 'en-US-Neural2-C';
   constructor(urlFunc: BuildUrl, voice: string = GcpTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('gcp', urlFunc, voice, rate);
   }
 }
 
+/**
+ * Text-to-speech implementation that uses the WellSaid Labs text-to-speech service.
+ */
 export class WellSaidTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE = '42'; // Sofia H. (Conversational)
   constructor(urlFunc: BuildUrl, voice: string = WellSaidTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
@@ -328,6 +331,26 @@ export class MurfTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE = 'VM016372341539042UZ'; // Natalie
   constructor(urlFunc: BuildUrl, voice: string = MurfTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('murf', urlFunc, voice, rate);
+  }
+}
+
+/**
+ * Text-to-speech implementation that uses the Play.HT text-to-speech service.
+ */
+export class PlayHTTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = 'larry';
+  constructor(urlFunc: BuildUrl, voice: string = PlayHTTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('playht', urlFunc, voice, rate);
+  }
+}
+
+/**
+ * Text-to-speech implementation that uses the Resemble.AI text-to-speech service.
+ */
+export class ResembleTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = '48d7ed16'; // Tarkos
+  constructor(urlFunc: BuildUrl, voice: string = ResembleTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('resemble', urlFunc, voice, rate);
   }
 }
 
@@ -527,6 +550,10 @@ export function createTextToSpeech({ provider, rate, voice, getToken, buildUrl }
       return new WellSaidTextToSpeech(buildUrl!, voice, rate);
     case 'murf':
       return new MurfTextToSpeech(buildUrl!, voice, rate);
+    case 'playht':
+      return new PlayHTTextToSpeech(buildUrl!, voice, rate);
+    case 'resemble':
+      return new ResembleTextToSpeech(buildUrl!, voice, rate);
     case 'eleven':
       return new ElevenLabsTextToSpeech(getToken!, voice);
     default:
