@@ -127,7 +127,7 @@ const PageComponent: React.FC = () => {
           costPerMChar={180}
           defaultVoice="21m00Tcm4TlvDq8ikWAM"
           text={text}
-        ></Tts>
+        />
         <Tts
           display="WellSaid Labs"
           provider="wellsaid"
@@ -135,7 +135,23 @@ const PageComponent: React.FC = () => {
           costPerMChar={999}
           defaultVoice="43"
           text={text}
-        ></Tts>
+        />
+        <Tts
+          display="Play.HT"
+          provider="playht"
+          link="https://play.ht"
+          costPerMChar={999}
+          defaultVoice="larry"
+          text={text}
+        />
+        <Tts
+          display="Resemble.AI"
+          provider="resemble"
+          link="https://resemble.ai"
+          costPerMChar={999}
+          defaultVoice="48d7ed16"
+          text={text}
+        />
         <Tts
           display="Azure"
           provider="azure"
@@ -143,7 +159,7 @@ const PageComponent: React.FC = () => {
           costPerMChar={16}
           defaultVoice="en-US-JennyNeural"
           text={text}
-        ></Tts>
+        />
         <Tts
           display="AWS Polly"
           provider="aws"
@@ -151,7 +167,7 @@ const PageComponent: React.FC = () => {
           costPerMChar={16}
           defaultVoice="Joanna"
           text={text}
-        ></Tts>
+        />
         <Tts
           display="Google"
           provider="gcp"
@@ -159,7 +175,7 @@ const PageComponent: React.FC = () => {
           costPerMChar={16}
           defaultVoice="en-US-Wavenet-D"
           text={text}
-        ></Tts>
+        />
       </div>
     </>
   );

@@ -317,10 +317,33 @@ export class GcpTextToSpeech extends RestTextToSpeech {
   }
 }
 
+/**
+ * Text-to-speech implementation that uses the WellSaid Labs text-to-speech service.
+ */
 export class WellSaidTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE = '42'; // Sofia H. (Conversational)
   constructor(urlFunc: BuildUrl, voice: string = WellSaidTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('wellsaid', urlFunc, voice, rate);
+  }
+}
+
+/**
+ * Text-to-speech implementation that uses the Play.HT text-to-speech service.
+ */
+export class PlayHTTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = 'larry';
+  constructor(urlFunc: BuildUrl, voice: string = PlayHTTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('playht', urlFunc, voice, rate);
+  }
+}
+
+/**
+ * Text-to-speech implementation that uses the Resemble.AI text-to-speech service.
+ */
+export class ResembleTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = '48d7ed16'; // Tarkos
+  constructor(urlFunc: BuildUrl, voice: string = ResembleTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('resemble', urlFunc, voice, rate);
   }
 }
 
@@ -518,6 +541,10 @@ export function createTextToSpeech({ provider, rate, voice, getToken, buildUrl }
       return new GcpTextToSpeech(buildUrl!, voice, rate);
     case 'wellsaid':
       return new WellSaidTextToSpeech(buildUrl!, voice, rate);
+    case 'playht':
+      return new PlayHTTextToSpeech(buildUrl!, voice, rate);
+    case 'resemble':
+      return new ResembleTextToSpeech(buildUrl!, voice, rate);
     case 'eleven':
       return new ElevenLabsTextToSpeech(getToken!, voice);
     default:
