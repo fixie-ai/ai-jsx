@@ -204,8 +204,7 @@ export function useSidekick({
   );
 
   // We don't need the API key to access the conversation API.
-  const fixieClient =
-    IsomorphicFixieClient.CreateWithoutApiKey(fixieAPIUrl ?? 'https://api.fixie.ai');
+  const fixieClient = IsomorphicFixieClient.CreateWithoutApiKey(fixieAPIUrl ?? 'https://api.fixie.ai');
 
   const lastSeenMostRecentAgentTextMessage = useRef('');
   async function createNewConversation() {
