@@ -7,9 +7,8 @@ import _ from 'lodash';
 import { AgentId, AssistantConversationTurn, ConversationTurn, TextMessage } from '../sidekick';
 import * as fixieMessageAPI from '../fixie-api';
 import { useRouter } from 'next/navigation';
-import { datadogLogs } from '@datadog/browser-logs';
 import { Jsonifiable } from 'type-fest';
-import { Message, MessageGenerationParams } from './sidekick-types.js';
+import { MessageGenerationParams } from './sidekick-types.js';
 
 export interface UseSidekickResult {
   /**
@@ -105,6 +104,8 @@ export interface UseSidekickArgs {
   conversationFixtures?: ConversationTurn[];
 
   messageGenerationParams?: Partial<Pick<MessageGenerationParams, 'model' | 'modelProvider'>>;
+
+  logPerformanceTraces?: (message: string, metadata: Jsonifiable) => void;
 }
 
 const firebaseConfig = {
@@ -122,6 +123,7 @@ export function useSidekick({
   conversationFixtures,
   onNewTokens,
   messageGenerationParams,
+  logPerformanceTraces,
   agentId,
 }: UseSidekickArgs): UseSidekickResult {
   /**
@@ -303,17 +305,17 @@ export function useSidekick({
       name: 'chat:delta:text',
     })?.timeMs;
 
-    datadogLogs.logger.info('[DD] All traces', {
+    logPerformanceTraces?.('[DD] All traces', {
       traces: performanceTrace.current,
       ...commonData,
     });
     if (firstFirebaseDelta) {
-      datadogLogs.logger.info('[DD] Time to first Firebase delta', {
+      logPerformanceTraces?.('[DD] Time to first Firebase delta', {
         ...commonData,
         timeMs: firstFirebaseDelta - firstPerfTrace,
       });
       const totalFirebaseTimeMs = lastFirebaseDelta! - firstPerfTrace;
-      datadogLogs.logger.info('[DD] Time to last Firebase delta', {
+      logPerformanceTraces?.('[DD] Time to last Firebase delta', {
         ...commonData,
         timeMs: totalFirebaseTimeMs,
         charactersPerMs: textCharactersInMostRecentTurn / totalFirebaseTimeMs,
