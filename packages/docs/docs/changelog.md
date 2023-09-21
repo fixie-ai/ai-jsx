@@ -1,13 +1,19 @@
 # Changelog
 
-## 0.18.0
+## 0.18.1
+
+- Modified `Sidekick` to add the following options:
+  - `outputFormat`: `text/mdx`, `text/markdown`, `text/plain`
+  - `includeNextStepsRecommendations`: `boolean`
+
+## [0.18.0](https://github.com/fixie-ai/ai-jsx/commit/36b9f02c866df9df761017fd9f8785d876d15ab8)
 
 - Added components for Automatic Speech Recognition (ASR) in `lib/asr/asr.tsx`.
 - Addec components for Text-to-Speech (TTS) in `lib/tts/tts.tsx`.
 - ASR providers include Deepgram, Speechmatics, Assembly AI, Rev AI, Soniox, and Gladia.
 - TTS providers include Google Cloud, AWS, Azure, and ElevenLabs.
 
-## 0.17.4
+## [0.17.4](https://github.com/fixie-ai/ai-jsx/commit/b002c00d3926e03769438b01443c1bb715ade496)
 
 - Fixed a bug where passing an empty `functionDefinitions` prop to `<OpenAIChatModel>` would cause an error.
 
