@@ -36,6 +36,7 @@
     "demo:context": "yarn build && node dist/src/context.js",
     "demo:multi-model": "yarn build && node dist/src/multi-model.js",
     "demo:opentelemetry": "yarn build && node dist/src/opentelemetry.js",
+    "demo:sidekick-output-format": "yarn build && node dist/src/sidekick-output-format.js",
     "demo:wandb": "yarn build && node dist/src/wandb.js",
     "demo:helloworld": "yarn build && node dist/src/helloworld.js",
     "demo:inline-chat": "yarn build && node dist/src/inline-chat.js",

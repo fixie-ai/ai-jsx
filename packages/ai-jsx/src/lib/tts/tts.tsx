@@ -436,6 +436,10 @@ class ElevenLabsOutboundMessage {
     this.xi_api_key = xi_api_key;
   }
   text: string;
+  voice_settings?: {
+    stability: number;
+    similarity: number;
+  };
   generation_config?: {
     chunk_length_schedule: number[];
   };
@@ -460,6 +464,10 @@ export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
     // once we have 50 characters of text buffered.
     const obj = new ElevenLabsOutboundMessage({
       text: ' ',
+      voice_settings: {
+        stability: 0.5,
+        similarity: 0.8,
+      },
       generation_config: {
         chunk_length_schedule: [50],
       },
@@ -471,13 +479,11 @@ export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
     const message = inMessage as ElevenLabsInboundMessage;
     console.debug(message);
     if (message.audio) {
-      if (!message.isFinal) {
-        console.debug(`[${this.name}] chunk received`);
-        this.queueChunk(new AudioChunk(Buffer.from(message.audio!, 'base64')));
-      } else {
-        console.log(`[${this.name}] utterance complete`);
-        this.setComplete();
-      }
+      console.debug(`[${this.name}] chunk received`);
+      this.queueChunk(new AudioChunk(Buffer.from(message.audio!, 'base64')));
+    } else if (message.isFinal) {
+      console.log(`[${this.name}] utterance complete`);
+      this.setComplete();
     } else if (message.error) {
       console.error(`[${this.name}] error: ${message.message}`);
     }
