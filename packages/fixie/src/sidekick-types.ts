@@ -1,38 +1,34 @@
-import { Jsonifiable } from 'type-fest'
-import {
-  FunctionResponse as FunctionResponseNode,
-  FunctionCall as FunctionCallNode
-} from 'ai-jsx/core/conversation'
-import { PropsOfComponent } from 'ai-jsx'
-import { MessageGenerationParams } from './fixie-api'
+import { Jsonifiable } from 'type-fest';
+import { FunctionResponse as FunctionResponseNode, FunctionCall as FunctionCallNode } from 'ai-jsx/core/conversation';
+import { PropsOfComponent } from 'ai-jsx';
+import { MessageGenerationParams } from './fixie-api';
 
-export type AgentId = string
-export type ConversationId = string
-export type Metadata = Record<string, Jsonifiable | undefined>
+export type AgentId = string;
+export type ConversationId = string;
+export type Metadata = Record<string, Jsonifiable | undefined>;
 export interface MessageRequestParams {
-  message: string
-  metadata?: Metadata
-  generationParams: MessageGenerationParams
+  message: string;
+  metadata?: Metadata;
+  generationParams: MessageGenerationParams;
 }
 
 export interface BaseConversationTurn<Role extends string> {
-  role: Role
-  timestamp: number
+  role: Role;
+  timestamp: number;
 
-  id: string
+  id: string;
 
   /** Any metadata the client or server would like to attach to the message.
   For instance, the client might include UI state from the host app,
   or the server might include debugging info.
   */
-  metadata?: Jsonifiable
+  metadata?: Jsonifiable;
 
-  state: State
+  state: State;
 }
 
-export interface UserOrAssistantConversationTurn<Role extends string>
-  extends BaseConversationTurn<Role> {
-  messages: Message[]
+export interface UserOrAssistantConversationTurn<Role extends string> extends BaseConversationTurn<Role> {
+  messages: Message[];
 }
 
 /**
@@ -44,25 +40,22 @@ export interface UserOrAssistantConversationTurn<Role extends string>
  *
  * If the user requests that the AI stop generating a message, the state will be 'stopped'.
  */
-type State = 'in-progress' | 'done' | 'stopped' | 'error'
+type State = 'in-progress' | 'done' | 'stopped' | 'error';
 export interface StateFields {
-  state: State
-  errorDetail?: string
+  state: State;
+  errorDetail?: string;
 }
 
-export interface AssistantConversationTurn
-  extends UserOrAssistantConversationTurn<'assistant'>,
-    StateFields {
+export interface AssistantConversationTurn extends UserOrAssistantConversationTurn<'assistant'>, StateFields {
   /**
    * The user turn that this turn was a reply to.
    */
-  inReplyToId: string
+  inReplyToId: string;
 }
 
-export interface UserConversationTurn
-  extends UserOrAssistantConversationTurn<'user'> {}
+export interface UserConversationTurn extends UserOrAssistantConversationTurn<'user'> {}
 
-export type ConversationTurn = AssistantConversationTurn | UserConversationTurn
+export type ConversationTurn = AssistantConversationTurn | UserConversationTurn;
 
 /** A message in the conversation. */
 export interface BaseMessage extends StateFields {
@@ -70,30 +63,30 @@ export interface BaseMessage extends StateFields {
       For instance, the client might include UI state from the host app,
       or the server might include debugging info.
   */
-  metadata?: Jsonifiable
+  metadata?: Jsonifiable;
 
-  id: string
+  id: string;
 
-  timestamp: number
+  timestamp: number;
 }
 
 export interface FunctionCall extends BaseMessage {
-  kind: 'functionCall'
-  name?: PropsOfComponent<typeof FunctionCallNode>['name']
-  args?: PropsOfComponent<typeof FunctionCallNode>['args']
+  kind: 'functionCall';
+  name?: PropsOfComponent<typeof FunctionCallNode>['name'];
+  args?: PropsOfComponent<typeof FunctionCallNode>['args'];
 }
 
 export interface FunctionResponse extends BaseMessage {
-  kind: 'functionResponse'
-  name: PropsOfComponent<typeof FunctionResponseNode>['name']
-  response: string
-  failed: PropsOfComponent<typeof FunctionResponseNode>['failed']
+  kind: 'functionResponse';
+  name: PropsOfComponent<typeof FunctionResponseNode>['name'];
+  response: string;
+  failed: PropsOfComponent<typeof FunctionResponseNode>['failed'];
 }
 
 export interface TextMessage extends BaseMessage {
-  kind: 'text'
+  kind: 'text';
   /** The text content of the message. */
-  content: string
+  content: string;
 }
 
-export type Message = FunctionCall | FunctionResponse | TextMessage
+export type Message = FunctionCall | FunctionResponse | TextMessage;
