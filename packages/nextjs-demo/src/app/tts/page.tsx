@@ -136,7 +136,14 @@ const PageComponent: React.FC = () => {
           defaultVoice="43"
           text={text}
         />
-        <Tts display="Murf.ai" provider="murf" link="https://murf.ai" costPerMChar={999} defaultVoice="VM016372341539042UZ" text={text} />
+        <Tts
+          display="Murf.ai"
+          provider="murf"
+          link="https://murf.ai"
+          costPerMChar={999}
+          defaultVoice="VM016372341539042UZ"
+          text={text}
+        />
         <Tts
           display="Azure"
           provider="azure"
