@@ -54,29 +54,25 @@ export class IsomorphicFixieClient {
   }
 
   /** Send a request to the Fixie API with the appropriate auth headers. */
-  async request(path: string, bodyData?: any): Promise<Jsonifiable> {
-    let res;
+  async request(path: string, bodyData?: any, method?: string): Promise<Jsonifiable> {
+    const fetch_method = method ?? (bodyData ? 'POST' : 'GET');
+    const headers = bodyData
+      ? {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        }
+      : {
+          Authorization: `Bearer ${this.apiKey}`,
+        };
     if (debug) {
       console.log(`[Fixie request] ${this.url}${path}`, bodyData);
     }
-    if (bodyData) {
-      const body = JSON.stringify(bodyData);
-      res = await fetch(`${this.url}${path}`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body,
-      });
-    } else {
-      res = await fetch(`${this.url}${path}`, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-      });
-    }
+    const res = await fetch(`${this.url}${path}`, {
+      method: fetch_method,
+      // @ts-expect-error
+      headers,
+      body: bodyData ? JSON.stringify(bodyData) : undefined,
+    });
     if (!res.ok) {
       throw new Error(`Failed to access Fixie API ${this.url}${path}: ${res.statusText}`);
     }
@@ -171,13 +167,32 @@ export class IsomorphicFixieClient {
   }
 
   /**
+   * Delete a given Source.
+   *
+   * The source must have no running jobs and no remaining documents. Use clearCorpusSource() to remove all documents.
+   */
+  deleteCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
+    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}`, undefined, 'DELETE');
+  }
+
+  /**
    * Refresh the given Source.
    *
-   * If a job is already running to refresh this source, and force = false, this call will return an error.
-   * If a job is already running to refresh this source, and force = true, that job will be killed and restarted.
+   * If a job is already running on this source, and force = false, this call will return an error.
+   * If a job is already running on this source, and force = true, that job will be killed and restarted.
    */
   refreshCorpusSource(corpusId: string, sourceId: string, force?: boolean): Promise<Jsonifiable> {
     return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, { force });
+  }
+
+  /**
+   * Clear the given Source, removing all its documents and their chunks.
+   *
+   * If a job is already running on this source, and force = false, this call will return an error.
+   * If a job is already running on this source, and force = true, that job will be killed and restarted.
+   */
+  clearCorpusSource(corpusId: string, sourceId: string, force?: boolean): Promise<Jsonifiable> {
+    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:clear`, { force });
   }
 
   /** List Jobs associated with a given Source. */
