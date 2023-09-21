@@ -1,4 +1,5 @@
 import type { Jsonifiable } from 'type-fest';
+import { AgentId, ConversationId, MessageGenerationParams, MessageRequestParams } from './sidekick-types.js';
 
 export interface UserInfo {
   id: number;
@@ -16,6 +17,10 @@ export interface UserInfo {
   api_token?: string;
   avatar?: string;
   organization?: string;
+}
+
+export class AgentDoesNotExistError extends Error {
+  code = 'agent-does-not-exist';
 }
 
 const debug =
@@ -54,25 +59,36 @@ export class IsomorphicFixieClient {
   }
 
   /** Send a request to the Fixie API with the appropriate auth headers. */
-  async request(path: string, bodyData?: any, method?: string): Promise<Jsonifiable> {
-    const fetch_method = method ?? (bodyData ? 'POST' : 'GET');
+  async request(path: string, bodyData?: unknown, method?: string, options?: RequestInit = {}) {
+    const fetchMethod = method ?? (bodyData ? 'POST' : 'GET');
+    const authHeaderValue = this.apiKey ? `Bearer ${this.apiKey}` : undefined;
     const headers = bodyData
       ? {
-          Authorization: `Bearer ${this.apiKey}`,
+          Authorization: authHeaderValue,
           'Content-Type': 'application/json',
         }
       : {
-          Authorization: `Bearer ${this.apiKey}`,
+          Authorization: authHeaderValue,
         };
     if (debug) {
       console.log(`[Fixie request] ${this.url}${path}`, bodyData);
     }
     const res = await fetch(`${this.url}${path}`, {
-      method: fetch_method,
+      ...options,
+      method: fetchMethod,
+      // The types are too strict here.
       // @ts-expect-error
       headers,
+      // This is needed so serverside NextJS doesn't cache POSTs.
+      cache: 'no-store',
       body: bodyData ? JSON.stringify(bodyData) : undefined,
     });
+
+    return res;
+  }
+
+  async requestJson(path: string, bodyData?: unknown, method?: string, options?: RequestInit): Promise<Jsonifiable> {
+    const res = await this.request(path, bodyData, method, options);
     if (!res.ok) {
       throw new Error(`Failed to access Fixie API ${this.url}${path}: ${res.statusText}`);
     }
@@ -87,12 +103,12 @@ export class IsomorphicFixieClient {
 
   /** List Corpora visible to this user. */
   listCorpora(): Promise<Jsonifiable> {
-    return this.request('/api/v1/corpora');
+    return this.requestJson('/api/v1/corpora');
   }
 
   /** Get information about a given Corpus. */
   getCorpus(corpusId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}`);
   }
 
   /** Create a new Corpus. */
@@ -103,7 +119,7 @@ export class IsomorphicFixieClient {
         description,
       },
     };
-    return this.request('/api/v1/corpora', body);
+    return this.requestJson('/api/v1/corpora', body);
   }
 
   /** Query a given Corpus. */
@@ -113,17 +129,17 @@ export class IsomorphicFixieClient {
       query,
       max_chunks: maxChunks,
     };
-    return this.request(`/api/v1/corpora/${corpusId}:query`, body);
+    return this.requestJson(`/api/v1/corpora/${corpusId}:query`, body);
   }
 
   /** List the Sources in a given Corpus. */
   listCorpusSources(corpusId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources`);
   }
 
   /** Get information about a given Source. */
   getCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}`);
   }
 
   /** Add a new Source to a Corpus. */
@@ -163,7 +179,7 @@ export class IsomorphicFixieClient {
         },
       },
     };
-    return this.request(`/api/v1/corpora/${corpusId}/sources`, body);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources`, body);
   }
 
   /**
@@ -172,7 +188,7 @@ export class IsomorphicFixieClient {
    * The source must have no running jobs and no remaining documents. Use clearCorpusSource() to remove all documents.
    */
   deleteCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}`, undefined, 'DELETE');
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}`, undefined, 'DELETE');
   }
 
   /**
@@ -182,7 +198,7 @@ export class IsomorphicFixieClient {
    * If a job is already running on this source, and force = true, that job will be killed and restarted.
    */
   refreshCorpusSource(corpusId: string, sourceId: string, force?: boolean): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, { force });
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, { force });
   }
 
   /**
@@ -192,26 +208,83 @@ export class IsomorphicFixieClient {
    * If a job is already running on this source, and force = true, that job will be killed and restarted.
    */
   clearCorpusSource(corpusId: string, sourceId: string, force?: boolean): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:clear`, { force });
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}:clear`, { force });
   }
 
   /** List Jobs associated with a given Source. */
   listCorpusSourceJobs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs`);
   }
 
   /** Get information about a given Job. */
   getCorpusSourceJob(corpusId: string, sourceId: string, jobId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs/${jobId}`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs/${jobId}`);
   }
 
   /** List Documents in a given Corpus Source. */
   listCorpusSourceDocs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents`);
   }
 
   /** Get information about a given Document. */
   getCorpusSourceDoc(corpusId: string, sourceId: string, docId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents/${docId}`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents/${docId}`);
+  }
+
+  async startConversation(agentId: AgentId, generationParams: MessageGenerationParams, message?: string) {
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+    console.log('Initiating startConversation request');
+    const conversation = await this.request(
+      `/api/v1/agents/${agentId}/conversations`,
+      { generationParams, message },
+      'POST',
+      { signal }
+    );
+
+    if (!conversation.body) {
+      throw new Error('Request to start a new conversation was empty');
+    }
+    if (conversation.status === 404) {
+      console.log(`Agent ${agentId} does not exist, or is private.`);
+      throw new AgentDoesNotExistError(`Agent ${agentId} does not exist, or is private.`);
+    }
+    if (!conversation.ok) {
+      throw new Error(
+        `Starting a new conversation failed: ${conversation.status} ${
+          conversation.statusText
+        } ${await conversation.text()}`
+      );
+    }
+
+    const headerName = 'X-Fixie-Conversation-Id';
+    const conversationIdHeaderValue = conversation.headers.get(headerName);
+    if (!conversationIdHeaderValue) {
+      throw new Error(`Fixie bug: Fixie backend did not return the "${headerName}" header.`);
+    }
+    return conversationIdHeaderValue;
+  }
+
+  sendMessage(agentId: AgentId, conversationId: ConversationId, message: MessageRequestParams) {
+    return this.request(`/api/v1/agents/${agentId}/conversations/${conversationId}/messages`, message);
+  }
+
+  stopGeneration(agentId: AgentId, conversationId: ConversationId, messageId: string) {
+    return this.request(
+      `/api/v1/agents/${agentId}/conversations/${conversationId}/messages/${messageId}/stop`,
+      undefined,
+      'POST'
+    );
+  }
+
+  regenerate(
+    agentId: AgentId,
+    conversationId: ConversationId,
+    messageId: string,
+    messageGenerationParams: MessageGenerationParams
+  ) {
+    return this.request(`/api/v1/agents/${agentId}/conversations/${conversationId}/messages/${messageId}/regenerate`, {
+      generationParams: messageGenerationParams,
+    });
   }
 }

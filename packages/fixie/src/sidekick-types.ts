@@ -1,7 +1,12 @@
 import { Jsonifiable } from 'type-fest';
 import { FunctionResponse as FunctionResponseNode, FunctionCall as FunctionCallNode } from 'ai-jsx/core/conversation';
 import { PropsOfComponent } from 'ai-jsx';
-import { MessageGenerationParams } from './fixie-api';
+
+export type MessageGenerationParams = Partial<{
+  modelProvider: string | null;
+  model: string | null;
+  userTimeZoneOffset: number;
+}>;
 
 export type AgentId = string;
 export type ConversationId = string;

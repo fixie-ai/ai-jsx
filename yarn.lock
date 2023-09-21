@@ -12427,6 +12427,7 @@ __metadata:
     "@types/terminal-kit": ^2.5.1
     "@typescript-eslint/eslint-plugin": ^5.60.0
     "@typescript-eslint/parser": ^5.60.0
+    ai-jsx: "workspace:*"
     apollo-upload-client: ^17.0.0
     axios: ^1.5.0
     commander: ^11.0.0
