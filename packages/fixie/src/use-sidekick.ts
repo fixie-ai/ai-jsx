@@ -4,11 +4,17 @@ import { initializeApp } from 'firebase/app';
 
 import { useState, SetStateAction, Dispatch, useRef } from 'react';
 import _ from 'lodash';
-import { AgentId, AssistantConversationTurn, ConversationTurn, TextMessage } from '../sidekick';
-import * as fixieMessageAPI from '../fixie-api';
+import {
+  MessageGenerationParams,
+  AgentId,
+  AssistantConversationTurn,
+  ConversationTurn,
+  TextMessage,
+} from './sidekick-types.js';
+// import * as fixieMessageAPI from '../fixie-api';
 import { useRouter } from 'next/navigation';
 import { Jsonifiable } from 'type-fest';
-import { MessageGenerationParams } from './sidekick-types.js';
+import { IsomorphicFixieClient } from './isomorphic-client.js';
 
 export interface UseSidekickResult {
   /**
@@ -106,6 +112,10 @@ export interface UseSidekickArgs {
   messageGenerationParams?: Partial<Pick<MessageGenerationParams, 'model' | 'modelProvider'>>;
 
   logPerformanceTraces?: (message: string, metadata: Jsonifiable) => void;
+
+  fixieAPIUrl?: string;
+  fixieAPIKey?: string;
+  fixieClient?: IsomorphicFixieClient;
 }
 
 const firebaseConfig = {
@@ -125,6 +135,9 @@ export function useSidekick({
   messageGenerationParams,
   logPerformanceTraces,
   agentId,
+  fixieAPIKey,
+  fixieAPIUrl,
+  fixieClient: inputFixieClient,
 }: UseSidekickArgs): UseSidekickResult {
   /**
    * Aspects of the useSidekick hook may be hideously more complicated than they need to be.
@@ -157,7 +170,7 @@ export function useSidekick({
     Record<ConversationTurn['id'], ConversationTurn['messages']>
   >({});
 
-  const fullMessageGenerationParams: fixieMessageAPI.MessageGenerationParams = {
+  const fullMessageGenerationParams: MessageGenerationParams = {
     model: 'gpt-4-32k',
     modelProvider: 'openai',
     ...messageGenerationParams,
@@ -192,10 +205,14 @@ export function useSidekick({
     turnsQuery
   );
 
+  const fixieClient =
+    inputFixieClient ?? IsomorphicFixieClient.Create(fixieAPIUrl ?? 'https://api.fixie.ai', fixieAPIKey);
+
   const lastSeenMostRecentAgentTextMessage = useRef('');
   const router = useRouter();
   async function createNewConversation() {
-    const conversationId = await fixieMessageAPI.startConversation(agentId, fullMessageGenerationParams, input);
+    const conversationId = (await fixieClient.startConversation(agentId, fullMessageGenerationParams, input))
+      .conversationIdHeaderValue;
     // This won't work when we try to genericize this hook, because it assumes control over the router.
     // But for today, it's fine.
     router.push(`/embed/${agentId}/${conversationId}${window.location.search}`);
@@ -344,7 +361,7 @@ export function useSidekick({
     addPerfCheckpoint('send-message');
     lastGeneratedTurnId.current = turns.at(-1)?.id;
     lastSeenMostRecentAgentTextMessage.current = '';
-    await fixieMessageAPI.sendMessage(agentId, conversationId, {
+    await fixieClient.sendMessage(agentId, conversationId, {
       message: message ?? input,
       generationParams: fullMessageGenerationParams,
     });
@@ -373,7 +390,7 @@ export function useSidekick({
     lastGeneratedTurnId.current = turns.at(-1)?.id;
     lastSeenMostRecentAgentTextMessage.current = '';
     setModelResponseRequested('regenerate');
-    await fixieMessageAPI.regenerate(agentId, conversationId, mostRecentAssistantTurn!.id, fullMessageGenerationParams);
+    await fixieClient.regenerate(agentId, conversationId, mostRecentAssistantTurn!.id, fullMessageGenerationParams);
     setModelResponseRequested(null);
   }
 
@@ -392,7 +409,7 @@ export function useSidekick({
         [mostRecentAssistantTurn!.id]: mostRecentAssistantTurn.messages,
       }));
     }
-    await fixieMessageAPI.stopGeneration(agentId, conversationId, mostRecentAssistantTurn!.id);
+    await fixieClient.stopGeneration(agentId, conversationId, mostRecentAssistantTurn!.id);
     setModelResponseRequested(null);
   }
 
