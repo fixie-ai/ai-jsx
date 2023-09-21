@@ -10,9 +10,8 @@ import {
   AssistantConversationTurn,
   ConversationTurn,
   TextMessage,
+  ConversationId,
 } from './sidekick-types.js';
-// import * as fixieMessageAPI from '../fixie-api';
-import { useRouter } from 'next/navigation';
 import { Jsonifiable } from 'type-fest';
 import { IsomorphicFixieClient } from './isomorphic-client.js';
 
@@ -116,6 +115,7 @@ export interface UseSidekickArgs {
   fixieAPIUrl?: string;
   fixieAPIKey?: string;
   fixieClient?: IsomorphicFixieClient;
+  onNewConversation?: (conversationId: ConversationId) => void;
 }
 
 const firebaseConfig = {
@@ -138,6 +138,7 @@ export function useSidekick({
   fixieAPIKey,
   fixieAPIUrl,
   fixieClient: inputFixieClient,
+  onNewConversation,
 }: UseSidekickArgs): UseSidekickResult {
   /**
    * Aspects of the useSidekick hook may be hideously more complicated than they need to be.
@@ -209,13 +210,10 @@ export function useSidekick({
     inputFixieClient ?? IsomorphicFixieClient.Create(fixieAPIUrl ?? 'https://api.fixie.ai', fixieAPIKey);
 
   const lastSeenMostRecentAgentTextMessage = useRef('');
-  const router = useRouter();
   async function createNewConversation() {
     const conversationId = (await fixieClient.startConversation(agentId, fullMessageGenerationParams, input))
       .conversationIdHeaderValue;
-    // This won't work when we try to genericize this hook, because it assumes control over the router.
-    // But for today, it's fine.
-    router.push(`/embed/${agentId}/${conversationId}${window.location.search}`);
+    onNewConversation?.(conversationId);
   }
 
   /**
