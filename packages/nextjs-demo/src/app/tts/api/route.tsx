@@ -12,8 +12,8 @@ const PROVIDER_MAP: ProviderMap = {
   aws: ttsAws,
   gcp: ttsGcp,
   wellsaid: ttsWellSaid,
-  playht: ttsPlayHt,
-  resemble: ttsResemble,
+  playht: ttsPlayHT,
+  resemble: ttsResembleV1,
 };
 
 function makeStreamResponse(startMillis: number, response: Response) {
@@ -193,7 +193,7 @@ function ttsWellSaid(voice: string, rate: number, text: string) {
 /**
  * REST client for Play.HT TTS (https://play.ht)
  */
-function ttsPlayHt(voice: string, rate: number, text: string) {
+function ttsPlayHT(voice: string, rate: number, text: string) {
   const headers = createHeaders();
   headers.append('X-User-Id', getEnvVar('PLAYHT_USER_ID'));
   headers.append('Authorization', `Bearer ${getEnvVar('PLAYHT_API_KEY')}`);
@@ -212,7 +212,26 @@ function ttsPlayHt(voice: string, rate: number, text: string) {
 /**
  * REST client for Resemble.AI TTS (https://www.resemble.ai)
  */
-function ttsResemble(voice: string, rate: number, text: string) {
+function ttsResembleV1(voice: string, rate: number, text: string) {
+  const headers = createHeaders();
+  headers.append('Authorization', `Bearer ${getEnvVar('RESEMBLE_API_KEY')}`);
+  const obj = {
+    body: text, // makeSsml(voice, rate, text),
+    voice_uuid: voice,
+    precision: 'PCM_16',
+    sample_rate: 22050,
+    output_type: 'mp3',
+    raw: true,
+  };
+  const url = `https://app.resemble.ai/api/v2/projects/${getEnvVar('RESEMBLE_PROJECT_ID')}/clips`
+  return doPost(url, headers, obj);
+}
+
+
+/**
+ * Streaming REST client for Resemble.AI TTS (https://www.resemble.ai)
+ */
+function ttsResembleV2(voice: string, rate: number, text: string) {
   const headers = createHeaders();
   headers.append('Authorization', `Bearer ${getEnvVar('RESEMBLE_API_KEY')}`);
   const obj = {
