@@ -327,6 +327,13 @@ export class WellSaidTextToSpeech extends RestTextToSpeech {
   }
 }
 
+export class MurfTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = 'VM016372341539042UZ'; // Natalie
+  constructor(urlFunc: BuildUrl, voice: string = MurfTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('murf', urlFunc, voice, rate);
+  }
+}
+
 /**
  * Text-to-speech implementation that uses the Play.HT text-to-speech service.
  */
@@ -541,6 +548,8 @@ export function createTextToSpeech({ provider, rate, voice, getToken, buildUrl }
       return new GcpTextToSpeech(buildUrl!, voice, rate);
     case 'wellsaid':
       return new WellSaidTextToSpeech(buildUrl!, voice, rate);
+    case 'murf':
+      return new MurfTextToSpeech(buildUrl!, voice, rate);
     case 'playht':
       return new PlayHTTextToSpeech(buildUrl!, voice, rate);
     case 'resemble':

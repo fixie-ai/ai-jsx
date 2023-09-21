@@ -12,6 +12,7 @@ const PROVIDER_MAP: ProviderMap = {
   aws: ttsAws,
   gcp: ttsGcp,
   wellsaid: ttsWellSaid,
+  murf: ttsMurf,
   playht: ttsPlayHT,
   resemble: ttsResembleV1,
   resemble2: ttsResembleV2,
@@ -44,6 +45,13 @@ function makeStreamResponse(startMillis: number, response: Response) {
   return new NextResponse(nextStream, { headers, status });
 }
 
+async function makeBlobResponseFromJson(startMillis: number, response: Response, keyName: string) {
+  const json = await response.json();
+  const binary = Buffer.from(json[keyName], 'base64');
+  console.log(`${startMillis} TTS complete latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
+  return new NextResponse(binary, { headers: { 'Content-Type': AUDIO_MPEG_MIME_TYPE } });
+}
+
 /**
  * Calls out to the requested TTS provider to generate speech with the given parameters.
  * This sidesteps CORS and also allows us to hide the API keys from the client.
@@ -68,17 +76,26 @@ export async function GET(request: NextRequest) {
   const response = await func(voice, rate, text);
   console.log(`${startMillis} TTS response latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
   if (provider == 'gcp') {
-    // GCP returns JSONified audio, not binary.
-    return makeResponseForGcp(startMillis, response);
+    return makeBlobResponseFromJson(startMillis, response, 'audioContent');
+  }
+  if (provider == 'murf') {
+    return makeBlobResponseFromJson(startMillis, response, 'encodedAudio');
   }
   return makeStreamResponse(startMillis, response);
+}
+
+/**
+ * Converts a decimal rate to a percent, e.g. 1.1 -> 10, 0.9 -> -10.
+ */
+function decimalToPercent(decimal: number) {
+  return Math.round((decimal - 1.0) * 100);
 }
 
 function makeSsml(voice: string, rate: number, text: string) {
   return `
   <speak version="1.0" xml:lang="en-US">
     <voice xml:lang="en-US" name="${voice}">
-      <prosody rate="${Math.round((rate - 1.0) * 100)}%">${text}</prosody>
+      <prosody rate="${decimalToPercent(rate)}%">${text}</prosody>
     </voice>
   </speak>`;
 }
@@ -170,13 +187,6 @@ function ttsGcp(voice: string, rate: number, text: string) {
   return doPost(url, headers, obj);
 }
 
-async function makeResponseForGcp(startMillis: number, response: Response) {
-  const json = await response.json();
-  const binary = Buffer.from(json.audioContent, 'base64');
-  console.log(`${startMillis} TTS complete latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
-  return new NextResponse(binary, { headers: { 'Content-Type': AUDIO_MPEG_MIME_TYPE } });
-}
-
 /**
  * REST client for WellSaid TTS.
  */
@@ -188,6 +198,24 @@ function ttsWellSaid(voice: string, rate: number, text: string) {
     text,
   };
   const url = 'https://api.wellsaidlabs.com/v1/tts/stream';
+  return doPost(url, headers, obj);
+}
+
+/**
+ * REST client for Murf.ai TTS.
+ */
+function ttsMurf(voice: string, rate: number, text: string) {
+  const headers = createHeaders();
+  headers.append('Api-Key', getEnvVar('MURF_API_KEY'));
+  const obj = {
+    voiceId: voice,
+    style: 'Conversational',
+    text,
+    rate: decimalToPercent(rate),
+    format: 'MP3',
+    encodeAsBase64: true,
+  };
+  const url = 'https://api.murf.ai/v1/speech/generate-with-key';
   return doPost(url, headers, obj);
 }
 

@@ -140,7 +140,15 @@ const PageComponent: React.FC = () => {
           text={text}
         />
         <Tts
-          display="Play.HT"
+          display="Murf AI"
+          provider="murf"
+          link="https://murf.ai"
+          costPerMChar={999}
+          defaultVoice="VM016372341539042UZ"
+          text={text}
+        />
+        <Tts
+          display="PlayHT"
           provider="playht"
           link="https://play.ht"
           costPerMChar={41.25}
@@ -148,7 +156,7 @@ const PageComponent: React.FC = () => {
           text={text}
         />
         <Tts
-          display="Resemble.AI"
+          display="Resemble AI"
           provider="resemble"
           link="https://resemble.ai"
           costPerMChar={400}
