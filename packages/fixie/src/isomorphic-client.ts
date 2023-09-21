@@ -245,6 +245,15 @@ export class IsomorphicFixieClient {
    *              streams its response. So, if you're driving a UI with this response, you always want to render the
    *              most recently emitted value from the stream.
    *
+   *          If the generation is stopped via the stopGeneration() API, the final value emitted from the stream will be
+   *          the same as what's persisted to the conversation history. However, intermediate stream values may include
+   *          extra content that then disappears. For example:
+   *
+   *            Stream entry 0: text: hello wor
+   *            <the stop occurs>
+   *            Stream entry 1: text: hello world I am
+   *            Stream entry 2: text: hello world
+   *
    * @see sendMessage
    * @see stopGeneration
    * @see regenerate
@@ -294,6 +303,15 @@ export class IsomorphicFixieClient {
    *          streams its response. So, if you're driving a UI with this response, you always want to render the
    *          most recently emitted value from the stream.
    *
+   *          If the generation is stopped via the stopGeneration() API, the final value emitted from the stream will be
+   *          the same as what's persisted to the conversation history. However, intermediate stream values may include
+   *          extra content that then disappears. For example:
+   *
+   *            Stream entry 0: text: hello wor
+   *            <the stop occurs>
+   *            Stream entry 1: text: hello world I am
+   *            Stream entry 2: text: hello world
+   *
    * @see startConversation
    */
   sendMessage(agentId: AgentId, conversationId: ConversationId, message: MessageRequestParams) {
@@ -323,6 +341,15 @@ export class IsomorphicFixieClient {
    *          of shape AssistantConversationTurn. Each member of the stream is the latest value of the turn as the agent
    *          streams its response. So, if you're driving a UI with this response, you always want to render the
    *          most recently emitted value from the stream.
+   *
+   *          If the generation is stopped via the stopGeneration() API, the final value emitted from the stream will be
+   *          the same as what's persisted to the conversation history. However, intermediate stream values may include
+   *          extra content that then disappears. For example:
+   *
+   *            Stream entry 0: text: hello wor
+   *            <the stop occurs>
+   *            Stream entry 1: text: hello world I am
+   *            Stream entry 2: text: hello world
    */
   regenerate(
     agentId: AgentId,
