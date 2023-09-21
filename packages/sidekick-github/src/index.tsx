@@ -1,13 +1,24 @@
-/// <reference lib="dom" />
+import { Tool } from "ai-jsx/batteries/use-tools";
+import { YourSidekickSystemMessage, finalSystemMessageBeforeResponse } from "./system-message.js";
+import { FixieCorpus } from "ai-jsx/batteries/docs";
+import { Sidekick } from "ai-jsx/sidekick";
 
-import { Tool } from 'ai-jsx/batteries/use-tools';
-import { SystemMessage } from 'ai-jsx/core/completion';
-import { Sidekick } from 'ai-jsx/sidekick';
+// This Document Collection contains information from the Git and GitHub documentation.
+const FIXIE_DOC_COLLECTION_ID: string = "b72ad16f-19fc-42d0-b053-69ab84f1e121";
 
-const ghToken = process.env.GITHUB_TOKEN;
+if (!FIXIE_DOC_COLLECTION_ID) {
+  throw new Error("Please set a FIXIE_CORPUS_ID in src/index.tsx");
+}
+
+const GH_TOKEN = process.env.GITHUB_TOKEN;
+const systemMessage = <YourSidekickSystemMessage />;
 
 const tools: Record<string, Tool> = {
-  runGithubGraphqlQuery: {
+  lookUpGitHubKnowledgeBase: FixieCorpus.createTool(
+    FIXIE_DOC_COLLECTION_ID,
+    "A tool for looking additional information to help answer the user query."
+  ),
+  runGitHubGraphqlQuery: {
     description: 'Run a GraphQL query against the Github API',
     parameters: {
       query: {
@@ -17,11 +28,12 @@ const tools: Record<string, Tool> = {
       },
     },
     func: async ({ query }: { query: string }) => {
+      // @ts-expect-error
       const response = await fetch('https://api.github.com/graphql', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `bearer ${ghToken}`,
+          Authorization: `bearer ${GH_TOKEN}`,
         },
         body: JSON.stringify({ query }),
       });
@@ -33,26 +45,11 @@ const tools: Record<string, Tool> = {
   },
 };
 
-const finalSystemMessageBeforeResponse = (
-  <SystemMessage>
-    Respond with a `Card`. If your API call produced a 4xx error, see if you can fix the request and try again.
-    Otherwise: Give the user suggested next queries, using `NextStepsButton`. Only suggest things you can actually do.
-    Here's an example of what the final outcome should look like:
-    {`
-  <NextStepsButton prompt='See more about this issue' />
-  <NextStepsButton prompt='See pull requests linked to this issue' />
-  `}
-    When you give next steps, phrase them as things the user would say to you.
-    {/* This is disregarded. */}
-    Also, only give next steps that are fully actionable by you. You cannot call any write APIs, so do not make
-    suggestions like `create a new issue`.
-  </SystemMessage>
-);
-
-export default function SidekickGH() {
+export default function SidekickTemplate() {
   return (
     <Sidekick
-      role="Github assistant"
+      role="GitHub assistant"
+      systemMessage={systemMessage}
       tools={tools}
       finalSystemMessageBeforeResponse={finalSystemMessageBeforeResponse}
     />
