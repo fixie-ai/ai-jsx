@@ -59,7 +59,7 @@ export class IsomorphicFixieClient {
   }
 
   /** Send a request to the Fixie API with the appropriate auth headers. */
-  async request(path: string, bodyData?: unknown, method?: string, options?: RequestInit = {}) {
+  async request(path: string, bodyData?: unknown, method?: string, options: RequestInit = {}) {
     const fetchMethod = method ?? (bodyData ? 'POST' : 'GET');
     const authHeaderValue = this.apiKey ? `Bearer ${this.apiKey}` : undefined;
     const headers = bodyData
