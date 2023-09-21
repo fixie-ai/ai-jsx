@@ -231,6 +231,24 @@ export class IsomorphicFixieClient {
     return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents/${docId}`);
   }
 
+  /**
+   * @experimental this API may change at any time.
+   *
+   * Start a new conversation with an agent, optionally sending the initial message. (If you don't send the initial
+   * message, the agent may.)
+   *
+   * @returns { conversationIdHeaderValue, response }
+   *    conversationIdHeaderValue: The conversation ID, which can be used with the other API methods to continue the
+   *                               conversation.
+   *    response: The fetch response. The response will be a stream of newline-delimited JSON objects, each of which be
+   *              of the shape ConversationTurn. Each member of the stream is the latest value of the turn as the agent
+   *              streams its response. So, if you're driving a UI with this response, you always want to render the
+   *              most recently emitted value from the stream.
+   *
+   * @see sendMessage
+   * @see stopGeneration
+   * @see regenerate
+   */
   async startConversation(agentId: AgentId, generationParams: MessageGenerationParams, message?: string) {
     const abortController = new AbortController();
     const signal = abortController.signal;
@@ -262,13 +280,31 @@ export class IsomorphicFixieClient {
     if (!conversationIdHeaderValue) {
       throw new Error(`Fixie bug: Fixie backend did not return the "${headerName}" header.`);
     }
-    return conversationIdHeaderValue;
+    return { conversationIdHeaderValue, response: conversation };
   }
 
+  /**
+   * @experimental this API may change at any time.
+   *
+   * Send a message to a conversation. If the conversationId does not refer to a conversation that already exists,
+   * this will throw an error.
+   *
+   * @returns a fetch response. The response will be a stream of newline-delimited JSON objects, each of which will be
+   *          of shape AssistantConversationTurn. Each member of the stream is the latest value of the turn as the agent
+   *          streams its response. So, if you're driving a UI with this response, you always want to render the
+   *          most recently emitted value from the stream.
+   *
+   * @see startConversation
+   */
   sendMessage(agentId: AgentId, conversationId: ConversationId, message: MessageRequestParams) {
     return this.request(`/api/v1/agents/${agentId}/conversations/${conversationId}/messages`, message);
   }
 
+  /**
+   * @experimental this API may change at any time.
+   *
+   * Stop a message that is currently being generated.
+   */
   stopGeneration(agentId: AgentId, conversationId: ConversationId, messageId: string) {
     return this.request(
       `/api/v1/agents/${agentId}/conversations/${conversationId}/messages/${messageId}/stop`,
@@ -277,6 +313,17 @@ export class IsomorphicFixieClient {
     );
   }
 
+  /**
+   * @experimental this API may change at any time.
+   *
+   * Regenerate a message that has already been generated. If `messageId` is not the most recent message in the
+   * conversation, this request will fail.
+   *
+   * @returns a fetch response. The response will be a stream of newline-delimited JSON objects, each of which will be
+   *          of shape AssistantConversationTurn. Each member of the stream is the latest value of the turn as the agent
+   *          streams its response. So, if you're driving a UI with this response, you always want to render the
+   *          most recently emitted value from the stream.
+   */
   regenerate(
     agentId: AgentId,
     conversationId: ConversationId,
