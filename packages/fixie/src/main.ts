@@ -265,7 +265,7 @@ source
   .description('Refresh a corpus source.')
   .option(
     '--force',
-    "If a job is already running on this source, kill it and start a new one. If a job is already running and you don't pass --force, the command will fail."
+    'By default, this command will fail if you try to refresh a source that currently has a job running. If you want to refresh the source regardless, pass this flag.'
   )
   .action(async (corpusId: string, sourceId: string, { force }) => {
     const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
@@ -278,7 +278,7 @@ source
   .description('Clear a corpus source.')
   .option(
     '--force',
-    "If a job is already running on this source, kill it and start a new one. If a job is already running and you don't pass --force, the command will fail."
+    'By default, this command will fail if you try to clear a source that currently has a job running. If you want to clear the source regardless, pass this flag.'
   )
   .action(async (corpusId: string, sourceId: string, { force }) => {
     const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
