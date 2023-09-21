@@ -311,7 +311,7 @@ export class AwsTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the Google Cloud text-to-speech service.
  */
 export class GcpTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = 'en-US-Wavenet-D';
+  static readonly DEFAULT_VOICE = 'en-US-Neural2-C';
   constructor(urlFunc: BuildUrl, voice: string = GcpTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('gcp', urlFunc, voice, rate);
   }

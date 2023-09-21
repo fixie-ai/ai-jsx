@@ -151,7 +151,7 @@ const PageComponent: React.FC = () => {
           display="Resemble.AI"
           provider="resemble"
           link="https://resemble.ai"
-          costPerMChar={999}
+          costPerMChar={400}
           defaultVoice="48d7ed16"
           text={text}
         />
@@ -176,7 +176,7 @@ const PageComponent: React.FC = () => {
           provider="gcp"
           link="https://cloud.google.com/text-to-speech"
           costPerMChar={16}
-          defaultVoice="en-US-Wavenet-D"
+          defaultVoice="en-US-Neural2-C"
           text={text}
         />
       </div>
