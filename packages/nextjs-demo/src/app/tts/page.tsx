@@ -146,7 +146,7 @@ const PageComponent: React.FC = () => {
           costPerMChar={999}
           defaultVoice="VM016372341539042UZ"
           text={text}
-          />
+        />
         <Tts
           display="PlayHT"
           provider="playht"

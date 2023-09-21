@@ -202,6 +202,24 @@ function ttsWellSaid(voice: string, rate: number, text: string) {
 }
 
 /**
+ * REST client for Murf.ai TTS.
+ */
+function ttsMurf(voice: string, rate: number, text: string) {
+  const headers = createHeaders();
+  headers.append('Api-Key', getEnvVar('MURF_API_KEY'));
+  const obj = {
+    voiceId: voice,
+    style: 'Conversational',
+    text,
+    rate: decimalToPercent(rate),
+    format: 'MP3',
+    encodeAsBase64: true,
+  };
+  const url = 'https://api.murf.ai/v1/speech/generate-with-key';
+  return doPost(url, headers, obj);
+}
+
+/**
  * REST client for Play.HT TTS (https://play.ht)
  */
 function ttsPlayHT(voice: string, rate: number, text: string) {
@@ -274,29 +292,6 @@ function doPost(url: string, headers: HeadersInit, body: Object) {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
-  });
-}
-
-/**
- * REST client for Murf.ai TTS.
- */
-function ttsMurf(voice: string, rate: number, text: string) {
-  const headers = new Headers();
-  headers.append('Content-Type', 'application/json');
-  headers.append('Api-Key', getEnvVar('MURF_API_KEY'));
-  const body = JSON.stringify({
-    voiceId: voice,
-    style: 'Conversational',
-    text,
-    rate: decimalToPercent(rate),
-    format: 'MP3',
-    encodeAsBase64: true,
-  });
-  const url = 'https://api.murf.ai/v1/speech/generate-with-key';
-  return fetch(url, {
-    method: 'POST',
-    headers,
-    body,
   });
 }
 
