@@ -88,22 +88,19 @@ export function FloatingFixieEmbed({ fixieHost, ...restProps }: FixieEmbedProps)
   const launcherUrl = new URL('embed-launcher', fixieHost ?? defaultFixieHost);
   const launcherRef = useRef<HTMLIFrameElement>(null);
   const [visible, setVisible] = useState(false);
-  const sidekickChannel = useRef(new MessageChannel());
 
   useEffect(() => {
+    const sidekickChannel = new MessageChannel();
     const launcherIFrame = launcherRef.current;
 
     if (launcherIFrame) {
       launcherIFrame.addEventListener('load', function () {
         if (launcherIFrame.contentWindow) {
-          launcherIFrame.contentWindow.postMessage('channel-message-port', '*', [sidekickChannel.current.port2]);
+          launcherIFrame.contentWindow.postMessage('channel-message-port', '*', [sidekickChannel.port2]);
         }
       });
 
-      sidekickChannel.current.port1.onmessage = function (event) {
-        if (event.origin !== (fixieHost ?? defaultFixieHost)) {
-          return;
-        }
+      sidekickChannel.port1.onmessage = function (event) {
         if (event.data === 'clicked launcher') {
           setVisible((visible) => !visible);
         }
