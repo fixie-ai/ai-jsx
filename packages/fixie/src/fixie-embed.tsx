@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 export interface FixieEmbedProps extends React.IframeHTMLAttributes<HTMLIFrameElement> {
@@ -66,7 +66,7 @@ export function ControlledFloatingFixieEmbed({
 
   return createPortal(
     // @ts-expect-error
-    <iframe {...getBaseIframeProps({ speak, debug, agentId, fixieHost })} {...iframeProps} style={chatStyle} ></iframe>,
+    <iframe {...getBaseIframeProps({ speak, debug, agentId, fixieHost })} {...iframeProps} style={chatStyle}></iframe>,
     document.body
   );
 }
@@ -85,11 +85,9 @@ export function FloatingFixieEmbed({ fixieHost, ...restProps }: FixieEmbedProps)
   } as const;
 
   const launcherUrl = new URL('embed-launcher', fixieHost ?? defaultFixieHost);
-  const launcherRef = React.useRef<HTMLIFrameElement>(null);
-
-  const [visible, setVisible] = React.useState(false);
-
-  const sidekickChannel = React.useRef(new MessageChannel());
+  const launcherRef = useRef<HTMLIFrameElement>(null);
+  const [visible, setVisible] = useState(false);
+  const sidekickChannel = useRef(new MessageChannel());
 
   useEffect(() => {
     function handleMessage(event: any) {
@@ -125,7 +123,7 @@ export function FloatingFixieEmbed({ fixieHost, ...restProps }: FixieEmbedProps)
   return createPortal(
     // @ts-expect-error
     <>
-      <ControlledFloatingFixieEmbed visible={visible} fixieHost={fixieHost} {...restProps} />
+      <ControlledFloatingFixieEmbed fixieHost={fixieHost} {...restProps} visible={visible} />
 
       <iframe style={launcherStyle} src={launcherUrl.toString()} ref={launcherRef}></iframe>
     </>,
