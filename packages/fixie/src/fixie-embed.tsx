@@ -9,5 +9,6 @@ export interface FixieEmbedProps extends React.IframeHTMLAttributes<HTMLIFrameEl
 }
 
 export function FixieEmbed({...iframeProps}: FixieEmbedProps) {
+  // @ts-expect-error
   return <iframe className='grow' src={embedUrl.toString()} allow='clipboard-write' {...iframeProps}></iframe>
 }
