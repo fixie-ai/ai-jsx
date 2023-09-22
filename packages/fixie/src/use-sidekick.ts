@@ -129,6 +129,8 @@ const firebaseConfig = {
 
 /**
  * @experimental this API may change at any time.
+ * 
+ * This hook manages the state of a Fixie-hosted conversation.
  */
 export function useSidekick({
   conversationId,
