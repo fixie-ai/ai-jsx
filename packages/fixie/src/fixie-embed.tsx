@@ -36,5 +36,5 @@ export function FixieEmbed({ speak, debug, agentId, fixieHost, ...iframeProps }:
     embedUrl.searchParams.set('debug', '1');
   }
 
-  return <iframe className="grow" src={embedUrl.toString()} allow="clipboard-write" {...iframeProps}></iframe>;
+  return <iframe src={embedUrl.toString()} allow="clipboard-write" {...iframeProps}></iframe>;
 }
