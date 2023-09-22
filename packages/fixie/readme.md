@@ -4,4 +4,4 @@ This package contains an SDK and command-line interface to the [Fixie.ai](https:
 
 ## Dev Notes
 
-To publish this package, run `npm publish` in this directory.
+To publish this package, run `yarn npm publish` in this directory.
