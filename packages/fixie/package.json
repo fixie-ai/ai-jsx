@@ -22,9 +22,16 @@
   "volta": {
     "extends": "../../package.json"
   },
-  "browser": "./dist/web-index.js",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "exports": {
+    "./web": {
+      "types": "./dist/web-index.d.ts",
+      "default": "./dist/web-index.js"
+    },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "bin": "./dist/src/main.js",
   "dependencies": {
     "@apollo/client": "^3.8.1",
@@ -55,7 +62,7 @@
     "@types/terminal-kit": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "^5.60.0",
     "@typescript-eslint/parser": "^5.60.0",
-    "ai-jsx": "workspace:*",
+    "ai-jsx": "*",
     "eslint": "^8.40.0",
     "eslint-config-nth": "^2.0.1",
     "prettier": "^3.0.0",
