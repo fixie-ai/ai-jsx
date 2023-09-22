@@ -127,6 +127,9 @@ const firebaseConfig = {
   measurementId: 'G-EZNCJS94S7',
 };
 
+/**
+ * @experimental this API may change at any time.
+ */
 export function useSidekick({
   conversationId,
   conversationFixtures,
