@@ -1,6 +1,6 @@
 {
   "name": "fixie",
-  "version": "1.4.0-0",
+  "version": "1.4.0-1",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
@@ -22,8 +22,16 @@
   "volta": {
     "extends": "../../package.json"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "exports": {
+    "./web": {
+      "types": "./dist/web-index.d.ts",
+      "default": "./dist/web-index.js"
+    },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "bin": "./dist/src/main.js",
   "dependencies": {
     "@apollo/client": "^3.8.1",

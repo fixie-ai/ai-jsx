@@ -96,7 +96,7 @@ export class IsomorphicFixieClient {
 
   /** Return information on the currently logged-in user. */
   userInfo(): Promise<UserInfo> {
-    const rawUserInfo: unknown = this.request('/api/user');
+    const rawUserInfo: unknown = this.requestJson('/api/user');
     return rawUserInfo as Promise<UserInfo>;
   }
 
