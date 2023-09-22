@@ -42,7 +42,14 @@ export function InlineFixieEmbed({ speak, debug, agentId, fixieHost, ...iframePr
   return <iframe {...getBaseIframeProps({ speak, debug, agentId, fixieHost })} {...iframeProps}></iframe>;
 }
 
-export function ControlledFloatingFixieEmbed({ visible, speak, debug, agentId, fixieHost, ...iframeProps }: FixieEmbedProps & { visible?: boolean}) {
+export function ControlledFloatingFixieEmbed({
+  visible,
+  speak,
+  debug,
+  agentId,
+  fixieHost,
+  ...iframeProps
+}: FixieEmbedProps & { visible?: boolean }) {
   const chatStyle = {
     position: 'fixed',
     bottom: `${10 + 10 + 48}px`,
@@ -56,7 +63,9 @@ export function ControlledFloatingFixieEmbed({ visible, speak, debug, agentId, f
     borderRadius: '16px',
   } as const;
 
-  return createPortal(<iframe style={chatStyle} {...getBaseIframeProps({ speak, debug, agentId, fixieHost })} {...iframeProps}></iframe>,
+  return createPortal(
+    // @ts-expect-error
+    <iframe style={chatStyle} {...getBaseIframeProps({ speak, debug, agentId, fixieHost })} {...iframeProps}></iframe>,
     document.body
   );
 }
@@ -79,40 +88,41 @@ export function FloatingFixieEmbed({ fixieHost, ...restProps }: FixieEmbedProps)
 
   const [visible, setVisible] = React.useState(false);
 
-  const sidekickChannel = React.useRef( new MessageChannel());
+  const sidekickChannel = React.useRef(new MessageChannel());
 
   useEffect(() => {
-    function handleMessage(event) {
-        if (event.origin !== (fixieHost ?? defaultFixieHost)) {
-            return;
-        }
+    function handleMessage(event: any) {
+      if (event.origin !== (fixieHost ?? defaultFixieHost)) {
+        return;
+      }
 
-        setVisible(visible => !visible);
+      setVisible((visible) => !visible);
 
-        const data = event.data;
-        console.log(data);
+      const data = event.data;
+      console.log(data);
     }
 
     window.addEventListener('message', handleMessage);
 
     return () => {
-        window.removeEventListener('message', handleMessage);
+      window.removeEventListener('message', handleMessage);
     };
-}, [fixieHost]);
+  }, [fixieHost]);
 
   useEffect(() => {
     const launcherIFrame = launcherRef.current;
 
     if (launcherIFrame) {
-        launcherIFrame.addEventListener('load', function() {
-            if (launcherIFrame.contentWindow) {
-                launcherIFrame.contentWindow.postMessage('channel-message-port', '*', [sidekickChannel.current.port2]);
-            }
-        });
+      launcherIFrame.addEventListener('load', function () {
+        if (launcherIFrame.contentWindow) {
+          launcherIFrame.contentWindow.postMessage('channel-message-port', '*', [sidekickChannel.current.port2]);
+        }
+      });
     }
-}, [launcherRef, sidekickChannel]);
+  }, [launcherRef, sidekickChannel]);
 
   return createPortal(
+    // @ts-expect-error
     <>
       <ControlledFloatingFixieEmbed visible={visible} fixieHost={fixieHost} {...restProps} />
 

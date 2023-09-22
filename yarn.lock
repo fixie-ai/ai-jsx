@@ -6687,6 +6687,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-dom@npm:^18.2.7":
+  version: 18.2.7
+  resolution: "@types/react-dom@npm:18.2.7"
+  dependencies:
+    "@types/react": "*"
+  checksum: e02ea908289a7ad26053308248d2b87f6aeafd73d0e2de2a3d435947bcea0422599016ffd1c3e38ff36c42f5e1c87c7417f05b0a157e48649e4a02f21727d54f
+  languageName: node
+  linkType: hard
+
 "@types/react-router-config@npm:*, @types/react-router-config@npm:^5.0.6":
   version: 5.0.7
   resolution: "@types/react-router-config@npm:5.0.7"
@@ -13036,6 +13045,7 @@ __metadata:
     "@types/lodash": ^4.14.198
     "@types/node": ^20.4.1
     "@types/react": ^18.2.22
+    "@types/react-dom": ^18.2.7
     "@types/terminal-kit": ^2.5.1
     "@typescript-eslint/eslint-plugin": ^5.60.0
     "@typescript-eslint/parser": ^5.60.0
