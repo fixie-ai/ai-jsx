@@ -61,11 +61,12 @@ export function ControlledFloatingFixieEmbed({
     display: visible ? 'block' : 'none',
     boxShadow: '0px 5px 40px rgba(0, 0, 0, 0.16)',
     borderRadius: '16px',
+    ...(iframeProps.style ?? {}),
   } as const;
 
   return createPortal(
     // @ts-expect-error
-    <iframe style={chatStyle} {...getBaseIframeProps({ speak, debug, agentId, fixieHost })} {...iframeProps}></iframe>,
+    <iframe {...getBaseIframeProps({ speak, debug, agentId, fixieHost })} {...iframeProps} style={chatStyle} ></iframe>,
     document.body
   );
 }
