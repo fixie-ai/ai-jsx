@@ -4842,6 +4842,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ozymandiasthegreat/vad@npm:^2.0.7":
+  version: 2.0.7
+  resolution: "@ozymandiasthegreat/vad@npm:2.0.7"
+  checksum: 8bddbf21fe6fff72337cb738bd0644cf4752c267e3a3d5fa2013214f2fe317baa8c53fbc9dd80824916b24d009ee86ef46dd72cc533cf690137003f942ec014d
+  languageName: node
+  linkType: hard
+
 "@pinecone-database/pinecone@npm:^0.1.6":
   version: 0.1.6
   resolution: "@pinecone-database/pinecone@npm:0.1.6"
@@ -6950,6 +6957,7 @@ __metadata:
     "@nick.heiner/wandb-fork": ^0.5.2-5
     "@opentelemetry/api": ^1.4.1
     "@opentelemetry/api-logs": ^0.41.1
+    "@ozymandiasthegreat/vad": ^2.0.7
     "@tsconfig/node16": ^1.0.4
     "@tsconfig/node18": ^2.0.1
     "@types/eslint": ^8
@@ -6979,7 +6987,6 @@ __metadata:
     lodash: ^4.17.21
     ml-distance: ^4.0.1
     node-fetch: ^3.3.1
-    node-vad: ^1.1.4
     openai: ^4.1.0
     pino: ^8.14.1
     pino-pretty: ^10.0.0
@@ -7952,15 +7959,6 @@ __metadata:
   version: 1.3.6
   resolution: "binary-search@npm:1.3.6"
   checksum: 2e6b3459a9c1ba1bd674a6a855a5ef7505f70707422244430e3510e989c0df6074a49fe60784a98b93b51545c9bcace1db1defee06ff861b124c036a2f2836bf
-  languageName: node
-  linkType: hard
-
-"bindings@npm:^1.5.0":
-  version: 1.5.0
-  resolution: "bindings@npm:1.5.0"
-  dependencies:
-    file-uri-to-path: 1.0.0
-  checksum: 65b6b48095717c2e6105a021a7da4ea435aa8d3d3cd085cb9e85bcb6e5773cf318c4745c3f7c504412855940b585bdf9b918236612a1c7a7942491de176f1ae7
   languageName: node
   linkType: hard
 
@@ -12317,13 +12315,6 @@ __metadata:
   peerDependencies:
     webpack: ^4.0.0 || ^5.0.0
   checksum: faf43eecf233f4897b0150aaa874eeeac214e4f9de49738a9e0ef734a30b5260059e85b7edadf852b98e415f875bd5f12587768a93fd52aaf2e479ecf95fab20
-  languageName: node
-  linkType: hard
-
-"file-uri-to-path@npm:1.0.0":
-  version: 1.0.0
-  resolution: "file-uri-to-path@npm:1.0.0"
-  checksum: b648580bdd893a008c92c7ecc96c3ee57a5e7b6c4c18a9a09b44fb5d36d79146f8e442578bc0e173dc027adf3987e254ba1dfd6e3ec998b7c282873010502144
   languageName: node
   linkType: hard
 
@@ -18030,15 +18021,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nan@npm:^2.14.0":
-  version: 2.18.0
-  resolution: "nan@npm:2.18.0"
-  dependencies:
-    node-gyp: latest
-  checksum: 4fe42f58456504eab3105c04a5cffb72066b5f22bd45decf33523cb17e7d6abc33cca2a19829407b9000539c5cb25f410312d4dc5b30220167a3594896ea6a0a
-  languageName: node
-  linkType: hard
-
 "nano-css@npm:^5.3.1":
   version: 5.3.5
   resolution: "nano-css@npm:5.3.5"
@@ -18492,18 +18474,6 @@ __metadata:
   version: 2.0.12
   resolution: "node-releases@npm:2.0.12"
   checksum: b8c56db82c4642a0f443332b331a4396dae452a2ac5a65c8dbd93ef89ecb2fbb0da9d42ac5366d4764973febadca816cf7587dad492dce18d2a6b2af59cda260
-  languageName: node
-  linkType: hard
-
-"node-vad@npm:^1.1.4":
-  version: 1.1.4
-  resolution: "node-vad@npm:1.1.4"
-  dependencies:
-    bindings: ^1.5.0
-    nan: ^2.14.0
-    node-gyp: latest
-    util-promisifyall: ^1.0.6
-  checksum: d9ea45a12d4508c232dda0336fe0422d5c92d38338f48a2222fe9845cbbc9f837389a2fb6272cbd59115e0f6ecc45defa21a7d104cafc5131c9d7a8197c8f589
   languageName: node
   linkType: hard
 
@@ -24635,13 +24605,6 @@ __metadata:
   version: 1.0.2
   resolution: "util-deprecate@npm:1.0.2"
   checksum: 474acf1146cb2701fe3b074892217553dfcf9a031280919ba1b8d651a068c9b15d863b7303cb15bd00a862b498e6cf4ad7b4a08fb134edd5a6f7641681cb54a2
-  languageName: node
-  linkType: hard
-
-"util-promisifyall@npm:^1.0.6":
-  version: 1.0.6
-  resolution: "util-promisifyall@npm:1.0.6"
-  checksum: 874ff4069260d6c01730623d352b15abe16e1c9c2b0d185808c77d94703b0e5364f8222867fef2a09b651bafb4d6a10806cee678c561745fdc0b11fe0ba315be
   languageName: node
   linkType: hard
 

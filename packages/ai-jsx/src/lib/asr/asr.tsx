@@ -1,5 +1,5 @@
 'use client';
-import { NodeVoiceActivityDetector, VoiceActivityDetectorBase } from "./vad.js";
+import { LibfVoiceActivityDetector, VoiceActivityDetectorBase } from './vad.js';
 
 const AUDIO_WORKLET_SRC = `
 class InputProcessor extends AudioWorkletProcessor {
@@ -84,6 +84,7 @@ export class MicManager extends EventTarget {
    * Stops capture.
    */
   stop() {
+    this.vad?.stop();
     this.processorNode?.disconnect();
     this.stream?.getTracks().forEach((track) => track.stop());
     this.streamElement?.pause();
@@ -102,7 +103,7 @@ export class MicManager extends EventTarget {
 
   private async startGraph(timeslice: number, onEnded?: () => void) {
     this.outBuffer = [];
-    this.context = new window.AudioContext({sampleRate: 16000});
+    this.context = new window.AudioContext({ sampleRate: 16000 });
     console.log(`MicManager sample rate: ${this.context.sampleRate}`);
     const workletSrcBlob = new Blob([AUDIO_WORKLET_SRC], {
       type: 'application/javascript',
@@ -143,7 +144,7 @@ export class MicManager extends EventTarget {
     source.connect(this.processorNode);
     this.processorNode.connect(this.context.destination);
 
-    this.vad = new NodeVoiceActivityDetector(this.sampleRate()!);
+    this.vad = new LibfVoiceActivityDetector(this.sampleRate()!);
     this.vad.onSpeechStart = () => {
       console.log('Speech start detected');
     };
@@ -153,8 +154,9 @@ export class MicManager extends EventTarget {
     this.vad.onSpeechCancel = () => {
       console.log('Speech cancel detected');
     };
+    this.vad.start(this.sampleRate()!);
   }
-  
+
   /**
    * Converts a list of Float32Arrays to a single ArrayBuffer of 16-bit
    * little-endian Pulse Code Modulation (PCM) audio data, which is
