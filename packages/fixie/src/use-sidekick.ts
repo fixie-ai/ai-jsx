@@ -129,7 +129,7 @@ const firebaseConfig = {
 
 /**
  * @experimental this API may change at any time.
- * 
+ *
  * This hook manages the state of a Fixie-hosted conversation.
  */
 export function useSidekick({
@@ -376,6 +376,8 @@ export function useSidekick({
    * and instead reads from Firebase.
    */
   turns.forEach((turn) => {
+    // The types are wrong here.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (lastAssistantMessagesAtStop[turn.id]) {
       turn.messages = lastAssistantMessagesAtStop[turn.id];
     }
@@ -423,7 +425,7 @@ export function useSidekick({
     return loadState === 'loaded' && mostRecentAssistantTurn?.state === 'in-progress';
   }
 
-  const result = {
+  return {
     turns,
     loadState,
     input,
@@ -435,8 +437,4 @@ export function useSidekick({
     sendMessage,
     conversationExists: snapshot ? !snapshot.empty : undefined,
   };
-
-  console.log('sidekick result', result);
-
-  return result;
 }
