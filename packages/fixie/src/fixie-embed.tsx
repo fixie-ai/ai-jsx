@@ -65,6 +65,7 @@ export function ControlledFloatingFixieEmbed({
   } as const;
 
   return createPortal(
+    // The types are wrong
     // @ts-expect-error
     <iframe {...getBaseIframeProps({ speak, debug, agentId, fixieHost })} {...iframeProps} style={chatStyle}></iframe>,
     document.body
@@ -90,25 +91,6 @@ export function FloatingFixieEmbed({ fixieHost, ...restProps }: FixieEmbedProps)
   const sidekickChannel = useRef(new MessageChannel());
 
   useEffect(() => {
-    function handleMessage(event: any) {
-      if (event.origin !== (fixieHost ?? defaultFixieHost)) {
-        return;
-      }
-
-      setVisible((visible) => !visible);
-
-      const data = event.data;
-      console.log(data);
-    }
-
-    window.addEventListener('message', handleMessage);
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [fixieHost]);
-
-  useEffect(() => {
     const launcherIFrame = launcherRef.current;
 
     if (launcherIFrame) {
@@ -117,10 +99,20 @@ export function FloatingFixieEmbed({ fixieHost, ...restProps }: FixieEmbedProps)
           launcherIFrame.contentWindow.postMessage('channel-message-port', '*', [sidekickChannel.current.port2]);
         }
       });
+
+      sidekickChannel.current.port1.onmessage = function (event) {
+        if (event.origin !== (fixieHost ?? defaultFixieHost)) {
+          return;
+        }
+        if (event.data === 'clicked launcher') {
+          setVisible((visible) => !visible);
+        }
+      };
     }
-  }, [launcherRef, sidekickChannel]);
+  }, [fixieHost]);
 
   return createPortal(
+    // The types are wrong
     // @ts-expect-error
     <>
       <ControlledFloatingFixieEmbed fixieHost={fixieHost} {...restProps} visible={visible} />
