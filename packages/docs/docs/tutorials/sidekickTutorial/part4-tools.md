@@ -149,3 +149,22 @@ return (
 That's it! Your Sidekick now has an extra appendage that can invoke the GitHub GraphQL API!
 
 ## Testing it out
+
+Before you can use the GitHub GraphQL API in your Sidekick, you need to create a GitHub API
+token.
+
+You can do this at https://github.com/settings/tokens.
+
+You **must** create a "Fine Grained" access token. Be sure to give the token
+**read only** access to things you want to ask the Sidekick about -- we recommend
+adding access to repository contents, issues, and pull requests, at a minimum.
+
+Once you have the token, set the `GITHUB_TOKEN` environment variable to the token value.
+
+Now you should be able to deploy the Sidekick and ask questions of it, like:
+* How many PRs are assigned me?
+* Show me the open issues in the fixie-ai/ai-jsx repo
+* What is my most recent pull request?
+
+In each case, the Sidekick will use the LLM to formulate a query to the GitHub GraphQL API,
+get back a response, and then use the LLM to generate a response.
