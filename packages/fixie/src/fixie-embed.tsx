@@ -72,8 +72,12 @@ export function ControlledFloatingFixieEmbed({
   return (
     <>
       {createPortal(
-        // The types are wrong
-        // @ts-expect-error
+        // Something rotten is happening. When I build TS from this package, it throws a dep error, which is
+        // incorrect. When I build from Generic Sidekick Frontend, the types work, so having a ts-expect-error here 
+        // causes a problem. I don't know why GSF is trying to rebuild the TS in the first place.
+        // This hacks around it.
+        // eslint-disable-next-line @typescript-eslint/prefer-ts-expect-error
+        // @ts-ignore
         <iframe
           {...getBaseIframeProps({ speak, debug, agentId, fixieHost })}
           {...iframeProps}
@@ -125,8 +129,12 @@ export function FloatingFixieEmbed({ fixieHost, ...restProps }: FixieEmbedProps)
   return (
     <>
       {createPortal(
-        // The types are wrong
-        // @ts-expect-error
+        // Something rotten is happening. When I build TS from this package, it throws a dep error, which is
+        // incorrect. When I build from Generic Sidekick Frontend, the types work, so having a ts-expect-error here 
+        // causes a problem. I don't know why GSF is trying to rebuild the TS in the first place.
+        // This hacks around it.
+        // eslint-disable-next-line @typescript-eslint/prefer-ts-expect-error
+        // @ts-ignore
         <>
           <ControlledFloatingFixieEmbed fixieHost={fixieHost} {...restProps} visible={visible} />
 
