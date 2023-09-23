@@ -2,7 +2,7 @@ import { getFirestore, collection, doc, query, orderBy, FirestoreError } from 'f
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { initializeApp } from 'firebase/app';
 
-import { useState, SetStateAction, Dispatch, useRef } from 'react';
+import { useState, SetStateAction, Dispatch, useRef, useEffect } from 'react';
 import _ from 'lodash';
 import {
   MessageGenerationParams,
@@ -133,7 +133,7 @@ const firebaseConfig = {
  * This hook manages the state of a Fixie-hosted conversation.
  */
 export function useSidekick({
-  conversationId,
+  conversationId: userPassedConversationId,
   conversationFixtures,
   onNewTokens,
   messageGenerationParams,
@@ -147,6 +147,16 @@ export function useSidekick({
    */
 
   const [input, setInput] = useState('');
+  const [conversationId, setConversationId] = useState(userPassedConversationId);
+
+  function handleNewConversationId(conversationId: ConversationId) {
+    setConversationId(conversationId);
+    onNewConversation?.(conversationId);
+  }
+
+  useEffect(() => {
+    setConversationId(userPassedConversationId);
+  }, [userPassedConversationId])
 
   // I think using `data` as a var name is fine here.
   /* eslint-disable id-blacklist */
@@ -215,7 +225,7 @@ export function useSidekick({
   async function createNewConversation() {
     const conversationId = (await fixieClient.startConversation(agentId, fullMessageGenerationParams, input))
       .conversationIdHeaderValue;
-    onNewConversation?.(conversationId);
+    handleNewConversationId(conversationId);
   }
 
   /**
