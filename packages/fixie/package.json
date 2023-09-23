@@ -1,6 +1,6 @@
 {
   "name": "fixie",
-  "version": "1.4.0-11",
+  "version": "1.4.0-13",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
@@ -22,6 +22,7 @@
   "bin": "./src/main.js",
   "dependencies": {
     "@apollo/client": "^3.8.1",
+    "@types/apollo-upload-client": "^17.0.2",
     "ai-jsx": "workspace:*",
     "apollo-upload-client": "^17.0.0",
     "axios": "^1.5.0",
@@ -39,10 +40,14 @@
     "untildify": "^5.0.0"
   },
   "peerDependencies": {
+    "@types/react-dom": "^18.2.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "peerDependenciesMeta": {
+    "@types/react-dom": {
+      "optional": true
+    },
     "react": {
       "optional": true
     },
@@ -53,13 +58,11 @@
   "devDependencies": {
     "@fixieai/sdk": "*",
     "@tsconfig/node18": "^2.0.1",
-    "@types/apollo-upload-client": "^17.0.2",
     "@types/extract-files": "^8.1.1",
     "@types/js-yaml": "^4.0.5",
     "@types/lodash": "^4.14.198",
     "@types/node": "^20.4.1",
     "@types/react": "^18.2.22",
-    "@types/react-dom": "^18.2.7",
     "@types/terminal-kit": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "^5.60.0",
     "@typescript-eslint/parser": "^5.60.0",
