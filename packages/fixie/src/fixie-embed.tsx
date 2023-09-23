@@ -64,11 +64,19 @@ export function ControlledFloatingFixieEmbed({
     ...(iframeProps.style ?? {}),
   } as const;
 
-  return createPortal(
-    // The types are wrong
-    // @ts-expect-error
-    <iframe {...getBaseIframeProps({ speak, debug, agentId, fixieHost })} {...iframeProps} style={chatStyle}></iframe>,
-    document.body
+  return (
+    <>
+      {createPortal(
+        // The types are wrong
+        // @ts-expect-error
+        <iframe
+          {...getBaseIframeProps({ speak, debug, agentId, fixieHost })}
+          {...iframeProps}
+          style={chatStyle}
+        ></iframe>,
+        document.body
+      )}
+    </>
   );
 }
 
@@ -109,15 +117,19 @@ export function FloatingFixieEmbed({ fixieHost, ...restProps }: FixieEmbedProps)
     }
   }, [fixieHost]);
 
-  return createPortal(
-    // The types are wrong
-    // @ts-expect-error
+  return (
     <>
-      <ControlledFloatingFixieEmbed fixieHost={fixieHost} {...restProps} visible={visible} />
+      {createPortal(
+        // The types are wrong
+        // @ts-expect-error
+        <>
+          <ControlledFloatingFixieEmbed fixieHost={fixieHost} {...restProps} visible={visible} />
 
-      <iframe style={launcherStyle} src={launcherUrl.toString()} ref={launcherRef}></iframe>
-    </>,
-    document.body
+          <iframe style={launcherStyle} src={launcherUrl.toString()} ref={launcherRef}></iframe>
+        </>,
+        document.body
+      )}
+    </>
   );
 }
 
