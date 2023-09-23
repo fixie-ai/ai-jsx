@@ -311,9 +311,46 @@ export class AwsTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the Google Cloud text-to-speech service.
  */
 export class GcpTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = 'en-US-Wavenet-D';
+  static readonly DEFAULT_VOICE = 'en-US-Neural2-C';
   constructor(urlFunc: BuildUrl, voice: string = GcpTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('gcp', urlFunc, voice, rate);
+  }
+}
+
+/**
+ * Text-to-speech implementation that uses the WellSaid Labs text-to-speech service.
+ */
+export class WellSaidTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = '42'; // Sofia H. (Conversational)
+  constructor(urlFunc: BuildUrl, voice: string = WellSaidTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('wellsaid', urlFunc, voice, rate);
+  }
+}
+
+export class MurfTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = 'VM016372341539042UZ'; // Natalie
+  constructor(urlFunc: BuildUrl, voice: string = MurfTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('murf', urlFunc, voice, rate);
+  }
+}
+
+/**
+ * Text-to-speech implementation that uses the Play.HT text-to-speech service.
+ */
+export class PlayHTTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = 'larry';
+  constructor(urlFunc: BuildUrl, voice: string = PlayHTTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('playht', urlFunc, voice, rate);
+  }
+}
+
+/**
+ * Text-to-speech implementation that uses the Resemble.AI text-to-speech service.
+ */
+export class ResembleTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = '48d7ed16'; // Tarkos
+  constructor(urlFunc: BuildUrl, voice: string = ResembleTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('resemble', urlFunc, voice, rate);
   }
 }
 
@@ -429,6 +466,10 @@ class ElevenLabsOutboundMessage {
     this.xi_api_key = xi_api_key;
   }
   text: string;
+  voice_settings?: {
+    stability: number;
+    similarity: number;
+  };
   generation_config?: {
     chunk_length_schedule: number[];
   };
@@ -453,6 +494,10 @@ export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
     // once we have 50 characters of text buffered.
     const obj = new ElevenLabsOutboundMessage({
       text: ' ',
+      voice_settings: {
+        stability: 0.5,
+        similarity: 0.8,
+      },
       generation_config: {
         chunk_length_schedule: [50],
       },
@@ -464,13 +509,11 @@ export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
     const message = inMessage as ElevenLabsInboundMessage;
     console.debug(message);
     if (message.audio) {
-      if (!message.isFinal) {
-        console.debug(`[${this.name}] chunk received`);
-        this.queueChunk(new AudioChunk(Buffer.from(message.audio!, 'base64')));
-      } else {
-        console.log(`[${this.name}] utterance complete`);
-        this.setComplete();
-      }
+      console.debug(`[${this.name}] chunk received`);
+      this.queueChunk(new AudioChunk(Buffer.from(message.audio!, 'base64')));
+    } else if (message.isFinal) {
+      console.log(`[${this.name}] utterance complete`);
+      this.setComplete();
     } else if (message.error) {
       console.error(`[${this.name}] error: ${message.message}`);
     }
@@ -503,6 +546,14 @@ export function createTextToSpeech({ provider, rate, voice, getToken, buildUrl }
       return new AwsTextToSpeech(buildUrl!, voice, rate);
     case 'gcp':
       return new GcpTextToSpeech(buildUrl!, voice, rate);
+    case 'wellsaid':
+      return new WellSaidTextToSpeech(buildUrl!, voice, rate);
+    case 'murf':
+      return new MurfTextToSpeech(buildUrl!, voice, rate);
+    case 'playht':
+      return new PlayHTTextToSpeech(buildUrl!, voice, rate);
+    case 'resemble':
+      return new ResembleTextToSpeech(buildUrl!, voice, rate);
     case 'eleven':
       return new ElevenLabsTextToSpeech(getToken!, voice);
     default:

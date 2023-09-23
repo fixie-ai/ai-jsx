@@ -1,10 +1,12 @@
 import { SystemMessage } from '../../../core/conversation.js';
 import { MdxSystemMessage } from '../../../react/jit-ui/mdx.js';
 import { Prompt } from '../../prompts.js';
-import { mdxUsageExamples } from './gen-ui.js';
+import { MdxUsageExamples } from './gen-ui.js';
 import { Node } from '../../../index.js';
+import { SidekickProps } from './sidekick.js';
 
-export interface SidekickSystemMessageProps {
+export interface SidekickSystemMessageProps
+  extends Pick<SidekickProps, 'outputFormat' | 'includeNextStepsRecommendations'> {
   timeZone: string;
   timeZoneOffset: string;
   userProvidedGenUIUsageExamples?: Node;
@@ -17,6 +19,8 @@ export function SidekickSystemMessage({
   timeZoneOffset,
   userProvidedGenUIUsageExamples,
   userProvidedGenUIComponentNames,
+  includeNextStepsRecommendations,
+  outputFormat,
   role,
 }: SidekickSystemMessageProps) {
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -39,6 +43,11 @@ export function SidekickSystemMessage({
     </SystemMessage>
   );
 
+  const baseComponentNames = ['Card', 'Citation'];
+  if (includeNextStepsRecommendations) {
+    baseComponentNames.push('NextStepsButton');
+  }
+
   return (
     <>
       {dateTimeSystemMessage}
@@ -51,15 +60,18 @@ export function SidekickSystemMessage({
         If the user asks something that is impossible, tell them **up-front** it is impossible. You can still write
         relevant helpful comments, but do not lead the user to think something can be done when it cannot be.
       </SystemMessage>
-      <MdxSystemMessage
-        componentNames={['Card', 'Citation', 'NextStepsButton', ...(userProvidedGenUIComponentNames ?? [])]}
-        usageExamples={
-          <>
-            {mdxUsageExamples}
-            {userProvidedGenUIUsageExamples}
-          </>
-        }
-      />
+      {outputFormat === 'text/markdown' && <SystemMessage>Respond with Markdown.</SystemMessage>}
+      {outputFormat === 'text/mdx' && (
+        <MdxSystemMessage
+          componentNames={[...baseComponentNames, ...(userProvidedGenUIComponentNames ?? [])]}
+          usageExamples={
+            <>
+              <MdxUsageExamples includeNextStepsRecommendations={includeNextStepsRecommendations} />
+              {userProvidedGenUIUsageExamples}
+            </>
+          }
+        />
+      )}
     </>
   );
 }

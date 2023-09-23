@@ -96,7 +96,7 @@ Clone the `fixie-sidekick-template` repository from GitHub:
 git clone https://github.com/fixie-ai/fixie-sidekick-template.git
 ```
 
-If this command fails you may need to [install Git](https://github.com/fixie-ai/fixie-sidekick-template.git).
+If this command fails you may need to [install Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
 You can also download the code directly from [the source](https://github.com/fixie-ai/fixie-sidekick-template). While you're there, give us a star! 🦊
 
@@ -107,6 +107,7 @@ build it before it can be deployed. To do this, in the `fixie-sidekick-template`
 directory, run:
 
 ```terminal
+cd fixie-sidekick-template
 npm install
 npm run build
 ```

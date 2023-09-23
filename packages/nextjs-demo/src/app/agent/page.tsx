@@ -127,7 +127,8 @@ class ChatManagerInit {
     public readonly asrProvider: string,
     public readonly ttsProvider: string,
     public readonly model: string,
-    public readonly docs: boolean
+    public readonly docs: boolean,
+    public readonly ttsVoice?: string
   ) {}
 }
 
@@ -147,10 +148,16 @@ class ChatManager {
   onAudioStart?: (latency: number) => void;
   onAudioEnd?: () => void;
   onError?: () => void;
-  constructor({ asrProvider, ttsProvider, model, docs }: ChatManagerInit) {
+  constructor({ asrProvider, ttsProvider, ttsVoice, model, docs }: ChatManagerInit) {
     this.micManager = new MicManager();
     this.asr = createSpeechRecognition({ provider: asrProvider, manager: this.micManager, getToken: getAsrToken });
-    this.tts = createTextToSpeech({ provider: ttsProvider, getToken: getTtsToken, buildUrl: buildTtsUrl, rate: 1.2 });
+    this.tts = createTextToSpeech({
+      provider: ttsProvider,
+      getToken: getTtsToken,
+      buildUrl: buildTtsUrl,
+      voice: ttsVoice,
+      rate: 1.2,
+    });
     this.model = model;
     this.docs = docs;
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
@@ -194,7 +201,8 @@ class ChatManager {
    */
   private handleInputUpdate(text: string, final: boolean) {
     // If the input text has been finalized, add it to the message history.
-    const userMessage = new ChatMessage('user', text);
+    const trimmed = text.trim();
+    const userMessage = new ChatMessage('user', trimmed);
     const newMessages = [...this.history, userMessage];
     if (final) {
       this.history = newMessages;
@@ -203,13 +211,13 @@ class ChatManager {
     // If it doesn't match an existing request, kick off a new one.
     // If it matches an existing request and the text is finalized, speculative
     // execution worked! Snap forward to the current state of that request.
-    const hit = text in this.pendingRequests;
-    console.log(`${final ? 'final' : 'partial'}: ${text} ${hit ? 'HIT' : 'MISS'}`);
+    const hit = trimmed in this.pendingRequests;
+    console.log(`${final ? 'final' : 'partial'}: ${trimmed} ${hit ? 'HIT' : 'MISS'}`);
     if (!hit) {
       const request = new ChatRequest(newMessages, this.model, this.docs, final);
       request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
       request.onComplete = (request) => this.handleRequestDone(request);
-      this.pendingRequests[text] = request;
+      this.pendingRequests[trimmed] = request;
       request.start();
     } else if (final) {
       const request = this.pendingRequests[text];
@@ -289,6 +297,7 @@ const PageComponent: React.FC = () => {
   const searchParams = useSearchParams();
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
+  const ttsVoice = searchParams.get('ttsVoice') || undefined;
   const model = searchParams.get('llm') || 'gpt-4';
   const docs = Boolean(searchParams.get('docs'));
   const [chatManager, setChatManager] = useState<ChatManager | null>(null);
@@ -300,7 +309,7 @@ const PageComponent: React.FC = () => {
 
   const active = () => Boolean(chatManager);
   const handleStart = () => {
-    const manager = new ChatManager({ asrProvider, ttsProvider, model, docs });
+    const manager = new ChatManager({ asrProvider, ttsProvider, ttsVoice, model, docs });
     setInput('');
     setOutput('');
     setAsrLatency(0);
