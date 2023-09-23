@@ -1,6 +1,6 @@
 {
   "name": "fixie",
-  "version": "1.4.0-2",
+  "version": "1.4.0-4",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
@@ -16,26 +16,14 @@
     "lint:fix": "eslint .",
     "prepack": "yarn build"
   },
-  "files": [
-    "dist"
-  ],
   "volta": {
     "extends": "../../package.json"
-  },
-  "exports": {
-    "./web": {
-      "types": "./dist/web-index.d.ts",
-      "default": "./dist/web-index.js"
-    },
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
   },
   "bin": "./dist/src/main.js",
   "dependencies": {
     "@apollo/client": "^3.8.1",
     "apollo-upload-client": "^17.0.0",
+    "ai-jsx": "workspace:*",
     "axios": "^1.5.0",
     "commander": "^11.0.0",
     "execa": "^8.0.1",
@@ -75,7 +63,6 @@
     "@types/terminal-kit": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "^5.60.0",
     "@typescript-eslint/parser": "^5.60.0",
-    "ai-jsx": "workspace:*",
     "eslint": "^8.40.0",
     "eslint-config-nth": "^2.0.1",
     "prettier": "^3.0.0",
