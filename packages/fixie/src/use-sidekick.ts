@@ -224,7 +224,7 @@ export function useSidekick({
   const lastSeenMostRecentAgentTextMessage = useRef('');
   async function createNewConversation() {
     const conversationId = (await fixieClient.startConversation(agentId, fullMessageGenerationParams, input))
-      .conversationIdHeaderValue;
+      .conversationId;
     handleNewConversationId(conversationId);
   }
 
