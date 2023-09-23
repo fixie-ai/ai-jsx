@@ -22,8 +22,8 @@
   "bin": "./dist/src/main.js",
   "dependencies": {
     "@apollo/client": "^3.8.1",
-    "apollo-upload-client": "^17.0.0",
     "ai-jsx": "workspace:*",
+    "apollo-upload-client": "^17.0.0",
     "axios": "^1.5.0",
     "commander": "^11.0.0",
     "execa": "^8.0.1",
