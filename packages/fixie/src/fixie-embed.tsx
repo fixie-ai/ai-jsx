@@ -49,7 +49,12 @@ export function ControlledFloatingFixieEmbed({
   agentId,
   fixieHost,
   ...iframeProps
-}: FixieEmbedProps & { visible?: boolean }) {
+}: FixieEmbedProps & { 
+  /**
+   * If true, the Fixie chat UI will be visible. If false, it will be hidden.
+   */
+  visible?: boolean 
+}) {
   const chatStyle = {
     position: 'fixed',
     bottom: `${10 + 10 + 48}px`,
