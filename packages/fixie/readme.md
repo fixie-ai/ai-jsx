@@ -60,7 +60,7 @@ This hook provides a fully managed API for a conversation. It returns a number o
 import { IsomorphicFixieClient } from 'fixie/web';
 ```
 
-This low-level API provides direct access to the Fixie conversation API. You need to manage things like loading state and response parsing on your own, but it's the most flexible.
+This low-level API provides direct access to the Fixie Conversation and Corpus APIs. You need to manage things like loading state and response parsing on your own, but it's the most flexible.
 
 ## Dev Notes
 
