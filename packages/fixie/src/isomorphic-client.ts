@@ -52,11 +52,13 @@ export class IsomorphicFixieClient {
 
   /**
    * Create a new FixieClient without an API key. This is only useful for accessing public APIs, such as the conversation APIs.
+   *
+   * You only need to pass url if you're pointing to a different Fixie backend than the default production. Unless you specificially know you need to do this, you don't.
    */
   // This is also useful for running in the console.fixie.ai webapp, because it's on the same host
   // as the backend and thus doesn't need the API key, assuming we set the auth cookies to be cross-domain.
-  static CreateWithoutApiKey(url: string) {
-    return new this(url);
+  static CreateWithoutApiKey(url?: string) {
+    return new this(url ?? 'https://api.fixie.ai');
   }
 
   /** Send a request to the Fixie API with the appropriate auth headers. */
@@ -236,8 +238,8 @@ export class IsomorphicFixieClient {
    * Start a new conversation with an agent, optionally sending the initial message. (If you don't send the initial
    * message, the agent may.)
    *
-   * @returns { conversationIdHeaderValue, response }
-   *    conversationIdHeaderValue: The conversation ID, which can be used with the other API methods to continue the
+   * @returns { conversationId, response }
+   *    conversationId: The conversation ID, which can be used with the other API methods to continue the
    *                               conversation.
    *    response: The fetch response. The response will be a stream of newline-delimited JSON objects, each of which be
    *              of the shape ConversationTurn. Each member of the stream is the latest value of the turn as the agent
@@ -282,11 +284,11 @@ export class IsomorphicFixieClient {
     }
 
     const headerName = 'X-Fixie-Conversation-Id';
-    const conversationIdHeaderValue = conversation.headers.get(headerName);
-    if (!conversationIdHeaderValue) {
+    const conversationId = conversation.headers.get(headerName);
+    if (!conversationId) {
       throw new Error(`Fixie bug: Fixie backend did not return the "${headerName}" header.`);
     }
-    return { conversationIdHeaderValue, response: conversation };
+    return { conversationId, response: conversation };
   }
 
   /**

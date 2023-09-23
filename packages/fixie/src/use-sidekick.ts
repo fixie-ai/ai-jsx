@@ -156,7 +156,7 @@ export function useSidekick({
 
   useEffect(() => {
     setConversationId(userPassedConversationId);
-  }, [userPassedConversationId])
+  }, [userPassedConversationId]);
 
   // I think using `data` as a var name is fine here.
   /* eslint-disable id-blacklist */
