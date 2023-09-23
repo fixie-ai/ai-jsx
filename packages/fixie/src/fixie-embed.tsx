@@ -83,6 +83,7 @@ export function FloatingFixieEmbed({ fixieHost, ...restProps }: FixieEmbedProps)
     zIndex: '999999',
     boxShadow: '0px 5px 40px rgba(0, 0, 0, 0.16)',
     background: 'none',
+    border: 'none',
   } as const;
 
   const launcherUrl = new URL('embed-launcher', fixieHost ?? defaultFixieHost);
