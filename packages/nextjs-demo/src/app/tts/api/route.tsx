@@ -12,6 +12,10 @@ const PROVIDER_MAP: ProviderMap = {
   aws: ttsAws,
   gcp: ttsGcp,
   wellsaid: ttsWellSaid,
+  murf: ttsMurf,
+  playht: ttsPlayHT,
+  resemble: ttsResembleV1,
+  resemble2: ttsResembleV2,
 };
 
 function makeStreamResponse(startMillis: number, response: Response) {
@@ -41,6 +45,13 @@ function makeStreamResponse(startMillis: number, response: Response) {
   return new NextResponse(nextStream, { headers, status });
 }
 
+async function makeBlobResponseFromJson(startMillis: number, response: Response, keyName: string) {
+  const json = await response.json();
+  const binary = Buffer.from(json[keyName], 'base64');
+  console.log(`${startMillis} TTS complete latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
+  return new NextResponse(binary, { headers: { 'Content-Type': AUDIO_MPEG_MIME_TYPE } });
+}
+
 /**
  * Calls out to the requested TTS provider to generate speech with the given parameters.
  * This sidesteps CORS and also allows us to hide the API keys from the client.
@@ -65,52 +76,53 @@ export async function GET(request: NextRequest) {
   const response = await func(voice, rate, text);
   console.log(`${startMillis} TTS response latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
   if (provider == 'gcp') {
-    // GCP returns JSONified audio, not binary.
-    return makeResponseForGcp(startMillis, response);
+    return makeBlobResponseFromJson(startMillis, response, 'audioContent');
+  }
+  if (provider == 'murf') {
+    return makeBlobResponseFromJson(startMillis, response, 'encodedAudio');
   }
   return makeStreamResponse(startMillis, response);
+}
+
+/**
+ * Converts a decimal rate to a percent, e.g. 1.1 -> 10, 0.9 -> -10.
+ */
+function decimalToPercent(decimal: number) {
+  return Math.round((decimal - 1.0) * 100);
 }
 
 function makeSsml(voice: string, rate: number, text: string) {
   return `
   <speak version="1.0" xml:lang="en-US">
     <voice xml:lang="en-US" name="${voice}">
-      <prosody rate="${Math.round((rate - 1.0) * 100)}%">${text}</prosody>
+      <prosody rate="${decimalToPercent(rate)}%">${text}</prosody>
     </voice>
   </speak>`;
 }
 
 /**
- * REST client for Eleven Labs TTS.
+ * REST client for Eleven Labs TTS. (https://elevenlabs.io)
  */
-function ttsEleven(voiceId: string, rate: number, text: string): Promise<Response> {
-  const latencyMode = 22;
-  const apiKey: string = getEnvVar('ELEVEN_API_KEY');
-  const url: string = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream?optimize_streaming_latency=${latencyMode}`;
-  const headers: HeadersInit = {
-    Accept: AUDIO_MPEG_MIME_TYPE,
-    'xi-api-key': apiKey,
-    'Content-Type': 'application/json',
-  };
-  const body = JSON.stringify({
+function ttsEleven(voiceId: string, rate: number, text: string) {
+  const headers = createHeaders();
+  headers.append('xi-api-key', getEnvVar('ELEVEN_API_KEY'));
+  const obj = {
     text,
     model_id: 'eleven_monolingual_v1',
     voice_settings: {
       stability: 0.5,
       similarity_boost: 0.5,
     },
-  });
-  return fetch(url, {
-    method: 'POST',
-    headers,
-    body,
-  });
+  };
+  const latencyMode = 22;
+  const url: string = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream?optimize_streaming_latency=${latencyMode}`;
+  return doPost(url, headers, obj);
 }
 
 /**
  * REST client for Azure TTS.
  */
-function ttsAzure(voice: string, rate: number, text: string): Promise<Response> {
+function ttsAzure(voice: string, rate: number, text: string) {
   const region = 'westus';
   const apiKey = getEnvVar('AZURE_TTS_API_KEY');
   const outputFormat = 'audio-24khz-48kbitrate-mono-mp3';
@@ -164,45 +176,122 @@ function ttsAws(voice: string, rate: number, text: string) {
  * REST client for GCP TTS.
  */
 function ttsGcp(voice: string, rate: number, text: string) {
-  const headers = new Headers();
-  headers.append('Content-Type', 'application/json');
-  const body = JSON.stringify({
+  const headers = createHeaders();
+  const obj = {
     input: { text },
     voice: { languageCode: 'en-US', name: voice },
     audioConfig: { audioEncoding: 'MP3', speakingRate: rate },
-  });
+  };
   const apiKey = getEnvVar('GOOGLE_TTS_API_KEY');
   const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
-  return fetch(url, {
-    method: 'POST',
-    headers,
-    body,
-  });
-}
-
-async function makeResponseForGcp(startMillis: number, response: Response) {
-  const json = await response.json();
-  const binary = Buffer.from(json.audioContent, 'base64');
-  console.log(`${startMillis} TTS complete latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
-  return new NextResponse(binary, { headers: { 'Content-Type': AUDIO_MPEG_MIME_TYPE } });
+  return doPost(url, headers, obj);
 }
 
 /**
  * REST client for WellSaid TTS.
  */
 function ttsWellSaid(voice: string, rate: number, text: string) {
-  const headers = new Headers();
-  headers.append('Content-Type', 'application/json');
+  const headers = createHeaders();
   headers.append('X-Api-Key', getEnvVar('WELLSAID_API_KEY'));
-  const body = JSON.stringify({
+  const obj = {
     speaker_id: voice,
     text,
-  });
+  };
   const url = 'https://api.wellsaidlabs.com/v1/tts/stream';
+  return doPost(url, headers, obj);
+}
+
+/**
+ * REST client for Murf.ai TTS.
+ */
+function ttsMurf(voice: string, rate: number, text: string) {
+  const headers = createHeaders();
+  headers.append('Api-Key', getEnvVar('MURF_API_KEY'));
+  const obj = {
+    voiceId: voice,
+    style: 'Conversational',
+    text,
+    rate: decimalToPercent(rate),
+    format: 'MP3',
+    encodeAsBase64: true,
+  };
+  const url = 'https://api.murf.ai/v1/speech/generate-with-key';
+  return doPost(url, headers, obj);
+}
+
+/**
+ * REST client for Play.HT TTS (https://play.ht)
+ */
+function ttsPlayHT(voice: string, rate: number, text: string) {
+  const headers = createHeaders();
+  headers.append('X-User-Id', getEnvVar('PLAYHT_USER_ID'));
+  headers.append('Authorization', `Bearer ${getEnvVar('PLAYHT_API_KEY')}`);
+  const obj = {
+    voice,
+    text,
+    quality: 'draft',
+    output_format: 'mp3',
+    speed: rate,
+    sample_rate: 24000,
+  };
+  const url = 'https://play.ht/api/v2/tts/stream';
+  return doPost(url, headers, obj);
+}
+
+/**
+ * REST client for Resemble.AI TTS (https://www.resemble.ai)
+ */
+function ttsResembleV1(voice: string, rate: number, text: string) {
+  const headers = createHeaders();
+  headers.append('Authorization', `Bearer ${getEnvVar('RESEMBLE_API_KEY')}`);
+  const obj = {
+    body: text, // makeSsml(voice, rate, text),
+    voice_uuid: voice,
+    precision: 'PCM_16',
+    sample_rate: 22050,
+    output_type: 'mp3',
+    raw: true,
+  };
+  const url = `https://app.resemble.ai/api/v2/projects/${getEnvVar('RESEMBLE_PROJECT_ID')}/clips`;
+  return doPost(url, headers, obj);
+}
+
+/**
+ * Streaming REST client for Resemble.AI TTS (https://www.resemble.ai)
+ */
+function ttsResembleV2(voice: string, rate: number, text: string) {
+  const headers = createHeaders();
+  headers.append('Authorization', `Bearer ${getEnvVar('RESEMBLE_API_KEY')}`);
+  const obj = {
+    project_uuid: getEnvVar('RESEMBLE_PROJECT_ID'),
+    voice_uuid: voice,
+    // eslint-disable-next-line id-blacklist
+    data: text, // makeSsml(voice, rate, text),
+    precision: 'PCM_16',
+    sample_rate: 22050,
+  };
+  const url = 'https://f.cluster.resemble.ai/stream';
+  return doPost(url, headers, obj);
+}
+
+/**
+ * Helper to create the basic headers for a service that accepts JSON and returns audio/mpeg.
+ */
+function createHeaders() {
+  const headers = new Headers();
+  headers.append('Content-Type', 'application/json');
+  headers.append('Accept', AUDIO_MPEG_MIME_TYPE);
+  return headers;
+}
+
+/**
+ * Helper to send a POST request with JSON body.
+ */
+function doPost(url: string, headers: HeadersInit, body: Object) {
   return fetch(url, {
     method: 'POST',
     headers,
-    body,
+    body: JSON.stringify(body),
   });
 }
 

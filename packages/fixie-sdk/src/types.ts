@@ -1,3 +1,5 @@
+import { Jsonifiable } from 'type-fest';
+
 export interface MessageBase {
   metadata?: Record<string, string | number | boolean | object | null>;
 }
@@ -43,6 +45,7 @@ export interface InvokeAgentRequest {
   conversationId: string;
   replyToTurnId?: string;
   generationParams?: GenerationParams;
+  parameters?: Record<string, Jsonifiable>;
 }
 
 export interface InvokeAgentResponse {
