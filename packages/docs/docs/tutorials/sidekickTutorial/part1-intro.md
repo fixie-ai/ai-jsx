@@ -37,7 +37,7 @@ In this tutorial you will:
 
 This tutorial requires you to have a GitHub account and to generate a read-only API access token. This enables us to build a Sidekick that can call out to the GitHub APIs so we can demonstrate how Sidekicks use tools.
 
-The tutorial provides step-by-step instructions on how to create and use this API access token in a safe way. If you don't have a GitHub account, you can create one for free at TODO.
+The tutorial provides step-by-step instructions on how to create and use this API access token in a safe way. If you don't have a GitHub account, you can [create one](https://github.com/join) for free.
 :::
 
 <!-- ## Overview of AI.JSX and Fixie Capabilities -->
@@ -61,9 +61,9 @@ Fixie Sidekicks are built using JavaScript and React and are powered by AI-JSX. 
 - **LLM Integration** → Simple integration with any LLM. When the Sidekick is hosted on Fixie, you have access to GPT-3.5 Turbo, GPT-4-8k, GPT-4-32k, Claude2, Claude Instant, and the Llama2...all without having to bring your own API keys.
 - **RAG** → Retrieval Augmented Generation (which we call "DocsQA" in Sidekicks) enables you to provide new knowledge (in the form of URLs, documents, or any other data) to the Sidekick.
 - **Prompt Components** → Construct your system/base prompts through JSX components.
-- **Tools** → TODO
-- **Generative UI** → TODO
-- **Hosting on Fixie** → TODO
+- **Tools** → Extend your Sidekick's abilities. Access external data or call an external API.
+- **Generative UI** → Move beyond simple, text-based chat and let your Sidekick create dynamic UI based on the user's needs.
+- **Hosting on Fixie** → Deploy to Fixie with a single step.
 
 ## Sidekicks Quickstart
 
