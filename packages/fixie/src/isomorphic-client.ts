@@ -1,4 +1,5 @@
 import type { Jsonifiable } from 'type-fest';
+import { AgentId, ConversationId, MessageGenerationParams, MessageRequestParams } from './sidekick-types.js';
 
 export interface UserInfo {
   id: number;
@@ -16,6 +17,10 @@ export interface UserInfo {
   api_token?: string;
   avatar?: string;
   organization?: string;
+}
+
+export class AgentDoesNotExistError extends Error {
+  code = 'agent-does-not-exist';
 }
 
 const debug =
@@ -46,33 +51,43 @@ export class IsomorphicFixieClient {
   }
 
   /**
-   * Create a new FixieClient without an API key. You probably don't want this. This is only useful if you're running
-   * code in the browser on the same domain as the Fixie service; e.g. app.fixie.ai.
+   * Create a new FixieClient without an API key. This is only useful for accessing public APIs, such as the conversation APIs.
    */
+  // This is also useful for running in the console.fixie.ai webapp, because it's on the same host
+  // as the backend and thus doesn't need the API key, assuming we set the auth cookies to be cross-domain.
   static CreateWithoutApiKey(url: string) {
     return new this(url);
   }
 
   /** Send a request to the Fixie API with the appropriate auth headers. */
-  async request(path: string, bodyData?: any, method?: string): Promise<Jsonifiable> {
-    const fetch_method = method ?? (bodyData ? 'POST' : 'GET');
-    const headers = bodyData
-      ? {
-          Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        }
-      : {
-          Authorization: `Bearer ${this.apiKey}`,
-        };
+  async request(path: string, bodyData?: unknown, method?: string, options: RequestInit = {}) {
+    const fetchMethod = method ?? (bodyData ? 'POST' : 'GET');
+
+    const headers: RequestInit['headers'] = {};
+    if (bodyData) {
+      headers['Content-Type'] = 'application/json';
+    }
+    if (this.apiKey) {
+      headers.Authorization = `Bearer ${this.apiKey}`;
+    }
+
     if (debug) {
       console.log(`[Fixie request] ${this.url}${path}`, bodyData);
     }
     const res = await fetch(`${this.url}${path}`, {
-      method: fetch_method,
-      // @ts-expect-error
+      ...options,
+      method: fetchMethod,
       headers,
+      // This is needed so serverside NextJS doesn't cache POSTs.
+      cache: 'no-store',
       body: bodyData ? JSON.stringify(bodyData) : undefined,
     });
+
+    return res;
+  }
+
+  async requestJson(path: string, bodyData?: unknown, method?: string, options?: RequestInit): Promise<Jsonifiable> {
+    const res = await this.request(path, bodyData, method, options);
     if (!res.ok) {
       throw new Error(`Failed to access Fixie API ${this.url}${path}: ${res.statusText}`);
     }
@@ -81,18 +96,18 @@ export class IsomorphicFixieClient {
 
   /** Return information on the currently logged-in user. */
   userInfo(): Promise<UserInfo> {
-    const rawUserInfo: unknown = this.request('/api/user');
+    const rawUserInfo: unknown = this.requestJson('/api/user');
     return rawUserInfo as Promise<UserInfo>;
   }
 
   /** List Corpora visible to this user. */
   listCorpora(): Promise<Jsonifiable> {
-    return this.request('/api/v1/corpora');
+    return this.requestJson('/api/v1/corpora');
   }
 
   /** Get information about a given Corpus. */
   getCorpus(corpusId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}`);
   }
 
   /** Create a new Corpus. */
@@ -103,7 +118,7 @@ export class IsomorphicFixieClient {
         description,
       },
     };
-    return this.request('/api/v1/corpora', body);
+    return this.requestJson('/api/v1/corpora', body);
   }
 
   /** Query a given Corpus. */
@@ -113,17 +128,17 @@ export class IsomorphicFixieClient {
       query,
       max_chunks: maxChunks,
     };
-    return this.request(`/api/v1/corpora/${corpusId}:query`, body);
+    return this.requestJson(`/api/v1/corpora/${corpusId}:query`, body);
   }
 
   /** List the Sources in a given Corpus. */
   listCorpusSources(corpusId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources`);
   }
 
   /** Get information about a given Source. */
   getCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}`);
   }
 
   /** Add a new Source to a Corpus. */
@@ -163,7 +178,7 @@ export class IsomorphicFixieClient {
         },
       },
     };
-    return this.request(`/api/v1/corpora/${corpusId}/sources`, body);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources`, body);
   }
 
   /**
@@ -172,7 +187,7 @@ export class IsomorphicFixieClient {
    * The source must have no running jobs and no remaining documents. Use clearCorpusSource() to remove all documents.
    */
   deleteCorpusSource(corpusId: string, sourceId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}`, undefined, 'DELETE');
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}`, undefined, 'DELETE');
   }
 
   /**
@@ -182,7 +197,7 @@ export class IsomorphicFixieClient {
    * If a job is already running on this source, and force = true, that job will be killed and restarted.
    */
   refreshCorpusSource(corpusId: string, sourceId: string, force?: boolean): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, { force });
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}:refresh`, { force });
   }
 
   /**
@@ -192,26 +207,155 @@ export class IsomorphicFixieClient {
    * If a job is already running on this source, and force = true, that job will be killed and restarted.
    */
   clearCorpusSource(corpusId: string, sourceId: string, force?: boolean): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}:clear`, { force });
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}:clear`, { force });
   }
 
   /** List Jobs associated with a given Source. */
   listCorpusSourceJobs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs`);
   }
 
   /** Get information about a given Job. */
   getCorpusSourceJob(corpusId: string, sourceId: string, jobId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs/${jobId}`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs/${jobId}`);
   }
 
   /** List Documents in a given Corpus Source. */
   listCorpusSourceDocs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents`);
   }
 
   /** Get information about a given Document. */
   getCorpusSourceDoc(corpusId: string, sourceId: string, docId: string): Promise<Jsonifiable> {
-    return this.request(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents/${docId}`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents/${docId}`);
+  }
+
+  /**
+   * @experimental this API may change at any time.
+   *
+   * Start a new conversation with an agent, optionally sending the initial message. (If you don't send the initial
+   * message, the agent may.)
+   *
+   * @returns { conversationIdHeaderValue, response }
+   *    conversationIdHeaderValue: The conversation ID, which can be used with the other API methods to continue the
+   *                               conversation.
+   *    response: The fetch response. The response will be a stream of newline-delimited JSON objects, each of which be
+   *              of the shape ConversationTurn. Each member of the stream is the latest value of the turn as the agent
+   *              streams its response. So, if you're driving a UI with this response, you always want to render the
+   *              most recently emitted value from the stream.
+   *
+   *          If the generation is stopped via the stopGeneration() API, the final value emitted from the stream will be
+   *          the same as what's persisted to the conversation history. However, intermediate stream values may include
+   *          extra content that then disappears. For example:
+   *
+   *            Stream entry 0: text: hello wor
+   *            <the stop occurs>
+   *            Stream entry 1: text: hello world I am
+   *            Stream entry 2: text: hello world
+   *
+   * @see sendMessage
+   * @see stopGeneration
+   * @see regenerate
+   */
+  async startConversation(agentId: AgentId, generationParams: MessageGenerationParams, message?: string) {
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+    const conversation = await this.request(
+      `/api/v1/agents/${agentId}/conversations`,
+      { generationParams, message },
+      'POST',
+      { signal }
+    );
+
+    if (!conversation.body) {
+      throw new Error('Request to start a new conversation was empty');
+    }
+    if (conversation.status === 404) {
+      throw new AgentDoesNotExistError(`Agent ${agentId} does not exist, or is private.`);
+    }
+    if (!conversation.ok) {
+      throw new Error(
+        `Starting a new conversation failed: ${conversation.status} ${
+          conversation.statusText
+        } ${await conversation.text()}`
+      );
+    }
+
+    const headerName = 'X-Fixie-Conversation-Id';
+    const conversationIdHeaderValue = conversation.headers.get(headerName);
+    if (!conversationIdHeaderValue) {
+      throw new Error(`Fixie bug: Fixie backend did not return the "${headerName}" header.`);
+    }
+    return { conversationIdHeaderValue, response: conversation };
+  }
+
+  /**
+   * @experimental this API may change at any time.
+   *
+   * Send a message to a conversation. If the conversationId does not refer to a conversation that already exists,
+   * this will throw an error.
+   *
+   * @returns a fetch response. The response will be a stream of newline-delimited JSON objects, each of which will be
+   *          of shape AssistantConversationTurn. Each member of the stream is the latest value of the turn as the agent
+   *          streams its response. So, if you're driving a UI with this response, you always want to render the
+   *          most recently emitted value from the stream.
+   *
+   *          If the generation is stopped via the stopGeneration() API, the final value emitted from the stream will be
+   *          the same as what's persisted to the conversation history. However, intermediate stream values may include
+   *          extra content that then disappears. For example:
+   *
+   *            Stream entry 0: text: hello wor
+   *            <the stop occurs>
+   *            Stream entry 1: text: hello world I am
+   *            Stream entry 2: text: hello world
+   *
+   * @see startConversation
+   */
+  sendMessage(agentId: AgentId, conversationId: ConversationId, message: MessageRequestParams) {
+    return this.request(`/api/v1/agents/${agentId}/conversations/${conversationId}/messages`, message);
+  }
+
+  /**
+   * @experimental this API may change at any time.
+   *
+   * Stop a message that is currently being generated.
+   */
+  stopGeneration(agentId: AgentId, conversationId: ConversationId, messageId: string) {
+    return this.request(
+      `/api/v1/agents/${agentId}/conversations/${conversationId}/messages/${messageId}/stop`,
+      undefined,
+      'POST'
+    );
+  }
+
+  /**
+   * @experimental this API may change at any time.
+   *
+   * Regenerate a message that has already been generated. If `messageId` is not the most recent message in the
+   * conversation, this request will fail.
+   *
+   * @returns a fetch response. The response will be a stream of newline-delimited JSON objects, each of which will be
+   *          of shape AssistantConversationTurn. Each member of the stream is the latest value of the turn as the agent
+   *          streams its response. So, if you're driving a UI with this response, you always want to render the
+   *          most recently emitted value from the stream.
+   *
+   *          If the generation is stopped via the stopGeneration() API, the final value emitted from the stream will be
+   *          the same as what's persisted to the conversation history. However, intermediate stream values may include
+   *          extra content that then disappears. For example:
+   *
+   *            Stream entry 0: text: hello wor
+   *            <the stop occurs>
+   *            Stream entry 1: text: hello world I am
+   *            Stream entry 2: text: hello world
+   */
+  regenerate(
+    agentId: AgentId,
+    conversationId: ConversationId,
+    messageId: string,
+    messageGenerationParams: MessageGenerationParams
+  ) {
+    return this.request(`/api/v1/agents/${agentId}/conversations/${conversationId}/messages/${messageId}/regenerate`, {
+      generationParams: messageGenerationParams,
+    });
   }
 }

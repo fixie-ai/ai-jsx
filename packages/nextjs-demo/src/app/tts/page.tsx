@@ -51,7 +51,7 @@ const getToken = async (provider: string) => {
 const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaultVoice, text }) => {
   const [voice, setVoice] = useState(defaultVoice);
   const [playing, setPlaying] = useState(false);
-  const [latency, setLatency] = useState(0);
+  const [latency, setLatency] = useState<number>();
   const [tts, setTts] = useState<TextToSpeechBase | null>();
   useEffect(() => {
     setTts(createTextToSpeech({ provider, buildUrl, getToken, voice, rate: 1.2 }));
@@ -71,7 +71,7 @@ const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaul
   };
 
   const caption = playing ? 'Stop' : 'Play';
-  const latencyText = playing ? (latency ? `${latency} ms` : 'Generating...') : '';
+  const latencyText = latency ? `${latency} ms` : playing ? 'Generating...' : '';
   return (
     <div className="mt-2">
       <p className="text-xl font-bold mt-2 ml-2">
@@ -85,7 +85,7 @@ const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaul
           ${costPerMChar}/million chars
         </a>
       </div>
-      <div className="text-sm ml-2 mb-2">
+      <div className="text-sm ml-2">
         <span className="font-bold">Voice: </span>
         <input
           type="text"
@@ -95,8 +95,11 @@ const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaul
           onChange={(e) => setVoice(e.currentTarget.value)}
         />
       </div>
+      <div className="text-sm ml-2 mb-2">
+        <span className="font-bold">Latency: </span>
+        {latencyText}
+      </div>
       <Button onClick={toggle}>{caption}</Button>
-      <span className="m-2">{latencyText}</span>
     </div>
   );
 };
@@ -127,7 +130,7 @@ const PageComponent: React.FC = () => {
           costPerMChar={180}
           defaultVoice="21m00Tcm4TlvDq8ikWAM"
           text={text}
-        ></Tts>
+        />
         <Tts
           display="WellSaid Labs"
           provider="wellsaid"
@@ -135,7 +138,31 @@ const PageComponent: React.FC = () => {
           costPerMChar={999}
           defaultVoice="43"
           text={text}
-        ></Tts>
+        />
+        <Tts
+          display="Murf AI"
+          provider="murf"
+          link="https://murf.ai"
+          costPerMChar={999}
+          defaultVoice="VM016372341539042UZ"
+          text={text}
+        />
+        <Tts
+          display="PlayHT"
+          provider="playht"
+          link="https://play.ht"
+          costPerMChar={41.25}
+          defaultVoice="larry"
+          text={text}
+        />
+        <Tts
+          display="Resemble AI"
+          provider="resemble"
+          link="https://resemble.ai"
+          costPerMChar={400}
+          defaultVoice="48d7ed16"
+          text={text}
+        />
         <Tts
           display="Azure"
           provider="azure"
@@ -143,7 +170,7 @@ const PageComponent: React.FC = () => {
           costPerMChar={16}
           defaultVoice="en-US-JennyNeural"
           text={text}
-        ></Tts>
+        />
         <Tts
           display="AWS Polly"
           provider="aws"
@@ -151,15 +178,15 @@ const PageComponent: React.FC = () => {
           costPerMChar={16}
           defaultVoice="Joanna"
           text={text}
-        ></Tts>
+        />
         <Tts
           display="Google"
           provider="gcp"
           link="https://cloud.google.com/text-to-speech"
           costPerMChar={16}
-          defaultVoice="en-US-Wavenet-D"
+          defaultVoice="en-US-Neural2-C"
           text={text}
-        ></Tts>
+        />
       </div>
     </>
   );
