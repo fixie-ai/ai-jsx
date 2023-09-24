@@ -26,7 +26,7 @@ that are individually processed by the LLM. Each chunk is passed into the LLM,
 and the _text embedding_ representing the chunk is computed. (For more details on text
 embeddings, check out the [OpenAI text embeddings API docs](https://platform.openai.com/docs/guides/embeddings).) The text embedding is a multidimensional vector, calculated by the LLM,
 representing the semantic content of the chunk. A _corpus_ consists of a set of document chunks and their corresponding embedding vectors.
-For a more detailed explanation of how a corpus is prepared and used, see the guide [DocsQA: Grounding Answers with a Source of Truth](../guides/docsqa.md#overview).
+For a more detailed explanation of how a corpus is prepared and used, see the guide [DocsQA: Grounding Answers with a Source of Truth](../../guides/docsqa.md#overview).
 
 When a question is posed to the corpus, we first pass the question to the LLM and extract
 its own embedding vector. The chunks with the highest cosine similarity to the question
