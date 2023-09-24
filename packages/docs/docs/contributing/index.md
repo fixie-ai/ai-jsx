@@ -62,7 +62,7 @@ To publish:
 1. During your PR:
 
    1. Make sure the `version` field in `packages/ai-jsx/package.json` has been incremented in accordance with [semver](https://semver.org/).
-   1. Update the [changelog](../changelog.md). In addition to adding a section describing
+   1. Update the changelog. In addition to adding a section describing
       the changes in the new version, be sure to update the heading for the previous version
       with a link to the commit for that version, for example:
 

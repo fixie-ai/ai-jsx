@@ -167,7 +167,7 @@
 ## [0.5.10](https://github.com/fixie-ai/ai-jsx/commit/e2735fde8c33e3019a074c29824206d9725eed64)
 
 - Update logging to log the output of every component.
-- Update [`UseTools`](./api/modules/batteries_use_tools.md) to use [OpenAI function calls](https://openai.com/blog/function-calling-and-other-api-updates) if you're using a model that supports them.
+- Update [`UseTools`](./api/modules/ai_jsx.batteries_use_tools.md) to use [OpenAI function calls](https://openai.com/blog/function-calling-and-other-api-updates) if you're using a model that supports them.
 
 ## [0.5.9](https://github.com/fixie-ai/ai-jsx/commit/92b6e0f28580fbd9b8fb62072d8c13e28b14d9fe)
 
@@ -175,13 +175,13 @@
 
 ## [0.5.8](https://github.com/fixie-ai/ai-jsx/commit/89c87a8ed6d394ce443ad074ae38152f54c7bddc)
 
-- [`ImageGen`](./api/modules/core_image_gen.md#image) now produces an [`Image`](./api/modules/core_image_gen.md#image) object which will render to a URL in the command line, but returns an `<img />` tag when using in the browser (React/Next).
+- [`ImageGen`](./api/modules/ai_jsx.core_image_gen.md#image) now produces an [`Image`](./api/modules/ai_jsx.core_image_gen.md#image) object which will render to a URL in the command line, but returns an `<img />` tag when using in the browser (React/Next).
 
 ## [0.5.7](https://github.com/fixie-ai/ai-jsx/commit/8c29bb65fa2d4d26893eabebf5aa63f1506703e7)
 
 - Add ability to stream UI components in the [UI on the client; AI.JSX on the server](./guides/architecture.mdx#ui-on-the-client-aijsx-on-the-server) architecture pattern.
 - Add ability to do append-only text streaming.
-- Update [`UseTools`](./api/modules/batteries_use_tools.md) to match [OpenAI function syntax](https://openai.com/blog/function-calling-and-other-api-updates).
+- Update [`UseTools`](./api/modules/ai_jsx.batteries_use_tools.md) to match [OpenAI function syntax](https://openai.com/blog/function-calling-and-other-api-updates).
 - Add `ConversationalHistory` component.
 
 ## [0.5.6](https://github.com/fixie-ai/ai-jsx/commit/92c34d97687bfdb7ed839b78fef3b4683acd0756)

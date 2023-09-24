@@ -138,7 +138,7 @@ const tools: Record<string, Tool> = {
 </UseTools>;
 ```
 
-More detail: [`UseTools` API docs](../api/modules/batteries_use_tools#usetools).
+More detail: [`UseTools` API docs](../api/modules/ai_jsx.batteries_use_tools#usetools).
 
 ### Accessing Knowledge (AKA "Docs QA")
 

@@ -37,7 +37,7 @@ When using a Fixie corpus, Fixie can handle parsing for most common documents ty
 
 ### Step 2: Vectorizing
 
-Now that you have text documents, you'll need to split them into "chunks" so that several can fit in your LLM's [context window](../ai-newcomers.md#context-window) and you'll need to [embed](../ai-newcomers.md#semantic-similarity-embeddings) them into your corpus's vector space. These are done with a [`Chunker`](../api/modules/batteries_docs#chunker) and an [`Embedding`](../api/interfaces/batteries_docs.Embedding.md) respectively. AI.JSX provides defaults for each of these, but you're free to swap these out however you'd like. This could be especially useful when combined with a custom loader and parser for non-text documents since there may be semantic meaning that could be inferred from the document structure itself that wouldn't necessarily be captured by the defaults.
+Now that you have text documents, you'll need to split them into "chunks" so that several can fit in your LLM's [context window](../ai-newcomers.md#context-window) and you'll need to [embed](../ai-newcomers.md#semantic-similarity-embeddings) them into your corpus's vector space. These are done with a [`Chunker`](../api/modules/ai_jsx.batteries_docs#chunker) and an [`Embedding`](../api/interfaces/ai_jsx.batteries_docs.Embedding.md) respectively. AI.JSX provides defaults for each of these, but you're free to swap these out however you'd like. This could be especially useful when combined with a custom loader and parser for non-text documents since there may be semantic meaning that could be inferred from the document structure itself that wouldn't necessarily be captured by the defaults.
 
 See also: [Pinecone Guidance on Chunking Strategies](https://www.pinecone.io/learn/chunking-strategies/).
 
@@ -45,7 +45,7 @@ With vectors in hand, your text chunks can be added to a vector database. When r
 
 ### Starting and Monitoring Loading
 
-The AI.JSX [`LoadableCorpus`](../api/classes/batteries_docs.LoadableCorpus) interface provides a [`load`](../api/classes/batteries_docs.LoadableCorpus#load) method that will begin loading and vectorizing documents so they're available for querying later. It also provides a [`getStats`](../api/classes/batteries_docs.LoadableCorpus#getstats) method so you can inspect a corpus's progress.
+The AI.JSX [`LoadableCorpus`](../api/classes/ai_jsx.batteries_docs.LoadableCorpus) interface provides a [`load`](../api/classes/ai_jsx.batteries_docs.LoadableCorpus#load) method that will begin loading and vectorizing documents so they're available for querying later. It also provides a [`getStats`](../api/classes/ai_jsx.batteries_docs.LoadableCorpus#getstats) method so you can inspect a corpus's progress.
 
 ```typescript
 // Have the corpus begin loading. This promise may take a while to resolve, but we'll be ready to
@@ -86,7 +86,7 @@ flowchart LR
   que[Query] -->|string| embed2[Embed] -->|vector| vdb2[(Vector DB)] -->|similar chunks| LLM
 ```
 
-If you use the built-in [`DocsQA`](../api/modules/batteries_docs.md#docsqa) component from AI.JSX, then you just need to decide how to present the chunk to your LLM:
+If you use the built-in [`DocsQA`](../api/modules/ai_jsx.batteries_docs.md#docsqa) component from AI.JSX, then you just need to decide how to present the chunk to your LLM:
 
 ```typescript
 function ShowDoc({ doc }: { doc: Document<MyDocMetadata> }) {
@@ -118,7 +118,7 @@ The `DocsQA` component provides an answer, like:
 */
 ```
 
-If you want an answer that cites sources, use [`DocsQAWithCitations`](../api/modules/batteries_docs.md#docsqawithcitations):
+If you want an answer that cites sources, use [`DocsQAWithCitations`](../api/modules/ai_jsx.batteries_docs.md#docsqawithcitations):
 
 ```tsx
 <DocsQAWithCitations question="What is the atomic number of nitrogen?" corpus={corpus} docComponent={ShowDoc} />

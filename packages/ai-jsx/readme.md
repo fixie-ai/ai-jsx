@@ -57,7 +57,7 @@ For a full set of examples, see [the examples package](https://github.com/fixie-
 
 ## Contributing
 
-We welcome contributions! See the [Contribution Guide](packages/docs/docs/contributing/index.md) for details on how to get started.
+We welcome contributions! See the [Contribution Guide](../contributing/index.md) for details on how to get started.
 
 ## License
 

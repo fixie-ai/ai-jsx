@@ -27,7 +27,7 @@ function App() {
 
 [`ChatCompletion`](../api/modules/core_completion?_highlight=chatcompletion#chatcompletion) is preferred to [`Completion`](../api/modules/core_completion?_highlight=chatcompletion#completion) because all the most powerful models are chat-based, and [it's best to start with the most powerful models](../ai-newcomers.md#recommended-dev-workflow).
 
-To configure the output of `ChatCompletion`, use [`ModelProps`](../api/interfaces/core_completion.ModelProps.md). This allows you to do things like making the model more creative or precise, telling the model how long a response you want back, etc. Combined with the natural language of your [prompt](../ai-newcomers.md#prompt-engineering), this is how you control the model's output.
+To configure the output of `ChatCompletion`, use [`ModelProps`](../api/interfaces/ai_jsx.core_completion.ModelProps.md). This allows you to do things like making the model more creative or precise, telling the model how long a response you want back, etc. Combined with the natural language of your [prompt](../ai-newcomers.md#prompt-engineering), this is how you control the model's output.
 
 ## The Problem with Non-Chat Models
 

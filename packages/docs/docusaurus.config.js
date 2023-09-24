@@ -38,14 +38,15 @@ const config = {
     [
       'docusaurus-plugin-typedoc',
       {
-        // If you add new public-facing entry points, please ensure that they are listed below
-        // so that the published API documentation will include them.
-        tsconfig: '../ai-jsx/tsconfig.json',
+        entryPoints: ['../ai-jsx', '../fixie'],
+        entryPointStrategy: 'packages',
+        includeVersion: true,
+        out: 'api',
         sidebar: {
+          fullNames: false,
           categoryLabel: 'API Reference',
           collapsed: true,
           position: 20,
-          fullNames: true,
         },
       },
     ],
@@ -108,7 +109,7 @@ const config = {
           {
             to: 'api/',
             position: 'left',
-            label: 'API',
+            label: 'API Reference',
           },
           {
             href: process.env.GITHUB_URL,
