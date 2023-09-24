@@ -35,7 +35,7 @@ const sidebars = {
           items: [
             'tutorials/sidekickTutorial/part1-intro',
             'tutorials/sidekickTutorial/part2-docsQA',
-            'tutorials/sidekickTutorial/part3-systemPrompt',
+            'tutorials/sidekickTutorial/part3-systemMessage',
             'tutorials/sidekickTutorial/part4-tools',
             'tutorials/sidekickTutorial/part5-genUI',
             'tutorials/sidekickTutorial/part6-deploying',
