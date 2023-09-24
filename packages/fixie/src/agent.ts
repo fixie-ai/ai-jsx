@@ -314,7 +314,6 @@ export class FixieAgent {
         externalDeployment: opts.externalUrl && { url: opts.externalUrl },
         managedDeployment: opts.tarball &&
           uploadFile && {
-            environment: 'NODEJS',
             codePackage: new Blob([uploadFile], { type: 'application/gzip' }),
             environmentVariables: Object.entries(opts.environmentVariables).map(([key, value]) => ({
               name: key,
