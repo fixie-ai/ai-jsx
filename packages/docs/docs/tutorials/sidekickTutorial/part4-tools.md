@@ -4,13 +4,20 @@ sidebar_position: 4
 
 # Part 4 - Tools
 
-In this tutorial, we're going to add **tools** to our Sidekick. A tool is simply a JavaScript
-function that can be invoked by the Sidekick when it needs some help from some external
-code. Tools can essentially do anything -- fetch data from an API, perform computation,
-access external data, and more. By giving your Sidekick access to tools, it is easy to extend
-the Sidekick's abilities.
+:::note What we cover in part 4
+In [Part 3](./part3-systemMessage) we learned how to update the System Message for our Sidekick. In Part 4, we will:
+
+- Learn what tools are and how to add them to our Sidekick.
+- Add a tool for using the GitHub Graphql API to our Sidekick.
+- Create a fine-grained access token for GitHub so our Sidekick can answer deeper questions using the GH API.
+
+:::
 
 ## Intro to Sidekick tools
+
+A tool is simply a JavaScript function that can be invoked by the Sidekick when it needs some help from some external
+code. Tools can essentially do anything -- fetch data from an API, perform computation, access external data, and more.
+By giving your Sidekick access to tools, it is easy to extend the Sidekick's abilities.
 
 In AI. JSX, we create a tool using the [ `Tool` class](https://docs.ai-jsx.com/api/interfaces/batteries_use_tools.Tool).
 `Tool` has three parameters:
