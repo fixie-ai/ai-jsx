@@ -76,7 +76,7 @@ field in the character sheet.
 
 ## Formatting the output as JSON and YAML
 
-Now, we're going to use two new components -- [`<JsonChatCompletion>`](../api/modules/batteries_constrained_output#jsonchatcompletion) and [`<YamlChatCompletion>`](../api/modules/batteries_constrained_output#yamlchatcompletion) --
+Now, we're going to use two new components -- [`<JsonChatCompletion>`](../../api/modules/batteries_constrained_output#jsonchatcompletion) and [`<YamlChatCompletion>`](../../api/modules/batteries_constrained_output#yamlchatcompletion) --
 to take the plain-text output of `<CharacterGenerator>` and format it as JSON and YAML.
 
 ```tsx filename="packages/tutorial/src/constrained-output.tsx"
