@@ -53,16 +53,43 @@ interface UniversalSidekickProps {
 type OutputFormatSidekickProps = MergeExclusive<
   {
     /**
-     * Pass `text/gen-ui`, or omit this field, to get a Gen UI response.
-     * To render this, you'll need an MDX compiler that's aware of the Gen UI components.
+     * The output format that the Sidekick should use. Defaults to `text/mdx`.
+     *
+     * `text/mdx` indicates that the Sidekick should output MDX, which is Markdown with
+     * additional JSX elements, such as cards or buttons.
+     *
+     * `text/markdown` indicates that the Sidekick should output plain Markdown.
+     *
+     * `text/plain` indicates that the Sidekick should output plain text.
      */
     outputFormat?: 'text/mdx' | undefined;
 
+    /**
+     * A set of examples to the Sidekick instructing it how to emit MDX responses, when
+     * `outputFormat` is `text/mdx`.
+     *
+     * By default, the Sidekick will only be able to use the default set of
+     * MDX components in its vocabulary: `Card`, `Citation`, and `NextStepsButton`.
+     * If you wish to support additional MDX components, you must provide examples
+     * of how to use them here.
+     */
     genUIExamples?: AI.Node;
+
+    /**
+     * A set of component names that the Sidekick should be able to use in its
+     * MDX output, when `outputFormat` is `text/mdx`.
+     *
+     * By default, the Sidekick will only be able to use the default set of
+     * MDX components in its vocabulary: `Card`, `Citation`, and `NextStepsButton`.
+     * If you wish to support additional MDX components, you must provide their
+     * names here.
+     */
     genUIComponentNames?: string[];
 
     /**
-     * If true, the Sidekick will emit next steps recommendations, such as:
+     * If true, the Sidekick will emit next steps recommendations using the
+     * `NextStepsButton` component. `outputFormat` must be set to `text/mdx` for this
+     * to work. For example:
      *
      *    ...and that's some detail about your most recent order.
      *
@@ -76,7 +103,7 @@ type OutputFormatSidekickProps = MergeExclusive<
   },
   {
     /**
-     * Pass `text/markdown` to get a Markdown response. To render this, you'll need a Markdown compiler.
+     * Pass `text/markdown` to get a Markdown response.
      *
      * Pass `text/plain` to get a plain text response.
      */
