@@ -38,6 +38,10 @@ export abstract class TextToSpeechBase {
    * Called when the generated audio has finished playing out.
    */
   public onComplete?: () => void;
+  /**
+   * Called when an error occurs.
+   */
+  public onError?: (error: Error) => void;
 
   constructor(protected readonly name: string) {
     this.audio = new Audio();
@@ -281,6 +285,11 @@ export class RestTextToSpeech extends MseTextToSpeech {
     this.queueChunk(newChunk);
     console.debug(`[${this.name}] requesting chunk: ${text}`);
     const res = await fetch(this.urlFunc(this.name, this.voice, this.rate, text));
+    if (!res.ok) {
+      this.stop();
+      this.onError?.(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
+      return;
+    }
     newChunk.buffer = await res.arrayBuffer();
     console.debug(`[${this.name}] received chunk: ${text}`);
     this.processChunkBuffer();
@@ -328,7 +337,7 @@ export class WellSaidTextToSpeech extends RestTextToSpeech {
 }
 
 export class MurfTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = 'VM016372341539042UZ'; // Natalie
+  static readonly DEFAULT_VOICE = 'en-US-natalie';
   constructor(urlFunc: BuildUrl, voice: string = MurfTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('murf', urlFunc, voice, rate);
   }
@@ -338,7 +347,7 @@ export class MurfTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the Play.HT text-to-speech service.
  */
 export class PlayHTTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = 'larry';
+  static readonly DEFAULT_VOICE = 'victor'; // AKA 'Ariana'
   constructor(urlFunc: BuildUrl, voice: string = PlayHTTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('playht', urlFunc, voice, rate);
   }
