@@ -19,6 +19,7 @@ import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { OpenAI as OpenAIClient } from 'openai';
+export { OpenAI as OpenAIClient } from 'openai';
 import { FinalRequestOptions } from 'openai/core';
 import { debugRepresentation } from '../core/debug.js';
 import { getEncoding } from 'js-tiktoken';
@@ -61,12 +62,11 @@ class AzureOpenAIClient extends OpenAIClient {
     };
   }
   override buildRequest(options: FinalRequestOptions) {
-    const result = super.buildRequest(options);
     if (options.body && 'model' in options.body) {
       const model = (options.body.model as string).replace('.', '');
-      result.url = result.url.replace('/chat/', `/deployments/${model}/chat/`);
+      options.path = `/deployments/${model}${options.path}`;
     }
-    return result;
+    return super.buildRequest(options);
   }
 }
 
