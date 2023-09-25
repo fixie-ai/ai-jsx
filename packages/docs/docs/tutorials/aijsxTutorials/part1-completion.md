@@ -43,16 +43,16 @@ JSX components to generate a DOM tree. Here, we are using JSX
 to describe the structure of the LLM model invocations and prompts
 in a compact, declarative way.
 
-The [`<ChatCompletion>`](../api/modules/core_completion#chatcompletion) component is the root of the tree, and is responsible
+The [`<ChatCompletion>`](../../api/modules/core_completion#ChatCompletion) component is the root of the tree, and is responsible
 for generating a single invocation of the LLM -- in this case, OpenAI's
-ChatGPT model -- and returning the result. The [`<UserMessage>`](../api/modules/core_completion#usermessage) component
+ChatGPT model -- and returning the result. The [`<UserMessage>`](../../api/modules/core_completion#usermessage) component
 simply tags the prompt as being the "user" component of the prompt -- as opposed
-to [`<SystemMessage>`](../api/modules/core_completion#systemmessage), which would be the "system" component of the prompt. These
+to [`<SystemMessage>`](../../api/modules/core_completion#systemmessage), which would be the "system" component of the prompt. These
 distinctions are used by OpenAI's API to differentiate between the fixed, system aspect
 of the prompt and the variable, user aspect of the prompt.
 
 In order to actually get a result, we need to pass our application to a
-[`RenderContext`](../api/interfaces/core_render.RenderContext) and call `render()` on it. The `RenderContext` is responsible
+[`RenderContext`](../../api/interfaces/core_render.RenderContext) and call `render()` on it. The `RenderContext` is responsible
 for managing the state of the application and progressively evaluating the state
 of the application as it is rendered. The `render()` method returns a `Promise`
 that evaluates to a string, which is the final result of rendering the JSX
