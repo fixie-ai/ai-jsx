@@ -6,7 +6,7 @@ sidebar_position: 4
 
 One of the most powerful capabilities of Large Language Models is the ability to
 answer questions about the contents of a set of documents. AI.JSX provides a powerful
-component called [`<DocsQA>`](../api/modules/batteries_docs#docsqa) that can answer a question about a corpus of documents
+component called [`<DocsQA>`](../../api/modules/batteries_docs#docsqa) that can answer a question about a corpus of documents
 using the LLM.
 
 Here's an example of how this will look in your app:
@@ -26,7 +26,7 @@ that are individually processed by the LLM. Each chunk is passed into the LLM,
 and the _text embedding_ representing the chunk is computed. (For more details on text
 embeddings, check out the [OpenAI text embeddings API docs](https://platform.openai.com/docs/guides/embeddings).) The text embedding is a multidimensional vector, calculated by the LLM,
 representing the semantic content of the chunk. A _corpus_ consists of a set of document chunks and their corresponding embedding vectors.
-For a more detailed explanation of how a corpus is prepared and used, see the guide [DocsQA: Grounding Answers with a Source of Truth](../guides/docsqa.md#overview).
+For a more detailed explanation of how a corpus is prepared and used, see the guide [DocsQA: Grounding Answers with a Source of Truth](../../guides/docsqa.md#overview).
 
 When a question is posed to the corpus, we first pass the question to the LLM and extract
 its own embedding vector. The chunks with the highest cosine similarity to the question
@@ -37,7 +37,7 @@ The implementation of `<DocsQA>` in AI.JSX currently stores the chunks and embed
 vectors in memory. One could also use a vector database to store the embedding vectors, and
 in the near future we'll be adding support for this to AI.JSX.
 
-The [`<DocsQA>`](../api/modules/batteries_docs#docsqa) component takes in several props:
+The [`<DocsQA>`](../../api/modules/batteries_docs#docsqa) component takes in several props:
 
 - `question` - the query to submit to the LLM about this document corpus.
 - `corpus` - the corpus of documents to search for the answer.
@@ -72,9 +72,9 @@ await corpus.load();
 
 We first fetch the contents of the web page and convert it to Markdown using
 the [Turndown](https://github.com/mixmark-io/turndown) library. We then create
-a [`LocalCorpus`](../api/classes/batteries_docs.LocalCorpus) from this Markdown content.
+a [`LocalCorpus`](../../api/classes/batteries_docs.LocalCorpus) from this Markdown content.
 
-Calling [`corpus.load()`](../api/classes/batteries_docs.LocalCorpus#load) will cause the corpus to be loaded into memory.
+Calling [`corpus.load()`](../../api/classes/batteries_docs.LocalCorpus#load) will cause the corpus to be loaded into memory.
 This is an async operation, since loading the documents and generating vectors
 can take a while, but for this demo we `await` the result.
 
@@ -114,7 +114,7 @@ processing them, we could have done so.
 
 Until now, we have been using an in-memory Corpus, which is good for a demo, but in practice you might want to use a vector database like [Pinecone](https://www.pinecone.io/) or [Chroma](https://www.trychroma.com/) instead. A vector database allows you to scale to much larger datasets.
 
-To do so, you can use [`LangchainCorpus`](../api/classes/batteries_docs.LangChainCorpus) to integrate with any [VectorStore from LangChain.js](https://js.langchain.com/docs/modules/indexes/vector_stores/integrations/):
+To do so, you can use [`LangchainCorpus`](../../api/classes/batteries_docs.LangChainCorpus) to integrate with any [VectorStore from LangChain.js](https://js.langchain.com/docs/modules/indexes/vector_stores/integrations/):
 
 ```tsx
 const corpus = new LangchainCorpus(await getVectorStore());
@@ -139,14 +139,14 @@ const vectorStore = await PineconeStore.fromExistingIndex(new OpenAIEmbeddings()
 });
 ```
 
-Once we have a [`VectorStore`](https://js.langchain.com/docs/modules/indexes/vector_stores/) object, we wrap it with a [`LangchainCorpus`](../api/classes/batteries_docs.LangChainCorpus):
+Once we have a [`VectorStore`](https://js.langchain.com/docs/modules/indexes/vector_stores/) object, we wrap it with a [`LangchainCorpus`](../../api/classes/batteries_docs.LangChainCorpus):
 
 ```tsx
 const corpus = new LangchainCorpus(vectorStore);
 ```
 
 The above assumes that the vector store is already populated.
-To load documents, you can use a [`LoadableLangchainCorpus`](../api/classes/batteries_docs.LoadableLangchainCorpus):
+To load documents, you can use a [`LoadableLangchainCorpus`](../../api/classes/batteries_docs.LoadableLangchainCorpus):
 
 ```tsx
 const corpus = new LoadableLangchainCorpus(vectorStore, staticLoader(docs), makeChunker(600, 100));

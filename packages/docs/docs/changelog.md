@@ -205,7 +205,7 @@
 ## [0.5.2](https://github.com/fixie-ai/ai-jsx/commit/3267098fd3659bd784c3e40d660d0d7521d1bf4a)
 
 - When reading env vars, read from `VAR_NAME` and `REACT_APP_VAR_NAME`. This makes your env vars available to projects using `create-react-app`.
-- [Add OpenAI client proxy.](./guides/openai#set-a-proxy-env-var)
+- Add OpenAI client proxy.
 
 ## [0.5.1](https://github.com/fixie-ai/ai-jsx/commit/856a2501592f157641d0d99c70fda960b0f7117a)
 

@@ -128,13 +128,13 @@ function* GenerateText() {
 
 ## Component API
 
-Components take props as the first argument and [`ComponentContext`](../api/interfaces/core_render.ComponentContext) as the second:
+Components take props as the first argument and [`ComponentContext`](../api/interfaces/core_node.ComponentContext) as the second:
 
 ```tsx
 function MyComponent(props, componentContext) {}
 ```
 
-`componentContext` contains a [`render`](../api/interfaces/core_render.ComponentContext#render) method, which you can use to [render other JSX components](./rendering.md#rendering-from-a-component).
+`componentContext` contains a [`render`](../api/interfaces/core_node.ComponentContext#render) method, which you can use to [render other JSX components](./rendering.md#rendering-from-a-component).
 
 ### Context
 
@@ -210,7 +210,7 @@ const catName = (
 
 In this case, `catName` will result in two separate model calls, so you'll get two different cat names.
 
-If this is not desired, you can wrap the component in [`memo`](../api/modules/core_memoize):
+If this is not desired, you can wrap the component in [`memo`](../api/interfaces/core_render.RenderContext.md#memo):
 
 ```tsx
 const catName = memo(

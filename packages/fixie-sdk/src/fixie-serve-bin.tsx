@@ -59,13 +59,14 @@ async function serve({
 
   app.post('/', (req, res) => {
     try {
+      const invokeAgentRequest = req.body as InvokeAgentRequest;
       const renderable = (
         <FixieAPIContext.Provider value={{ url: fixieApiUrl, authToken: (req as any).fixieAuthToken }}>
           <RequestContext.Provider
-            value={{ request: req.body as InvokeAgentRequest, agentId: (req as any).fixieVerifiedToken.payload.aid }}
+            value={{ request: invokeAgentRequest, agentId: (req as any).fixieVerifiedToken.payload.aid }}
           >
             <FixieRequestWrapper>
-              <Handler />
+              <Handler {...(invokeAgentRequest.parameters ?? {})} />
             </FixieRequestWrapper>
           </RequestContext.Provider>
         </FixieAPIContext.Provider>
