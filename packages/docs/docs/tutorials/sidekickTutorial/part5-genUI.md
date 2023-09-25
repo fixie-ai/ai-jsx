@@ -16,15 +16,16 @@ extend your Sidekick to use this Generative UI capability, which we call GenUI f
 
 When you create a Sidekick, the `outputFormat` parameter passed to the `<Sidekick>` component
 indicates the type of output that the Sidekick produces. There are three options:
-* `text/plain` - The Sidekick produces plain text responses only.
-* `text/markdown` - The Sidekick produces Markdown, which can include standard Markdown
-elements like lists, tables, and code blocks.
-* `text/mdx` - The Sidekick produces [MDX](https://mdxjs.com/), which is essentially
-Markdown with embedded JSX components.
+
+- `text/plain` - The Sidekick produces plain text responses only.
+- `text/markdown` - The Sidekick produces Markdown, which can include standard Markdown
+  elements like lists, tables, and code blocks.
+- `text/mdx` - The Sidekick produces [MDX](https://mdxjs.com/), which is essentially
+  Markdown with embedded JSX components.
 
 When using `text/mdx` (which is the default), the Sidekick generates Markdown potentially
 interspersed with GenUI components. An example might be something like the following:
-  
+
 ```jsx
   Sure, here is the latest pull request assigned to you:
 
@@ -41,7 +42,7 @@ interspersed with GenUI components. An example might be something like the follo
   Number of commits: 1
   Number of changed files: 13
   </Card>
-  ```
+```
 
 When rendered in the Sidekick UI, this will show a card with the given information, like this:
 
@@ -51,12 +52,12 @@ When rendered in the Sidekick UI, this will show a card with the given informati
 
 The standard Sidekick UI renderer understands how to use three MDX components:
 
-* `<Card>` - A card with a header, some contents, and an optional more detail link.
-* `<Citation>` - A citation that includes a title and a link.
-* `<NextStepsButton>` - A button that, when pressed, sends the contents of the button text
-as the next query to the Sidekick.
+- `<Card>` - A card with a header, some contents, and an optional more detail link.
+- `<Citation>` - A citation that includes a title and a link.
+- `<NextStepsButton>` - A button that, when pressed, sends the contents of the button text
+  as the next query to the Sidekick.
 
-As long as the `outputFormat` parameter to the `<Sidekick>` component is set to `text/mdx` , 
+As long as the `outputFormat` parameter to the `<Sidekick>` component is set to `text/mdx` ,
 there is nothing more you need to do to get the Sidekick to use these standard components.
 
 ## Helping the Sidekick know when to use GenUI components
@@ -71,31 +72,29 @@ it some concrete examples of when to use them.
 ```tsx
 export const finalSystemMessageBeforeResponse = (
   <SystemMessage>
-    Respond with a `Card`. If your API call produced a 4xx error, see if you can fix the request
-    and try again. Otherwise: Give the user suggested next queries, using `NextStepsButton`.
-    Only suggest things you can actually do. Here's an example of what the final outcome should
-    look like:
+    Respond with a `Card`. If your API call produced a 4xx error, see if you can fix the request and try again.
+    Otherwise: Give the user suggested next queries, using `NextStepsButton`. Only suggest things you can actually do.
+    Here's an example of what the final outcome should look like:
     {`
         <NextStepsButton prompt='See more about this function' />
         <NextStepsButton prompt='See all of the stars for this repository' />
         `}
-    When you give next steps, phrase them as things the user would say to you. Also, only give
-    next steps that are fully actionable by you. You cannot call any write APIs, so do not make
-    suggestions like `create a repository`.
+    When you give next steps, phrase them as things the user would say to you. Also, only give next steps that are fully
+    actionable by you. You cannot call any write APIs, so do not make suggestions like `create a repository`.
   </SystemMessage>
 );
 ```
 
-To use this in our Sidekick, we're going to pass it in as a `finalSystemMessageBeforeResponse` , 
+To use this in our Sidekick, we're going to pass it in as a `finalSystemMessageBeforeResponse` ,
 like so:
 
 ```tsx
-    <Sidekick
-      role="GitHub assistant"
-      systemMessage={systemMessage}
-      tools={tools}
-      finalSystemMessageBeforeResponse={finalSystemMessageBeforeResponse}
-    />
+<Sidekick
+  role="GitHub assistant"
+  systemMessage={systemMessage}
+  tools={tools}
+  finalSystemMessageBeforeResponse={finalSystemMessageBeforeResponse}
+/>
 ```
 
 ## Adding custom GenUI components
@@ -113,7 +112,7 @@ the optional parameters `genUIComponentNames` and `genUIExamples` to the `<Sidek
 component, like so:
 
 ```tsx
-const genUIComponentNames = [ 'MyTable' ]; 
+const genUIComponentNames = [ 'MyTable' ];
 const genUIExamples = (
   return <>
     Whenever responding with tabular data, the {'<MyTable />'} component. Its interface is:
@@ -125,7 +124,7 @@ const genUIExamples = (
     }
     `}
   </>
-); 
+);
 
 const mySidekick = (
   <Sidekick
