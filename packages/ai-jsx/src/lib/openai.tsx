@@ -64,7 +64,7 @@ class AzureOpenAIClient extends OpenAIClient {
   override buildRequest(options: FinalRequestOptions) {
     if (options.body && 'model' in options.body) {
       const model = (options.body.model as string).replace('.', '');
-      options.path = `/deployments/${model}${options.path}`;
+      options.path = `openai/deployments/${model}${options.path}`;
     }
     return super.buildRequest(options);
   }
@@ -73,8 +73,8 @@ class AzureOpenAIClient extends OpenAIClient {
 const openAiClientContext = AI.createContext<() => OpenAIClient>(
   _.once(() => {
     const baseURL = getEnvVar('OPENAI_API_BASE', false);
-    const useAzure = baseURL?.endsWith('azure.com');
-    const apiKey = getEnvVar(useAzure ? 'OPENAI_AZURE_API_KEY' : 'OPENAI_API_KEY', false);
+    const useAzure = baseURL && new URL(baseURL).hostname.endsWith('.azure.com');
+    const apiKey = getEnvVar(useAzure ? 'AZURE_OPENAI_API_KEY' : 'OPENAI_API_KEY', false);
     const config = {
       apiKey,
       dangerouslyAllowBrowser: Boolean(getEnvVar('REACT_APP_OPENAI_API_KEY', false)),
@@ -429,10 +429,14 @@ export async function* OpenAIChatModel(
   // This requires some gymnastics because several components will share a single iterator that can only be consumed once.
   // That is, the logical loop execution is spread over multiple functions (closures over the shared iterator).
   async function advance() {
-    const next = await iterator.next();
-    if (next.done) {
-      return null;
-    }
+    // Eat any empty chunks, typically seen at the beginning of the stream.
+    let next;
+    do {
+      next = await iterator.next();
+      if (next.done) {
+        return null;
+      }
+    } while (next.value.choices.length == 0);
 
     logger.trace({ deltaMessage: next.value }, 'Got delta message');
     return next.value.choices[0].delta;
