@@ -2,9 +2,8 @@
 import VADBuilder, { VAD, VADMode, VADEvent } from '@ozymandiasthegreat/vad';
 
 export abstract class VoiceActivityDetectorBase {
-  abstract start(sampleRate: number): void;
+  abstract start(): void;
   abstract stop(): void;
-  // abstract pause(): void;
   abstract processFrame(frame: Float32Array): void;
   onSpeechStart?: () => void;
   onSpeechCancel?: () => void;
@@ -13,7 +12,7 @@ export abstract class VoiceActivityDetectorBase {
 }
 
 export class LibfVoiceActivityDetector extends VoiceActivityDetectorBase {
-  private readonly minSamples = 160;
+  private readonly minSamples = 320;
   private VADClass?: typeof VAD;
   private vad?: VAD;
   private buffer: Int16Array = new Int16Array(0);
@@ -28,8 +27,13 @@ export class LibfVoiceActivityDetector extends VoiceActivityDetectorBase {
   stop() {
     this.vad?.destroy();
     this.vad = undefined;
+    this.VADClass = undefined;
   }
   processFrame(frame: Float32Array) {
+    if (!this.vad) {
+      return;
+    }
+
     const intFrame = this.VADClass!.floatTo16BitPCM(frame);
 
     // If we don't have enough samples to hit the minimum, just add to our buffer.

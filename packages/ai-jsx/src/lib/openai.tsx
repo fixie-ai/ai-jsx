@@ -19,7 +19,7 @@ import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { OpenAI as OpenAIClient } from 'openai';
-export { OpenAI as OpenAIClient } from 'openai';
+import {FinalRequestOptions} from 'openai/core';
 import { debugRepresentation } from '../core/debug.js';
 import { getEncoding } from 'js-tiktoken';
 import _ from 'lodash';
@@ -45,17 +45,45 @@ export type ValidChatModel =
   | 'gpt-3.5-turbo-16k'
   | 'gpt-3.5-turbo-16k-0613';
 
+/**
+ * An OpenAI client that talks to the Azure OpenAI service.
+ * - Adds an API version in the query string.
+ * - Uses Api-Key instead of Authorization for the auth header.
+ * - Includes the deployment name in the path; note that deployment names cannot contain dots.
+ */
+  class AzureOpenAIClient extends OpenAIClient { 
+  protected override defaultQuery() {
+    return { 'api-version': '2023-07-01-preview' };
+  }
+  protected override authHeaders() {
+    return {
+      'Api-Key': this.apiKey,
+    };
+  }
+  override buildRequest(options: FinalRequestOptions) {
+    const result = super.buildRequest(options);
+    if (options.body && 'model' in options.body) {
+      const model = (options.body.model as string).replace('.', '');
+      result.url = result.url.replace('/chat/', `/deployments/${model}/chat/`);
+    }
+    return result;
+  }
+}
+
 const openAiClientContext = AI.createContext<() => OpenAIClient>(
   _.once(() => {
     const baseURL = getEnvVar('OPENAI_API_BASE', false);
-    return new OpenAIClient({
-      apiKey: getEnvVar('OPENAI_API_KEY', false),
+    const useAzure = baseURL?.endsWith('azure.com');
+    const apiKey = getEnvVar(useAzure ? 'OPENAI_AZURE_API_KEY' : 'OPENAI_API_KEY', false);
+    const config = {
+      apiKey,
       dangerouslyAllowBrowser: Boolean(getEnvVar('REACT_APP_OPENAI_API_KEY', false)),
       // N.B. `baseURL` needs to be _unspecified_ rather than undefined
       ...(baseURL ? { baseURL } : {}),
       // TODO: Figure out a better way to work around NextJS fetch blocking streaming
       fetch: ((globalThis as any)._nextOriginalFetch ?? globalThis.fetch).bind(globalThis),
-    });
+    }
+    return useAzure ? new AzureOpenAIClient(config) : new OpenAIClient(config);
   })
 );
 

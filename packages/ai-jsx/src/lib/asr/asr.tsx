@@ -48,11 +48,12 @@ function bufferToBase64(buffer: ArrayBuffer) {
  * Currently, the VAD is quite primitive with a speech threshold of -50 dbFS.
  */
 export class MicManager extends EventTarget {
+  private numSamples: number = 0;
   private outBuffer?: Float32Array[];
   private context?: AudioContext;
   private streamElement?: HTMLAudioElement;
   private stream?: MediaStream;
-  private processorNode?: AudioWorkletNode;
+  private processorNode?: AudioWorkletNode;  
   private vad?: VoiceActivityDetectorBase;
 
   /**
@@ -97,11 +98,18 @@ export class MicManager extends EventTarget {
   /**
    * Returns the sample rate of the capturer.
    */
-  sampleRate() {
-    return this.context?.sampleRate;
+  get sampleRate() {
+    return this.context ? this.context.sampleRate : 0;
+  }
+  /**
+   * Returns the number of milliseconds of audio captured so far.
+   */
+  get currentMillis() {
+    return (this.numSamples / this.sampleRate) * 1000;
   }
 
   private async startGraph(timeslice: number, onEnded?: () => void) {
+    this.numSamples = 0;
     this.outBuffer = [];
     this.context = new window.AudioContext({ sampleRate: 16000 });
     console.log(`MicManager sample rate: ${this.context.sampleRate}`);
@@ -112,8 +120,9 @@ export class MicManager extends EventTarget {
     await this.context!.audioWorklet.addModule(workletSrcUrl);
     this.processorNode = new AudioWorkletNode(this.context, 'input-processor');
     this.processorNode.port.onmessage = (event) => {
+      this.numSamples += AUDIO_WORKLET_NUM_SAMPLES;
       this.outBuffer!.push(event.data);
-      const bufDuration = ((AUDIO_WORKLET_NUM_SAMPLES * this.outBuffer!.length) / this.sampleRate()!) * 1000;
+      const bufDuration = ((AUDIO_WORKLET_NUM_SAMPLES * this.outBuffer!.length) / this.sampleRate) * 1000;
       if (bufDuration >= timeslice) {
         const chunkEvent = new CustomEvent('chunk', {
           detail: this.makeAudioChunk(this.outBuffer!),
@@ -142,18 +151,23 @@ export class MicManager extends EventTarget {
       throw new Error('No stream or streamElement');
     }
     source.connect(this.processorNode);
+    // Only connect the destination if we're playing a file,
+    // since we don't want to hear ourselves.
+    if (this.streamElement) {
+      source.connect(this.context.destination);
+    }
 
-    this.vad = new LibfVoiceActivityDetector(this.sampleRate()!);
+    this.vad = new LibfVoiceActivityDetector(this.sampleRate);
     this.vad.onSpeechStart = () => {
-      console.log('Speech start detected');
+      console.log(`Speech begin: ${this.currentMillis.toFixed(0)} ms`);
     };
     this.vad.onSpeechEnd = () => {
-      console.log('Speech end detected');
+      console.log(`Speech FINAL: ${this.currentMillis.toFixed(0)} ms`);
     };
     this.vad.onSpeechCancel = () => {
       console.log('Speech cancel detected');
     };
-    this.vad.start(this.sampleRate()!);
+    this.vad.start();
   }
 
   /**
@@ -282,7 +296,7 @@ export abstract class SpeechRecognitionBase extends EventTarget {
       } else {
         console.error(`[${this.name}] socket closed`);
       }
-      this.streamSentMillis += (chunk.byteLength / (2 * this.manager.sampleRate()!)) * 1000;
+      this.streamSentMillis += (chunk.byteLength / (2 * this.manager.sampleRate)) * 1000;
     });
   }
   private computeLatency(recognitionMillis: number) {
@@ -328,12 +342,11 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
   async start() {
     this.buf = '';
     const params = new URLSearchParams({
-      tier: 'nova',
-      model: this.model ?? 'general',
+      model: this.model ?? 'nova-2-ea',
       version: 'latest',
       encoding: 'linear16',
       channels: '1',
-      sample_rate: this.manager.sampleRate()!.toString(),
+      sample_rate: this.manager.sampleRate.toString(),
       punctuate: 'true',
       interim_results: 'true',
       endpointing: '300',
@@ -406,7 +419,7 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
   protected handleOpen() {
     const obj = {
       api_key: this.token,
-      sample_rate_hertz: this.manager.sampleRate(),
+      sample_rate_hertz: this.manager.sampleRate,
       include_nonfinal: true,
       enable_endpoint_detection: true,
       speech_context: null,
@@ -468,7 +481,7 @@ export class GladiaSpeechRecognition extends SpeechRecognitionBase {
   protected handleOpen() {
     const obj = {
       x_gladia_key: this.token,
-      sample_rate: this.manager.sampleRate(),
+      sample_rate: this.manager.sampleRate,
       encoding: 'wav',
       // 300ms endpointing by default
       language: this.language?.slice(0, 2) == 'en' ? 'english' : null,
@@ -509,7 +522,7 @@ export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
   }
   async start() {
     super.startInternal(
-      `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=${this.manager.sampleRate()}&token=${await this.fetchToken()}`
+      `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=${this.manager.sampleRate}&token=${await this.fetchToken()}`
     );
   }
   /**
@@ -563,7 +576,7 @@ export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
       audio_format: {
         type: 'raw',
         encoding: 'pcm_s16le',
-        sample_rate: this.manager.sampleRate(),
+        sample_rate: this.manager.sampleRate,
       },
       transcription_config: {
         language: this.language?.slice(0, 2) ?? 'en',
@@ -618,7 +631,7 @@ export class RevAISpeechRecognition extends SpeechRecognitionBase {
   async start() {
     const params = new URLSearchParams({
       access_token: await this.fetchToken(),
-      content_type: `audio/x-raw;layout=interleaved;rate=${this.manager.sampleRate()};format=S16LE;channels=1`,
+      content_type: `audio/x-raw;layout=interleaved;rate=${this.manager.sampleRate};format=S16LE;channels=1`,
     });
     if (this.language) {
       params.set('language', this.language.slice(0, 2));
