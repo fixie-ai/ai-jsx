@@ -3,7 +3,7 @@ import { InvokeAgentRequest } from './types.js';
 import { ShowConversation, ConversationHistoryContext } from 'ai-jsx/core/conversation';
 import { Json } from './json.js';
 import { FixieConversation } from './conversation.js';
-import { OpenAI, OpenAIClient, ValidChatModel as OpenAIChatModel } from 'ai-jsx/lib/openai';
+import { OpenAI as OpenAIClient, ValidChatModel as OpenAIChatModel } from 'ai-jsx/lib/openai';
 import { Anthropic, AnthropicClient, ValidChatModel as AnthropicChatModel } from 'ai-jsx/lib/anthropic';
 import { cohereContext } from 'ai-jsx/lib/cohere';
 import { FixieAPIContext } from 'ai-jsx/batteries/fixie';
