@@ -38,7 +38,7 @@ const sidebars = {
             'tutorials/sidekickTutorial/part3-systemMessage',
             'tutorials/sidekickTutorial/part4-tools',
             'tutorials/sidekickTutorial/part5-genUI',
-            'tutorials/sidekickTutorial/part6-deploying',
+            'tutorials/sidekickTutorial/part6-embedding',
             'tutorials/sidekickTutorial/part7-conclusion',
           ],
         },
