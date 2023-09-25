@@ -362,25 +362,23 @@ const PageComponent: React.FC = () => {
     <>
       <div className="w-full">
         <p className="font-sm ml-2 mb-2">
-          This demo allows you to chat (via voice) with a drive-thru agent at a Krispy Kreme. Click Start Chatting (or
-          tap the spacebar) to begin.
+          This demo allows you to chat (via voice) with a drive-thru agent at a fictional donut shop. Click Start
+          Chatting (or tap the spacebar) to begin.
         </p>
         <div className="grid grid-cols-2">
           <div className="p-4">
             <p className="text-lg font-bold">🍩 DONUTS</p>
             <ul className="text-sm">
-              <MenuItem name="PUMPKIN SPICE ORIGINAL GLAZED® DOUGHNUT" price={1.29} />
+              <MenuItem name="PUMPKIN SPICE ICED DOUGHNUT" price={1.29} />
               <MenuItem name="PUMPKIN SPICE CAKE DOUGHNUT" price={1.29} />
-              <MenuItem name="PUMPKIN SPICE CHEESECAKE SWIRL DOUGHNUT" price={1.29} />
-              <MenuItem name="PUMPKIN SPICE MAPLE PECAN DOUGHNUT" price={1.29} />
-              <MenuItem name="ORIGINAL GLAZED® DOUGHNUT" price={0.99} />
-              <MenuItem name="CHOCOLATE ICED GLAZED DOUGHNUT" price={1.09} />
-              <MenuItem name="CHOCOLATE ICED GLAZED DOUGHNUT WITH SPRINKLES" price={1.09} />
-              <MenuItem name="GLAZED RASPBERRY FILLED DOUGHNUT" price={1.09} />
-              <MenuItem name="GLAZED BLUEBERRY CAKE DOUGHNUT" price={1.09} />
+              <MenuItem name="OLD FASHIONED DOUGHNUT" price={0.99} />
+              <MenuItem name="CHOCOLATE ICED DOUGHNUT" price={1.09} />
+              <MenuItem name="CHOCOLATE ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
+              <MenuItem name="RASPBERRY FILLED DOUGHNUT" price={1.09} />
+              <MenuItem name="BLUEBERRY CAKE DOUGHNUT" price={1.09} />
               <MenuItem name="STRAWBERRY ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
-              <MenuItem name="GLAZED LEMON FILLED DOUGHNUT" price={1.09} />
-              <MenuItem name="ORIGINAL GLAZED® DOUGHNUT HOLES" price={3.99} />
+              <MenuItem name="LEMON FILLED DOUGHNUT" price={1.09} />
+              <MenuItem name="DOUGHNUT HOLES" price={3.99} />
             </ul>
           </div>
           <div className="p-4">
@@ -388,14 +386,13 @@ const PageComponent: React.FC = () => {
             <ul className="text-sm">
               <MenuItem name="PUMPKIN SPICE COFFEE" price={2.59} />
               <MenuItem name="PUMPKIN SPICE LATTE" price={4.59} />
-              <MenuItem name="CLASSIC BREWED COFFEE" price={1.79} />
-              <MenuItem name="CLASSIC DECAF BREWED COFFEE" price={1.79} />
+              <MenuItem name="REGULAR BREWED COFFEE" price={1.79} />
+              <MenuItem name="DECAF BREWED COFFEE" price={1.79} />
               <MenuItem name="LATTE" price={3.49} />
-              <MenuItem name="VANILLA SPECIALTY LATTE" price={3.49} />
-              <MenuItem name="ORIGINAL GLAZED® LATTE" price={3.49} />
-              <MenuItem name="CARAMEL SPECIALTY LATTE" price={3.49} />
-              <MenuItem name="CARAMEL MOCHA SPECIALTY LATTE" price={3.49} />
-              <MenuItem name="MOCHA SPECIALTY LATTE" price={3.49} />
+              <MenuItem name="CAPPUCINO" price={3.49} />
+              <MenuItem name="CARAMEL MACCHIATO" price={3.49} />
+              <MenuItem name="MOCHA LATTE" price={3.49} />
+              <MenuItem name="CARAMEL MOCHA LATTE" price={3.49} />
             </ul>
           </div>
         </div>
