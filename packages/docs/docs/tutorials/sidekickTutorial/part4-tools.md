@@ -177,3 +177,24 @@ Now you should be able to deploy the Sidekick and ask questions of it, like:
 
 In each case, the Sidekick will use the LLM to formulate a query to the GitHub GraphQL API,
 get back a response, and then use the LLM to generate a response.
+
+## Kick-Starters
+
+This section provides some optional, suggested exercises you can do to go deeper and really "kick"-start your usage of Sidekicks.
+
+### Increase the Scope
+
+:::warning Proceed with Caution
+
+Giving your Sidekick read/update/delete access should not be done lightly. Data loss can occur.
+
+:::
+
+Change the scope on your GitHub access token to let the Sidekick make changes or updates. Wire up a new function to provide this tool to the LLM and update the System Message accordingly.
+
+### Wire up a new Tool
+
+Are there other APIs or tools that you use along with GitHub? Consider adding them to your Sidekick (SK). Here are a couple ideas:
+
+- **CI/CD** → Connect with TravisCI (or another CI/CD service) to have your SK answer questions about builds or deployments.
+- **Issue Tracking** → Give the SK a tool that can look up assigned issues in Jira or another tool.
