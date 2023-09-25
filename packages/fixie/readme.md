@@ -11,7 +11,7 @@ This package contains a number of ways for you to integrate a Fixie agent into y
   - [`<ControlledFloatingFixieEmbed />`](#controlledfloatingfixieembed)
   - [`<InlineFixieEmbed />`](#inlinefixieembed)
 - Bring Your Own Frontend:
-  - [`useSidekick`](#usesidekick)
+  - [`useFixie`](#usefixie)
   - [`IsomorphicFixieClient`](#isomorphicfixieclient)
 
 ### Embed
@@ -46,10 +46,10 @@ This React component will embed a Fixie chat window inline with your content.
 
 If you want to directly integrate Fixie into your webapp, use these APIs.
 
-#### `useSidekick`
+#### `useFixie`
 
 ```ts
-import { useSidekick } from 'fixie/web';
+import { useFixie } from 'fixie/web';
 ```
 
 This hook provides a fully managed API for a conversation. It returns a number of fields you can use to drive a rich UI, including loading states and debug diagnostics.

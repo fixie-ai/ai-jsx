@@ -21,7 +21,7 @@ import { IsomorphicFixieClient } from './isomorphic-client.js';
 // when trying to build this file. (Vite from Redwood worked fine.)
 const useCollectionData = untypedUseCollectionData as typeof typedUseCollectionData;
 
-export interface UseSidekickResult {
+export interface UseFixieResult {
   /**
    * The conversation history.
    */
@@ -82,7 +82,7 @@ export interface UseSidekickResult {
   conversationExists?: boolean;
 }
 
-export interface UseSidekickArgs {
+export interface UseFixieArgs {
   /**
    * The ID of the conversation to use.
    *
@@ -138,7 +138,7 @@ const firebaseConfig = {
  *
  * This hook manages the state of a Fixie-hosted conversation.
  */
-export function useSidekick({
+export function useFixie({
   conversationId: userPassedConversationId,
   conversationFixtures,
   onNewTokens,
@@ -147,9 +147,9 @@ export function useSidekick({
   agentId,
   fixieAPIUrl,
   onNewConversation,
-}: UseSidekickArgs): UseSidekickResult {
+}: UseFixieArgs): UseFixieResult {
   /**
-   * Aspects of the useSidekick hook may be hideously more complicated than they need to be.
+   * Aspects of the useFixie hook may be hideously more complicated than they need to be.
    */
 
   const [input, setInput] = useState('');
@@ -253,7 +253,7 @@ export function useSidekick({
     };
   }
 
-  const loadState = (loading ? 'loading' : error ? error : 'loaded') as UseSidekickResult['loadState'];
+  const loadState = (loading ? 'loading' : error ? error : 'loaded') as UseFixieResult['loadState'];
   const turns = conversationFixtures ?? value ?? [];
 
   /**
