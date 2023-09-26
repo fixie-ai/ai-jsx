@@ -1,16 +1,47 @@
 'use client';
 import VADBuilder, { VAD, VADMode, VADEvent } from '@ozymandiasthegreat/vad';
 
+/**
+ * Base class for voice activity detectors.
+ */
 export abstract class VoiceActivityDetectorBase {
+  /**
+   * Starts the voice activity detector.
+   */
   abstract start(): void;
+  /**
+   * Stop the voice activity detector.
+   */
   abstract stop(): void;
+  /**
+   * Returns true if the voice activity detector is currently detecting voice.
+   */
   abstract get isVoiceActive(): boolean;
+  /**
+   * Process a frame of audio.
+   */
   abstract processFrame(frame: Float32Array): void;
+  /**
+   * Called when voice is detected.
+   */
   onVoiceStart?: () => void;
+  /**
+   * Called when voice is no longer detected.
+   */
   onVoiceEnd?: () => void;
+  /**
+   * Called when an error occurs.
+   */
   onError?: () => void;
 }
 
+/**
+ * The WebRTC GMM-based voice activity detector, ported to WASM.
+ * Note that this VAD has a habit of producing false positives,
+ * but this is unsurprising given that in most VAD applications
+ * (e.g., silence suppression) false positives are harmless and false
+ * negatives are really bad.
+ */
 export class LibfVoiceActivityDetector extends VoiceActivityDetectorBase {
   private readonly minSamples = 320;
   private VADClass?: typeof VAD;
@@ -47,7 +78,7 @@ export class LibfVoiceActivityDetector extends VoiceActivityDetectorBase {
     if (newBufferSize < this.minSamples) {
       const newBuffer = new Int16Array(newBufferSize);
       newBuffer.set(this.buffer);
-			newBuffer.set(intFrame, this.buffer.length);
+      newBuffer.set(intFrame, this.buffer.length);
       this.buffer = newBuffer;
       return;
     }
