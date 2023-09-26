@@ -357,7 +357,8 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
   async start() {
     this.buf = '';
     const params = new URLSearchParams({
-      model: this.model ?? 'nova-2-ea',
+      tier: 'nova',
+      model: this.model ?? 'general',
       version: 'latest',
       encoding: 'linear16',
       channels: '1',
