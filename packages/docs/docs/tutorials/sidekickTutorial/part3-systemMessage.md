@@ -5,7 +5,9 @@ sidebar_position: 3
 # Part 3 - Creating the System Message
 
 :::note What we cover in part 3
-In [Part 2](./part2-docsQA) we learned about DocsQA and hooked up a document collection based on Git and GitHub to our Sidekick. In Part 3, we will:
+In [Part 2](./part2-docsQA) we learned about DocsQA and hooked up a document collection based on Git and GitHub to our Sidekick.
+
+In Part 3, you will:
 
 - Learn about the System Message and why it is important.
 - Update our template Sidekick with a more tailored message for our use case.
@@ -102,7 +104,7 @@ export function YourSidekickSystemMessage() {
   );
 }
 
-export const finalSystemMessageBeforeResponse = <SystemMessage></SystemMessage>;
+export const finalSystemMessageBeforeResponse = <></>;
 ```
 
 Now, in `index.tsx` replace the tools constant with the following code:
@@ -124,13 +126,37 @@ If you aren't already running `serve`, start it up so we can test our changes in
 npx fixie@latest serve
 ```
 
-## Kick-Starters
+Now let's ask it some questions. Try each of the following:
 
-This section provides some optional, suggested exercises you can do to go deeper and really "kick"-start your usage of Sidekicks.
+```terminal
+What can you do?
 
-### Tweak the System Message
+How do branches work?
+
+What is the GitHub CLI?
+```
+
+### Clean-up Sidekick Description in Fixie
+
+You may have noticed that the description in the Fixie UI still talks about a Sidekick for foxes. This is from the template. To update this, open the agent.yaml file and change the description to the following:
+
+```terminal
+description: "A Fixie Sidekick that helps understand and manage your presence on GitHub."
+```
+
+This will be updated the next time you use `npx fixie@latest serve` or `npx fixie@latest deploy`
+
+Next up in Part 4 we will learn how to give our Sidekick more capabilities via Tools.
+
+:::tip "Kick"-Starters
+
+_This section provides some optional, suggested exercises you can do to go deeper with your usage of Sidekicks._
+
+**Tweak the System Message**
 
 Make some changes to the system message and then see how those changes impact the behavior of your Sidekick. Here are some things to try:
 
 - Remove the second system message and then try to get your Sidekick to respond as a different character.
 - Tell the model it is an expert on knitting and see how it responds to your questions about git and GitHub.
+
+:::

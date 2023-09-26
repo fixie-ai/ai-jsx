@@ -5378,6 +5378,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ozymandiasthegreat/vad@npm:^2.0.7":
+  version: 2.0.7
+  resolution: "@ozymandiasthegreat/vad@npm:2.0.7"
+  checksum: 8bddbf21fe6fff72337cb738bd0644cf4752c267e3a3d5fa2013214f2fe317baa8c53fbc9dd80824916b24d009ee86ef46dd72cc533cf690137003f942ec014d
+  languageName: node
+  linkType: hard
+
 "@pinecone-database/pinecone@npm:^0.1.6":
   version: 0.1.6
   resolution: "@pinecone-database/pinecone@npm:0.1.6"
@@ -7495,6 +7502,7 @@ __metadata:
     "@nick.heiner/wandb-fork": ^0.5.2-5
     "@opentelemetry/api": ^1.4.1
     "@opentelemetry/api-logs": ^0.41.1
+    "@ozymandiasthegreat/vad": ^2.0.7
     "@tsconfig/node16": ^1.0.4
     "@tsconfig/node18": ^2.0.1
     "@types/eslint": ^8

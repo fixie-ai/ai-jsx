@@ -5,13 +5,6 @@ import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
 import '../globals.css';
 
-// latency map and report based on findings
-// tts bargein?
-// vad
-// shorter initial messages
-// caching or other initial startup opt?
-// explore Piper via WASM/python
-
 // 1. VAD triggers silence. (Latency here is frame size + VAD delay)
 // 2. ASR sends partial transcript. ASR latency = 2-1.
 // 3. ASR sends final transcript. ASR latency = 3-1.
