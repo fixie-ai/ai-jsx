@@ -2,7 +2,7 @@ import * as AI from 'ai-jsx';
 import { Tool, UseTools } from 'ai-jsx/batteries/use-tools';
 import { UserMessage, SystemMessage } from 'ai-jsx/core/conversation';
 import { LogImplementation, LogLevel } from 'ai-jsx/core/log';
-import { OpenAI } from 'ai-jsx/lib/openai';
+import { OpenAI, ValidChatModel } from 'ai-jsx/lib/openai';
 import z from 'zod';
 
 export const tools: Record<string, Tool> = {
@@ -173,7 +173,7 @@ export const tools: Record<string, Tool> = {
 
 function TestCase({ minimal }: { minimal: boolean }) {
   return (
-    <OpenAI chatModel="gpt-4-32k">
+    <OpenAI chatModel={(process.env.OPENAI_MODEL ?? 'gpt-4-32k') as ValidChatModel}>
       <UseTools tools={minimal ? {} : tools}>
         {!minimal && (
           <>
