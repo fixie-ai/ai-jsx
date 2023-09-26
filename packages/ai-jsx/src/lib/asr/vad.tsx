@@ -41,9 +41,12 @@ export abstract class VoiceActivityDetectorBase {
  * but this is unsurprising given that in most VAD applications
  * (e.g., silence suppression) false positives are harmless and false
  * negatives are really bad.
+ *
+ * Using the shortest supported frame size (10ms) seems to help
+ * reduce false positives, and is better for latency anyway.
  */
 export class LibfVoiceActivityDetector extends VoiceActivityDetectorBase {
-  private readonly minSamples = 320;
+  private readonly minSamples = 160; // 10ms at 16kHz
   private VADClass?: typeof VAD;
   private vad?: VAD;
   private buffer: Int16Array = new Int16Array(0);
