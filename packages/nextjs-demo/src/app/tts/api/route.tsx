@@ -1,21 +1,28 @@
 /** @jsxImportSource ai-jsx */
 import { NextRequest, NextResponse } from 'next/server';
+import { assert } from 'console';
+import _ from 'lodash';
 import aws4 from 'aws4';
 
 const AUDIO_MPEG_MIME_TYPE = 'audio/mpeg';
+const APPLICATION_JSON_MIME_TYPE = 'application/json';
+type Generate = (voiceId: string, rate: number, text: string) => Promise<Response>;
+class Provider {
+  constructor(public func: Generate, public keyPath?: string) {}
+}
 type ProviderMap = {
-  [key: string]: (voiceId: string, rate: number, text: string) => Promise<Response>;
+  [key: string]: Provider;
 };
 const PROVIDER_MAP: ProviderMap = {
-  eleven: ttsEleven,
-  azure: ttsAzure,
-  aws: ttsAws,
-  gcp: ttsGcp,
-  wellsaid: ttsWellSaid,
-  murf: ttsMurf,
-  playht: ttsPlayHT,
-  resemble: ttsResembleV1,
-  resemble2: ttsResembleV2,
+  eleven: { func: ttsEleven },
+  azure: { func: ttsAzure },
+  aws: { func: ttsAws },
+  gcp: { func: ttsGcp, keyPath: 'audioContent' },
+  wellsaid: { func: ttsWellSaid },
+  murf: { func: ttsMurf, keyPath: 'encodedAudio' },
+  playht: { func: ttsPlayHT },
+  resemble1: { func: ttsResembleV1, keyPath: 'item.raw_audio' },
+  resemble: { func: ttsResembleV2, keyPath: 'item.raw_audio' },
 };
 
 function makeStreamResponse(startMillis: number, response: Response) {
@@ -45,9 +52,10 @@ function makeStreamResponse(startMillis: number, response: Response) {
   return new NextResponse(nextStream, { headers, status });
 }
 
-async function makeBlobResponseFromJson(startMillis: number, response: Response, keyName: string) {
+async function makeBlobResponseFromJson(startMillis: number, response: Response, keyPath: string) {
   const json = await response.json();
-  const binary = Buffer.from(json[keyName], 'base64');
+  const value = _.get(json, keyPath);
+  const binary = Buffer.from(value, 'base64');
   console.log(`${startMillis} TTS complete latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
   return new NextResponse(binary, { headers: { 'Content-Type': AUDIO_MPEG_MIME_TYPE } });
 }
@@ -59,28 +67,34 @@ async function makeBlobResponseFromJson(startMillis: number, response: Response,
  */
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
-  const provider = params.get('provider');
+  const providerName = params.get('provider');
   const voice = params.get('voice');
   const text = params.get('text');
   const rate = params.get('rate') ? parseFloat(params.get('rate')!) : 1.0;
-  if (!provider || !voice || !text) {
-    return new NextResponse(JSON.stringify({ error: 'You must specify params `provider`, `voice`, and `text`.' }));
+  if (!providerName || !voice || !text) {
+    return new NextResponse(JSON.stringify({ error: 'You must specify params `provider`, `voice`, and `text`.' }), {
+      status: 400,
+    });
   }
-  if (!(provider in PROVIDER_MAP)) {
-    return new NextResponse(JSON.stringify({ error: `unknown provider ${provider}` }));
+  if (!(providerName in PROVIDER_MAP)) {
+    return new NextResponse(JSON.stringify({ error: `unknown provider ${providerName}` }), { status: 400 });
   }
 
   const startMillis = performance.now();
-  console.log(`${startMillis} TTS for: ${provider} ${text}`);
-  const func = PROVIDER_MAP[provider];
-  const response = await func(voice, rate, text);
+  console.log(`${startMillis} TTS for: ${providerName} ${text}`);
+  const provider = PROVIDER_MAP[providerName];
+  const response = await provider.func(voice, rate, text);
+  if (!response.ok) {
+    console.log(`${startMillis} TTS error: ${response.status} ${response.statusText}`);
+    return new NextResponse(await response.json(), { status: response.status });
+  }
   console.log(`${startMillis} TTS response latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
-  if (provider == 'gcp') {
-    return makeBlobResponseFromJson(startMillis, response, 'audioContent');
+  const contentType = response.headers.get('Content-Type');
+  if (provider.keyPath) {
+    assert(contentType == APPLICATION_JSON_MIME_TYPE);
+    return makeBlobResponseFromJson(startMillis, response, provider.keyPath);
   }
-  if (provider == 'murf') {
-    return makeBlobResponseFromJson(startMillis, response, 'encodedAudio');
-  }
+  assert(contentType == AUDIO_MPEG_MIME_TYPE);
   return makeStreamResponse(startMillis, response);
 }
 
@@ -158,7 +172,7 @@ function ttsAws(voice: string, rate: number, text: string) {
     service: 'polly',
     region,
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': APPLICATION_JSON_MIME_TYPE,
     },
     body: JSON.stringify(params),
   };
@@ -176,7 +190,7 @@ function ttsAws(voice: string, rate: number, text: string) {
  * REST client for GCP TTS.
  */
 function ttsGcp(voice: string, rate: number, text: string) {
-  const headers = createHeaders();
+  const headers = createHeaders(APPLICATION_JSON_MIME_TYPE);
   const obj = {
     input: { text },
     voice: { languageCode: 'en-US', name: voice },
@@ -205,13 +219,14 @@ function ttsWellSaid(voice: string, rate: number, text: string) {
  * REST client for Murf.ai TTS.
  */
 function ttsMurf(voice: string, rate: number, text: string) {
-  const headers = createHeaders();
+  const headers = createHeaders(APPLICATION_JSON_MIME_TYPE);
   headers.append('Api-Key', getEnvVar('MURF_API_KEY'));
   const obj = {
     voiceId: voice,
     style: 'Conversational',
     text,
     rate: decimalToPercent(rate),
+    sampleRate: 24000,
     format: 'MP3',
     encodeAsBase64: true,
   };
@@ -242,7 +257,7 @@ function ttsPlayHT(voice: string, rate: number, text: string) {
  * REST client for Resemble.AI TTS (https://www.resemble.ai)
  */
 function ttsResembleV1(voice: string, rate: number, text: string) {
-  const headers = createHeaders();
+  const headers = createHeaders(APPLICATION_JSON_MIME_TYPE);
   headers.append('Authorization', `Bearer ${getEnvVar('RESEMBLE_API_KEY')}`);
   const obj = {
     body: text, // makeSsml(voice, rate, text),
@@ -277,10 +292,10 @@ function ttsResembleV2(voice: string, rate: number, text: string) {
 /**
  * Helper to create the basic headers for a service that accepts JSON and returns audio/mpeg.
  */
-function createHeaders() {
+function createHeaders(acceptType = AUDIO_MPEG_MIME_TYPE) {
   const headers = new Headers();
-  headers.append('Content-Type', 'application/json');
-  headers.append('Accept', AUDIO_MPEG_MIME_TYPE);
+  headers.append('Content-Type', APPLICATION_JSON_MIME_TYPE);
+  headers.append('Accept', acceptType);
   return headers;
 }
 

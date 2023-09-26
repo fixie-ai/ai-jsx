@@ -17,11 +17,15 @@ AI programming brings a new set of performance considerations. The fundamental d
 
 The key performance strategies are:
 
-1. [Streaming Responses](#strategy-1--streaming-responses)
-1. [Minimizing Output Length](#strategy-2--minimizing-output-length)
-1. [Avoiding Waterfalls + Roundtrips](#strategy-3--avoiding-waterfalls--roundtrips)
-1. [Deferring Execution](#strategy-4--deferring-execution)
-1. [Using a Faster Model](#strategy-5--using-a-faster-model)
+- [Performance](#performance)
+  - [Five Strategies for AI App Performance](#five-strategies-for-ai-app-performance)
+  - [Strategy #1: Streaming Responses](#strategy-1-streaming-responses)
+    - [Streaming From the UI](#streaming-from-the-ui)
+    - [Streaming From the API](#streaming-from-the-api)
+  - [Strategy #2: Minimizing Output Length](#strategy-2-minimizing-output-length)
+  - [Strategy #3: Avoiding Waterfalls + Roundtrips](#strategy-3-avoiding-waterfalls--roundtrips)
+  - [Strategy #4: Deferring Execution](#strategy-4-deferring-execution)
+  - [Strategy #5: Using a Faster Model](#strategy-5-using-a-faster-model)
 
 :::note Performance vs. Reliability
 Aside from "streaming responses", all these strategies make a trade-off between performance vs. the reliability of correctness. You'll have to find the trade-offs that make sense for your application. In general, we recommend starting with correctness, then making trade-offs for performance while keeping correctness at or above an acceptable threshold. No one cares how fast your app is if the results are bad. :smile:
@@ -185,7 +189,7 @@ This hurts parallelism, because the `StoryGenerator` component can't be returned
 Use AI.JSX's built-in support for memoization instead.
 :::
 
-Instead, use [`memo`](/api/modules/core_memoize#memo):
+Instead, use [`memo`](../api/interfaces/core_render.RenderContext.md#memo):
 
 ```tsx
 function StoryGenerator(props, { memo }) {

@@ -86,7 +86,7 @@ function registerServeCommand(command: Command) {
 
 // Get current version of this package.
 const currentPath = path.dirname(fileURLToPath(import.meta.url));
-const packageJsonPath = path.resolve(currentPath, path.join('..', '..', 'package.json'));
+const packageJsonPath = path.resolve(currentPath, path.join('..', 'package.json'));
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
 program

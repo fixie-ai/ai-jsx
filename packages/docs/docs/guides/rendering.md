@@ -144,7 +144,7 @@ Let's take a closer look at some more examples of how to do rendering. There are
 
 ### Debugging Locally in the Terminal
 
-Use [the Inspector](../tutorials/part2-inline.md).
+Use [the Inspector](../tutorials/aijsxTutorials/part2-inline.md).
 
 ```tsx
 import { showInspector } from 'ai-jsx/core/inspector';

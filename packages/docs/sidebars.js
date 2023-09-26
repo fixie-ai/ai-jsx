@@ -23,7 +23,26 @@ const sidebars = {
       label: 'Sidekicks',
       collapsible: true,
       collapsed: false,
-      items: ['sidekicks/sidekicks-quickstart', 'sidekicks/sidekicks-docsqa'],
+      items: [
+        'sidekicks/sidekicks-quickstart',
+        'sidekicks/sidekicks-docsqa',
+        // Start Sidekicks Tutorials
+        {
+          type: 'category',
+          label: 'Sidekicks Tutorial',
+          collapsible: true,
+          collapsed: true,
+          items: [
+            'tutorials/sidekickTutorial/part1-intro',
+            'tutorials/sidekickTutorial/part2-docsQA',
+            'tutorials/sidekickTutorial/part3-systemMessage',
+            'tutorials/sidekickTutorial/part4-tools',
+            'tutorials/sidekickTutorial/part5-genUI',
+            'tutorials/sidekickTutorial/part6-embedding',
+            'tutorials/sidekickTutorial/part7-conclusion',
+          ],
+        },
+      ],
     },
     {
       type: 'category',
@@ -33,19 +52,20 @@ const sidebars = {
       items: [
         'getting-started',
         'ai-newcomers',
+        // Start AI.JSX Tutorials
         {
           type: 'category',
           label: 'AI.JSX Tutorials',
           collapsible: true,
           collapsed: true,
           items: [
-            'tutorials/part1-completion',
-            'tutorials/part2-inline',
-            'tutorials/part3-constrained-output',
-            'tutorials/part4-docsqa',
-            'tutorials/part5-nextjs',
-            'tutorials/part6-router',
-            'tutorials/part7-tools',
+            'tutorials/aijsxTutorials/part1-completion',
+            'tutorials/aijsxTutorials/part2-inline',
+            'tutorials/aijsxTutorials/part3-constrained-output',
+            'tutorials/aijsxTutorials/part4-docsqa',
+            'tutorials/aijsxTutorials/part5-nextjs',
+            'tutorials/aijsxTutorials/part6-router',
+            'tutorials/aijsxTutorials/part7-tools',
           ],
         },
       ],

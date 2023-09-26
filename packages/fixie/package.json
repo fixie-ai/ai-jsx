@@ -1,6 +1,6 @@
 {
   "name": "fixie",
-  "version": "1.4.0-1",
+  "version": "1.5.0",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "build": "rm -rf dist && tsc",
-    "start": "node --no-warnings dist/src/main.js",
+    "start": "node --no-warnings src/main.js",
     "build-start": "yarn run build && yarn run start",
     "format": "prettier --write .",
     "test": "yarn run build && yarn run lint",
@@ -16,25 +16,14 @@
     "lint:fix": "eslint .",
     "prepack": "yarn build"
   },
-  "files": [
-    "dist"
-  ],
   "volta": {
     "extends": "../../package.json"
   },
-  "exports": {
-    "./web": {
-      "types": "./dist/web-index.d.ts",
-      "default": "./dist/web-index.js"
-    },
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
-    }
-  },
-  "bin": "./dist/src/main.js",
+  "bin": "./src/main.js",
   "dependencies": {
     "@apollo/client": "^3.8.1",
+    "@types/apollo-upload-client": "^17.0.2",
+    "ai-jsx": "workspace:*",
     "apollo-upload-client": "^17.0.0",
     "axios": "^1.5.0",
     "commander": "^11.0.0",
@@ -50,23 +39,36 @@
     "terminal-kit": "^3.0.0",
     "untildify": "^5.0.0"
   },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@types/react-dom": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@fixieai/sdk": "*",
     "@tsconfig/node18": "^2.0.1",
-    "@types/apollo-upload-client": "^17.0.2",
     "@types/extract-files": "^8.1.1",
     "@types/js-yaml": "^4.0.5",
     "@types/lodash": "^4.14.198",
     "@types/node": "^20.4.1",
     "@types/react": "^18.2.22",
+    "@types/react-dom": "^18.2.7",
     "@types/terminal-kit": "^2.5.1",
     "@typescript-eslint/eslint-plugin": "^5.60.0",
     "@typescript-eslint/parser": "^5.60.0",
-    "ai-jsx": "workspace:*",
     "eslint": "^8.40.0",
     "eslint-config-nth": "^2.0.1",
     "prettier": "^3.0.0",
-    "react": "^18.2.0",
     "type-fest": "^4.3.1",
     "typescript": "5.1.3"
   },

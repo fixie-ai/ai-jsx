@@ -1,8 +1,10 @@
 import { getFirestore, collection, doc, query, orderBy, FirestoreError } from 'firebase/firestore';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { useCollectionData as typedUseCollectionData } from 'react-firebase-hooks/firestore';
+// @ts-expect-error
+import { useCollectionData as untypedUseCollectionData } from 'react-firebase-hooks/firestore/dist/index.esm.js';
 import { initializeApp } from 'firebase/app';
 
-import { useState, SetStateAction, Dispatch, useRef } from 'react';
+import { useState, SetStateAction, Dispatch, useRef, useEffect } from 'react';
 import _ from 'lodash';
 import {
   MessageGenerationParams,
@@ -15,7 +17,11 @@ import {
 import { Jsonifiable } from 'type-fest';
 import { IsomorphicFixieClient } from './isomorphic-client.js';
 
-export interface UseSidekickResult {
+// This is whacky. I did it because Webpack from Fixie Frame threw an error
+// when trying to build this file. (Vite from Redwood worked fine.)
+const useCollectionData = untypedUseCollectionData as typeof typedUseCollectionData;
+
+export interface UseFixieResult {
   /**
    * The conversation history.
    */
@@ -76,7 +82,7 @@ export interface UseSidekickResult {
   conversationExists?: boolean;
 }
 
-export interface UseSidekickArgs {
+export interface UseFixieArgs {
   /**
    * The ID of the conversation to use.
    *
@@ -132,8 +138,8 @@ const firebaseConfig = {
  *
  * This hook manages the state of a Fixie-hosted conversation.
  */
-export function useSidekick({
-  conversationId,
+export function useFixie({
+  conversationId: userPassedConversationId,
   conversationFixtures,
   onNewTokens,
   messageGenerationParams,
@@ -141,12 +147,22 @@ export function useSidekick({
   agentId,
   fixieAPIUrl,
   onNewConversation,
-}: UseSidekickArgs): UseSidekickResult {
+}: UseFixieArgs): UseFixieResult {
   /**
-   * Aspects of the useSidekick hook may be hideously more complicated than they need to be.
+   * Aspects of the useFixie hook may be hideously more complicated than they need to be.
    */
 
   const [input, setInput] = useState('');
+  const [conversationId, setConversationId] = useState(userPassedConversationId);
+
+  function handleNewConversationId(conversationId: ConversationId) {
+    setConversationId(conversationId);
+    onNewConversation?.(conversationId);
+  }
+
+  useEffect(() => {
+    setConversationId(userPassedConversationId);
+  }, [userPassedConversationId]);
 
   // I think using `data` as a var name is fine here.
   /* eslint-disable id-blacklist */
@@ -214,8 +230,8 @@ export function useSidekick({
   const lastSeenMostRecentAgentTextMessage = useRef('');
   async function createNewConversation() {
     const conversationId = (await fixieClient.startConversation(agentId, fullMessageGenerationParams, input))
-      .conversationIdHeaderValue;
-    onNewConversation?.(conversationId);
+      .conversationId;
+    handleNewConversationId(conversationId);
   }
 
   /**
@@ -237,7 +253,7 @@ export function useSidekick({
     };
   }
 
-  const loadState = (loading ? 'loading' : error ? error : 'loaded') as UseSidekickResult['loadState'];
+  const loadState = (loading ? 'loading' : error ? error : 'loaded') as UseFixieResult['loadState'];
   const turns = conversationFixtures ?? value ?? [];
 
   /**

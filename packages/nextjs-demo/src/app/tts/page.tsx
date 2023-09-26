@@ -62,6 +62,7 @@ const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaul
       setLatency(0);
       tts!.onPlaying = () => setLatency(tts!.latency);
       tts!.onComplete = () => setPlaying(false);
+      tts!.onError = (_error: Error) => setPlaying(false);
       tts!.play(text);
       tts!.flush();
     } else {
@@ -144,7 +145,7 @@ const PageComponent: React.FC = () => {
           provider="murf"
           link="https://murf.ai"
           costPerMChar={999}
-          defaultVoice="VM016372341539042UZ"
+          defaultVoice="en-US-natalie"
           text={text}
         />
         <Tts
@@ -152,7 +153,7 @@ const PageComponent: React.FC = () => {
           provider="playht"
           link="https://play.ht"
           costPerMChar={41.25}
-          defaultVoice="larry"
+          defaultVoice="victor"
           text={text}
         />
         <Tts

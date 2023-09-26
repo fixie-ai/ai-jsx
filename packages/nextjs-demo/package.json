@@ -20,7 +20,7 @@
     "@types/aws4": "^1.11.3",
     "@types/node": "20.2.5",
     "@types/react": "18.2.8",
-    "@types/react-dom": "18.2.4",
+    "@types/react-dom": "^18.2.7",
     "ai": "^2.1.8",
     "ai-jsx": "workspace:*",
     "autoprefixer": "10.4.14",
