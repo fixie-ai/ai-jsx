@@ -5,7 +5,9 @@ sidebar_position: 4
 # Part 4 - Tools
 
 :::note What we cover in part 4
-In [Part 3](./part3-systemMessage) we learned how to update the System Message for our Sidekick. In Part 4, we will:
+In [Part 3](./part3-systemMessage) we learned how to update the System Message for our Sidekick.
+
+In Part 4, you will:
 
 - Learn what tools are and how to add them to our Sidekick.
 - Add a tool for using the GitHub Graphql API to our Sidekick.
@@ -104,7 +106,7 @@ const graphQLQueryTool: Tool = {
   },
   func: async ({ query }: { query: string }) => {
     // @ts-expect-error
-    // Just use the fetch API to sedn the query to the GitHub GraphQL endpoint.
+    // Just use the fetch API to send the query to the GitHub GraphQL endpoint.
     // We send the `Authorization: bearer <token>` header to authenticate the request.
     const response = await fetch('https://api.github.com/graphql', {
       method: 'POST',
@@ -167,22 +169,34 @@ You **must** create a "Fine Grained" access token. Be sure to give the token
 **read only** access to things you want to ask the Sidekick about -- we recommend
 adding access to repository contents, issues, and pull requests, at a minimum.
 
-Once you have the token, set the `GITHUB_TOKEN` environment variable to the token value.
+Once you have the token, create a new file called `.env` and set the `GITHUB_TOKEN` environment variable to the token value. It should look something like this:
+
+```terminal
+GITHUB_TOKEN=YOUR_TOKEN_HERE
+```
+
+You also need to add the following line towards the top of your index.tsx file:
+
+```jsx
+const GH_TOKEN = process.env.GITHUB_TOKEN;
+```
 
 Now you should be able to deploy the Sidekick and ask questions of it, like:
 
-- How many PRs are assigned me?
-- Show me the open issues in the fixie-ai/ai-jsx repo
-- What is my most recent pull request?
+```terminal
+How many PRs are assigned me?
+```
+
+```terminal
+Show me the open issues in the fixie-ai/ai-jsx repo
+```
+
+```terminal
+What is my most recent pull request?
+```
 
 In each case, the Sidekick will use the LLM to formulate a query to the GitHub GraphQL API,
 get back a response, and then use the LLM to generate a response.
-
-## Kick-Starters
-
-This section provides some optional, suggested exercises you can do to go deeper and really "kick"-start your usage of Sidekicks.
-
-### Increase the Scope
 
 :::warning Proceed with Caution
 
@@ -190,11 +204,19 @@ Giving your Sidekick read/update/delete access should not be done lightly. Data 
 
 :::
 
+:::tip "Kick"-Starters
+
+_This section provides some optional, suggested exercises you can do to go deeper with your usage of Sidekicks._
+
+**Increase the Scope (CAUTION)**
+
 Change the scope on your GitHub access token to let the Sidekick make changes or updates. Wire up a new function to provide this tool to the LLM and update the System Message accordingly.
 
-### Wire up a new Tool
+**Wire up a new Tool**
 
 Are there other APIs or tools that you use along with GitHub? Consider adding them to your Sidekick (SK). Here are a couple ideas:
 
 - **CI/CD** → Connect with TravisCI (or another CI/CD service) to have your SK answer questions about builds or deployments.
 - **Issue Tracking** → Give the SK a tool that can look up assigned issues in Jira or another tool.
+
+:::

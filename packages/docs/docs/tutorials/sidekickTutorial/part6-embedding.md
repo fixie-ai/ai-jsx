@@ -7,7 +7,9 @@ import FloatingEmbed from '../../../static/img/FloatingEmbed.png'
 # Part 6 - Embedding your Sidekick
 
 :::note What we cover in part 6
-In [Part 5](./part5-genUI) we learned about GenUI, the built-in components, and how to create custom components. In Part 6, we will:
+In [Part 5](./part5-genUI) we learned about GenUI, the built-in components, and how to create custom components.
+
+In Part 6, you will:
 
 - Look at how a Sidekick can be embedded into other applications.
 - Introduce the various embedding approaches.
@@ -57,10 +59,12 @@ Save the file and then navigate to the [FloatingEmbedPage](http://localhost:8910
 
 <img src={FloatingEmbed} alt="" width="600"/>
 
-## Kick-Starters
+:::tip "Kick"-Starters
 
-This section provides some optional, suggested exercises you can do to go deeper and really "kick"-start your usage of Sidekicks.
+_This section provides some optional, suggested exercises you can do to go deeper with your usage of Sidekicks._
 
-### Try Other Embedding Components
+**Try Other Embedding Components**
 
 In this part we used the `<FloatingFixieEmbed />` component. Try experimenting with `<ControlledFloatingFixieEmbed />`. Where in your app might you want to control the visibility of the Sidekick? When would it be useful to have everything inline and use `<InlineFixieEmbed />`?
+
+:::
