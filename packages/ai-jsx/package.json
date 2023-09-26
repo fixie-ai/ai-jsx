@@ -4,7 +4,7 @@
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://ai-jsx.com",
-  "version": "0.17.0",
+  "version": "0.18.1",
   "volta": {
     "extends": "../../package.json"
   },
@@ -198,6 +198,15 @@
         "default": "./dist/cjs/lib/openai.cjs"
       }
     },
+    "./lib/cohere": {
+      "import": {
+        "types": "./dist/esm/lib/cohere.d.ts",
+        "default": "./dist/esm/lib/cohere.js"
+      },
+      "require": {
+        "default": "./dist/cjs/lib/cohere.cjs"
+      }
+    },
     "./lib/anthropic": {
       "import": {
         "types": "./dist/esm/lib/anthropic.d.ts",
@@ -380,13 +389,14 @@
     "@nick.heiner/wandb-fork": "^0.5.2-5",
     "@opentelemetry/api": "^1.4.1",
     "@opentelemetry/api-logs": "^0.41.1",
+    "@ozymandiasthegreat/vad": "^2.0.7",
     "axios": "^1.4.0",
     "cli-highlight": "^2.1.11",
     "cli-spinners": "^2.9.0",
     "ink": "^4.2.0",
     "js-tiktoken": "^1.0.7",
     "js-yaml": "^4.1.0",
-    "langchain": "^0.0.81",
+    "langchain": "^0.0.143",
     "lodash": "^4.17.21",
     "ml-distance": "^4.0.1",
     "openai": "^4.1.0",

@@ -17,10 +17,10 @@ import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { Image, ImageGenPropsWithChildren } from '../core/image-gen.js';
 import * as AI from '../index.js';
 import { Node } from '../index.js';
-import { ChatOrCompletionModelOrBoth } from './model.js';
 import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { OpenAI as OpenAIClient } from 'openai';
 export { OpenAI as OpenAIClient } from 'openai';
+import { FinalRequestOptions } from 'openai/core';
 import { debugRepresentation } from '../core/debug.js';
 import { getEncoding } from 'js-tiktoken';
 import _ from 'lodash';
@@ -46,19 +46,44 @@ export type ValidChatModel =
   | 'gpt-3.5-turbo-16k'
   | 'gpt-3.5-turbo-16k-0613';
 
-type OpenAIModelChoices = ChatOrCompletionModelOrBoth<ValidChatModel, ValidCompletionModel>;
+/**
+ * An OpenAI client that talks to the Azure OpenAI service.
+ * - Adds an API version in the query string.
+ * - Uses Api-Key instead of Authorization for the auth header.
+ * - Includes the deployment name in the path; note that deployment names cannot contain dots.
+ */
+class AzureOpenAIClient extends OpenAIClient {
+  protected override defaultQuery() {
+    return { 'api-version': '2023-07-01-preview' };
+  }
+  protected override authHeaders() {
+    return {
+      'Api-Key': this.apiKey,
+    };
+  }
+  override buildRequest(options: FinalRequestOptions) {
+    if (options.body && 'model' in options.body) {
+      const model = (options.body.model as string).replace('.', '');
+      options.path = `openai/deployments/${model}${options.path}`;
+    }
+    return super.buildRequest(options);
+  }
+}
 
 const openAiClientContext = AI.createContext<() => OpenAIClient>(
   _.once(() => {
     const baseURL = getEnvVar('OPENAI_API_BASE', false);
-    return new OpenAIClient({
-      apiKey: getEnvVar('OPENAI_API_KEY', false),
+    const useAzure = baseURL && new URL(baseURL).hostname.endsWith('.azure.com');
+    const apiKey = getEnvVar(useAzure ? 'AZURE_OPENAI_API_KEY' : 'OPENAI_API_KEY', false);
+    const config = {
+      apiKey,
       dangerouslyAllowBrowser: Boolean(getEnvVar('REACT_APP_OPENAI_API_KEY', false)),
       // N.B. `baseURL` needs to be _unspecified_ rather than undefined
       ...(baseURL ? { baseURL } : {}),
       // TODO: Figure out a better way to work around NextJS fetch blocking streaming
       fetch: ((globalThis as any)._nextOriginalFetch ?? globalThis.fetch).bind(globalThis),
-    });
+    };
+    return useAzure ? new AzureOpenAIClient(config) : new OpenAIClient(config);
   })
 );
 
@@ -75,7 +100,12 @@ export function OpenAI({
   completionModel,
   client,
   ...defaults
-}: { children: Node; client?: OpenAIClient } & OpenAIModelChoices & ModelProps) {
+}: {
+  children: Node;
+  client?: OpenAIClient;
+  chatModel?: ValidChatModel;
+  completionModel?: ValidCompletionModel;
+} & ModelProps) {
   let result = children;
 
   if (client) {
@@ -351,7 +381,7 @@ export async function* OpenAIChatModel(
   }
 
   const openaiFunctions = !props.functionDefinitions
-    ? undefined
+    ? []
     : Object.entries(props.functionDefinitions).map(([functionName, functionDefinition]) => ({
         name: functionName,
         description: functionDefinition.description,
@@ -365,7 +395,7 @@ export async function* OpenAIChatModel(
     temperature: props.temperature,
     top_p: props.topP,
     messages,
-    functions: openaiFunctions,
+    functions: openaiFunctions.length > 0 ? openaiFunctions : undefined,
     function_call: props.forcedFunction ? { name: props.forcedFunction } : undefined,
     stop: props.stop,
     logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
@@ -399,10 +429,14 @@ export async function* OpenAIChatModel(
   // This requires some gymnastics because several components will share a single iterator that can only be consumed once.
   // That is, the logical loop execution is spread over multiple functions (closures over the shared iterator).
   async function advance() {
-    const next = await iterator.next();
-    if (next.done) {
-      return null;
-    }
+    // Eat any empty chunks, typically seen at the beginning of the stream.
+    let next;
+    do {
+      next = await iterator.next();
+      if (next.done) {
+        return null;
+      }
+    } while (next.value.choices.length == 0);
 
     logger.trace({ deltaMessage: next.value }, 'Got delta message');
     return next.value.choices[0].delta;

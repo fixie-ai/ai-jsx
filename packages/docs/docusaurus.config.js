@@ -96,7 +96,7 @@ const config = {
         },
         items: [
           {
-            to: 'tutorials/part1-completion', // to: 'tutorials/sidekickTutorial/part1-intro',
+            to: 'sidekicks/sidekicks-quickstart',
             position: 'left',
             label: 'Learn',
           },

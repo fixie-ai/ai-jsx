@@ -1,6 +1,35 @@
 # Changelog
 
-## 0.17.0
+## 0.18.1
+
+- Modified `Sidekick` to add the following options:
+  - `outputFormat`: `text/mdx`, `text/markdown`, `text/plain`
+  - `includeNextStepsRecommendations`: `boolean`
+
+## [0.18.0](https://github.com/fixie-ai/ai-jsx/commit/36b9f02c866df9df761017fd9f8785d876d15ab8)
+
+- Added components for Automatic Speech Recognition (ASR) in `lib/asr/asr.tsx`.
+- Addec components for Text-to-Speech (TTS) in `lib/tts/tts.tsx`.
+- ASR providers include Deepgram, Speechmatics, Assembly AI, Rev AI, Soniox, and Gladia.
+- TTS providers include Google Cloud, AWS, Azure, and ElevenLabs.
+
+## [0.17.4](https://github.com/fixie-ai/ai-jsx/commit/b002c00d3926e03769438b01443c1bb715ade496)
+
+- Fixed a bug where passing an empty `functionDefinitions` prop to `<OpenAIChatModel>` would cause an error.
+
+## [0.17.3](https://github.com/fixie-ai/ai-jsx/commit/cd206fc81dc4a22eb66f7d95e40cc826b6fd57f3)
+
+- Added the ability to set Anthropic/OpenAI clients without setting the default model
+
+## [0.17.2](https://github.com/fixie-ai/ai-jsx/commit/5d7b202d384fd26a313271ae9f474fb074d938bd)
+
+- Increase the default token limit for automatic API response trimming.
+
+## [0.17.1](https://github.com/fixie-ai/ai-jsx/commit/49ecdada32d7fbea547ca1d7fd6fd9c82617ea00)
+
+- API token limiting: long API responses in `Sidekick` are now automatically truncated. If this happens, the response is chunked and the LLM is given a new function `loadBySimilarity` to query the last function response.
+
+## [0.17.0](https://github.com/fixie-ai/ai-jsx/commit/4ae89b6883660be06854ddd535b82e2d174513fa)
 
 - Changed `<UseTools>` to allow AI.JSX components to be tools.
 - Added `FixieAPIConfiguration` context.
@@ -176,7 +205,7 @@
 ## [0.5.2](https://github.com/fixie-ai/ai-jsx/commit/3267098fd3659bd784c3e40d660d0d7521d1bf4a)
 
 - When reading env vars, read from `VAR_NAME` and `REACT_APP_VAR_NAME`. This makes your env vars available to projects using `create-react-app`.
-- [Add OpenAI client proxy.](./guides/openai#set-a-proxy-env-var)
+- Add OpenAI client proxy.
 
 ## [0.5.1](https://github.com/fixie-ai/ai-jsx/commit/856a2501592f157641d0d99c70fda960b0f7117a)
 

@@ -2,12 +2,13 @@ import { gql } from '@apollo/client/core/index.js';
 import yaml from 'js-yaml';
 import fs from 'fs';
 import terminal from 'terminal-kit';
-import { execSync, ChildProcess } from 'child_process';
+import { execSync } from 'child_process';
 import ora from 'ora';
 import os from 'os';
 import path from 'path';
 import { execa } from 'execa';
 import Watcher from 'watcher';
+import net from 'node:net';
 
 const { terminal: term } = terminal;
 
@@ -314,7 +315,6 @@ export class FixieAgent {
         externalDeployment: opts.externalUrl && { url: opts.externalUrl },
         managedDeployment: opts.tarball &&
           uploadFile && {
-            environment: 'NODEJS',
             codePackage: new Blob([uploadFile], { type: 'application/gzip' }),
             environmentVariables: Object.entries(opts.environmentVariables).map(([key, value]) => ({
               name: key,
@@ -402,7 +402,7 @@ export class FixieAgent {
     return agent;
   }
 
-  static spawnAgentProcess(agentPath: string, port: number, env: Record<string, string>): ChildProcess {
+  static spawnAgentProcess(agentPath: string, port: number, env: Record<string, string>) {
     term(`🌱 Starting local agent process on port ${port}...\n`);
     const pathToCheck = path.resolve(path.join(agentPath, 'dist', 'index.js'));
     if (!fs.existsSync(pathToCheck)) {
@@ -416,15 +416,17 @@ export class FixieAgent {
     const [argv0, ...args] = cmdline.split(' ');
     const subProcess = execa(argv0, args, { cwd: agentPath, env });
     term('🌱 Agent process running at PID: ').green(subProcess.pid)('\n');
+    subProcess.stdout?.setEncoding('utf8');
+    subProcess.stderr?.setEncoding('utf8');
 
     subProcess.on('spawn', () => {
       console.log(`🌱 Agent child process started with PID [${subProcess.pid}]`);
     });
     subProcess.stdout?.on('data', (sdata: string) => {
-      console.log(`🌱 Agent stdout: ${sdata}`);
+      console.log(`🌱 Agent stdout: ${sdata.trimEnd()}`);
     });
     subProcess.stderr?.on('data', (sdata: string) => {
-      console.error(`🌱 Agent stdout: ${sdata}`);
+      console.error(`🌱 Agent stdout: ${sdata.trimEnd()}`);
     });
     subProcess.on('error', (err: any) => {
       term('🌱 ').red(`Agent child process [${subProcess.pid}] exited with error: ${err.message}\n`);
@@ -450,6 +452,21 @@ export class FixieAgent {
     if (!fs.existsSync(packageJsonPath)) {
       throw Error(`No package.json found at ${packageJsonPath}. Only JS-based agents are supported.`);
     }
+
+    const yarnLockPath = path.resolve(path.join(agentPath, 'yarn.lock'));
+    const pnpmLockPath = path.resolve(path.join(agentPath, 'pnpm-lock.yaml'));
+
+    if (fs.existsSync(yarnLockPath)) {
+      term.yellow(
+        '⚠️ Detected yarn.lock file, but Fixie only supports npm. Fixie will try to install your package with npm, which may produce unexpected results.'
+      );
+    }
+    if (fs.existsSync(pnpmLockPath)) {
+      term.yellow(
+        '⚠️ Detected pnpm-lock.yaml file, but Fixie only supports npm. Fixie will try to install your package with npm, which may produce unexpected results.'
+      );
+    }
+
     const agent = await this.ensureAgent(client, agentId, config);
     const tarball = FixieAgent.getCodePackage(agentPath);
     const spinner = ora(' 🚀 Deploying... (hang tight, this takes a minute or two!)').start();
@@ -476,6 +493,7 @@ export class FixieAgent {
   }) {
     const config = await FixieAgent.LoadConfig(agentPath);
     const agentId = `${(await client.userInfo()).username}/${config.handle}`;
+
     term('🦊 Serving agent ').green(agentId)('...\n');
 
     // Check if the package.json path exists in this directory.
@@ -498,12 +516,33 @@ export class FixieAgent {
       console.log(`🌱 Restarting local agent process due to ${event}: ${targetPath}`);
       agentProcess.kill();
       // Let it shut down gracefully.
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise<void>((resolve) =>
+        agentProcess.exitCode !== null || agentProcess.signalCode !== null
+          ? resolve()
+          : agentProcess.on('exit', resolve)
+      );
       agentProcess = FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
     });
 
-    // Wait for 5 seconds for it to start up.
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    // Poll the port until it's listening.
+    async function waitForAgentToBeReady() {
+      while (true) {
+        try {
+          await new Promise<void>((resolve, reject) => {
+            const socket = net.connect({
+              host: '127.0.0.1',
+              port,
+            });
+
+            socket.on('connect', resolve);
+            socket.on('error', reject);
+          });
+          break;
+        } catch {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+    }
 
     async function* spawnTunnel(port: number): AsyncGenerator<string> {
       type AsyncGeneratorYield<T> = (value: T) => void;
@@ -627,10 +666,10 @@ export class FixieAgent {
     // The tunnel may yield different URLs over time. We need to create a new
     // agent revision each time.
     for await (const currentUrl of deploymentUrlsIter) {
+      await waitForAgentToBeReady();
+
       term('🚇 Current tunnel URL is: ').green(currentUrl)('\n');
       try {
-        // Wait 3 seconds to ensure the tunnel is set up.
-        await new Promise((resolve) => setTimeout(resolve, 3000));
         if (currentRevision) {
           term('🥡 Deleting temporary agent revision ').green(currentRevision.id)('\n');
           await agent.deleteRevision(currentRevision.id);

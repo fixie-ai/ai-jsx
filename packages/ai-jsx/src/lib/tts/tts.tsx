@@ -38,6 +38,10 @@ export abstract class TextToSpeechBase {
    * Called when the generated audio has finished playing out.
    */
   public onComplete?: () => void;
+  /**
+   * Called when an error occurs.
+   */
+  public onError?: (error: Error) => void;
 
   constructor(protected readonly name: string) {
     this.audio = new Audio();
@@ -88,7 +92,7 @@ export abstract class TextToSpeechBase {
 /**
  * A text-to-speech service that requests audio from a server and
  * plays it in one shot using the HTML5 audio element. The URL to request
- * audio from the server is constructed using the provided BuildUrlFunction,
+ * audio from the server is constructed using the provided BuildUrl function,
  * allowing this class to be used with a variety of text-to-speech services.
  */
 export class SimpleTextToSpeech extends TextToSpeechBase {
@@ -245,11 +249,13 @@ export class RestTextToSpeech extends MseTextToSpeech {
     super(name);
   }
   protected generate(text: string) {
+    // Only send complete sentences to the server. We only know if a sentence is complete if
+    // a sentence fragment comes after it. We'll buffer that fragment.
     this.pendingText += text;
     let pendingText = '';
     split(this.pendingText).forEach((piece: any) => {
       if (piece.type == 'Sentence') {
-        if (piece.children.length == 2 && piece.children[1].type == 'Punctuation') {
+        if (piece.range[1] < this.pendingText.length) {
           this.requestChunk(piece.raw);
         } else if (!pendingText) {
           pendingText = piece.raw;
@@ -279,6 +285,11 @@ export class RestTextToSpeech extends MseTextToSpeech {
     this.queueChunk(newChunk);
     console.debug(`[${this.name}] requesting chunk: ${text}`);
     const res = await fetch(this.urlFunc(this.name, this.voice, this.rate, text));
+    if (!res.ok) {
+      this.stop();
+      this.onError?.(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
+      return;
+    }
     newChunk.buffer = await res.arrayBuffer();
     console.debug(`[${this.name}] received chunk: ${text}`);
     this.processChunkBuffer();
@@ -302,6 +313,53 @@ export class AwsTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE = 'Joanna';
   constructor(urlFunc: BuildUrl, voice: string = AwsTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('aws', urlFunc, voice, rate);
+  }
+}
+
+/**
+ * Text-to-speech implementation that uses the Google Cloud text-to-speech service.
+ */
+export class GcpTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = 'en-US-Neural2-C';
+  constructor(urlFunc: BuildUrl, voice: string = GcpTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('gcp', urlFunc, voice, rate);
+  }
+}
+
+/**
+ * Text-to-speech implementation that uses the WellSaid Labs text-to-speech service.
+ */
+export class WellSaidTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = '42'; // Sofia H. (Conversational)
+  constructor(urlFunc: BuildUrl, voice: string = WellSaidTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('wellsaid', urlFunc, voice, rate);
+  }
+}
+
+export class MurfTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = 'en-US-natalie';
+  constructor(urlFunc: BuildUrl, voice: string = MurfTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('murf', urlFunc, voice, rate);
+  }
+}
+
+/**
+ * Text-to-speech implementation that uses the Play.HT text-to-speech service.
+ */
+export class PlayHTTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = 'victor'; // AKA 'Ariana'
+  constructor(urlFunc: BuildUrl, voice: string = PlayHTTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('playht', urlFunc, voice, rate);
+  }
+}
+
+/**
+ * Text-to-speech implementation that uses the Resemble.AI text-to-speech service.
+ */
+export class ResembleTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = '48d7ed16'; // Tarkos
+  constructor(urlFunc: BuildUrl, voice: string = ResembleTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('resemble', urlFunc, voice, rate);
   }
 }
 
@@ -417,6 +475,10 @@ class ElevenLabsOutboundMessage {
     this.xi_api_key = xi_api_key;
   }
   text: string;
+  voice_settings?: {
+    stability: number;
+    similarity: number;
+  };
   generation_config?: {
     chunk_length_schedule: number[];
   };
@@ -441,6 +503,10 @@ export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
     // once we have 50 characters of text buffered.
     const obj = new ElevenLabsOutboundMessage({
       text: ' ',
+      voice_settings: {
+        stability: 0.5,
+        similarity: 0.8,
+      },
       generation_config: {
         chunk_length_schedule: [50],
       },
@@ -452,13 +518,11 @@ export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
     const message = inMessage as ElevenLabsInboundMessage;
     console.debug(message);
     if (message.audio) {
-      if (!message.isFinal) {
-        console.debug(`[${this.name}] chunk received`);
-        this.queueChunk(new AudioChunk(Buffer.from(message.audio!, 'base64')));
-      } else {
-        console.log(`[${this.name}] utterance complete`);
-        this.setComplete();
-      }
+      console.debug(`[${this.name}] chunk received`);
+      this.queueChunk(new AudioChunk(Buffer.from(message.audio!, 'base64')));
+    } else if (message.isFinal) {
+      console.log(`[${this.name}] utterance complete`);
+      this.setComplete();
     } else if (message.error) {
       console.error(`[${this.name}] error: ${message.message}`);
     }
@@ -484,11 +548,24 @@ export class TextToSpeechOptions {
  * Factory function to create a text-to-speech service for the specified provider.
  */
 export function createTextToSpeech({ provider, rate, voice, getToken, buildUrl }: TextToSpeechOptions) {
-  if (provider == 'azure') {
-    return new AzureTextToSpeech(buildUrl!, voice, rate);
+  switch (provider) {
+    case 'azure':
+      return new AzureTextToSpeech(buildUrl!, voice, rate);
+    case 'aws':
+      return new AwsTextToSpeech(buildUrl!, voice, rate);
+    case 'gcp':
+      return new GcpTextToSpeech(buildUrl!, voice, rate);
+    case 'wellsaid':
+      return new WellSaidTextToSpeech(buildUrl!, voice, rate);
+    case 'murf':
+      return new MurfTextToSpeech(buildUrl!, voice, rate);
+    case 'playht':
+      return new PlayHTTextToSpeech(buildUrl!, voice, rate);
+    case 'resemble':
+      return new ResembleTextToSpeech(buildUrl!, voice, rate);
+    case 'eleven':
+      return new ElevenLabsTextToSpeech(getToken!, voice);
+    default:
+      throw new Error(`unknown provider ${provider}`);
   }
-  if (provider == 'eleven') {
-    return new ElevenLabsTextToSpeech(getToken!, voice);
-  }
-  throw new Error(`unknown provider ${provider}`);
 }

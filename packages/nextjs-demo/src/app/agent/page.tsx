@@ -5,10 +5,22 @@ import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
 import '../globals.css';
 
-// latency map
-// shorter initial messages
-// caching or other initial startup opt?
-// tts bargein?
+// 1. VAD triggers silence. (Latency here is frame size + VAD delay)
+// 2. ASR sends partial transcript. ASR latency = 2-1.
+// 3. ASR sends final transcript. ASR latency = 3-1.
+// 4. LLM request is made. This can happen before 3 is complete, in which case the speculative execution savings is 3-2.
+// 5. LLM starts streaming tokens. LLM base latency = 5-4.
+// 6. LLM sends enough tokens for TTS to start (full sentence, or 50 chars). LLM token latency = 6-5, LLM total latency = 6-4.
+// 7. TTS requests chunk of audio.
+// 8. TTS chunk is received.
+// 9. TTS playout starts (usually just about instantaneous after 8). TTS latency = 9-7.
+// Total latency = 9-1 = ASR latency + LLM base latency + LLM token latency TTS latency - speculative execution savings.
+
+// Token per second rules of thumb:
+// GPT-4: 12 tps (approx 1s for 50 chars)
+// GPT-3.5: 70 tps (approx 0.2s for 50 chars)
+// Claude v1: 40 tps (approx 0.4s for 50 chars)
+// Claude Instant v1: 70 tps (approx 0.2s for 50 chars)
 
 const DEFAULT_ASR_FRAME_SIZE = 100;
 const DEFAULT_ASR_PROVIDER = 'deepgram';
@@ -60,24 +72,34 @@ class ChatRequest {
   public done = false;
   public onUpdate?: (request: ChatRequest, newText: string) => void;
   public onComplete?: (request: ChatRequest) => void;
-  constructor(private readonly inMessages: ChatMessage[], private readonly model: string, public active: boolean) {}
+  private startMillis?: number;
+  public requestLatency?: number;
+  public streamLatency?: number;
+  constructor(
+    private readonly inMessages: ChatMessage[],
+    private readonly model: string,
+    private readonly docs: boolean,
+    public active: boolean
+  ) {}
   async start() {
     console.log(`calling LLM for ${this.inMessages[this.inMessages.length - 1].content}`);
-    const startTime = performance.now();
+    this.startMillis = performance.now();
     const res = await fetch('/agent/api', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ messages: this.inMessages, model: this.model }),
+      body: JSON.stringify({ messages: this.inMessages, model: this.model, docs: this.docs }),
     });
-    console.log(`Got LLM response, latency=${(performance.now() - startTime).toFixed(0)}`);
+    this.requestLatency = performance.now() - this.startMillis;
+    console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
     const reader = res.body!.getReader();
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
         this.done = true;
+        this.streamLatency = performance.now() - this.startMillis - this.requestLatency;
         this.onComplete?.(this);
         break;
       }
@@ -92,7 +114,9 @@ class ChatManagerInit {
   constructor(
     public readonly asrProvider: string,
     public readonly ttsProvider: string,
-    public readonly model: string
+    public readonly model: string,
+    public readonly docs: boolean,
+    public readonly ttsVoice?: string
   ) {}
 }
 
@@ -106,19 +130,35 @@ class ChatManager {
   private readonly asr: SpeechRecognitionBase;
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
-  onInputChange?: (text: string, final: boolean) => void;
-  onOutputChange?: (text: string, final: boolean) => void;
+  private readonly docs: boolean;
+  onInputChange?: (text: string, final: boolean, latency: number) => void;
+  onOutputChange?: (text: string, final: boolean, latency: number) => void;
+  onAudioStart?: (latency: number) => void;
+  onAudioEnd?: () => void;
   onError?: () => void;
-  constructor({ asrProvider, ttsProvider, model }: ChatManagerInit) {
+  constructor({ asrProvider, ttsProvider, ttsVoice, model, docs }: ChatManagerInit) {
     this.micManager = new MicManager();
     this.asr = createSpeechRecognition({ provider: asrProvider, manager: this.micManager, getToken: getAsrToken });
-    this.tts = createTextToSpeech({ provider: ttsProvider, getToken: getTtsToken, buildUrl: buildTtsUrl, rate: 1.2 });
+    this.tts = createTextToSpeech({
+      provider: ttsProvider,
+      getToken: getTtsToken,
+      buildUrl: buildTtsUrl,
+      voice: ttsVoice,
+      rate: 1.2,
+    });
     this.model = model;
+    this.docs = docs;
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const obj = event.detail!;
       this.handleInputUpdate(obj.text, obj.final);
-      this.onInputChange?.(obj.text, obj.final);
+      this.onInputChange?.(obj.text, obj.final, obj.latency!);
     });
+    this.tts.onPlaying = () => {
+      this.onAudioStart?.(this.tts.latency!);
+    };
+    this.tts.onComplete = () => {
+      this.onAudioEnd?.();
+    };
   }
   /**
    * Starts the chat.
@@ -129,7 +169,7 @@ class ChatManager {
       this.onError?.();
     });
     this.asr.start();
-    if (initialMessage) {
+    if (initialMessage !== undefined) {
       this.handleInputUpdate(initialMessage, true);
     }
   }
@@ -149,7 +189,8 @@ class ChatManager {
    */
   private handleInputUpdate(text: string, final: boolean) {
     // If the input text has been finalized, add it to the message history.
-    const userMessage = new ChatMessage('user', text);
+    const trimmed = text.trim();
+    const userMessage = new ChatMessage('user', trimmed);
     const newMessages = [...this.history, userMessage];
     if (final) {
       this.history = newMessages;
@@ -158,20 +199,20 @@ class ChatManager {
     // If it doesn't match an existing request, kick off a new one.
     // If it matches an existing request and the text is finalized, speculative
     // execution worked! Snap forward to the current state of that request.
-    const hit = text in this.pendingRequests;
-    console.log(`${final ? 'final' : 'partial'}: ${text} ${hit ? 'HIT' : 'MISS'}`);
+    const hit = trimmed in this.pendingRequests;
+    console.log(`${final ? 'final' : 'partial'}: ${trimmed} ${hit ? 'HIT' : 'MISS'}`);
     if (!hit) {
-      const request = new ChatRequest(newMessages, this.model, final);
+      const request = new ChatRequest(newMessages, this.model, this.docs, final);
       request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
       request.onComplete = (request) => this.handleRequestDone(request);
-      this.pendingRequests[text] = request;
+      this.pendingRequests[trimmed] = request;
       request.start();
     } else if (final) {
       const request = this.pendingRequests[text];
       request.active = true;
       this.tts.play(request.outMessage);
       if (!request.done) {
-        this.onOutputChange?.(request.outMessage, false);
+        this.onOutputChange?.(request.outMessage, false, request.requestLatency!);
       } else {
         this.finishRequest(request);
       }
@@ -183,7 +224,7 @@ class ChatManager {
    */
   private handleRequestUpdate(request: ChatRequest, newText: string) {
     if (request.active) {
-      this.onOutputChange?.(request.outMessage, false);
+      this.onOutputChange?.(request.outMessage, false, request.requestLatency!);
       this.tts.play(newText);
     }
   }
@@ -206,11 +247,18 @@ class ChatManager {
     const assistantMessage = new ChatMessage('assistant', request.outMessage);
     this.history.push(assistantMessage);
     this.pendingRequests = {};
-    this.onOutputChange?.(request.outMessage, true);
+    this.onOutputChange?.(request.outMessage, true, request.requestLatency!);
   }
 }
 
-const ButtonComponent: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
+const MenuItem: React.FC<{ name: string; price: number }> = ({ name, price }) => (
+  <li className="flex justify-between">
+    <span className="text-left">{name}</span>
+    <span className="text-right">${price}</span>
+  </li>
+);
+
+const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
   onClick,
   disabled,
   children,
@@ -226,28 +274,52 @@ const ButtonComponent: React.FC<{ onClick: () => void; disabled: boolean; childr
   </button>
 );
 
+const Latency: React.FC<{ name: string; latency: number }> = ({ name, latency }) => (
+  <>
+    {' '}
+    {name} <span className="font-bold">{latency ? latency.toFixed(0) : '-'}</span> ms
+  </>
+);
+
 const PageComponent: React.FC = () => {
   const searchParams = useSearchParams();
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
+  const ttsVoice = searchParams.get('ttsVoice') || undefined;
   const model = searchParams.get('llm') || 'gpt-4';
+  const docs = Boolean(searchParams.get('docs'));
   const [chatManager, setChatManager] = useState<ChatManager | null>(null);
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
+  const [asrLatency, setAsrLatency] = useState(0);
+  const [llmLatency, setLlmLatency] = useState(0);
+  const [ttsLatency, setTtsLatency] = useState(0);
 
   const active = () => Boolean(chatManager);
   const handleStart = () => {
-    const manager = new ChatManager({ asrProvider, ttsProvider, model });
+    const manager = new ChatManager({ asrProvider, ttsProvider, ttsVoice, model, docs });
+    setInput('');
+    setOutput('');
+    setAsrLatency(0);
+    setLlmLatency(0);
+    setTtsLatency(0);
     setChatManager(manager);
-    manager.start('Hi!');
-    manager.onInputChange = (text) => {
+    manager.start('');
+    manager.onInputChange = (text, final, latency) => {
       setInput(text);
+      setAsrLatency(latency);
+      setLlmLatency(0);
+      setTtsLatency(0);
     };
-    manager.onOutputChange = (text, final) => {
+    manager.onOutputChange = (text, final, latency) => {
       setOutput(text);
       if (final) {
         setInput('');
       }
+      setLlmLatency((prev) => (prev ? prev : latency));
+    };
+    manager.onAudioStart = (latency) => {
+      setTtsLatency(latency);
     };
     manager.onError = () => {
       chatManager!.stop();
@@ -283,67 +355,73 @@ const PageComponent: React.FC = () => {
     <>
       <div className="w-full">
         <p className="font-sm ml-2 mb-2">
-          This demo allows you to chat (via voice) with a drive-thru agent at a Krispy Kreme. Click Start to begin.
+          This demo allows you to chat (via voice) with a drive-thru agent at a fictional donut shop. Click Start
+          Chatting (or tap the spacebar) to begin.
         </p>
         <div className="grid grid-cols-2">
           <div className="p-4">
             <p className="text-lg font-bold">🍩 DONUTS</p>
             <ul className="text-sm">
-              <li>PUMPKIN SPICE ORIGINAL GLAZED® DOUGHNUT $1.29</li>
-              <ul>
-                <li>PUMPKIN SPICE CAKE DOUGHNUT $1.29</li>
-                <li>PUMPKIN SPICE CHEESECAKE SWIRL DOUGHNUT $1.29</li>
-                <li>PUMPKIN SPICE MAPLE PECAN DOUGHNUT $1.29</li>
-                <li>ORIGINAL GLAZED® DOUGHNUT $0.99</li>
-                <li>CHOCOLATE ICED GLAZED DOUGHNUT $1.09</li>
-                <li>CHOCOLATE ICED GLAZED DOUGHNUT WITH SPRINKLES $1.09</li>
-                <li>GLAZED RASPBERRY FILLED DOUGHNUT $1.09</li>
-                <li>GLAZED BLUEBERRY CAKE DOUGHNUT $1.09</li>
-                <li>STRAWBERRY ICED DOUGHNUT WITH SPRINKLES $1.09</li>
-                <li>GLAZED LEMON FILLED DOUGHNUT $1.09</li>
-                <li>CHOCOLATE ICED CUSTARD FILLED DOUGHNUT $1.09</li>
-                <li>CHOCOLATE ICED DOUGHNUT WITH KREME™ FILLING $1.09</li>
-                <li>CAKE BATTER DOUGHNUT $1.09</li>
-                <li>ORIGINAL GLAZED® DOUGHNUT HOLES $3.99</li>
-              </ul>
+              <MenuItem name="PUMPKIN SPICE ICED DOUGHNUT" price={1.29} />
+              <MenuItem name="PUMPKIN SPICE CAKE DOUGHNUT" price={1.29} />
+              <MenuItem name="OLD FASHIONED DOUGHNUT" price={0.99} />
+              <MenuItem name="CHOCOLATE ICED DOUGHNUT" price={1.09} />
+              <MenuItem name="CHOCOLATE ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
+              <MenuItem name="RASPBERRY FILLED DOUGHNUT" price={1.09} />
+              <MenuItem name="BLUEBERRY CAKE DOUGHNUT" price={1.09} />
+              <MenuItem name="STRAWBERRY ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
+              <MenuItem name="LEMON FILLED DOUGHNUT" price={1.09} />
+              <MenuItem name="DOUGHNUT HOLES" price={3.99} />
             </ul>
           </div>
           <div className="p-4">
             <p className="text-lg font-bold">☕️ COFFEE & DRINKS</p>
             <ul className="text-sm">
-              <li>PUMPKIN SPICE COFFEE $2.59</li>
-              <li>PUMPKIN SPICE LATTE $4.59</li>
-              <li>CLASSIC BREWED COFFEE $1.79</li>
-              <li>CLASSIC DECAF BREWED COFFEE $1.79</li>
-              <li>LATTE $3.49</li>
-              <li>VANILLA SPECIALTY LATTE $3.49</li>
-              <li>ORIGINAL GLAZED® LATTE $3.49</li>
-              <li>CARAMEL SPECIALTY LATTE $3.49</li>
-              <li>CARAMEL MOCHA SPECIALTY LATTE $3.49</li>
-              <li>MOCHA SPECIALTY LATTE $3.49</li>
+              <MenuItem name="PUMPKIN SPICE COFFEE" price={2.59} />
+              <MenuItem name="PUMPKIN SPICE LATTE" price={4.59} />
+              <MenuItem name="REGULAR BREWED COFFEE" price={1.79} />
+              <MenuItem name="DECAF BREWED COFFEE" price={1.79} />
+              <MenuItem name="LATTE" price={3.49} />
+              <MenuItem name="CAPPUCINO" price={3.49} />
+              <MenuItem name="CARAMEL MACCHIATO" price={3.49} />
+              <MenuItem name="MOCHA LATTE" price={3.49} />
+              <MenuItem name="CARAMEL MOCHA LATTE" price={3.49} />
             </ul>
           </div>
         </div>
         <div>
-          <div className="m-2 w-full h-32 border-2" id="output">
+          <div
+            className="m-2 w-full text-xl h-32 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center"
+            id="output"
+          >
             {output}
           </div>
         </div>
         <div>
           <div
-            className={`m-2 w-full text-lg h-12 border-2 ${active() ? 'animate-pulse border-red-400' : ''}`}
+            className={`m-2 w-full text-xl h-12 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center ${
+              active() ? 'border-red-400' : ''
+            }`}
             id="input"
           >
             {input}
           </div>
         </div>
-        <div className="m-2 w-full flex justify-center">
-          <ButtonComponent disabled={active()} onClick={handleStart}>
+        <div className="m-3 w-full flex justify-center">
+          <Button disabled={active()} onClick={handleStart}>
             Start Chatting
-          </ButtonComponent>
-          <ButtonComponent disabled={!active()} onClick={handleStop}>
+          </Button>
+          <Button disabled={!active()} onClick={handleStop}>
             Stop Chatting
-          </ButtonComponent>
+          </Button>
+        </div>
+        <div className="flex justify-center">
+          <span className="text-sm font-mono">
+            <Latency name="ASR" latency={asrLatency} /> |
+            <Latency name="LLM" latency={llmLatency} /> |
+            <Latency name="TTS" latency={ttsLatency} /> |
+            <Latency name="" latency={asrLatency + llmLatency + ttsLatency} />
+          </span>
         </div>
       </div>
     </>

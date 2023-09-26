@@ -45,7 +45,7 @@ With vectors in hand, your text chunks can be added to a vector database. When r
 
 ### Starting and Monitoring Loading
 
-The AI.JSX [`LoadableCorpus`](../api/classes/batteries_docs.LoadableCorpus) interface provides a [`load`](../api/classes/batteries_docs.LoadableCorpus#load) method that will begin loading and vectorizing documents so they're available for querying later. It also provides a [`getStats`](../api/classes/batteries_docs.LoadableCorpus#getstats) method so you can inspect a corpus's progress.
+The AI.JSX [`LoadableCorpus`](../api/interfaces/batteries_docs.LoadableCorpus) interface provides a [`load`](../api/interfaces/batteries_docs.LoadableCorpus#load) method that will begin loading and vectorizing documents so they're available for querying later. It also provides a [`getStats`](../api/interfaces/batteries_docs.LoadableCorpus#getstats) method so you can inspect a corpus's progress.
 
 ```typescript
 // Have the corpus begin loading. This promise may take a while to resolve, but we'll be ready to

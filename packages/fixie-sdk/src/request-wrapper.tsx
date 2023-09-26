@@ -3,7 +3,9 @@ import { InvokeAgentRequest } from './types.js';
 import { ShowConversation, ConversationHistoryContext } from 'ai-jsx/core/conversation';
 import { Json } from './json.js';
 import { FixieConversation } from './conversation.js';
-import { OpenAI, OpenAIClient, ValidChatModel } from 'ai-jsx/lib/openai';
+import { OpenAI, OpenAIClient, ValidChatModel as OpenAIChatModel } from 'ai-jsx/lib/openai';
+import { Anthropic, AnthropicClient, ValidChatModel as AnthropicChatModel } from 'ai-jsx/lib/anthropic';
+import { cohereContext } from 'ai-jsx/lib/cohere';
 import { FixieAPIContext } from 'ai-jsx/batteries/fixie';
 
 export const RequestContext = AI.createContext<{
@@ -74,25 +76,54 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
   }
   const { request } = requestContext;
 
-  // If we're using OpenAI (or default), enable the OpenAI proxy.
-  if (!request.generationParams?.modelProvider || request.generationParams.modelProvider.toLowerCase() === 'openai') {
-    wrappedNode = (
-      <OpenAI
-        client={
-          new OpenAIClient({
-            apiKey: authToken,
-            baseURL: new URL('api/openai-proxy/v1', apiBaseUrl).toString(),
-            fetch: globalThis.fetch,
-          })
-        }
-        chatModel={(request.generationParams?.model as ValidChatModel | undefined) ?? 'gpt-3.5-turbo'}
-      >
-        {wrappedNode}
-      </OpenAI>
-    );
-  } else {
-    throw new Error(`The model provider ("${request.generationParams.modelProvider}") is not supported.`);
+  const modelProvider = request.generationParams?.modelProvider?.toLowerCase() ?? 'openai';
+  if (modelProvider !== 'openai' && modelProvider !== 'anthropic') {
+    throw new Error(`The model provider ("${request.generationParams?.modelProvider}") is not supported.`);
   }
+
+  // Set both OpenAI and Anthropic Clients, but only configure the requested one as the default ChatCompletion model.
+  wrappedNode = (
+    <OpenAI
+      client={
+        new OpenAIClient({
+          apiKey: authToken,
+          baseURL: new URL('api/openai-proxy/v1', apiBaseUrl).toString(),
+          fetch: globalThis.fetch,
+        })
+      }
+      chatModel={
+        !request.generationParams?.modelProvider || request.generationParams.modelProvider.toLowerCase() === 'openai'
+          ? (request.generationParams?.model as OpenAIChatModel | undefined) ?? 'gpt-3.5-turbo'
+          : undefined
+      }
+    >
+      {wrappedNode}
+    </OpenAI>
+  );
+
+  wrappedNode = (
+    <Anthropic
+      client={
+        new AnthropicClient({ authToken, apiKey: null, baseURL: new URL('api/anthropic-proxy', apiBaseUrl).toString() })
+      }
+      chatModel={
+        request.generationParams?.modelProvider?.toLowerCase() === 'anthropic'
+          ? (request.generationParams.model as AnthropicChatModel | undefined) ?? 'claude-instant-1'
+          : undefined
+      }
+    >
+      {wrappedNode}
+    </Anthropic>
+  );
+
+  // Add the Cohere client.
+  wrappedNode = (
+    <cohereContext.Provider
+      value={{ api_key: authToken, api_url: new URL('api/cohere-proxy/v1', apiBaseUrl).toString() }}
+    >
+      {wrappedNode}
+    </cohereContext.Provider>
+  );
 
   return (
     <ConversationHistoryContext.Provider value={memo(<FixieConversation />)}>
