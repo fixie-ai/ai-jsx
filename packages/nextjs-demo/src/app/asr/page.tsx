@@ -174,7 +174,7 @@ const PageComponent: React.FC = () => {
   const handleStartFile = async () => {
     setTranscript(HARVARD_SENTENCES_01_TRANSCRIPT);
     const manager = new MicManager();
-    await manager.startFile('/audio/harvard01.m4a', 20, () => setManager(null));
+    await manager.startFile('/audio/harvard01.m4a', 100, () => setManager(null));
     setManager(manager);
   };
   const handleStartMic = async () => {

@@ -4,10 +4,10 @@ import VADBuilder, { VAD, VADMode, VADEvent } from '@ozymandiasthegreat/vad';
 export abstract class VoiceActivityDetectorBase {
   abstract start(): void;
   abstract stop(): void;
+  abstract get isVoiceActive(): boolean;
   abstract processFrame(frame: Float32Array): void;
-  onSpeechStart?: () => void;
-  onSpeechCancel?: () => void;
-  onSpeechEnd?: () => void;
+  onVoiceStart?: () => void;
+  onVoiceEnd?: () => void;
   onError?: () => void;
 }
 
@@ -16,24 +16,30 @@ export class LibfVoiceActivityDetector extends VoiceActivityDetectorBase {
   private VADClass?: typeof VAD;
   private vad?: VAD;
   private buffer: Int16Array = new Int16Array(0);
-  private inSpeech: boolean = false;
+  private voiceActive: boolean = false;
   constructor(private readonly sampleRate: number) {
     super();
   }
   async start() {
     this.VADClass = await VADBuilder();
     this.vad = new this.VADClass(VADMode.NORMAL, this.sampleRate);
+    this.buffer = new Int16Array(0);
+    this.voiceActive = false;
   }
   stop() {
     this.vad?.destroy();
     this.vad = undefined;
     this.VADClass = undefined;
   }
+  get isVoiceActive() {
+    return this.voiceActive;
+  }
   processFrame(frame: Float32Array) {
     if (!this.vad) {
       return;
     }
 
+    // The VAD library requires 16-bit PCM input, so we convert from float.
     const intFrame = this.VADClass!.floatTo16BitPCM(frame);
 
     // If we don't have enough samples to hit the minimum, just add to our buffer.
@@ -57,15 +63,15 @@ export class LibfVoiceActivityDetector extends VoiceActivityDetectorBase {
     const result = this.vad!.processFrame(vadFrame);
     switch (result) {
       case VADEvent.VOICE:
-        if (!this.inSpeech) {
-          this.inSpeech = true;
-          this.onSpeechStart?.();
+        if (!this.voiceActive) {
+          this.voiceActive = true;
+          this.onVoiceStart?.();
         }
         break;
       case VADEvent.SILENCE:
-        if (this.inSpeech) {
-          this.inSpeech = false;
-          this.onSpeechEnd?.();
+        if (this.voiceActive) {
+          this.voiceActive = false;
+          this.onVoiceEnd?.();
         }
         break;
       case VADEvent.ERROR:

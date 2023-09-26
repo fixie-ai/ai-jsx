@@ -53,7 +53,7 @@ export class MicManager extends EventTarget {
   private context?: AudioContext;
   private streamElement?: HTMLAudioElement;
   private stream?: MediaStream;
-  private processorNode?: AudioWorkletNode;  
+  private processorNode?: AudioWorkletNode;
   private vad?: VoiceActivityDetectorBase;
 
   /**
@@ -90,6 +90,7 @@ export class MicManager extends EventTarget {
     this.stream?.getTracks().forEach((track) => track.stop());
     this.streamElement?.pause();
     this.context?.close();
+    this.vad = undefined;
     this.processorNode = undefined;
     this.stream = undefined;
     this.context = undefined;
@@ -107,7 +108,22 @@ export class MicManager extends EventTarget {
   get currentMillis() {
     return (this.numSamples / this.sampleRate) * 1000;
   }
+  /**
+   * Returns true if the capturer is currently capturing audio.
+   */
+  get isActive() {
+    return Boolean(this.context);
+  }
+  /**
+   * Returns true if the voice activity is currently detected.
+   */
+  get isVoiceActive() {
+    return this.vad?.isVoiceActive ?? false;
+  }
 
+  /**
+   * Starts the audio graph based on either `this.stream` or `this.streamElement`.
+   */
   private async startGraph(timeslice: number, onEnded?: () => void) {
     this.numSamples = 0;
     this.outBuffer = [];
@@ -158,14 +174,13 @@ export class MicManager extends EventTarget {
     }
 
     this.vad = new LibfVoiceActivityDetector(this.sampleRate);
-    this.vad.onSpeechStart = () => {
+    this.vad.onVoiceStart = () => {
       console.log(`Speech begin: ${this.currentMillis.toFixed(0)} ms`);
+      this.dispatchEvent(new CustomEvent('vad', { detail: true }));
     };
-    this.vad.onSpeechEnd = () => {
+    this.vad.onVoiceEnd = () => {
       console.log(`Speech FINAL: ${this.currentMillis.toFixed(0)} ms`);
-    };
-    this.vad.onSpeechCancel = () => {
-      console.log('Speech cancel detected');
+      this.dispatchEvent(new CustomEvent('vad', { detail: false }));
     };
     this.vad.start();
   }
