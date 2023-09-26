@@ -12,6 +12,15 @@ only emitting text, a Sidekick can emit buttons, cards, tables, and more, pickin
 best UI components to use based on the response. In this section, we'll show you how to
 extend your Sidekick to use this Generative UI capability, which we call GenUI for short.
 
+:::note What we cover in part 5
+In [Part 4](./part4-tools) we covered tools and added one for the GitHub Graphql API to our Sidekick. In Part 5, we will:
+
+- Learn how Sidekicks can go beyond simple text chat and dynamically use UI components.
+- Cover the built-in GenUI components.
+- Understand how to add custom components and make those available to the model via GenUI.
+
+:::
+
 ## Introduction to GenUI
 
 When you create a Sidekick, the `outputFormat` parameter passed to the `<Sidekick>` component
@@ -141,6 +150,8 @@ const mySidekick = (
 Of course, it's your job to implement the `<MyTable>` component in your own UI.
 
 ## Kick-Starters
+
+This section provides some optional, suggested exercises you can do to go deeper and really "kick"-start your usage of Sidekicks.
 
 ### Changing up the `<SystemMessage>`
 
