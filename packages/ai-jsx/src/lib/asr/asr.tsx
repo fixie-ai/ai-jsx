@@ -1,4 +1,5 @@
 'use client';
+import { LibfVoiceActivityDetector, VoiceActivityDetectorBase } from './vad.js';
 
 const AUDIO_WORKLET_SRC = `
 class InputProcessor extends AudioWorkletProcessor {
@@ -47,12 +48,14 @@ function bufferToBase64(buffer: ArrayBuffer) {
  * Currently, the VAD is quite primitive with a speech threshold of -50 dbFS.
  */
 export class MicManager extends EventTarget {
+  private numSamples: number = 0;
   private outBuffer?: Float32Array[];
   private context?: AudioContext;
   private streamElement?: HTMLAudioElement;
   private stream?: MediaStream;
   private processorNode?: AudioWorkletNode;
-  private numSilentFrames = 0;
+  private vad?: VoiceActivityDetectorBase;
+
   /**
    * Starts capture from the microphone.
    */
@@ -82,10 +85,12 @@ export class MicManager extends EventTarget {
    * Stops capture.
    */
   stop() {
+    this.vad?.stop();
     this.processorNode?.disconnect();
     this.stream?.getTracks().forEach((track) => track.stop());
     this.streamElement?.pause();
     this.context?.close();
+    this.vad = undefined;
     this.processorNode = undefined;
     this.stream = undefined;
     this.context = undefined;
@@ -94,13 +99,36 @@ export class MicManager extends EventTarget {
   /**
    * Returns the sample rate of the capturer.
    */
-  sampleRate() {
-    return this.context?.sampleRate;
+  get sampleRate() {
+    return this.context ? this.context.sampleRate : 0;
+  }
+  /**
+   * Returns the number of milliseconds of audio captured so far.
+   */
+  get currentMillis() {
+    return (this.numSamples / this.sampleRate) * 1000;
+  }
+  /**
+   * Returns true if the capturer is currently capturing audio.
+   */
+  get isActive() {
+    return Boolean(this.context);
+  }
+  /**
+   * Returns true if the voice activity is currently detected.
+   */
+  get isVoiceActive() {
+    return this.vad?.isVoiceActive ?? false;
   }
 
+  /**
+   * Starts the audio graph based on either `this.stream` or `this.streamElement`.
+   */
   private async startGraph(timeslice: number, onEnded?: () => void) {
+    this.numSamples = 0;
     this.outBuffer = [];
-    this.context = new window.AudioContext();
+    this.context = new window.AudioContext({ sampleRate: 16000 });
+    console.log(`MicManager sample rate: ${this.context.sampleRate}`);
     const workletSrcBlob = new Blob([AUDIO_WORKLET_SRC], {
       type: 'application/javascript',
     });
@@ -108,8 +136,9 @@ export class MicManager extends EventTarget {
     await this.context!.audioWorklet.addModule(workletSrcUrl);
     this.processorNode = new AudioWorkletNode(this.context, 'input-processor');
     this.processorNode.port.onmessage = (event) => {
+      this.numSamples += AUDIO_WORKLET_NUM_SAMPLES;
       this.outBuffer!.push(event.data);
-      const bufDuration = ((AUDIO_WORKLET_NUM_SAMPLES * this.outBuffer!.length) / this.sampleRate()!) * 1000;
+      const bufDuration = ((AUDIO_WORKLET_NUM_SAMPLES * this.outBuffer!.length) / this.sampleRate) * 1000;
       if (bufDuration >= timeslice) {
         const chunkEvent = new CustomEvent('chunk', {
           detail: this.makeAudioChunk(this.outBuffer!),
@@ -117,6 +146,7 @@ export class MicManager extends EventTarget {
         this.dispatchEvent(chunkEvent);
         this.outBuffer = [];
       }
+      this.vad?.processFrame(event.data);
     };
     let source;
     if (this.stream) {
@@ -137,8 +167,24 @@ export class MicManager extends EventTarget {
       throw new Error('No stream or streamElement');
     }
     source.connect(this.processorNode);
-    this.numSilentFrames = 0;
+    // Only connect the destination if we're playing a file,
+    // since we don't want to hear ourselves.
+    if (this.streamElement) {
+      source.connect(this.context.destination);
+    }
+
+    this.vad = new LibfVoiceActivityDetector(this.sampleRate);
+    this.vad.onVoiceStart = () => {
+      console.log(`Speech begin: ${this.currentMillis.toFixed(0)} ms`);
+      this.dispatchEvent(new CustomEvent('vad', { detail: true }));
+    };
+    this.vad.onVoiceEnd = () => {
+      console.log(`Speech FINAL: ${this.currentMillis.toFixed(0)} ms`);
+      this.dispatchEvent(new CustomEvent('vad', { detail: false }));
+    };
+    this.vad.start();
   }
+
   /**
    * Converts a list of Float32Arrays to a single ArrayBuffer of 16-bit
    * little-endian Pulse Code Modulation (PCM) audio data, which is
@@ -151,37 +197,14 @@ export class MicManager extends EventTarget {
     const outBuffer = new ArrayBuffer(byteLength);
     const view = new DataView(outBuffer);
     let index = 0;
-    let energy = 0.0;
     inBuffers.forEach((inBuffer) => {
       inBuffer.forEach((sample) => {
-        energy += sample * sample;
         const i16 = Math.max(-32768, Math.min(32767, Math.floor(sample * 32768)));
         view.setInt16(index, i16, true);
         index += 2;
       });
-      this.updateVad(energy / (index / 2));
     });
     return outBuffer;
-  }
-  /**
-   * Updates the Voice Activity Detection (VAD) state based on the
-   * average energy of a single audio buffer. This is a very primitive
-   * VAD that simply checks if the average energy is above a threshold
-   * for a certain amount of time (12800 samples @ 48KHz = 266ms)
-   */
-  private updateVad(energy: number) {
-    const dbfs = 10 * Math.log10(energy);
-    if (dbfs < -50) {
-      this.numSilentFrames++;
-      if (this.numSilentFrames == 100) {
-        this.dispatchEvent(new CustomEvent('vad', { detail: false }));
-      }
-    } else {
-      if (this.numSilentFrames >= 100) {
-        this.dispatchEvent(new CustomEvent('vad', { detail: true }));
-      }
-      this.numSilentFrames = 0;
-    }
   }
 }
 
@@ -288,7 +311,7 @@ export abstract class SpeechRecognitionBase extends EventTarget {
       } else {
         console.error(`[${this.name}] socket closed`);
       }
-      this.streamSentMillis += (chunk.byteLength / (2 * this.manager.sampleRate()!)) * 1000;
+      this.streamSentMillis += (chunk.byteLength / (2 * this.manager.sampleRate)) * 1000;
     });
   }
   private computeLatency(recognitionMillis: number) {
@@ -339,7 +362,7 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
       version: 'latest',
       encoding: 'linear16',
       channels: '1',
-      sample_rate: this.manager.sampleRate()!.toString(),
+      sample_rate: this.manager.sampleRate.toString(),
       punctuate: 'true',
       interim_results: 'true',
       endpointing: '300',
@@ -412,7 +435,7 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
   protected handleOpen() {
     const obj = {
       api_key: this.token,
-      sample_rate_hertz: this.manager.sampleRate(),
+      sample_rate_hertz: this.manager.sampleRate,
       include_nonfinal: true,
       enable_endpoint_detection: true,
       speech_context: null,
@@ -474,7 +497,7 @@ export class GladiaSpeechRecognition extends SpeechRecognitionBase {
   protected handleOpen() {
     const obj = {
       x_gladia_key: this.token,
-      sample_rate: this.manager.sampleRate(),
+      sample_rate: this.manager.sampleRate,
       encoding: 'wav',
       // 300ms endpointing by default
       language: this.language?.slice(0, 2) == 'en' ? 'english' : null,
@@ -515,7 +538,7 @@ export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
   }
   async start() {
     super.startInternal(
-      `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=${this.manager.sampleRate()}&token=${await this.fetchToken()}`
+      `wss://api.assemblyai.com/v2/realtime/ws?sample_rate=${this.manager.sampleRate}&token=${await this.fetchToken()}`
     );
   }
   /**
@@ -569,7 +592,7 @@ export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
       audio_format: {
         type: 'raw',
         encoding: 'pcm_s16le',
-        sample_rate: this.manager.sampleRate(),
+        sample_rate: this.manager.sampleRate,
       },
       transcription_config: {
         language: this.language?.slice(0, 2) ?? 'en',
@@ -624,7 +647,7 @@ export class RevAISpeechRecognition extends SpeechRecognitionBase {
   async start() {
     const params = new URLSearchParams({
       access_token: await this.fetchToken(),
-      content_type: `audio/x-raw;layout=interleaved;rate=${this.manager.sampleRate()};format=S16LE;channels=1`,
+      content_type: `audio/x-raw;layout=interleaved;rate=${this.manager.sampleRate};format=S16LE;channels=1`,
     });
     if (this.language) {
       params.set('language', this.language.slice(0, 2));
