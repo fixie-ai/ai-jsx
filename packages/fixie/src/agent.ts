@@ -403,10 +403,12 @@ export class FixieAgent {
   }
 
   static spawnAgentProcess(agentPath: string, port: number, env: Record<string, string>) {
-    term(`🌱 Starting local agent process on port ${port}...\n`);
+    term(`🌱 Building agent at ${agentPath}...\n`);
+    this.getCodePackage(agentPath);
+
     const pathToCheck = path.resolve(path.join(agentPath, 'dist', 'index.js'));
     if (!fs.existsSync(pathToCheck)) {
-      throw Error(`Your agent was not found at ${pathToCheck}. Do you need to build your agent code first?`);
+      throw Error(`Your agent was not found at ${pathToCheck}. Did the build fail?`);
     }
 
     const cmdline = `npx --package=@fixieai/sdk fixie-serve-bin --packagePath ./dist/index.js --port ${port}`;
@@ -502,16 +504,29 @@ export class FixieAgent {
       throw Error(`No package.json found in ${packageJsonPath}. Only JS-based agents are supported.`);
     }
 
-    // Trigger an `npm pack` to run a build.
-    this.getCodePackage(agentPath);
-
     // Start the agent process locally.
     let agentProcess = FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
 
     // Watch files in the agent directory for changes.
     const watchPath = path.resolve(agentPath);
+    const watchExcludePaths = [
+      path.resolve(path.join(agentPath, 'dist')),
+      path.resolve(path.join(agentPath, 'node_modules')),
+    ];
+    // Return true if the path matches the prefix of any of the exclude paths.
+    const ignoreFunc = (path: string): boolean => {
+      if (watchExcludePaths.some((excludePath) => path.startsWith(excludePath))) {
+        return true;
+      }
+      return false;
+    };
     console.log(`🌱 Watching ${watchPath} for changes...`);
-    const watcher = new Watcher(watchPath, { ignoreInitial: true, recursive: true });
+
+    const watcher = new Watcher(watchPath, {
+      ignoreInitial: true,
+      recursive: true,
+      ignore: ignoreFunc,
+    });
     watcher.on('all', async (event: any, targetPath: string, _targetPathNext: any) => {
       console.log(`🌱 Restarting local agent process due to ${event}: ${targetPath}`);
       agentProcess.kill();
