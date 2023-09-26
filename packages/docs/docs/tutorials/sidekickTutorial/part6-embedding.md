@@ -30,9 +30,9 @@ Embedding a Sidekick enables you to provide its capabilities to the end-users of
 
 ### Types of Sidekick Embedding
 
-The Fixie Platform SDK (TODO LINK) enables you to embed your Sidekick in two primary ways:
+The [Fixie Platform SDK](https://github.com/fixie-ai/ai-jsx/tree/main/packages/fixie#web-apis) enables you to embed your Sidekick in two primary ways:
 
-1. **Bring Your Own Frontend** → This is when you want to go fully custom and have fine-grained control over everything. This is beyond the scope of the tutorial. You can learn more about this at TODO LINK.
+1. **Bring Your Own Frontend** → This is when you want to go fully custom and have fine-grained control over everything. This is beyond the scope of the tutorial. There is an example [here](https://github.com/fixie-ai/redwood-fixie-sample/blob/main/web/src/pages/LowLevelApiPage/LowLevelApiPage.tsx).
 1. **iframe Embedding** → This is an opinionated approach. Fixie provides three React components each with different behaviors:
    1. `<FloatingFixieEmbed />` → Provides a button that shows up in your app that end-users can use to toggle the floating chat window.
    1. `<ControlledFloatingFixieEmbed />` → Unlike `FloatingFixieEmbed` it does not provide a button for launch. You manage visibility yourself via the `visible` prop.
