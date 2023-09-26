@@ -7,7 +7,9 @@ import FloatingEmbed from '../../../static/img/FloatingEmbed.png'
 # Part 6 - Embedding your Sidekick
 
 :::note What we cover in part 6
-In [Part 5](./part5-genUI) we learned about GenUI, the built-in components, and how to create custom components. In Part 6, we will:
+In [Part 5](./part5-genUI) we learned about GenUI, the built-in components, and how to create custom components.
+
+In Part 6, you will:
 
 - Look at how a Sidekick can be embedded into other applications.
 - Introduce the various embedding approaches.
@@ -28,9 +30,9 @@ Embedding a Sidekick enables you to provide its capabilities to the end-users of
 
 ### Types of Sidekick Embedding
 
-The Fixie Platform SDK (TODO LINK) enables you to embed your Sidekick in two primary ways:
+The [Fixie Platform SDK](https://github.com/fixie-ai/ai-jsx/tree/main/packages/fixie#web-apis) enables you to embed your Sidekick in two primary ways:
 
-1. **Bring Your Own Frontend** → This is when you want to go fully custom and have fine-grained control over everything. This is beyond the scope of the tutorial. You can learn more about this at TODO LINK.
+1. **Bring Your Own Frontend** → This is when you want to go fully custom and have fine-grained control over everything. This is beyond the scope of the tutorial. There is an example [here](https://github.com/fixie-ai/redwood-fixie-sample/blob/main/web/src/pages/LowLevelApiPage/LowLevelApiPage.tsx).
 1. **iframe Embedding** → This is an opinionated approach. Fixie provides three React components each with different behaviors:
    1. `<FloatingFixieEmbed />` → Provides a button that shows up in your app that end-users can use to toggle the floating chat window.
    1. `<ControlledFloatingFixieEmbed />` → Unlike `FloatingFixieEmbed` it does not provide a button for launch. You manage visibility yourself via the `visible` prop.
@@ -57,10 +59,12 @@ Save the file and then navigate to the [FloatingEmbedPage](http://localhost:8910
 
 <img src={FloatingEmbed} alt="" width="600"/>
 
-## Kick-Starters
+:::tip "Kick"-Starters
 
-This section provides some optional, suggested exercises you can do to go deeper and really "kick"-start your usage of Sidekicks.
+_This section provides some optional, suggested exercises you can do to go deeper with your usage of Sidekicks._
 
-### Try Other Embedding Components
+**Try Other Embedding Components**
 
 In this part we used the `<FloatingFixieEmbed />` component. Try experimenting with `<ControlledFloatingFixieEmbed />`. Where in your app might you want to control the visibility of the Sidekick? When would it be useful to have everything inline and use `<InlineFixieEmbed />`?
+
+:::

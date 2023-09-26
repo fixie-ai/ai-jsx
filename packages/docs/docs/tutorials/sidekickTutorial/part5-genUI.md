@@ -13,7 +13,9 @@ best UI components to use based on the response. In this section, we'll show you
 extend your Sidekick to use this Generative UI capability, which we call GenUI for short.
 
 :::note What we cover in part 5
-In [Part 4](./part4-tools) we covered tools and added one for the GitHub Graphql API to our Sidekick. In Part 5, we will:
+In [Part 4](./part4-tools) we covered tools and added one for the GitHub Graphql API to our Sidekick.
+
+In Part 5, you will:
 
 - Learn how Sidekicks can go beyond simple text chat and dynamically use UI components.
 - Cover the built-in GenUI components.
@@ -106,6 +108,20 @@ like so:
 />
 ```
 
+### See GenUI in Action
+
+Now let's go back to our Sidekick and retry a couple of our earlier queries:
+
+```terminal
+How many PRs are assigned me?
+```
+
+```terminal
+What is my most recent pull request?
+```
+
+You should now see a more visually interesting UI along with related, additional queries to try displayed as buttons.
+
 ## Adding custom GenUI components
 
 It is possible to get the Sidekick to use your own, custom MDX components in its output.
@@ -149,13 +165,15 @@ const mySidekick = (
 
 Of course, it's your job to implement the `<MyTable>` component in your own UI.
 
-## Kick-Starters
+:::tip "Kick"-Starters
 
-This section provides some optional, suggested exercises you can do to go deeper and really "kick"-start your usage of Sidekicks.
+_This section provides some optional, suggested exercises you can do to go deeper with your usage of Sidekicks._
 
-### Changing up the `<SystemMessage>`
+**Changing up the `<SystemMessage>`**
 
 Try changing the `<SystemMessage>` to encourage the Sidekick to use different components
 for different use cases. For example, maybe you want it to always generate a `<Citation>`
 
 when it is giving a link to a GitHub issue or pull request, rather than using a `<Card>` .
+
+:::
