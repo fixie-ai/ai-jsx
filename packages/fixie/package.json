@@ -23,7 +23,7 @@
   "dependencies": {
     "@apollo/client": "^3.8.1",
     "@types/apollo-upload-client": "^17.0.2",
-    "ai-jsx": "^0.18.1",
+    "ai-jsx": "^0.18.2",
     "apollo-upload-client": "^17.0.0",
     "axios": "^1.5.0",
     "commander": "^11.0.0",
