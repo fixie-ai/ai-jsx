@@ -1,5 +1,6 @@
 import type { Jsonifiable } from 'type-fest';
 import { AgentId, ConversationId, MessageGenerationParams, MessageRequestParams } from './sidekick-types.js';
+import axios, { AxiosRequestConfig } from 'axios';
 
 export interface UserInfo {
   id: number;
@@ -62,7 +63,7 @@ export class IsomorphicFixieClient {
   }
 
   /** Send a request to the Fixie API with the appropriate auth headers. */
-  async request(path: string, bodyData?: unknown, method?: string, options: RequestInit = {}) {
+  async request(path: string, bodyData?: unknown, method?: string, options: AxiosRequestConfig = {}) {
     const fetchMethod = method ?? (bodyData ? 'POST' : 'GET');
 
     const headers: RequestInit['headers'] = {};
@@ -72,28 +73,24 @@ export class IsomorphicFixieClient {
     if (this.apiKey) {
       headers.Authorization = `Bearer ${this.apiKey}`;
     }
-
     if (debug) {
       console.log(`[Fixie request] ${this.url}${path}`, bodyData);
     }
-    const res = await fetch(`${this.url}${path}`, {
+    const res = await axios.request({
       ...options,
+      url: `${this.url}${path}`,
       method: fetchMethod,
       headers,
-      // This is needed so serverside NextJS doesn't cache POSTs.
-      cache: 'no-store',
-      body: bodyData ? JSON.stringify(bodyData) : undefined,
+      // eslint-disable-next-line
+      data: bodyData,
     });
 
     return res;
   }
 
-  async requestJson(path: string, bodyData?: unknown, method?: string, options?: RequestInit): Promise<Jsonifiable> {
-    const res = await this.request(path, bodyData, method, options);
-    if (!res.ok) {
-      throw new Error(`Failed to access Fixie API ${this.url}${path}: ${res.statusText}`);
-    }
-    return res.json();
+  async requestJson(path: string, bodyData?: unknown, method?: string): Promise<Jsonifiable> {
+    const response = await this.request(path, bodyData, method);
+    return response.data;
   }
 
   /** Return information on the currently logged-in user. */
@@ -102,8 +99,17 @@ export class IsomorphicFixieClient {
     return rawUserInfo as Promise<UserInfo>;
   }
 
-  /** List Corpora visible to this user. */
-  listCorpora(): Promise<Jsonifiable> {
+  /** List Corpora visible to this user.
+   * @param ownerType
+   *   OWNER_USER: Only list corpora owned by the current user.
+   *   OWNER_ORG: Only list corpora owned by the current user's organization.
+   *   OWNER_PUBLIC: Only list public corpora.
+   *   OWNER_ALL: List all corpora visible to the current user.
+   */
+  listCorpora(ownerType?: 'OWNER_USER' | 'OWNER_ORG' | 'OWNER_PUBLIC' | 'OWNER_ALL'): Promise<Jsonifiable> {
+    if (ownerType !== undefined) {
+      return this.requestJson(`/api/v1/corpora?owner_type=${ownerType}`);
+    }
     return this.requestJson('/api/v1/corpora');
   }
 
@@ -262,29 +268,22 @@ export class IsomorphicFixieClient {
   async startConversation(agentId: AgentId, generationParams: MessageGenerationParams, message?: string) {
     const abortController = new AbortController();
     const signal = abortController.signal;
+
     const conversation = await this.request(
       `/api/v1/agents/${agentId}/conversations`,
       { generationParams, message },
       'POST',
       { signal }
     );
-
-    if (!conversation.body) {
+    if (!conversation.data) {
       throw new Error('Request to start a new conversation was empty');
     }
     if (conversation.status === 404) {
       throw new AgentDoesNotExistError(`Agent ${agentId} does not exist, or is private.`);
     }
-    if (!conversation.ok) {
-      throw new Error(
-        `Starting a new conversation failed: ${conversation.status} ${
-          conversation.statusText
-        } ${await conversation.text()}`
-      );
-    }
 
     const headerName = 'X-Fixie-Conversation-Id';
-    const conversationId = conversation.headers.get(headerName);
+    const conversationId = conversation.headers.headerName;
     if (!conversationId) {
       throw new Error(`Fixie bug: Fixie backend did not return the "${headerName}" header.`);
     }
