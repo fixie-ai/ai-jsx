@@ -22,7 +22,8 @@ import { OpenAI as OpenAIClient } from 'openai';
 export { OpenAI as OpenAIClient } from 'openai';
 import { FinalRequestOptions } from 'openai/core';
 import { debugRepresentation } from '../core/debug.js';
-import { getEncoding } from 'js-tiktoken';
+import cl100k_base from 'js-tiktoken/ranks/cl100k_base';
+import { Tiktoken } from 'js-tiktoken/lite';
 import _ from 'lodash';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
@@ -131,10 +132,14 @@ export function OpenAI({
   return result;
 }
 
-const getEncoder = _.once(() => getEncoding('cl100k_base'));
+// Preload the tokenizer to avoid a large delay on first use.
+const tiktoken = new Tiktoken(cl100k_base);
+export const tokenizer = {
+  encode: (text: string) => tiktoken.encode(text),
+  decode: (tokens: number[]) => tiktoken.decode(tokens),
+};
 
 function logitBiasOfTokens(tokens: Record<string, number>) {
-  const tokenizer = getEncoder();
   return Object.fromEntries(
     Object.entries(tokens).map(([token, bias]) => {
       const encoded = tokenizer.encode(token);
@@ -213,7 +218,7 @@ function estimateFunctionTokenCount(functions: Record<string, FunctionDefinition
   // According to https://community.openai.com/t/how-to-calculate-the-tokens-when-using-function-call/266573
   // function definitions are serialized as TypeScript. We'll use JSON-serialization as an approximation (which
   // is almost certainly an overestimate).
-  return getEncoder().encode(JSON.stringify(functions)).length;
+  return tokenizer.encode(JSON.stringify(functions)).length;
 }
 
 function tokenLimitForChatModel(
@@ -251,30 +256,29 @@ async function tokenCountForConversationMessage(
 ): Promise<number> {
   const TOKENS_PER_MESSAGE = 3;
   const TOKENS_PER_NAME = 1;
-  const encoder = getEncoder();
   switch (message.type) {
     case 'user':
       return (
         TOKENS_PER_MESSAGE +
-        encoder.encode(await render(message.element)).length +
-        (message.element.props.name ? encoder.encode(message.element.props.name).length + TOKENS_PER_NAME : 0)
+        tokenizer.encode(await render(message.element)).length +
+        (message.element.props.name ? tokenizer.encode(message.element.props.name).length + TOKENS_PER_NAME : 0)
       );
     case 'assistant':
     case 'system':
-      return TOKENS_PER_MESSAGE + encoder.encode(await render(message.element)).length;
+      return TOKENS_PER_MESSAGE + tokenizer.encode(await render(message.element)).length;
     case 'functionCall':
       return (
         TOKENS_PER_MESSAGE +
         TOKENS_PER_NAME +
-        encoder.encode(message.element.props.name).length +
-        encoder.encode(JSON.stringify(message.element.props.args)).length
+        tokenizer.encode(message.element.props.name).length +
+        tokenizer.encode(JSON.stringify(message.element.props.args)).length
       );
     case 'functionResponse':
       return (
         TOKENS_PER_MESSAGE +
         TOKENS_PER_NAME +
-        encoder.encode(await render(message.element.props.children)).length +
-        encoder.encode(message.element.props.name).length
+        tokenizer.encode(await render(message.element.props.children)).length +
+        tokenizer.encode(message.element.props.name).length
       );
   }
 }
