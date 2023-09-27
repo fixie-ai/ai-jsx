@@ -133,10 +133,10 @@ export function OpenAI({
 }
 
 // Preload the tokenizer to avoid a large delay on first use.
-const tiktoken = new Tiktoken(cl100k_base);
+const cl100kTokenizer = new Tiktoken(cl100k_base);
 export const tokenizer = {
-  encode: (text: string) => tiktoken.encode(text),
-  decode: (tokens: number[]) => tiktoken.decode(tokens),
+  encode: (text: string) => cl100kTokenizer.encode(text),
+  decode: (tokens: number[]) => cl100kTokenizer.decode(tokens),
 };
 
 function logitBiasOfTokens(tokens: Record<string, number>) {
