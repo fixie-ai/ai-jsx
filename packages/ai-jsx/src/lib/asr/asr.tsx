@@ -146,7 +146,12 @@ export class MicManager extends EventTarget {
         this.dispatchEvent(chunkEvent);
         this.outBuffer = [];
       }
+      const millis = performance.now();
       this.vad?.processFrame(event.data);
+      const elapsed = performance.now() - millis;
+      if (elapsed > 10) {
+        console.warn(`VAD processFrame took ${elapsed.toFixed(0)} ms`);
+      }
     };
     let source;
     if (this.stream) {
@@ -338,7 +343,7 @@ export abstract class SpeechRecognitionBase extends EventTarget {
     this.socket!.send(chunk);
   }
   protected flush() {
-    console.log(`[${this.name}] flushing ${this.outBuffer.length} chunks`);
+    console.log(`[${this.name}] flushing ${this.outBuffer.length * AUDIO_WORKLET_NUM_SAMPLES * 1000 / this.manager.sampleRate} ms`);
     this.outBuffer.forEach((chunk) => this.sendChunk(chunk));
     this.outBuffer = [];
   }
@@ -346,7 +351,8 @@ export abstract class SpeechRecognitionBase extends EventTarget {
 }
 
 /**
- * Speech recognizer that uses the Deepgram service.
+ * Speech recognizer that uses the Deepgram service, as described at
+ * https://developers.deepgram.com/reference/streaming
  */
 export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
   private buf: string;
@@ -421,7 +427,8 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
 }
 
 /**
- * Speech recognizer that uses the Soniox service.
+ * Speech recognizer that uses the Soniox service, as described at
+ * https://github.com/soniox/web_voice/blob/master/src/web_voice.js
  */
 export class SonioxSpeechRecognition extends SpeechRecognitionBase {
   private token?: string;
@@ -483,7 +490,8 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
 }
 
 /**
- * Speech recognizer that uses the Gladia service.
+ * Speech recognizer that uses the Gladia service, as described at
+ * https://docs.gladia.io/reference/live-audio
  */
 export class GladiaSpeechRecognition extends SpeechRecognitionBase {
   private token?: string;
@@ -530,7 +538,8 @@ export class GladiaSpeechRecognition extends SpeechRecognitionBase {
 }
 
 /**
- * Speech recognizer that uses the AssemblyAI service.
+ * Speech recognizer that uses the AssemblyAI service, as described at
+ * https://www.assemblyai.com/docs/guides/real-time-streaming-transcription
  */
 export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
   constructor(manager: MicManager, tokenFunc: GetToken, language?: string) {
@@ -573,7 +582,8 @@ export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
 }
 
 /**
- * Speech recognizer that uses the Speechmatics service.
+ * Speech recognizer that uses the Speechmatics service, as described at
+ * https://docs.speechmatics.com/rt-api-ref
  */
 export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
   private buf: string;
@@ -638,7 +648,8 @@ export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
 }
 
 /**
- * Speech recognizer that uses the Rev AI service.
+ * Speech recognizer that uses the Rev AI service, as described at
+ * https://docs.rev.ai/api/streaming/
  */
 export class RevAISpeechRecognition extends SpeechRecognitionBase {
   constructor(manager: MicManager, tokenFunc: GetToken, language?: string) {
