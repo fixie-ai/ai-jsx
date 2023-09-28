@@ -11,6 +11,7 @@ import terminal from 'terminal-kit';
 import { fileURLToPath } from 'url';
 import { FixieAgent } from './agent.js';
 import { AuthenticateOrLogIn, FIXIE_CONFIG_FILE, loadConfig } from './auth.js';
+import { FixieClientError } from './isomorphic-client.js';
 
 const { terminal: term } = terminal;
 
@@ -90,31 +91,33 @@ const packageJsonPath = path.resolve(currentPath, path.join('..', 'package.json'
 const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
 function errorHandler(error: any) {
-  if (error.response) {
+  if (error instanceof FixieClientError) {
     // Error from a REST API call.
-    const url = error.response.config.url;
-    if (error.response.status == 401) {
-      term.red('❌ Could not authenticate to the Fixie API at ').green(`${url}.\n`);
+    const url = error.url;
+    if (error.statusCode == 401) {
+      term('❌ Could not authenticate to the Fixie API at ').green(`${url}\n`);
       if (process.env.FIXIE_API_URL) {
-        term('❌ FIXIE_API_URL is set to ').red(process.env.FIXIE_API_URL)('\n');
-        term('❌ Check to ensure that this is the correct API endpoint.\n');
+        term('Your ').green('FIXIE_API_URL')(' is set to ').green(process.env.FIXIE_API_URL)('\n');
+        term('Check to ensure that this is the correct API endpoint.\n');
       }
       if (process.env.FIXIE_API_KEY) {
-        term('❌ ').green('FIXIE_API_KEY')(' is set to ').red(process.env.FIXIE_API_KEY.slice(0, 12))('...\n');
-        term('❌ Check to ensure that this is the correct key.\n');
+        term('Your ').green('FIXIE_API_KEY')(' is set to ').green(process.env.FIXIE_API_KEY.slice(0, 12))('...\n');
+        term('Check to ensure that this is the correct key.\n');
       }
-    } else if (error.response.status == 400) {
-      term.red('❌ Client made bad request to ').green(`${url}.\n`);
-    } else if (error.response.status == 403) {
-      term.red('❌ Forbidden: ').green(`${url}.\n`);
-    } else if (error.response.status == 404) {
-      term.red('❌ Not found: ').green(`${url}.\n`);
+    } else if (error.statusCode == 400) {
+      term('❌ Client made bad request to ').green(`${url}\n`);
+      term('Please check that you are running the latest version using ').green('npx fixie@latest -V')('\n');
+      term('The version of this CLI is: ').green(packageJson.version)('\n');
+    } else if (error.statusCode == 403) {
+      term('❌ Forbidden: ').green(`${url}\n`);
+    } else if (error.statusCode == 404) {
+      term('❌ Not found: ').green(`${url}\n`);
     } else {
-      term.red('❌ Error accessing Fixie API at ').green(url)(': ')(error.message)('\n');
+      term('❌ Error accessing Fixie API at ').green(url)(': ')(error.message)('\n');
     }
-    term.green(JSON.stringify(error.response.data, null, 2));
+    term.green(JSON.stringify(error.detail, null, 2));
   } else {
-    term.red('❌ Error: ')(error.message)('\n');
+    term('❌ Error: ')(error.message)('\n');
   }
 }
 

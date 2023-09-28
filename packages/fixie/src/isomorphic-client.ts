@@ -1,6 +1,5 @@
 import type { Jsonifiable } from 'type-fest';
 import { AgentId, ConversationId, MessageGenerationParams, MessageRequestParams } from './sidekick-types.js';
-import axios, { AxiosRequestConfig } from 'axios';
 
 export interface UserInfo {
   id: number;
@@ -22,6 +21,26 @@ export interface UserInfo {
 
 export class AgentDoesNotExistError extends Error {
   code = 'agent-does-not-exist';
+}
+
+/**
+ * Represents an error that occurs when the Fixie client encounters an error contacting
+ * the API endxpoint.
+ */
+export class FixieClientError extends Error {
+  url: string;
+  statusCode: number;
+  statusText: string;
+  detail: unknown;
+
+  constructor(url: string, statusCode: number, statusText: string, message?: string, detail: unknown = {}) {
+    super(message);
+    this.url = url;
+    this.statusCode = statusCode;
+    this.statusText = statusText;
+    this.name = 'FixieClientError';
+    this.detail = detail;
+  }
 }
 
 const debug =
@@ -63,7 +82,7 @@ export class IsomorphicFixieClient {
   }
 
   /** Send a request to the Fixie API with the appropriate auth headers. */
-  async request(path: string, bodyData?: unknown, method?: string, options: AxiosRequestConfig = {}) {
+  async request(path: string, bodyData?: unknown, method?: string, options: RequestInit = {}) {
     const fetchMethod = method ?? (bodyData ? 'POST' : 'GET');
 
     const headers: RequestInit['headers'] = {};
@@ -76,21 +95,26 @@ export class IsomorphicFixieClient {
     if (debug) {
       console.log(`[Fixie request] ${this.url}${path}`, bodyData);
     }
-    const res = await axios.request({
+    const url = `${this.url}${path}`;
+    const res = await fetch(url, {
       ...options,
-      url: `${this.url}${path}`,
       method: fetchMethod,
       headers,
       // eslint-disable-next-line
-      data: bodyData,
+      body: bodyData ? JSON.stringify(bodyData) : undefined,
+    }).catch((err) => {
+      throw new FixieClientError(url, 0, 'Network error', `Network error accessing ${url}`, err);
     });
-
+    if (!res.ok) {
+      const errorDetail: string | unknown = await res.json().catch(() => res.text());
+      throw new FixieClientError(url, res.status, res.statusText, `Error accessing Fixie API: ${url}`, errorDetail);
+    }
     return res;
   }
 
   async requestJson(path: string, bodyData?: unknown, method?: string): Promise<Jsonifiable> {
     const response = await this.request(path, bodyData, method);
-    return response.data;
+    return response.json();
   }
 
   /** Return information on the currently logged-in user. */
@@ -275,7 +299,7 @@ export class IsomorphicFixieClient {
       'POST',
       { signal }
     );
-    if (!conversation.data) {
+    if (!conversation.body) {
       throw new Error('Request to start a new conversation was empty');
     }
     if (conversation.status === 404) {
@@ -283,7 +307,7 @@ export class IsomorphicFixieClient {
     }
 
     const headerName = 'X-Fixie-Conversation-Id';
-    const conversationId = conversation.headers.headerName;
+    const conversationId = conversation.headers.get(headerName);
     if (!conversationId) {
       throw new Error(`Fixie bug: Fixie backend did not return the "${headerName}" header.`);
     }
