@@ -531,11 +531,15 @@ export class FixieAgent {
       console.log(`🌱 Restarting local agent process due to ${event}: ${targetPath}`);
       agentProcess.kill();
       // Let it shut down gracefully.
-      await new Promise<void>((resolve) =>
-        agentProcess.exitCode !== null || agentProcess.signalCode !== null
-          ? resolve()
-          : agentProcess.on('exit', resolve)
-      );
+      await new Promise<void>((resolve) => {
+        if (agentProcess.exitCode !== null || agentProcess.signalCode !== null) {
+          resolve();
+        } else {
+          agentProcess.on('close', () => {
+            resolve();
+          });
+        }
+      });
       agentProcess = FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
     });
 
