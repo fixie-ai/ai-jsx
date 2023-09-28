@@ -122,7 +122,13 @@ function errorHandler(error: any) {
 }
 
 function catchErrors(fn: (...args: any[]) => Promise<any>) {
-  return (...args: any[]) => fn(...args).catch(errorHandler);
+  return async (...args: any[]) => {
+    try {
+      await fn(...args);
+    } catch (err) {
+      errorHandler(err);
+    }
+  };
 }
 
 program
