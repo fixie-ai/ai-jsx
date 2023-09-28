@@ -100,6 +100,8 @@ export class IsomorphicFixieClient {
       ...options,
       method: fetchMethod,
       headers,
+      // This is needed so serverside NextJS doesn't cache POSTs.
+      cache: 'no-store',
       // eslint-disable-next-line
       body: bodyData ? JSON.stringify(bodyData) : undefined,
     }).catch((err) => {
