@@ -1,6 +1,6 @@
 {
   "name": "fixie",
-  "version": "1.5.0",
+  "version": "1.5.3",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
@@ -23,7 +23,7 @@
   "dependencies": {
     "@apollo/client": "^3.8.1",
     "@types/apollo-upload-client": "^17.0.2",
-    "ai-jsx": "workspace:*",
+    "ai-jsx": "^0.18.2",
     "apollo-upload-client": "^17.0.0",
     "axios": "^1.5.0",
     "commander": "^11.0.0",
@@ -37,7 +37,8 @@
     "ora": "^7.0.1",
     "react-firebase-hooks": "^5.1.1",
     "terminal-kit": "^3.0.0",
-    "untildify": "^5.0.0"
+    "untildify": "^5.0.0",
+    "watcher": "^2.3.0"
   },
   "peerDependencies": {
     "react": "^18.2.0",

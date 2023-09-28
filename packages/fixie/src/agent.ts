@@ -7,6 +7,7 @@ import ora from 'ora';
 import os from 'os';
 import path from 'path';
 import { execa } from 'execa';
+import Watcher from 'watcher';
 import net from 'node:net';
 
 const { terminal: term } = terminal;
@@ -402,10 +403,12 @@ export class FixieAgent {
   }
 
   static spawnAgentProcess(agentPath: string, port: number, env: Record<string, string>) {
-    term(`🌱 Starting local agent process on port ${port}...\n`);
+    term(`🌱 Building agent at ${agentPath}...\n`);
+    this.getCodePackage(agentPath);
+
     const pathToCheck = path.resolve(path.join(agentPath, 'dist', 'index.js'));
     if (!fs.existsSync(pathToCheck)) {
-      throw Error(`Your agent was not found at ${pathToCheck}. Do you need to build your agent code first?`);
+      throw Error(`Your agent was not found at ${pathToCheck}. Did the build fail?`);
     }
 
     const cmdline = `npx --package=@fixieai/sdk fixie-serve-bin --packagePath ./dist/index.js --port ${port}`;
@@ -414,17 +417,24 @@ export class FixieAgent {
 
     const [argv0, ...args] = cmdline.split(' ');
     const subProcess = execa(argv0, args, { cwd: agentPath, env });
+    term('🌱 Agent process running at PID: ').green(subProcess.pid)('\n');
     subProcess.stdout?.setEncoding('utf8');
     subProcess.stderr?.setEncoding('utf8');
 
+    subProcess.on('spawn', () => {
+      console.log(`🌱 Agent child process started with PID [${subProcess.pid}]`);
+    });
     subProcess.stdout?.on('data', (sdata: string) => {
       console.log(`🌱 Agent stdout: ${sdata.trimEnd()}`);
     });
     subProcess.stderr?.on('data', (sdata: string) => {
       console.error(`🌱 Agent stdout: ${sdata.trimEnd()}`);
     });
+    subProcess.on('error', (err: any) => {
+      term('🌱 ').red(`Agent child process [${subProcess.pid}] exited with error: ${err.message}\n`);
+    });
     subProcess.on('close', (returnCode: number) => {
-      term('🌱 ').red(`Agent child process exited with code ${returnCode}\n`);
+      term('🌱 ').red(`Agent child process [${subProcess.pid}] exited with code ${returnCode}\n`);
     });
     return subProcess;
   }
@@ -485,6 +495,7 @@ export class FixieAgent {
   }) {
     const config = await FixieAgent.LoadConfig(agentPath);
     const agentId = `${(await client.userInfo()).username}/${config.handle}`;
+
     term('🦊 Serving agent ').green(agentId)('...\n');
 
     // Check if the package.json path exists in this directory.
@@ -493,11 +504,44 @@ export class FixieAgent {
       throw Error(`No package.json found in ${packageJsonPath}. Only JS-based agents are supported.`);
     }
 
-    // Trigger an `npm pack` to run a build.
-    this.getCodePackage(agentPath);
-
     // Start the agent process locally.
-    FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
+    let agentProcess = FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
+
+    // Watch files in the agent directory for changes.
+    const watchPath = path.resolve(agentPath);
+    const watchExcludePaths = [
+      path.resolve(path.join(agentPath, 'dist')),
+      path.resolve(path.join(agentPath, 'node_modules')),
+    ];
+    // Return true if the path matches the prefix of any of the exclude paths.
+    const ignoreFunc = (path: string): boolean => {
+      if (watchExcludePaths.some((excludePath) => path.startsWith(excludePath))) {
+        return true;
+      }
+      return false;
+    };
+    console.log(`🌱 Watching ${watchPath} for changes...`);
+
+    const watcher = new Watcher(watchPath, {
+      ignoreInitial: true,
+      recursive: true,
+      ignore: ignoreFunc,
+    });
+    watcher.on('all', async (event: any, targetPath: string, _targetPathNext: any) => {
+      console.log(`🌱 Restarting local agent process due to ${event}: ${targetPath}`);
+      agentProcess.kill();
+      // Let it shut down gracefully.
+      await new Promise<void>((resolve) => {
+        if (agentProcess.exitCode !== null || agentProcess.signalCode !== null) {
+          resolve();
+        } else {
+          agentProcess.on('close', () => {
+            resolve();
+          });
+        }
+      });
+      agentProcess = FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
+    });
 
     // Poll the port until it's listening.
     async function waitForAgentToBeReady() {
@@ -615,6 +659,7 @@ export class FixieAgent {
     }
     let currentRevision: AgentRevision | null = null;
     const doCleanup = async () => {
+      watcher.close();
       if (originalRevision) {
         try {
           await agent.setCurrentRevision(originalRevision.id);

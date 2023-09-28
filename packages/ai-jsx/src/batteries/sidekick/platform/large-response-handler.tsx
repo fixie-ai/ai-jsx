@@ -2,7 +2,7 @@ import * as AI from '../../../index.js';
 import { ConversationMessage, FunctionResponse, renderToConversation } from '../../../core/conversation.js';
 
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-import { getEncoding, Tiktoken } from 'js-tiktoken';
+import { tokenizer as openAiTokenizer } from '../../../lib/openai.js';
 import yaml from 'js-yaml';
 import _ from 'lodash';
 import { UseToolsProps } from '../../use-tools.js';
@@ -12,12 +12,6 @@ import { Jsonifiable } from 'type-fest';
 export interface RedactedFuncionResponseMetadata {
   isRedacted: true;
   chunks: string[];
-}
-
-const getOpenAIEncoder = _.once(() => getEncoding('cl100k_base'));
-
-function tokenCount(text: string, encoder: Tiktoken) {
-  return encoder.encode(text).length;
 }
 
 const TRUNCATION_SUFFIX = '\n\n...[value-truncated:too-large]...';
@@ -43,28 +37,28 @@ export async function TruncateByTokens(
   {
     children,
     maxLength,
-    encoder = getOpenAIEncoder(),
+    tokenizer = openAiTokenizer,
   }: {
     children: AI.Node;
     maxLength: number;
-    encoder?: Tiktoken;
+    tokenizer?: typeof openAiTokenizer;
   },
   { render }: AI.ComponentContext
 ) {
   const stringified = await render(children);
-  if (tokenCount(stringified, encoder) <= maxLength) {
+  if (tokenizer.encode(stringified).length <= maxLength) {
     return stringified;
   }
-  const budget = maxLength - tokenCount(TRUNCATION_SUFFIX, encoder);
+  const budget = maxLength - tokenizer.encode(TRUNCATION_SUFFIX).length;
 
-  return encoder.decode(encoder.encode(stringified).slice(0, budget)) + TRUNCATION_SUFFIX;
+  return tokenizer.decode(tokenizer.encode(stringified).slice(0, budget)) + TRUNCATION_SUFFIX;
 }
 
 export interface LargeFunctionResponseProps {
   maxLength: number;
   failedMaxLength: number;
   numChunks: number;
-  encoder?: Tiktoken;
+  tokenizer?: typeof openAiTokenizer;
 }
 
 async function LargeFunctionResponseHandler(
@@ -73,7 +67,7 @@ async function LargeFunctionResponseHandler(
     maxLength = 4000,
     failedMaxLength = 1000,
     numChunks = 4,
-    encoder = getOpenAIEncoder(),
+    tokenizer = openAiTokenizer,
     ...props
   }: AI.PropsOfComponent<typeof FunctionResponse> & LargeFunctionResponseProps,
   { render, logger, getContext }: AI.ComponentContext
@@ -90,14 +84,14 @@ async function LargeFunctionResponseHandler(
   let stringified = await render(children);
 
   // Option 1: do nothing if it's already small enough
-  if (tokenCount(stringified, encoder) <= maxLength) {
+  if (tokenizer.encode(stringified).length <= maxLength) {
     return <FunctionResponse {...props}>{stringified}</FunctionResponse>;
   }
 
   stringified = yamlOptimizeIfPossible(stringified);
 
   // Option 2: try dumping as YAML. If it's small enough, then we are done.
-  if (tokenCount(stringified, encoder) <= maxLength) {
+  if (tokenizer.encode(stringified).length <= maxLength) {
     return <FunctionResponse {...props}>{stringified}</FunctionResponse>;
   }
 
@@ -114,7 +108,7 @@ async function LargeFunctionResponseHandler(
     );
     return (
       <FunctionResponse {...props} metadata={{ isRedacted: true }}>
-        <TruncateByTokens maxLength={maxLength} encoder={encoder}>
+        <TruncateByTokens maxLength={maxLength} tokenizer={tokenizer}>
           {stringified}
         </TruncateByTokens>
       </FunctionResponse>
@@ -124,7 +118,7 @@ async function LargeFunctionResponseHandler(
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: maxLength / numChunks,
     chunkOverlap: maxLength / numChunks / 10,
-    lengthFunction: (x) => tokenCount(x, encoder),
+    lengthFunction: (x) => tokenizer.encode(x).length,
   });
   const chunks = await splitter.splitText(stringified);
 
