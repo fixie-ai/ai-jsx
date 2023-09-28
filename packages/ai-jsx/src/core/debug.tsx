@@ -150,10 +150,16 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
           return `[${values.join(', ')}]`;
       }
     } else if (typeof value === 'object') {
-      if (context === 'props' || context === 'children') {
-        return `{${JSON.stringify(value)}}`;
+      let stringified;
+      try {
+        stringified = JSON.stringify(value);
+      } catch {
+        stringified = '{/* ... */}';
       }
-      return JSON.stringify(value);
+      if (context === 'props' || context === 'children') {
+        return `{${stringified}}`;
+      }
+      return stringified;
     } else if (typeof value === 'function') {
       const toRender = value.name === '' ? value.toString() : value.name;
       if (context === 'props' || context === 'children') {

@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.18.1
+## 0.18.2
+
+- Modified `lib/openai` to preload the tokenizer to avoid a stall on first use
+- Fixed an issue where `debug(component)` would throw an exception if a component had a prop that could not be JSON-serialized.
+
+## [0.18.1](https://github.com/fixie-ai/ai-jsx/commit/956ce578eb03f9fd269ae043fa514a7cf711bb06)
 
 - Modified `Sidekick` to add the following options:
   - `outputFormat`: `text/mdx`, `text/markdown`, `text/plain`
