@@ -33,7 +33,8 @@ async function getToken(provider: string) {
  * Removes caps, punctuation, and extra whitespace from a string.
  */
 function normalizeText(text: string) {
-  return text.toLowerCase()
+  return text
+    .toLowerCase()
     .replace(/[^\w\s]|_/g, '')
     .replace(/\s+/g, ' ')
     .trim();
@@ -138,9 +139,7 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
       if (transcript.final && transcript.observedLatency) {
         setFinalLatency((prev) => [...prev, transcript.observedLatency!]);
         setPartialLatency((prev) => [...prev, partialLatency]);
-        console.log(
-          `[${id}] latency=${transcript.observedLatency.toFixed(0)}, partial=${partialLatency.toFixed(0)}`
-        );
+        console.log(`[${id}] latency=${transcript.observedLatency.toFixed(0)}, partial=${partialLatency.toFixed(0)}`);
       }
     });
     recognizer.start();
