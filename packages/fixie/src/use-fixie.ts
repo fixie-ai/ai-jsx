@@ -82,13 +82,15 @@ export interface UseFixieResult {
   conversationExists?: boolean;
 }
 
+export const StartNewConversationSymbol = Symbol('StartNewConversation');
+
 export interface UseFixieArgs {
   /**
    * The ID of the conversation to use.
    *
    * If omitted, the hook will return a no-op for most functions.
    */
-  conversationId?: string;
+  conversationId?: string | typeof StartNewConversationSymbol;
 
   /**
    * The agentID to use.
@@ -153,7 +155,11 @@ export function useFixie({
    */
 
   const [input, setInput] = useState('');
-  const [conversationId, setConversationId] = useState(userPassedConversationId);
+  const [conversationId, setConversationId] = useState<string | undefined>(getConversationIdFromUserPassedConversationId());
+
+  function getConversationIdFromUserPassedConversationId() {
+    return typeof userPassedConversationId === 'string' ? userPassedConversationId : undefined;
+  }
 
   function handleNewConversationId(conversationId: ConversationId) {
     setConversationId(conversationId);
@@ -161,7 +167,13 @@ export function useFixie({
   }
 
   useEffect(() => {
-    setConversationId(userPassedConversationId);
+    if (userPassedConversationId === StartNewConversationSymbol) {
+      createNewConversation();
+    }
+  })
+
+  useEffect(() => {
+    setConversationId(getConversationIdFromUserPassedConversationId());
   }, [userPassedConversationId]);
 
   // I think using `data` as a var name is fine here.
