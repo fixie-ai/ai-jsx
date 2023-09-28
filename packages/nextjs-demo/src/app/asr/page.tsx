@@ -30,10 +30,10 @@ async function getToken(provider: string) {
 }
 
 /**
- * Removes punctuation and extra whitespace from a string.
+ * Removes caps, punctuation, and extra whitespace from a string.
  */
 function normalizeText(text: string) {
-  return text
+  return text.toLowerCase()
     .replace(/[^\w\s]|_/g, '')
     .replace(/\s+/g, ' ')
     .trim();
@@ -97,7 +97,6 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
     return wordErrorRate(refClean, inClean);
   };
   const start = () => {
-    console.log('Creating recognizer');
     const recognizer = createSpeechRecognition({ provider: id, manager: manager!, getToken });
     setRecognizer(recognizer);
     setOutput([]);
@@ -114,13 +113,13 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
       // Determine if there's an earlier partial transcript that matches this one.
       // If so, we'll use that to compute the partial latency.
       // We'll also skip any duplicate partial transcripts.
-      let partialLatency = 0;
+      let partialLatency = transcript.observedLatency;
       const currOutput = outputRef.current;
       if (currOutput.length > 0) {
         const lastTranscript = currOutput[currOutput.length - 1];
         if (!lastTranscript.final) {
           if (normalizeText(lastTranscript.text) == normalizeText(transcript.text)) {
-            console.log(`[${id}] Duplicate transcript "${transcript.text}"`);
+            console.debug(`[${id}] Duplicate transcript "${transcript.text}"`);
             if (!transcript.final) {
               return;
             }
@@ -144,7 +143,6 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
         );
       }
     });
-    console.log('Starting recognizer');
     recognizer.start();
   };
   const stop = () => {
