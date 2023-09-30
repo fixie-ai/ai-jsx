@@ -1,5 +1,5 @@
 'use client';
-import { TextToSpeechBase, createTextToSpeech } from 'ai-jsx/lib/tts/tts';
+import { TextToSpeechBase, TextToSpeechProtocol, createTextToSpeech } from 'ai-jsx/lib/tts/tts';
 import React, { useState, useEffect } from 'react';
 import '../globals.css';
 
@@ -23,6 +23,7 @@ const Button: React.FC<{ onClick: () => void; children: React.ReactNode }> = ({ 
 type TtsProps = {
   display: string;
   provider: string;
+  proto?: TextToSpeechProtocol;
   link: string;
   costPerMChar: number;
   defaultVoice: string;
@@ -48,13 +49,13 @@ const getToken = async (provider: string) => {
   return json.token;
 };
 
-const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, defaultVoice, text }) => {
+const Tts: React.FC<TtsProps> = ({ display, provider, proto, link, costPerMChar, defaultVoice, text }) => {
   const [voice, setVoice] = useState(defaultVoice);
   const [playing, setPlaying] = useState(false);
   const [latency, setLatency] = useState<number>();
   const [tts, setTts] = useState<TextToSpeechBase | null>();
   useEffect(() => {
-    setTts(createTextToSpeech({ provider, buildUrl, getToken, voice, rate: 1.2 }));
+    setTts(createTextToSpeech({ provider, proto, buildUrl, getToken, voice, rate: 1.2 }));
   }, [provider, voice]);
   const toggle = () => {
     if (!playing) {
@@ -125,8 +126,18 @@ const PageComponent: React.FC = () => {
       <p className="ml-2 mb-2 text-sm">{countWords(text)} words</p>
       <div className="grid grid-cols-1 md:grid-cols-2 w-full">
         <Tts
-          display="ElevenLabs"
+          display="ElevenLabs (WebSocket)"
           provider="eleven"
+          proto="ws"
+          link="https://elevenlabs.io"
+          costPerMChar={180}
+          defaultVoice="21m00Tcm4TlvDq8ikWAM"
+          text={text}
+        />
+        <Tts
+          display="ElevenLabs (REST)"
+          provider="eleven"
+          proto="rest"
           link="https://elevenlabs.io"
           costPerMChar={180}
           defaultVoice="21m00Tcm4TlvDq8ikWAM"
