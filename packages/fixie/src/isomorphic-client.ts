@@ -23,6 +23,26 @@ export class AgentDoesNotExistError extends Error {
   code = 'agent-does-not-exist';
 }
 
+/**
+ * Represents an error that occurs when the Fixie client encounters an error contacting
+ * the API endxpoint.
+ */
+export class FixieClientError extends Error {
+  url: string;
+  statusCode: number;
+  statusText: string;
+  detail: unknown;
+
+  constructor(url: string, statusCode: number, statusText: string, message?: string, detail: unknown = {}) {
+    super(message);
+    this.url = url;
+    this.statusCode = statusCode;
+    this.statusText = statusText;
+    this.name = 'FixieClientError';
+    this.detail = detail;
+  }
+}
+
 const debug =
   typeof process !== 'undefined' &&
   // Don't make any assumptions about the environment.
@@ -72,28 +92,31 @@ export class IsomorphicFixieClient {
     if (this.apiKey) {
       headers.Authorization = `Bearer ${this.apiKey}`;
     }
-
     if (debug) {
       console.log(`[Fixie request] ${this.url}${path}`, bodyData);
     }
-    const res = await fetch(`${this.url}${path}`, {
+    const url = `${this.url}${path}`;
+    const res = await fetch(url, {
       ...options,
       method: fetchMethod,
       headers,
       // This is needed so serverside NextJS doesn't cache POSTs.
       cache: 'no-store',
+      // eslint-disable-next-line
       body: bodyData ? JSON.stringify(bodyData) : undefined,
+    }).catch((err) => {
+      throw new FixieClientError(url, 0, 'Network error', `Network error accessing ${url}`, err);
     });
-
+    if (!res.ok) {
+      const errorDetail: string | unknown = await res.json().catch(() => res.text());
+      throw new FixieClientError(url, res.status, res.statusText, `Error accessing Fixie API: ${url}`, errorDetail);
+    }
     return res;
   }
 
-  async requestJson(path: string, bodyData?: unknown, method?: string, options?: RequestInit): Promise<Jsonifiable> {
-    const res = await this.request(path, bodyData, method, options);
-    if (!res.ok) {
-      throw new Error(`Failed to access Fixie API ${this.url}${path}: ${res.statusText}`);
-    }
-    return res.json();
+  async requestJson(path: string, bodyData?: unknown, method?: string): Promise<Jsonifiable> {
+    const response = await this.request(path, bodyData, method);
+    return response.json();
   }
 
   /** Return information on the currently logged-in user. */
@@ -102,8 +125,17 @@ export class IsomorphicFixieClient {
     return rawUserInfo as Promise<UserInfo>;
   }
 
-  /** List Corpora visible to this user. */
-  listCorpora(): Promise<Jsonifiable> {
+  /** List Corpora visible to this user.
+   * @param ownerType
+   *   OWNER_USER: Only list corpora owned by the current user.
+   *   OWNER_ORG: Only list corpora owned by the current user's organization.
+   *   OWNER_PUBLIC: Only list public corpora.
+   *   OWNER_ALL: List all corpora visible to the current user.
+   */
+  listCorpora(ownerType?: 'OWNER_USER' | 'OWNER_ORG' | 'OWNER_PUBLIC' | 'OWNER_ALL'): Promise<Jsonifiable> {
+    if (ownerType !== undefined) {
+      return this.requestJson(`/api/v1/corpora?owner_type=${ownerType}`);
+    }
     return this.requestJson('/api/v1/corpora');
   }
 
@@ -262,25 +294,18 @@ export class IsomorphicFixieClient {
   async startConversation(agentId: AgentId, generationParams: MessageGenerationParams, message?: string) {
     const abortController = new AbortController();
     const signal = abortController.signal;
+
     const conversation = await this.request(
       `/api/v1/agents/${agentId}/conversations`,
       { generationParams, message },
       'POST',
       { signal }
     );
-
     if (!conversation.body) {
       throw new Error('Request to start a new conversation was empty');
     }
     if (conversation.status === 404) {
       throw new AgentDoesNotExistError(`Agent ${agentId} does not exist, or is private.`);
-    }
-    if (!conversation.ok) {
-      throw new Error(
-        `Starting a new conversation failed: ${conversation.status} ${
-          conversation.statusText
-        } ${await conversation.text()}`
-      );
     }
 
     const headerName = 'X-Fixie-Conversation-Id';
