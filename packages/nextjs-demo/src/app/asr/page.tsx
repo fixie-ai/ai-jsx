@@ -1,7 +1,13 @@
 'use client';
 import '../globals.css';
 import React, { useState, useEffect, useRef } from 'react';
-import { MicManager, createSpeechRecognition, SpeechRecognitionBase, Transcript } from 'ai-jsx/lib/asr/asr';
+import {
+  MicManager,
+  createSpeechRecognition,
+  normalizeText,
+  SpeechRecognitionBase,
+  Transcript,
+} from 'ai-jsx/lib/asr/asr';
 import { wordErrorRate } from 'word-error-rate';
 import _ from 'lodash';
 
@@ -27,17 +33,6 @@ async function getToken(provider: string) {
   });
   const json = await response.json();
   return json.token;
-}
-
-/**
- * Removes caps, punctuation, and extra whitespace from a string.
- */
-function normalizeText(text: string) {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s]|_/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
 }
 
 const TranscriptRenderer: React.FC<{ value: Transcript[] }> = ({ value }) => {
@@ -106,7 +101,7 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
     recognizer.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const transcript = event.detail!;
       console.debug(
-        `[${id}] ${transcript.timestamp.toFixed(0)} (${transcript.reportedLatency.toFixed(0)}) ${transcript.text} ${
+        `[${id}] ${transcript.timestamp.toFixed(0)} (${transcript.reportedLatency!.toFixed(0)}) ${transcript.text} ${
           transcript.final ? 'FINAL' : ''
         }`
       );
@@ -114,7 +109,7 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
       // Determine if there's an earlier partial transcript that matches this one.
       // If so, we'll use that to compute the partial latency.
       // We'll also skip any duplicate partial transcripts.
-      let partialLatency = transcript.observedLatency;
+      let partialLatency = transcript.observedLatency!;
       const currOutput = outputRef.current;
       if (currOutput.length > 0) {
         const lastTranscript = currOutput[currOutput.length - 1];
@@ -124,7 +119,7 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
             if (!transcript.final) {
               return;
             }
-            partialLatency = transcript.observedLatency - (transcript.timestamp - lastTranscript.timestamp);
+            partialLatency -= transcript.timestamp - lastTranscript.timestamp;
           }
         }
       }

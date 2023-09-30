@@ -1,6 +1,12 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { createSpeechRecognition, SpeechRecognitionBase, MicManager, Transcript } from 'ai-jsx/lib/asr/asr';
+import {
+  createSpeechRecognition,
+  normalizeText,
+  SpeechRecognitionBase,
+  MicManager,
+  Transcript,
+} from 'ai-jsx/lib/asr/asr';
 import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
 import '../globals.css';
@@ -131,7 +137,7 @@ class ChatManager {
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
   private readonly docs: boolean;
-  onInputChange?: (text: string, final: boolean, latency: number) => void;
+  onInputChange?: (text: string, final: boolean, latency?: number) => void;
   onOutputChange?: (text: string, final: boolean, latency: number) => void;
   onAudioStart?: (latency: number) => void;
   onAudioEnd?: () => void;
@@ -151,7 +157,7 @@ class ChatManager {
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const obj = event.detail!;
       this.handleInputUpdate(obj.text, obj.final);
-      this.onInputChange?.(obj.text, obj.final, obj.latency!);
+      this.onInputChange?.(obj.text, obj.final, obj.observedLatency);
     });
     this.tts.onPlaying = () => {
       this.onAudioStart?.(this.tts.latency!);
@@ -188,9 +194,13 @@ class ChatManager {
    * Handle new input from the ASR.
    */
   private handleInputUpdate(text: string, final: boolean) {
+    // Ignore partial transcripts if VAD indicates the user is still speaking.
+    if (!final && this.micManager.isVoiceActive) {
+      return;
+    }
+
     // If the input text has been finalized, add it to the message history.
-    const trimmed = text.trim();
-    const userMessage = new ChatMessage('user', trimmed);
+    const userMessage = new ChatMessage('user', text.trim());
     const newMessages = [...this.history, userMessage];
     if (final) {
       this.history = newMessages;
@@ -199,13 +209,14 @@ class ChatManager {
     // If it doesn't match an existing request, kick off a new one.
     // If it matches an existing request and the text is finalized, speculative
     // execution worked! Snap forward to the current state of that request.
-    const hit = trimmed in this.pendingRequests;
-    console.log(`${final ? 'final' : 'partial'}: ${trimmed} ${hit ? 'HIT' : 'MISS'}`);
+    const normalized = normalizeText(text);
+    const hit = normalized in this.pendingRequests;
+    console.log(`${final ? 'final' : 'partial'}: ${normalized} ${hit ? 'HIT' : 'MISS'}`);
     if (!hit) {
       const request = new ChatRequest(newMessages, this.model, this.docs, final);
       request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
       request.onComplete = (request) => this.handleRequestDone(request);
-      this.pendingRequests[trimmed] = request;
+      this.pendingRequests[normalized] = request;
       request.start();
     } else if (final) {
       const request = this.pendingRequests[text];
@@ -307,7 +318,9 @@ const PageComponent: React.FC = () => {
     manager.start('');
     manager.onInputChange = (text, final, latency) => {
       setInput(text);
-      setAsrLatency(latency);
+      if (latency) {
+        setAsrLatency(latency);
+      }
       setLlmLatency(0);
       setTtsLatency(0);
     };
