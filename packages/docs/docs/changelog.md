@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.19.0
+
 - Remove `Prompt` component.
 - Fix issue with how the SDK handles request errors.
 - Enable Sidekicks to introduce themselves at the start of a conversation.

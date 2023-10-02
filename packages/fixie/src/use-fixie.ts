@@ -229,8 +229,9 @@ export function useFixie({
 
   const lastSeenMostRecentAgentTextMessage = useRef('');
   async function createNewConversation(overriddenInput?: string) {
-    const conversationId = (await fixieClient.startConversation(agentId, fullMessageGenerationParams, overriddenInput ?? input))
-      .conversationId;
+    const conversationId = (
+      await fixieClient.startConversation(agentId, fullMessageGenerationParams, overriddenInput ?? input)
+    ).conversationId;
     handleNewConversationId(conversationId);
   }
 
