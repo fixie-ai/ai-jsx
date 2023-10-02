@@ -525,10 +525,8 @@ export async function ShrinkConversation(
     stop: (e) => isConversationalComponent(e) || e.tag === InternalShrinkable,
   });
 
-  assertNoMeaningfulStringContent(rendered);
-
   // If there are no shrinkable elements, there's no need to evaluate the cost.
-  const shrinkableOrConversationElements = rendered.filter(AI.isElement);
+  const shrinkableOrConversationElements = assertNoMeaningfulStringContent(rendered);
   if (!shrinkableOrConversationElements.find((value) => value.tag === InternalShrinkable)) {
     return shrinkableOrConversationElements;
   }
