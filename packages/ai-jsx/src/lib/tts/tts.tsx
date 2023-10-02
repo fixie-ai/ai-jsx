@@ -1,6 +1,14 @@
 'use client';
 import { split } from 'sentence-splitter';
 
+let audioContext: AudioContext | undefined;
+function getAudioContext() {
+  if (!audioContext) {
+    audioContext = new AudioContext();
+  }
+  return audioContext;
+}
+
 /**
  * A function that can be used to build a URL for a text-to-speech
  * service. This URL will be used to retrieve an audio file that can be
@@ -123,12 +131,96 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
   }
 }
 
+
 class AudioChunk {
   public readonly timestamp: number;
   constructor(public buffer?: ArrayBuffer) {
     this.timestamp = performance.now();
   }
 }
+
+export class WebAudioTextToSpeech extends TextToSpeechBase {
+  private readonly audioContext: AudioContext;
+  private readonly destNode: MediaStreamAudioDestinationNode;
+  private readonly sourceNodes: AudioBufferSourceNode[] = [];
+  private nextStartTime: number = 0;
+  private inProgress = false;
+  constructor(name: string, context: AudioContext) {
+    super(name);
+    this.audioContext = context;
+    this.destNode = this.audioContext.createMediaStreamDestination();
+    this.audio.srcObject = this.destNode.stream;
+  }
+  play(text: string) {
+    if (this.audio.readyState == 0) {
+      console.log(`[${this.name}] tts starting play`);
+      this.audio.play();
+    }
+    if (!this.inProgress) {
+      this.playMillis = performance.now();
+      this.inProgress = true;
+    }
+    this.generate(text);
+  }
+  playing() {
+    return this.inProgress;
+  }
+  flush() {
+    if (this.inProgress) {
+      this.doFlush();
+    }
+  }
+
+  stop() {
+    console.log(`[${this.name}] tts skipping`);
+    // Cancel any pending requests, discard any chunks in our queue, and
+    // skip over any audio data already buffered by the audio element.
+    this.sourceNodes.forEach((node) => node.stop());
+    this.audio.currentTime = this.nextStartTime;
+    this.inProgress = false;
+    this.stopGeneration();
+  }
+  close() {
+    console.log(`[${this.name}] tts stopping`);
+    this.audio.pause();
+    this.tearDown();
+  }
+
+  /**
+   * Adds a chunk to the pending chunk buffer, and starts processing the buffer, if possible.
+   * The chunk can be a placeholder without any data if the data will be added later;
+   * this is useful to ensure chunks are played in the correct order.
+   */
+  protected async queueChunk(chunk: AudioChunk) {
+    if (this.inProgress) {
+      const sourceNode = this.audioContext.createBufferSource();
+      sourceNode.buffer = await this.audioContext.decodeAudioData(chunk!.buffer!);
+      sourceNode.onended = () => {
+        console.log('buffer ended');
+        const removedNode = this.sourceNodes.shift();
+        if (removedNode != sourceNode) {
+          console.warn(`[${this.name}] source node mismatch`);
+        }
+      };
+      sourceNode.connect(this.destNode);
+      sourceNode.start(this.nextStartTime);
+      this.nextStartTime += sourceNode.buffer.duration;
+      this.sourceNodes.push(sourceNode);
+    } else {
+      console.warn(`[${this.name}] chunk received inProgress=false, ignoring`);
+    }
+  }
+
+  protected generate(_text: string) {}
+  protected doFlush() {}
+  protected setComplete() {
+    this.inProgress = false;
+  }
+  protected stopGeneration() {}
+  protected tearDown() {}
+}
+
+
 
 /**
  * Defines a text-to-speech service that requests individual audio utterances
@@ -212,6 +304,7 @@ class MseTextToSpeech extends TextToSpeechBase {
       console.warn(`[${this.name}] chunk received inProgress=false, ignoring`);
     }
   }
+
   /**
    * Processes the first chunk in the ordered chunk buffer, appending it to the
    * MSE source buffer if possible. If the chunk is pending, no-op.
@@ -238,7 +331,7 @@ class MseTextToSpeech extends TextToSpeechBase {
  * A text-to-speech service that requests chunked audio from a server
  * using REST requests for each chunk of audio.
  */
-export class RestTextToSpeech extends MseTextToSpeech {
+export class RestTextToSpeech extends WebAudioTextToSpeech { //MseTextToSpeech {
   private pendingText: string = '';
   constructor(
     name: string,
@@ -246,7 +339,7 @@ export class RestTextToSpeech extends MseTextToSpeech {
     private readonly voice: string,
     private readonly rate: number = 1.0
   ) {
-    super(name);
+    super(name, getAudioContext());
   }
   protected generate(text: string) {
     // Only send complete sentences to the server. We only know if a sentence is complete if
