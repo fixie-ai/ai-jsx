@@ -10,7 +10,6 @@ export interface SidekickSystemMessageProps
   timeZoneOffset: string;
   userProvidedGenUIUsageExamples?: Node;
   userProvidedGenUIComponentNames?: string[];
-  role: string;
 }
 
 export function SidekickSystemMessage({
@@ -20,7 +19,6 @@ export function SidekickSystemMessage({
   userProvidedGenUIComponentNames,
   includeNextStepsRecommendations,
   outputFormat,
-  role,
 }: SidekickSystemMessageProps) {
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const currentDate = daysOfWeek[new Date().getDay()];
