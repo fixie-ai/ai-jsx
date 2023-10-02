@@ -659,6 +659,7 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
     return apiResult.results.map((result: any) => ({
       chunk: {
         content: result.chunkContent,
+        documentName: result.citation.publicUrl || result.citation.title,
       },
       score: result.score,
     }));
