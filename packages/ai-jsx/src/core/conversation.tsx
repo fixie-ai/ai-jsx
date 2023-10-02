@@ -442,7 +442,7 @@ export async function ShrinkConversation(
       })
     );
 
-    return await Promise.all(
+    return Promise.all(
       rendered.map<Promise<TreeNode>>(async (value) => {
         if (value.tag === InternalShrinkable) {
           const children = await conversationToTreeRoots(value.props.children);
