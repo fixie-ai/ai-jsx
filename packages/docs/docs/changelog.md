@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.18.3
+## 0.19.0
+- Remove `Prompt` component.
+- Fix issue with how the SDK handles request errors.
+- Enable Sidekicks to introduce themselves at the start of a conversation.
+
+## [0.18.3](https://github.com/fixie-ai/ai-jsx/commit/b57ed36)
 
 - Fix an issue where empty strings in conversational prompts cause errors to be thrown.
 
