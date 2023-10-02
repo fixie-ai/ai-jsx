@@ -364,6 +364,16 @@ export class ResembleTextToSpeech extends RestTextToSpeech {
 }
 
 /**
+ * Text-to-speech implementation that uses the Resemble.AI text-to-speech service.
+ */
+export class ElevenLabsTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM';
+  constructor(urlFunc: BuildUrl, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('eleven', urlFunc, voice, rate);
+  }
+}
+
+/**
  * Text-to-speech implementation that uses a web socket to stream text to the
  * server and receives audio chunks as they are generated.
  */
@@ -489,8 +499,7 @@ class ElevenLabsOutboundMessage {
 /**
  * Text-to-speech implementation that uses Eleven Labs' text-to-speech service.
  */
-export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
-  static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM';
+export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
   constructor(private readonly tokenFunc: GetToken, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
     const model_id = 'eleven_monolingual_v1';
     const optimize_streaming_latency = '22'; // doesn't seem to have any effect
@@ -536,7 +545,10 @@ export class ElevenLabsTextToSpeech extends WebSocketTextToSpeech {
   }
 }
 
+export type TextToSpeechProtocol = 'rest' | 'ws';
+
 export class TextToSpeechOptions {
+  proto?: TextToSpeechProtocol;
   rate?: number;
   voice?: string;
   getToken?: GetToken;
@@ -547,25 +559,34 @@ export class TextToSpeechOptions {
 /**
  * Factory function to create a text-to-speech service for the specified provider.
  */
-export function createTextToSpeech({ provider, rate, voice, getToken, buildUrl }: TextToSpeechOptions) {
-  switch (provider) {
-    case 'azure':
-      return new AzureTextToSpeech(buildUrl!, voice, rate);
-    case 'aws':
-      return new AwsTextToSpeech(buildUrl!, voice, rate);
-    case 'gcp':
-      return new GcpTextToSpeech(buildUrl!, voice, rate);
-    case 'wellsaid':
-      return new WellSaidTextToSpeech(buildUrl!, voice, rate);
-    case 'murf':
-      return new MurfTextToSpeech(buildUrl!, voice, rate);
-    case 'playht':
-      return new PlayHTTextToSpeech(buildUrl!, voice, rate);
-    case 'resemble':
-      return new ResembleTextToSpeech(buildUrl!, voice, rate);
-    case 'eleven':
-      return new ElevenLabsTextToSpeech(getToken!, voice);
-    default:
-      throw new Error(`unknown provider ${provider}`);
+export function createTextToSpeech({ provider, proto, rate, voice, getToken, buildUrl }: TextToSpeechOptions) {
+  if (!proto || proto == 'rest') {
+    switch (provider) {
+      case 'azure':
+        return new AzureTextToSpeech(buildUrl!, voice, rate);
+      case 'aws':
+        return new AwsTextToSpeech(buildUrl!, voice, rate);
+      case 'gcp':
+        return new GcpTextToSpeech(buildUrl!, voice, rate);
+      case 'wellsaid':
+        return new WellSaidTextToSpeech(buildUrl!, voice, rate);
+      case 'murf':
+        return new MurfTextToSpeech(buildUrl!, voice, rate);
+      case 'playht':
+        return new PlayHTTextToSpeech(buildUrl!, voice, rate);
+      case 'resemble':
+        return new ResembleTextToSpeech(buildUrl!, voice, rate);
+      case 'eleven':
+        return new ElevenLabsTextToSpeech(buildUrl!, voice);
+      default:
+        throw new Error(`unknown REST provider ${provider}`);
+    }
+  } else {
+    switch (provider) {
+      case 'eleven':
+        return new ElevenLabsWebSocketTextToSpeech(getToken!, voice);
+      default:
+        throw new Error(`unknown WebSocket provider ${provider}`);
+    }
   }
 }
