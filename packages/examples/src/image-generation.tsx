@@ -5,9 +5,7 @@ import { ImageGen } from 'ai-jsx/core/image-gen';
 function RecipeWithImage(_: {}, { memo }: AI.ComponentContext) {
   const recipeTitle = memo(
     <ChatCompletion temperature={1}>
-      <SystemMessage>
-          You are a Michelin Star Head Chef
-      </SystemMessage>
+      <SystemMessage>You are a Michelin Star Head Chef</SystemMessage>
       <UserMessage>Come up with a title for an exotic sushi.</UserMessage>
     </ChatCompletion>
   );

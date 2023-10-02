@@ -51,9 +51,7 @@ export function SidekickSystemMessage({
     <>
       {dateTimeSystemMessage}
       {responseFramingSystemMessage}
-      <SystemMessage>
-        {responseFramingSystemMessage}
-      </SystemMessage>
+      <SystemMessage>{responseFramingSystemMessage}</SystemMessage>
       <SystemMessage>
         If the user asks something that is impossible, tell them **up-front** it is impossible. You can still write
         relevant helpful comments, but do not lead the user to think something can be done when it cannot be.

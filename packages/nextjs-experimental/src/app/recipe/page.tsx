@@ -68,9 +68,7 @@ export function RecipeInstructionListItem({ children }: { children: React.ReactN
 function RecipeAI({ query }: { query: string }, { memo }: AI.ComponentContext) {
   const recipe = memo(
     <ChatCompletion temperature={1}>
-      <SystemMessage>
-          You are a Michelin Star Head Chef
-      </SystemMessage>
+      <SystemMessage>You are a Michelin Star Head Chef</SystemMessage>
       <UserMessage>Give me a recipe for {query}.</UserMessage>
     </ChatCompletion>
   );
