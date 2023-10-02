@@ -10,6 +10,10 @@ $ yarn test
 
 # Run a command for a particular monorepo package
 $ yarn workspace ai-jsx add my-package-name
+
+# Launch the NextJS demos
+yarn turbo dev --scope nextjs-demo
+yarn turbo dev --scope nextjs-experimental
 ```
 
 If one monorepo package depends on another, the dependee generally compiles its TS files to `dist`. If you change a dependee, be sure to run `build` so the output files are updated.
