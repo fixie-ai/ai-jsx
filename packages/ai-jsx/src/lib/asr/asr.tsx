@@ -39,6 +39,17 @@ function bufferToBase64(buffer: ArrayBuffer) {
 }
 
 /**
+ * Removes caps, punctuation, and extra whitespace from a string.
+ */
+export function normalizeText(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]|_/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
  * Represents a single voice activity event from a VAD.
  * @param active Indicates whether voice is currently active.
  * @param timestamp The stream time (relative to the start of the audio)
