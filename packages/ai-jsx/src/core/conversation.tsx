@@ -174,7 +174,7 @@ export function isConversationalComponent(element: AI.Element<any>): boolean {
   ).includes(element.tag);
 }
 
-function assertAllElementsAreConversationalComponents(partialRendering: AI.PartiallyRendered[]) {
+function assertNoMeaningfulStringContent(partialRendering: AI.PartiallyRendered[]): AI.Element<any>[] {
   const invalidChildren = partialRendering.filter((el) => typeof el === 'string' && el.trim()) as string[];
   if (invalidChildren.length) {
     throw new AIJSXError(
@@ -188,12 +188,12 @@ function assertAllElementsAreConversationalComponents(partialRendering: AI.Parti
       }
     );
   }
+
+  return partialRendering.filter(AI.isElement);
 }
 
 function toConversationMessages(partialRendering: AI.PartiallyRendered[]): ConversationMessage[] {
-  assertAllElementsAreConversationalComponents(partialRendering);
-
-  return (partialRendering as AI.Element<any>[]).map<ConversationMessage>((e) => {
+  return assertNoMeaningfulStringContent(partialRendering).map<ConversationMessage>((e) => {
     switch (e.tag) {
       case UserMessage:
         return { type: 'user', element: e };
@@ -436,18 +436,14 @@ export async function ShrinkConversation(
 
   /** Converts a conversational `AI.Node` into a shrinkable tree. */
   async function conversationToTreeRoots(conversation: AI.Node): Promise<TreeNode[]> {
-    const rendered = await render(conversation, {
-      stop: (e) => isConversationalComponent(e) || e.tag === InternalShrinkable,
-    });
+    const rendered = assertNoMeaningfulStringContent(
+      await render(conversation, {
+        stop: (e) => isConversationalComponent(e) || e.tag === InternalShrinkable,
+      })
+    );
 
-    assertAllElementsAreConversationalComponents(rendered);
-
-    const asTreeNodes = await Promise.all(
-      rendered.map<Promise<TreeNode | null>>(async (value) => {
-        if (typeof value === 'string') {
-          return null;
-        }
-
+    return await Promise.all(
+      rendered.map<Promise<TreeNode>>(async (value) => {
         if (value.tag === InternalShrinkable) {
           const children = await conversationToTreeRoots(value.props.children);
           return { type: 'shrinkable', element: value, cost: aggregateCost(children), children };
@@ -460,8 +456,6 @@ export async function ShrinkConversation(
         };
       })
     );
-
-    return asTreeNodes.filter((n): n is TreeNode => n !== null);
   }
 
   /** Finds the least important node in any of the trees, considering cost as a second factor. */
@@ -531,7 +525,7 @@ export async function ShrinkConversation(
     stop: (e) => isConversationalComponent(e) || e.tag === InternalShrinkable,
   });
 
-  assertAllElementsAreConversationalComponents(rendered);
+  assertNoMeaningfulStringContent(rendered);
 
   // If there are no shrinkable elements, there's no need to evaluate the cost.
   const shrinkableOrConversationElements = rendered.filter(AI.isElement);
