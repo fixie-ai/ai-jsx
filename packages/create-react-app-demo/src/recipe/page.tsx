@@ -3,7 +3,6 @@ import * as AI from 'ai-jsx/react';
 import { UICompletion } from 'ai-jsx/react/completion';
 import { useState, ReactNode } from 'react';
 import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
-import { Prompt } from 'ai-jsx/batteries/prompts';
 import { ImageGen } from 'ai-jsx/core/image-gen';
 import ResultContainer from '../ResultContainer.tsx';
 import InputPrompt from '../InputPrompt.tsx';
@@ -75,7 +74,6 @@ export function RecipeInstructionListItem({ children }: { children: ReactNode })
 function RecipeAI({ query }: { query: string }, { memo }: AI.ComponentContext) {
   const recipe = memo(
     <ChatCompletion temperature={1}>
-      <Prompt persona="a Michelin Star Head Chef" />
       <UserMessage>Give me a recipe for {query}.</UserMessage>
     </ChatCompletion>
   );

@@ -1,6 +1,5 @@
 import { SystemMessage } from '../../../core/conversation.js';
 import { MdxSystemMessage } from '../../../react/jit-ui/mdx.js';
-import { Prompt } from '../../prompts.js';
 import { MdxUsageExamples } from './gen-ui.js';
 import { Node } from '../../../index.js';
 import { SidekickProps } from './sidekick.js';
@@ -53,7 +52,6 @@ export function SidekickSystemMessage({
       {dateTimeSystemMessage}
       {responseFramingSystemMessage}
       <SystemMessage>
-        <Prompt apolitical concise persona={`expert ${role}`} />
         {responseFramingSystemMessage}
       </SystemMessage>
       <SystemMessage>

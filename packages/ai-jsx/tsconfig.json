@@ -23,7 +23,6 @@
       "src/batteries/docs.tsx",
       "src/batteries/natural-language-router.tsx",
       "src/batteries/logging-integrations.tsx",
-      "src/batteries/prompts.tsx",
       "src/batteries/use-tools.tsx"
     ],
     "sort": ["kind", "visibility", "instance-first", "required-first", "alphabetical"],

@@ -171,15 +171,6 @@
         "default": "./dist/cjs/core/errors.cjs"
       }
     },
-    "./batteries/prompts": {
-      "import": {
-        "types": "./dist/esm/batteries/prompts.d.ts",
-        "default": "./dist/esm/batteries/prompts.js"
-      },
-      "require": {
-        "default": "./dist/cjs/batteries/prompts.cjs"
-      }
-    },
     "./batteries/constrained-output": {
       "import": {
         "types": "./dist/esm/batteries/constrained-output.d.ts",
