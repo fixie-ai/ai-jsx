@@ -122,6 +122,11 @@ export function getNextConversationStep(
           </ChatCompletion>
         </RepairMdxInConversation>
       );
+    /**
+     * By adding `case 'system'` here, we handle the case where the user has not
+     * yet sent a message, so the Sidekick introduces itself.
+     */
+    case 'system':
     case 'user':
       return (
         <RepairMdxInConversation>

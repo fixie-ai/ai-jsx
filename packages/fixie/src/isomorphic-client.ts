@@ -108,8 +108,13 @@ export class IsomorphicFixieClient {
       throw new FixieClientError(url, 0, 'Network error', `Network error accessing ${url}`, err);
     });
     if (!res.ok) {
-      const errorDetail: string | unknown = await res.json().catch(() => res.text());
-      throw new FixieClientError(url, res.status, res.statusText, `Error accessing Fixie API: ${url}`, errorDetail);
+      throw new FixieClientError(
+        url,
+        res.status,
+        res.statusText,
+        `Error accessing Fixie API: ${url}`,
+        await res.text()
+      );
     }
     return res;
   }
