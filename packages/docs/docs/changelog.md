@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.18.2
+## 0.18.3
+
+- Fix an issue where empty strings in conversational prompts cause errors to be thrown.
+
+## [0.18.2](https://github.com/fixie-ai/ai-jsx/commit/fc8ada2d9900b179252d377292835dc28998b86f)
 
 - Modified `lib/openai` to preload the tokenizer to avoid a stall on first use
 - Fixed an issue where `debug(component)` would throw an exception if a component had a prop that could not be JSON-serialized.
