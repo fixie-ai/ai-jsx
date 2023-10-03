@@ -134,13 +134,13 @@ const firebaseConfig = {
 
 type ModelRequestedState = 'stop' | 'regenerate' | null;
 
-class NewTokensEvent extends Event {
+export class NewTokensEvent extends Event {
   constructor(public readonly tokens: string) {
     super('newTokens');
   }
 }
 
-class PerfLogEvent extends Event {
+export class PerfLogEvent extends Event {
   // I think using `data` as a var name is fine here.
   /* eslint-disable-next-line id-blacklist */
   constructor(public readonly message: string, public readonly data: object) {
@@ -148,7 +148,7 @@ class PerfLogEvent extends Event {
   }
 }
 
-class FixieConversationClient extends EventTarget {
+export class FixieConversationClient extends EventTarget {
   // I think using `data` as a var name is fine here.
   /* eslint-disable id-blacklist */
   private performanceTrace: { name: string; timeMs: number; data?: Jsonifiable }[] = [];
@@ -417,7 +417,7 @@ class FixieConversationClient extends EventTarget {
   }
 }
 
-class FixieChatClient {
+export class FixieChatClient {
   private readonly conversationsRoot: ReturnType<typeof collection>;
   private readonly fixieClient: IsomorphicFixieClient;
   private conversations: Record<ConversationId, FixieConversationClient> = {};
@@ -560,7 +560,7 @@ export function useFixie({
    */
   if (!conversationId) {
     return {
-      turns,
+      turns: conversationFixtures ?? turns,
       loadState,
       modelResponseInProgress,
       regenerate,
@@ -612,7 +612,7 @@ export function useFixie({
   }
 
   return {
-    turns,
+    turns: conversationFixtures ?? turns,
     loadState,
     input,
     error: undefined,
