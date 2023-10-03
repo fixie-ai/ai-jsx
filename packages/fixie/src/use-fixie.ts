@@ -228,9 +228,10 @@ export function useFixie({
   const fixieClient = IsomorphicFixieClient.CreateWithoutApiKey(fixieAPIUrl ?? 'https://api.fixie.ai');
 
   const lastSeenMostRecentAgentTextMessage = useRef('');
-  async function createNewConversation() {
-    const conversationId = (await fixieClient.startConversation(agentId, fullMessageGenerationParams, input))
-      .conversationId;
+  async function createNewConversation(overriddenInput?: string) {
+    const conversationId = (
+      await fixieClient.startConversation(agentId, fullMessageGenerationParams, overriddenInput ?? input)
+    ).conversationId;
     handleNewConversationId(conversationId);
   }
 

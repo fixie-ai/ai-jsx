@@ -47,22 +47,6 @@ Output:
 
 Instead of giving us "Bismarck", the actual capital of North Dakota, the model is predicting that a question about one state is often followed by questions about other states.
 
-## Prompting Primitives Get You Started Faster
-
-We have included a small set of prompts that we found useful via [`<Prompt />`](../api/modules/batteries_prompts#prompt). We think they serve as a great starting point and help provide some productivity shortcuts for you. Here's an example:
-
-```tsx
-function App() {
-  // Asking the model to respond as if they were a React developer
-  return (
-    <ChatCompletion>
-      <Prompt persona="a React developer" />
-      <UserMessage>What is JSX?</UserMessage>
-    </ChatCompletion>
-  );
-}
-```
-
 ## Constrained Output
 
 Sometimes it's important we get the AI model to respond in a particular way. We want the model to respond with the correct information **and** present the information in a specific way. For example, we might want the response to be formatted as JSON or YAML.
