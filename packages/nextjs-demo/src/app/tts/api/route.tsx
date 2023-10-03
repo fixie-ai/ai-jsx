@@ -5,10 +5,11 @@ import _ from 'lodash';
 import aws4 from 'aws4';
 
 const AUDIO_MPEG_MIME_TYPE = 'audio/mpeg';
+const AUDIO_WAV_MIME_TYPE = 'audio/wav';
 const APPLICATION_JSON_MIME_TYPE = 'application/json';
 type Generate = (voiceId: string, rate: number, text: string) => Promise<Response>;
 class Provider {
-  constructor(public func: Generate, public keyPath?: string) {}
+  constructor(public func: Generate, public keyPath?: string, public mimeType?: string) {}
 }
 type ProviderMap = {
   [key: string]: Provider;
@@ -21,8 +22,8 @@ const PROVIDER_MAP: ProviderMap = {
   wellsaid: { func: ttsWellSaid },
   murf: { func: ttsMurf, keyPath: 'encodedAudio' },
   playht: { func: ttsPlayHT },
-  resemble1: { func: ttsResembleV1, keyPath: 'item.raw_audio' },
-  resemble: { func: ttsResembleV2, keyPath: 'item.raw_audio' },
+  resemble: { func: ttsResembleV1, keyPath: 'item.raw_audio', mimeType: AUDIO_WAV_MIME_TYPE },
+  resemble2: { func: ttsResembleV2, keyPath: 'item.raw_audio' },
 };
 
 function makeStreamResponse(startMillis: number, response: Response) {
@@ -52,12 +53,14 @@ function makeStreamResponse(startMillis: number, response: Response) {
   return new NextResponse(nextStream, { headers, status });
 }
 
-async function makeBlobResponseFromJson(startMillis: number, response: Response, keyPath: string) {
+async function makeBlobResponseFromJson(startMillis: number, response: Response, keyPath: string, mimeType: string) {
+  console.log(response.text);
   const json = await response.json();
+  console.log(json);
   const value = _.get(json, keyPath);
   const binary = Buffer.from(value, 'base64');
   console.log(`${startMillis} TTS complete latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
-  return new NextResponse(binary, { headers: { 'Content-Type': AUDIO_MPEG_MIME_TYPE } });
+  return new NextResponse(binary, { headers: { 'Content-Type': mimeType } });
 }
 
 /**
@@ -85,6 +88,7 @@ export async function GET(request: NextRequest) {
   const provider = PROVIDER_MAP[providerName];
   const response = await provider.func(voice, rate, text);
   if (!response.ok) {
+    console.log(await response.text());
     console.log(`${startMillis} TTS error: ${response.status} ${response.statusText}`);
     return new NextResponse(await response.json(), { status: response.status });
   }
@@ -92,7 +96,7 @@ export async function GET(request: NextRequest) {
   const contentType = response.headers.get('Content-Type');
   if (provider.keyPath) {
     assert(contentType == APPLICATION_JSON_MIME_TYPE);
-    return makeBlobResponseFromJson(startMillis, response, provider.keyPath);
+    return makeBlobResponseFromJson(startMillis, response, provider.keyPath, provider.mimeType ?? AUDIO_MPEG_MIME_TYPE);
   }
   assert(contentType == AUDIO_MPEG_MIME_TYPE);
   return makeStreamResponse(startMillis, response);

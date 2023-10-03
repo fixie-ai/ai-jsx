@@ -1,13 +1,121 @@
 'use client';
 import { split } from 'sentence-splitter';
 
-let audioContext: AudioContext | undefined;
-function getAudioContext() {
-  if (!audioContext) {
-    audioContext = new AudioContext();
+const AUDIO_WORKLET_SRC = `
+class OutputProcessor extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.queue = [];
+    this.seqNum = 0;
+    this.bufPos = 0;
+    this.port.onmessage = (e) => {
+      this.queue.push(e.data);
+      this.queue.sort((a, b) => a.seqNum - b.seqNum);
+      console.log('buf added, seq num = ' + e.data.seqNum + ' queue len=' + this.queue.length.toString());
+    } 
   }
-  return audioContext;
+  process(inputs, outputs) {
+    const output = outputs[0];
+    const outLeft = output[0];
+    const outRight = output[1];
+    const outLen = outLeft.length;
+    this.copy(outLeft, outRight, outLen);
+    return true;
+  }
+  copy(outLeft, outRight, outLen) {  
+    let outPos = 0;
+    while (outPos < outLen) {
+      const buf = this.buf();
+      if (!buf) {
+        break;
+      }
+      const bufLeft = buf[0];
+      const bufRight = buf[1] ?? bufLeft;
+      const bufLen = bufLeft.length;      
+      const len = Math.min(bufLen - this.bufPos, outLen - outPos);
+      outLeft.set(bufLeft.subarray(this.bufPos, this.bufPos + len), outPos);
+      outRight?.set(bufRight.subarray(this.bufPos, this.bufPos + len), outPos);
+      outPos += len;
+      this.bufPos += len;      
+    }
+    if (outPos < outLen) {
+      //console.warn('buf exhausted, out pos=' + outPos.toString());
+      outLeft.fill(0, outPos);
+      outRight?.fill(0, outPos);
+      outPos = outLen;
+    }
+  }
+  buf() {
+    const msg = this.queue[0];
+    if (!msg || msg.seqNum != this.seqNum) {
+      if (msg) {
+        console.log('buf not ready, msg seq num=' + msg?.seqNum.toString());
+      }
+      return null;
+    }
+    if (this.bufPos == msg.channelData[0].length) {
+      this.port.postMessage({seqNum: msg.seqNum});
+      this.queue.shift();
+      console.log('buf consumed, seq num=' + msg.seqNum.toString() + ' queue len=' + this.queue.length.toString());
+      this.seqNum++;
+      this.bufPos = 0;
+      return this.buf();
+    }
+    return msg.channelData;
+  }
 }
+
+registerProcessor("output-processor", OutputProcessor);
+`;
+
+class AudioMessage {
+  constructor(public seqNum: number, public channelData: Float32Array[]) {}
+}
+class AudioOutputManager {
+  private context?: AudioContext;
+  private outputNode?: AudioWorkletNode;
+  private seqNum = 0;
+  async createStream() {
+    if (!this.context) {
+      this.context = new AudioContext({ sampleRate: 44100 });
+      const workletSrcBlob = new Blob([AUDIO_WORKLET_SRC], {
+        type: 'application/javascript',
+      });
+      const workletSrcUrl = URL.createObjectURL(workletSrcBlob);
+      await this.context.audioWorklet.addModule(workletSrcUrl);
+      this.outputNode = new AudioWorkletNode(this.context, 'output-processor');
+      this.outputNode.port.onmessage = (e) => {
+        console.log(`buf consumed, seq num=${e.data.seqNum}`);
+      };
+    }
+    const dest = this.context.createMediaStreamDestination();
+    this.outputNode!.connect(dest);
+    return dest.stream;
+  }
+  async appendBuffer(encodedBuffer: ArrayBuffer) {
+    const seqNum = this.seqNum++;
+    let buffer;
+    for (let i = 0; i < 1; i++) {
+      try {
+        console.log(`decoding buffer, elen=${encodedBuffer.byteLength}`);
+        buffer = await this.context?.decodeAudioData(encodedBuffer);
+        console.log(`decoded buffer, dlen=${buffer!.length}`);
+      } catch (error) {
+        console.warn(`decode error: ${error}`);
+        continue;
+      }
+    }
+
+    const channelData = [buffer!.getChannelData(0)];
+    if (buffer!.numberOfChannels > 1) {
+      channelData.push(buffer!.getChannelData(1));
+    }
+    console.log(`buf added, seq num=${seqNum}`);
+    this.outputNode?.port.postMessage(new AudioMessage(seqNum, channelData));
+  }
+}
+
+const outputManager = new AudioOutputManager();
 
 /**
  * A function that can be used to build a URL for a text-to-speech
@@ -30,6 +138,8 @@ export type GetToken = (provider: string) => Promise<string>;
  */
 export abstract class TextToSpeechBase {
   protected audio: HTMLAudioElement;
+  protected playing = false;
+
   /**
    * The time (performance.now()) when the play() method was first called.
    */
@@ -58,29 +168,41 @@ export abstract class TextToSpeechBase {
     this.audio.onloadstart = () => console.log(`[${this.name}] tts loadstart`);
     this.audio.onloadeddata = () => console.log(`[${this.name}] tts loadeddata`);
     this.audio.oncanplay = () => console.log(`[${this.name}] tts canplay`);
-    this.audio.onplaying = () => {
-      console.log(`[${this.name}] tts playing`);
-      if (this.playMillis) {
-        this.latency = Math.floor(performance.now() - this.playMillis);
-        console.log(`[${this.name}] tts play latency: ${this.latency} ms`);
-      }
-      this.onPlaying?.();
-    };
   }
+  protected setPlaying() {
+    console.log(`[${this.name}] tts playing`);
+    if (this.playMillis) {
+      this.latency = Math.floor(performance.now() - this.playMillis);
+      console.log(`[${this.name}] tts play latency: ${this.latency} ms`);
+    }
+    this.playing = true;
+    this.onPlaying?.();
+  }
+  protected setComplete(error?: Error) {
+    console.log(`[${this.name}] tts complete`);
+    this.playing = false;
+    if (error) {
+      this.onError?.(error);
+    } else {
+      this.onComplete?.();
+    }
+  }
+
+  /**
+   * Whether audio is currently playing.
+   */
+  get isPlaying(): boolean {
+    return this.playing;
+  }
+
   /**
    * Converts the given text to speech and plays it using the HTML5 audio element.
    * This method may be called multiple times, and the audio will be played serially.
    * Generation may be buffered, use the flush() method to indicate all text has been provided.
    * During playout, use skip() to stop the current playout, or stop() to end all generation
    * and close any resources.
-
    */
   abstract play(_text: string): void;
-  /**
-   * Whether generation is in progress, i.e., play() has been called and
-   * the resultant audio has not yet finished playing.
-   */
-  abstract playing(): boolean;
   /**
    * Flushes any text buffered by a previous play() call.
    */
@@ -111,14 +233,12 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
     private readonly rate = 1.0
   ) {
     super(name);
+    this.audio.onplaying = () => this.setPlaying();
   }
   play(text: string) {
     this.playMillis = performance.now();
     this.audio.src = this.urlFunc(this.name, this.voice, this.rate, text);
     this.audio.play();
-  }
-  playing() {
-    return !this.audio.paused;
   }
   flush() {}
   stop() {
@@ -131,43 +251,41 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
   }
 }
 
-
-class AudioChunk {
-  public readonly timestamp: number;
-  constructor(public buffer?: ArrayBuffer) {
-    this.timestamp = performance.now();
-  }
-}
-
 export class WebAudioTextToSpeech extends TextToSpeechBase {
-  private readonly audioContext: AudioContext;
-  private readonly destNode: MediaStreamAudioDestinationNode;
-  private readonly sourceNodes: AudioBufferSourceNode[] = [];
+  //private readonly audioContext: AudioContext;
+  //private readonly destNode: MediaStreamAudioDestinationNode;
+  private readonly chunkBuffer: ArrayBuffer[] = [];
+  //private readonly sourceNodes: AudioBufferSourceNode[] = [];
+  private audioOutputNode?: AudioWorkletNode;
+  private updating = false;
   private nextStartTime: number = 0;
   private inProgress = false;
-  constructor(name: string, context: AudioContext) {
+  constructor(name: string) {//}, context: AudioContext) {
     super(name);
-    this.audioContext = context;
-    this.destNode = this.audioContext.createMediaStreamDestination();
-    this.audio.srcObject = this.destNode.stream;
+    //this.audioContext = context;
+    //this.destNode = this.audioContext.createMediaStreamDestination();
+    this.audio.onwaiting = () => console.log(`[${this.name}] tts waiting`);
   }
-  play(text: string) {
-    if (this.audio.readyState == 0) {
-      console.log(`[${this.name}] tts starting play`);
-      this.audio.play();
-    }
+  async play(text: string) {
+    //++++
     if (!this.inProgress) {
       this.playMillis = performance.now();
       this.inProgress = true;
     }
+    if (this.audio.readyState == 0) {
+      console.log(`[${this.name}] tts starting play`);
+      //this.audioOutputNode = new AudioWorkletNode(getAudioContext()!, 'output-processor');
+      //this.audioOutputNode.connect(this.destNode);
+      this.audio.srcObject = await outputManager.createStream();
+      this.audio.play();
+    }
+  
     this.generate(text);
-  }
-  playing() {
-    return this.inProgress;
   }
   flush() {
     if (this.inProgress) {
       this.doFlush();
+      this.inProgress = false;
     }
   }
 
@@ -175,7 +293,9 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     console.log(`[${this.name}] tts skipping`);
     // Cancel any pending requests, discard any chunks in our queue, and
     // skip over any audio data already buffered by the audio element.
-    this.sourceNodes.forEach((node) => node.stop());
+    //while (this.sourceNodes.length > 0) {
+    //  this.sourceNodes.pop()!.stop();
+    //}
     this.audio.currentTime = this.nextStartTime;
     this.inProgress = false;
     this.stopGeneration();
@@ -191,36 +311,77 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
    * The chunk can be a placeholder without any data if the data will be added later;
    * this is useful to ensure chunks are played in the correct order.
    */
-  protected async queueChunk(chunk: AudioChunk) {
-    if (this.inProgress) {
+  protected queueChunk(chunk: ArrayBuffer) {
+    this.chunkBuffer.push(chunk);
+    this.processChunkQueue();
+  }
+
+  /**
+   * Processes the first chunk in the ordered chunk buffer, creating a new source node
+   * and connecting it to the destination node. If the chunk is pending, no-op.
+   */
+  /*protected async processChunkQueue() {
+    if (!this.updating && this.chunkBuffer.length > 0) {
+      this.updating = true;
+      const chunk = this.chunkBuffer.shift()!;
       const sourceNode = this.audioContext.createBufferSource();
-      sourceNode.buffer = await this.audioContext.decodeAudioData(chunk!.buffer!);
       sourceNode.onended = () => {
-        console.log('buffer ended');
-        const removedNode = this.sourceNodes.shift();
-        if (removedNode != sourceNode) {
-          console.warn(`[${this.name}] source node mismatch`);
+        const index = this.sourceNodes.indexOf(sourceNode);
+        console.log(`[${this.name}] chunk ended, curr time=${this.audioContext.currentTime} pos=${index}`);
+        this.sourceNodes.splice(index, 1);
+        // When cleaning up, we need to disconnect the destination node from the graph, otherwise
+        // time will crank forward and we'll get dilation of the next queued audio chunks, as noted in
+        // https://bugs.chromium.org/p/chromium/issues/detail?id=638823#c31
+        if (this.sourceNodes.length == 0 && !this.inProgress) {
+          this.audio.srcObject = null;
+          this.setComplete();
         }
       };
+      console.log(`[${this.name}] decoding chunk`);
+      sourceNode.buffer = await this.audioContext.decodeAudioData(chunk);
+      // Once we start playing, currentTime will continuously increase, so we need to
+      // handle the situation where this.nextStartTime is stale.
+      this.nextStartTime = Math.max(this.nextStartTime, this.audioContext.currentTime);
+      console.log(
+        `[${this.name}] sequencing chunk with start time ${this.nextStartTime}, curr time=${this.audioContext.currentTime}`
+      );
       sourceNode.connect(this.destNode);
       sourceNode.start(this.nextStartTime);
-      this.nextStartTime += sourceNode.buffer.duration;
       this.sourceNodes.push(sourceNode);
-    } else {
-      console.warn(`[${this.name}] chunk received inProgress=false, ignoring`);
+      this.nextStartTime += sourceNode.buffer.duration;
+      this.updating = false;
+      if (!this.playing) {
+        this.setPlaying();
+      }
+      setTimeout(() => this.processChunkQueue(), 0);
+    }
+  }*/
+
+  protected async processChunkQueue() {
+    if (!this.updating && this.chunkBuffer.length > 0) {
+      this.updating = true;
+      const chunk = this.chunkBuffer.shift()!;
+      console.log(`[${this.name}] decoding chunk`);
+      outputManager.appendBuffer(chunk);
+      //const buffer = await this.audioContext.decodeAudioData(chunk);
+      //console.log(`[${this.name}] decoded chunk, sample rate=${buffer.sampleRate}`);
+      //postAudioBuffer(this.audioOutputNode!, buffer);
+      this.updating = false;
+      if (!this.playing) {
+        this.setPlaying();
+      }
+      setTimeout(() => this.processChunkQueue(), 0);
     }
   }
 
   protected generate(_text: string) {}
   protected doFlush() {}
-  protected setComplete() {
+  protected stopGeneration() {}
+  protected tearDown() {
+    this.chunkBuffer.length = 0;
     this.inProgress = false;
   }
-  protected stopGeneration() {}
-  protected tearDown() {}
 }
-
-
 
 /**
  * Defines a text-to-speech service that requests individual audio utterances
@@ -234,23 +395,27 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
 class MseTextToSpeech extends TextToSpeechBase {
   private readonly mediaSource: MediaSource = new MediaSource();
   private sourceBuffer?: SourceBuffer;
-  private readonly chunkBuffer: AudioChunk[] = [];
+  private readonly chunkQueue: ArrayBuffer[] = [];
   private inProgress = false;
 
   constructor(name: string) {
     super(name);
     this.audio.src = URL.createObjectURL(this.mediaSource);
+    this.audio.onplaying = () => {
+      console.log(`[${this.name}] tts playing`);
+      this.setPlaying();
+    };
     this.audio.onwaiting = () => {
       console.log(`[${this.name}] tts waiting`);
       if (!this.inProgress) {
-        this.onComplete?.();
+        this.setComplete();
       }
     };
     this.mediaSource.onsourceopen = () => {
       if (!this.sourceBuffer) {
         this.sourceBuffer = this.mediaSource.addSourceBuffer('audio/mpeg');
         this.sourceBuffer.onupdateend = () => {
-          this.processChunkBuffer();
+          this.processChunkQueue();
         };
       }
     };
@@ -266,9 +431,6 @@ class MseTextToSpeech extends TextToSpeechBase {
     }
     this.generate(text);
   }
-  playing() {
-    return this.inProgress;
-  }
   flush() {
     if (this.inProgress) {
       this.doFlush();
@@ -280,7 +442,7 @@ class MseTextToSpeech extends TextToSpeechBase {
     // Cancel any pending requests, discard any chunks in our queue, and
     // skip over any audio data already buffered by the audio element.
     this.sourceBuffer?.abort();
-    this.chunkBuffer.length = 0;
+    this.chunkQueue.length = 0;
     this.audio.currentTime = this.audio.buffered.end(0);
     this.inProgress = false;
     this.stopGeneration();
@@ -296,34 +458,34 @@ class MseTextToSpeech extends TextToSpeechBase {
    * The chunk can be a placeholder without any data if the data will be added later;
    * this is useful to ensure chunks are played in the correct order.
    */
-  protected queueChunk(chunk: AudioChunk) {
-    if (this.inProgress) {
-      this.chunkBuffer.push(chunk);
-      this.processChunkBuffer();
-    } else {
-      console.warn(`[${this.name}] chunk received inProgress=false, ignoring`);
-    }
+  protected queueChunk(chunk: ArrayBuffer) {
+    this.chunkQueue.push(chunk);
+    this.processChunkQueue();
   }
 
   /**
    * Processes the first chunk in the ordered chunk buffer, appending it to the
    * MSE source buffer if possible. If the chunk is pending, no-op.
    */
-  protected processChunkBuffer() {
-    if (!this.sourceBuffer?.updating && this.chunkBuffer.length > 0 && this.chunkBuffer[0].buffer) {
-      const chunk = this.chunkBuffer.shift();
-      this.sourceBuffer?.appendBuffer(chunk!.buffer!);
+  protected processChunkQueue() {
+    if (!this.sourceBuffer?.updating && this.chunkQueue.length > 0) {
+      this.sourceBuffer?.appendBuffer(this.chunkQueue.shift()!);
     }
   }
   protected generate(_text: string) {}
   protected doFlush() {}
-  protected setComplete() {
-    this.inProgress = false;
-  }
   protected stopGeneration() {}
   protected tearDown() {
-    this.chunkBuffer.length = 0;
+    this.chunkQueue.length = 0;
     this.inProgress = false;
+  }
+}
+
+class TextToSpeechRequest {
+  public readonly createTimestamp: number;
+  public sendTimestamp?: number;
+  constructor(public text: string) {
+    this.createTimestamp = performance.now();
   }
 }
 
@@ -331,25 +493,28 @@ class MseTextToSpeech extends TextToSpeechBase {
  * A text-to-speech service that requests chunked audio from a server
  * using REST requests for each chunk of audio.
  */
-export class RestTextToSpeech extends WebAudioTextToSpeech { //MseTextToSpeech {
+export class RestTextToSpeech extends WebAudioTextToSpeech {
   private pendingText: string = '';
+  private readonly requestQueue: TextToSpeechRequest[] = [];
   constructor(
     name: string,
     private readonly urlFunc: BuildUrl,
     private readonly voice: string,
     private readonly rate: number = 1.0
   ) {
-    super(name, getAudioContext());
+    super(name);// getAudioContext()!);
   }
   protected generate(text: string) {
-    // Only send complete sentences to the server. We only know if a sentence is complete if
-    // a sentence fragment comes after it. We'll buffer that fragment.
+    // Only send complete sentences to the server, one at a time.
+    // We only know if a sentence is complete if a sentence fragment comes
+    // after it (e.g., the sentence length is less thatn the total pending text
+    // length).
     this.pendingText += text;
     let pendingText = '';
-    split(this.pendingText).forEach((piece: any) => {
+    for (const piece of split(this.pendingText)) {
       if (piece.type == 'Sentence') {
         if (piece.range[1] < this.pendingText.length) {
-          this.requestChunk(piece.raw);
+          this.queueRequest(piece.raw);
         } else if (!pendingText) {
           pendingText = piece.raw;
         } else {
@@ -358,34 +523,47 @@ export class RestTextToSpeech extends WebAudioTextToSpeech { //MseTextToSpeech {
           );
         }
       }
-    });
+    }
     this.pendingText = pendingText;
   }
   protected async doFlush() {
     const utterance = this.pendingText.trim();
     this.pendingText = '';
     if (utterance) {
-      await this.requestChunk(utterance);
+      await this.queueRequest(utterance);
     }
-    setTimeout(() => this.setComplete(), 0);
   }
   protected tearDown() {
     this.pendingText = '';
     super.tearDown();
   }
-  private async requestChunk(text: string) {
-    const newChunk = new AudioChunk();
-    this.queueChunk(newChunk);
-    console.debug(`[${this.name}] requesting chunk: ${text}`);
-    const res = await fetch(this.urlFunc(this.name, this.voice, this.rate, text));
-    if (!res.ok) {
-      this.stop();
-      this.onError?.(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
+  private queueRequest(text: string) {
+    this.requestQueue.push(new TextToSpeechRequest(text));
+    this.processRequestBuffer();
+  }
+  private async processRequestBuffer() {
+    // Serialize the generate requests to ensure that the first request
+    // is not delayed by subsequent requests.
+    if (this.requestQueue.length == 0 || this.requestQueue[0].sendTimestamp) {
       return;
     }
-    newChunk.buffer = await res.arrayBuffer();
-    console.debug(`[${this.name}] received chunk: ${text}`);
-    this.processChunkBuffer();
+
+    const req = this.requestQueue[0];
+    const shortText = req.text.length > 20 ? `${req.text.substring(0, 20)}...` : req.text;
+    console.debug(`[${this.name}] requesting chunk: ${shortText}`);
+    req.sendTimestamp = performance.now();
+    const res = await fetch(this.urlFunc(this.name, this.voice, this.rate, req.text));
+    if (!res.ok) {
+      this.stop();
+      this.setComplete(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
+      return;
+    }
+
+    const chunk = await res.arrayBuffer();
+    console.debug(`[${this.name}] received chunk: ${shortText}, type=${res.headers.get('content-type')}`);
+    this.queueChunk(chunk);
+    this.requestQueue.shift();
+    this.processRequestBuffer();
   }
 }
 
@@ -470,13 +648,13 @@ export class ElevenLabsTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses a web socket to stream text to the
  * server and receives audio chunks as they are generated.
  */
-export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
+export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
   protected socket: WebSocket;
   // Message buffer for when the socket is not yet open.
   private readonly socketBuffer: string[] = [];
   private pendingText: string = '';
   constructor(name: string, private readonly url: string) {
-    super(name);
+    super(name);//, getAudioContext()!);
     this.socket = this.createSocket(url);
   }
   protected generate(text: string) {
@@ -492,6 +670,7 @@ export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
     this.pendingText = this.pendingText.substring(index + 1);
   }
   protected doFlush() {
+    console.log(`[${this.name}] flushing`); 
     // Flush any pending text (all generation requests have to be followed by a space),
     // and send a flush request to the server.
     if (this.pendingText) {
@@ -621,7 +800,7 @@ export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
     console.debug(message);
     if (message.audio) {
       console.debug(`[${this.name}] chunk received`);
-      this.queueChunk(new AudioChunk(Buffer.from(message.audio!, 'base64')));
+      this.queueChunk(Buffer.from(message.audio!, 'base64').buffer);
     } else if (message.isFinal) {
       console.log(`[${this.name}] utterance complete`);
       this.setComplete();
