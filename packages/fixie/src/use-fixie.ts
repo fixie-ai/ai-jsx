@@ -155,11 +155,6 @@ export function useFixie({
   const [input, setInput] = useState('');
   const [conversationId, setConversationId] = useState(userPassedConversationId);
 
-  function handleNewConversationId(conversationId: ConversationId) {
-    setConversationId(conversationId);
-    onNewConversation?.(conversationId);
-  }
-
   useEffect(() => {
     setConversationId(userPassedConversationId);
   }, [userPassedConversationId]);
@@ -227,12 +222,28 @@ export function useFixie({
   // We don't need the API key to access the conversation API.
   const fixieClient = IsomorphicFixieClient.CreateWithoutApiKey(fixieAPIUrl ?? 'https://api.fixie.ai');
 
+  // const [newConversationBeingCreated, setNewConversationBeingCreated] = useState(false);
+  const newConversationBeingCreatedButNoResponseTokensYet = useRef(false);
+
   const lastSeenMostRecentAgentTextMessage = useRef('');
   async function createNewConversation(overriddenInput?: string) {
-    const conversationId = (
+    // setNewConversationBeingCreated(true);
+    newConversationBeingCreatedButNoResponseTokensYet.current = true;
+    const {conversationId, response} = (
       await fixieClient.startConversation(agentId, fullMessageGenerationParams, overriddenInput ?? input)
-    ).conversationId;
-    handleNewConversationId(conversationId);
+    );
+
+    const decoder = new TextDecoder();
+    response.body?.pipeTo(new WritableStream({
+      write(chunk) {
+        // setNewConversationBeingCreated(false);
+        console.log('nth== response chunk', decoder.decode(chunk))
+        newConversationBeingCreatedButNoResponseTokensYet.current = false;
+      }
+    }));
+
+    setConversationId(conversationId);
+    onNewConversation?.(conversationId);
   }
 
   /**
@@ -442,6 +453,24 @@ export function useFixie({
     return loadState === 'loaded' && mostRecentAssistantTurn?.state === 'in-progress';
   }
 
+  function getConversationExists() {
+    /**
+     * If we don't have a snapshot yet, then we don't know if the conversation exists.
+     */
+    if (!snapshot || newConversationBeingCreatedButNoResponseTokensYet.current) {
+      return undefined;
+    }
+
+    return !snapshot.empty;
+  }
+
+  console.log('nth==', {
+    conversationExists: getConversationExists(),
+    loadState,
+    snapshotEmpty: snapshot?.empty,
+    newConversationBeingCreated: newConversationBeingCreatedButNoResponseTokensYet.current
+  })
+
   return {
     turns,
     loadState,
@@ -452,6 +481,6 @@ export function useFixie({
     modelResponseInProgress: getModelResponseInProgress(),
     setInput,
     sendMessage,
-    conversationExists: snapshot ? !snapshot.empty : undefined,
+    conversationExists: getConversationExists()
   };
 }
