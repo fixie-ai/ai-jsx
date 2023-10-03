@@ -292,6 +292,9 @@ class FixieConversationClient extends EventTarget {
   }
 
   public exists() {
+    if (this.loadState === 'loading' || this.loadState === 'no-conversation-set') {
+      return undefined;
+    }
     return this.isEmpty === false || this.optimisticallyExists;
   }
 
@@ -514,6 +517,7 @@ export function useFixie({
     let conversation: FixieConversationClient;
 
     function updateLocalStateFromConversation() {
+      console.log('useFixie updateLocalStateFromConversation')
       setLoadState(conversation.getLoadState());
       setTurns(conversation.getTurns());
       setModelResponseInProgress(conversation.getModelResponseInProgress());
