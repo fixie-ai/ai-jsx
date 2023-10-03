@@ -133,6 +133,86 @@ const firebaseConfig = {
   measurementId: 'G-EZNCJS94S7',
 };
 
+type ModelRequestedState = 'stop' | 'regenerate' | null;
+
+class FixieChatClient {
+  // I think using `data` as a var name is fine here.
+  /* eslint-disable id-blacklist */
+  private performanceTrace: { name: string; timeMs: number; data?: Jsonifiable }[] = []
+  private lastGeneratedTurnId: ConversationTurn['id'] | undefined = undefined
+  private lastTurnForWhichHandleNewTokensWasCalled: ConversationTurn['id'] | undefined = undefined
+
+  addPerfCheckpoint(name: string, data?: Jsonifiable) {
+    this.performanceTrace.push({ name, timeMs: performance.now(), data });
+  }
+  /* eslint-enable id-blacklist */
+
+  /**
+   * We do state management for optimistic UI.
+   *
+   * For stop/regenerate, if we simply request a stop/regenerate, the UI won't update until Fixie Frame updates
+   * Firebase and that update is seen by the client. Instead, we'd rather optimistically update.This requires managing
+   * an intermediate layer of state.
+   */
+  private modelResponseRequested: ModelRequestedState = null
+
+  private conversationsRoot: ReturnType<typeof collection>;
+  private conversationDocs: Record<ConversationId, ReturnType<typeof doc>> = {}
+
+  private fixieClients: Record<string, IsomorphicFixieClient> = {}
+
+  private validConversationIds = new Set<ConversationId>();
+
+  constructor() {
+    const firebaseApp = initializeApp(firebaseConfig);
+    this.conversationsRoot = collection(getFirestore(firebaseApp), 'schemas/v0/conversations');
+    
+    const turnCollection = collection(conversation, 'turns');
+    // If we try this, we get:
+    //
+    // Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    //
+    // .withConverter({
+    //   toFirestore: _.identity,
+    //   fromFirestore: (snapshot, options) => {
+    //     const data = snapshot.data(options)
+    //     return {
+    //       ...data,
+    //       id: snapshot.id,
+    //     }
+    //   }
+    // });
+    const turnsQuery = query(turnCollection, orderBy('timestamp', 'asc'));
+  }
+
+  private getFixieClient(fixieAPIUrl?: string) {
+    const urlToUse = fixieAPIUrl ?? 'https://api.fixie.ai';
+    if (!(urlToUse in this.fixieClients)) {
+      // We don't need the API key to access the conversation API.
+      this.fixieClients[urlToUse] = IsomorphicFixieClient.CreateWithoutApiKey(urlToUse);
+    }
+    return this.fixieClients[urlToUse];
+  }
+
+  private getConversationDoc(conversationId: ConversationId) {
+    if (!this.conversationDocs[conversationId]) {
+      const conversation = doc(this.conversationsRoot, conversationId ?? 'fake-id');
+      this.conversationDocs[conversationId] = conversation;
+    }
+    return this.conversationDocs[conversationId];
+  }
+
+  async createNewConversation(fixieAPIUrl: string | undefined, input: string, agentId: AgentId, fullMessageGenerationParams: MessageGenerationParams) {
+    const conversationId = (
+      await this.getFixieClient().startConversation(agentId, fullMessageGenerationParams, input)
+    ).conversationId;
+    this.validConversationIds.add(conversationId);
+    return conversationId;
+  }
+}
+
+const fixieChatClient = new FixieChatClient();
+
 /**
  * @experimental this API may change at any time.
  *
@@ -181,15 +261,8 @@ export function useFixie({
   }
   /* eslint-enable id-blacklist */
 
-  /**
-   * We do state management for optimistic UI.
-   *
-   * For stop/regenerate, if we simply request a stop/regenerate, the UI won't update until Fixie Frame updates
-   * Firebase and that update is seen by the client. Instead, we'd rather optimistically update.This requires managing
-   * an intermediate layer of state.
-   */
 
-  type ModelRequestedState = 'stop' | 'regenerate' | null;
+
   const [modelResponseRequested, setModelResponseRequested] = useState<ModelRequestedState>(null);
   const [lastAssistantMessagesAtStop, setLastAssistantMessagesAtStop] = useState<
     Record<ConversationTurn['id'], ConversationTurn['messages']>
@@ -201,28 +274,7 @@ export function useFixie({
     ...messageGenerationParams,
     userTimeZoneOffset: new Date().getTimezoneOffset(),
   };
-
-  const firebaseApp = initializeApp(firebaseConfig);
-
-  const conversationsRoot = collection(getFirestore(firebaseApp), 'schemas/v0/conversations');
-  const conversation = doc(conversationsRoot, conversationId ?? 'fake-id');
-  const turnCollection = collection(conversation, 'turns');
-
-  // If we try this, we get:
-  //
-  // Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
-  //
-  // .withConverter({
-  //   toFirestore: _.identity,
-  //   fromFirestore: (snapshot, options) => {
-  //     const data = snapshot.data(options)
-  //     return {
-  //       ...data,
-  //       id: snapshot.id,
-  //     }
-  //   }
-  // });
-  const turnsQuery = query(turnCollection, orderBy('timestamp', 'asc'));
+  
   const [value, loading, error, snapshot] = useCollectionData<ConversationTurn>(
     // This rightly complains that we aren't using .withConverter,
     // but we hack around it below by manually updating messages.
@@ -230,16 +282,15 @@ export function useFixie({
     turnsQuery
   );
 
-  // We don't need the API key to access the conversation API.
-  const fixieClient = IsomorphicFixieClient.CreateWithoutApiKey(fixieAPIUrl ?? 'https://api.fixie.ai');
-
   const lastSeenMostRecentAgentTextMessage = useRef('');
   const validConversationIds = useRef(new Set());
   async function createNewConversation(overriddenInput?: string) {
-    const conversationId = (
-      await fixieClient.startConversation(agentId, fullMessageGenerationParams, overriddenInput ?? input)
-    ).conversationId;
-    validConversationIds.current.add(conversationId);
+    const conversationId = await fixieChatClient.createNewConversation(
+      fixieAPIUrl,
+      overriddenInput ?? input,
+      agentId,
+      fullMessageGenerationParams
+    );
     setConversationId(conversationId);
     onNewConversation?.(conversationId);
   }
