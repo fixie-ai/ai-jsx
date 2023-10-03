@@ -41,7 +41,7 @@ export interface UseFixieResult {
   /**
    * Regenerate the most recent model response.
    */
-  regenerate: () => Promise<void>;
+  regenerate: () => Promise<void> | Promise<Response>;
 
   /**
    * Request a stop of the current model response.
@@ -49,7 +49,7 @@ export interface UseFixieResult {
    * The model will stop generation after it gets the request, but you may see a few more
    * tokens stream in before that happens.
    */
-  stop: () => Promise<void>;
+  stop: () => Promise<void> | Promise<Response>;
 
   /**
    * Append `message` to the conversation. This does not change `input`.
@@ -57,7 +57,7 @@ export interface UseFixieResult {
    * If you omit `message`, the current value of `input` will be used instead.
    *
    */
-  sendMessage: (message?: string) => Promise<void>;
+  sendMessage: (message?: string) => Promise<void> | Promise<Response>;
 
   /**
    * A managed input value. This is the text the user is currently typing.
@@ -169,9 +169,11 @@ class FixieConversationClient extends EventTarget {
   private modelResponseRequested: ModelRequestedState = null;
   private lastAssistantMessagesAtStop: ConversationTurn['messages'] = [];
 
-  private conversationFirebaseDoc: ReturnType<typeof doc>;
+  private readonly conversationFirebaseDoc: ReturnType<typeof doc>;
   private loadState: UseFixieResult['loadState'] = 'loading';
   private turns: UseFixieResult['turns'] = [];
+  private isEmpty?: boolean;
+  private optimisticallyExists = false
 
   private lastSeenMostRecentAgentTextMessage = '';
 
@@ -201,67 +203,81 @@ class FixieConversationClient extends EventTarget {
     //   }
     // });
     const turnsQuery = query(turnCollection, orderBy('timestamp', 'asc'));
-    onSnapshot(turnsQuery, (snapshot) => {
-      this.loadState = 'loaded';
-      snapshot.docs.forEach((doc, index) => {
-        this.turns[index] = {
-          ...doc.data(),
-          id: doc.id,
-        };
-      });
 
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'modified') {
-          const turn = change.doc.data() as ConversationTurn;
-          if (turn.role === 'assistant') {
-            /**
-             * We only want to call onNewTokens when the model is generating new tokens. If turn.state is 'stopped', it'll
-             * still generate a new `modified` change, and thus this callback will be called, but we don't want to call
-             * onNewTokens.
-             *
-             * Because we do optimistic UI, it's possible that we've requested a stop, but generation hasn't actually
-             * stopped. In this case, we don't wnat to call onNewTokens, so we check modelResponseRequested.
-             */
-            if (['in-progress', 'done'].includes(turn.state) && this.modelResponseRequested !== 'stop') {
-              const lastMessageFromAgent = this.lastSeenMostRecentAgentTextMessage;
-              const mostRecentAssistantTextMessage = _.findLast(turn.messages, {
-                kind: 'text',
-              }) as TextMessage | undefined;
-              if (mostRecentAssistantTextMessage) {
-                const messageIsContinuation =
-                  lastMessageFromAgent && mostRecentAssistantTextMessage.content.startsWith(lastMessageFromAgent);
-                const newMessagePart = messageIsContinuation
-                  ? mostRecentAssistantTextMessage.content.slice(lastMessageFromAgent.length)
-                  : mostRecentAssistantTextMessage.content;
+    onSnapshot(
+      turnsQuery,
+      (snapshot) => {
+        this.isEmpty = snapshot.empty
 
-                if (!messageIsContinuation && this.lastTurnForWhichHandleNewTokensWasCalled === turn.id) {
-                  return;
-                }
+        this.loadState = 'loaded';
+        // TODO: try turnsQuery.withConverter
+        snapshot.docs.forEach((doc, index) => {
+          this.turns[index] = {
+            ...doc.data(),
+            id: doc.id,
+          };
+        });
 
-                this.lastSeenMostRecentAgentTextMessage = mostRecentAssistantTextMessage.content;
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === 'modified') {
+            const turn = change.doc.data() as ConversationTurn;
+            if (turn.role === 'assistant') {
+              /**
+               * We only want to call onNewTokens when the model is generating new tokens. If turn.state is 'stopped', it'll
+               * still generate a new `modified` change, and thus this callback will be called, but we don't want to call
+               * onNewTokens.
+               *
+               * Because we do optimistic UI, it's possible that we've requested a stop, but generation hasn't actually
+               * stopped. In this case, we don't wnat to call onNewTokens, so we check modelResponseRequested.
+               */
+              if (['in-progress', 'done'].includes(turn.state) && this.modelResponseRequested !== 'stop') {
+                const lastMessageFromAgent = this.lastSeenMostRecentAgentTextMessage;
+                const mostRecentAssistantTextMessage = _.findLast(turn.messages, {
+                  kind: 'text',
+                }) as TextMessage | undefined;
+                if (mostRecentAssistantTextMessage) {
+                  const messageIsContinuation =
+                    lastMessageFromAgent && mostRecentAssistantTextMessage.content.startsWith(lastMessageFromAgent);
+                  const newMessagePart = messageIsContinuation
+                    ? mostRecentAssistantTextMessage.content.slice(lastMessageFromAgent.length)
+                    : mostRecentAssistantTextMessage.content;
 
-                if (newMessagePart) {
-                  this.lastTurnForWhichHandleNewTokensWasCalled = turn.id;
-                  this.addPerfCheckpoint('chat:delta:text', { newText: newMessagePart });
-                  this.dispatchEvent(new NewTokensEvent(newMessagePart));
+                  if (!messageIsContinuation && this.lastTurnForWhichHandleNewTokensWasCalled === turn.id) {
+                    return;
+                  }
+
+                  this.lastSeenMostRecentAgentTextMessage = mostRecentAssistantTextMessage.content;
+
+                  if (newMessagePart) {
+                    this.lastTurnForWhichHandleNewTokensWasCalled = turn.id;
+                    this.addPerfCheckpoint('chat:delta:text', { newText: newMessagePart });
+                    this.dispatchEvent(new NewTokensEvent(newMessagePart));
+                  }
                 }
               }
             }
           }
-        }
-      });
+        });
 
-      if (
-        snapshot.docChanges().length &&
-        this.turns.every(({ state }) => state === 'done' || state === 'stopped' || state === 'error') &&
-        this.performanceTrace.length &&
-        this.turns.at(-1)?.id !== this.lastGeneratedTurnId
-      ) {
-        // I'm not sure if this is at all valuable.
-        this.addPerfCheckpoint('all-turns-done-or-stopped-or-errored');
-        this.flushPerfTrace();
+        if (
+          snapshot.docChanges().length &&
+          this.turns.every(({ state }) => state === 'done' || state === 'stopped' || state === 'error') &&
+          this.performanceTrace.length &&
+          this.turns.at(-1)?.id !== this.lastGeneratedTurnId
+        ) {
+          // I'm not sure if this is at all valuable.
+          this.addPerfCheckpoint('all-turns-done-or-stopped-or-errored');
+          this.flushPerfTrace();
+        }
+      },
+      (error) => {
+        this.loadState = error;
       }
-    });
+    );
+  }
+
+  public exists() {
+    return this.isEmpty === false || this.optimisticallyExists
   }
 
   private flushPerfTrace() {
@@ -326,33 +342,36 @@ class FixieConversationClient extends EventTarget {
     return this.turns;
   }
 
-  public async sendMessage(agentId: AgentId, message: string, messageGenerationParams: MessageGenerationParams) {
+  public sendMessage(agentId: AgentId, message: string, messageGenerationParams: MessageGenerationParams) {
     this.performanceTrace = [];
     this.addPerfCheckpoint('send-message');
     this.lastGeneratedTurnId = this.turns.at(-1)?.id;
     this.lastSeenMostRecentAgentTextMessage = '';
-    await this.fixieClient.sendMessage(agentId, this.conversationId, {
+    return this.fixieClient.sendMessage(agentId, this.conversationId, {
       message,
       generationParams: messageGenerationParams,
     });
   }
 
-  public async regenerate(agentId: AgentId, fullMessageGenerationParams: MessageGenerationParams) {
+  public regenerate(agentId: AgentId, fullMessageGenerationParams: MessageGenerationParams) {
     this.performanceTrace = [];
     this.addPerfCheckpoint('regenerate');
     this.lastGeneratedTurnId = this.turns.at(-1)?.id;
     this.lastSeenMostRecentAgentTextMessage = '';
     this.modelResponseRequested = 'regenerate';
-    await this.fixieClient.regenerate(
+    const response = this.fixieClient.regenerate(
       agentId,
       this.conversationId,
       this.getMostRecentAssistantTurn()!.id,
       fullMessageGenerationParams
     );
-    this.modelResponseRequested = null;
+    response.then(() => {
+      this.modelResponseRequested = null;
+    });
+    return response;
   }
 
-  public async stop(agentId: AgentId) {
+  public stop(agentId: AgentId) {
     this.lastSeenMostRecentAgentTextMessage = '';
     this.lastGeneratedTurnId = this.turns.at(-1)?.id;
     this.modelResponseRequested = 'stop';
@@ -362,8 +381,11 @@ class FixieConversationClient extends EventTarget {
     if (mostRecentAssistantTurn) {
       this.lastAssistantMessagesAtStop = mostRecentAssistantTurn.messages;
     }
-    await this.fixieClient.stopGeneration(agentId, this.conversationId, mostRecentAssistantTurn!.id);
-    this.modelResponseRequested = null;
+    const response = this.fixieClient.stopGeneration(agentId, this.conversationId, mostRecentAssistantTurn!.id);
+    response.then(() => {
+      this.modelResponseRequested = null;
+    });
+    return response;
   }
 
   public getMostRecentAssistantTurn() {
@@ -411,7 +433,7 @@ class FixieChatClient {
   }
 }
 
-const fixieChatClient = new FixieChatClient();
+const fixieChatClients: Record<string, FixieChatClient> = {};
 
 /**
  * @experimental this API may change at any time.
@@ -428,6 +450,12 @@ export function useFixie({
   fixieAPIUrl,
   onNewConversation,
 }: UseFixieArgs): UseFixieResult {
+  const fixieAPIUrlToUse = fixieAPIUrl ?? 'https://api.fixie.ai';
+  if (!(fixieAPIUrlToUse in fixieChatClients)) {
+    fixieChatClients[fixieAPIUrlToUse] = new FixieChatClient(fixieAPIUrl);
+  }
+  const fixieChatClient = fixieChatClients[fixieAPIUrlToUse];
+
   /**
    * In general, you're supposed to use setState for values that impact render, and ref for values that don't.
    * Because any value that gets returned from this hook may impact render, it seems like we'd want to use setState.
@@ -448,21 +476,29 @@ export function useFixie({
     setConversationId(userPassedConversationId);
   }, [userPassedConversationId]);
 
-  // I think using `data` as a var name is fine here.
-  /* eslint-disable id-blacklist */
-  // const performanceTrace = useRef<{ name: string; timeMs: number; data?: Jsonifiable }[]>([]);
-  // const lastGeneratedTurnId = useRef<ConversationTurn['id'] | undefined>(undefined);
-  // const lastTurnForWhichHandleNewTokensWasCalled = useRef<ConversationTurn['id'] | undefined>(undefined);
+  useEffect(() => {
+    function handleNewTokens(event: Event) {
+      onNewTokens?.((event as NewTokensEvent).tokens);
+    }
+    function handlePerfLog(event: Event) {
+      const perfLogEvent = event as PerfLogEvent;
+      logPerformanceTraces?.(perfLogEvent.message, perfLogEvent.data);
+    }
 
-  // function addPerfCheckpoint(name: string, data?: Jsonifiable) {
-  //   performanceTrace.current.push({ name, timeMs: performance.now(), data });
-  // }
-  /* eslint-enable id-blacklist */
+    if (conversationId) {
+      const conversation = fixieChatClient.getConversation(conversationId);
+      conversation.addEventListener('newTokens', handleNewTokens);
+      conversation.addEventListener('perfLog', handlePerfLog);
+    }
 
-  // const [modelResponseRequested, setModelResponseRequested] = useState<ModelRequestedState>(null);
-  // const [lastAssistantMessagesAtStop, setLastAssistantMessagesAtStop] = useState<
-  //   Record<ConversationTurn['id'], ConversationTurn['messages']>
-  // >({});
+    return () => {
+      if (conversationId) {
+        const conversation = fixieChatClient.getConversation(conversationId);
+        conversation.removeEventListener('newTokens', handleNewTokens);
+        conversation.removeEventListener('perfLog', handlePerfLog);
+      }
+    };
+  }, [conversationId]);
 
   const fullMessageGenerationParams: MessageGenerationParams = {
     model: 'gpt-4-32k',
@@ -471,24 +507,14 @@ export function useFixie({
     userTimeZoneOffset: new Date().getTimezoneOffset(),
   };
 
-  // const [value, loading, error, snapshot] = useCollectionData<ConversationTurn>(
-  //   // This rightly complains that we aren't using .withConverter,
-  //   // but we hack around it below by manually updating messages.
-  //   // @ts-expect-error
-  //   turnsQuery
-  // );
-
-  const lastSeenMostRecentAgentTextMessage = useRef('');
-  const validConversationIds = useRef(new Set());
   async function createNewConversation(overriddenInput?: string) {
-    const conversationId = await fixieChatClient.createNewConversation(
-      fixieAPIUrl,
+    const conversation = await fixieChatClient.createNewConversation(
       overriddenInput ?? input,
       agentId,
       fullMessageGenerationParams
     );
-    setConversationId(conversationId);
-    onNewConversation?.(conversationId);
+    setConversationId(conversation.conversationId);
+    onNewConversation?.(conversation.conversationId);
   }
 
   /**
@@ -515,31 +541,12 @@ export function useFixie({
   const loadState = conversation.getLoadState();
   const turns = conversationFixtures ?? conversation.getTurns();
 
-  /**
-   * The right way to do this is to use with `withConverter` method, but when I enabled
-   * that, I had other problems.
-   */
-  // if (loadState === 'loaded' && !conversationFixtures) {
-  //   snapshot?.docs.forEach((doc, index) => {
-  //     turns![index].id = doc.id;
-  //   });
-  // }
-
-  const mostRecentAssistantTurn = _.findLast(turns, { role: 'assistant' }) as AssistantConversationTurn | undefined;
-
-  // async function sendMessage(message?: string) {
-  //   if (!conversationId) {
-  //     return;
-  //   }
-  //   performanceTrace.current = [];
-  //   addPerfCheckpoint('send-message');
-  //   lastGeneratedTurnId.current = turns.at(-1)?.id;
-  //   lastSeenMostRecentAgentTextMessage.current = '';
-  //   await fixieClient.sendMessage(agentId, conversationId, {
-  //     message: message ?? input,
-  //     generationParams: fullMessageGenerationParams,
-  //   });
-  // }
+  function sendMessage(message?: string) {
+    if (!conversationId) {
+      return Promise.resolve();
+    }
+    return conversation.sendMessage(agentId, message ?? input, fullMessageGenerationParams);
+  }
 
   // if (modelResponseRequested === 'regenerate' && mostRecentAssistantTurn) {
   //   mostRecentAssistantTurn.messages = [];
@@ -557,37 +564,19 @@ export function useFixie({
   //   }
   // });
 
-  // async function regenerate() {
-  //   if (!conversationId) {
-  //     return;
-  //   }
-  //   performanceTrace.current = [];
-  //   addPerfCheckpoint('regenerate');
-  //   lastGeneratedTurnId.current = turns.at(-1)?.id;
-  //   lastSeenMostRecentAgentTextMessage.current = '';
-  //   setModelResponseRequested('regenerate');
-  //   await fixieClient.regenerate(agentId, conversationId, mostRecentAssistantTurn!.id, fullMessageGenerationParams);
-  //   setModelResponseRequested(null);
-  // }
+  function regenerate() {
+    if (!conversationId) {
+      return Promise.resolve();
+    }
+    return conversation.regenerate(agentId, fullMessageGenerationParams);
+  }
 
-  // async function stop() {
-  //   if (!conversationId) {
-  //     return;
-  //   }
-  //   lastSeenMostRecentAgentTextMessage.current = '';
-  //   lastGeneratedTurnId.current = turns.at(-1)?.id;
-  //   setModelResponseRequested('stop');
-  //   flushPerfTrace();
-  //   addPerfCheckpoint('stop');
-  //   if (mostRecentAssistantTurn) {
-  //     setLastAssistantMessagesAtStop((prev) => ({
-  //       ...prev,
-  //       [mostRecentAssistantTurn!.id]: mostRecentAssistantTurn.messages,
-  //     }));
-  //   }
-  //   await fixieClient.stopGeneration(agentId, conversationId, mostRecentAssistantTurn!.id);
-  //   setModelResponseRequested(null);
-  // }
+  function stop() {
+    if (!conversationId) {
+      return Promise.resolve();
+    }
+    return conversation.stop(agentId);
+  }
 
   // function getModelResponseInProgress() {
   //   if (modelResponseRequested === 'regenerate') {
@@ -603,12 +592,12 @@ export function useFixie({
     turns,
     loadState,
     input,
-    error,
+    error: undefined,
     stop,
     regenerate,
-    modelResponseInProgress: getModelResponseInProgress(),
+    modelResponseInProgress: conversation.getModelResponseInProgress(),
     setInput,
     sendMessage,
-    conversationExists: validConversationIds.current.has(conversationId) || (snapshot ? !snapshot.empty : undefined),
+    conversationExists: conversation.exists(),
   };
 }
