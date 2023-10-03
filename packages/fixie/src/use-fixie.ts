@@ -189,21 +189,16 @@ class FixieConversationClient extends EventTarget {
     this.conversationFirebaseDoc = doc(conversationsRoot, conversationId);
 
     const turnCollection = collection(this.conversationFirebaseDoc, 'turns');
-    // If we try this, we get:
-    //
-    // Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
-    //
-    // .withConverter({
-    //   toFirestore: _.identity,
-    //   fromFirestore: (snapshot, options) => {
-    //     const data = snapshot.data(options)
-    //     return {
-    //       ...data,
-    //       id: snapshot.id,
-    //     }
-    //   }
-    // });
-    const turnsQuery = query(turnCollection, orderBy('timestamp', 'asc'));
+    const turnsQuery = query(turnCollection, orderBy('timestamp', 'asc')).withConverter({
+      toFirestore: _.identity,
+      fromFirestore: (snapshot, options) => {
+        const snapshotData = snapshot.data(options);
+        return {
+          id: snapshot.id,
+          ...snapshotData,
+        };
+      },
+    });
 
     onSnapshot(
       turnsQuery,
@@ -211,14 +206,9 @@ class FixieConversationClient extends EventTarget {
         this.isEmpty = snapshot.empty;
 
         this.loadState = 'loaded';
-        // TODO: try turnsQuery.withConverter
-        snapshot.docs.forEach((doc, index) => {
-          // @ts-expect-error
-          this.turns[index] = {
-            ...doc.data(),
-            id: doc.id,
-          };
-        });
+        // If we use snapshot.docs.forEach, it doesn't execute synchronously,
+        // which feels unnecessarily surprising.
+        this.turns = Array.from(snapshot.docs.values()).map((doc) => doc.data() as ConversationTurn);
 
         snapshot.docChanges().forEach((change) => {
           if (change.type === 'modified') {
@@ -361,6 +351,8 @@ class FixieConversationClient extends EventTarget {
   }
 
   public sendMessage(agentId: AgentId, message: string, messageGenerationParams: MessageGenerationParams) {
+    // TODO: Optimistically update with the new message.
+
     this.performanceTrace = [];
     this.addPerfCheckpoint('send-message');
     this.lastGeneratedTurnId = this.turns.at(-1)?.id;
@@ -410,7 +402,7 @@ class FixieConversationClient extends EventTarget {
     return response;
   }
 
-  public getMostRecentAssistantTurn() {
+  private getMostRecentAssistantTurn() {
     return _.findLast(this.turns, { role: 'assistant' }) as AssistantConversationTurn | undefined;
   }
 
@@ -517,9 +509,10 @@ export function useFixie({
     let conversation: FixieConversationClient;
 
     function updateLocalStateFromConversation() {
-      console.log('useFixie updateLocalStateFromConversation')
+      console.log('useFixie updateLocalStateFromConversation');
       setLoadState(conversation.getLoadState());
       setTurns(conversation.getTurns());
+      console.log('useFixie turns', conversation.getTurns());
       setModelResponseInProgress(conversation.getModelResponseInProgress());
       setConversationExists(conversation.exists());
     }
