@@ -1,11 +1,10 @@
 import { getFirestore, collection, doc, query, orderBy, FirestoreError, onSnapshot } from 'firebase/firestore';
 // import { useCollectionData as typedUseCollectionData } from 'react-firebase-hooks/firestore';
-// @ts-expect-error
 // import { useCollectionData as untypedUseCollectionData } from 'react-firebase-hooks/firestore/dist/index.esm.js';
 import { initializeApp } from 'firebase/app';
 
-import { useState, SetStateAction, Dispatch, useRef, useEffect } from 'react';
-import _ from 'lodash';
+import { useState, SetStateAction, Dispatch, useEffect } from 'react';
+import _, { set } from 'lodash';
 import {
   MessageGenerationParams,
   AgentId,
@@ -142,6 +141,8 @@ class NewTokensEvent extends Event {
 }
 
 class PerfLogEvent extends Event {
+  // I think using `data` as a var name is fine here.
+  /* eslint-disable-next-line id-blacklist */
   constructor(public readonly message: string, public readonly data: object) {
     super('perfLog');
   }
@@ -173,7 +174,7 @@ class FixieConversationClient extends EventTarget {
   private loadState: UseFixieResult['loadState'] = 'loading';
   private turns: UseFixieResult['turns'] = [];
   private isEmpty?: boolean;
-  private optimisticallyExists = false
+  public optimisticallyExists = false;
 
   private lastSeenMostRecentAgentTextMessage = '';
 
@@ -207,11 +208,12 @@ class FixieConversationClient extends EventTarget {
     onSnapshot(
       turnsQuery,
       (snapshot) => {
-        this.isEmpty = snapshot.empty
+        this.isEmpty = snapshot.empty;
 
         this.loadState = 'loaded';
         // TODO: try turnsQuery.withConverter
         snapshot.docs.forEach((doc, index) => {
+          // @ts-expect-error
           this.turns[index] = {
             ...doc.data(),
             id: doc.id,
@@ -269,15 +271,28 @@ class FixieConversationClient extends EventTarget {
           this.addPerfCheckpoint('all-turns-done-or-stopped-or-errored');
           this.flushPerfTrace();
         }
+        this.dispatchStateChangeEvent();
       },
       (error) => {
         this.loadState = error;
+        this.dispatchStateChangeEvent();
       }
     );
   }
 
+  private dispatchStateChangeEvent() {
+    super.dispatchEvent(new Event('stateChange'));
+  }
+
+  public addStateChangeEventListener(listener: EventListenerOrEventListenerObject) {
+    super.addEventListener('stateChange', listener);
+  }
+  public removeStateChangeEventListener(listener: EventListenerOrEventListenerObject) {
+    super.removeEventListener('stateChange', listener);
+  }
+
   public exists() {
-    return this.isEmpty === false || this.optimisticallyExists
+    return this.isEmpty === false || this.optimisticallyExists;
   }
 
   private flushPerfTrace() {
@@ -359,6 +374,7 @@ class FixieConversationClient extends EventTarget {
     this.lastGeneratedTurnId = this.turns.at(-1)?.id;
     this.lastSeenMostRecentAgentTextMessage = '';
     this.modelResponseRequested = 'regenerate';
+    this.dispatchStateChangeEvent();
     const response = this.fixieClient.regenerate(
       agentId,
       this.conversationId,
@@ -367,6 +383,7 @@ class FixieConversationClient extends EventTarget {
     );
     response.then(() => {
       this.modelResponseRequested = null;
+      this.dispatchStateChangeEvent();
     });
     return response;
   }
@@ -381,9 +398,11 @@ class FixieConversationClient extends EventTarget {
     if (mostRecentAssistantTurn) {
       this.lastAssistantMessagesAtStop = mostRecentAssistantTurn.messages;
     }
+    this.dispatchStateChangeEvent();
     const response = this.fixieClient.stopGeneration(agentId, this.conversationId, mostRecentAssistantTurn!.id);
     response.then(() => {
       this.modelResponseRequested = null;
+      this.dispatchStateChangeEvent();
     });
     return response;
   }
@@ -418,7 +437,9 @@ class FixieChatClient {
     const conversationId = (await this.fixieClient.startConversation(agentId, fullMessageGenerationParams, input))
       .conversationId;
 
-    return this.getConversation(conversationId);
+    const conversation = this.getConversation(conversationId);
+    conversation.optimisticallyExists = true;
+    return conversation;
   }
 
   getConversation(conversationId: ConversationId) {
@@ -476,6 +497,11 @@ export function useFixie({
     setConversationId(userPassedConversationId);
   }, [userPassedConversationId]);
 
+  const [loadState, setLoadState] = useState<UseFixieResult['loadState']>('no-conversation-set');
+  const [turns, setTurns] = useState<UseFixieResult['turns']>([]);
+  const [modelResponseInProgress, setModelResponseInProgress] = useState(false);
+  const [conversationExists, setConversationExists] = useState<boolean | undefined>(undefined);
+
   useEffect(() => {
     function handleNewTokens(event: Event) {
       onNewTokens?.((event as NewTokensEvent).tokens);
@@ -485,10 +511,22 @@ export function useFixie({
       logPerformanceTraces?.(perfLogEvent.message, perfLogEvent.data);
     }
 
+    let conversation: FixieConversationClient;
+
+    function updateLocalStateFromConversation() {
+      setLoadState(conversation.getLoadState());
+      setTurns(conversation.getTurns());
+      setModelResponseInProgress(conversation.getModelResponseInProgress());
+      setConversationExists(conversation.exists());
+    }
     if (conversationId) {
-      const conversation = fixieChatClient.getConversation(conversationId);
+      conversation = fixieChatClient.getConversation(conversationId);
       conversation.addEventListener('newTokens', handleNewTokens);
       conversation.addEventListener('perfLog', handlePerfLog);
+
+      updateLocalStateFromConversation();
+
+      conversation.addStateChangeEventListener(updateLocalStateFromConversation);
     }
 
     return () => {
@@ -496,6 +534,7 @@ export function useFixie({
         const conversation = fixieChatClient.getConversation(conversationId);
         conversation.removeEventListener('newTokens', handleNewTokens);
         conversation.removeEventListener('perfLog', handlePerfLog);
+        conversation.removeStateChangeEventListener(updateLocalStateFromConversation);
       }
     };
   }, [conversationId]);
@@ -524,9 +563,9 @@ export function useFixie({
    */
   if (!conversationId) {
     return {
-      turns: [],
-      loadState: 'no-conversation-set',
-      modelResponseInProgress: false,
+      turns,
+      loadState,
+      modelResponseInProgress,
       regenerate,
       stop,
       sendMessage: createNewConversation,
@@ -536,10 +575,7 @@ export function useFixie({
     };
   }
 
-  // const loadState = (loading ? 'loading' : error ? error : 'loaded') as UseFixieResult['loadState'];
   const conversation = fixieChatClient.getConversation(conversationId);
-  const loadState = conversation.getLoadState();
-  const turns = conversationFixtures ?? conversation.getTurns();
 
   function sendMessage(message?: string) {
     if (!conversationId) {
@@ -578,16 +614,6 @@ export function useFixie({
     return conversation.stop(agentId);
   }
 
-  // function getModelResponseInProgress() {
-  //   if (modelResponseRequested === 'regenerate') {
-  //     return true;
-  //   }
-  //   if (modelResponseRequested === 'stop') {
-  //     return false;
-  //   }
-  //   return loadState === 'loaded' && mostRecentAssistantTurn?.state === 'in-progress';
-  // }
-
   return {
     turns,
     loadState,
@@ -595,9 +621,9 @@ export function useFixie({
     error: undefined,
     stop,
     regenerate,
-    modelResponseInProgress: conversation.getModelResponseInProgress(),
+    modelResponseInProgress,
     setInput,
     sendMessage,
-    conversationExists: conversation.exists(),
+    conversationExists,
   };
 }
