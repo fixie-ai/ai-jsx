@@ -360,7 +360,7 @@ export abstract class SpeechRecognitionBase extends EventTarget {
     this.manager.addEventListener('vad', (evt: CustomEventInit<VoiceActivity>) => {
       const update = evt.detail!;
       if (!update.active) {
-        if (this.streamLastVoiceEndMillis == 0 && this.streamFirstTranscriptMillis != 0) {
+        if (this.streamLastVoiceEndMillis === 0 && this.streamFirstTranscriptMillis !== 0) {
           this.streamLastVoiceEndMillis = update.timestamp;
         } else {
           console.log(`[${this.name}] unexpected voice end at ${update.timestamp}`);
