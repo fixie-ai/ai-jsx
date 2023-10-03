@@ -155,11 +155,6 @@ export function useFixie({
   const [input, setInput] = useState('');
   const [conversationId, setConversationId] = useState(userPassedConversationId);
 
-  function handleNewConversationId(conversationId: ConversationId) {
-    setConversationId(conversationId);
-    onNewConversation?.(conversationId);
-  }
-
   useEffect(() => {
     setConversationId(userPassedConversationId);
   }, [userPassedConversationId]);
@@ -232,7 +227,8 @@ export function useFixie({
     const conversationId = (
       await fixieClient.startConversation(agentId, fullMessageGenerationParams, overriddenInput ?? input)
     ).conversationId;
-    handleNewConversationId(conversationId);
+    setConversationId(conversationId);
+    onNewConversation?.(conversationId);
   }
 
   /**
