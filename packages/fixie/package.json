@@ -1,6 +1,6 @@
 {
   "name": "fixie",
-  "version": "1.5.4",
+  "version": "1.6.0",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
@@ -35,7 +35,6 @@
     "lodash": "^4.17.21",
     "open": "^9.1.0",
     "ora": "^7.0.1",
-    "react-firebase-hooks": "^5.1.1",
     "terminal-kit": "^3.0.0",
     "untildify": "^5.0.0",
     "watcher": "^2.3.0"
