@@ -1,10 +1,8 @@
 import { getFirestore, collection, doc, query, orderBy, FirestoreError, onSnapshot } from 'firebase/firestore';
-// import { useCollectionData as typedUseCollectionData } from 'react-firebase-hooks/firestore';
-// import { useCollectionData as untypedUseCollectionData } from 'react-firebase-hooks/firestore/dist/index.esm.js';
 import { initializeApp } from 'firebase/app';
 
 import { useState, SetStateAction, Dispatch, useEffect } from 'react';
-import _, { set } from 'lodash';
+import _ from 'lodash';
 import {
   MessageGenerationParams,
   AgentId,
@@ -15,10 +13,6 @@ import {
 } from './sidekick-types.js';
 import { Jsonifiable } from 'type-fest';
 import { IsomorphicFixieClient } from './isomorphic-client.js';
-
-// This is whacky. I did it because Webpack from Fixie Frame threw an error
-// when trying to build this file. (Vite from Redwood worked fine.)
-// const useCollectionData = untypedUseCollectionData as typeof typedUseCollectionData;
 
 export interface UseFixieResult {
   /**
