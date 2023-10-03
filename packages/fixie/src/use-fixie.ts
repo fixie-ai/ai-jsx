@@ -135,7 +135,19 @@ const firebaseConfig = {
 
 type ModelRequestedState = 'stop' | 'regenerate' | null;
 
-class FixieConversationClient {
+class NewTokensEvent extends Event {
+  constructor(public readonly tokens: string) {
+    super('newTokens');
+  }
+}
+
+class PerfLogEvent extends Event {
+  constructor(public readonly message: string, public readonly data: object) {
+    super('perfLog');
+  }
+}
+
+class FixieConversationClient extends EventTarget {
   // I think using `data` as a var name is fine here.
   /* eslint-disable id-blacklist */
   private performanceTrace: { name: string; timeMs: number; data?: Jsonifiable }[] = []
@@ -160,14 +172,145 @@ class FixieConversationClient {
   private loadState: UseFixieResult['loadState'] = 'loading'
   private turns: UseFixieResult['turns'] = []
 
-  constructor(private readonly conversationId: ConversationId, fixieChatClient: FixieChatClient) {
+  private lastSeenMostRecentAgentTextMessage = ''
 
+  // TODO: Unsubscribe eventually
+  constructor(public readonly conversationId: ConversationId, fixieChatClient: FixieChatClient, conversationsRoot: ReturnType<typeof collection>) {
+    super();
+
+    this.conversationFirebaseDoc = doc(conversationsRoot, conversationId);
+
+    const turnCollection = collection(this.conversationFirebaseDoc, 'turns');
+    // If we try this, we get:
+    //
+    // Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
+    //
+    // .withConverter({
+    //   toFirestore: _.identity,
+    //   fromFirestore: (snapshot, options) => {
+    //     const data = snapshot.data(options)
+    //     return {
+    //       ...data,
+    //       id: snapshot.id,
+    //     }
+    //   }
+    // });
+    const turnsQuery = query(turnCollection, orderBy('timestamp', 'asc'));
+    onSnapshot(turnsQuery, (snapshot) => {
+      this.loadState = 'loaded';
+      snapshot.docs.forEach((doc, index) => {
+        this.turns[index] = {
+          ...doc.data(),
+          id: doc.id,
+        }
+      });
+
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'modified') {
+          const turn = change.doc.data() as ConversationTurn;
+          if (turn.role === 'assistant') {
+            /**
+             * We only want to call onNewTokens when the model is generating new tokens. If turn.state is 'stopped', it'll
+             * still generate a new `modified` change, and thus this callback will be called, but we don't want to call
+             * onNewTokens.
+             *
+             * Because we do optimistic UI, it's possible that we've requested a stop, but generation hasn't actually
+             * stopped. In this case, we don't wnat to call onNewTokens, so we check modelResponseRequested.
+             */
+            if (['in-progress', 'done'].includes(turn.state) && this.modelResponseRequested !== 'stop') {
+              const lastMessageFromAgent = this.lastSeenMostRecentAgentTextMessage;
+              const mostRecentAssistantTextMessage = _.findLast(turn.messages, {
+                kind: 'text',
+              }) as TextMessage | undefined;
+              if (mostRecentAssistantTextMessage) {
+                const messageIsContinuation =
+                  lastMessageFromAgent && mostRecentAssistantTextMessage.content.startsWith(lastMessageFromAgent);
+                const newMessagePart = messageIsContinuation
+                  ? mostRecentAssistantTextMessage.content.slice(lastMessageFromAgent.length)
+                  : mostRecentAssistantTextMessage.content;
+    
+                if (!messageIsContinuation && this.lastTurnForWhichHandleNewTokensWasCalled === turn.id) {
+                  return;
+                }
+    
+                this.lastSeenMostRecentAgentTextMessage = mostRecentAssistantTextMessage.content;
+    
+                if (newMessagePart) {
+                  this.lastTurnForWhichHandleNewTokensWasCalled = turn.id;
+                  this.addPerfCheckpoint('chat:delta:text', { newText: newMessagePart });
+                  this.dispatchEvent(new NewTokensEvent(newMessagePart));
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (
+        snapshot.docChanges().length &&
+        this.turns.every(({ state }) => state === 'done' || state === 'stopped' || state === 'error') &&
+        this.performanceTrace.length &&
+        this.turns.at(-1)?.id !== this.lastGeneratedTurnId
+      ) {
+        // I'm not sure if this is at all valuable.
+        this.addPerfCheckpoint('all-turns-done-or-stopped-or-errored');
+        this.flushPerfTrace();
+      }
+    });
   }
 
+  private flushPerfTrace() {
+    if (!this.performanceTrace.length) {
+      return;
+    }
+
+    const latestTurnId = this.turns.at(-1)?.id;
+    /**
+     * It would be nice to include function calls here too, but we can do that later.
+     */
+    const textCharactersInMostRecentTurn = _.sumBy(this.turns.at(-1)?.messages, (message) => {
+      switch (message.kind) {
+        case 'text':
+          return message.content.length;
+        case 'functionCall':
+        case 'functionResponse':
+          return 0;
+      }
+    });
+
+    const commonData = { latestTurnId, textCharactersInMostRecentTurn };
+
+    const firstPerfTrace = this.performanceTrace[0].timeMs;
+    const firstFirebaseDelta = _.find(this.performanceTrace, {
+      name: 'chat:delta:text',
+    })?.timeMs;
+    const lastFirebaseDelta = _.findLast(this.performanceTrace, {
+      name: 'chat:delta:text',
+    })?.timeMs;
+
+    this.dispatchEvent(new PerfLogEvent('[DD] All traces', {
+      traces: this.performanceTrace,
+      ...commonData,
+    }));
+    if (firstFirebaseDelta) {
+      this.dispatchEvent(new PerfLogEvent('[DD] All traces after first Firebase delta', {
+        ...commonData,
+        timeMs: firstFirebaseDelta - firstPerfTrace,
+      }));
+      const totalFirebaseTimeMs = lastFirebaseDelta! - firstPerfTrace;
+      this.dispatchEvent(new PerfLogEvent('[DD] Time to last Firebase delta', {
+        ...commonData,
+        timeMs: totalFirebaseTimeMs,
+        charactersPerMs: textCharactersInMostRecentTurn / totalFirebaseTimeMs,
+      }));
+    }
+
+    this.performanceTrace = [];
+  }
 }
 
 class FixieChatClient {
-  private conversationsRoot: ReturnType<typeof collection>;
+  private readonly conversationsRoot: ReturnType<typeof collection>;
   private fixieClients: Record<string, IsomorphicFixieClient> = {}
   private conversations: Record<ConversationId, FixieConversationClient> = {};
 
@@ -189,154 +332,13 @@ class FixieChatClient {
     const conversationId = (
       await this.getFixieClient(fixieAPIUrl).startConversation(agentId, fullMessageGenerationParams, input)
     ).conversationId;
-    this.subscribeToConversation(conversationId);
-    return conversationId;
-  }
 
-  // TODO: Unsubscribe eventually
-  private subscribeToConversation(conversationId: ConversationId) {
-    if (!(conversationId in this.conversations)) {
-      this.conversations[conversationId] = {
-        loadState: 'loading',
-        turns: []
-      }
-    }
-
-    const conversation = this.getConversationDoc(conversationId)
-    const turnCollection = collection(conversation, 'turns');
-    // If we try this, we get:
-    //
-    // Error: Maximum update depth exceeded. This can happen when a component repeatedly calls setState inside componentWillUpdate or componentDidUpdate. React limits the number of nested updates to prevent infinite loops.
-    //
-    // .withConverter({
-    //   toFirestore: _.identity,
-    //   fromFirestore: (snapshot, options) => {
-    //     const data = snapshot.data(options)
-    //     return {
-    //       ...data,
-    //       id: snapshot.id,
-    //     }
-    //   }
-    // });
-    const turnsQuery = query(turnCollection, orderBy('timestamp', 'asc'));
-    onSnapshot(turnsQuery, (snapshot) => {
-      this.conversations[conversationId].loadState = 'loaded';
-      snapshot.docs.forEach((doc, index) => {
-        this.conversations[conversationId].turns[index] = {
-          ...doc.data(),
-          id: doc.id,
-        }
-      });
-
-      snapshot.docChanges().forEach((change) => {
-        if (change.type === 'modified') {
-          const turn = change.doc.data() as ConversationTurn;
-          if (turn.role === 'assistant') {
-            /**
-             * We only want to call onNewTokens when the model is generating new tokens. If turn.state is 'stopped', it'll
-             * still generate a new `modified` change, and thus this callback will be called, but we don't want to call
-             * onNewTokens.
-             *
-             * Because we do optimistic UI, it's possible that we've requested a stop, but generation hasn't actually
-             * stopped. In this case, we don't wnat to call onNewTokens, so we check modelResponseRequested.
-             */
-            if (['in-progress', 'done'].includes(turn.state) && modelResponseRequested !== 'stop') {
-              const lastMessageFromAgent = lastSeenMostRecentAgentTextMessage.current;
-              const mostRecentAssistantTextMessage = _.findLast(turn.messages, {
-                kind: 'text',
-              }) as TextMessage | undefined;
-              if (mostRecentAssistantTextMessage) {
-                const messageIsContinuation =
-                  lastMessageFromAgent && mostRecentAssistantTextMessage.content.startsWith(lastMessageFromAgent);
-                const newMessagePart = messageIsContinuation
-                  ? mostRecentAssistantTextMessage.content.slice(lastMessageFromAgent.length)
-                  : mostRecentAssistantTextMessage.content;
-    
-                if (!messageIsContinuation && lastTurnForWhichHandleNewTokensWasCalled.current === turn.id) {
-                  return;
-                }
-    
-                lastSeenMostRecentAgentTextMessage.current = mostRecentAssistantTextMessage.content;
-    
-                if (newMessagePart) {
-                  lastTurnForWhichHandleNewTokensWasCalled.current = turn.id;
-                  addPerfCheckpoint('chat:delta:text', { newText: newMessagePart });
-                  onNewTokens?.(newMessagePart);
-                }
-              }
-            }
-          }
-        }
-      });
-
-      if (
-        snapshot?.docChanges().length &&
-        turns.every(({ state }) => state === 'done' || state === 'stopped' || state === 'error') &&
-        performanceTrace.current.length &&
-        turns.at(-1)?.id !== lastGeneratedTurnId.current
-      ) {
-        // I'm not sure if this is at all valuable.
-        addPerfCheckpoint('all-turns-done-or-stopped-or-errored');
-        flushPerfTrace();
-      }
-
-     })
-
-     
-  }
-
-  private flushPerfTrace() {
-    if (!performanceTrace.current.length) {
-      return;
-    }
-
-    const latestTurnId = turns.at(-1)?.id;
-    /**
-     * It would be nice to include function calls here too, but we can do that later.
-     */
-    const textCharactersInMostRecentTurn = _.sumBy(turns.at(-1)?.messages, (message) => {
-      switch (message.kind) {
-        case 'text':
-          return message.content.length;
-        case 'functionCall':
-        case 'functionResponse':
-          return 0;
-      }
-    });
-
-    const commonData = { latestTurnId, textCharactersInMostRecentTurn };
-
-    const firstPerfTrace = performanceTrace.current[0].timeMs;
-    const firstFirebaseDelta = _.find(performanceTrace.current, {
-      name: 'chat:delta:text',
-    })?.timeMs;
-    const lastFirebaseDelta = _.findLast(performanceTrace.current, {
-      name: 'chat:delta:text',
-    })?.timeMs;
-
-    logPerformanceTraces?.('[DD] All traces', {
-      traces: performanceTrace.current,
-      ...commonData,
-    });
-    if (firstFirebaseDelta) {
-      logPerformanceTraces?.('[DD] Time to first Firebase delta', {
-        ...commonData,
-        timeMs: firstFirebaseDelta - firstPerfTrace,
-      });
-      const totalFirebaseTimeMs = lastFirebaseDelta! - firstPerfTrace;
-      logPerformanceTraces?.('[DD] Time to last Firebase delta', {
-        ...commonData,
-        timeMs: totalFirebaseTimeMs,
-        charactersPerMs: textCharactersInMostRecentTurn / totalFirebaseTimeMs,
-      });
-    }
-
-    performanceTrace.current = [];
+    return this.getConversation(conversationId);
   }
 
   getConversation(conversationId: ConversationId) {
     if (!(conversationId in this.conversations)) {
-      this.subscribeToConversation(conversationId);
+      this.conversations[conversationId] = new FixieConversationClient(conversationId, this, this.conversationsRoot);
     }
     return this.conversations[conversationId];
   }
