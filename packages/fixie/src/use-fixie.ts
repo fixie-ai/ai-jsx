@@ -14,6 +14,9 @@ import {
 import { Jsonifiable } from 'type-fest';
 import { IsomorphicFixieClient } from './isomorphic-client.js';
 
+/**
+ * The result of the useFixie hook.
+ */
 export interface UseFixieResult {
   /**
    * The conversation history.
@@ -75,6 +78,9 @@ export interface UseFixieResult {
   conversationExists?: boolean;
 }
 
+/**
+ * Arguments passed to the useFixie hook.
+ */
 export interface UseFixieArgs {
   /**
    * The ID of the conversation to use.
@@ -128,12 +134,20 @@ const firebaseConfig = {
 
 type ModelRequestedState = 'stop' | 'regenerate' | null;
 
+/**
+ * An event that will be fired when the model has emitted new tokens.
+ */
 export class NewTokensEvent extends Event {
   constructor(public readonly tokens: string) {
     super('newTokens');
   }
 }
 
+/**
+ * An event that will be emitted when there are perf traces to log.
+ * If you would like to log them, listen for this event, and use the `data` and `message` properties to log to whatever
+ * your monitoring system is.
+ */
 export class PerfLogEvent extends Event {
   // I think using `data` as a var name is fine here.
   /* eslint-disable-next-line id-blacklist */
@@ -142,6 +156,9 @@ export class PerfLogEvent extends Event {
   }
 }
 
+/**
+ * A client that maintains a connection to a particular conversation.
+ */
 export class FixieConversationClient extends EventTarget {
   // I think using `data` as a var name is fine here.
   /* eslint-disable id-blacklist */
@@ -411,6 +428,11 @@ export class FixieConversationClient extends EventTarget {
   }
 }
 
+/**
+ * A client that maintains a connection to the Fixie conversation API.
+ */
+// This may be of minimal value, and we should just consolidate into using FixieConversationClient directly. Maybe the
+// methods on this class should just be static methods on FixieConversationClient.
 export class FixieChatClient {
   private readonly conversationsRoot: ReturnType<typeof collection>;
   private readonly fixieClient: IsomorphicFixieClient;
@@ -443,6 +465,12 @@ export class FixieChatClient {
   }
 }
 
+/**
+ * A map of Fixie API URLs to FixieChatClients.
+ *
+ * In practice, this will only ever have a single entry. But the useFixie hook takes a fixieAPIUrl argument, so if we don't
+ * handle multiple possible values, it'll be a footgun.
+ */
 const fixieChatClients: Record<string, FixieChatClient> = {};
 
 /**
