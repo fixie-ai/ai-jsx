@@ -381,17 +381,19 @@ export class FixieConversationClient extends EventTarget {
     this.lastSeenMostRecentAgentTextMessage = '';
     this.modelResponseRequested = 'regenerate';
     this.dispatchStateChangeEvent();
-    const response = this.fixieClient.regenerate(
+    const requestStart = this.fixieClient.regenerate(
       agentId,
       this.conversationId,
       this.getMostRecentAssistantTurn()!.id,
       fullMessageGenerationParams
     );
-    response.then(() => {
-      this.modelResponseRequested = null;
-      this.dispatchStateChangeEvent();
-    });
-    return response;
+    requestStart
+      .then((response) => response.text())
+      .then(() => {
+        this.modelResponseRequested = null;
+        this.dispatchStateChangeEvent();
+      });
+    return requestStart;
   }
 
   public stop(agentId: AgentId) {
@@ -405,12 +407,14 @@ export class FixieConversationClient extends EventTarget {
       this.lastAssistantMessagesAtStop = mostRecentAssistantTurn.messages;
     }
     this.dispatchStateChangeEvent();
-    const response = this.fixieClient.stopGeneration(agentId, this.conversationId, mostRecentAssistantTurn!.id);
-    response.then(() => {
-      this.modelResponseRequested = null;
-      this.dispatchStateChangeEvent();
-    });
-    return response;
+    const requestStart = this.fixieClient.stopGeneration(agentId, this.conversationId, mostRecentAssistantTurn!.id);
+    requestStart
+      .then((response) => response.text())
+      .then(() => {
+        this.modelResponseRequested = null;
+        this.dispatchStateChangeEvent();
+      });
+    return requestStart;
   }
 
   private getMostRecentAssistantTurn() {
@@ -531,10 +535,8 @@ export function useFixie({
     let conversation: FixieConversationClient;
 
     function updateLocalStateFromConversation() {
-      console.log('useFixie updateLocalStateFromConversation');
       setLoadState(conversation.getLoadState());
       setTurns(conversation.getTurns());
-      console.log('useFixie turns', conversation.getTurns());
       setModelResponseInProgress(conversation.getModelResponseInProgress());
       setConversationExists(conversation.exists());
     }
