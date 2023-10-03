@@ -63,8 +63,7 @@ interface AsrProps {
 }
 
 const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, transcript }) => {
-  const [output, setOutput] = useState<Transcript[]>([]);
-  const outputRef = useRef(output);
+  const output = useRef<Transcript[]>([]);
   const [partialLatency, setPartialLatency] = useState<number[]>([]);
   const [finalLatency, setFinalLatency] = useState<number[]>([]);
   const [recognizer, setRecognizer] = useState<SpeechRecognitionBase | null>(null);
@@ -93,9 +92,9 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
     return wordErrorRate(refClean, inClean);
   };
   const start = () => {
+    output.current = [];
     const recognizer = createSpeechRecognition({ provider: id, manager: manager!, getToken });
     setRecognizer(recognizer);
-    setOutput([]);
     setPartialLatency([]);
     setFinalLatency([]);
     recognizer.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
@@ -110,9 +109,9 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
       // If so, we'll use that to compute the partial latency.
       // We'll also skip any duplicate partial transcripts.
       let partialLatency = transcript.observedLatency!;
-      const currOutput = outputRef.current;
+      const currOutput = output.current;
       if (currOutput.length > 0) {
-        const lastTranscript = currOutput.at(-1)
+        const lastTranscript = currOutput.at(-1);
         if (!lastTranscript.final) {
           if (normalizeText(lastTranscript.text) == normalizeText(transcript.text)) {
             console.debug(`[${id}] Duplicate transcript "${transcript.text}"`);
@@ -127,10 +126,8 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
       // Update our list of transcripts and latency counters.
       // The final latency is just the transcript timestamp minus the VAD timestamp.
       // The partial latency takes into account any matching partials, or the final latency if there are no matches.
-      setOutput((prevOutput) => {
-        outputRef.current = [...prevOutput.slice(0, justFinals(prevOutput).length), transcript];
-        return outputRef.current;
-      });
+      const prevOutput = output.current;
+      output.current = [...prevOutput.slice(0, justFinals(prevOutput).length), transcript];
       if (transcript.final && transcript.observedLatency) {
         setFinalLatency((prev) => [...prev, transcript.observedLatency!]);
         setPartialLatency((prev) => [...prev, partialLatency]);
@@ -175,9 +172,9 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
       </div>
       <div className="text-sm">
         <span className="font-bold">WER: </span>
-        {computeWer(output, transcript).toFixed(3)}
+        {computeWer(output.current, transcript).toFixed(3)}
       </div>
-      <TranscriptRenderer value={output} />
+      <TranscriptRenderer value={output.current} />
     </div>
   );
 };

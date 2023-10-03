@@ -88,7 +88,7 @@ class ChatRequest {
     public active: boolean
   ) {}
   async start() {
-    console.log(`calling LLM for ${this.inMessages[this.inMessages.length - 1].content}`);
+    console.log(`calling LLM for ${this.inMessages.at(-1)?.content}`);
     this.startMillis = performance.now();
     const res = await fetch('/agent/api', {
       method: 'POST',
