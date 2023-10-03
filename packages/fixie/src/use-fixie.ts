@@ -150,15 +150,15 @@ class PerfLogEvent extends Event {
 class FixieConversationClient extends EventTarget {
   // I think using `data` as a var name is fine here.
   /* eslint-disable id-blacklist */
-  private performanceTrace: { name: string; timeMs: number; data?: Jsonifiable }[] = []
-  private lastGeneratedTurnId: ConversationTurn['id'] | undefined = undefined
-  private lastTurnForWhichHandleNewTokensWasCalled: ConversationTurn['id'] | undefined = undefined
-  
+  private performanceTrace: { name: string; timeMs: number; data?: Jsonifiable }[] = [];
+  private lastGeneratedTurnId: ConversationTurn['id'] | undefined = undefined;
+  private lastTurnForWhichHandleNewTokensWasCalled: ConversationTurn['id'] | undefined = undefined;
+
   addPerfCheckpoint(name: string, data?: Jsonifiable) {
     this.performanceTrace.push({ name, timeMs: performance.now(), data });
   }
   /* eslint-enable id-blacklist */
-  
+
   /**
    * We do state management for optimistic UI.
    *
@@ -166,16 +166,21 @@ class FixieConversationClient extends EventTarget {
    * Firebase and that update is seen by the client. Instead, we'd rather optimistically update.This requires managing
    * an intermediate layer of state.
    */
-  private modelResponseRequested: ModelRequestedState = null
+  private modelResponseRequested: ModelRequestedState = null;
+  private lastAssistantMessagesAtStop: ConversationTurn['messages'] = [];
 
-  private conversationFirebaseDoc: ReturnType<typeof doc>
-  private loadState: UseFixieResult['loadState'] = 'loading'
-  private turns: UseFixieResult['turns'] = []
+  private conversationFirebaseDoc: ReturnType<typeof doc>;
+  private loadState: UseFixieResult['loadState'] = 'loading';
+  private turns: UseFixieResult['turns'] = [];
 
-  private lastSeenMostRecentAgentTextMessage = ''
+  private lastSeenMostRecentAgentTextMessage = '';
 
   // TODO: Unsubscribe eventually
-  constructor(public readonly conversationId: ConversationId, fixieChatClient: FixieChatClient, conversationsRoot: ReturnType<typeof collection>) {
+  constructor(
+    public readonly conversationId: ConversationId,
+    private readonly fixieClient: IsomorphicFixieClient,
+    conversationsRoot: ReturnType<typeof collection>
+  ) {
     super();
 
     this.conversationFirebaseDoc = doc(conversationsRoot, conversationId);
@@ -202,7 +207,7 @@ class FixieConversationClient extends EventTarget {
         this.turns[index] = {
           ...doc.data(),
           id: doc.id,
-        }
+        };
       });
 
       snapshot.docChanges().forEach((change) => {
@@ -228,13 +233,13 @@ class FixieConversationClient extends EventTarget {
                 const newMessagePart = messageIsContinuation
                   ? mostRecentAssistantTextMessage.content.slice(lastMessageFromAgent.length)
                   : mostRecentAssistantTextMessage.content;
-    
+
                 if (!messageIsContinuation && this.lastTurnForWhichHandleNewTokensWasCalled === turn.id) {
                   return;
                 }
-    
+
                 this.lastSeenMostRecentAgentTextMessage = mostRecentAssistantTextMessage.content;
-    
+
                 if (newMessagePart) {
                   this.lastTurnForWhichHandleNewTokensWasCalled = turn.id;
                   this.addPerfCheckpoint('chat:delta:text', { newText: newMessagePart });
@@ -288,57 +293,119 @@ class FixieConversationClient extends EventTarget {
       name: 'chat:delta:text',
     })?.timeMs;
 
-    this.dispatchEvent(new PerfLogEvent('[DD] All traces', {
-      traces: this.performanceTrace,
-      ...commonData,
-    }));
+    this.dispatchEvent(
+      new PerfLogEvent('[DD] All traces', {
+        traces: this.performanceTrace,
+        ...commonData,
+      })
+    );
     if (firstFirebaseDelta) {
-      this.dispatchEvent(new PerfLogEvent('[DD] All traces after first Firebase delta', {
-        ...commonData,
-        timeMs: firstFirebaseDelta - firstPerfTrace,
-      }));
+      this.dispatchEvent(
+        new PerfLogEvent('[DD] All traces after first Firebase delta', {
+          ...commonData,
+          timeMs: firstFirebaseDelta - firstPerfTrace,
+        })
+      );
       const totalFirebaseTimeMs = lastFirebaseDelta! - firstPerfTrace;
-      this.dispatchEvent(new PerfLogEvent('[DD] Time to last Firebase delta', {
-        ...commonData,
-        timeMs: totalFirebaseTimeMs,
-        charactersPerMs: textCharactersInMostRecentTurn / totalFirebaseTimeMs,
-      }));
+      this.dispatchEvent(
+        new PerfLogEvent('[DD] Time to last Firebase delta', {
+          ...commonData,
+          timeMs: totalFirebaseTimeMs,
+          charactersPerMs: textCharactersInMostRecentTurn / totalFirebaseTimeMs,
+        })
+      );
     }
 
     this.performanceTrace = [];
+  }
+
+  public getLoadState() {
+    return this.loadState;
+  }
+  public getTurns() {
+    return this.turns;
+  }
+
+  public async sendMessage(agentId: AgentId, message: string, messageGenerationParams: MessageGenerationParams) {
+    this.performanceTrace = [];
+    this.addPerfCheckpoint('send-message');
+    this.lastGeneratedTurnId = this.turns.at(-1)?.id;
+    this.lastSeenMostRecentAgentTextMessage = '';
+    await this.fixieClient.sendMessage(agentId, this.conversationId, {
+      message,
+      generationParams: messageGenerationParams,
+    });
+  }
+
+  public async regenerate(agentId: AgentId, fullMessageGenerationParams: MessageGenerationParams) {
+    this.performanceTrace = [];
+    this.addPerfCheckpoint('regenerate');
+    this.lastGeneratedTurnId = this.turns.at(-1)?.id;
+    this.lastSeenMostRecentAgentTextMessage = '';
+    this.modelResponseRequested = 'regenerate';
+    await this.fixieClient.regenerate(
+      agentId,
+      this.conversationId,
+      this.getMostRecentAssistantTurn()!.id,
+      fullMessageGenerationParams
+    );
+    this.modelResponseRequested = null;
+  }
+
+  public async stop(agentId: AgentId) {
+    this.lastSeenMostRecentAgentTextMessage = '';
+    this.lastGeneratedTurnId = this.turns.at(-1)?.id;
+    this.modelResponseRequested = 'stop';
+    this.flushPerfTrace();
+    this.addPerfCheckpoint('stop');
+    const mostRecentAssistantTurn = this.getMostRecentAssistantTurn();
+    if (mostRecentAssistantTurn) {
+      this.lastAssistantMessagesAtStop = mostRecentAssistantTurn.messages;
+    }
+    await this.fixieClient.stopGeneration(agentId, this.conversationId, mostRecentAssistantTurn!.id);
+    this.modelResponseRequested = null;
+  }
+
+  public getMostRecentAssistantTurn() {
+    return _.findLast(this.turns, { role: 'assistant' }) as AssistantConversationTurn | undefined;
+  }
+
+  public getModelResponseInProgress() {
+    if (this.modelResponseRequested === 'regenerate') {
+      return true;
+    }
+    if (this.modelResponseRequested === 'stop') {
+      return false;
+    }
+    return this.loadState === 'loaded' && this.getMostRecentAssistantTurn()?.state === 'in-progress';
   }
 }
 
 class FixieChatClient {
   private readonly conversationsRoot: ReturnType<typeof collection>;
-  private fixieClients: Record<string, IsomorphicFixieClient> = {}
+  private readonly fixieClient: IsomorphicFixieClient;
   private conversations: Record<ConversationId, FixieConversationClient> = {};
 
-  constructor() {
+  constructor(fixieAPIUrl = 'https://api.fixie.ai') {
     const firebaseApp = initializeApp(firebaseConfig);
     this.conversationsRoot = collection(getFirestore(firebaseApp), 'schemas/v0/conversations');
+    this.fixieClient = IsomorphicFixieClient.CreateWithoutApiKey(fixieAPIUrl);
   }
 
-  public getFixieClient(fixieAPIUrl?: string) {
-    const urlToUse = fixieAPIUrl ?? 'https://api.fixie.ai';
-    if (!(urlToUse in this.fixieClients)) {
-      // We don't need the API key to access the conversation API.
-      this.fixieClients[urlToUse] = IsomorphicFixieClient.CreateWithoutApiKey(urlToUse);
-    }
-    return this.fixieClients[urlToUse];
-  }
-
-  async createNewConversation(fixieAPIUrl: string | undefined, input: string, agentId: AgentId, fullMessageGenerationParams: MessageGenerationParams) {
-    const conversationId = (
-      await this.getFixieClient(fixieAPIUrl).startConversation(agentId, fullMessageGenerationParams, input)
-    ).conversationId;
+  async createNewConversation(input: string, agentId: AgentId, fullMessageGenerationParams: MessageGenerationParams) {
+    const conversationId = (await this.fixieClient.startConversation(agentId, fullMessageGenerationParams, input))
+      .conversationId;
 
     return this.getConversation(conversationId);
   }
 
   getConversation(conversationId: ConversationId) {
     if (!(conversationId in this.conversations)) {
-      this.conversations[conversationId] = new FixieConversationClient(conversationId, this, this.conversationsRoot);
+      this.conversations[conversationId] = new FixieConversationClient(
+        conversationId,
+        this.fixieClient,
+        this.conversationsRoot
+      );
     }
     return this.conversations[conversationId];
   }
@@ -366,10 +433,10 @@ export function useFixie({
    * Because any value that gets returned from this hook may impact render, it seems like we'd want to use setState.
    * However, I've noticed some timing issues where, because setState is async, the value is not actually read when
    * we need it.
-   * 
+   *
    * For instance, if we manage a value X via setState, and on a hook invocation, we call setState(X + 1), all our
    * reads of X in this hook invocation will read the old value of X, not the new value.
-   * 
+   *
    * Thus, to manage state where we need the update to be reflected immediately, I've used refs. I'm not sure if
    * this is bad or there's something else I'm supposed to do in this situation.
    */
@@ -392,8 +459,6 @@ export function useFixie({
   // }
   /* eslint-enable id-blacklist */
 
-
-
   // const [modelResponseRequested, setModelResponseRequested] = useState<ModelRequestedState>(null);
   // const [lastAssistantMessagesAtStop, setLastAssistantMessagesAtStop] = useState<
   //   Record<ConversationTurn['id'], ConversationTurn['messages']>
@@ -405,7 +470,7 @@ export function useFixie({
     ...messageGenerationParams,
     userTimeZoneOffset: new Date().getTimezoneOffset(),
   };
-  
+
   // const [value, loading, error, snapshot] = useCollectionData<ConversationTurn>(
   //   // This rightly complains that we aren't using .withConverter,
   //   // but we hack around it below by manually updating messages.
@@ -447,8 +512,8 @@ export function useFixie({
 
   // const loadState = (loading ? 'loading' : error ? error : 'loaded') as UseFixieResult['loadState'];
   const conversation = fixieChatClient.getConversation(conversationId);
-  const {loadState} = conversation;
-  const turns = conversationFixtures ?? conversation.turns;
+  const loadState = conversation.getLoadState();
+  const turns = conversationFixtures ?? conversation.getTurns();
 
   /**
    * The right way to do this is to use with `withConverter` method, but when I enabled
@@ -462,83 +527,77 @@ export function useFixie({
 
   const mostRecentAssistantTurn = _.findLast(turns, { role: 'assistant' }) as AssistantConversationTurn | undefined;
 
-  async function sendMessage(message?: string) {
-    if (!conversationId) {
-      return;
-    }
-    performanceTrace.current = [];
-    addPerfCheckpoint('send-message');
-    lastGeneratedTurnId.current = turns.at(-1)?.id;
-    lastSeenMostRecentAgentTextMessage.current = '';
-    await fixieClient.sendMessage(agentId, conversationId, {
-      message: message ?? input,
-      generationParams: fullMessageGenerationParams,
-    });
-  }
+  // async function sendMessage(message?: string) {
+  //   if (!conversationId) {
+  //     return;
+  //   }
+  //   performanceTrace.current = [];
+  //   addPerfCheckpoint('send-message');
+  //   lastGeneratedTurnId.current = turns.at(-1)?.id;
+  //   lastSeenMostRecentAgentTextMessage.current = '';
+  //   await fixieClient.sendMessage(agentId, conversationId, {
+  //     message: message ?? input,
+  //     generationParams: fullMessageGenerationParams,
+  //   });
+  // }
 
-  if (modelResponseRequested === 'regenerate' && mostRecentAssistantTurn) {
-    mostRecentAssistantTurn.messages = [];
-  }
-  /**
-   * This strategy means that if the UI will optimistically update to stop the stream. However, once the user
-   * refreshes, they'll see more content when the client discards the local `lastAssistantMessagesAtStop` state
-   * and instead reads from Firebase.
-   */
-  turns.forEach((turn) => {
-    // The types are wrong here.
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (lastAssistantMessagesAtStop[turn.id]) {
-      turn.messages = lastAssistantMessagesAtStop[turn.id];
-    }
-  });
+  // if (modelResponseRequested === 'regenerate' && mostRecentAssistantTurn) {
+  //   mostRecentAssistantTurn.messages = [];
+  // }
+  // /**
+  //  * This strategy means that if the UI will optimistically update to stop the stream. However, once the user
+  //  * refreshes, they'll see more content when the client discards the local `lastAssistantMessagesAtStop` state
+  //  * and instead reads from Firebase.
+  //  */
+  // turns.forEach((turn) => {
+  //   // The types are wrong here.
+  //   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  //   if (lastAssistantMessagesAtStop[turn.id]) {
+  //     turn.messages = lastAssistantMessagesAtStop[turn.id];
+  //   }
+  // });
 
-  async function regenerate() {
-    if (!conversationId) {
-      return;
-    }
-    performanceTrace.current = [];
-    addPerfCheckpoint('regenerate');
-    lastGeneratedTurnId.current = turns.at(-1)?.id;
-    lastSeenMostRecentAgentTextMessage.current = '';
-    setModelResponseRequested('regenerate');
-    await fixieClient.regenerate(agentId, conversationId, mostRecentAssistantTurn!.id, fullMessageGenerationParams);
-    setModelResponseRequested(null);
-  }
+  // async function regenerate() {
+  //   if (!conversationId) {
+  //     return;
+  //   }
+  //   performanceTrace.current = [];
+  //   addPerfCheckpoint('regenerate');
+  //   lastGeneratedTurnId.current = turns.at(-1)?.id;
+  //   lastSeenMostRecentAgentTextMessage.current = '';
+  //   setModelResponseRequested('regenerate');
+  //   await fixieClient.regenerate(agentId, conversationId, mostRecentAssistantTurn!.id, fullMessageGenerationParams);
+  //   setModelResponseRequested(null);
+  // }
 
-  async function stop() {
-    if (!conversationId) {
-      return;
-    }
-    lastSeenMostRecentAgentTextMessage.current = '';
-    lastGeneratedTurnId.current = turns.at(-1)?.id;
-    setModelResponseRequested('stop');
-    flushPerfTrace();
-    addPerfCheckpoint('stop');
-    if (mostRecentAssistantTurn) {
-      setLastAssistantMessagesAtStop((prev) => ({
-        ...prev,
-        [mostRecentAssistantTurn!.id]: mostRecentAssistantTurn.messages,
-      }));
-    }
-    await fixieClient.stopGeneration(agentId, conversationId, mostRecentAssistantTurn!.id);
-    setModelResponseRequested(null);
-  }
+  // async function stop() {
+  //   if (!conversationId) {
+  //     return;
+  //   }
+  //   lastSeenMostRecentAgentTextMessage.current = '';
+  //   lastGeneratedTurnId.current = turns.at(-1)?.id;
+  //   setModelResponseRequested('stop');
+  //   flushPerfTrace();
+  //   addPerfCheckpoint('stop');
+  //   if (mostRecentAssistantTurn) {
+  //     setLastAssistantMessagesAtStop((prev) => ({
+  //       ...prev,
+  //       [mostRecentAssistantTurn!.id]: mostRecentAssistantTurn.messages,
+  //     }));
+  //   }
+  //   await fixieClient.stopGeneration(agentId, conversationId, mostRecentAssistantTurn!.id);
+  //   setModelResponseRequested(null);
+  // }
 
-  function getModelResponseInProgress() {
-    if (modelResponseRequested === 'regenerate') {
-      return true;
-    }
-    if (modelResponseRequested === 'stop') {
-      return false;
-    }
-    return loadState === 'loaded' && mostRecentAssistantTurn?.state === 'in-progress';
-  }
-
-  console.log('nth==', {
-    validConversationIds: Array.from(validConversationIds.current.values()),
-    conversationId,
-    exists: validConversationIds.current.has(conversationId) || (snapshot ? !snapshot.empty : undefined)
-  })
+  // function getModelResponseInProgress() {
+  //   if (modelResponseRequested === 'regenerate') {
+  //     return true;
+  //   }
+  //   if (modelResponseRequested === 'stop') {
+  //     return false;
+  //   }
+  //   return loadState === 'loaded' && mostRecentAssistantTurn?.state === 'in-progress';
+  // }
 
   return {
     turns,

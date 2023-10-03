@@ -26,12 +26,12 @@ export interface FixieEmbedProps extends React.IframeHTMLAttributes<HTMLIFrameEl
   inline?: boolean;
 
   /**
-   * If true, the agent will send a greeting message when the conversation starts. To make this work, you'll want to 
-   * either specify a hardcoded greeting message as part of the agent config, or update the agent system message to 
+   * If true, the agent will send a greeting message when the conversation starts. To make this work, you'll want to
+   * either specify a hardcoded greeting message as part of the agent config, or update the agent system message to
    * tell the agent how to start the conversation.
-   * 
+   *
    * If false, the agent will be silent until the user sends a message.
-   * 
+   *
    * Defaults to false.
    */
   agentSendsGreeting?: boolean;
@@ -49,8 +49,17 @@ const defaultFixieHost = 'https://fixie.vercel.app';
  *
  * Any extra props to this component are passed through to the `iframe`.
  */
-export function InlineFixieEmbed({ speak, debug, agentId, fixieHost, agentSendsGreeting, ...iframeProps }: FixieEmbedProps) {
-  return <iframe {...getBaseIframeProps({ speak, debug, agentId, fixieHost, agentSendsGreeting })} {...iframeProps}></iframe>;
+export function InlineFixieEmbed({
+  speak,
+  debug,
+  agentId,
+  fixieHost,
+  agentSendsGreeting,
+  ...iframeProps
+}: FixieEmbedProps) {
+  return (
+    <iframe {...getBaseIframeProps({ speak, debug, agentId, fixieHost, agentSendsGreeting })} {...iframeProps}></iframe>
+  );
 }
 
 export function ControlledFloatingFixieEmbed({
