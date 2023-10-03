@@ -1,7 +1,7 @@
-import { getFirestore, collection, doc, query, orderBy, FirestoreError } from 'firebase/firestore';
-import { useCollectionData as typedUseCollectionData } from 'react-firebase-hooks/firestore';
+import { getFirestore, collection, doc, query, orderBy, FirestoreError, onSnapshot } from 'firebase/firestore';
+// import { useCollectionData as typedUseCollectionData } from 'react-firebase-hooks/firestore';
 // @ts-expect-error
-import { useCollectionData as untypedUseCollectionData } from 'react-firebase-hooks/firestore/dist/index.esm.js';
+// import { useCollectionData as untypedUseCollectionData } from 'react-firebase-hooks/firestore/dist/index.esm.js';
 import { initializeApp } from 'firebase/app';
 
 import { useState, SetStateAction, Dispatch, useRef, useEffect } from 'react';
@@ -19,7 +19,7 @@ import { IsomorphicFixieClient } from './isomorphic-client.js';
 
 // This is whacky. I did it because Webpack from Fixie Frame threw an error
 // when trying to build this file. (Vite from Redwood worked fine.)
-const useCollectionData = untypedUseCollectionData as typeof typedUseCollectionData;
+// const useCollectionData = untypedUseCollectionData as typeof typedUseCollectionData;
 
 export interface UseFixieResult {
   /**
@@ -135,18 +135,18 @@ const firebaseConfig = {
 
 type ModelRequestedState = 'stop' | 'regenerate' | null;
 
-class FixieChatClient {
+class FixieConversationClient {
   // I think using `data` as a var name is fine here.
   /* eslint-disable id-blacklist */
   private performanceTrace: { name: string; timeMs: number; data?: Jsonifiable }[] = []
   private lastGeneratedTurnId: ConversationTurn['id'] | undefined = undefined
   private lastTurnForWhichHandleNewTokensWasCalled: ConversationTurn['id'] | undefined = undefined
-
+  
   addPerfCheckpoint(name: string, data?: Jsonifiable) {
     this.performanceTrace.push({ name, timeMs: performance.now(), data });
   }
   /* eslint-enable id-blacklist */
-
+  
   /**
    * We do state management for optimistic UI.
    *
@@ -156,17 +156,53 @@ class FixieChatClient {
    */
   private modelResponseRequested: ModelRequestedState = null
 
+  private conversationFirebaseDoc: ReturnType<typeof doc>
+  private loadState: UseFixieResult['loadState'] = 'loading'
+  private turns: UseFixieResult['turns'] = []
+
+  constructor(private readonly conversationId: ConversationId, fixieChatClient: FixieChatClient) {
+
+  }
+
+}
+
+class FixieChatClient {
   private conversationsRoot: ReturnType<typeof collection>;
-  private conversationDocs: Record<ConversationId, ReturnType<typeof doc>> = {}
-
   private fixieClients: Record<string, IsomorphicFixieClient> = {}
-
-  private validConversationIds = new Set<ConversationId>();
+  private conversations: Record<ConversationId, FixieConversationClient> = {};
 
   constructor() {
     const firebaseApp = initializeApp(firebaseConfig);
     this.conversationsRoot = collection(getFirestore(firebaseApp), 'schemas/v0/conversations');
-    
+  }
+
+  public getFixieClient(fixieAPIUrl?: string) {
+    const urlToUse = fixieAPIUrl ?? 'https://api.fixie.ai';
+    if (!(urlToUse in this.fixieClients)) {
+      // We don't need the API key to access the conversation API.
+      this.fixieClients[urlToUse] = IsomorphicFixieClient.CreateWithoutApiKey(urlToUse);
+    }
+    return this.fixieClients[urlToUse];
+  }
+
+  async createNewConversation(fixieAPIUrl: string | undefined, input: string, agentId: AgentId, fullMessageGenerationParams: MessageGenerationParams) {
+    const conversationId = (
+      await this.getFixieClient(fixieAPIUrl).startConversation(agentId, fullMessageGenerationParams, input)
+    ).conversationId;
+    this.subscribeToConversation(conversationId);
+    return conversationId;
+  }
+
+  // TODO: Unsubscribe eventually
+  private subscribeToConversation(conversationId: ConversationId) {
+    if (!(conversationId in this.conversations)) {
+      this.conversations[conversationId] = {
+        loadState: 'loading',
+        turns: []
+      }
+    }
+
+    const conversation = this.getConversationDoc(conversationId)
     const turnCollection = collection(conversation, 'turns');
     // If we try this, we get:
     //
@@ -183,194 +219,73 @@ class FixieChatClient {
     //   }
     // });
     const turnsQuery = query(turnCollection, orderBy('timestamp', 'asc'));
-  }
+    onSnapshot(turnsQuery, (snapshot) => {
+      this.conversations[conversationId].loadState = 'loaded';
+      snapshot.docs.forEach((doc, index) => {
+        this.conversations[conversationId].turns[index] = {
+          ...doc.data(),
+          id: doc.id,
+        }
+      });
 
-  private getFixieClient(fixieAPIUrl?: string) {
-    const urlToUse = fixieAPIUrl ?? 'https://api.fixie.ai';
-    if (!(urlToUse in this.fixieClients)) {
-      // We don't need the API key to access the conversation API.
-      this.fixieClients[urlToUse] = IsomorphicFixieClient.CreateWithoutApiKey(urlToUse);
-    }
-    return this.fixieClients[urlToUse];
-  }
-
-  private getConversationDoc(conversationId: ConversationId) {
-    if (!this.conversationDocs[conversationId]) {
-      const conversation = doc(this.conversationsRoot, conversationId ?? 'fake-id');
-      this.conversationDocs[conversationId] = conversation;
-    }
-    return this.conversationDocs[conversationId];
-  }
-
-  async createNewConversation(fixieAPIUrl: string | undefined, input: string, agentId: AgentId, fullMessageGenerationParams: MessageGenerationParams) {
-    const conversationId = (
-      await this.getFixieClient().startConversation(agentId, fullMessageGenerationParams, input)
-    ).conversationId;
-    this.validConversationIds.add(conversationId);
-    return conversationId;
-  }
-}
-
-const fixieChatClient = new FixieChatClient();
-
-/**
- * @experimental this API may change at any time.
- *
- * This hook manages the state of a Fixie-hosted conversation.
- */
-export function useFixie({
-  conversationId: userPassedConversationId,
-  conversationFixtures,
-  onNewTokens,
-  messageGenerationParams,
-  logPerformanceTraces,
-  agentId,
-  fixieAPIUrl,
-  onNewConversation,
-}: UseFixieArgs): UseFixieResult {
-  /**
-   * Aspects of the useFixie hook may be hideously more complicated than they need to be.
-   * 
-   * In general, you're supposed to use setState for values that impact render, and ref for values that don't.
-   * Because any value that gets returned from this hook may impact render, it seems like we'd want to use setState.
-   * However, I've noticed some timing issues where, because setState is async, the value is not actually read when
-   * we need it.
-   * 
-   * For instance, if we manage a value X via setState, and on a hook invocation, we call setState(X + 1), all our
-   * reads of X in this hook invocation will read the old value of X, not the new value.
-   * 
-   * Thus, to manage state where we need the update to be reflected immediately, I've used refs. I'm not sure if
-   * this is bad or there's something else I'm supposed to do in this situation.
-   */
-
-  const [input, setInput] = useState('');
-  const [conversationId, setConversationId] = useState(userPassedConversationId);
-
-  useEffect(() => {
-    setConversationId(userPassedConversationId);
-  }, [userPassedConversationId]);
-
-  // I think using `data` as a var name is fine here.
-  /* eslint-disable id-blacklist */
-  const performanceTrace = useRef<{ name: string; timeMs: number; data?: Jsonifiable }[]>([]);
-  const lastGeneratedTurnId = useRef<ConversationTurn['id'] | undefined>(undefined);
-  const lastTurnForWhichHandleNewTokensWasCalled = useRef<ConversationTurn['id'] | undefined>(undefined);
-
-  function addPerfCheckpoint(name: string, data?: Jsonifiable) {
-    performanceTrace.current.push({ name, timeMs: performance.now(), data });
-  }
-  /* eslint-enable id-blacklist */
-
-
-
-  const [modelResponseRequested, setModelResponseRequested] = useState<ModelRequestedState>(null);
-  const [lastAssistantMessagesAtStop, setLastAssistantMessagesAtStop] = useState<
-    Record<ConversationTurn['id'], ConversationTurn['messages']>
-  >({});
-
-  const fullMessageGenerationParams: MessageGenerationParams = {
-    model: 'gpt-4-32k',
-    modelProvider: 'openai',
-    ...messageGenerationParams,
-    userTimeZoneOffset: new Date().getTimezoneOffset(),
-  };
-  
-  const [value, loading, error, snapshot] = useCollectionData<ConversationTurn>(
-    // This rightly complains that we aren't using .withConverter,
-    // but we hack around it below by manually updating messages.
-    // @ts-expect-error
-    turnsQuery
-  );
-
-  const lastSeenMostRecentAgentTextMessage = useRef('');
-  const validConversationIds = useRef(new Set());
-  async function createNewConversation(overriddenInput?: string) {
-    const conversationId = await fixieChatClient.createNewConversation(
-      fixieAPIUrl,
-      overriddenInput ?? input,
-      agentId,
-      fullMessageGenerationParams
-    );
-    setConversationId(conversationId);
-    onNewConversation?.(conversationId);
-  }
-
-  /**
-   * If there's no conversation ID, we return noops for everything. This allows the caller of this hook to be largely
-   * agnostic to whether a conversation actually exists. However, because hooks must be called unconditionally,
-   * we have the awkwardness of needing to call all the hooks above this spot in the code.
-   */
-  if (!conversationId) {
-    return {
-      turns: [],
-      loadState: 'no-conversation-set',
-      modelResponseInProgress: false,
-      regenerate,
-      stop,
-      sendMessage: createNewConversation,
-      error: undefined,
-      input,
-      setInput,
-    };
-  }
-
-  const loadState = (loading ? 'loading' : error ? error : 'loaded') as UseFixieResult['loadState'];
-  const turns = conversationFixtures ?? value ?? [];
-
-  /**
-   * The right way to do this is to use with `withConverter` method, but when I enabled
-   * that, I had other problems.
-   */
-  if (loadState === 'loaded' && !conversationFixtures) {
-    snapshot?.docs.forEach((doc, index) => {
-      turns![index].id = doc.id;
-    });
-  }
-
-  const mostRecentAssistantTurn = _.findLast(turns, { role: 'assistant' }) as AssistantConversationTurn | undefined;
-
-  snapshot?.docChanges().forEach((change) => {
-    if (change.type === 'modified') {
-      const turn = change.doc.data() as ConversationTurn;
-      if (turn.role === 'assistant') {
-        /**
-         * We only want to call onNewTokens when the model is generating new tokens. If turn.state is 'stopped', it'll
-         * still generate a new `modified` change, and thus this callback will be called, but we don't want to call
-         * onNewTokens.
-         *
-         * Because we do optimistic UI, it's possible that we've requested a stop, but generation hasn't actually
-         * stopped. In this case, we don't wnat to call onNewTokens, so we check modelResponseRequested.
-         */
-        if (['in-progress', 'done'].includes(turn.state) && modelResponseRequested !== 'stop') {
-          const lastMessageFromAgent = lastSeenMostRecentAgentTextMessage.current;
-          const mostRecentAssistantTextMessage = _.findLast(turn.messages, {
-            kind: 'text',
-          }) as TextMessage | undefined;
-          if (mostRecentAssistantTextMessage) {
-            const messageIsContinuation =
-              lastMessageFromAgent && mostRecentAssistantTextMessage.content.startsWith(lastMessageFromAgent);
-            const newMessagePart = messageIsContinuation
-              ? mostRecentAssistantTextMessage.content.slice(lastMessageFromAgent.length)
-              : mostRecentAssistantTextMessage.content;
-
-            if (!messageIsContinuation && lastTurnForWhichHandleNewTokensWasCalled.current === turn.id) {
-              return;
-            }
-
-            lastSeenMostRecentAgentTextMessage.current = mostRecentAssistantTextMessage.content;
-
-            if (newMessagePart) {
-              lastTurnForWhichHandleNewTokensWasCalled.current = turn.id;
-              addPerfCheckpoint('chat:delta:text', { newText: newMessagePart });
-              onNewTokens?.(newMessagePart);
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'modified') {
+          const turn = change.doc.data() as ConversationTurn;
+          if (turn.role === 'assistant') {
+            /**
+             * We only want to call onNewTokens when the model is generating new tokens. If turn.state is 'stopped', it'll
+             * still generate a new `modified` change, and thus this callback will be called, but we don't want to call
+             * onNewTokens.
+             *
+             * Because we do optimistic UI, it's possible that we've requested a stop, but generation hasn't actually
+             * stopped. In this case, we don't wnat to call onNewTokens, so we check modelResponseRequested.
+             */
+            if (['in-progress', 'done'].includes(turn.state) && modelResponseRequested !== 'stop') {
+              const lastMessageFromAgent = lastSeenMostRecentAgentTextMessage.current;
+              const mostRecentAssistantTextMessage = _.findLast(turn.messages, {
+                kind: 'text',
+              }) as TextMessage | undefined;
+              if (mostRecentAssistantTextMessage) {
+                const messageIsContinuation =
+                  lastMessageFromAgent && mostRecentAssistantTextMessage.content.startsWith(lastMessageFromAgent);
+                const newMessagePart = messageIsContinuation
+                  ? mostRecentAssistantTextMessage.content.slice(lastMessageFromAgent.length)
+                  : mostRecentAssistantTextMessage.content;
+    
+                if (!messageIsContinuation && lastTurnForWhichHandleNewTokensWasCalled.current === turn.id) {
+                  return;
+                }
+    
+                lastSeenMostRecentAgentTextMessage.current = mostRecentAssistantTextMessage.content;
+    
+                if (newMessagePart) {
+                  lastTurnForWhichHandleNewTokensWasCalled.current = turn.id;
+                  addPerfCheckpoint('chat:delta:text', { newText: newMessagePart });
+                  onNewTokens?.(newMessagePart);
+                }
+              }
             }
           }
         }
-      }
-    }
-  });
+      });
 
-  function flushPerfTrace() {
+      if (
+        snapshot?.docChanges().length &&
+        turns.every(({ state }) => state === 'done' || state === 'stopped' || state === 'error') &&
+        performanceTrace.current.length &&
+        turns.at(-1)?.id !== lastGeneratedTurnId.current
+      ) {
+        // I'm not sure if this is at all valuable.
+        addPerfCheckpoint('all-turns-done-or-stopped-or-errored');
+        flushPerfTrace();
+      }
+
+     })
+
+     
+  }
+
+  private flushPerfTrace() {
     if (!performanceTrace.current.length) {
       return;
     }
@@ -419,16 +334,131 @@ export function useFixie({
     performanceTrace.current = [];
   }
 
-  if (
-    snapshot?.docChanges().length &&
-    turns.every(({ state }) => state === 'done' || state === 'stopped' || state === 'error') &&
-    performanceTrace.current.length &&
-    turns.at(-1)?.id !== lastGeneratedTurnId.current
-  ) {
-    // I'm not sure if this is at all valuable.
-    addPerfCheckpoint('all-turns-done-or-stopped-or-errored');
-    flushPerfTrace();
+  getConversation(conversationId: ConversationId) {
+    if (!(conversationId in this.conversations)) {
+      this.subscribeToConversation(conversationId);
+    }
+    return this.conversations[conversationId];
   }
+}
+
+const fixieChatClient = new FixieChatClient();
+
+/**
+ * @experimental this API may change at any time.
+ *
+ * This hook manages the state of a Fixie-hosted conversation.
+ */
+export function useFixie({
+  conversationId: userPassedConversationId,
+  conversationFixtures,
+  onNewTokens,
+  messageGenerationParams,
+  logPerformanceTraces,
+  agentId,
+  fixieAPIUrl,
+  onNewConversation,
+}: UseFixieArgs): UseFixieResult {
+  /**
+   * In general, you're supposed to use setState for values that impact render, and ref for values that don't.
+   * Because any value that gets returned from this hook may impact render, it seems like we'd want to use setState.
+   * However, I've noticed some timing issues where, because setState is async, the value is not actually read when
+   * we need it.
+   * 
+   * For instance, if we manage a value X via setState, and on a hook invocation, we call setState(X + 1), all our
+   * reads of X in this hook invocation will read the old value of X, not the new value.
+   * 
+   * Thus, to manage state where we need the update to be reflected immediately, I've used refs. I'm not sure if
+   * this is bad or there's something else I'm supposed to do in this situation.
+   */
+
+  const [input, setInput] = useState('');
+  const [conversationId, setConversationId] = useState(userPassedConversationId);
+
+  useEffect(() => {
+    setConversationId(userPassedConversationId);
+  }, [userPassedConversationId]);
+
+  // I think using `data` as a var name is fine here.
+  /* eslint-disable id-blacklist */
+  // const performanceTrace = useRef<{ name: string; timeMs: number; data?: Jsonifiable }[]>([]);
+  // const lastGeneratedTurnId = useRef<ConversationTurn['id'] | undefined>(undefined);
+  // const lastTurnForWhichHandleNewTokensWasCalled = useRef<ConversationTurn['id'] | undefined>(undefined);
+
+  // function addPerfCheckpoint(name: string, data?: Jsonifiable) {
+  //   performanceTrace.current.push({ name, timeMs: performance.now(), data });
+  // }
+  /* eslint-enable id-blacklist */
+
+
+
+  // const [modelResponseRequested, setModelResponseRequested] = useState<ModelRequestedState>(null);
+  // const [lastAssistantMessagesAtStop, setLastAssistantMessagesAtStop] = useState<
+  //   Record<ConversationTurn['id'], ConversationTurn['messages']>
+  // >({});
+
+  const fullMessageGenerationParams: MessageGenerationParams = {
+    model: 'gpt-4-32k',
+    modelProvider: 'openai',
+    ...messageGenerationParams,
+    userTimeZoneOffset: new Date().getTimezoneOffset(),
+  };
+  
+  // const [value, loading, error, snapshot] = useCollectionData<ConversationTurn>(
+  //   // This rightly complains that we aren't using .withConverter,
+  //   // but we hack around it below by manually updating messages.
+  //   // @ts-expect-error
+  //   turnsQuery
+  // );
+
+  const lastSeenMostRecentAgentTextMessage = useRef('');
+  const validConversationIds = useRef(new Set());
+  async function createNewConversation(overriddenInput?: string) {
+    const conversationId = await fixieChatClient.createNewConversation(
+      fixieAPIUrl,
+      overriddenInput ?? input,
+      agentId,
+      fullMessageGenerationParams
+    );
+    setConversationId(conversationId);
+    onNewConversation?.(conversationId);
+  }
+
+  /**
+   * If there's no conversation ID, we return noops for everything. This allows the caller of this hook to be largely
+   * agnostic to whether a conversation actually exists. However, because hooks must be called unconditionally,
+   * we have the awkwardness of needing to call all the hooks above this spot in the code.
+   */
+  if (!conversationId) {
+    return {
+      turns: [],
+      loadState: 'no-conversation-set',
+      modelResponseInProgress: false,
+      regenerate,
+      stop,
+      sendMessage: createNewConversation,
+      error: undefined,
+      input,
+      setInput,
+    };
+  }
+
+  // const loadState = (loading ? 'loading' : error ? error : 'loaded') as UseFixieResult['loadState'];
+  const conversation = fixieChatClient.getConversation(conversationId);
+  const {loadState} = conversation;
+  const turns = conversationFixtures ?? conversation.turns;
+
+  /**
+   * The right way to do this is to use with `withConverter` method, but when I enabled
+   * that, I had other problems.
+   */
+  // if (loadState === 'loaded' && !conversationFixtures) {
+  //   snapshot?.docs.forEach((doc, index) => {
+  //     turns![index].id = doc.id;
+  //   });
+  // }
+
+  const mostRecentAssistantTurn = _.findLast(turns, { role: 'assistant' }) as AssistantConversationTurn | undefined;
 
   async function sendMessage(message?: string) {
     if (!conversationId) {
