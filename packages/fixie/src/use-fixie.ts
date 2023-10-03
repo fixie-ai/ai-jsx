@@ -150,6 +150,17 @@ export function useFixie({
 }: UseFixieArgs): UseFixieResult {
   /**
    * Aspects of the useFixie hook may be hideously more complicated than they need to be.
+   * 
+   * In general, you're supposed to use setState for values that impact render, and ref for values that don't.
+   * Because any value that gets returned from this hook may impact render, it seems like we'd want to use setState.
+   * However, I've noticed some timing issues where, because setState is async, the value is not actually read when
+   * we need it.
+   * 
+   * For instance, if we manage a value X via setState, and on a hook invocation, we call setState(X + 1), all our
+   * reads of X in this hook invocation will read the old value of X, not the new value.
+   * 
+   * Thus, to manage state where we need the update to be reflected immediately, I've used refs. I'm not sure if
+   * this is bad or there's something else I'm supposed to do in this situation.
    */
 
   const [input, setInput] = useState('');
@@ -223,10 +234,12 @@ export function useFixie({
   const fixieClient = IsomorphicFixieClient.CreateWithoutApiKey(fixieAPIUrl ?? 'https://api.fixie.ai');
 
   const lastSeenMostRecentAgentTextMessage = useRef('');
+  const validConversationIds = useRef(new Set());
   async function createNewConversation(overriddenInput?: string) {
     const conversationId = (
       await fixieClient.startConversation(agentId, fullMessageGenerationParams, overriddenInput ?? input)
     ).conversationId;
+    validConversationIds.current.add(conversationId);
     setConversationId(conversationId);
     onNewConversation?.(conversationId);
   }
@@ -438,6 +451,12 @@ export function useFixie({
     return loadState === 'loaded' && mostRecentAssistantTurn?.state === 'in-progress';
   }
 
+  console.log('nth==', {
+    validConversationIds: Array.from(validConversationIds.current.values()),
+    conversationId,
+    exists: validConversationIds.current.has(conversationId) || (snapshot ? !snapshot.empty : undefined)
+  })
+
   return {
     turns,
     loadState,
@@ -448,6 +467,6 @@ export function useFixie({
     modelResponseInProgress: getModelResponseInProgress(),
     setInput,
     sendMessage,
-    conversationExists: snapshot ? !snapshot.empty : undefined,
+    conversationExists: validConversationIds.current.has(conversationId) || (snapshot ? !snapshot.empty : undefined),
   };
 }
