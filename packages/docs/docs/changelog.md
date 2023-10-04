@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.20.0
+
 - Remove `finalSystemMessageBeforeResponse` from `Sidekick` component. The `systemMessage` is now always given to the model as the last part of the context window.
 - Remove other cruft from the built-in Sidekick system message.
 - Remove `Card` component from the Sidekick's possible output MDX components.
