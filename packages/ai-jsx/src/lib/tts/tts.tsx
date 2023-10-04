@@ -201,7 +201,7 @@ class AudioOutputManager extends EventTarget {
     }
     const channelData = [buffer];
     console.log(`buf added, seq num=${seqNum}`);
-    audioStream.outputNode.port.postMessage({seqNum, channelData});
+    audioStream.outputNode.port.postMessage({ seqNum, channelData });
   }
   private dispatchWaiting(stream: MediaStream) {
     this.dispatchEvent(new CustomEvent('waiting', { detail: stream }));
