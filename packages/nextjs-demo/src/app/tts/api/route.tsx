@@ -5,7 +5,10 @@ import _ from 'lodash';
 import aws4 from 'aws4';
 
 const AUDIO_MPEG_MIME_TYPE = 'audio/mpeg';
+const AUIDO_WAV_MIME_TYPE = 'audio/wav';
 const APPLICATION_JSON_MIME_TYPE = 'application/json';
+const APPLICATION_X_WWW_FORM_URLENCODED_MIME_TYPE = 'application/x-www-form-urlencoded';
+
 type Generate = (voiceId: string, rate: number, text: string) => Promise<Response>;
 class Provider {
   constructor(public func: Generate, public keyPath?: string) {}
@@ -14,15 +17,16 @@ type ProviderMap = {
   [key: string]: Provider;
 };
 const PROVIDER_MAP: ProviderMap = {
-  eleven: { func: ttsEleven },
-  azure: { func: ttsAzure },
   aws: { func: ttsAws },
+  azure: { func: ttsAzure },
+  eleven: { func: ttsEleven },
   gcp: { func: ttsGcp, keyPath: 'audioContent' },
-  wellsaid: { func: ttsWellSaid },
   murf: { func: ttsMurf, keyPath: 'encodedAudio' },
   playht: { func: ttsPlayHT },
   resemble1: { func: ttsResembleV1, keyPath: 'item.raw_audio' },
   resemble: { func: ttsResembleV2, keyPath: 'item.raw_audio' },
+  lmnt: { func: ttsLmnt },
+  wellsaid: { func: ttsWellSaid },
 };
 
 function makeStreamResponse(startMillis: number, response: Response) {
@@ -130,7 +134,7 @@ function ttsEleven(voiceId: string, rate: number, text: string) {
   };
   const latencyMode = 22;
   const url: string = `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream?optimize_streaming_latency=${latencyMode}`;
-  return doPost(url, headers, obj);
+  return postJson(url, headers, obj);
 }
 
 /**
@@ -141,7 +145,7 @@ function ttsAzure(voice: string, rate: number, text: string) {
   const apiKey = getEnvVar('AZURE_TTS_API_KEY');
   const outputFormat = 'audio-24khz-48kbitrate-mono-mp3';
   const url = `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`;
-  const headers = new Headers();
+  const headers = createHeaders({});
   headers.append('Ocp-Apim-Subscription-Key', apiKey);
   headers.append('Content-Type', 'application/ssml+xml');
   headers.append('X-Microsoft-OutputFormat', outputFormat);
@@ -190,7 +194,7 @@ function ttsAws(voice: string, rate: number, text: string) {
  * REST client for GCP TTS.
  */
 function ttsGcp(voice: string, rate: number, text: string) {
-  const headers = createHeaders(APPLICATION_JSON_MIME_TYPE);
+  const headers = createHeaders({ accept: APPLICATION_JSON_MIME_TYPE });
   const obj = {
     input: { text },
     voice: { languageCode: 'en-US', name: voice },
@@ -198,29 +202,27 @@ function ttsGcp(voice: string, rate: number, text: string) {
   };
   const apiKey = getEnvVar('GOOGLE_TTS_API_KEY');
   const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
-  return doPost(url, headers, obj);
+  return postJson(url, headers, obj);
 }
 
 /**
  * REST client for WellSaid TTS.
  */
 function ttsWellSaid(voice: string, rate: number, text: string) {
-  const headers = createHeaders();
-  headers.append('X-Api-Key', getEnvVar('WELLSAID_API_KEY'));
+  const headers = createHeaders({ x_api_key: getEnvVar('WELLSAID_API_KEY') });
   const obj = {
     speaker_id: voice,
     text,
   };
   const url = 'https://api.wellsaidlabs.com/v1/tts/stream';
-  return doPost(url, headers, obj);
+  return postJson(url, headers, obj);
 }
 
 /**
  * REST client for Murf.ai TTS.
  */
 function ttsMurf(voice: string, rate: number, text: string) {
-  const headers = createHeaders(APPLICATION_JSON_MIME_TYPE);
-  headers.append('Api-Key', getEnvVar('MURF_API_KEY'));
+  const headers = createHeaders({ api_key: getEnvVar('MURF_API_KEY'), accept: APPLICATION_JSON_MIME_TYPE });
   const obj = {
     voiceId: voice,
     style: 'Conversational',
@@ -231,16 +233,15 @@ function ttsMurf(voice: string, rate: number, text: string) {
     encodeAsBase64: true,
   };
   const url = 'https://api.murf.ai/v1/speech/generate-with-key';
-  return doPost(url, headers, obj);
+  return postJson(url, headers, obj);
 }
 
 /**
  * REST client for Play.HT TTS (https://play.ht)
  */
 function ttsPlayHT(voice: string, rate: number, text: string) {
-  const headers = createHeaders();
+  const headers = createHeaders({ authorization: makeAuth('PLAYHT_API_KEY') });
   headers.append('X-User-Id', getEnvVar('PLAYHT_USER_ID'));
-  headers.append('Authorization', `Bearer ${getEnvVar('PLAYHT_API_KEY')}`);
   const obj = {
     voice,
     text,
@@ -250,15 +251,17 @@ function ttsPlayHT(voice: string, rate: number, text: string) {
     sample_rate: 24000,
   };
   const url = 'https://play.ht/api/v2/tts/stream';
-  return doPost(url, headers, obj);
+  return postJson(url, headers, obj);
 }
 
 /**
  * REST client for Resemble.AI TTS (https://www.resemble.ai)
  */
 function ttsResembleV1(voice: string, rate: number, text: string) {
-  const headers = createHeaders(APPLICATION_JSON_MIME_TYPE);
-  headers.append('Authorization', `Bearer ${getEnvVar('RESEMBLE_API_KEY')}`);
+  const headers = createHeaders({
+    authorization: makeAuth('RESEMBLE_API_KEY'),
+    accept: APPLICATION_JSON_MIME_TYPE,
+  });
   const obj = {
     body: text, // makeSsml(voice, rate, text),
     voice_uuid: voice,
@@ -268,15 +271,14 @@ function ttsResembleV1(voice: string, rate: number, text: string) {
     raw: true,
   };
   const url = `https://app.resemble.ai/api/v2/projects/${getEnvVar('RESEMBLE_PROJECT_ID')}/clips`;
-  return doPost(url, headers, obj);
+  return postJson(url, headers, obj);
 }
 
 /**
  * Streaming REST client for Resemble.AI TTS (https://www.resemble.ai)
  */
 function ttsResembleV2(voice: string, rate: number, text: string) {
-  const headers = createHeaders();
-  headers.append('Authorization', `Bearer ${getEnvVar('RESEMBLE_API_KEY')}`);
+  const headers = createHeaders({ authorization: makeAuth('RESEMBLE_API_KEY') });
   const obj = {
     project_uuid: getEnvVar('RESEMBLE_PROJECT_ID'),
     voice_uuid: voice,
@@ -286,27 +288,74 @@ function ttsResembleV2(voice: string, rate: number, text: string) {
     sample_rate: 22050,
   };
   const url = 'https://f.cluster.resemble.ai/stream';
-  return doPost(url, headers, obj);
+  return postJson(url, headers, obj);
+}
+
+/**
+ * Streaming REST client for LMNT TTS (https://www.lmnt.com)
+ */
+function ttsLmnt(voice: string, rate: number, text: string) {
+  const headers = createHeaders({ x_api_key: getEnvVar('LMNT_API_KEY') });
+  const obj = new URLSearchParams({
+    voice,
+    text,
+    speed: rate.toString(),
+    format: 'mp3',
+  });
+  const url = 'https://api.lmnt.com/speech/beta/synthesize';
+  return postForm(url, headers, obj);
+}
+
+interface TtsHeaders {
+  authorization?: string;
+  api_key?: string;
+  x_api_key?: string;
+  accept?: string;
 }
 
 /**
  * Helper to create the basic headers for a service that accepts JSON and returns audio/mpeg.
  */
-function createHeaders(acceptType = AUDIO_MPEG_MIME_TYPE) {
+function createHeaders({ authorization, api_key, x_api_key, accept }: TtsHeaders = {}) {
   const headers = new Headers();
-  headers.append('Content-Type', APPLICATION_JSON_MIME_TYPE);
-  headers.append('Accept', acceptType);
+  if (authorization) {
+    headers.append('Authorization', authorization);
+  }
+  if (api_key) {
+    headers.append('Api-Key', api_key);
+  }
+  if (x_api_key) {
+    headers.append('X-Api-Key', x_api_key);
+  }
+  headers.append('Accept', accept ?? AUDIO_MPEG_MIME_TYPE);
   return headers;
+}
+
+function makeAuth(keyName: string) {
+  return `Bearer ${getEnvVar(keyName)}`;
 }
 
 /**
  * Helper to send a POST request with JSON body.
  */
-function doPost(url: string, headers: HeadersInit, body: Object) {
+function postJson(url: string, headers: Headers, body: Object) {
+  headers.append('Content-Type', APPLICATION_JSON_MIME_TYPE);
   return fetch(url, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
+  });
+}
+
+/**
+ * Helper to send a POST request with URL-encoded body.
+ */
+function postForm(url: string, headers: Headers, body: URLSearchParams) {
+  headers.append('Content-Type', APPLICATION_X_WWW_FORM_URLENCODED_MIME_TYPE);
+  return fetch(url, {
+    method: 'POST',
+    headers,
+    body,
   });
 }
 
@@ -318,11 +367,15 @@ function doPost(url: string, headers: HeadersInit, body: Object) {
 export async function POST(request: NextRequest) {
   const inJson = await request.json();
   const provider = inJson.provider as string;
-  if (provider != 'eleven') {
+  let token;
+  if (provider == 'eleven') {
+    token = getEnvVar('ELEVEN_API_KEY');
+  } else if (provider == 'lmnt') {
+    token = getEnvVar('LMNT_API_KEY');
+  }
+  if (!token) {
     return new NextResponse(JSON.stringify({ error: 'unknown provider' }));
   }
-
-  const token = getEnvVar('ELEVEN_API_KEY');
   return new NextResponse(JSON.stringify({ token }));
 }
 

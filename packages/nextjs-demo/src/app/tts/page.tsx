@@ -25,7 +25,7 @@ type TtsProps = {
   provider: string;
   proto?: TextToSpeechProtocol;
   link: string;
-  costPerMChar: number;
+  costPerKChar: number;
   defaultVoice: string;
   text: string;
 };
@@ -49,7 +49,7 @@ const getToken = async (provider: string) => {
   return json.token;
 };
 
-const Tts: React.FC<TtsProps> = ({ display, provider, proto, link, costPerMChar, defaultVoice, text }) => {
+const Tts: React.FC<TtsProps> = ({ display, provider, proto, link, costPerKChar, defaultVoice, text }) => {
   const [voice, setVoice] = useState(defaultVoice);
   const [playing, setPlaying] = useState(false);
   const [latency, setLatency] = useState<number>();
@@ -84,7 +84,7 @@ const Tts: React.FC<TtsProps> = ({ display, provider, proto, link, costPerMChar,
       <div className="text-sm ml-2">
         <span className="font-bold">Cost: </span>
         <a className="hover:underline" href={`${link}/pricing`}>
-          ${costPerMChar}/million chars
+          ${costPerKChar.toFixed(3)}/thousand chars
         </a>
       </div>
       <div className="text-sm ml-2">
@@ -130,7 +130,7 @@ const PageComponent: React.FC = () => {
           provider="eleven"
           proto="ws"
           link="https://elevenlabs.io"
-          costPerMChar={180}
+          costPerKChar={0.18}
           defaultVoice="21m00Tcm4TlvDq8ikWAM"
           text={text}
         />
@@ -139,23 +139,33 @@ const PageComponent: React.FC = () => {
           provider="eleven"
           proto="rest"
           link="https://elevenlabs.io"
-          costPerMChar={180}
+          costPerKChar={0.18}
           defaultVoice="21m00Tcm4TlvDq8ikWAM"
           text={text}
         />
         <Tts
-          display="WellSaid Labs"
-          provider="wellsaid"
-          link="https://wellsaidlabs.com"
-          costPerMChar={999}
-          defaultVoice="43"
+          display="LMNT (WebSocket)"
+          provider="lmnt"
+          proto="ws"
+          link="https://lmnt.com"
+          costPerKChar={0.2}
+          defaultVoice="mrnmrz72"
+          text={text}
+        />
+        <Tts
+          display="LMNT (REST)"
+          provider="lmnt"
+          proto="rest"
+          link="https://lmnt.com"
+          costPerKChar={0.2}
+          defaultVoice="mrnmrz72"
           text={text}
         />
         <Tts
           display="Murf AI"
           provider="murf"
           link="https://murf.ai"
-          costPerMChar={999}
+          costPerKChar={1.0}
           defaultVoice="en-US-natalie"
           text={text}
         />
@@ -163,7 +173,7 @@ const PageComponent: React.FC = () => {
           display="PlayHT"
           provider="playht"
           link="https://play.ht"
-          costPerMChar={41.25}
+          costPerKChar={0.04125}
           defaultVoice="victor"
           text={text}
         />
@@ -171,15 +181,23 @@ const PageComponent: React.FC = () => {
           display="Resemble AI"
           provider="resemble"
           link="https://resemble.ai"
-          costPerMChar={400}
+          costPerKChar={0.4}
           defaultVoice="48d7ed16"
+          text={text}
+        />
+        <Tts
+          display="WellSaid Labs"
+          provider="wellsaid"
+          link="https://wellsaidlabs.com"
+          costPerKChar={1.0}
+          defaultVoice="43"
           text={text}
         />
         <Tts
           display="Azure"
           provider="azure"
           link="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services"
-          costPerMChar={16}
+          costPerKChar={0.016}
           defaultVoice="en-US-JennyNeural"
           text={text}
         />
@@ -187,7 +205,7 @@ const PageComponent: React.FC = () => {
           display="AWS Polly"
           provider="aws"
           link="https://aws.amazon.com/polly"
-          costPerMChar={16}
+          costPerKChar={0.016}
           defaultVoice="Joanna"
           text={text}
         />
@@ -195,7 +213,7 @@ const PageComponent: React.FC = () => {
           display="Google"
           provider="gcp"
           link="https://cloud.google.com/text-to-speech"
-          costPerMChar={16}
+          costPerKChar={0.016}
           defaultVoice="en-US-Neural2-C"
           text={text}
         />

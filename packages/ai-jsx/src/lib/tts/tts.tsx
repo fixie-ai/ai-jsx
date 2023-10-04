@@ -297,6 +297,16 @@ export class RestTextToSpeech extends MseTextToSpeech {
 }
 
 /**
+ * Text-to-speech implementation that uses the AWS Polly text-to-speech service.
+ */
+export class AwsTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = 'Joanna';
+  constructor(urlFunc: BuildUrl, voice: string = AwsTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('aws', urlFunc, voice, rate);
+  }
+}
+
+/**
  * Text-to-speech implementation that uses Azure's text-to-speech service.
  */
 export class AzureTextToSpeech extends RestTextToSpeech {
@@ -307,12 +317,12 @@ export class AzureTextToSpeech extends RestTextToSpeech {
 }
 
 /**
- * Text-to-speech implementation that uses the AWS Polly text-to-speech service.
+ * Text-to-speech implementation that uses the ElevenLabs text-to-speech service.
  */
-export class AwsTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = 'Joanna';
-  constructor(urlFunc: BuildUrl, voice: string = AwsTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
-    super('aws', urlFunc, voice, rate);
+export class ElevenLabsTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM';
+  constructor(urlFunc: BuildUrl, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('eleven', urlFunc, voice, rate);
   }
 }
 
@@ -326,13 +336,10 @@ export class GcpTextToSpeech extends RestTextToSpeech {
   }
 }
 
-/**
- * Text-to-speech implementation that uses the WellSaid Labs text-to-speech service.
- */
-export class WellSaidTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = '42'; // Sofia H. (Conversational)
-  constructor(urlFunc: BuildUrl, voice: string = WellSaidTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
-    super('wellsaid', urlFunc, voice, rate);
+export class LmntTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = 'mrnmrz72'; // Marzia
+  constructor(urlFunc: BuildUrl, voice: string = LmntTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('lmnt', urlFunc, voice, rate);
   }
 }
 
@@ -364,12 +371,12 @@ export class ResembleTextToSpeech extends RestTextToSpeech {
 }
 
 /**
- * Text-to-speech implementation that uses the Resemble.AI text-to-speech service.
+ * Text-to-speech implementation that uses the WellSaid Labs text-to-speech service.
  */
-export class ElevenLabsTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM';
-  constructor(urlFunc: BuildUrl, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
-    super('eleven', urlFunc, voice, rate);
+export class WellSaidTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = '42'; // Sofia H. (Conversational)
+  constructor(urlFunc: BuildUrl, voice: string = WellSaidTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('wellsaid', urlFunc, voice, rate);
   }
 }
 
@@ -435,13 +442,17 @@ export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
     };
     socket.onmessage = (event) => {
       let message;
-      try {
-        message = JSON.parse(event.data);
-      } catch (error) {
-        console.error(`Failed to parse socket message: ${error}, data=${event.data}`);
-        return;
+      if (typeof event.data == 'string') {
+        try {
+          message = JSON.parse(event.data);
+        } catch (error) {
+          console.error(`Failed to parse socket message: ${error}, data=${event.data}`);
+          return;
+        }
+        this.handleMessage(message);
+      } else if (event.data instanceof ArrayBuffer) {
+        this.queueChunk(new AudioChunk(event.data));
       }
-      this.handleMessage(message);
     };
     socket.onerror = (_event) => {
       console.log(`[${this.name}] socket error`);
@@ -465,7 +476,7 @@ export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
   }
 
   protected abstract handleOpen(): void;
-  protected abstract handleMessage(_message: unknown): void;
+  protected handleMessage(_message: unknown) {}
   protected abstract createChunkRequest(_text: string): unknown;
   protected abstract createFlushRequest(): unknown;
 }
@@ -500,7 +511,7 @@ class ElevenLabsOutboundMessage {
  * Text-to-speech implementation that uses Eleven Labs' text-to-speech service.
  */
 export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
-  constructor(private readonly tokenFunc: GetToken, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
+  constructor(private readonly tokenFunc: GetToken, voice = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
     const model_id = 'eleven_monolingual_v1';
     const optimize_streaming_latency = '22'; // doesn't seem to have any effect
     const params = new URLSearchParams({ model_id, optimize_streaming_latency });
@@ -545,6 +556,36 @@ export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
   }
 }
 
+class LmntOutboundMessage {
+  constructor({ text, voice, eof }: LmntOutboundMessage) {
+    this.text = text;
+    this.eof = eof;
+  }
+  text?: string;
+  voice?: string;
+  eof?: boolean;
+}
+
+export class LmntWebSocketTextToSpeech extends WebSocketTextToSpeech {
+  constructor(private readonly tokenFunc: GetToken, private readonly voice = LmntTextToSpeech.DEFAULT_VOICE) {
+    const url = `wss://api.lmnt.com/speech/beta/synthesize_streaming`;
+    super('lmnt', url);
+  }
+  protected async handleOpen() {
+    const obj = {
+      voice: this.voice,
+      'X-Api-Key': await this.tokenFunc(this.name),
+    };
+    this.sendObject(obj);
+  }
+  protected createChunkRequest(text: string): LmntOutboundMessage {
+    return new LmntOutboundMessage({ text });
+  }
+  protected createFlushRequest(): LmntOutboundMessage {
+    return new LmntOutboundMessage({ eof: true });
+  }
+}
+
 export type TextToSpeechProtocol = 'rest' | 'ws';
 
 export class TextToSpeechOptions {
@@ -566,18 +607,20 @@ export function createTextToSpeech({ provider, proto, rate, voice, getToken, bui
         return new AzureTextToSpeech(buildUrl!, voice, rate);
       case 'aws':
         return new AwsTextToSpeech(buildUrl!, voice, rate);
+      case 'eleven':
+        return new ElevenLabsTextToSpeech(buildUrl!, voice);
       case 'gcp':
         return new GcpTextToSpeech(buildUrl!, voice, rate);
-      case 'wellsaid':
-        return new WellSaidTextToSpeech(buildUrl!, voice, rate);
+      case 'lmnt':
+        return new LmntTextToSpeech(buildUrl!, voice, rate);
       case 'murf':
         return new MurfTextToSpeech(buildUrl!, voice, rate);
       case 'playht':
         return new PlayHTTextToSpeech(buildUrl!, voice, rate);
       case 'resemble':
         return new ResembleTextToSpeech(buildUrl!, voice, rate);
-      case 'eleven':
-        return new ElevenLabsTextToSpeech(buildUrl!, voice);
+      case 'wellsaid':
+        return new WellSaidTextToSpeech(buildUrl!, voice, rate);
       default:
         throw new Error(`unknown REST provider ${provider}`);
     }
@@ -585,6 +628,8 @@ export function createTextToSpeech({ provider, proto, rate, voice, getToken, bui
     switch (provider) {
       case 'eleven':
         return new ElevenLabsWebSocketTextToSpeech(getToken!, voice);
+      case 'lmnt':
+        return new LmntWebSocketTextToSpeech(getToken!, voice);
       default:
         throw new Error(`unknown WebSocket provider ${provider}`);
     }
