@@ -567,7 +567,7 @@ class LmntOutboundMessage {
 
 export class LmntWebSocketTextToSpeech extends WebSocketTextToSpeech {
   constructor(private readonly tokenFunc: GetToken, private readonly voice = LmntTextToSpeech.DEFAULT_VOICE) {
-    const url = `wss://api.lmnt.com/speech/beta/synthesize_streaming`;
+    const url = 'wss://api.lmnt.com/speech/beta/synthesize_streaming';
     super('lmnt', url);
   }
   protected async handleOpen() {
