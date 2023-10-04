@@ -91,7 +91,11 @@ export async function GET(request: NextRequest) {
     return new NextResponse(await response.json(), { status: response.status });
   }
   const contentType = response.headers.get('Content-Type');
-  console.log(`${startMillis} TTS response latency: ${(performance.now() - startMillis).toFixed(0)} ms, content-type: ${contentType}`);
+  console.log(
+    `${startMillis} TTS response latency: ${(performance.now() - startMillis).toFixed(
+      0
+    )} ms, content-type: ${contentType}`
+  );
   if (provider.keyPath) {
     assert(contentType?.startsWith(APPLICATION_JSON_MIME_TYPE));
     return makeBlobResponseFromJson(startMillis, response, provider.keyPath, provider.mimeType ?? AUDIO_MPEG_MIME_TYPE);
