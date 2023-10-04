@@ -107,7 +107,7 @@ export type SidekickProps = UniversalSidekickProps & OutputFormatSidekickProps;
 
 export function Sidekick(props: SidekickProps) {
   const model = props.model ?? 'gpt-4-32k';
-  const modelSupportsTools = model.startsWith('gpt-4') || model.startsWith('gpt-3.5')
+  const modelSupportsTools = model.startsWith('gpt-4') || model.startsWith('gpt-3.5');
   if (!modelSupportsTools && props.tools) {
     throw new Error(`Model ${props.model} does not support tools. Only gpt-4 and gpt-3.5 support tools.`);
   }

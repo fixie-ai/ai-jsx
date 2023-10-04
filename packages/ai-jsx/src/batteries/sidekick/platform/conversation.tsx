@@ -121,7 +121,9 @@ export function getNextConversationStep(
     case 'functionResponse':
       return (
         <RepairMdxInConversation>
-          <ChatCompletion functionDefinitions={tools ? updatedTools : undefined}>{shrinkableConversation}</ChatCompletion>
+          <ChatCompletion functionDefinitions={tools ? updatedTools : undefined}>
+            {shrinkableConversation}
+          </ChatCompletion>
         </RepairMdxInConversation>
       );
     default:
