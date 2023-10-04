@@ -783,7 +783,7 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
         }
         this.handleMessage(message);
       } else if (event.data instanceof ArrayBuffer) {
-        this.queueChunk(new AudioChunk(event.data));
+        this.queueChunk(new AudioChunk(AUDIO_MPEG_MIME_TYPE, event.data));
       }
     };
     socket.onerror = (_event) => {
