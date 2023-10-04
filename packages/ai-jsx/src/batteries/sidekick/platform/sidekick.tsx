@@ -2,14 +2,15 @@ import { present } from './conversation.js';
 import { UseTools } from './use-tools-eject.js';
 import { SidekickSystemMessage } from './system-message.js';
 import { OpenAI } from '../../../lib/openai.js';
+import { Anthropic } from '../../../lib/anthropic.js';
 import { UseToolsProps } from '../../use-tools.js';
 import * as AI from '../../../index.js';
 import { ConversationHistory, ShowConversation } from '../../../core/conversation.js';
 import { MergeExclusive } from 'type-fest';
 
 export type OpenAIChatModel = Exclude<Parameters<typeof OpenAI>[0]['chatModel'], undefined>;
-export type ModelProvider = 'openai';
-export type ChatModel = OpenAIChatModel;
+export type AnthropicChatModel = Exclude<Parameters<typeof Anthropic>[0]['chatModel'], undefined>;
+export type ChatModel = OpenAIChatModel | AnthropicChatModel;
 
 /**
  * This is not as type safe as it could be, but I'm fine with that because the type safety would have to be enforced
@@ -18,30 +19,27 @@ export type ChatModel = OpenAIChatModel;
  *
  * If the user passes a modelProvider that doesn't match the model, AI.JSX will throw an error at completion time.
  */
-export function ModelProvider({
-  children,
-  modelProvider,
-  model,
-}: {
-  children: AI.Node;
-  modelProvider: ModelProvider;
-  model: ChatModel;
-}) {
-  switch (modelProvider) {
-    case 'openai':
-      return (
-        <OpenAI chatModel={model as OpenAIChatModel} temperature={0}>
-          {children}
-        </OpenAI>
-      );
-    default:
-      throw new Error(`Unknown model provider: ${modelProvider}`);
-  }
+export function ModelProvider({ children, model }: { children: AI.Node; model: ChatModel }) {
+  const isOpenAI = model.startsWith('gpt');
+  return isOpenAI ? (
+    <OpenAI chatModel={model as OpenAIChatModel} temperature={0}>
+      {children}
+    </OpenAI>
+  ) : (
+    <Anthropic chatModel={model as AnthropicChatModel} temperature={0}>
+      {children}
+    </Anthropic>
+  );
 }
 
 interface UniversalSidekickProps {
   tools?: UseToolsProps['tools'];
   systemMessage?: AI.Node;
+
+  /**
+   * Defaults to gpt-4-32k
+   */
+  model?: ChatModel;
 }
 
 type OutputFormatSidekickProps = MergeExclusive<
@@ -108,8 +106,14 @@ type OutputFormatSidekickProps = MergeExclusive<
 export type SidekickProps = UniversalSidekickProps & OutputFormatSidekickProps;
 
 export function Sidekick(props: SidekickProps) {
+  const modelsThatSupportTools = ['gpt-4', 'gpt-3.5'];
+  const model = props.model ?? 'gpt-4-32k';
+  if (!modelsThatSupportTools.includes(model) && props.tools) {
+    throw new Error(`Model ${props.model} does not support tools`);
+  }
+
   return (
-    <ModelProvider model="gpt-4-32k" modelProvider="openai">
+    <ModelProvider model={model}>
       <ShowConversation present={present}>
         <UseTools tools={props.tools ?? {}} showSteps>
           <SidekickSystemMessage
