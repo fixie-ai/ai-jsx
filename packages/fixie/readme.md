@@ -64,4 +64,8 @@ This low-level API provides direct access to the Fixie Conversation and Corpus A
 
 ## Dev Notes
 
-To publish this package, you first need to update the version number in `package.json`. Then run `yarn npm publish` in this directory.
+To publish this package:
+
+1. Update the version number in `package.json`.
+1. Run `yarn install` in the root to get the changes to `yarn.lock`.
+1. Finally, run `yarn npm publish` in this directory to get the updated package published to npm.
