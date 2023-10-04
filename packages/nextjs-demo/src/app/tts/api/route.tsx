@@ -5,7 +5,7 @@ import _ from 'lodash';
 import aws4 from 'aws4';
 
 const AUDIO_MPEG_MIME_TYPE = 'audio/mpeg';
-const AUIDO_WAV_MIME_TYPE = 'audio/wav';
+const AUDIO_WAV_MIME_TYPE = 'audio/wav';
 const APPLICATION_JSON_MIME_TYPE = 'application/json';
 const APPLICATION_X_WWW_FORM_URLENCODED_MIME_TYPE = 'application/x-www-form-urlencoded';
 
@@ -278,7 +278,7 @@ function ttsResembleV1(voice: string, rate: number, text: string) {
  * Streaming REST client for Resemble.AI TTS (https://www.resemble.ai)
  */
 function ttsResembleV2(voice: string, rate: number, text: string) {
-  const headers = createHeaders({ authorization: makeAuth('RESEMBLE_API_KEY') });
+  const headers = createHeaders({ authorization: makeAuth('RESEMBLE_API_KEY'), accept: AUDIO_WAV_MIME_TYPE });
   const obj = {
     project_uuid: getEnvVar('RESEMBLE_PROJECT_ID'),
     voice_uuid: voice,
@@ -300,7 +300,7 @@ function ttsLmnt(voice: string, rate: number, text: string) {
     voice,
     text,
     speed: rate.toString(),
-    format: 'mp3',
+    format: 'mp3', // || "wav"
   });
   const url = 'https://api.lmnt.com/speech/beta/synthesize';
   return postForm(url, headers, obj);
