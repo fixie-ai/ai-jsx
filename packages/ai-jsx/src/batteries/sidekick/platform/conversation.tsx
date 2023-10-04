@@ -78,7 +78,7 @@ export function present(conversationElement: ConversationMessage) {
 export function getNextConversationStep(
   messages: ConversationMessage[],
   fullConversation: ConversationMessage[],
-  tools: UseToolsProps['tools']
+  tools?: UseToolsProps['tools']
 ) {
   const shrinkableConversation = getShrinkableConversation(messages, fullConversation);
   const lastMessage = messages[messages.length - 1];
@@ -101,7 +101,7 @@ export function getNextConversationStep(
         />
       );
       // If we are using a tool based on redacted functions, we don't want to redact it further
-      if (!(name in tools)) {
+      if (tools && !(name in tools)) {
         return executedFunction;
       }
       // Function responses can potentially be very large. In that case, we need
@@ -121,7 +121,9 @@ export function getNextConversationStep(
     case 'functionResponse':
       return (
         <RepairMdxInConversation>
-          <ChatCompletion functionDefinitions={updatedTools}>{shrinkableConversation}</ChatCompletion>
+          <ChatCompletion functionDefinitions={tools ? updatedTools : undefined}>
+            {shrinkableConversation}
+          </ChatCompletion>
         </RepairMdxInConversation>
       );
     default:
