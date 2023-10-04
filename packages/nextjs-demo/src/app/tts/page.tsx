@@ -1,5 +1,5 @@
 'use client';
-import { TextToSpeechBase, TextToSpeechProtocol, createTextToSpeech } from 'ai-jsx/lib/tts/tts';
+import { TextToSpeechBase, createTextToSpeech } from 'ai-jsx/lib/tts/tts';
 import React, { useState, useEffect } from 'react';
 import '../globals.css';
 
@@ -20,7 +20,7 @@ const Button: React.FC<{ onClick: () => void; children: React.ReactNode }> = ({ 
   </button>
 );
 
-type TtsProps = {
+interface TtsProps {
   display: string;
   provider: string;
   supportsWs?: boolean;
@@ -28,7 +28,7 @@ type TtsProps = {
   costPerKChar: number;
   defaultVoice: string;
   text: string;
-};
+}
 
 const buildUrl = (provider: string, voice: string, rate: number, text: string) => {
   const params = new URLSearchParams({

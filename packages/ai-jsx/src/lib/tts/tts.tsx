@@ -588,13 +588,13 @@ export class LmntWebSocketTextToSpeech extends WebSocketTextToSpeech {
 
 export type TextToSpeechProtocol = 'rest' | 'ws';
 
-export class TextToSpeechOptions {
+export interface TextToSpeechOptions {
+  provider: string;
   proto?: TextToSpeechProtocol;
   rate?: number;
   voice?: string;
   getToken?: GetToken;
   buildUrl?: BuildUrl;
-  constructor(public provider: string) {}
 }
 
 /**
