@@ -66,6 +66,11 @@ const AUDIO_MPEG_MIME_TYPE = 'audio/mpeg';
 const AUDIO_PCM_MIME_TYPE = 'audio/pcm';
 const AUDIO_L16_MIME_TYPE = 'audio/L16';
 
+/**
+ * A chunk of encoded or raw audio data; the encoding is specified by `mimeType`.
+ * If the encoding is PCM, the sample rate must be specified in `sampleRate`.
+ * PCM data is assumed to be signed 16-bit little-endian.
+ */
 class AudioChunk {
   mimeType: string;
   sampleRate: number;
@@ -80,14 +85,20 @@ class AudioChunk {
   }
 }
 
-class AudioMessage {
-  constructor(public seqNum: number, public channelData: Float32Array[]) {}
-}
-
+/**
+ * An internal object used to manage an active audio stream.
+ */
 class AudioStream {
   nextSeqNum = 0;
   constructor(public outputNode: AudioWorkletNode, public destNode: MediaStreamAudioDestinationNode) {}
 }
+
+/**
+ * Manages an AudioContext and allows creation of multiple audio streams
+ * that can be played out using <audio> elements. Use of <audio> for
+ * playout avoids some of the problems associated with using WebAudio
+ * directly, e.g., audio not playing on iOS when the phone is on silent.
+ */
 class AudioOutputManager extends EventTarget {
   private context?: AudioContext;
   private readonly streams: Map<string, AudioStream> = new Map<string, AudioStream>();
@@ -190,7 +201,7 @@ class AudioOutputManager extends EventTarget {
     }
     const channelData = [buffer];
     console.log(`buf added, seq num=${seqNum}`);
-    audioStream.outputNode.port.postMessage(new AudioMessage(seqNum, channelData));
+    audioStream.outputNode.port.postMessage({seqNum, channelData});
   }
   private dispatchWaiting(stream: MediaStream) {
     this.dispatchEvent(new CustomEvent('waiting', { detail: stream }));
@@ -334,6 +345,15 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
   }
 }
 
+/**
+ * Defines a text-to-speech service that requests individual audio utterances
+ * from a server and plays them out using Web Audio and <audio> elements.
+ * This approach reduces latency by allowing the audio to be streamed as it is
+ * generated, rather than waiting for the entire audio file to be generated. It also
+ * allows text to be fed to the service in a stream rather than all at once. This
+ * class is not meant to be used directly, but provides infrastructure for
+ * RestTextToSpeech and WebSocketTextToSpeech.
+ */
 export class WebAudioTextToSpeech extends TextToSpeechBase {
   private readonly chunkBuffer: AudioChunk[] = [];
   private updating = false;
@@ -397,7 +417,6 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
    * Processes the first chunk in the ordered chunk buffer, creating a new source node
    * and connecting it to the destination node. If the chunk is pending, no-op.
    */
-
   protected async processChunkQueue() {
     if (!this.updating && this.chunkBuffer.length > 0) {
       this.updating = true;
