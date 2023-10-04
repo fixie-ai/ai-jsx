@@ -1,48 +1,14 @@
 import { present } from './conversation.js';
 import { UseTools } from './use-tools-eject.js';
 import { SidekickSystemMessage } from './system-message.js';
-import { OpenAI } from '../../../lib/openai.js';
-import { Anthropic } from '../../../lib/anthropic.js';
 import { UseToolsProps } from '../../use-tools.js';
 import * as AI from '../../../index.js';
 import { ConversationHistory, ShowConversation } from '../../../core/conversation.js';
 import { MergeExclusive } from 'type-fest';
 
-export type OpenAIChatModel = Exclude<Parameters<typeof OpenAI>[0]['chatModel'], undefined>;
-export type AnthropicChatModel = Exclude<Parameters<typeof Anthropic>[0]['chatModel'], undefined>;
-export type ChatModel = OpenAIChatModel | AnthropicChatModel;
-
-/**
- * This is not as type safe as it could be, but I'm fine with that because the type safety would have to be enforced
- * at the API layer (e.g. req.body()), and even after we did that, I'm not convinceed we could actually assert to TS
- * that we've validated the types.
- *
- * If the user passes a modelProvider that doesn't match the model, AI.JSX will throw an error at completion time.
- */
-export function ModelProvider({ children, model }: { children: AI.Node; model: ChatModel }) {
-  const isOpenAI = model.startsWith('gpt');
-  return isOpenAI ? (
-    <OpenAI chatModel={model as OpenAIChatModel} temperature={0}>
-      {children}
-    </OpenAI>
-  ) : (
-    <Anthropic chatModel={model as AnthropicChatModel} temperature={0}>
-      {children}
-    </Anthropic>
-  );
-}
-
 interface UniversalSidekickProps {
   tools?: UseToolsProps['tools'];
   systemMessage?: AI.Node;
-
-  /**
-   * The model to use. Defaults to gpt-4-32k.
-   *
-   * If you pass `tools`, then the model you choose must support tools. Currently, only gpt-4 and gpt-3.5 support
-   * tools. So if you pass an Anthropic model, don't pass `tools`.
-   */
-  model?: ChatModel;
 }
 
 type OutputFormatSidekickProps = MergeExclusive<
@@ -109,14 +75,7 @@ type OutputFormatSidekickProps = MergeExclusive<
 export type SidekickProps = UniversalSidekickProps & OutputFormatSidekickProps;
 
 export function Sidekick(props: SidekickProps) {
-  const model = props.model ?? 'gpt-4-32k';
-  const modelSupportsTools = model.startsWith('gpt-4') || model.startsWith('gpt-3.5');
-  if (!modelSupportsTools && props.tools) {
-    throw new Error(`Model ${props.model} does not support tools. Only gpt-4 and gpt-3.5 support tools.`);
-  }
-
   return (
-    <ModelProvider model={model}>
       <ShowConversation present={present}>
         <UseTools tools={props.tools ?? undefined} showSteps>
           <SidekickSystemMessage
@@ -130,6 +89,5 @@ export function Sidekick(props: SidekickProps) {
           {props.systemMessage}
         </UseTools>
       </ShowConversation>
-    </ModelProvider>
   );
 }
