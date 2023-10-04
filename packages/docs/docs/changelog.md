@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.19.0
+## 0.20.0
+
+- Remove `finalSystemMessageBeforeResponse` from `Sidekick` component. The `systemMessage` is now always given to the model as the last part of the context window.
+- Remove other cruft from the built-in Sidekick system message.
+- Remove `Card` component from the Sidekick's possible output MDX components.
+
+## [0.19.0](https://github.com/fixie-ai/ai-jsx/commit/79108af2db3dd59fcf9b53082c3499680335b96c)
 
 - Remove `Prompt` component.
 - Remove `role` prop from the `Sidekick` component.

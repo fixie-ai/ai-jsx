@@ -1,7 +1,13 @@
 'use client';
 import '../globals.css';
 import React, { useState, useEffect, useRef } from 'react';
-import { MicManager, createSpeechRecognition, SpeechRecognitionBase, Transcript } from 'ai-jsx/lib/asr/asr';
+import {
+  MicManager,
+  createSpeechRecognition,
+  normalizeText,
+  SpeechRecognitionBase,
+  Transcript,
+} from 'ai-jsx/lib/asr/asr';
 import { wordErrorRate } from 'word-error-rate';
 import _ from 'lodash';
 
@@ -29,6 +35,22 @@ async function getToken(provider: string) {
   return json.token;
 }
 
+const TranscriptRenderer: React.FC<{ value: Transcript[] }> = ({ value }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    ref.current!.scrollTop = ref.current!.scrollHeight;
+  });
+  return (
+    <div className="mt-4 mr-4 mb-4 w-96 h-36 p-4 bg-fixie-dust overflow-y-scroll" ref={ref}>
+      {value.map((transcript, index) => (
+        <p key={index} className={transcript.final ? 'text-black' : 'text-black/40'}>
+          {transcript.text}
+        </p>
+      ))}
+    </div>
+  );
+};
+
 interface AsrProps {
   name: string;
   link: string;
@@ -41,11 +63,11 @@ interface AsrProps {
 }
 
 const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, transcript }) => {
-  const [output, setOutput] = useState('');
+  const output = useRef<Transcript[]>([]);
   const [partialLatency, setPartialLatency] = useState<number[]>([]);
   const [finalLatency, setFinalLatency] = useState<number[]>([]);
   const [recognizer, setRecognizer] = useState<SpeechRecognitionBase | null>(null);
-  const textarea = useRef(null);
+  const justFinals = (transcripts: Transcript[]) => transcripts.filter((transcript) => transcript.final);
   const computeCostColor = (cost: number) => {
     if (cost < 0.01) {
       return 'text-green-700';
@@ -56,56 +78,61 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
     return 'text-red-700';
   };
   const computeLatency = (values: number[]) => _.mean(values);
-  const computeWer = (inText: string, refText?: string) => {
-    if (!inText || !refText) {
+  const computeWer = (transcripts: Transcript[], refText?: string) => {
+    if (!transcripts.length || !refText) {
       return 0;
     }
-    const numLines = inText.split('\n').length - 1;
-    const refClean = refText
-      .split('\n')
-      .slice(0, numLines)
-      .join(' ')
-      .replace(/[^\w\s]|_/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-    const inClean = inText
-      .replace(/[^\w\s]|_/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const numLines = justFinals(transcripts).length;
+    const refClean = normalizeText(refText.split('\n').slice(0, numLines).join(' '));
+    const inClean = normalizeText(
+      justFinals(transcripts)
+        .map((transcript) => transcript.text)
+        .join(' ')
+    );
     return wordErrorRate(refClean, inClean);
   };
   const start = () => {
+    output.current = [];
     const recognizer = createSpeechRecognition({ provider: id, manager: manager!, getToken });
-    const element = textarea.current! as HTMLTextAreaElement;
     setRecognizer(recognizer);
-    setOutput('');
     setPartialLatency([]);
     setFinalLatency([]);
-    element.value = '';
     recognizer.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
-      const transcriptObj = event.detail!;
-      const currData = element.value;
-      const lastNewlineIndex = currData.lastIndexOf('\n');
-      const oldData = lastNewlineIndex != -1 ? currData.slice(0, lastNewlineIndex + 1) : '';
-      let newData = oldData + transcriptObj.text;
-      if (!transcriptObj.final) {
-        if (transcriptObj.latency) {
-          setPartialLatency((partialLatency) => [...partialLatency, transcriptObj.latency!]);
-        }
-      } else {
-        newData += '\n';
-        setOutput(newData);
-        if (transcriptObj.latency) {
-          setFinalLatency((finalLatency) => [...finalLatency, transcriptObj.latency!]);
-        }
-      }
-      element.value = newData;
-      element.scrollTop = element.scrollHeight;
-      console.log(
-        `[${id}] ${transcriptObj.timestamp.toFixed(0)} ${event.detail!.text} (${event.detail!.latency} ms) ${
-          event.detail!.final ? 'FINAL' : ''
+      const transcript = event.detail!;
+      console.debug(
+        `[${id}] ${transcript.timestamp.toFixed(0)} (${transcript.reportedLatency!.toFixed(0)}) ${transcript.text} ${
+          transcript.final ? 'FINAL' : ''
         }`
       );
+
+      // Determine if there's an earlier partial transcript that matches this one.
+      // If so, we'll use that to compute the partial latency.
+      // We'll also skip any duplicate partial transcripts.
+      let partialLatency = transcript.observedLatency!;
+      const currOutput = output.current;
+      if (currOutput.length > 0) {
+        const lastTranscript = currOutput.at(-1);
+        if (lastTranscript?.final) {
+          if (normalizeText(lastTranscript.text) == normalizeText(transcript.text)) {
+            console.debug(`[${id}] Duplicate transcript "${transcript.text}"`);
+            if (!transcript.final) {
+              return;
+            }
+            partialLatency -= transcript.timestamp - lastTranscript.timestamp;
+          }
+        }
+      }
+
+      // Update our list of transcripts and latency counters.
+      // The final latency is just the transcript timestamp minus the VAD timestamp.
+      // The partial latency takes into account any matching partials, or the final latency if there are no matches.
+      const prevOutput = output.current;
+      output.current = [...prevOutput.slice(0, justFinals(prevOutput).length), transcript];
+      if (transcript.final && transcript.observedLatency) {
+        setFinalLatency((prev) => [...prev, transcript.observedLatency!]);
+        setPartialLatency((prev) => [...prev, partialLatency]);
+        console.log(`[${id}] latency=${transcript.observedLatency.toFixed(0)}, partial=${partialLatency.toFixed(0)}`);
+      }
     });
     recognizer.start();
   };
@@ -145,9 +172,9 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
       </div>
       <div className="text-sm">
         <span className="font-bold">WER: </span>
-        {computeWer(output, transcript).toFixed(3)}
+        {computeWer(output.current, transcript).toFixed(3)}
       </div>
-      <textarea cols={80} rows={5} ref={textarea}></textarea>
+      <TranscriptRenderer value={output.current} />
     </div>
   );
 };
