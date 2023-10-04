@@ -76,18 +76,18 @@ export type SidekickProps = UniversalSidekickProps & OutputFormatSidekickProps;
 
 export function Sidekick(props: SidekickProps) {
   return (
-      <ShowConversation present={present}>
-        <UseTools tools={props.tools ?? undefined} showSteps>
-          <SidekickSystemMessage
-            timeZone="America/Los_Angeles"
-            includeNextStepsRecommendations={props.includeNextStepsRecommendations ?? true}
-            outputFormat={props.outputFormat ?? 'text/mdx'}
-            userProvidedGenUIUsageExamples={props.genUIExamples}
-            userProvidedGenUIComponentNames={props.genUIComponentNames}
-          />
-          <ConversationHistory />
-          {props.systemMessage}
-        </UseTools>
-      </ShowConversation>
+    <ShowConversation present={present}>
+      <UseTools tools={props.tools ?? undefined} showSteps>
+        <SidekickSystemMessage
+          timeZone="America/Los_Angeles"
+          includeNextStepsRecommendations={props.includeNextStepsRecommendations ?? true}
+          outputFormat={props.outputFormat ?? 'text/mdx'}
+          userProvidedGenUIUsageExamples={props.genUIExamples}
+          userProvidedGenUIComponentNames={props.genUIComponentNames}
+        />
+        <ConversationHistory />
+        {props.systemMessage}
+      </UseTools>
+    </ShowConversation>
   );
 }
