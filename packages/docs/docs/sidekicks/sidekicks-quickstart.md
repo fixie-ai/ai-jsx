@@ -76,7 +76,7 @@ npx fixie@latest
 
 ### d) Authenticate the Fixie CLI
 
-To configure the Fixie CLI to login to the Fixie service, just run:
+To configure the Fixie CLI to log in to the Fixie service, just run:
 
 ```terminal
 npx fixie@latest auth

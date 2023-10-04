@@ -50,11 +50,5 @@ const finalSystemMessageBeforeResponse = (
 );
 
 export default function SidekickGH() {
-  return (
-    <Sidekick
-      role="Github assistant"
-      tools={tools}
-      finalSystemMessageBeforeResponse={finalSystemMessageBeforeResponse}
-    />
-  );
+  return <Sidekick tools={tools} finalSystemMessageBeforeResponse={finalSystemMessageBeforeResponse} />;
 }

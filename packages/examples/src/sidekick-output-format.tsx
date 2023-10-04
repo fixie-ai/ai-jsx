@@ -27,7 +27,6 @@ function MySidekick({
     // I don't feel like making the types line up.
     // @ts-expect-error
     <Sidekick
-      role="Flight assistant"
       outputFormat={contentType}
       systemMessage={mySystemMessage}
       includeNextStepsRecommendations={includeNextStepsRecommendations}

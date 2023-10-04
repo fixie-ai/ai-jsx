@@ -120,7 +120,6 @@ export function Sidekick(props: SidekickProps) {
           <SidekickSystemMessage
             timeZone="America/Los_Angeles"
             timeZoneOffset="420"
-            role={props.role}
             includeNextStepsRecommendations={props.includeNextStepsRecommendations ?? true}
             outputFormat={props.outputFormat ?? 'text/mdx'}
             userProvidedGenUIUsageExamples={props.genUIExamples}

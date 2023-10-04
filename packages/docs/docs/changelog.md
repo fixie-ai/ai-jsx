@@ -1,6 +1,17 @@
 # Changelog
 
-## 0.18.2
+## 0.19.0
+
+- Remove `Prompt` component.
+- Remove `role` prop from the `Sidekick` component.
+- Fix issue with how the SDK handles request errors.
+- Enable Sidekicks to introduce themselves at the start of a conversation.
+
+## [0.18.3](https://github.com/fixie-ai/ai-jsx/commit/b57ed36)
+
+- Fix an issue where empty strings in conversational prompts cause errors to be thrown.
+
+## [0.18.2](https://github.com/fixie-ai/ai-jsx/commit/fc8ada2d9900b179252d377292835dc28998b86f)
 
 - Modified `lib/openai` to preload the tokenizer to avoid a stall on first use
 - Fixed an issue where `debug(component)` would throw an exception if a component had a prop that could not be JSON-serialized.

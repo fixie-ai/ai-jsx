@@ -108,8 +108,13 @@ export class IsomorphicFixieClient {
       throw new FixieClientError(url, 0, 'Network error', `Network error accessing ${url}`, err);
     });
     if (!res.ok) {
-      const errorDetail: string | unknown = await res.json().catch(() => res.text());
-      throw new FixieClientError(url, res.status, res.statusText, `Error accessing Fixie API: ${url}`, errorDetail);
+      throw new FixieClientError(
+        url,
+        res.status,
+        res.statusText,
+        `Error accessing Fixie API: ${url}`,
+        await res.text()
+      );
     }
     return res;
   }
@@ -270,13 +275,13 @@ export class IsomorphicFixieClient {
    * Start a new conversation with an agent, optionally sending the initial message. (If you don't send the initial
    * message, the agent may.)
    *
-   * @returns { conversationId, response }
-   *    conversationId: The conversation ID, which can be used with the other API methods to continue the
-   *                               conversation.
-   *    response: The fetch response. The response will be a stream of newline-delimited JSON objects, each of which be
-   *              of the shape ConversationTurn. Each member of the stream is the latest value of the turn as the agent
-   *              streams its response. So, if you're driving a UI with this response, you always want to render the
-   *              most recently emitted value from the stream.
+   * @returns {Object} An object with the following properties:
+   *    @property {string} conversationId - The conversation ID, which can be used with the other API methods to continue the
+   *                                         conversation.
+   *    @property {Object} response - The fetch response. The response will be a stream of newline-delimited JSON objects,
+   *                                  each of which be of the shape ConversationTurn. Each member of the stream is the latest
+   *                                  value of the turn as the agent streams its response. So, if you're driving a UI with this
+   *                                  response, you always want to render the most recently emitted value from the stream.
    *
    *          If the generation is stopped via the stopGeneration() API, the final value emitted from the stream will be
    *          the same as what's persisted to the conversation history. However, intermediate stream values may include

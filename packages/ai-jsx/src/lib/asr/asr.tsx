@@ -39,6 +39,27 @@ function bufferToBase64(buffer: ArrayBuffer) {
 }
 
 /**
+ * Removes caps, punctuation, and extra whitespace from a string.
+ */
+export function normalizeText(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]|_/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Represents a single voice activity event from a VAD.
+ * @param active Indicates whether voice is currently active.
+ * @param timestamp The stream time (relative to the start of the audio)
+ * in milliseconds when the voice activity changed, as reported by the VAD.
+ */
+export class VoiceActivity {
+  constructor(public active: boolean, public timestamp: number) {}
+}
+
+/**
  * Manages capturing audio from the microphone or a URL (for testing).
  * Currently uses a WebAudio worker, but we may want to switch to MediaRecorder
  * in the future so that we can emit Opus encoded frames.
@@ -128,7 +149,8 @@ export class MicManager extends EventTarget {
     this.numSamples = 0;
     this.outBuffer = [];
     this.context = new window.AudioContext({ sampleRate: 16000 });
-    console.log(`MicManager sample rate: ${this.context.sampleRate}`);
+    console.log(`MicManager starting graph, sample rate=${this.context.sampleRate}`);
+
     const workletSrcBlob = new Blob([AUDIO_WORKLET_SRC], {
       type: 'application/javascript',
     });
@@ -138,8 +160,8 @@ export class MicManager extends EventTarget {
     this.processorNode.port.onmessage = (event) => {
       this.numSamples += AUDIO_WORKLET_NUM_SAMPLES;
       this.outBuffer!.push(event.data);
-      const bufDuration = ((AUDIO_WORKLET_NUM_SAMPLES * this.outBuffer!.length) / this.sampleRate) * 1000;
-      if (bufDuration >= timeslice) {
+      const bufMillis = ((AUDIO_WORKLET_NUM_SAMPLES * this.outBuffer!.length) / this.sampleRate) * 1000;
+      if (bufMillis >= timeslice) {
         const chunkEvent = new CustomEvent('chunk', {
           detail: this.makeAudioChunk(this.outBuffer!),
         });
@@ -148,6 +170,7 @@ export class MicManager extends EventTarget {
       }
       this.vad?.processFrame(event.data);
     };
+
     let source;
     if (this.stream) {
       source = this.context.createMediaStreamSource(this.stream);
@@ -176,13 +199,14 @@ export class MicManager extends EventTarget {
     this.vad = new LibfVoiceActivityDetector(this.sampleRate);
     this.vad.onVoiceStart = () => {
       console.log(`Speech begin: ${this.currentMillis.toFixed(0)} ms`);
-      this.dispatchEvent(new CustomEvent('vad', { detail: true }));
+      this.dispatchEvent(new CustomEvent('vad', { detail: new VoiceActivity(true, this.currentMillis) }));
     };
     this.vad.onVoiceEnd = () => {
       console.log(`Speech FINAL: ${this.currentMillis.toFixed(0)} ms`);
-      this.dispatchEvent(new CustomEvent('vad', { detail: false }));
+      this.dispatchEvent(new CustomEvent('vad', { detail: new VoiceActivity(false, this.currentMillis) }));
     };
     this.vad.start();
+    console.log('MicManager graph started');
   }
 
   /**
@@ -218,13 +242,29 @@ export type GetToken = (provider: string) => Promise<string>;
 /**
  * Represents a single transcript from a speech recognition service. The
  * transcript should correlate to a single utterance (sentence or phrase).
- * The final flag indicates whether the service is still processing the
- * received audio.
- * The latency field is optional and indicates the time in milliseconds
- * between when VAD detected silence and the transcript was received.
+ * @param text The text of the transcript for the utterance.
+ * @param final Indicates whether this is a partial or final transcript.
+ * As the name implies, if the final flag is set, no further transcripts
+ * will be received for this utterance.
+ * @param timestamp The stream time (relative to the start of the audio) ++++
+ * in milliseconds that this transcript reflects, i.e., the amount of
+ * audio that has been recognized so far. The accuracy of this value
+ * varies substantially by provider, making it hard to depend on.
+ * @param reportedLatency The latency of the transcript in milliseconds,
+ * as reported by the ASR service. It is computed from `timestamp`.
+ * @param observedLatency The latency of the transcript in milliseconds,
+ * between when our VAD detected silence and the transcript was received.
+ * This is only filled in for final transcripts.
  */
 export class Transcript {
-  constructor(public text: string, public final: boolean, public timestamp: number, public latency?: number) {}
+  constructor(
+    public text: string,
+    public final: boolean,
+    public timestamp: number,
+    public recognitionTimestamp: number,
+    public reportedLatency?: number,
+    public observedLatency?: number
+  ) {}
 }
 
 /**
@@ -240,6 +280,10 @@ export abstract class SpeechRecognitionBase extends EventTarget {
   private streamSentMillis: number = 0;
   /** A relative time indicating how much audio data has been recognized. */
   protected streamRecognizedMillis: number = 0;
+  /** A relative time indicating the first time a transcript was received for the current utterance. */
+  protected streamFirstTranscriptMillis: number = 0;
+  /** A relative time indicating when local VAD indicated the end of the current utterance. */
+  protected streamLastVoiceEndMillis: number = 0;
   private outBuffer: ArrayBuffer[] = [];
   protected socket?: WebSocket;
 
@@ -313,24 +357,53 @@ export abstract class SpeechRecognitionBase extends EventTarget {
       }
       this.streamSentMillis += (chunk.byteLength / (2 * this.manager.sampleRate)) * 1000;
     });
+    this.manager.addEventListener('vad', (evt: CustomEventInit<VoiceActivity>) => {
+      const update = evt.detail!;
+      if (!update.active) {
+        if (this.streamLastVoiceEndMillis === 0 && this.streamFirstTranscriptMillis !== 0) {
+          this.streamLastVoiceEndMillis = update.timestamp;
+        } else {
+          console.log(`[${this.name}] unexpected voice end at ${update.timestamp}`);
+        }
+      }
+    });
   }
-  private computeLatency(recognitionMillis: number) {
+  /**
+   * Computes the delta between now and a relative time in the stream.
+   */
+  private computeLatency(streamMillis: number) {
     if (!this.initialChunkMillis) {
       return;
     }
-    return performance.now() - (this.initialChunkMillis + recognitionMillis);
+    return performance.now() - (this.initialChunkMillis + streamMillis);
   }
+
   protected dispatchTranscript(transcript: string, final: boolean, recognizedMillis: number) {
     if (!final && recognizedMillis < this.streamRecognizedMillis) {
       console.warn(`[${this.name}] recognition time ${recognizedMillis} < ${this.streamRecognizedMillis}, ignoring`);
       return;
     }
-    const latency = this.computeLatency(recognizedMillis);
+
+    this.streamRecognizedMillis = recognizedMillis;
+    const reportedLatency = this.computeLatency(recognizedMillis);
+    let observedLatency;
+    if (final) {
+      observedLatency = this.computeLatency(this.streamLastVoiceEndMillis);
+      this.streamFirstTranscriptMillis = this.streamLastVoiceEndMillis = 0;
+    } else if (this.streamFirstTranscriptMillis == 0) {
+      this.streamFirstTranscriptMillis = recognizedMillis;
+    }
     const event = new CustomEvent('transcript', {
-      detail: new Transcript(transcript, final, recognizedMillis, latency),
+      detail: new Transcript(
+        transcript,
+        final,
+        performance.now() - this.initialChunkMillis,
+        recognizedMillis,
+        reportedLatency,
+        observedLatency
+      ),
     });
     this.dispatchEvent(event);
-    this.streamRecognizedMillis = recognizedMillis;
   }
   protected handleOpen() {}
   protected handleMessage(_result: any) {}
@@ -338,7 +411,10 @@ export abstract class SpeechRecognitionBase extends EventTarget {
     this.socket!.send(chunk);
   }
   protected flush() {
-    console.log(`[${this.name}] flushing ${this.outBuffer.length} chunks`);
+    if (this.outBuffer.length > 0) {
+      const bufMillis = (this.outBuffer.length * AUDIO_WORKLET_NUM_SAMPLES * 1000) / this.manager.sampleRate;
+      console.log(`[${this.name}] flushing ${bufMillis} ms of buffered audio`);
+    }
     this.outBuffer.forEach((chunk) => this.sendChunk(chunk));
     this.outBuffer = [];
   }
@@ -346,7 +422,8 @@ export abstract class SpeechRecognitionBase extends EventTarget {
 }
 
 /**
- * Speech recognizer that uses the Deepgram service.
+ * Speech recognizer that uses the Deepgram service, as described at
+ * https://developers.deepgram.com/reference/streaming
  */
 export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
   private buf: string;
@@ -421,7 +498,8 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
 }
 
 /**
- * Speech recognizer that uses the Soniox service.
+ * Speech recognizer that uses the Soniox service, as described at
+ * https://github.com/soniox/web_voice/blob/master/src/web_voice.js
  */
 export class SonioxSpeechRecognition extends SpeechRecognitionBase {
   private token?: string;
@@ -483,7 +561,8 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
 }
 
 /**
- * Speech recognizer that uses the Gladia service.
+ * Speech recognizer that uses the Gladia service, as described at
+ * https://docs.gladia.io/reference/live-audio
  */
 export class GladiaSpeechRecognition extends SpeechRecognitionBase {
   private token?: string;
@@ -530,7 +609,8 @@ export class GladiaSpeechRecognition extends SpeechRecognitionBase {
 }
 
 /**
- * Speech recognizer that uses the AssemblyAI service.
+ * Speech recognizer that uses the AssemblyAI service, as described at
+ * https://www.assemblyai.com/docs/guides/real-time-streaming-transcription
  */
 export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
   constructor(manager: MicManager, tokenFunc: GetToken, language?: string) {
@@ -573,7 +653,8 @@ export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
 }
 
 /**
- * Speech recognizer that uses the Speechmatics service.
+ * Speech recognizer that uses the Speechmatics service, as described at
+ * https://docs.speechmatics.com/rt-api-ref
  */
 export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
   private buf: string;
@@ -619,26 +700,35 @@ export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
    */
   protected handleMessage(result: any) {
     if (result.message == 'AddPartialTranscript') {
-      if (result.metadata.transcript) {
-        this.dispatchTranscript(this.buf + result.metadata.transcript, false, result.metadata.end_time * 1000);
-      }
+      const transcript = this.cleanTranscript(result.metadata.transcript);
+      this.dispatchTranscript(this.buf + transcript, false, result.metadata.end_time * 1000);
     } else if (result.message == 'AddTranscript') {
       if (result.metadata.transcript) {
+        const transcript = this.cleanTranscript(result.metadata.transcript);
         if (!('is_eos' in result.results[0])) {
-          this.buf += result.metadata.transcript;
+          this.buf += transcript;
         } else {
           this.dispatchTranscript(this.buf, true, result.metadata.end_time * 1000);
-          this.buf = result.metadata.transcript;
+          this.buf = transcript;
         }
       }
     } else if (result.message != 'AudioAdded' && result.message != 'RecognitionStarted' && result.message != 'Info') {
       console.log(`speechmatics: unhandled message type: ${result.message}`);
     }
   }
+  /**
+   * Speechmatics transcripts typically include the trailing punctuation from
+   * the previous utterance, so we discard it if present.
+   */
+  private cleanTranscript(transcript: string) {
+    // Remove leading punctuation and whitespace.
+    return transcript.replace(/^[\s.,?!]+/, '');
+  }
 }
 
 /**
- * Speech recognizer that uses the Rev AI service.
+ * Speech recognizer that uses the Rev AI service, as described at
+ * https://docs.rev.ai/api/streaming/
  */
 export class RevAISpeechRecognition extends SpeechRecognitionBase {
   constructor(manager: MicManager, tokenFunc: GetToken, language?: string) {
