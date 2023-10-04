@@ -14,9 +14,7 @@ class OutputProcessor extends AudioWorkletProcessor {
     } 
   }
   process(inputs, outputs) {
-    const output = outputs[0];
-    const outLeft = output[0];
-    const outRight = output[1];
+    const [[outLeft, outRight]] = outputs;
     const outLen = outLeft.length;
     this.copy(outLeft, outRight, outLen);
     return true;
