@@ -115,7 +115,7 @@ export function Sidekick(props: SidekickProps) {
   return (
     <ModelProvider model={model}>
       <ShowConversation present={present}>
-        <UseTools tools={props.tools ?? {}} showSteps>
+        <UseTools tools={props.tools ?? undefined} showSteps>
           <SidekickSystemMessage
             timeZone="America/Los_Angeles"
             includeNextStepsRecommendations={props.includeNextStepsRecommendations ?? true}
