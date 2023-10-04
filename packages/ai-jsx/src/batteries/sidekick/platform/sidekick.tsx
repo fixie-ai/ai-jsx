@@ -37,7 +37,10 @@ interface UniversalSidekickProps {
   systemMessage?: AI.Node;
 
   /**
-   * Defaults to gpt-4-32k
+   * The model to use. Defaults to gpt-4-32k.
+   *
+   * If you pass `tools`, then the model you choose must support tools. Currently, only gpt-4 and gpt-3.5 support
+   * tools. So if you pass an Anthropic model, don't pass `tools`.
    */
   model?: ChatModel;
 }
