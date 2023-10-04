@@ -74,7 +74,7 @@ async function ChatAgent({
   docs?: number;
 }) {
   let prompt = AGENT_PROMPT;
-  const query = conversation[conversation.length - 1].content;
+  const query = conversation.at(-1)?.content;
   if (docs && query) {
     const corpus = new FixieCorpus(AGENT_CORPUS_ID);
     const chunks = await corpus.search(query, { limit: MAX_CHUNKS });
