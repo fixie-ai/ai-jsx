@@ -93,7 +93,7 @@ export async function* AnthropicChatModel(
   props: AnthropicChatModelProps,
   { render, getContext, logger, memo }: AI.ComponentContext
 ): AI.RenderableStream {
-  if ('functionDefinitions' in props) {
+  if ('functionDefinitions' in props && props.functionDefinitions) {
     throw new AIJSXError(
       'Anthropic does not support function calling, but function definitions were provided.',
       ErrorCode.ChatModelDoesNotSupportFunctions,

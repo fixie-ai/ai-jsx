@@ -8,3 +8,5 @@ dist
 packages/docs/docs/api
 packages/docs/build
 packages/create-react-app-demo/build/
+packages/fixie/**/*.js
+packages/fixie/**/*.d.ts

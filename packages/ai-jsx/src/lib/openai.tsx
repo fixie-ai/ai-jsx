@@ -20,8 +20,10 @@ import { Node } from '../index.js';
 import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { OpenAI as OpenAIClient } from 'openai';
 export { OpenAI as OpenAIClient } from 'openai';
+import { FinalRequestOptions } from 'openai/core';
 import { debugRepresentation } from '../core/debug.js';
-import { getEncoding } from 'js-tiktoken';
+import cl100k_base from 'js-tiktoken/ranks/cl100k_base';
+import { Tiktoken } from 'js-tiktoken/lite';
 import _ from 'lodash';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
@@ -45,17 +47,44 @@ export type ValidChatModel =
   | 'gpt-3.5-turbo-16k'
   | 'gpt-3.5-turbo-16k-0613';
 
+/**
+ * An OpenAI client that talks to the Azure OpenAI service.
+ * - Adds an API version in the query string.
+ * - Uses Api-Key instead of Authorization for the auth header.
+ * - Includes the deployment name in the path; note that deployment names cannot contain dots.
+ */
+class AzureOpenAIClient extends OpenAIClient {
+  protected override defaultQuery() {
+    return { 'api-version': '2023-07-01-preview' };
+  }
+  protected override authHeaders() {
+    return {
+      'Api-Key': this.apiKey,
+    };
+  }
+  override buildRequest(options: FinalRequestOptions) {
+    if (options.body && 'model' in options.body) {
+      const model = (options.body.model as string).replace('.', '');
+      options.path = `openai/deployments/${model}${options.path}`;
+    }
+    return super.buildRequest(options);
+  }
+}
+
 const openAiClientContext = AI.createContext<() => OpenAIClient>(
   _.once(() => {
     const baseURL = getEnvVar('OPENAI_API_BASE', false);
-    return new OpenAIClient({
-      apiKey: getEnvVar('OPENAI_API_KEY', false),
+    const useAzure = baseURL && new URL(baseURL).hostname.endsWith('.azure.com');
+    const apiKey = getEnvVar(useAzure ? 'AZURE_OPENAI_API_KEY' : 'OPENAI_API_KEY', false);
+    const config = {
+      apiKey,
       dangerouslyAllowBrowser: Boolean(getEnvVar('REACT_APP_OPENAI_API_KEY', false)),
       // N.B. `baseURL` needs to be _unspecified_ rather than undefined
       ...(baseURL ? { baseURL } : {}),
       // TODO: Figure out a better way to work around NextJS fetch blocking streaming
       fetch: ((globalThis as any)._nextOriginalFetch ?? globalThis.fetch).bind(globalThis),
-    });
+    };
+    return useAzure ? new AzureOpenAIClient(config) : new OpenAIClient(config);
   })
 );
 
@@ -103,10 +132,14 @@ export function OpenAI({
   return result;
 }
 
-const getEncoder = _.once(() => getEncoding('cl100k_base'));
+// Preload the tokenizer to avoid a large delay on first use.
+const cl100kTokenizer = new Tiktoken(cl100k_base);
+export const tokenizer = {
+  encode: (text: string) => cl100kTokenizer.encode(text),
+  decode: (tokens: number[]) => cl100kTokenizer.decode(tokens),
+};
 
 function logitBiasOfTokens(tokens: Record<string, number>) {
-  const tokenizer = getEncoder();
   return Object.fromEntries(
     Object.entries(tokens).map(([token, bias]) => {
       const encoded = tokenizer.encode(token);
@@ -185,7 +218,7 @@ function estimateFunctionTokenCount(functions: Record<string, FunctionDefinition
   // According to https://community.openai.com/t/how-to-calculate-the-tokens-when-using-function-call/266573
   // function definitions are serialized as TypeScript. We'll use JSON-serialization as an approximation (which
   // is almost certainly an overestimate).
-  return getEncoder().encode(JSON.stringify(functions)).length;
+  return tokenizer.encode(JSON.stringify(functions)).length;
 }
 
 function tokenLimitForChatModel(
@@ -223,30 +256,29 @@ async function tokenCountForConversationMessage(
 ): Promise<number> {
   const TOKENS_PER_MESSAGE = 3;
   const TOKENS_PER_NAME = 1;
-  const encoder = getEncoder();
   switch (message.type) {
     case 'user':
       return (
         TOKENS_PER_MESSAGE +
-        encoder.encode(await render(message.element)).length +
-        (message.element.props.name ? encoder.encode(message.element.props.name).length + TOKENS_PER_NAME : 0)
+        tokenizer.encode(await render(message.element)).length +
+        (message.element.props.name ? tokenizer.encode(message.element.props.name).length + TOKENS_PER_NAME : 0)
       );
     case 'assistant':
     case 'system':
-      return TOKENS_PER_MESSAGE + encoder.encode(await render(message.element)).length;
+      return TOKENS_PER_MESSAGE + tokenizer.encode(await render(message.element)).length;
     case 'functionCall':
       return (
         TOKENS_PER_MESSAGE +
         TOKENS_PER_NAME +
-        encoder.encode(message.element.props.name).length +
-        encoder.encode(JSON.stringify(message.element.props.args)).length
+        tokenizer.encode(message.element.props.name).length +
+        tokenizer.encode(JSON.stringify(message.element.props.args)).length
       );
     case 'functionResponse':
       return (
         TOKENS_PER_MESSAGE +
         TOKENS_PER_NAME +
-        encoder.encode(await render(message.element.props.children)).length +
-        encoder.encode(message.element.props.name).length
+        tokenizer.encode(await render(message.element.props.children)).length +
+        tokenizer.encode(message.element.props.name).length
       );
   }
 }
@@ -401,10 +433,14 @@ export async function* OpenAIChatModel(
   // This requires some gymnastics because several components will share a single iterator that can only be consumed once.
   // That is, the logical loop execution is spread over multiple functions (closures over the shared iterator).
   async function advance() {
-    const next = await iterator.next();
-    if (next.done) {
-      return null;
-    }
+    // Eat any empty chunks, typically seen at the beginning of the stream.
+    let next;
+    do {
+      next = await iterator.next();
+      if (next.done) {
+        return null;
+      }
+    } while (next.value.choices.length == 0);
 
     logger.trace({ deltaMessage: next.value }, 'Got delta message');
     return next.value.choices[0].delta;

@@ -76,10 +76,10 @@ npx fixie@latest
 
 ### d) Authenticate the Fixie CLI
 
-To configure the Fixie CLI to login to the Fixie service, just run:
+To configure the Fixie CLI to log in to the Fixie service, just run:
 
 ```terminal
-npx fixie auth
+npx fixie@latest auth
 ```
 
 This will open a browser tab to authenticate to the Fixie Console. The Fixie
@@ -96,7 +96,7 @@ Clone the `fixie-sidekick-template` repository from GitHub:
 git clone https://github.com/fixie-ai/fixie-sidekick-template.git
 ```
 
-If this command fails you may need to [install Git](https://github.com/fixie-ai/fixie-sidekick-template.git).
+If this command fails you may need to [install Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
 You can also download the code directly from [the source](https://github.com/fixie-ai/fixie-sidekick-template). While you're there, give us a star! 🦊
 
@@ -107,6 +107,7 @@ build it before it can be deployed. To do this, in the `fixie-sidekick-template`
 directory, run:
 
 ```terminal
+cd fixie-sidekick-template
 npm install
 npm run build
 ```
@@ -118,7 +119,7 @@ The resulting JavaScript code should now be in the `dist/` subdirectory.
 In the `fixie-sidekick-template` directory, simply run:
 
 ```terminal
-npx fixie deploy
+npx fixie@latest deploy
 ```
 
 This will deploy the Sidekick to the Fixie cloud service. It takes a couple of
@@ -126,7 +127,7 @@ minutes, but once the process is done, you will see a link to the Sidekick's
 page on the Fixie Console. For example:
 
 ```terminal
-❯ npx fixie deploy
+❯ npx fixie@latest deploy
 🦊 Deploying agent sarah/fixie-sidekick-template...
 🦊 Creating new agent sarah/fixie-sidekick-template...
 ⠋  🚀 Deploying... (hang tight, this takes a minute or two!)
@@ -135,7 +136,7 @@ page on the Fixie Console. For example:
 
 <img src={Step3Profit} alt="" width="300"/>
 
-## Step 4: Try it Out!
+## Step 4: Converse with Sidekick
 
 Surf on over to the Sidekick URL shown by the `fixie deploy` command. You should
 now be able to chat directly with your Sidekick!
@@ -150,7 +151,7 @@ the cloud.
 Instead of `fixie deploy`, you run:
 
 ```terminal
-npx fixie serve
+npx fixie@fixie serve
 ```
 
 This starts up the Sidekick running on your local machine, and sets
@@ -170,13 +171,16 @@ Sidekick, but you're not limited to this interface. You can chat with your
 Sidekick directly via a REST API, or embed the Sidekick chat UI in your own
 web app.
 
-### Method 1: Via the REST API
+### Method 1: Via the REST API (using curl)
 
 First up, let's ask our Sidekick a question through the Fixie REST API, using
-`curl`. From your terminal:
+`curl`. Each Sidekick exposes a simple REST API allowing you to create and manage _conversations_ with
+the Sidekick.
+
+To send a message to the Sidekick, you can use:
 
 ```bash
-curl 'https://console.fixie.ai/api/v1/agents/<your user name>/<your sidekick name>/conversations' \
+curl 'https://api.fixie.ai/api/v1/agents/<your user name>/<your sidekick name>/conversations' \
   -d '{ "message": "What can you do?" }' \
   -H 'Authorization: Bearer <your Fixie API key>' \
   -H 'Content-Type: application/json'
@@ -185,13 +189,60 @@ curl 'https://console.fixie.ai/api/v1/agents/<your user name>/<your sidekick nam
 For example:
 
 ```bash
-curl 'https://console.fixie.ai/api/v1/agents/sarah/fixie-sidekick-template/conversations' \
+curl 'https://api.fixie.ai/api/v1/agents/sarah/fixie-sidekick-template/conversations' \
   -d '{ "message": "What can you do?" }' \
   -H 'Authorization: Bearer FmEEMtjcHLfNGPrLhRQwQfwG9Li...' \
   -H 'Content-Type: application/json'
 ```
 
-### Method 2: Via the Fixie Console
+You should see a stream of response messages from the Sidekick, as it sends back
+a response to your question. The last line of the response will show:
+
+```
+{"id": "7a1c57c1-4068-4668-8878-ede11bcb81d6", "turns": [{"id": "8c747526-ac3c-45d2-94d6-c637993e7759", "timestamp": "2023-09-23T21:47:40.956489", "role": "user", "messages": [{"kind": "text", "content": "Tell me about yourself"}], "generationParams": null, "state": "done"}, {"id": "bc716f1b-8eba-4f4f-8df0-4a078fd8359e", "timestamp": "2023-09-23T21:47:41.267027+00:00", "role": "assistant", "messages": [{"kind": "text", "content": "Sure, I'm an AI assistant designed to help you with Git and GitHub."}], "generationParams": null, "state": "done", "inReplyToId": "8c747526-ac3c-45d2-94d6-c637993e7759"}]}
+```
+
+It's a little ugly, of course, but if you pipe the output to `jq`, you can see a nicely-formatted
+JSON object:
+
+```json
+{
+  "id": "67a2f2bd-f85f-41f8-81a9-6ca1330fdaa0",
+  "turns": [
+    {
+      "id": "ef865d96-73c9-421a-9651-fee15ed23528",
+      "timestamp": "2023-09-23T21:48:51.827657",
+      "role": "user",
+      "messages": [
+        {
+          "kind": "text",
+          "content": "Tell me about yourself"
+        }
+      ],
+      "generationParams": null,
+      "state": "done"
+    },
+    {
+      "id": "3a40cfd0-52be-4d0f-a935-36bf3aefbf4e",
+      "timestamp": "2023-09-23T21:48:52.061825+00:00",
+      "role": "assistant",
+      "messages": [
+        {
+          "kind": "text",
+          "content": "Sure, I'm an AI assistant designed to help you with Git and GitHub."
+        }
+      ],
+      "generationParams": null,
+      "state": "done",
+      "inReplyToId": "ef865d96-73c9-421a-9651-fee15ed23528"
+    }
+  ]
+}
+```
+
+### Method 2: Via the Fixie Dashboard
+
+Using `curl` isn't always preferable or very user-friendly. Fortunately, every Sidekick has a web interface that you can access directly:
 
 - In your browser, navigate to the [Fixie dashboard](https://console.fixie.ai/).
 - Click on your Sidekick.

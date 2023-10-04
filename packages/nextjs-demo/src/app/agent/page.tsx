@@ -1,16 +1,15 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { createSpeechRecognition, SpeechRecognitionBase, MicManager, Transcript } from 'ai-jsx/lib/asr/asr';
+import {
+  createSpeechRecognition,
+  normalizeText,
+  SpeechRecognitionBase,
+  MicManager,
+  Transcript,
+} from 'ai-jsx/lib/asr/asr';
 import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
 import '../globals.css';
-
-// latency map and report based on findings
-// tts bargein?
-// vad
-// shorter initial messages
-// caching or other initial startup opt?
-// explore Piper via WASM/python
 
 // 1. VAD triggers silence. (Latency here is frame size + VAD delay)
 // 2. ASR sends partial transcript. ASR latency = 2-1.
@@ -89,7 +88,7 @@ class ChatRequest {
     public active: boolean
   ) {}
   async start() {
-    console.log(`calling LLM for ${this.inMessages[this.inMessages.length - 1].content}`);
+    console.log(`calling LLM for ${this.inMessages.at(-1)?.content}`);
     this.startMillis = performance.now();
     const res = await fetch('/agent/api', {
       method: 'POST',
@@ -138,7 +137,7 @@ class ChatManager {
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
   private readonly docs: boolean;
-  onInputChange?: (text: string, final: boolean, latency: number) => void;
+  onInputChange?: (text: string, final: boolean, latency?: number) => void;
   onOutputChange?: (text: string, final: boolean, latency: number) => void;
   onAudioStart?: (latency: number) => void;
   onAudioEnd?: () => void;
@@ -158,7 +157,7 @@ class ChatManager {
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const obj = event.detail!;
       this.handleInputUpdate(obj.text, obj.final);
-      this.onInputChange?.(obj.text, obj.final, obj.latency!);
+      this.onInputChange?.(obj.text, obj.final, obj.observedLatency);
     });
     this.tts.onPlaying = () => {
       this.onAudioStart?.(this.tts.latency!);
@@ -195,8 +194,13 @@ class ChatManager {
    * Handle new input from the ASR.
    */
   private handleInputUpdate(text: string, final: boolean) {
+    // Ignore partial transcripts if VAD indicates the user is still speaking.
+    if (!final && this.micManager.isVoiceActive) {
+      return;
+    }
+
     // If the input text has been finalized, add it to the message history.
-    const userMessage = new ChatMessage('user', text);
+    const userMessage = new ChatMessage('user', text.trim());
     const newMessages = [...this.history, userMessage];
     if (final) {
       this.history = newMessages;
@@ -205,13 +209,14 @@ class ChatManager {
     // If it doesn't match an existing request, kick off a new one.
     // If it matches an existing request and the text is finalized, speculative
     // execution worked! Snap forward to the current state of that request.
-    const hit = text in this.pendingRequests;
-    console.log(`${final ? 'final' : 'partial'}: ${text} ${hit ? 'HIT' : 'MISS'}`);
+    const normalized = normalizeText(text);
+    const hit = normalized in this.pendingRequests;
+    console.log(`${final ? 'final' : 'partial'}: ${normalized} ${hit ? 'HIT' : 'MISS'}`);
     if (!hit) {
       const request = new ChatRequest(newMessages, this.model, this.docs, final);
       request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
       request.onComplete = (request) => this.handleRequestDone(request);
-      this.pendingRequests[text] = request;
+      this.pendingRequests[normalized] = request;
       request.start();
     } else if (final) {
       const request = this.pendingRequests[text];
@@ -313,7 +318,9 @@ const PageComponent: React.FC = () => {
     manager.start('');
     manager.onInputChange = (text, final, latency) => {
       setInput(text);
-      setAsrLatency(latency);
+      if (latency) {
+        setAsrLatency(latency);
+      }
       setLlmLatency(0);
       setTtsLatency(0);
     };
@@ -361,25 +368,23 @@ const PageComponent: React.FC = () => {
     <>
       <div className="w-full">
         <p className="font-sm ml-2 mb-2">
-          This demo allows you to chat (via voice) with a drive-thru agent at a Krispy Kreme. Click Start Chatting (or
-          tap the spacebar) to begin.
+          This demo allows you to chat (via voice) with a drive-thru agent at a fictional donut shop. Click Start
+          Chatting (or tap the spacebar) to begin.
         </p>
         <div className="grid grid-cols-2">
           <div className="p-4">
             <p className="text-lg font-bold">🍩 DONUTS</p>
             <ul className="text-sm">
-              <MenuItem name="PUMPKIN SPICE ORIGINAL GLAZED® DOUGHNUT" price={1.29} />
+              <MenuItem name="PUMPKIN SPICE ICED DOUGHNUT" price={1.29} />
               <MenuItem name="PUMPKIN SPICE CAKE DOUGHNUT" price={1.29} />
-              <MenuItem name="PUMPKIN SPICE CHEESECAKE SWIRL DOUGHNUT" price={1.29} />
-              <MenuItem name="PUMPKIN SPICE MAPLE PECAN DOUGHNUT" price={1.29} />
-              <MenuItem name="ORIGINAL GLAZED® DOUGHNUT" price={0.99} />
-              <MenuItem name="CHOCOLATE ICED GLAZED DOUGHNUT" price={1.09} />
-              <MenuItem name="CHOCOLATE ICED GLAZED DOUGHNUT WITH SPRINKLES" price={1.09} />
-              <MenuItem name="GLAZED RASPBERRY FILLED DOUGHNUT" price={1.09} />
-              <MenuItem name="GLAZED BLUEBERRY CAKE DOUGHNUT" price={1.09} />
+              <MenuItem name="OLD FASHIONED DOUGHNUT" price={0.99} />
+              <MenuItem name="CHOCOLATE ICED DOUGHNUT" price={1.09} />
+              <MenuItem name="CHOCOLATE ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
+              <MenuItem name="RASPBERRY FILLED DOUGHNUT" price={1.09} />
+              <MenuItem name="BLUEBERRY CAKE DOUGHNUT" price={1.09} />
               <MenuItem name="STRAWBERRY ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
-              <MenuItem name="GLAZED LEMON FILLED DOUGHNUT" price={1.09} />
-              <MenuItem name="ORIGINAL GLAZED® DOUGHNUT HOLES" price={3.99} />
+              <MenuItem name="LEMON FILLED DOUGHNUT" price={1.09} />
+              <MenuItem name="DOUGHNUT HOLES" price={3.99} />
             </ul>
           </div>
           <div className="p-4">
@@ -387,14 +392,13 @@ const PageComponent: React.FC = () => {
             <ul className="text-sm">
               <MenuItem name="PUMPKIN SPICE COFFEE" price={2.59} />
               <MenuItem name="PUMPKIN SPICE LATTE" price={4.59} />
-              <MenuItem name="CLASSIC BREWED COFFEE" price={1.79} />
-              <MenuItem name="CLASSIC DECAF BREWED COFFEE" price={1.79} />
+              <MenuItem name="REGULAR BREWED COFFEE" price={1.79} />
+              <MenuItem name="DECAF BREWED COFFEE" price={1.79} />
               <MenuItem name="LATTE" price={3.49} />
-              <MenuItem name="VANILLA SPECIALTY LATTE" price={3.49} />
-              <MenuItem name="ORIGINAL GLAZED® LATTE" price={3.49} />
-              <MenuItem name="CARAMEL SPECIALTY LATTE" price={3.49} />
-              <MenuItem name="CARAMEL MOCHA SPECIALTY LATTE" price={3.49} />
-              <MenuItem name="MOCHA SPECIALTY LATTE" price={3.49} />
+              <MenuItem name="CAPPUCINO" price={3.49} />
+              <MenuItem name="CARAMEL MACCHIATO" price={3.49} />
+              <MenuItem name="MOCHA LATTE" price={3.49} />
+              <MenuItem name="CARAMEL MOCHA LATTE" price={3.49} />
             </ul>
           </div>
         </div>

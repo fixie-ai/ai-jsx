@@ -4,7 +4,7 @@
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://ai-jsx.com",
-  "version": "0.18.0",
+  "version": "0.21.0",
   "volta": {
     "extends": "../../package.json"
   },
@@ -169,15 +169,6 @@
       },
       "require": {
         "default": "./dist/cjs/core/errors.cjs"
-      }
-    },
-    "./batteries/prompts": {
-      "import": {
-        "types": "./dist/esm/batteries/prompts.d.ts",
-        "default": "./dist/esm/batteries/prompts.js"
-      },
-      "require": {
-        "default": "./dist/cjs/batteries/prompts.cjs"
       }
     },
     "./batteries/constrained-output": {
@@ -389,6 +380,7 @@
     "@nick.heiner/wandb-fork": "^0.5.2-5",
     "@opentelemetry/api": "^1.4.1",
     "@opentelemetry/api-logs": "^0.41.1",
+    "@ozymandiasthegreat/vad": "^2.0.7",
     "axios": "^1.4.0",
     "cli-highlight": "^2.1.11",
     "cli-spinners": "^2.9.0",

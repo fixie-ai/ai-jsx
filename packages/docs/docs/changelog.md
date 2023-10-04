@@ -1,13 +1,47 @@
 # Changelog
 
-## 0.18.0
+## 0.21.0
+
+- `Sidekick` is no longer locked to GPT-4-32k. Now, it'll run with whatever model is set by the AI.JSX context.
+  - If you pass tools, make sure that the model supports native function calling, or you'll get an error.
+- Fix bug in Anthropic's `ChatCompletion` where it was too aggressive in checking that `tools` don't exist.
+
+## [0.20.0](https://github.com/fixie-ai/ai-jsx/commit/96e2e4e7ccca7d9bec7c417da42fb3eca26d2037)
+
+- Remove `finalSystemMessageBeforeResponse` from `Sidekick` component. The `systemMessage` is now always given to the model as the last part of the context window.
+- Remove other cruft from the built-in Sidekick system message.
+- Remove `Card` component from the Sidekick's possible output MDX components.
+
+## [0.19.0](https://github.com/fixie-ai/ai-jsx/commit/79108af2db3dd59fcf9b53082c3499680335b96c)
+
+- Remove `Prompt` component.
+- Remove `role` prop from the `Sidekick` component.
+- Fix issue with how the SDK handles request errors.
+- Enable Sidekicks to introduce themselves at the start of a conversation.
+
+## [0.18.3](https://github.com/fixie-ai/ai-jsx/commit/b57ed36)
+
+- Fix an issue where empty strings in conversational prompts cause errors to be thrown.
+
+## [0.18.2](https://github.com/fixie-ai/ai-jsx/commit/fc8ada2d9900b179252d377292835dc28998b86f)
+
+- Modified `lib/openai` to preload the tokenizer to avoid a stall on first use
+- Fixed an issue where `debug(component)` would throw an exception if a component had a prop that could not be JSON-serialized.
+
+## [0.18.1](https://github.com/fixie-ai/ai-jsx/commit/956ce578eb03f9fd269ae043fa514a7cf711bb06)
+
+- Modified `Sidekick` to add the following options:
+  - `outputFormat`: `text/mdx`, `text/markdown`, `text/plain`
+  - `includeNextStepsRecommendations`: `boolean`
+
+## [0.18.0](https://github.com/fixie-ai/ai-jsx/commit/36b9f02c866df9df761017fd9f8785d876d15ab8)
 
 - Added components for Automatic Speech Recognition (ASR) in `lib/asr/asr.tsx`.
 - Addec components for Text-to-Speech (TTS) in `lib/tts/tts.tsx`.
 - ASR providers include Deepgram, Speechmatics, Assembly AI, Rev AI, Soniox, and Gladia.
 - TTS providers include Google Cloud, AWS, Azure, and ElevenLabs.
 
-## 0.17.4
+## [0.17.4](https://github.com/fixie-ai/ai-jsx/commit/b002c00d3926e03769438b01443c1bb715ade496)
 
 - Fixed a bug where passing an empty `functionDefinitions` prop to `<OpenAIChatModel>` would cause an error.
 
@@ -199,7 +233,7 @@
 ## [0.5.2](https://github.com/fixie-ai/ai-jsx/commit/3267098fd3659bd784c3e40d660d0d7521d1bf4a)
 
 - When reading env vars, read from `VAR_NAME` and `REACT_APP_VAR_NAME`. This makes your env vars available to projects using `create-react-app`.
-- [Add OpenAI client proxy.](./guides/openai#set-a-proxy-env-var)
+- Add OpenAI client proxy.
 
 ## [0.5.1](https://github.com/fixie-ai/ai-jsx/commit/856a2501592f157641d0d99c70fda960b0f7117a)
 

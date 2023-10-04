@@ -20,13 +20,15 @@ const Button: React.FC<{ onClick: () => void; children: React.ReactNode }> = ({ 
   </button>
 );
 
-type TtsProps = {
+interface TtsProps {
   display: string;
   provider: string;
+  supportsWs?: boolean;
   link: string;
-  costPerMChar: number;
+  costPerKChar: number;
+  defaultVoice: string;
   text: string;
-};
+}
 
 const buildUrl = (provider: string, voice: string, rate: number, text: string) => {
   const params = new URLSearchParams({
@@ -47,19 +49,33 @@ const getToken = async (provider: string) => {
   return json.token;
 };
 
-const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, text }) => {
+const Tts: React.FC<TtsProps> = ({
+  display,
+  provider,
+  supportsWs = false,
+  link,
+  costPerKChar,
+  defaultVoice,
+  text,
+}: TtsProps) => {
+  const [voice, setVoice] = useState(defaultVoice);
   const [playing, setPlaying] = useState(false);
-  const [latency, setLatency] = useState(0);
-  const [tts, setTts] = useState<TextToSpeechBase | null>();
+  const [latency, setLatency] = useState<number>();
+  const [restTts, setRestTts] = useState<TextToSpeechBase | null>();
+  const [wsTts, setWsTts] = useState<TextToSpeechBase | null>();
   useEffect(() => {
-    setTts(createTextToSpeech({ provider, buildUrl, getToken, rate: 1.2 }));
-  }, [provider]);
-  const toggle = () => {
+    setRestTts(createTextToSpeech({ provider, proto: 'rest', buildUrl, getToken, voice, rate: 1.2 }));
+    if (supportsWs) {
+      setWsTts(createTextToSpeech({ provider, proto: 'ws', buildUrl, getToken, voice, rate: 1.2 }));
+    }
+  }, [provider, voice]);
+  const toggle = (tts: TextToSpeechBase) => {
     if (!playing) {
       setPlaying(true);
       setLatency(0);
       tts!.onPlaying = () => setLatency(tts!.latency);
       tts!.onComplete = () => setPlaying(false);
+      tts!.onError = (_error: Error) => setPlaying(false);
       tts!.play(text);
       tts!.flush();
     } else {
@@ -67,8 +83,12 @@ const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, text }
       tts!.stop();
     }
   };
+  const toggleRest = () => toggle(restTts!);
+  const toggleWs = () => toggle(wsTts!);
+
   const caption = playing ? 'Stop' : 'Play';
-  const latencyText = playing ? (latency ? `${latency} ms` : 'Generating...') : '';
+  const latencyText = latency ? `${latency} ms` : playing ? 'Generating...' : '';
+  const wsButton = supportsWs ? <Button onClick={toggleWs}>{`${caption} WS`}</Button> : null;
   return (
     <div className="mt-2">
       <p className="text-xl font-bold mt-2 ml-2">
@@ -76,14 +96,29 @@ const Tts: React.FC<TtsProps> = ({ display, provider, link, costPerMChar, text }
           {display}
         </a>
       </p>
-      <div className="text-sm ml-2 mb-1">
+      <div className="text-sm ml-2">
         <span className="font-bold">Cost: </span>
         <a className="hover:underline" href={`${link}/pricing`}>
-          ${costPerMChar}/million chars
+          ${costPerKChar.toFixed(3)}/thousand chars
         </a>
       </div>
-      <Button onClick={toggle}>{caption}</Button>
-      <span className="m-2">{latencyText}</span>
+      <div className="text-sm ml-2">
+        <span className="font-bold">Voice: </span>
+        <input
+          type="text"
+          name={`${provider}Voice`}
+          list="voiceName"
+          className="text-sm h-5 bg-fixie-dust p-1 w-48"
+          value={voice}
+          onChange={(e) => setVoice(e.currentTarget.value)}
+        />
+      </div>
+      <div className="text-sm ml-2 mb-2">
+        <span className="font-bold">Latency: </span>
+        {latencyText}
+      </div>
+      <Button onClick={toggleRest}>{caption}</Button>
+      {wsButton}
     </div>
   );
 };
@@ -94,8 +129,9 @@ const PageComponent: React.FC = () => {
   return (
     <>
       <p className="font-sm ml-2 mb-2">
-        This demo exercises several real-time TTS (text-to-speech) implementations. Clicking a button will convert the
-        text below to speech and play it out using the specified implementation.
+        This demo exercises several real-time TTS (text-to-speech) implementations. Clicking a Play button will convert
+        the text below to speech using the selected implementation. Some implementations also support WebSockets,
+        indicated by the presence of a Play WS button.
       </p>
       <textarea
         className="m-2"
@@ -107,22 +143,80 @@ const PageComponent: React.FC = () => {
       ></textarea>
       <p className="ml-2 mb-2 text-sm">{countWords(text)} words</p>
       <div className="grid grid-cols-1 md:grid-cols-2 w-full">
-        <Tts display="ElevenLabs" provider="eleven" link="https://elevenlabs.io" costPerMChar={180} text={text}></Tts>
+        <Tts
+          display="ElevenLabs"
+          provider="eleven"
+          supportsWs
+          link="https://elevenlabs.io"
+          costPerKChar={0.18}
+          defaultVoice="21m00Tcm4TlvDq8ikWAM"
+          text={text}
+        />
+        <Tts
+          display="LMNT"
+          provider="lmnt"
+          supportsWs
+          link="https://lmnt.com"
+          costPerKChar={0.2}
+          defaultVoice="mrnmrz72"
+          text={text}
+        />
+        <Tts
+          display="Murf AI"
+          provider="murf"
+          link="https://murf.ai"
+          costPerKChar={1.0}
+          defaultVoice="en-US-natalie"
+          text={text}
+        />
+        <Tts
+          display="PlayHT"
+          provider="playht"
+          link="https://play.ht"
+          costPerKChar={0.04125}
+          defaultVoice="victor"
+          text={text}
+        />
+        <Tts
+          display="Resemble AI"
+          provider="resemble"
+          link="https://resemble.ai"
+          costPerKChar={0.4}
+          defaultVoice="e28236ee"
+          text={text}
+        />
+        <Tts
+          display="WellSaid Labs"
+          provider="wellsaid"
+          link="https://wellsaidlabs.com"
+          costPerKChar={1.0}
+          defaultVoice="43"
+          text={text}
+        />
         <Tts
           display="Azure"
           provider="azure"
           link="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services"
-          costPerMChar={16}
+          costPerKChar={0.016}
+          defaultVoice="en-US-JennyNeural"
           text={text}
-        ></Tts>
-        <Tts display="AWS Polly" provider="aws" link="https://aws.amazon.com/polly" costPerMChar={16} text={text}></Tts>
+        />
+        <Tts
+          display="AWS Polly"
+          provider="aws"
+          link="https://aws.amazon.com/polly"
+          costPerKChar={0.016}
+          defaultVoice="Joanna"
+          text={text}
+        />
         <Tts
           display="Google"
           provider="gcp"
           link="https://cloud.google.com/text-to-speech"
-          costPerMChar={16}
+          costPerKChar={0.016}
+          defaultVoice="en-US-Neural2-C"
           text={text}
-        ></Tts>
+        />
       </div>
     </>
   );

@@ -78,8 +78,7 @@ export function present(conversationElement: ConversationMessage) {
 export function getNextConversationStep(
   messages: ConversationMessage[],
   fullConversation: ConversationMessage[],
-  finalSystemMessageBeforeResponse: AI.Node,
-  tools: UseToolsProps['tools']
+  tools?: UseToolsProps['tools']
 ) {
   const shrinkableConversation = getShrinkableConversation(messages, fullConversation);
   const lastMessage = messages[messages.length - 1];
@@ -102,7 +101,7 @@ export function getNextConversationStep(
         />
       );
       // If we are using a tool based on redacted functions, we don't want to redact it further
-      if (!(name in tools)) {
+      if (tools && !(name in tools)) {
         return executedFunction;
       }
       // Function responses can potentially be very large. In that case, we need
@@ -113,19 +112,18 @@ export function getNextConversationStep(
         </LargeFunctionResponseWrapper>
       );
     }
+    /**
+     * By adding `case 'system'` here, we handle the case where the user has not
+     * yet sent a message, so the Sidekick introduces itself.
+     */
+    case 'system':
+    case 'user':
     case 'functionResponse':
       return (
         <RepairMdxInConversation>
-          <ChatCompletion functionDefinitions={updatedTools}>
+          <ChatCompletion functionDefinitions={tools ? updatedTools : undefined}>
             {shrinkableConversation}
-            {finalSystemMessageBeforeResponse}
           </ChatCompletion>
-        </RepairMdxInConversation>
-      );
-    case 'user':
-      return (
-        <RepairMdxInConversation>
-          <ChatCompletion functionDefinitions={updatedTools}>{shrinkableConversation}</ChatCompletion>
         </RepairMdxInConversation>
       );
     default:
