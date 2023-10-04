@@ -23,7 +23,7 @@ const Button: React.FC<{ onClick: () => void; children: React.ReactNode }> = ({ 
 type TtsProps = {
   display: string;
   provider: string;
-  proto?: TextToSpeechProtocol;
+  supportsWs?: boolean;
   link: string;
   costPerKChar: number;
   defaultVoice: string;
@@ -49,15 +49,27 @@ const getToken = async (provider: string) => {
   return json.token;
 };
 
-const Tts: React.FC<TtsProps> = ({ display, provider, proto, link, costPerKChar, defaultVoice, text }) => {
+const Tts: React.FC<TtsProps> = ({
+  display,
+  provider,
+  supportsWs = false,
+  link,
+  costPerKChar,
+  defaultVoice,
+  text,
+}: TtsProps) => {
   const [voice, setVoice] = useState(defaultVoice);
   const [playing, setPlaying] = useState(false);
   const [latency, setLatency] = useState<number>();
-  const [tts, setTts] = useState<TextToSpeechBase | null>();
+  const [restTts, setRestTts] = useState<TextToSpeechBase | null>();
+  const [wsTts, setWsTts] = useState<TextToSpeechBase | null>();
   useEffect(() => {
-    setTts(createTextToSpeech({ provider, proto, buildUrl, getToken, voice, rate: 1.2 }));
+    setRestTts(createTextToSpeech({ provider, proto: 'rest', buildUrl, getToken, voice, rate: 1.2 }));
+    if (supportsWs) {
+      setWsTts(createTextToSpeech({ provider, proto: 'ws', buildUrl, getToken, voice, rate: 1.2 }));
+    }
   }, [provider, voice]);
-  const toggle = () => {
+  const toggle = (tts: TextToSpeechBase) => {
     if (!playing) {
       setPlaying(true);
       setLatency(0);
@@ -71,9 +83,12 @@ const Tts: React.FC<TtsProps> = ({ display, provider, proto, link, costPerKChar,
       tts!.stop();
     }
   };
+  const toggleRest = () => toggle(restTts!);
+  const toggleWs = () => toggle(wsTts!);
 
   const caption = playing ? 'Stop' : 'Play';
   const latencyText = latency ? `${latency} ms` : playing ? 'Generating...' : '';
+  const wsButton = supportsWs ? <Button onClick={toggleWs}>{`${caption} WS`}</Button> : null;
   return (
     <div className="mt-2">
       <p className="text-xl font-bold mt-2 ml-2">
@@ -101,7 +116,8 @@ const Tts: React.FC<TtsProps> = ({ display, provider, proto, link, costPerKChar,
         <span className="font-bold">Latency: </span>
         {latencyText}
       </div>
-      <Button onClick={toggle}>{caption}</Button>
+      <Button onClick={toggleRest}>{caption}</Button>
+      {wsButton}
     </div>
   );
 };
@@ -112,8 +128,9 @@ const PageComponent: React.FC = () => {
   return (
     <>
       <p className="font-sm ml-2 mb-2">
-        This demo exercises several real-time TTS (text-to-speech) implementations. Clicking a button will convert the
-        text below to speech and play it out using the specified implementation.
+        This demo exercises several real-time TTS (text-to-speech) implementations. Clicking a Play button will convert
+        the text below to speech using the selected implementation. Some implementations also support WebSockets,
+        indicated by the presence of a Play WS button.
       </p>
       <textarea
         className="m-2"
@@ -126,36 +143,18 @@ const PageComponent: React.FC = () => {
       <p className="ml-2 mb-2 text-sm">{countWords(text)} words</p>
       <div className="grid grid-cols-1 md:grid-cols-2 w-full">
         <Tts
-          display="ElevenLabs (WebSocket)"
+          display="ElevenLabs"
           provider="eleven"
-          proto="ws"
+          supportsWs
           link="https://elevenlabs.io"
           costPerKChar={0.18}
           defaultVoice="21m00Tcm4TlvDq8ikWAM"
           text={text}
         />
         <Tts
-          display="ElevenLabs (REST)"
-          provider="eleven"
-          proto="rest"
-          link="https://elevenlabs.io"
-          costPerKChar={0.18}
-          defaultVoice="21m00Tcm4TlvDq8ikWAM"
-          text={text}
-        />
-        <Tts
-          display="LMNT (WebSocket)"
+          display="LMNT"
           provider="lmnt"
-          proto="ws"
-          link="https://lmnt.com"
-          costPerKChar={0.2}
-          defaultVoice="mrnmrz72"
-          text={text}
-        />
-        <Tts
-          display="LMNT (REST)"
-          provider="lmnt"
-          proto="rest"
+          supportsWs
           link="https://lmnt.com"
           costPerKChar={0.2}
           defaultVoice="mrnmrz72"
