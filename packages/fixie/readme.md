@@ -64,4 +64,4 @@ This low-level API provides direct access to the Fixie Conversation and Corpus A
 
 ## Dev Notes
 
-To publish this package, run `yarn npm publish` in this directory.
+To publish this package, you first need to update the version number in `package.json`. Then run `yarn npm publish` in this directory.
