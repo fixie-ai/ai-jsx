@@ -26,6 +26,17 @@ export interface FixieEmbedProps extends React.IframeHTMLAttributes<HTMLIFrameEl
   inline?: boolean;
 
   /**
+   * If true, the agent will send a greeting message when the conversation starts. To make this work, you'll want to
+   * either specify a hardcoded greeting message as part of the agent config, or update the agent system message to
+   * tell the agent how to start the conversation.
+   *
+   * If false, the agent will be silent until the user sends a message.
+   *
+   * Defaults to false.
+   */
+  agentSendsGreeting?: boolean;
+
+  /**
    * If you're not sure whether you need this, the answer is "no".
    */
   fixieHost?: string;
@@ -38,14 +49,24 @@ const defaultFixieHost = 'https://fixie.vercel.app';
  *
  * Any extra props to this component are passed through to the `iframe`.
  */
-export function InlineFixieEmbed({ speak, debug, agentId, fixieHost, ...iframeProps }: FixieEmbedProps) {
-  return <iframe {...getBaseIframeProps({ speak, debug, agentId, fixieHost })} {...iframeProps}></iframe>;
+export function InlineFixieEmbed({
+  speak,
+  debug,
+  agentId,
+  fixieHost,
+  agentSendsGreeting,
+  ...iframeProps
+}: FixieEmbedProps) {
+  return (
+    <iframe {...getBaseIframeProps({ speak, debug, agentId, fixieHost, agentSendsGreeting })} {...iframeProps}></iframe>
+  );
 }
 
 export function ControlledFloatingFixieEmbed({
   visible,
   speak,
   debug,
+  agentSendsGreeting,
   agentId,
   fixieHost,
   ...iframeProps
@@ -79,7 +100,7 @@ export function ControlledFloatingFixieEmbed({
         // eslint-disable-next-line @typescript-eslint/prefer-ts-expect-error
         // @ts-ignore
         <iframe
-          {...getBaseIframeProps({ speak, debug, agentId, fixieHost })}
+          {...getBaseIframeProps({ speak, debug, agentId, fixieHost, agentSendsGreeting })}
           {...iframeProps}
           style={chatStyle}
         ></iframe>,
@@ -149,15 +170,19 @@ export function FloatingFixieEmbed({ fixieHost, ...restProps }: FixieEmbedProps)
 function getBaseIframeProps({
   speak,
   debug,
+  agentSendsGreeting,
   fixieHost,
   agentId,
-}: Pick<FixieEmbedProps, 'speak' | 'debug' | 'fixieHost' | 'agentId'>) {
+}: Pick<FixieEmbedProps, 'speak' | 'debug' | 'fixieHost' | 'agentId' | 'agentSendsGreeting'>) {
   const embedUrl = new URL(`/embed/${agentId}`, fixieHost ?? defaultFixieHost);
   if (speak) {
     embedUrl.searchParams.set('speak', '1');
   }
   if (debug) {
     embedUrl.searchParams.set('debug', '1');
+  }
+  if (agentSendsGreeting) {
+    embedUrl.searchParams.set('agentStartsConversation', '1');
   }
 
   return {
