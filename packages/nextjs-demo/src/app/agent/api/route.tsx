@@ -54,7 +54,17 @@ MOCHA LATTE $3.49
 CARAMEL MOCHA LATTE $3.49
 `;
 
-const KK_INITIAL_RESPONSE = 'Welcome to Krispy Kreme! What can I get started for you today?';
+const DD_INITIAL_RESPONSES = [
+    "Welcome to Dr. Donut! What can I get started for you today?",
+    "Hi, thanks for choosing Dr. Donut! What would you like to order?",
+    "Howdy! Welcome to Dr. Donut. What'll make your day?",
+    "Welcome to Dr. Donut, home of the best donuts in town! How can I help you?",
+    "Greetings from Dr. Donut! What can we make fresh for you today?",
+    "Hello and welcome to Dr. Donut! Are you ready to order?",
+    "Hi there! Dr. Donut at your service. What would you like today?",
+    "Hi, the doctor is in! What can we get for you today?",
+]
+
 
 /**
  * The id of the corpus, from https://console.fixie.ai.
@@ -67,6 +77,13 @@ const MAX_CHUNKS = 4;
  */
 class ClientMessage {
   constructor(public role: string, public content: string) {}
+}
+
+/**
+ * Creates an initial response from the agent.
+ */
+function createInitialResponse() {
+  return DD_INITIAL_RESPONSES[Math.floor(Math.random() * DD_INITIAL_RESPONSES.length)];
 }
 
 /**
@@ -132,7 +149,7 @@ export async function POST(request: NextRequest) {
 
   let stream;
   if (json.messages.length == 1 && !json.messages[0].content) {
-    stream = pseudoTextStream(KK_INITIAL_RESPONSE);
+    stream = pseudoTextStream(createInitialResponse());
   } else {
     stream = toTextStream(<ChatAgent conversation={json.messages} model={json.model} docs={json.docs} />);
   }
