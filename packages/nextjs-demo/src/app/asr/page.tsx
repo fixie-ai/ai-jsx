@@ -112,7 +112,7 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
       const currOutput = output.current;
       if (currOutput.length > 0) {
         const lastTranscript = currOutput.at(-1);
-        if (!lastTranscript.final) {
+        if (lastTranscript?.final) {
           if (normalizeText(lastTranscript.text) == normalizeText(transcript.text)) {
             console.debug(`[${id}] Duplicate transcript "${transcript.text}"`);
             if (!transcript.final) {
