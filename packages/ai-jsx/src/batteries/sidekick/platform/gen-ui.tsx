@@ -11,24 +11,6 @@ export function MdxUsageExamples({includeNextStepsRecommendations}: Pick<Sidekic
   When you show the user a link, only show them links that you found from
   searching the knowledge base. Do not make links up.
 
-  To group information about an entity, use a {'<Card />'} component. Its interface is:
-  {`
-  interface CardProps {
-    header: string
-    /** This can be MDX */
-    children: string
-    
-    /** Only use this if you have an image from an API response. Do not make one up. */
-    imageUrl?: string
-    
-    /** Only use this if you have somewhere to link the user out to. */
-    moreDetailUrl?: string
-    
-    /** Only use this if you have somewhere to link the user out to. */
-    moreDetailLabel?: string
-  }
-  `}
-
   When you show users links to knowledge base, use the {'<Citation />'} component. Its props are:
   {' interface CitationProps { title: string; href: string } '}
 

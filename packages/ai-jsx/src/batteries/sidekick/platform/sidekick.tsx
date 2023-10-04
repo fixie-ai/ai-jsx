@@ -42,7 +42,6 @@ export function ModelProvider({
 interface UniversalSidekickProps {
   tools?: UseToolsProps['tools'];
   systemMessage?: AI.Node;
-  finalSystemMessageBeforeResponse?: AI.Node;
 }
 
 type OutputFormatSidekickProps = MergeExclusive<
@@ -51,7 +50,7 @@ type OutputFormatSidekickProps = MergeExclusive<
      * The output format that the Sidekick should use. Defaults to `text/mdx`.
      *
      * `text/mdx` indicates that the Sidekick should output MDX, which is Markdown with
-     * additional JSX elements, such as cards or buttons.
+     * additional JSX elements, such as buttons.
      *
      * `text/markdown` indicates that the Sidekick should output plain Markdown.
      *
@@ -64,7 +63,7 @@ type OutputFormatSidekickProps = MergeExclusive<
      * `outputFormat` is `text/mdx`.
      *
      * By default, the Sidekick will only be able to use the default set of
-     * MDX components in its vocabulary: `Card`, `Citation`, and `NextStepsButton`.
+     * MDX components in its vocabulary: `Citation` and `NextStepsButton`.
      * If you wish to support additional MDX components, you must provide examples
      * of how to use them here.
      */
@@ -75,7 +74,7 @@ type OutputFormatSidekickProps = MergeExclusive<
      * MDX output, when `outputFormat` is `text/mdx`.
      *
      * By default, the Sidekick will only be able to use the default set of
-     * MDX components in its vocabulary: `Card`, `Citation`, and `NextStepsButton`.
+     * MDX components in its vocabulary: `Citation` and `NextStepsButton`.
      * If you wish to support additional MDX components, you must provide their
      * names here.
      */
@@ -112,21 +111,16 @@ export function Sidekick(props: SidekickProps) {
   return (
     <ModelProvider model="gpt-4-32k" modelProvider="openai">
       <ShowConversation present={present}>
-        <UseTools
-          tools={props.tools ?? {}}
-          showSteps
-          finalSystemMessageBeforeResponse={props.finalSystemMessageBeforeResponse}
-        >
+        <UseTools tools={props.tools ?? {}} showSteps>
           <SidekickSystemMessage
             timeZone="America/Los_Angeles"
-            timeZoneOffset="420"
             includeNextStepsRecommendations={props.includeNextStepsRecommendations ?? true}
             outputFormat={props.outputFormat ?? 'text/mdx'}
             userProvidedGenUIUsageExamples={props.genUIExamples}
             userProvidedGenUIComponentNames={props.genUIComponentNames}
           />
-          {props.systemMessage}
           <ConversationHistory />
+          {props.systemMessage}
         </UseTools>
       </ShowConversation>
     </ModelProvider>
