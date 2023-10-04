@@ -17,6 +17,7 @@
     "deploy": "fixie deploy"
   },
   "dependencies": {
+    "@types/node": "^20.8.2",
     "ai-jsx": "*"
   },
   "files": [
