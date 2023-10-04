@@ -22,8 +22,8 @@ const PROVIDER_MAP: ProviderMap = {
   wellsaid: { func: ttsWellSaid },
   murf: { func: ttsMurf, keyPath: 'encodedAudio' },
   playht: { func: ttsPlayHT },
-  resemble: { func: ttsResembleV1, keyPath: 'item.raw_audio', mimeType: AUDIO_WAV_MIME_TYPE },
-  resemble2: { func: ttsResembleV2, keyPath: 'item.raw_audio' },
+  resemble1: { func: ttsResembleV1, keyPath: 'item.raw_audio', mimeType: AUDIO_WAV_MIME_TYPE },
+  resemble: { func: ttsResembleV2 },
 };
 
 function makeStreamResponse(startMillis: number, response: Response) {
@@ -267,7 +267,7 @@ function ttsResembleV1(voice: string, rate: number, text: string) {
     body: text, // makeSsml(voice, rate, text),
     voice_uuid: voice,
     precision: 'PCM_16',
-    sample_rate: 22050,
+    sample_rate: 44100,
     output_type: 'mp3',
     raw: true,
   };
@@ -287,9 +287,9 @@ function ttsResembleV2(voice: string, rate: number, text: string) {
     // eslint-disable-next-line id-blacklist
     data: text, // makeSsml(voice, rate, text),
     precision: 'PCM_16',
-    sample_rate: 22050,
+    sample_rate: 44100,
   };
-  const url = 'https://f.cluster.resemble.ai/stream';
+  const url = 'https://p.cluster.resemble.ai/stream';
   return doPost(url, headers, obj);
 }
 

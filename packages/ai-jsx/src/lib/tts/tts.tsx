@@ -94,14 +94,14 @@ class AudioStream {
   nextSeqNum = 0;
   constructor(public outputNode: AudioWorkletNode, public destNode: MediaStreamAudioDestinationNode) {}
 }
-class AudioOutputManager {
+class AudioOutputManager extends EventTarget {
   private context?: AudioContext;
   private readonly streams: Map<string, AudioStream> = new Map<string, AudioStream>();
   async start() {
     if (this.context || typeof AudioContext == 'undefined') {
       return;
     }
-    this.context = new AudioContext({ sampleRate: 22050 });
+    this.context = new AudioContext();
     const workletSrcBlob = new Blob([AUDIO_WORKLET_SRC], {
       type: 'application/javascript',
     });
@@ -124,6 +124,7 @@ class AudioOutputManager {
     outputNode.connect(destNode);
     outputNode.port.onmessage = (e) => {
       console.log(`stream ${streamId} buf consumed, seq num=${e.data.seqNum}`);
+      this.dispatchWaiting(destNode.stream);
     };
     this.streams.set(streamId, new AudioStream(outputNode, destNode));
     return destNode.stream;
@@ -133,6 +134,7 @@ class AudioOutputManager {
     if (!audioStream) {
       return;
     }
+    audioStream.outputNode.port.onmessage = null;
     audioStream.outputNode.disconnect();
     this.streams.delete(stream.id);
   }
@@ -195,6 +197,9 @@ class AudioOutputManager {
     const channelData = [buffer];
     console.log(`buf added, seq num=${seqNum}`);
     audioStream.outputNode.port.postMessage(new AudioMessage(seqNum, channelData));
+  }
+  private dispatchWaiting(stream: MediaStream) {
+    this.dispatchEvent(new CustomEvent('waiting', { detail: stream }));
   }
 }
 
@@ -347,6 +352,11 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     if (this.audio.readyState == 0) {
       console.log(`[${this.name}] tts starting play`);
       this.audio.srcObject = outputManager.createStream();
+      outputManager.addEventListener('waiting', (event: CustomEventInit<MediaStream>) => {
+        if (event.detail == this.audio.srcObject) {
+          this.setComplete();
+        }
+      });
       this.audio.play();
     }
     if (!this.inProgress) {
@@ -664,7 +674,7 @@ export class PlayHTTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the Resemble.AI text-to-speech service.
  */
 export class ResembleTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = '48d7ed16'; // Tarkos
+  static readonly DEFAULT_VOICE = 'e28236ee'; // Samantha (v2)
   constructor(urlFunc: BuildUrl, voice: string = ResembleTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('resemble', urlFunc, voice, rate);
   }
@@ -816,7 +826,7 @@ export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
     const params = new URLSearchParams({ model_id, optimize_streaming_latency, output_format });
     const url = `wss://api.elevenlabs.io/v1/text-to-speech/${voice}/stream-input?${params}`;
     super('eleven', url);
-    this.contentType = `${AUDIO_PCM_MIME_TYPE}; rate=22050`;
+    this.contentType = `${AUDIO_PCM_MIME_TYPE};rate=22050`;
   }
   protected async handleOpen() {
     // A chunk_length_schedule of [50] means we'll try to generate a chunk
@@ -842,7 +852,6 @@ export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
       this.queueChunk(new AudioChunk(this.contentType, Buffer.from(message.audio!, 'base64').buffer));
     } else if (message.isFinal) {
       console.log(`[${this.name}] utterance complete`);
-      this.setComplete();
     } else if (message.error) {
       console.error(`[${this.name}] error: ${message.message}`);
     }
