@@ -42,7 +42,6 @@ export function ModelProvider({
 interface UniversalSidekickProps {
   tools?: UseToolsProps['tools'];
   systemMessage?: AI.Node;
-  finalSystemMessageBeforeResponse?: AI.Node;
 }
 
 type OutputFormatSidekickProps = MergeExclusive<
@@ -112,11 +111,7 @@ export function Sidekick(props: SidekickProps) {
   return (
     <ModelProvider model="gpt-4-32k" modelProvider="openai">
       <ShowConversation present={present}>
-        <UseTools
-          tools={props.tools ?? {}}
-          showSteps
-          finalSystemMessageBeforeResponse={props.finalSystemMessageBeforeResponse}
-        >
+        <UseTools tools={props.tools ?? {}} showSteps>
           <SidekickSystemMessage
             timeZone="America/Los_Angeles"
             timeZoneOffset="420"
