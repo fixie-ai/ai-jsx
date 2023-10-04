@@ -616,7 +616,7 @@ export class FixieAgent {
         throw Error('No deployment URL specified in agent.yaml');
       }
       deploymentUrlsIter = (async function* () {
-        yield config.deploymentUrl as string;
+        yield config.deploymentUrl!;
 
         // Never yield another value.
         await new Promise(() => {});
@@ -720,29 +720,29 @@ export class FixieAgent {
     gen2: AsyncIterator<U>
   ): AsyncGenerator<[T, U]> {
     const generators = [gen1, gen2] as const;
-    let currentValues = (await Promise.all(generators.map((g) => g.next()))).map((v) => v.value) as [T, U];
-    let nextPromises = generators.map((g) => g.next());
+    const currentValues = (await Promise.all(generators.map((g) => g.next()))).map((v) => v.value) as [T, U];
+    const nextPromises = generators.map((g) => g.next());
+
+    async function updateWithReadyValue(index: number): Promise<boolean> {
+      const value = await Promise.race([nextPromises[index], null]);
+      if (value === null) {
+        return false;
+      }
+
+      if (value.done) {
+        return true;
+      }
+
+      currentValues[index] = value.value;
+      nextPromises[index] = generators[index].next();
+      return false;
+    }
 
     while (true) {
       yield currentValues;
 
       // Wait for one of the generators to yield a new value.
       await Promise.race(nextPromises);
-
-      async function updateWithReadyValue(index: number): Promise<boolean> {
-        const value = await Promise.race([nextPromises[index], null]);
-        if (value === null) {
-          return false;
-        }
-
-        if (value.done) {
-          return true;
-        }
-
-        currentValues[index] = value.value;
-        nextPromises[index] = generators[index].next();
-        return false;
-      }
 
       const shouldExit = await Promise.all([0, 1].map(updateWithReadyValue));
       if (shouldExit.some((v) => v)) {
