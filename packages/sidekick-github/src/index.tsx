@@ -33,7 +33,7 @@ const tools: Record<string, Tool> = {
   },
 };
 
-const finalSystemMessageBeforeResponse = (
+const systemMessage = (
   <SystemMessage>
     Respond with a `Card`. If your API call produced a 4xx error, see if you can fix the request and try again.
     Otherwise: Give the user suggested next queries, using `NextStepsButton`. Only suggest things you can actually do.
@@ -50,5 +50,5 @@ const finalSystemMessageBeforeResponse = (
 );
 
 export default function SidekickGH() {
-  return <Sidekick tools={tools} finalSystemMessageBeforeResponse={finalSystemMessageBeforeResponse} />;
+  return <Sidekick tools={tools} systemMessage={systemMessage} />;
 }
