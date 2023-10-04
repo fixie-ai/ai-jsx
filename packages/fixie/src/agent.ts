@@ -267,7 +267,7 @@ export class FixieAgent {
     // with the runtime parameters for the agent.
     const tsconfigPath = path.resolve(path.join(agentPath, 'tsconfig.json'));
     if (!fs.existsSync(tsconfigPath)) {
-      term.yellow('⚠️ tsconfig.json not found. Your agent will not support runtime parameters.\n');
+      term.yellow(`⚠️ tsconfig.json not found at ${tsconfigPath}. Your agent will not support runtime parameters.\n`);
       return null;
     }
 
@@ -288,7 +288,7 @@ export class FixieAgent {
     );
     const program = TJS.programFromConfig(tsconfigPath, [tempPath]);
     const schema = TJS.generateSchema(program, 'RuntimeParameters', settings);
-    if (schema && schema.type !== 'object') {
+    if (schema?.type !== 'object') {
       throw new Error(`The first argument of your default export must be an object (not ${schema.type})`);
     }
 
