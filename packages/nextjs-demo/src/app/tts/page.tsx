@@ -106,6 +106,7 @@ const Tts: React.FC<TtsProps> = ({
         <span className="font-bold">Voice: </span>
         <input
           type="text"
+          name={`${provider}Voice`}
           list="voiceName"
           className="text-sm h-5 bg-fixie-dust p-1 w-48"
           value={voice}
@@ -181,7 +182,7 @@ const PageComponent: React.FC = () => {
           provider="resemble"
           link="https://resemble.ai"
           costPerKChar={0.4}
-          defaultVoice="48d7ed16"
+          defaultVoice="e28236ee"
           text={text}
         />
         <Tts

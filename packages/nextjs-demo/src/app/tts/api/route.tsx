@@ -11,7 +11,7 @@ const APPLICATION_X_WWW_FORM_URLENCODED_MIME_TYPE = 'application/x-www-form-urle
 
 type Generate = (voiceId: string, rate: number, text: string) => Promise<Response>;
 class Provider {
-  constructor(public func: Generate, public keyPath?: string) {}
+  constructor(public func: Generate, public keyPath?: string, public mimeType?: string) {}
 }
 type ProviderMap = {
   [key: string]: Provider;
@@ -24,8 +24,8 @@ const PROVIDER_MAP: ProviderMap = {
   lmnt: { func: ttsLmnt },
   murf: { func: ttsMurf, keyPath: 'encodedAudio' },
   playht: { func: ttsPlayHT },
-  resemble1: { func: ttsResembleV1, keyPath: 'item.raw_audio' },
-  resemble: { func: ttsResembleV2, keyPath: 'item.raw_audio' },
+  resemble1: { func: ttsResembleV1, keyPath: 'item.raw_audio', mimeType: AUDIO_WAV_MIME_TYPE },
+  resemble: { func: ttsResembleV2 },
   wellsaid: { func: ttsWellSaid },
 };
 
@@ -56,12 +56,12 @@ function makeStreamResponse(startMillis: number, response: Response) {
   return new NextResponse(nextStream, { headers, status });
 }
 
-async function makeBlobResponseFromJson(startMillis: number, response: Response, keyPath: string) {
+async function makeBlobResponseFromJson(startMillis: number, response: Response, keyPath: string, mimeType: string) {
   const json = await response.json();
   const value = _.get(json, keyPath);
   const binary = Buffer.from(value, 'base64');
   console.log(`${startMillis} TTS complete latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
-  return new NextResponse(binary, { headers: { 'Content-Type': AUDIO_MPEG_MIME_TYPE } });
+  return new NextResponse(binary, { headers: { 'Content-Type': mimeType } });
 }
 
 /**
@@ -89,16 +89,20 @@ export async function GET(request: NextRequest) {
   const provider = PROVIDER_MAP[providerName];
   const response = await provider.func(voice, rate, text);
   if (!response.ok) {
+    console.log(await response.text());
     console.log(`${startMillis} TTS error: ${response.status} ${response.statusText}`);
     return new NextResponse(await response.json(), { status: response.status });
   }
-  console.log(`${startMillis} TTS response latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
   const contentType = response.headers.get('Content-Type');
+  console.log(
+    `${startMillis} TTS response latency: ${(performance.now() - startMillis).toFixed(
+      0
+    )} ms, content-type: ${contentType}`
+  );
   if (provider.keyPath) {
-    assert(contentType == APPLICATION_JSON_MIME_TYPE);
-    return makeBlobResponseFromJson(startMillis, response, provider.keyPath);
+    assert(contentType?.startsWith(APPLICATION_JSON_MIME_TYPE));
+    return makeBlobResponseFromJson(startMillis, response, provider.keyPath, provider.mimeType ?? AUDIO_MPEG_MIME_TYPE);
   }
-  assert(contentType == AUDIO_MPEG_MIME_TYPE);
   return makeStreamResponse(startMillis, response);
 }
 
@@ -266,7 +270,7 @@ function ttsResembleV1(voice: string, rate: number, text: string) {
     body: text, // makeSsml(voice, rate, text),
     voice_uuid: voice,
     precision: 'PCM_16',
-    sample_rate: 22050,
+    sample_rate: 44100,
     output_type: 'mp3',
     raw: true,
   };
@@ -285,9 +289,9 @@ function ttsResembleV2(voice: string, rate: number, text: string) {
     // eslint-disable-next-line id-blacklist
     data: text, // makeSsml(voice, rate, text),
     precision: 'PCM_16',
-    sample_rate: 22050,
+    sample_rate: 44100,
   };
-  const url = 'https://f.cluster.resemble.ai/stream';
+  const url = 'https://p.cluster.resemble.ai/stream';
   return postJson(url, headers, obj);
 }
 
