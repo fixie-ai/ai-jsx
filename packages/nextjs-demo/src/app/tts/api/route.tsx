@@ -53,7 +53,7 @@ function makeStreamResponse(startMillis: number, response: Response) {
   return new NextResponse(nextStream, { headers, status });
 }
 
-async function makeBlobResponseFromJson(startMillis: number, response: Response, keyPath: string, mimeType: string) {  
+async function makeBlobResponseFromJson(startMillis: number, response: Response, keyPath: string, mimeType: string) {
   const json = await response.json();
   const value = _.get(json, keyPath);
   const binary = Buffer.from(value, 'base64');
