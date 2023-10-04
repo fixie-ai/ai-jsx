@@ -21,11 +21,11 @@ const PROVIDER_MAP: ProviderMap = {
   azure: { func: ttsAzure },
   eleven: { func: ttsEleven },
   gcp: { func: ttsGcp, keyPath: 'audioContent' },
+  lmnt: { func: ttsLmnt },
   murf: { func: ttsMurf, keyPath: 'encodedAudio' },
   playht: { func: ttsPlayHT },
   resemble1: { func: ttsResembleV1, keyPath: 'item.raw_audio' },
   resemble: { func: ttsResembleV2, keyPath: 'item.raw_audio' },
-  lmnt: { func: ttsLmnt },
   wellsaid: { func: ttsWellSaid },
 };
 
