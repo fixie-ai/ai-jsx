@@ -10,6 +10,8 @@ import { execa } from 'execa';
 import Watcher from 'watcher';
 import net from 'node:net';
 
+import * as TJS from 'typescript-json-schema';
+
 const { terminal: term } = terminal;
 
 import { FixieClient } from './client.js';
@@ -260,6 +262,39 @@ export class FixieAgent {
     return config as AgentConfig;
   }
 
+  private static inferRuntimeParametersSchema(agentPath: string): TJS.Definition | null {
+    // If there's a tsconfig.json file, try to use Typescript to produce a JSON schema
+    // with the runtime parameters for the agent.
+    const tsconfigPath = path.resolve(path.join(agentPath, 'tsconfig.json'));
+    if (!fs.existsSync(tsconfigPath)) {
+      term.yellow(`⚠️ tsconfig.json not found at ${tsconfigPath}. Your agent will not support runtime parameters.\n`);
+      return null;
+    }
+
+    const settings: TJS.PartialArgs = {
+      required: true,
+      noExtraProps: true,
+    };
+
+    // We're currently assuming the entrypoint is exported from src/index.{ts,tsx}.
+    const handlerPath = path.resolve(path.join(agentPath, 'src/index.js'));
+    const tempPath = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'fixie-')), 'extract-parameters-schema.mts');
+    fs.writeFileSync(
+      tempPath,
+      `
+      import Handler from '${handlerPath}';
+      export type RuntimeParameters = Parameters<typeof Handler>[0] extends infer T ? T : {};
+      `
+    );
+    const program = TJS.programFromConfig(tsconfigPath, [tempPath]);
+    const schema = TJS.generateSchema(program, 'RuntimeParameters', settings);
+    if (schema && schema.type !== 'object') {
+      throw new Error(`The first argument of your default export must be an object (not ${schema.type})`);
+    }
+
+    return schema;
+  }
+
   /** Package the code in the given directory and return the path to the tarball. */
   private static getCodePackage(agentPath: string): string {
     // Read the package.json file to get the package name and version.
@@ -279,7 +314,10 @@ export class FixieAgent {
 
   /** Create a new agent revision, which deploys the agent. */
   private async createRevision(
-    opts: MergeExclusive<{ externalUrl: string }, { tarball: string; environmentVariables: Record<string, string> }>
+    opts: MergeExclusive<{ externalUrl: string }, { tarball: string; environmentVariables: Record<string, string> }> & {
+      defaultRuntimeParameters?: Record<string, unknown> | null;
+      runtimeParametersSchema?: TJS.Definition | null;
+    }
   ): Promise<AgentRevision> {
     const uploadFile = opts.tarball ? fs.readFileSync(fs.realpathSync(opts.tarball)) : undefined;
 
@@ -291,6 +329,7 @@ export class FixieAgent {
           $makeCurrent: Boolean!
           $externalDeployment: ExternalDeploymentInput
           $managedDeployment: ManagedDeploymentInput
+          $defaultRuntimeParameters: JSONString
         ) {
           createAgentRevision(
             agentHandle: $handle
@@ -299,6 +338,7 @@ export class FixieAgent {
               metadata: $metadata
               externalDeployment: $externalDeployment
               managedDeployment: $managedDeployment
+              defaultRuntimeParameters: $defaultRuntimeParameters
             }
           ) {
             revision {
@@ -312,7 +352,11 @@ export class FixieAgent {
         handle: this.handle,
         metadata: [],
         makeCurrent: true,
-        externalDeployment: opts.externalUrl && { url: opts.externalUrl },
+        defaultRuntimeParameters: JSON.stringify(opts.defaultRuntimeParameters),
+        externalDeployment: opts.externalUrl && {
+          url: opts.externalUrl,
+          runtimeParametersSchema: JSON.stringify(opts.runtimeParametersSchema),
+        },
         managedDeployment: opts.tarball &&
           uploadFile && {
             codePackage: new Blob([uploadFile], { type: 'application/gzip' }),
@@ -320,6 +364,7 @@ export class FixieAgent {
               name: key,
               value,
             })),
+            runtimeParametersSchema: JSON.stringify(opts.runtimeParametersSchema),
           },
       },
       fetchPolicy: 'no-cache',
@@ -470,9 +515,10 @@ export class FixieAgent {
     }
 
     const agent = await this.ensureAgent(client, agentId, config);
+    const runtimeParametersSchema = this.inferRuntimeParametersSchema(agentPath);
     const tarball = FixieAgent.getCodePackage(agentPath);
     const spinner = ora(' 🚀 Deploying... (hang tight, this takes a minute or two!)').start();
-    const revision = await agent.createRevision({ tarball, environmentVariables });
+    const revision = await agent.createRevision({ tarball, environmentVariables, runtimeParametersSchema });
     spinner.succeed(`Agent ${config.handle} is running at: ${agent.agentUrl()}`);
     return revision;
   }
@@ -503,6 +549,12 @@ export class FixieAgent {
     if (!fs.existsSync(packageJsonPath)) {
       throw Error(`No package.json found in ${packageJsonPath}. Only JS-based agents are supported.`);
     }
+
+    // Infer the runtime parameters schema. We'll create a generator that yields whenever the schema changes.
+    let runtimeParametersSchema = FixieAgent.inferRuntimeParametersSchema(agentPath);
+    const { iterator: schemaGenerator, push: pushToSchemaGenerator } =
+      this.createAsyncIterable<TJS.Definition | null>();
+    pushToSchemaGenerator(runtimeParametersSchema);
 
     // Start the agent process locally.
     let agentProcess = FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
@@ -540,116 +592,35 @@ export class FixieAgent {
           });
         }
       });
-      agentProcess = FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
+
+      try {
+        const newSchema = FixieAgent.inferRuntimeParametersSchema(agentPath);
+        if (JSON.stringify(runtimeParametersSchema) !== JSON.stringify(newSchema)) {
+          pushToSchemaGenerator(newSchema);
+          runtimeParametersSchema = newSchema;
+        }
+
+        agentProcess = FixieAgent.spawnAgentProcess(agentPath, port, environmentVariables);
+      } catch (ex) {
+        term(`❌ Failed to restart agent process: ${ex} \n`);
+      }
     });
-
-    // Poll the port until it's listening.
-    async function waitForAgentToBeReady() {
-      while (true) {
-        try {
-          await new Promise<void>((resolve, reject) => {
-            const socket = net.connect({
-              host: '127.0.0.1',
-              port,
-            });
-
-            socket.on('connect', resolve);
-            socket.on('error', reject);
-          });
-          break;
-        } catch {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        }
-      }
-    }
-
-    async function* spawnTunnel(port: number): AsyncGenerator<string> {
-      type AsyncGeneratorYield<T> = (value: T) => void;
-      // Represents the value yielded by the subprocess.
-      let yieldValue: AsyncGeneratorYield<string> | null = null;
-      // This Promise is resolved when the tunnel subprocess yields a new address.
-      let whenYielded = new Promise<string>((resolve) => {
-        yieldValue = resolve;
-      });
-
-      term('🚇 Starting tunnel process...\n');
-      // We use localhost.run as a tunneling service. This sets up an SSH tunnel
-      // to the provided local port via localhost.run. The subprocess returns a
-      // stream of JSON responses, one per line, with the external URL of the tunnel
-      // as it changes.
-      const subProcess = execa('ssh', [
-        '-R',
-        // N.B. 127.0.0.1 must be used on Windows (not localhost or 0.0.0.0)
-        `80:127.0.0.1:${port}`,
-        '-o',
-        // Need to send keepalives to prevent the connection from getting chopped
-        // (see https://localhost.run/docs/faq#my-connection-is-unstable-tunnels-go-down-often)
-        'ServerAliveInterval=59',
-        '-o',
-        'StrictHostKeyChecking=accept-new',
-        'nokey@localhost.run',
-        '--',
-        '--output=json',
-      ]);
-      subProcess.stdout?.setEncoding('utf8');
-
-      // Every time the subprocess emits a new line, we parse it as JSON ans
-      // extract the 'address' field.
-      let currentLine = '';
-      subProcess.stdout?.on('data', (chunk: string) => {
-        // We need to do buffering since the data we get from stdout
-        // will not necessarily be line-buffered. We can get 0, 1, or more complete
-        // lines in a single chunk.
-        currentLine += chunk;
-        let newlineIndex;
-        while ((newlineIndex = currentLine.indexOf('\n')) !== -1) {
-          const line = currentLine.slice(0, newlineIndex);
-          currentLine = currentLine.slice(newlineIndex + 1);
-          // Parse data as JSON.
-          const pdata = JSON.parse(line);
-          // If pdata has the 'address' field, yield it.
-          if (pdata.address) {
-            yieldValue?.(`https://${pdata.address}`);
-          }
-        }
-      });
-      if (debug) {
-        subProcess.stderr?.on('data', (sdata: string) => {
-          console.error(`🚇 Tunnel stderr: ${sdata}`);
-        });
-        subProcess.on('close', (returnCode: number) => {
-          console.log(`🚇 Tunnel child process exited with code ${returnCode}`);
-        });
-      }
-      // Now we wait for the subprocess to yield a new address, which we then
-      // re-yield to the caller of this function.
-      while (true) {
-        const tunnelAddress = await whenYielded;
-        if (tunnelAddress === '') {
-          break;
-        }
-        yield tunnelAddress;
-        yieldValue = null;
-        whenYielded = new Promise<string>((resolve) => {
-          yieldValue = resolve;
-        });
-      }
-    }
 
     // This is an iterator which yields the public URL of the tunnel where the agent
     // can be reached by the Fixie service. The tunnel address can change over time.
-    let deploymentUrlsIter;
+    let deploymentUrlsIter: AsyncIterator<string>;
     if (tunnel) {
-      deploymentUrlsIter = spawnTunnel(port);
+      deploymentUrlsIter = FixieAgent.spawnTunnel(port, Boolean(debug));
     } else {
       if (!config.deploymentUrl) {
         throw Error('No deployment URL specified in agent.yaml');
       }
-      deploymentUrlsIter = [
-        (async function* () {
-          yield config.deploymentUrl;
-        })(),
-      ];
+      deploymentUrlsIter = (async function* () {
+        yield config.deploymentUrl!;
+
+        // Never yield another value.
+        await new Promise(() => {});
+      })();
     }
 
     const agent = await this.ensureAgent(client, agentId, config);
@@ -684,8 +655,11 @@ export class FixieAgent {
 
     // The tunnel may yield different URLs over time. We need to create a new
     // agent revision each time.
-    for await (const currentUrl of deploymentUrlsIter) {
-      await waitForAgentToBeReady();
+    for await (const [currentUrl, runtimeParametersSchema] of this.zipAsyncIterables(
+      deploymentUrlsIter,
+      schemaGenerator
+    )) {
+      await FixieAgent.pollPortUntilReady(port);
 
       term('🚇 Current tunnel URL is: ').green(currentUrl)('\n');
       try {
@@ -694,7 +668,7 @@ export class FixieAgent {
           await agent.deleteRevision(currentRevision.id);
           currentRevision = null;
         }
-        currentRevision = await agent.createRevision({ externalUrl: currentUrl as string });
+        currentRevision = await agent.createRevision({ externalUrl: currentUrl, runtimeParametersSchema });
         term('🥡 Created temporary agent revision ').green(currentRevision.id)('\n');
         term('🥡 Agent ').green(config.handle)(' is running at: ').green(agent.agentUrl())('\n');
       } catch (e: any) {
@@ -703,5 +677,137 @@ export class FixieAgent {
         continue;
       }
     }
+  }
+
+  private static async pollPortUntilReady(port: number): Promise<void> {
+    while (true) {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const socket = net.connect({
+            host: '127.0.0.1',
+            port,
+          });
+
+          socket.on('connect', resolve);
+          socket.on('error', reject);
+        });
+        break;
+      } catch {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+  }
+
+  private static createAsyncIterable<T>(): { iterator: AsyncIterator<T>; push: (value: T) => void } {
+    let streamController: ReadableStreamDefaultController<T>;
+    const stream = new ReadableStream<T>({
+      start(controller) {
+        streamController = controller;
+      },
+    });
+
+    return {
+      // @ts-expect-error https://github.com/DefinitelyTyped/DefinitelyTyped/discussions/62651
+      iterator: stream[Symbol.asyncIterator](),
+      push: (value: T) => {
+        streamController.enqueue(value);
+      },
+    };
+  }
+
+  private static async *zipAsyncIterables<T, U>(
+    gen1: AsyncIterator<T>,
+    gen2: AsyncIterator<U>
+  ): AsyncGenerator<[T, U]> {
+    const generators = [gen1, gen2] as const;
+    const currentValues = (await Promise.all(generators.map((g) => g.next()))).map((v) => v.value) as [T, U];
+    const nextPromises = generators.map((g) => g.next());
+
+    async function updateWithReadyValue(index: number): Promise<boolean> {
+      const value = await Promise.race([nextPromises[index], null]);
+      if (value === null) {
+        return false;
+      }
+
+      if (value.done) {
+        return true;
+      }
+
+      currentValues[index] = value.value;
+      nextPromises[index] = generators[index].next();
+      return false;
+    }
+
+    while (true) {
+      yield currentValues;
+
+      // Wait for one of the generators to yield a new value.
+      await Promise.race(nextPromises);
+
+      const shouldExit = await Promise.all([0, 1].map(updateWithReadyValue));
+      if (shouldExit.some((v) => v)) {
+        break;
+      }
+    }
+  }
+
+  private static spawnTunnel(port: number, debug: boolean): AsyncIterator<string> {
+    const { iterator, push: pushToIterator } = this.createAsyncIterable<string>();
+
+    term('🚇 Starting tunnel process...\n');
+    // We use localhost.run as a tunneling service. This sets up an SSH tunnel
+    // to the provided local port via localhost.run. The subprocess returns a
+    // stream of JSON responses, one per line, with the external URL of the tunnel
+    // as it changes.
+    const subProcess = execa('ssh', [
+      '-R',
+      // N.B. 127.0.0.1 must be used on Windows (not localhost or 0.0.0.0)
+      `80:127.0.0.1:${port}`,
+      '-o',
+      // Need to send keepalives to prevent the connection from getting chopped
+      // (see https://localhost.run/docs/faq#my-connection-is-unstable-tunnels-go-down-often)
+      'ServerAliveInterval=59',
+      '-o',
+      'StrictHostKeyChecking=accept-new',
+      'nokey@localhost.run',
+      '--',
+      '--output=json',
+    ]);
+    subProcess.stdout?.setEncoding('utf8');
+
+    // Every time the subprocess emits a new line, we parse it as JSON ans
+    // extract the 'address' field.
+    let currentLine = '';
+    subProcess.stdout?.on('data', (chunk: string) => {
+      // We need to do buffering since the data we get from stdout
+      // will not necessarily be line-buffered. We can get 0, 1, or more complete
+      // lines in a single chunk.
+      currentLine += chunk;
+      let newlineIndex;
+      while ((newlineIndex = currentLine.indexOf('\n')) !== -1) {
+        const line = currentLine.slice(0, newlineIndex);
+        currentLine = currentLine.slice(newlineIndex + 1);
+        // Parse data as JSON.
+        const pdata = JSON.parse(line);
+        // If pdata has the 'address' field, yield it.
+        if (pdata.address) {
+          pushToIterator(`https://${pdata.address}`);
+        }
+      }
+    });
+
+    subProcess.stderr?.on('data', (sdata: string) => {
+      if (debug) {
+        console.error(`🚇 Tunnel stderr: ${sdata}`);
+      }
+    });
+    subProcess.on('close', (returnCode: number) => {
+      if (debug) {
+        console.log(`🚇 Tunnel child process exited with code ${returnCode}`);
+      }
+      iterator.return?.(null);
+    });
+
+    return iterator;
   }
 }

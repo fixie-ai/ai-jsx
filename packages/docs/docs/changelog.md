@@ -1,6 +1,18 @@
 # Changelog
 
-## 0.19.0
+## 0.21.0
+
+- `Sidekick` is no longer locked to GPT-4-32k. Now, it'll run with whatever model is set by the AI.JSX context.
+  - If you pass tools, make sure that the model supports native function calling, or you'll get an error.
+- Fix bug in Anthropic's `ChatCompletion` where it was too aggressive in checking that `tools` don't exist.
+
+## [0.20.0](https://github.com/fixie-ai/ai-jsx/commit/96e2e4e7ccca7d9bec7c417da42fb3eca26d2037)
+
+- Remove `finalSystemMessageBeforeResponse` from `Sidekick` component. The `systemMessage` is now always given to the model as the last part of the context window.
+- Remove other cruft from the built-in Sidekick system message.
+- Remove `Card` component from the Sidekick's possible output MDX components.
+
+## [0.19.0](https://github.com/fixie-ai/ai-jsx/commit/79108af2db3dd59fcf9b53082c3499680335b96c)
 
 - Remove `Prompt` component.
 - Remove `role` prop from the `Sidekick` component.

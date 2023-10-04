@@ -2,10 +2,16 @@ import { ChatCompletion, SystemMessage, ConversationHistory } from 'ai-jsx/core/
 
 console.log('Fixie Hello World agent starting.');
 
-export default function HelloWorld() {
+export default function HelloWorld({
+  character = 'Clippy from Microsoft Office',
+  temperature = 1,
+}: {
+  character?: string;
+  temperature?: number;
+}) {
   return (
-    <ChatCompletion temperature={1}>
-      <SystemMessage>You are Clippy from Microsoft Office. Respond to the user accordingly.</SystemMessage>
+    <ChatCompletion temperature={temperature}>
+      <SystemMessage>You are {character}. Respond to the user accordingly.</SystemMessage>
       <ConversationHistory />
     </ChatCompletion>
   );
