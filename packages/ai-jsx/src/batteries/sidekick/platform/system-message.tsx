@@ -7,7 +7,6 @@ import { SidekickProps } from './sidekick.js';
 export interface SidekickSystemMessageProps
   extends Pick<SidekickProps, 'outputFormat' | 'includeNextStepsRecommendations'> {
   timeZone: string;
-  timeZoneOffset: string;
   userProvidedGenUIUsageExamples?: Node;
   userProvidedGenUIComponentNames?: string[];
 }

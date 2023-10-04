@@ -114,7 +114,6 @@ export function Sidekick(props: SidekickProps) {
         <UseTools tools={props.tools ?? {}} showSteps>
           <SidekickSystemMessage
             timeZone="America/Los_Angeles"
-            timeZoneOffset="420"
             includeNextStepsRecommendations={props.includeNextStepsRecommendations ?? true}
             outputFormat={props.outputFormat ?? 'text/mdx'}
             userProvidedGenUIUsageExamples={props.genUIExamples}
