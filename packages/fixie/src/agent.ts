@@ -288,7 +288,7 @@ export class FixieAgent {
     );
     const program = TJS.programFromConfig(tsconfigPath, [tempPath]);
     const schema = TJS.generateSchema(program, 'RuntimeParameters', settings);
-    if (schema?.type !== 'object') {
+    if (schema && schema.type !== 'object') {
       throw new Error(`The first argument of your default export must be an object (not ${schema.type})`);
     }
 
