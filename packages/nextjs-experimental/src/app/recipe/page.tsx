@@ -2,9 +2,8 @@
 import * as AI from 'ai-jsx/experimental/next';
 import React, { Suspense } from 'react';
 import { UICompletion } from 'ai-jsx/react/completion';
-import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
+import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { ImageGen } from 'ai-jsx/core/image-gen';
-import { Prompt } from 'ai-jsx/batteries/prompts';
 import ResultContainer from '@/components/ResultContainer';
 import InputPrompt from '@/components/InputPrompt';
 
@@ -69,7 +68,7 @@ export function RecipeInstructionListItem({ children }: { children: React.ReactN
 function RecipeAI({ query }: { query: string }, { memo }: AI.ComponentContext) {
   const recipe = memo(
     <ChatCompletion temperature={1}>
-      <Prompt persona="a Michelin Star Head Chef" />
+      <SystemMessage>You are a Michelin Star Head Chef</SystemMessage>
       <UserMessage>Give me a recipe for {query}.</UserMessage>
     </ChatCompletion>
   );

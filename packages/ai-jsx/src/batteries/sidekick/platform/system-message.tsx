@@ -1,6 +1,5 @@
 import { SystemMessage } from '../../../core/conversation.js';
 import { MdxSystemMessage } from '../../../react/jit-ui/mdx.js';
-import { Prompt } from '../../prompts.js';
 import { MdxUsageExamples } from './gen-ui.js';
 import { Node } from '../../../index.js';
 import { SidekickProps } from './sidekick.js';
@@ -11,7 +10,6 @@ export interface SidekickSystemMessageProps
   timeZoneOffset: string;
   userProvidedGenUIUsageExamples?: Node;
   userProvidedGenUIComponentNames?: string[];
-  role: string;
 }
 
 export function SidekickSystemMessage({
@@ -21,7 +19,6 @@ export function SidekickSystemMessage({
   userProvidedGenUIComponentNames,
   includeNextStepsRecommendations,
   outputFormat,
-  role,
 }: SidekickSystemMessageProps) {
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const currentDate = daysOfWeek[new Date().getDay()];
@@ -52,10 +49,6 @@ export function SidekickSystemMessage({
     <>
       {dateTimeSystemMessage}
       {responseFramingSystemMessage}
-      <SystemMessage>
-        <Prompt apolitical concise persona={`expert ${role}`} />
-        {responseFramingSystemMessage}
-      </SystemMessage>
       <SystemMessage>
         If the user asks something that is impossible, tell them **up-front** it is impossible. You can still write
         relevant helpful comments, but do not lead the user to think something can be done when it cannot be.

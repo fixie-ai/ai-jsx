@@ -60,7 +60,6 @@
     "demo:reddit": "yarn build && node dist/src/bakeoff/reddit-qa/ai-jsx.js",
     "demo:reddit:lc": "yarn build && node dist/src/bakeoff/reddit-qa/langchain.mjs",
     "demo:fastify": "yarn build && node dist/src/fastify.js",
-    "demo:prompting-basics": "yarn build && node dist/src/prompting-basics.js",
     "demo:validated-generation": "yarn build && node dist/src/validated-generation.js",
     "demo:image-generation": "yarn build && node dist/src/image-generation.js",
     "demo:shrink": "yarn build && node dist/src/conversation-shrinking.js",
