@@ -51,7 +51,7 @@ type OutputFormatSidekickProps = MergeExclusive<
      * The output format that the Sidekick should use. Defaults to `text/mdx`.
      *
      * `text/mdx` indicates that the Sidekick should output MDX, which is Markdown with
-     * additional JSX elements, such as cards or buttons.
+     * additional JSX elements, such as buttons.
      *
      * `text/markdown` indicates that the Sidekick should output plain Markdown.
      *
@@ -64,7 +64,7 @@ type OutputFormatSidekickProps = MergeExclusive<
      * `outputFormat` is `text/mdx`.
      *
      * By default, the Sidekick will only be able to use the default set of
-     * MDX components in its vocabulary: `Card`, `Citation`, and `NextStepsButton`.
+     * MDX components in its vocabulary: `Citation` and `NextStepsButton`.
      * If you wish to support additional MDX components, you must provide examples
      * of how to use them here.
      */
@@ -75,7 +75,7 @@ type OutputFormatSidekickProps = MergeExclusive<
      * MDX output, when `outputFormat` is `text/mdx`.
      *
      * By default, the Sidekick will only be able to use the default set of
-     * MDX components in its vocabulary: `Card`, `Citation`, and `NextStepsButton`.
+     * MDX components in its vocabulary: `Citation` and `NextStepsButton`.
      * If you wish to support additional MDX components, you must provide their
      * names here.
      */
