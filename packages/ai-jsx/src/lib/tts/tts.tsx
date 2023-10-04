@@ -5,13 +5,12 @@ const AUDIO_WORKLET_SRC = `
 class OutputProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
-    this.queue = [];
+    this.msgs = {};
     this.seqNum = 0;
     this.bufPos = 0;
     this.port.onmessage = (e) => {
-      this.queue.push(e.data);
-      this.queue.sort((a, b) => a.seqNum - b.seqNum);
-      //console.log('buf added, seq num = ' + e.data.seqNum + ' queue len=' + this.queue.length.toString());
+      this.msgs[e.data.seqNum] = e.data;
+      //console.debug('buf added, seq num = ' + e.data.seqNum + ' queue len=' + this.queue.length.toString());
     } 
   }
   process(inputs, outputs) {
@@ -46,17 +45,14 @@ class OutputProcessor extends AudioWorkletProcessor {
     }
   }
   buf() {
-    const msg = this.queue[0];
-    if (!msg || msg.seqNum != this.seqNum) {
-      //if (msg) {
-      //  console.log('buf not ready, msg seq num=' + msg?.seqNum.toString());
-      //}
+    const msg = this.msgs[this.seqNum];
+    if (!msg) {
       return null;
     }
     if (this.bufPos == msg.channelData[0].length) {
       this.port.postMessage({seqNum: msg.seqNum});
-      this.queue.shift();
-      //console.log('buf consumed, seq num=' + msg.seqNum.toString() + ' queue len=' + this.queue.length.toString());
+      delete this.msgs[msg.seqNum];
+      //console.debug('buf consumed, seq num=' + msg.seqNum.toString() + ' queue len=' + this.queue.length.toString());
       this.seqNum++;
       this.bufPos = 0;
       return this.buf();
@@ -78,7 +74,7 @@ class AudioChunk {
   constructor(contentType: string, public buffer: ArrayBuffer) {
     const pieces = contentType.split(';');
     this.mimeType = pieces[0];
-    const sampleRatePiece = pieces.find((piece) => piece.startsWith('rate='));
+    const sampleRatePiece = pieces.find((piece) => piece.trim().startsWith('rate='));
     this.sampleRate = sampleRatePiece ? parseInt(sampleRatePiece.split('=')[1]) : 0;
   }
   get isPcm() {
@@ -547,7 +543,7 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     private readonly voice: string,
     private readonly rate: number = 1.0
   ) {
-    super(name); // getAudioContext()!);
+    super(name);
   }
   protected generate(text: string) {
     // Only send complete sentences to the server, one at a time.
@@ -584,9 +580,9 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
   }
   private queueRequest(text: string) {
     this.requestQueue.push(new TextToSpeechRequest(text));
-    this.processRequestBuffer();
+    this.processRequestQueue();
   }
-  private async processRequestBuffer() {
+  private async processRequestQueue() {
     // Serialize the generate requests to ensure that the first request
     // is not delayed by subsequent requests.
     if (this.requestQueue.length == 0 || this.requestQueue[0].sendTimestamp) {
@@ -609,7 +605,7 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     console.debug(`[${this.name}] received chunk: ${shortText}, type=${res.headers.get('content-type')}`);
     this.queueChunk(chunk);
     this.requestQueue.shift();
-    this.processRequestBuffer();
+    this.processRequestQueue();
   }
 }
 

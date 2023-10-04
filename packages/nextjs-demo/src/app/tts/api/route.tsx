@@ -53,10 +53,8 @@ function makeStreamResponse(startMillis: number, response: Response) {
   return new NextResponse(nextStream, { headers, status });
 }
 
-async function makeBlobResponseFromJson(startMillis: number, response: Response, keyPath: string, mimeType: string) {
-  console.log(response.text);
+async function makeBlobResponseFromJson(startMillis: number, response: Response, keyPath: string, mimeType: string) {  
   const json = await response.json();
-  console.log(json);
   const value = _.get(json, keyPath);
   const binary = Buffer.from(value, 'base64');
   console.log(`${startMillis} TTS complete latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
@@ -92,13 +90,12 @@ export async function GET(request: NextRequest) {
     console.log(`${startMillis} TTS error: ${response.status} ${response.statusText}`);
     return new NextResponse(await response.json(), { status: response.status });
   }
-  console.log(`${startMillis} TTS response latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
   const contentType = response.headers.get('Content-Type');
+  console.log(`${startMillis} TTS response latency: ${(performance.now() - startMillis).toFixed(0)} ms, content-type: ${contentType}`);
   if (provider.keyPath) {
-    assert(contentType == APPLICATION_JSON_MIME_TYPE);
+    assert(contentType?.startsWith(APPLICATION_JSON_MIME_TYPE));
     return makeBlobResponseFromJson(startMillis, response, provider.keyPath, provider.mimeType ?? AUDIO_MPEG_MIME_TYPE);
   }
-  assert(contentType == AUDIO_MPEG_MIME_TYPE);
   return makeStreamResponse(startMillis, response);
 }
 
