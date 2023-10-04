@@ -557,12 +557,11 @@ export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
 }
 
 class LmntOutboundMessage {
-  constructor({ text, voice, eof }: LmntOutboundMessage) {
+  constructor({ text, eof }: LmntOutboundMessage) {
     this.text = text;
     this.eof = eof;
   }
   text?: string;
-  voice?: string;
   eof?: boolean;
 }
 
