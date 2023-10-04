@@ -1,12 +1,11 @@
 import * as AI from 'ai-jsx';
-import { ChatCompletion, UserMessage } from 'ai-jsx/core/completion';
-import { Prompt } from 'ai-jsx/batteries/prompts';
+import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { ImageGen } from 'ai-jsx/core/image-gen';
 
 function RecipeWithImage(_: {}, { memo }: AI.ComponentContext) {
   const recipeTitle = memo(
     <ChatCompletion temperature={1}>
-      <Prompt persona="a Michelin Star Head Chef" />
+      <SystemMessage>You are a Michelin Star Head Chef</SystemMessage>
       <UserMessage>Come up with a title for an exotic sushi.</UserMessage>
     </ChatCompletion>
   );

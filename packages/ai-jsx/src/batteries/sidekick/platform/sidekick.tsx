@@ -43,11 +43,6 @@ interface UniversalSidekickProps {
   tools?: UseToolsProps['tools'];
   systemMessage?: AI.Node;
   finalSystemMessageBeforeResponse?: AI.Node;
-
-  /**
-   * The role the model should take, like "a customer service agent for my_company_name".
-   */
-  role: string;
 }
 
 type OutputFormatSidekickProps = MergeExclusive<
@@ -125,7 +120,6 @@ export function Sidekick(props: SidekickProps) {
           <SidekickSystemMessage
             timeZone="America/Los_Angeles"
             timeZoneOffset="420"
-            role={props.role}
             includeNextStepsRecommendations={props.includeNextStepsRecommendations ?? true}
             outputFormat={props.outputFormat ?? 'text/mdx'}
             userProvidedGenUIUsageExamples={props.genUIExamples}
