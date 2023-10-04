@@ -433,6 +433,7 @@ export abstract class WebSocketTextToSpeech extends MseTextToSpeech {
   protected createSocket(url: string) {
     const connectMillis = performance.now();
     const socket = new WebSocket(url);
+    socket.binaryType = 'arraybuffer';
     socket.onopen = (_event) => {
       const elapsed = performance.now() - connectMillis;
       console.log(`[${this.name}] socket opened, elapsed=${elapsed.toFixed(0)}`);
