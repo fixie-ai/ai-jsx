@@ -9,7 +9,7 @@
     "moduleResolution": "node16",
     "jsx": "react",
     "esModuleInterop": true,
-    "outDir": ".",
+    "outDir": "dist",
     "declaration": true,
     "lib": ["dom", "dom.iterable", "ES2022"]
   },

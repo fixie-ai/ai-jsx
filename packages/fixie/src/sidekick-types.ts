@@ -1,6 +1,4 @@
 import { Jsonifiable } from 'type-fest';
-import { FunctionResponse as FunctionResponseNode, FunctionCall as FunctionCallNode } from 'ai-jsx/core/conversation';
-import { PropsOfComponent } from 'ai-jsx';
 
 export type MessageGenerationParams = Partial<{
   modelProvider: string | null;
@@ -81,15 +79,15 @@ export interface BaseMessage extends StateFields {
 
 export interface FunctionCall extends BaseMessage {
   kind: 'functionCall';
-  name?: PropsOfComponent<typeof FunctionCallNode>['name'];
-  args?: PropsOfComponent<typeof FunctionCallNode>['args'];
+  name?: string;
+  args?: Record<string, string | number | boolean | null>;
 }
 
 export interface FunctionResponse extends BaseMessage {
   kind: 'functionResponse';
-  name: PropsOfComponent<typeof FunctionResponseNode>['name'];
+  name: string;
   response: string;
-  failed: PropsOfComponent<typeof FunctionResponseNode>['failed'];
+  failed?: boolean;
 }
 
 export interface TextMessage extends BaseMessage {
