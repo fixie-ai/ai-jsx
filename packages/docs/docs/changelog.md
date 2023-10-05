@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.22.0
+## 0.21.1
 
 - `includeNextStepsRecommendations` and `useCitationCard` are now required props to `Sidekick`. Previously, the defaulted to `true`.
 - `outputFormat` is now a required prop to `Sidekick`. Previously, it defaulted to `text/mdx`.
