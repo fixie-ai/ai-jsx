@@ -23112,6 +23112,7 @@ __metadata:
     "@tsconfig/node18": ^2.0.1
     "@types/node": ^20.8.2
     ai-jsx: "*"
+    fixie: "*"
     typescript: ^5.1.3
   languageName: unknown
   linkType: soft

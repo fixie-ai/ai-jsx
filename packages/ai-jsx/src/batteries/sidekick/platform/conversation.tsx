@@ -235,7 +235,6 @@ function RepairMdx({ children }: { children: string }) {
 }
 
 async function* LimitToValidMdx({ children }: { children: AI.Node }, { render, logger }: AI.ComponentContext) {
-  yield ' ';
   const rendered = render(children);
   for await (const frame of rendered) {
     const mdxCompileError = await getMdxCompileError(frame);
