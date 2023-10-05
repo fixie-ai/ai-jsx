@@ -1,4 +1,5 @@
 'use client';
+import { P } from 'pino';
 import { split } from 'sentence-splitter';
 
 const AUDIO_WORKLET_SRC = `
@@ -85,20 +86,8 @@ class AudioChunk {
   }
 }
 
-/**
- * An internal demuxer that allows us to easily go from network chunks to complete MP3 frames.
- */
-class Mp3Demuxer {
-  // See https://www.mp3-tech.org/programmer/frame_header.html
-  private readonly BIT_RATES = [
-    [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320], // v1
-    [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160], // v2
-  ];
-  private readonly SAMPLE_RATES = [
-    [44100, 48000, 32000], // v1
-    [22050, 24000, 16000] // v2
-  ];
-  private buffer: Uint8Array = new Uint8Array(0);
+class Demuxer {
+  protected buffer: Uint8Array = new Uint8Array(0);
   addChunk(chunk: ArrayBuffer) {
     const totalLen = this.buffer.length + chunk.byteLength;
     const newBuffer = new Uint8Array(totalLen);
@@ -123,15 +112,28 @@ class Mp3Demuxer {
     this.buffer = this.buffer.slice(totalLen);
     return out.buffer;
   }
+};
+
+/**
+ * An internal demuxer that allows us to easily go from network chunks to complete MP3 frames.
+ */
+class Mp3Demuxer extends Demuxer {
+  // See https://www.mp3-tech.org/programmer/frame_header.html
+  private readonly BIT_RATES = [
+    [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320], // v1
+    [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160], // v2
+  ];
+  private readonly SAMPLE_RATES = [
+    [44100, 48000, 32000], // v1
+    [22050, 24000, 16000] // v2
+  ];
   private getFrameLen(offset: number) {
-    console.log(`getFrameLen: offset=${offset} len=${this.buffer.byteLength}`);
     // Check we have enough bytes.
-    if (this.buffer.byteLength < offset + 4) {
+    if (this.buffer.length < offset + 4) {
       return 0;
     }
     // Check this is a valid MP3 header (version 1 or 2, layer 3, no CRC)
     const [b1, b2, b3, b4] = this.buffer.slice(offset, offset + 4);
-    console.log(`getFrameLen: b1=${b1.toString(16)} b2=${b2.toString(16)} b3=${b3.toString(16)} b4=${b4.toString(16)}`);
     if (b1 != 0xff || (b2 & 0xf7) != 0xf3) {
       console.warn(`invalid frame header ${b1.toString(16)} ${b2.toString(16)} ${b3.toString(16)} ${b4.toString(16)}`);
       return 0;
@@ -149,12 +151,39 @@ class Mp3Demuxer {
       console.warn(`invalid channel mode ${channelMode}`);
       return 0;
     }
-    console.log(`getFrameLen: bitRate=${bitRate} sampleRate=${sampleRate} padding=${padding}`);
     // Calculate and return the frame length.
     const frameLen = Math.floor((144 * bitRate * 1000) / sampleRate) + padding;
-    console.log(`getFrameLen: offset=${offset} frameLen=${frameLen}`);
     return frameLen;
   }
+}
+
+class WavDemuxer extends Demuxer {
+  private totalSize?: number;
+  private dataSize?: number;
+  private numChannels?: number;
+  private sampleRate?: number;
+  private bitDepth?: number;
+  getFrameLen(offset: number) {
+    if (offset == 0 && !this.totalSize && this.buffer.length < 36) {
+      return 0;
+    }
+      const riffView = new DataView(this.buffer.slice(0, 36));
+        const riff = riffView.getUint32(0, true);
+        if (riff != 0x52494646) {
+          console.
+        }
+        this.buffer = this.buffer.slice(36);
+      }
+      if (this.buffer.byteLength == 0) {
+        return null;
+      }
+      const frameLen = this.buffer.byteLength;
+      const out = this.buffer.slice(0, frameLen);
+      this.buffer = this.buffer.slice(frameLen);
+      return out.buffer;
+    }
+  }
+ 
 }
 
 /**
