@@ -174,7 +174,7 @@ const PageComponent: React.FC = () => {
           provider="playht"
           link="https://play.ht"
           costPerKChar={0.04125}
-          defaultVoice="victor"
+          defaultVoice="s3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json"
           text={text}
         />
         <Tts

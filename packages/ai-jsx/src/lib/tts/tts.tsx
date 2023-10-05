@@ -323,8 +323,8 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
   constructor(
     name: string,
     protected readonly urlFunc: BuildUrl,
-    private readonly voice: string,
-    private readonly rate = 1.0
+    public readonly voice: string,
+    public readonly rate = 1.0
   ) {
     super(name);
     this.audio.onplaying = () => this.setPlaying();
@@ -557,8 +557,8 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
   constructor(
     name: string,
     private readonly urlFunc: BuildUrl,
-    private readonly voice: string,
-    private readonly rate: number = 1.0
+    public readonly voice: string,
+    public readonly rate: number = 1.0
   ) {
     super(name);
   }
@@ -684,7 +684,9 @@ export class MurfTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the Play.HT text-to-speech service.
  */
 export class PlayHTTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = 'victor'; // AKA 'Ariana'
+  // static readonly DEFAULT_VOICE = 'victor'; // AKA 'Ariana'
+  static readonly DEFAULT_VOICE =
+    's3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json';
   constructor(urlFunc: BuildUrl, voice: string = PlayHTTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('playht', urlFunc, voice, rate);
   }
@@ -719,7 +721,7 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
   // Message buffer for when the socket is not yet open.
   private readonly socketBuffer: string[] = [];
   private pendingText: string = '';
-  constructor(name: string, private readonly url: string) {
+  constructor(name: string, private readonly url: string, public readonly voice: string) {
     super(name);
     this.socket = this.createSocket(url);
   }
@@ -850,7 +852,7 @@ export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
     const output_format = 'pcm_22050'; // 44100' requires $99/mo plan
     const params = new URLSearchParams({ model_id, optimize_streaming_latency, output_format });
     const url = `wss://api.elevenlabs.io/v1/text-to-speech/${voice}/stream-input?${params}`;
-    super('eleven', url);
+    super('eleven', url, voice);
     this.contentType = `${AUDIO_PCM_MIME_TYPE};rate=22050`;
   }
   protected async handleOpen() {
@@ -900,9 +902,9 @@ class LmntOutboundMessage {
 }
 
 export class LmntWebSocketTextToSpeech extends WebSocketTextToSpeech {
-  constructor(private readonly tokenFunc: GetToken, private readonly voice = LmntTextToSpeech.DEFAULT_VOICE) {
+  constructor(private readonly tokenFunc: GetToken, voice = LmntTextToSpeech.DEFAULT_VOICE) {
     const url = 'wss://api.lmnt.com/speech/beta/synthesize_streaming';
-    super('lmnt', url);
+    super('lmnt', url, voice);
   }
   protected async handleOpen() {
     const obj = {
