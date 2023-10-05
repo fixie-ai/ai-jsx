@@ -44,6 +44,7 @@ export interface GenerationParams {
 export interface InvokeAgentRequest {
   conversationId: string;
   replyToTurnId?: string;
+  conversation?: Conversation;
   generationParams?: GenerationParams;
   parameters?: Record<string, Jsonifiable>;
 }
@@ -54,7 +55,7 @@ export interface InvokeAgentResponse {
   errorDetail: string | null;
 }
 
-export interface GetConversationResponse {
+export interface Conversation {
   id: string;
   turns: ConversationTurn[];
 }
