@@ -5,8 +5,6 @@ import _ from 'lodash';
 import aws4 from 'aws4';
 import * as PlayHTAPI from 'playht';
 
-PlayHTAPI.init({apiKey: getEnvVar('PLAYHT_API_KEY'), userId: getEnvVar('PLAYHT_USER_ID')});
-
 const AUDIO_MPEG_MIME_TYPE = 'audio/mpeg';
 const AUDIO_WAV_MIME_TYPE = 'audio/wav';
 const APPLICATION_JSON_MIME_TYPE = 'application/json';
@@ -273,14 +271,15 @@ async function ttsPlayHTGrpc(voice: string, rate: number, text: string) {
     voiceId: voice,
     outputFormat: 'mp3',
     quality: 'draft',
-    speed: rate
+    speed: rate,
   };
   let controller: ReadableStreamDefaultController;
   const stream = new ReadableStream({
     start(c) {
       controller = c;
-    }
+    },
   });
+  PlayHTAPI.init({ apiKey: getEnvVar('PLAYHT_API_KEY'), userId: getEnvVar('PLAYHT_USER_ID') });
   const nodeStream = await PlayHTAPI.stream(text, opts);
   nodeStream.on('data', (chunk) => controller.enqueue(new Uint8Array(chunk)));
   nodeStream.on('end', () => controller.close());
