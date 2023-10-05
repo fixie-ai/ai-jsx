@@ -64,6 +64,7 @@
     "demo:image-generation": "yarn build && node dist/src/image-generation.js",
     "demo:shrink": "yarn build && node dist/src/conversation-shrinking.js",
     "demo:fixie-corpus": "yarn build && node dist/src/fixie-corpus.js",
+    "demo:story": "yarn build && node dist/src/story.js",
     "view-logs": "cat ai-jsx.log | pino-pretty",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
