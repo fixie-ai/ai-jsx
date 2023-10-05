@@ -5,7 +5,7 @@ import { Node } from '../../../index.js';
 import { SidekickProps } from './sidekick.js';
 
 export interface SidekickSystemMessageProps
-  extends Pick<SidekickProps, 'outputFormat' | 'includeNextStepsRecommendations'> {
+  extends Pick<SidekickProps, 'outputFormat' | 'includeNextStepsRecommendations' | 'useCitationCard'> {
   timeZone: string;
   userProvidedGenUIUsageExamples?: Node;
   userProvidedGenUIComponentNames?: string[];
@@ -16,6 +16,7 @@ export function SidekickSystemMessage({
   userProvidedGenUIUsageExamples,
   userProvidedGenUIComponentNames,
   includeNextStepsRecommendations,
+  useCitationCard,
   outputFormat,
 }: SidekickSystemMessageProps) {
   const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -37,23 +38,40 @@ export function SidekickSystemMessage({
     </SystemMessage>
   );
 
-  const baseComponentNames = ['Citation'];
+  const baseComponentNames = [];
   if (includeNextStepsRecommendations) {
     baseComponentNames.push('NextStepsButton');
   }
+  if (useCitationCard) {
+    baseComponentNames.push('Citation');
+  }
+
+  const allComponents = [...baseComponentNames, ...(userProvidedGenUIComponentNames ?? [])];
+
+  if (allComponents.length && outputFormat !== 'text/mdx') {
+    throw new Error(
+      `If you specify components for the Sidekick to use, you must set outputFormat to text/mdx. You specified components "${allComponents.join(
+        '", "'
+      )}", and outputFormat "${outputFormat}`
+    );
+  }
+
+  const outputFormatToUse = allComponents.length ? outputFormat : 'text/markdown';
 
   return (
     <>
       {dateTimeSystemMessage}
       {responseFramingSystemMessage}
-      {outputFormat === 'text/plain' && <SystemMessage>Respond with plain text, without any markup.</SystemMessage>}
-      {outputFormat === 'text/markdown' && <SystemMessage>Respond with Markdown.</SystemMessage>}
-      {outputFormat === 'text/mdx' && (
+      {outputFormatToUse === 'text/markdown' && <SystemMessage>Respond with Markdown.</SystemMessage>}
+      {outputFormatToUse === 'text/mdx' && (
         <MdxSystemMessage
-          componentNames={[...baseComponentNames, ...(userProvidedGenUIComponentNames ?? [])]}
+          componentNames={allComponents}
           usageExamples={
             <>
-              <MdxUsageExamples includeNextStepsRecommendations={includeNextStepsRecommendations} />
+              <MdxUsageExamples
+                includeNextStepsRecommendations={includeNextStepsRecommendations}
+                useCitationCard={useCitationCard}
+              />
               {userProvidedGenUIUsageExamples}
             </>
           }

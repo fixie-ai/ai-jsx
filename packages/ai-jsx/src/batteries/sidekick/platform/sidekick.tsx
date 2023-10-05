@@ -61,6 +61,13 @@ type OutputFormatSidekickProps = MergeExclusive<
      * Defaults to true.
      */
     includeNextStepsRecommendations?: boolean;
+
+    /**
+     * If true, the Sidekick will emit a `Citation` component when it wants to cite a source. For example:
+     *
+     *   <Citation title='How to cancel an order' href='https://docs.example.com/how-to-cancel-order' />
+     */
+    useCitationCard?: boolean;
   },
   {
     /**
@@ -81,6 +88,7 @@ export function Sidekick(props: SidekickProps) {
         <SidekickSystemMessage
           timeZone="America/Los_Angeles"
           includeNextStepsRecommendations={props.includeNextStepsRecommendations ?? true}
+          useCitationCard={props.useCitationCard ?? true}
           outputFormat={props.outputFormat ?? 'text/mdx'}
           userProvidedGenUIUsageExamples={props.genUIExamples}
           userProvidedGenUIComponentNames={props.genUIComponentNames}
