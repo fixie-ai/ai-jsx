@@ -54,14 +54,52 @@ MOCHA LATTE $3.49
 CARAMEL MOCHA LATTE $3.49
 `;
 
+const DD_INITIAL_RESPONSES = [
+  'Welcome to Dr. Donut! What can I get started for you today?',
+  'Hi, thanks for choosing Dr. Donut! What would you like to order?',
+  "Howdy! Welcome to Dr. Donut. What'll make your day?",
+  'Welcome to Dr. Donut, home of the best donuts in town! How can I help you?',
+  'Greetings from Dr. Donut! What can we make fresh for you today?',
+  'Hello and welcome to Dr. Donut! Are you ready to order?',
+  'Hi there! Dr. Donut at your service. What would you like today?',
+  'Hi, the doctor is in! What can we get for you today?',
+];
+
 /**
  * The id of the corpus, from https://console.fixie.ai.
  */
 const AGENT_CORPUS_ID = 'bd69dce6-7b56-4d0b-8b2f-226500780ebd';
 const MAX_CHUNKS = 4;
 
+/**
+ * The user and assistant messages exchanged by client and server.
+ */
 class ClientMessage {
   constructor(public role: string, public content: string) {}
+}
+
+/**
+ * Creates an initial response from the agent.
+ */
+function createInitialResponse() {
+  return DD_INITIAL_RESPONSES[Math.floor(Math.random() * DD_INITIAL_RESPONSES.length)];
+}
+
+/**
+ * Makes a text stream that simulates LLM output from a specified string.
+ */
+function pseudoTextStream(text: string, interWordDelay = 20) {
+  return new ReadableStream({
+    async pull(controller) {
+      const words = text.split(' ');
+      for (let index = 0; index < words.length; index++) {
+        const word = words[index];
+        controller.enqueue(index > 0 ? ` ${word}` : word);
+        await new Promise((resolve) => setTimeout(resolve, interWordDelay));
+      }
+      controller.close();
+    },
+  }).pipeThrough(new TextEncoderStream());
 }
 
 async function ChatAgent({
@@ -107,7 +145,12 @@ export async function POST(request: NextRequest) {
   const json = await request.json();
   console.log(`New request (model=${json.model} docs=${json.docs})`);
   json.messages.forEach((message: ClientMessage) => console.log(`role=${message.role} content=${message.content}`));
-  return new StreamingTextResponse(
-    toTextStream(<ChatAgent conversation={json.messages} model={json.model} docs={json.docs} />)
-  );
+
+  let stream;
+  if (json.messages.length == 1 && !json.messages[0].content) {
+    stream = pseudoTextStream(createInitialResponse());
+  } else {
+    stream = toTextStream(<ChatAgent conversation={json.messages} model={json.model} docs={json.docs} />);
+  }
+  return new StreamingTextResponse(stream);
 }
