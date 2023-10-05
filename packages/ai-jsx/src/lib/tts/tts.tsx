@@ -685,7 +685,8 @@ export class MurfTextToSpeech extends RestTextToSpeech {
  */
 export class PlayHTTextToSpeech extends RestTextToSpeech {
   // static readonly DEFAULT_VOICE = 'victor'; // AKA 'Ariana'
-  static readonly DEFAULT_VOICE = 's3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json';
+  static readonly DEFAULT_VOICE =
+    's3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json';
   constructor(urlFunc: BuildUrl, voice: string = PlayHTTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('playht', urlFunc, voice, rate);
   }
