@@ -56,7 +56,15 @@ export function SidekickSystemMessage({
     );
   }
 
-  const outputFormatToUse = allComponents.length ? outputFormat : 'text/markdown';
+  /**
+   * If the user passed text/mdx but did not pass any config that results in components being
+   * available, we'll set the outputFormat to text/markdown instead, so we can omit the MDX
+   * system message.
+   */
+  let outputFormatToUse = outputFormat;
+  if (!allComponents.length && outputFormat === 'text/mdx') {
+    outputFormatToUse = 'text/markdown';
+  }
 
   return (
     <>

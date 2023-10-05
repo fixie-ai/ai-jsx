@@ -23,14 +23,14 @@ type OutputFormatSidekickProps = MergeExclusive<
      *
      * `text/plain` indicates that the Sidekick should output plain text.
      */
-    outputFormat?: 'text/mdx';
+    outputFormat?: 'text/mdx' | undefined;
 
     /**
      * A set of examples to the Sidekick instructing it how to emit MDX responses, when
      * `outputFormat` is `text/mdx`.
      *
-     * Separately, the Sidekick will emit MDX components if the `includeNextStepsRecommendations` and `useCitationCard`
-     * props are set.
+     * Separately from that's passed here, the Sidekick will emit MDX components if the
+     * `includeNextStepsRecommendations` and `useCitationCard` props are set.
      */
     genUIExamples?: AI.Node;
 
@@ -38,8 +38,8 @@ type OutputFormatSidekickProps = MergeExclusive<
      * A set of component names that the Sidekick should be able to use in its
      * MDX output, when `outputFormat` is `text/mdx`.
      *
-     * Separately, the Sidekick will emit MDX components if the `includeNextStepsRecommendations` and `useCitationCard`
-     * props are set.
+     * Separately from that's passed here, the Sidekick will emit MDX components if the
+     * `includeNextStepsRecommendations` and `useCitationCard` props are set.
      */
     genUIComponentNames?: string[];
 
