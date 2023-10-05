@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.21.1
+## 0.21.2
+
+- Fix a bug in `LimitToValidMdx` where a whitespace character was initially yieled.
+
+## [0.21.1](https://github.com/fixie-ai/ai-jsx/commit/e6064f54fe253e3b8e182fa4f7e05fd37da15dbc)
 
 - `Sidekick` now accepts a `useCitationCard` prop, which controls whether it will emit `<Citation />` MDX components.
 
