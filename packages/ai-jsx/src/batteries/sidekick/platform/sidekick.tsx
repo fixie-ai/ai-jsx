@@ -29,10 +29,8 @@ type OutputFormatSidekickProps = MergeExclusive<
      * A set of examples to the Sidekick instructing it how to emit MDX responses, when
      * `outputFormat` is `text/mdx`.
      *
-     * By default, the Sidekick will only be able to use the default set of
-     * MDX components in its vocabulary: `Citation` and `NextStepsButton`.
-     * If you wish to support additional MDX components, you must provide examples
-     * of how to use them here.
+     * Separately from that's passed here, the Sidekick will emit MDX components if the
+     * `includeNextStepsRecommendations` and `useCitationCard` props are set.
      */
     genUIExamples?: AI.Node;
 
@@ -40,10 +38,8 @@ type OutputFormatSidekickProps = MergeExclusive<
      * A set of component names that the Sidekick should be able to use in its
      * MDX output, when `outputFormat` is `text/mdx`.
      *
-     * By default, the Sidekick will only be able to use the default set of
-     * MDX components in its vocabulary: `Citation` and `NextStepsButton`.
-     * If you wish to support additional MDX components, you must provide their
-     * names here.
+     * Separately from that's passed here, the Sidekick will emit MDX components if the
+     * `includeNextStepsRecommendations` and `useCitationCard` props are set.
      */
     genUIComponentNames?: string[];
 
@@ -61,6 +57,13 @@ type OutputFormatSidekickProps = MergeExclusive<
      * Defaults to true.
      */
     includeNextStepsRecommendations?: boolean;
+
+    /**
+     * If true, the Sidekick will emit a `Citation` component when it wants to cite a source. For example:
+     *
+     *   <Citation title='How to cancel an order' href='https://docs.example.com/how-to-cancel-order' />
+     */
+    useCitationCard?: boolean;
   },
   {
     /**
@@ -81,6 +84,7 @@ export function Sidekick(props: SidekickProps) {
         <SidekickSystemMessage
           timeZone="America/Los_Angeles"
           includeNextStepsRecommendations={props.includeNextStepsRecommendations ?? true}
+          useCitationCard={props.useCitationCard ?? true}
           outputFormat={props.outputFormat ?? 'text/mdx'}
           userProvidedGenUIUsageExamples={props.genUIExamples}
           userProvidedGenUIComponentNames={props.genUIComponentNames}
