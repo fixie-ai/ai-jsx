@@ -4,6 +4,7 @@
   "devDependencies": {
     "@fixieai/sdk": "*",
     "@tsconfig/node18": "^2.0.1",
+    "fixie": "*",
     "typescript": "^5.1.3"
   },
   "private": true,
