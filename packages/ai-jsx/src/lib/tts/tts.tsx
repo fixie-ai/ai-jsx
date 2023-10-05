@@ -86,11 +86,87 @@ class AudioChunk {
 }
 
 /**
+ * An internal demuxer that allows us to easily go from network chunks to complete MP3 frames.
+ */
+class Mp3Demuxer {
+  // See https://www.mp3-tech.org/programmer/frame_header.html
+  private readonly BIT_RATES = [
+    [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320], // v1
+    [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160], // v2
+  ];
+  private readonly SAMPLE_RATES = [
+    [44100, 48000, 32000], // v1
+    [22050, 24000, 16000] // v2
+  ];
+  private buffer: Uint8Array = new Uint8Array(0);
+  addChunk(chunk: ArrayBuffer) {
+    const totalLen = this.buffer.length + chunk.byteLength;
+    const newBuffer = new Uint8Array(totalLen);
+    newBuffer.set(new Uint8Array(this.buffer), 0);
+    newBuffer.set(new Uint8Array(chunk), this.buffer.byteLength);
+    this.buffer = newBuffer;
+  }
+  getFrames() {
+    let totalLen = 0;
+    while (true) {
+      const frameLen = this.getFrameLen(totalLen);
+      console.log(`getFrames: totalLen=${totalLen} frameLen=${frameLen}`);
+      if (!frameLen || totalLen + frameLen > this.buffer.length) {
+        break;
+      }
+      totalLen += frameLen;
+    }
+    if (totalLen == 0) {
+      return null;
+    }
+    const out = this.buffer.slice(0, totalLen);
+    this.buffer = this.buffer.slice(totalLen);
+    return out.buffer;
+  }
+  private getFrameLen(offset: number) {
+    console.log(`getFrameLen: offset=${offset} len=${this.buffer.byteLength}`);
+    // Check we have enough bytes.
+    if (this.buffer.byteLength < offset + 4) {
+      return 0;
+    }
+    // Check this is a valid MP3 header (version 1 or 2, layer 3, no CRC)
+    const [b1, b2, b3, b4] = this.buffer.slice(offset, offset + 4);
+    console.log(`getFrameLen: b1=${b1.toString(16)} b2=${b2.toString(16)} b3=${b3.toString(16)} b4=${b4.toString(16)}`);
+    if (b1 != 0xff || (b2 & 0xf7) != 0xf3) {
+      console.warn(`invalid frame header ${b1.toString(16)} ${b2.toString(16)} ${b3.toString(16)} ${b4.toString(16)}`);
+      return 0;
+    }
+    // Get the version from byte 2 (v1=11, v2=10)
+    const versionBits = (b2 & 0x18) >> 3;
+    const index = versionBits == 3 ? 0 : 1;
+    // Extract the bit rate, sample rate, and padding from byte 3.
+    const bitRate = this.BIT_RATES[index][(b3 & 0xF0) >> 4];
+    const sampleRate = this.SAMPLE_RATES[index][(b3 & 0x0C) >> 2];
+    const padding = (b3 & 0x02) >> 1;
+    // Extract the channel mode from byte 4.
+    const channelMode = (b4 & 0xC0) >> 6;
+    if (channelMode != 3) {
+      console.warn(`invalid channel mode ${channelMode}`);
+      return 0;
+    }
+    console.log(`getFrameLen: bitRate=${bitRate} sampleRate=${sampleRate} padding=${padding}`);
+    // Calculate and return the frame length.
+    const frameLen = Math.floor((144 * bitRate * 1000) / sampleRate) + padding;
+    console.log(`getFrameLen: offset=${offset} frameLen=${frameLen}`);
+    return frameLen;
+  }
+}
+
+/**
  * An internal object used to manage an active audio stream.
  */
 class AudioStream {
   nextSeqNum = 0;
+  demuxer?: Mp3Demuxer;
   constructor(public outputNode: AudioWorkletNode, public destNode: MediaStreamAudioDestinationNode) {}
+  getNextSeqNum() {
+    return this.nextSeqNum++;
+  }
 }
 
 /**
@@ -145,27 +221,36 @@ class AudioOutputManager extends EventTarget {
   }
   async appendBuffer(stream: MediaStream, chunk: AudioChunk) {
     if (chunk.isPcm) {
-      await this.appendPcmBuffer(stream, chunk.sampleRate, chunk.buffer);
+      await this.appendPcmBuffer(stream, chunk);
     } else {
-      await this.appendEncodedBuffer(stream, chunk.buffer);
+      await this.appendEncodedBuffer(stream, chunk);
     }
   }
-  private async appendEncodedBuffer(stream: MediaStream, encodedBuffer: ArrayBuffer) {
-    const seqNum = this.getNextSeqNum(stream);
-    const buffer = await this.context?.decodeAudioData(encodedBuffer);
-    this.appendNativeBuffer(stream, seqNum, buffer!.getChannelData(0));
-  }
-  private async appendPcmBuffer(stream: MediaStream, sampleRate: number, inBuffer: ArrayBuffer) {
-    const seqNum = this.getNextSeqNum(stream);
-    const buffer = await this.resamplePcmBuffer(sampleRate, inBuffer);
-    this.appendNativeBuffer(stream, seqNum, buffer);
-  }
-  private getNextSeqNum(stream: MediaStream) {
+  private async appendEncodedBuffer(stream: MediaStream, encodedBuffer: AudioChunk) {
     const audioStream = this.streams.get(stream.id);
     if (!audioStream) {
       throw new Error('stream not found');
     }
-    return audioStream.nextSeqNum++;
+    if (!audioStream.demuxer && encodedBuffer.mimeType == AUDIO_MPEG_MIME_TYPE) {
+      audioStream.demuxer = new Mp3Demuxer();
+    }
+    audioStream.demuxer!.addChunk(encodedBuffer.buffer);
+    const decodableBuffer = audioStream.demuxer!.getFrames();
+    if (!decodableBuffer) {
+      return;
+    }
+    const seqNum = audioStream.getNextSeqNum();
+    const buffer = await this.context?.decodeAudioData(decodableBuffer);
+    this.appendNativeBuffer(stream, seqNum, buffer!.getChannelData(0));
+  }
+  private async appendPcmBuffer(stream: MediaStream, pcmBuffer: AudioChunk) {
+    const audioStream = this.streams.get(stream.id);
+    if (!audioStream) {
+      throw new Error('stream not found');
+    }
+    const seqNum = audioStream.getNextSeqNum();
+    const buffer = await this.resamplePcmBuffer(pcmBuffer.sampleRate, pcmBuffer.buffer);
+    this.appendNativeBuffer(stream, seqNum, buffer);
   }
   private async resamplePcmBuffer(inSampleRate: number, inBuffer: ArrayBuffer) {
     const floatBuffer = this.makeAudioBuffer(inBuffer);
@@ -616,11 +701,17 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       this.setComplete(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
       return;
     }
-
     const contentType = res.headers.get('content-type') ?? AUDIO_MPEG_MIME_TYPE;
-    const chunk = new AudioChunk(contentType, await res.arrayBuffer());
     console.debug(`[${this.name}] received chunk: ${shortText}, type=${res.headers.get('content-type')}`);
-    this.queueChunk(chunk);
+    const reader = res.body!.getReader();
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) {
+        break;
+      }
+      console.debug(`[${this.name}] received chunk buffer: ${shortText}, len=${value.length}`);
+      this.queueChunk(new AudioChunk(contentType, value.buffer));
+    }
     this.requestQueue.shift();
     this.processRequestQueue();
   }
