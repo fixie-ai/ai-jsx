@@ -14,7 +14,7 @@ interface UniversalSidekickProps {
 type OutputFormatSidekickProps = MergeExclusive<
   {
     /**
-     * The output format that the Sidekick should use. Defaults to `text/mdx`.
+     * The output format that the Sidekick should use.
      *
      * `text/mdx` indicates that the Sidekick should output MDX, which is Markdown with
      * additional JSX elements, such as buttons.
@@ -23,16 +23,14 @@ type OutputFormatSidekickProps = MergeExclusive<
      *
      * `text/plain` indicates that the Sidekick should output plain text.
      */
-    outputFormat?: 'text/mdx' | undefined;
+    outputFormat: 'text/mdx';
 
     /**
      * A set of examples to the Sidekick instructing it how to emit MDX responses, when
      * `outputFormat` is `text/mdx`.
      *
-     * By default, the Sidekick will only be able to use the default set of
-     * MDX components in its vocabulary: `Citation` and `NextStepsButton`.
-     * If you wish to support additional MDX components, you must provide examples
-     * of how to use them here.
+     * Separately, the Sidekick will emit MDX components if the `includeNextStepsRecommendations` and `useCitationCard`
+     * props are set.
      */
     genUIExamples?: AI.Node;
 
@@ -40,10 +38,8 @@ type OutputFormatSidekickProps = MergeExclusive<
      * A set of component names that the Sidekick should be able to use in its
      * MDX output, when `outputFormat` is `text/mdx`.
      *
-     * By default, the Sidekick will only be able to use the default set of
-     * MDX components in its vocabulary: `Citation` and `NextStepsButton`.
-     * If you wish to support additional MDX components, you must provide their
-     * names here.
+     * Separately, the Sidekick will emit MDX components if the `includeNextStepsRecommendations` and `useCitationCard`
+     * props are set.
      */
     genUIComponentNames?: string[];
 
@@ -60,14 +56,14 @@ type OutputFormatSidekickProps = MergeExclusive<
      *
      * Defaults to true.
      */
-    includeNextStepsRecommendations?: boolean;
+    includeNextStepsRecommendations: boolean;
 
     /**
      * If true, the Sidekick will emit a `Citation` component when it wants to cite a source. For example:
      *
      *   <Citation title='How to cancel an order' href='https://docs.example.com/how-to-cancel-order' />
      */
-    useCitationCard?: boolean;
+    useCitationCard: boolean;
   },
   {
     /**
@@ -87,9 +83,9 @@ export function Sidekick(props: SidekickProps) {
       <UseTools tools={props.tools ?? undefined} showSteps>
         <SidekickSystemMessage
           timeZone="America/Los_Angeles"
-          includeNextStepsRecommendations={props.includeNextStepsRecommendations ?? true}
-          useCitationCard={props.useCitationCard ?? true}
-          outputFormat={props.outputFormat ?? 'text/mdx'}
+          includeNextStepsRecommendations={props.includeNextStepsRecommendations}
+          useCitationCard={props.useCitationCard}
+          outputFormat={props.outputFormat}
           userProvidedGenUIUsageExamples={props.genUIExamples}
           userProvidedGenUIComponentNames={props.genUIComponentNames}
         />

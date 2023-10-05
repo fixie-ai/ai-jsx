@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.21.0
+## 0.22.0
+
+- `includeNextStepsRecommendations` and `useCitationCard` are now required props to `Sidekick`. Previously, the defaulted to `true`.
+- `outputFormat` is now a required prop to `Sidekick`. Previously, it defaulted to `text/mdx`.
+
+## [0.21.0](https://github.com/fixie-ai/ai-jsx/commit/7e1bba39f37300363216e564448b640a12de8db1)
 
 - `Sidekick` is no longer locked to GPT-4-32k. Now, it'll run with whatever model is set by the AI.JSX context.
   - If you pass tools, make sure that the model supports native function calling, or you'll get an error.
