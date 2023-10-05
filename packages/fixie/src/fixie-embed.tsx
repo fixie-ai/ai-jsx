@@ -37,6 +37,17 @@ export interface FixieEmbedProps extends React.IframeHTMLAttributes<HTMLIFrameEl
   agentSendsGreeting?: boolean;
 
   /**
+   * Sets the title of the chat window. If you don't specify this, the agent's name will be used.
+   */
+  chatTitle?: string;
+
+  /**
+   * Set a primary color for the chat window. If you don't specify this, neutral colors will be used. You may wish
+   * to set this to be your primary brand color.
+   */
+  primaryColor?: string;
+
+  /**
    * If you're not sure whether you need this, the answer is "no".
    */
   fixieHost?: string;
@@ -54,11 +65,16 @@ export function InlineFixieEmbed({
   debug,
   agentId,
   fixieHost,
+  chatTitle,
+  primaryColor,
   agentSendsGreeting,
   ...iframeProps
 }: FixieEmbedProps) {
   return (
-    <iframe {...getBaseIframeProps({ speak, debug, agentId, fixieHost, agentSendsGreeting })} {...iframeProps}></iframe>
+    <iframe
+      {...getBaseIframeProps({ speak, debug, agentId, fixieHost, agentSendsGreeting, chatTitle, primaryColor })}
+      {...iframeProps}
+    ></iframe>
   );
 }
 
@@ -69,6 +85,8 @@ export function ControlledFloatingFixieEmbed({
   agentSendsGreeting,
   agentId,
   fixieHost,
+  chatTitle,
+  primaryColor,
   ...iframeProps
 }: FixieEmbedProps & {
   /**
@@ -100,7 +118,7 @@ export function ControlledFloatingFixieEmbed({
         // eslint-disable-next-line @typescript-eslint/prefer-ts-expect-error
         // @ts-ignore
         <iframe
-          {...getBaseIframeProps({ speak, debug, agentId, fixieHost, agentSendsGreeting })}
+          {...getBaseIframeProps({ speak, debug, agentId, fixieHost, agentSendsGreeting, chatTitle, primaryColor })}
           {...iframeProps}
           style={chatStyle}
         ></iframe>,
@@ -125,6 +143,9 @@ export function FloatingFixieEmbed({ fixieHost, ...restProps }: FixieEmbedProps)
   } as const;
 
   const launcherUrl = new URL('embed-launcher', fixieHost ?? defaultFixieHost);
+  if (restProps.primaryColor) {
+    launcherUrl.searchParams.set('primaryColor', restProps.primaryColor);
+  }
   const launcherRef = useRef<HTMLIFrameElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -173,7 +194,12 @@ function getBaseIframeProps({
   agentSendsGreeting,
   fixieHost,
   agentId,
-}: Pick<FixieEmbedProps, 'speak' | 'debug' | 'fixieHost' | 'agentId' | 'agentSendsGreeting'>) {
+  chatTitle,
+  primaryColor,
+}: Pick<
+  FixieEmbedProps,
+  'speak' | 'debug' | 'fixieHost' | 'agentId' | 'agentSendsGreeting' | 'chatTitle' | 'primaryColor'
+>) {
   const embedUrl = new URL(`/embed/${agentId}`, fixieHost ?? defaultFixieHost);
   if (speak) {
     embedUrl.searchParams.set('speak', '1');
@@ -183,6 +209,12 @@ function getBaseIframeProps({
   }
   if (agentSendsGreeting) {
     embedUrl.searchParams.set('agentStartsConversation', '1');
+  }
+  if (chatTitle) {
+    embedUrl.searchParams.set('chatTitle', chatTitle);
+  }
+  if (primaryColor) {
+    embedUrl.searchParams.set('primaryColor', primaryColor);
   }
 
   return {
