@@ -1,5 +1,4 @@
 'use client';
-import { P } from 'pino';
 import { split } from 'sentence-splitter';
 
 const AUDIO_WORKLET_SRC = `
@@ -158,33 +157,65 @@ class Mp3Demuxer extends Demuxer {
 }
 
 class WavDemuxer extends Demuxer {
+  private gotRiff
   private totalSize?: number;
   private dataSize?: number;
-  private numChannels?: number;
-  private sampleRate?: number;
-  private bitDepth?: number;
+  public numChannels?: number;
+  public sampleRate?: number;
+  public bitDepth?: number;
   getFrameLen(offset: number) {
-    if (offset == 0 && !this.totalSize && this.buffer.length < 36) {
-      return 0;
-    }
-      const riffView = new DataView(this.buffer.slice(0, 36));
-        const riff = riffView.getUint32(0, true);
-        if (riff != 0x52494646) {
-          console.
-        }
-        this.buffer = this.buffer.slice(36);
+    if (offset == 0 && !this.totalSize) {
+      if (this.buffer.length < 36) {
+        return 0;
       }
-      if (this.buffer.byteLength == 0) {
-        return null;
+      const view = new DataView(this.buffer.buffer, offset);
+      const riff = view.getUint32(0, true);
+      if (riff != 0x52494646) {
+        console.warn(`invalid RIFF ${riff.toString(16)}`);
+        return 0;
       }
-      const frameLen = this.buffer.byteLength;
-      const out = this.buffer.slice(0, frameLen);
-      this.buffer = this.buffer.slice(frameLen);
-      return out.buffer;
-    }
-  }
- 
-}
+      this.totalSize = view.getUint32(4, true);
+      const wave = view.getUint32(8, true);
+      if (wave != 0x57415645) {
+        console.warn(`invalid WAVE ${wave.toString(16)}`);
+        return 0;
+      }
+      const fmt = view.getUint32(12, true);
+      if (fmt != 0x666d7420) {
+        console.warn(`invalid fmt ${fmt.toString(16)}`);
+        return 0;
+      }
+      const fmtSize = view.getUint32(16, true);
+      if (fmtSize != 16) {
+        console.warn(`invalid fmt size ${fmtSize}`);
+        return 0;
+      }
+      const audioFormat = view.getUint16(20, true);
+      if (audioFormat != 1) {
+        console.warn(`invalid audio format ${audioFormat}`);
+        return 0;
+      }
+      this.numChannels = view.getUint16(22, true);
+      if (this.numChannels != 1) {
+        console.warn(`invalid num channels ${this.numChannels}`);
+        return 0;
+      }
+      this.sampleRate = view.getUint32(24, true);
+      this.bitDepth = view.getUint16(34, true);
+      if (this.bitDepth != 16) {
+        console.warn(`invalid bit depth ${this.bitDepth}`);
+        return 0;
+      }
+      return 36;
+    } else if (!this.dataSize) {
+
+
+
+
+
+
+
+    
 
 /**
  * An internal object used to manage an active audio stream.
