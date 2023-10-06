@@ -13,6 +13,6 @@
     "declaration": true,
     "lib": ["dom", "dom.iterable", "ES2022"]
   },
-  "include": ["src/*", "jest.config.ts", ".eslintrc.cjs", "index.ts", "web.ts"],
+  "include": ["src/*", "jest.config.ts", ".eslintrc.cjs", "index.ts", "web.ts", "main.ts"],
   "exclude": []
 }
