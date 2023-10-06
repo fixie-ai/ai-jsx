@@ -94,12 +94,12 @@ class Demuxer {
     newBuffer.set(new Uint8Array(chunk), this.buffer.byteLength);
     this.buffer = newBuffer;
   }
-  getFrames() {
+  getFrame() {
     let totalLen = 0;
     while (true) {
       const frameLen = this.getFrameLen(totalLen);
       console.log(`getFrames: totalLen=${totalLen} frameLen=${frameLen}`);
-      if (!frameLen || totalLen + frameLen > this.buffer.length) {
+      if (!frameLen) {
         break;
       }
       totalLen += frameLen;
@@ -157,57 +157,27 @@ class Mp3Demuxer extends Demuxer {
 }
 
 class WavDemuxer extends Demuxer {
-  private gotRiff
-  private totalSize?: number;
-  private dataSize?: number;
-  public numChannels?: number;
-  public sampleRate?: number;
-  public bitDepth?: number;
+  private gotRiff = false;
   getFrameLen(offset: number) {
-    if (offset == 0 && !this.totalSize) {
-      if (this.buffer.length < 36) {
-        return 0;
-      }
+    if (this.buffer.length < offset + 8) {
+      return 0;
+    }
+    if (!this.gotRiff) {
+      this.gotRiff = true;
+      return 8;
+    } else {
       const view = new DataView(this.buffer.buffer, offset);
-      const riff = view.getUint32(0, true);
-      if (riff != 0x52494646) {
-        console.warn(`invalid RIFF ${riff.toString(16)}`);
+      const tag = view.getUint32(0, true);
+      const len = view.getUint32(4, true);
+      if (this.buffer.length < offset + len + 8)
         return 0;
       }
-      this.totalSize = view.getUint32(4, true);
-      const wave = view.getUint32(8, true);
-      if (wave != 0x57415645) {
-        console.warn(`invalid WAVE ${wave.toString(16)}`);
-        return 0;
-      }
-      const fmt = view.getUint32(12, true);
-      if (fmt != 0x666d7420) {
-        console.warn(`invalid fmt ${fmt.toString(16)}`);
-        return 0;
-      }
-      const fmtSize = view.getUint32(16, true);
-      if (fmtSize != 16) {
-        console.warn(`invalid fmt size ${fmtSize}`);
-        return 0;
-      }
-      const audioFormat = view.getUint16(20, true);
-      if (audioFormat != 1) {
-        console.warn(`invalid audio format ${audioFormat}`);
-        return 0;
-      }
-      this.numChannels = view.getUint16(22, true);
-      if (this.numChannels != 1) {
-        console.warn(`invalid num channels ${this.numChannels}`);
-        return 0;
-      }
-      this.sampleRate = view.getUint32(24, true);
-      this.bitDepth = view.getUint16(34, true);
-      if (this.bitDepth != 16) {
-        console.warn(`invalid bit depth ${this.bitDepth}`);
-        return 0;
-      }
-      return 36;
-    } else if (!this.dataSize) {
+      return len + 8;
+    }
+  }
+}
+
+  
 
 
 
