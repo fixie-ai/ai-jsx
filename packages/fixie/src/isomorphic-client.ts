@@ -188,7 +188,8 @@ export class IsomorphicFixieClient {
     excludeGlobs?: string[],
     maxDocuments?: number,
     maxDepth?: number,
-    description?: string
+    description?: string,
+    displayName?: string
   ): Promise<Jsonifiable> {
     /**
      * Mike says Apify won't like the querystring and fragment, so we'll remove them.
@@ -204,6 +205,7 @@ export class IsomorphicFixieClient {
     const body = {
       corpus_id: corpusId,
       source: {
+        displayName,
         description,
         corpus_id: corpusId,
         load_spec: {
