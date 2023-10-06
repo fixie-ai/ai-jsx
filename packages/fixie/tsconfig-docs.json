@@ -5,7 +5,7 @@
     "noEmitOnError": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "module": "esnext",
+    "module": "Node16",
     "moduleResolution": "node16",
     "jsx": "react",
     "esModuleInterop": true,
