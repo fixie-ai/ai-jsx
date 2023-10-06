@@ -1,7 +1,7 @@
 import { SidekickProps } from './sidekick.js';
 
 // prettier-ignore
-export function MdxUsageExamples({includeNextStepsRecommendations}: Pick<SidekickProps, 'includeNextStepsRecommendations'>) {
+export function MdxUsageExamples({includeNextStepsRecommendations, useCitationCard}: Pick<SidekickProps, 'includeNextStepsRecommendations' | 'useCitationCard'>) {
   return <>
   Respond concisely, using MDX formatting to make your response
   more readable and structured.
@@ -11,8 +11,10 @@ export function MdxUsageExamples({includeNextStepsRecommendations}: Pick<Sidekic
   When you show the user a link, only show them links that you found from
   searching the knowledge base. Do not make links up.
 
-  When you show users links to knowledge base, use the {'<Citation />'} component. Its props are:
-  {' interface CitationProps { title: string; href: string } '}
+  {useCitationCard && <>
+    When you show users links to knowledge base, use the {'<Citation />'} component. Its props are:
+    {' interface CitationProps { title: string; href: string } '}
+  </>}
 
   {includeNextStepsRecommendations && <>
     You may suggest follow-up ideas to the user, if they fall within the scope of

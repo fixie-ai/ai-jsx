@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.21.0
+## 0.21.2
+
+- Fix a bug in `LimitToValidMdx` where a whitespace character was initially yieled.
+
+## [0.21.1](https://github.com/fixie-ai/ai-jsx/commit/e6064f54fe253e3b8e182fa4f7e05fd37da15dbc)
+
+- `Sidekick` now accepts a `useCitationCard` prop, which controls whether it will emit `<Citation />` MDX components.
+
+## [0.21.0](https://github.com/fixie-ai/ai-jsx/commit/7e1bba39f37300363216e564448b640a12de8db1)
 
 - `Sidekick` is no longer locked to GPT-4-32k. Now, it'll run with whatever model is set by the AI.JSX context.
   - If you pass tools, make sure that the model supports native function calling, or you'll get an error.

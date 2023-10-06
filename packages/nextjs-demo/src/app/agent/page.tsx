@@ -219,7 +219,7 @@ class ChatManager {
       this.pendingRequests[normalized] = request;
       request.start();
     } else if (final) {
-      const request = this.pendingRequests[text];
+      const request = this.pendingRequests[normalized];
       request.active = true;
       this.tts.play(request.outMessage);
       if (!request.done) {
