@@ -1,6 +1,6 @@
 {
   "name": "fixie",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
@@ -75,7 +75,9 @@
   "publishConfig": {
     "access": "public"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": "./dist/main.js",
     "./web": "./dist/web.js"
