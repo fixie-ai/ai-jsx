@@ -9,6 +9,8 @@ import {
 } from 'ai-jsx/lib/asr/asr';
 import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
+import { View, AudioAnalyser, Iris } from "./components/viz";
+import { THREE } from "three";
 import '../globals.css';
 
 // 1. VAD triggers silence. (Latency here is frame size + VAD delay)
@@ -305,6 +307,16 @@ const PageComponent: React.FC = () => {
   const [asrLatency, setAsrLatency] = useState(0);
   const [llmLatency, setLlmLatency] = useState(0);
   const [ttsLatency, setTtsLatency] = useState(0);
+
+  if (typeof window !== "undefined") {
+    const audioAnalyser = new AudioAnalyser(window);
+    audioAnalyser.init();
+
+    const view = new View(window);
+    view.init(audioAnalyser);
+
+    const iris = new Iris();
+  }
 
   const active = () => Boolean(chatManager);
   const handleStart = () => {
