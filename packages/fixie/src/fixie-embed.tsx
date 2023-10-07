@@ -188,7 +188,7 @@ export function FloatingFixieEmbed({ fixieHost, ...restProps }: FixieEmbedProps)
   );
 }
 
-function getBaseIframeProps({
+export function getBaseIframeProps({
   speak,
   debug,
   agentSendsGreeting,
