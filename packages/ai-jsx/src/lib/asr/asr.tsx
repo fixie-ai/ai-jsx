@@ -75,6 +75,7 @@ export class MicManager extends EventTarget {
   private streamElement?: HTMLAudioElement;
   private stream?: MediaStream;
   private processorNode?: AudioWorkletNode;
+  private analyzerNode?: AnalyserNode;
   private vad?: VoiceActivityDetectorBase;
 
   /**
@@ -107,11 +108,13 @@ export class MicManager extends EventTarget {
    */
   stop() {
     this.vad?.stop();
+    this.analyzerNode?.disconnect();
     this.processorNode?.disconnect();
     this.stream?.getTracks().forEach((track) => track.stop());
     this.streamElement?.pause();
     this.context?.close();
     this.vad = undefined;
+    this.analyzerNode = undefined;
     this.processorNode = undefined;
     this.stream = undefined;
     this.context = undefined;
@@ -140,6 +143,9 @@ export class MicManager extends EventTarget {
    */
   get isVoiceActive() {
     return this.vad?.isVoiceActive ?? false;
+  }
+  get analyzer() {
+    return this.analyzerNode;
   }
 
   /**
@@ -171,6 +177,8 @@ export class MicManager extends EventTarget {
       this.vad?.processFrame(event.data);
     };
 
+    this.analyzerNode = this.context.createAnalyser();
+
     let source;
     if (this.stream) {
       source = this.context.createMediaStreamSource(this.stream);
@@ -189,7 +197,8 @@ export class MicManager extends EventTarget {
     } else {
       throw new Error('No stream or streamElement');
     }
-    source.connect(this.processorNode);
+    source.connect(this.analyzerNode);
+    this.analyzerNode.connect(this.processorNode);
     // Only connect the destination if we're playing a file,
     // since we don't want to hear ourselves.
     if (this.streamElement) {

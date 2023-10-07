@@ -20,6 +20,7 @@ import {
   getPlatformSupportedApplicationModes,
 } from "./components/applicationModes";
 import AudioFFTAnalyzer from "./components/analyzers/audioFFTAnalyzer";
+import AudioExternalFFTAnalyzer from "./components/analyzers/audioExternalFFTAnalyzer";
 import AudioScopeAnalyzer from "./components/analyzers/audioScopeAnalyzer";
 import AudioScopeCanvas from "./components/canvas/AudioScope";
 import Visual3DCanvas from "./components/canvas/Visual3D";
@@ -203,6 +204,9 @@ class ChatManager {
     this.pendingRequests = {};
   }
 
+  getLocalAnalyzer() {
+    return this.micManager.localAnalyzer;
+  }
   /**
    * Handle new input from the ASR.
    */
@@ -305,12 +309,12 @@ const Latency: React.FC<{ name: string; latency: number }> = ({ name, latency })
   </>
 );
 
-const getAnalyzerComponent = (mode: ApplicationMode) => {
+const getAnalyzerComponent = (chatManager: ChatManager, mode: ApplicationMode) => {
   switch (mode) {
     case APPLICATION_MODE.AUDIO:
-      return <AudioFFTAnalyzer />;
+      return <AudioExternalFFTAnalyzer localAnalyzer={chatManager.getLocalAnalyzer()}/>;
     case APPLICATION_MODE.AUDIO_SCOPE:
-      return <AudioScopeAnalyzer />;
+      return <AudioScopeAnalyzer />;  
     default:
       return null;
   }
@@ -430,7 +434,7 @@ const PageComponent: React.FC = () => {
         </p>
         <div className="h-96 w-full flex justify-center">
         <Suspense fallback={<span>loading...</span>}>
-      {getAnalyzerComponent(mode as ApplicationMode)}
+      {getAnalyzerComponent(chatManager, mode as ApplicationMode)}
       {getCanvasComponent(mode as ApplicationMode)}
     </Suspense>
     </div>
