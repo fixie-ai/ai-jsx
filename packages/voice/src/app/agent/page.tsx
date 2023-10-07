@@ -11,7 +11,7 @@ import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
 import { View, AudioAnalyser, Iris } from "./components/viz";
 import '../globals.css';
-
+import Image from 'next/image';
 import { useControls } from "leva";
 import {
   ApplicationMode,
@@ -421,6 +421,9 @@ const PageComponent: React.FC = () => {
   return (
     <>
       <div className="w-full h-full">
+        <div className="text-center">
+          <Image src="/logo.png" width={200} height={200} />
+        </div>
         <p className="font-sm ml-2 mb-2">
           This demo allows you to chat (via voice) with a drive-thru agent at a fictional donut shop. Click Start
           Chatting (or tap the spacebar) to begin.

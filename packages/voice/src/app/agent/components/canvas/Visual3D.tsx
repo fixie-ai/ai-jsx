@@ -55,7 +55,7 @@ const Visual3DCanvas = ({ mode }: Visual3DCanvasProps) => {
       value:
         visualizerParam && AVAILABLE_VISUALS.includes(visualizerParam)
           ? visualizerParam
-          : AVAILABLE_VISUALS[0],
+          : AVAILABLE_VISUALS[1],
       options: AVAILABLE_VISUALS,
     },
   });

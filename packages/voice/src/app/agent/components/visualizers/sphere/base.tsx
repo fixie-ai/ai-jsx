@@ -22,10 +22,10 @@ interface BaseSphereProps {
 
 const BaseSphere = ({
   coordinateMapper,
-  radius = 2,
-  nPoints = 800,
-  cubeSideLength = 0.05,
-  palette = COLOR_PALETTE.THREE_COOL_TO_WARM,
+  radius = 1.75,
+  nPoints = 2000,
+  cubeSideLength = 0.01,
+  palette = COLOR_PALETTE.SAND_5,
 }: BaseSphereProps) => {
   const meshRef = useRef<InstancedMesh>(null!);
   const tmpMatrix = useMemo(() => new Matrix4(), []);

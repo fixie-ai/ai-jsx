@@ -12,7 +12,7 @@ interface AudioVisualProps {
 
 const AudioVisual = ({
   visual,
-  palette = COLOR_PALETTE.THREE_COOL_TO_WARM,
+  palette = COLOR_PALETTE.SAND_5,
 }: AudioVisualProps) => {
   const freqData = useVisualSourceDataX();
   const energyInfo = useEnergyInfo();
