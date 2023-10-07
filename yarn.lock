@@ -13113,7 +13113,7 @@ __metadata:
     react-dom:
       optional: true
   bin:
-    fixie: ./dist/main.js
+    fixie: ./src/main.js
   languageName: unknown
   linkType: soft
 

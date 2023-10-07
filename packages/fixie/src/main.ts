@@ -9,9 +9,9 @@ import fs from 'fs';
 import path from 'path';
 import terminal from 'terminal-kit';
 import { fileURLToPath } from 'url';
-import { FixieAgent } from './src/agent.js';
-import { AuthenticateOrLogIn, FIXIE_CONFIG_FILE, loadConfig } from './src/auth.js';
-import { FixieClientError } from './src/isomorphic-client.js';
+import { FixieAgent } from './agent.js';
+import { AuthenticateOrLogIn, FIXIE_CONFIG_FILE, loadConfig } from './auth.js';
+import { FixieClientError } from './isomorphic-client.js';
 
 const { terminal: term } = terminal;
 
