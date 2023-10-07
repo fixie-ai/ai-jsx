@@ -1,6 +1,6 @@
 {
   "name": "fixie",
-  "version": "1.8.1",
+  "version": "1.9.2",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
@@ -19,11 +19,10 @@
   "volta": {
     "extends": "../../package.json"
   },
-  "bin": "./src/main.js",
+  "bin": "./dist/main.js",
   "dependencies": {
     "@apollo/client": "^3.8.1",
     "@types/apollo-upload-client": "^17.0.2",
-    "ai-jsx": "^0.18.2",
     "apollo-upload-client": "^17.0.0",
     "axios": "^1.5.1",
     "commander": "^11.0.0",
@@ -75,5 +74,12 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": "./dist/index.js",
+    "./web": "./dist/web.js"
   }
 }
