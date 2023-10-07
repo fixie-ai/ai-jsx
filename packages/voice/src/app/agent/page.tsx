@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import {
   createSpeechRecognition,
   normalizeText,
@@ -10,8 +10,19 @@ import {
 import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
 import { View, AudioAnalyser, Iris } from "./components/viz";
-import { THREE } from "three";
 import '../globals.css';
+
+import { useControls } from "leva";
+import {
+  ApplicationMode,
+  APPLICATION_MODE,
+  getAppModeDisplayName,
+  getPlatformSupportedApplicationModes,
+} from "./components/applicationModes";
+import AudioFFTAnalyzer from "./components/analyzers/audioFFTAnalyzer";
+import AudioScopeAnalyzer from "./components/analyzers/audioScopeAnalyzer";
+import AudioScopeCanvas from "./components/canvas/AudioScope";
+import Visual3DCanvas from "./components/canvas/Visual3D";
 
 // 1. VAD triggers silence. (Latency here is frame size + VAD delay)
 // 2. ASR sends partial transcript. ASR latency = 2-1.
@@ -294,6 +305,28 @@ const Latency: React.FC<{ name: string; latency: number }> = ({ name, latency })
   </>
 );
 
+const getAnalyzerComponent = (mode: ApplicationMode) => {
+  switch (mode) {
+    case APPLICATION_MODE.AUDIO:
+      return <AudioFFTAnalyzer />;
+    case APPLICATION_MODE.AUDIO_SCOPE:
+      return <AudioScopeAnalyzer />;
+    default:
+      return null;
+  }
+};
+
+const AVAILABLE_MODES = getPlatformSupportedApplicationModes();
+
+const getCanvasComponent = (mode: ApplicationMode) => {
+  switch (mode) {
+    case APPLICATION_MODE.AUDIO_SCOPE:
+      return <AudioScopeCanvas />;
+    default:
+      return <Visual3DCanvas mode={mode} />;
+  }
+};
+
 const PageComponent: React.FC = () => {
   const searchParams = useSearchParams();
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
@@ -308,15 +341,7 @@ const PageComponent: React.FC = () => {
   const [llmLatency, setLlmLatency] = useState(0);
   const [ttsLatency, setTtsLatency] = useState(0);
 
-  if (typeof window !== "undefined") {
-    const audioAnalyser = new AudioAnalyser(window);
-    audioAnalyser.init();
-
-    const view = new View(window);
-    view.init(audioAnalyser);
-
-    const iris = new Iris();
-  }
+  
 
   const active = () => Boolean(chatManager);
   const handleStart = () => {
@@ -376,47 +401,39 @@ const PageComponent: React.FC = () => {
     };
   }, [onKeyDown]);
 
+  const modeParam = new URLSearchParams(document.location.search).get(
+    "mode"
+  ) as ApplicationMode | null;
+  const { mode } = useControls({
+    mode: {
+      value:
+        modeParam && AVAILABLE_MODES.includes(modeParam)
+          ? modeParam
+          : AVAILABLE_MODES[2],
+      options: AVAILABLE_MODES.reduce(
+        (o, mode) => ({ ...o, [getAppModeDisplayName(mode)]: mode }),
+        {}
+      ),
+      order: -100,
+    },
+  });
+
   return (
     <>
-      <div className="w-full">
+      <div className="w-full h-full">
         <p className="font-sm ml-2 mb-2">
           This demo allows you to chat (via voice) with a drive-thru agent at a fictional donut shop. Click Start
           Chatting (or tap the spacebar) to begin.
         </p>
-        <div className="grid grid-cols-2">
-          <div className="p-4">
-            <p className="text-lg font-bold">🍩 DONUTS</p>
-            <ul className="text-sm">
-              <MenuItem name="PUMPKIN SPICE ICED DOUGHNUT" price={1.29} />
-              <MenuItem name="PUMPKIN SPICE CAKE DOUGHNUT" price={1.29} />
-              <MenuItem name="OLD FASHIONED DOUGHNUT" price={0.99} />
-              <MenuItem name="CHOCOLATE ICED DOUGHNUT" price={1.09} />
-              <MenuItem name="CHOCOLATE ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
-              <MenuItem name="RASPBERRY FILLED DOUGHNUT" price={1.09} />
-              <MenuItem name="BLUEBERRY CAKE DOUGHNUT" price={1.09} />
-              <MenuItem name="STRAWBERRY ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
-              <MenuItem name="LEMON FILLED DOUGHNUT" price={1.09} />
-              <MenuItem name="DOUGHNUT HOLES" price={3.99} />
-            </ul>
-          </div>
-          <div className="p-4">
-            <p className="text-lg font-bold">☕️ COFFEE & DRINKS</p>
-            <ul className="text-sm">
-              <MenuItem name="PUMPKIN SPICE COFFEE" price={2.59} />
-              <MenuItem name="PUMPKIN SPICE LATTE" price={4.59} />
-              <MenuItem name="REGULAR BREWED COFFEE" price={1.79} />
-              <MenuItem name="DECAF BREWED COFFEE" price={1.79} />
-              <MenuItem name="LATTE" price={3.49} />
-              <MenuItem name="CAPPUCINO" price={3.49} />
-              <MenuItem name="CARAMEL MACCHIATO" price={3.49} />
-              <MenuItem name="MOCHA LATTE" price={3.49} />
-              <MenuItem name="CARAMEL MOCHA LATTE" price={3.49} />
-            </ul>
-          </div>
-        </div>
+        <div className="h-96 w-full flex justify-center">
+        <Suspense fallback={<span>loading...</span>}>
+      {getAnalyzerComponent(mode as ApplicationMode)}
+      {getCanvasComponent(mode as ApplicationMode)}
+    </Suspense>
+    </div>
         <div>
           <div
-            className="m-2 w-full text-xl h-32 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center"
+            className="m-2 w-full text-xl h-32 rounded-lg text-white flex items-center justify-center"
             id="output"
           >
             {output}
@@ -424,7 +441,7 @@ const PageComponent: React.FC = () => {
         </div>
         <div>
           <div
-            className={`m-2 w-full text-xl h-12 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center ${
+            className={`m-2 w-full text-xl h-12 rounded-lg text-white flex items-center justify-center ${
               active() ? 'border-red-400' : ''
             }`}
             id="input"
@@ -439,14 +456,6 @@ const PageComponent: React.FC = () => {
           <Button disabled={!active()} onClick={handleStop}>
             Stop Chatting
           </Button>
-        </div>
-        <div className="flex justify-center">
-          <span className="text-sm font-mono">
-            <Latency name="ASR" latency={asrLatency} /> |
-            <Latency name="LLM" latency={llmLatency} /> |
-            <Latency name="TTS" latency={ttsLatency} /> |
-            <Latency name="" latency={asrLatency + llmLatency + ttsLatency} />
-          </span>
         </div>
       </div>
     </>

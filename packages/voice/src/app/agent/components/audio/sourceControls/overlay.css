@@ -1,0 +1,67 @@
+#info {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+  padding: 1.5em;
+  color: white;
+  text-shadow: 1px 1px black;
+  border-radius: 1em;
+}
+
+.contrast #info button {
+  border-color: black;
+}
+
+.contrast #info button:hover {
+  background-color: rgb(80, 80, 80);
+  color: white;
+}
+
+#info button {
+  color: inherit;
+  cursor: pointer;
+  border: 1px solid white;
+  outline: none;
+  background: none;
+  border-radius: 3px;
+  padding: 0.5em 1em;
+  margin-right: 0.5em;
+  pointer-events: auto;
+  text-shadow: 1px 1px black;
+  font-weight: bold;
+}
+
+#info button:hover {
+  background-color: rgb(180, 180, 180);
+  color: black;
+  text-shadow: none;
+}
+
+#info a {
+  pointer-events: auto;
+}
+
+#info p:last-child {
+  margin-bottom: 0;
+}
+
+.contrast #info *,
+.contrast footer * {
+  text-shadow: none;
+  color: black;
+}
+
+#info h1 {
+  font-family: "Montserrat", sans-serif;
+  margin-bottom: 0.5em;
+  font-size: 1.5rem;
+}
+
+#info h2 {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1rem;
+}
+
+#info p {
+  margin-bottom: 1em;
+}
