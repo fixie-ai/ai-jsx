@@ -406,7 +406,7 @@ const PageComponent: React.FC = () => {
     };
   }, [onKeyDown]);
 
-  const modeParam = new URLSearchParams(document.location.search).get('mode') as ApplicationMode | null;
+  const modeParam = null;
   const { mode } = useControls({
     mode: {
       value: modeParam && AVAILABLE_MODES.includes(modeParam) ? modeParam : AVAILABLE_MODES[2],
