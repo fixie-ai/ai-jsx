@@ -1,12 +1,7 @@
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
-import { Points } from "three";
-import {
-  COORDINATE_TYPE,
-  gaussianRandom,
-  ICoordinateMapper,
-  TWO_PI,
-} from "../../mappers/coordinateMappers/common";
+import { useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import { Points } from 'three';
+import { COORDINATE_TYPE, gaussianRandom, ICoordinateMapper, TWO_PI } from '../../mappers/coordinateMappers/common';
 
 interface BaseDiffusedRingProps {
   coordinateMapper: ICoordinateMapper;

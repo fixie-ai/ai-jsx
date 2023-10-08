@@ -1,12 +1,8 @@
-import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
-import { BoxGeometry, InstancedMesh, Matrix4, MeshBasicMaterial } from "three";
-import {
-  COORDINATE_TYPE,
-  ICoordinateMapper,
-  TWO_PI,
-} from "../../mappers/coordinateMappers/common";
-import { ColorPalette, ColorPaletteType, COLOR_PALETTE } from "../palettes";
+import { useFrame } from '@react-three/fiber';
+import { useEffect, useMemo, useRef } from 'react';
+import { BoxGeometry, InstancedMesh, Matrix4, MeshBasicMaterial } from 'three';
+import { COORDINATE_TYPE, ICoordinateMapper, TWO_PI } from '../../mappers/coordinateMappers/common';
+import { ColorPalette, ColorPaletteType, COLOR_PALETTE } from '../palettes';
 
 // const MAPPING_MODE_POLAR_2D = "polar_2d";
 // const MAPPING_MODE_POLAR_PHI = "polar_phi";
@@ -22,7 +18,7 @@ interface BaseSphereProps {
 
 const BaseSphere = ({
   coordinateMapper,
-  radius = 1.75,
+  radius = 5.0,
   nPoints = 2000,
   cubeSideLength = 0.01,
   palette = COLOR_PALETTE.SAND_5,
@@ -66,11 +62,7 @@ const BaseSphere = ({
 
       meshRef.current.setMatrixAt(
         i,
-        tmpMatrix.setPosition(
-          x * effectiveRadius,
-          y * effectiveRadius,
-          z * effectiveRadius
-        )
+        tmpMatrix.setPosition(x * effectiveRadius, y * effectiveRadius, z * effectiveRadius)
       );
     }
 
@@ -85,11 +77,8 @@ const BaseSphere = ({
       receiveShadow={true}
       args={[new BoxGeometry(), new MeshBasicMaterial(), nPoints]}
     >
-      <boxGeometry
-        attach="geometry"
-        args={[cubeSideLength, cubeSideLength, cubeSideLength, 1]}
-      />
-      <meshBasicMaterial attach="material" color={"white"} toneMapped={false} />
+      <boxGeometry attach="geometry" args={[cubeSideLength, cubeSideLength, cubeSideLength, 1]} />
+      <meshBasicMaterial attach="material" color={'white'} toneMapped={false} />
     </instancedMesh>
   );
 };

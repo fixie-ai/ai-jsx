@@ -421,7 +421,7 @@ const PageComponent: React.FC = () => {
         <div className="text-center flex justify-center">
           <Image alt="Fixie Voice logo" src="/logo.png" width={200} height={200} />
         </div>
-        <div className="h-96 w-full flex justify-center">
+        <div className="h-[425px] w-full flex justify-center mt-10">
           <Suspense fallback={<span className="text-white font-sans text-sm">Loading...</span>}>
             {getAnalyzerComponent(mode as ApplicationMode)}
             {getCanvasComponent(mode as ApplicationMode)}
@@ -435,9 +435,7 @@ const PageComponent: React.FC = () => {
             {showDialogue && output}
           </div>
           <div
-            className={`mx-auto max-w-lg font-sans text-lg m-2 w-full text-xl h-12 rounded-lg text-white flex items-center justify-center ${
-              active() ? 'border-red-400' : ''
-            }`}
+            className={`mx-auto max-w-lg font-sans text-md text-center m-2 w-full text-xl h-12 rounded-lg text-white flex items-center justify-center`}
             id="input"
           >
             {showDialogue && input}
