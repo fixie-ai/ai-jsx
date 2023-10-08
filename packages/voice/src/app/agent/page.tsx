@@ -9,20 +9,24 @@ import {
 } from 'ai-jsx/lib/asr/asr';
 import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
-import { View, AudioAnalyser, Iris } from "./components/viz";
+import { View, AudioAnalyser, Iris } from './components/viz';
 import '../globals.css';
 import Image from 'next/image';
-import { useControls } from "leva";
+import { useControls } from 'leva';
 import {
   ApplicationMode,
   APPLICATION_MODE,
   getAppModeDisplayName,
   getPlatformSupportedApplicationModes,
-} from "./components/applicationModes";
-import AudioFFTAnalyzer from "./components/analyzers/audioFFTAnalyzer";
-import AudioScopeAnalyzer from "./components/analyzers/audioScopeAnalyzer";
-import AudioScopeCanvas from "./components/canvas/AudioScope";
-import Visual3DCanvas from "./components/canvas/Visual3D";
+} from './components/applicationModes';
+import AudioFFTAnalyzer from './components/analyzers/audioFFTAnalyzer';
+import AudioScopeAnalyzer from './components/analyzers/audioScopeAnalyzer';
+import AudioScopeCanvas from './components/canvas/AudioScope';
+import Visual3DCanvas from './components/canvas/Visual3D';
+
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+import { Play, Pause } from '@phosphor-icons/react';
 
 // 1. VAD triggers silence. (Latency here is frame size + VAD delay)
 // 2. ASR sends partial transcript. ASR latency = 2-1.
@@ -275,13 +279,6 @@ class ChatManager {
   }
 }
 
-const MenuItem: React.FC<{ name: string; price: number }> = ({ name, price }) => (
-  <li className="flex justify-between">
-    <span className="text-left">{name}</span>
-    <span className="text-right">${price}</span>
-  </li>
-);
-
 const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
   onClick,
   disabled,
@@ -290,9 +287,9 @@ const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React
   <button
     onClick={onClick}
     disabled={disabled}
-    className={`ml-2 rounded-md ${
-      disabled ? 'bg-gray-300' : 'bg-fixie-fresh-salmon hover:bg-fixie-ripe-salmon'
-    } px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon`}
+    className={`ml-4 rounded-sm ${
+      disabled ? 'bg-gray-300' : 'bg-white hover:bg-gray-200 border border-gray-300'
+    } px-4 py-2 text-sm font-semibold text-black`}
   >
     {children}
   </button>
@@ -337,13 +334,21 @@ const PageComponent: React.FC = () => {
   const [chatManager, setChatManager] = useState<ChatManager | null>(null);
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
+  const [showDialogue, setShowDialogue] = useState(true);
   const [asrLatency, setAsrLatency] = useState(0);
   const [llmLatency, setLlmLatency] = useState(0);
   const [ttsLatency, setTtsLatency] = useState(0);
 
-  
-
   const active = () => Boolean(chatManager);
+
+  const toggleStartStop = () => {
+    if (active()) {
+      handleStop();
+    } else {
+      handleStart();
+    }
+  };
+
   const handleStart = () => {
     const manager = new ChatManager({ asrProvider, ttsProvider, ttsVoice, model, docs });
     setInput('');
@@ -401,19 +406,11 @@ const PageComponent: React.FC = () => {
     };
   }, [onKeyDown]);
 
-  const modeParam = new URLSearchParams(document.location.search).get(
-    "mode"
-  ) as ApplicationMode | null;
+  const modeParam = new URLSearchParams(document.location.search).get('mode') as ApplicationMode | null;
   const { mode } = useControls({
     mode: {
-      value:
-        modeParam && AVAILABLE_MODES.includes(modeParam)
-          ? modeParam
-          : AVAILABLE_MODES[2],
-      options: AVAILABLE_MODES.reduce(
-        (o, mode) => ({ ...o, [getAppModeDisplayName(mode)]: mode }),
-        {}
-      ),
+      value: modeParam && AVAILABLE_MODES.includes(modeParam) ? modeParam : AVAILABLE_MODES[2],
+      options: AVAILABLE_MODES.reduce((o, mode) => ({ ...o, [getAppModeDisplayName(mode)]: mode }), {}),
       order: -100,
     },
   });
@@ -421,43 +418,54 @@ const PageComponent: React.FC = () => {
   return (
     <>
       <div className="w-full h-full">
-        <div className="text-center">
-          <Image src="/logo.png" width={200} height={200} />
+        <div className="text-center flex justify-center">
+          <Image alt="Fixie Voice logo" src="/logo.png" width={200} height={200} />
         </div>
-        <p className="font-sm ml-2 mb-2">
-          This demo allows you to chat (via voice) with a drive-thru agent at a fictional donut shop. Click Start
-          Chatting (or tap the spacebar) to begin.
-        </p>
         <div className="h-96 w-full flex justify-center">
-        <Suspense fallback={<span>loading...</span>}>
-      {getAnalyzerComponent(mode as ApplicationMode)}
-      {getCanvasComponent(mode as ApplicationMode)}
-    </Suspense>
-    </div>
-        <div>
+          <Suspense fallback={<span className="text-white font-sans text-sm">Loading...</span>}>
+            {getAnalyzerComponent(mode as ApplicationMode)}
+            {getCanvasComponent(mode as ApplicationMode)}
+          </Suspense>
+        </div>
+        <div className="flex flex-col justify-center">
           <div
-            className="m-2 w-full text-xl h-32 rounded-lg text-white flex items-center justify-center"
+            className="mx-auto max-w-lg font-sans m-2 w-full text-lg h-32 rounded-lg text-white flex items-center justify-center text-center"
             id="output"
           >
-            {output}
+            {showDialogue && output}
           </div>
-        </div>
-        <div>
           <div
-            className={`m-2 w-full text-xl h-12 rounded-lg text-white flex items-center justify-center ${
+            className={`mx-auto max-w-lg font-sans text-lg m-2 w-full text-xl h-12 rounded-lg text-white flex items-center justify-center ${
               active() ? 'border-red-400' : ''
             }`}
             id="input"
           >
-            {input}
+            {showDialogue && input}
           </div>
         </div>
-        <div className="m-3 w-full flex justify-center">
-          <Button disabled={active()} onClick={handleStart}>
-            Start Chatting
-          </Button>
-          <Button disabled={!active()} onClick={handleStop}>
-            Stop Chatting
+        <div className="m-3 w-full flex justify-center items-center">
+          <Select defaultValue="donut">
+            <SelectTrigger className="w-[180px] text-white rounded">
+              <SelectValue placeholder="Choose a demo" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              <SelectItem value="donut">Dr. Donut</SelectItem>
+              <SelectItem value="companion">Companion</SelectItem>
+              <SelectItem value="third">Third</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button disabled={false} onClick={toggleStartStop}>
+            {active() ? (
+              <div className="flex items-center justify-between w-14">
+                <Pause size={15} className="inline" weight="fill" />
+                {'  Stop'}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between w-14">
+                <Play size={15} className="inline" weight="fill" />
+                {'  Start'}
+              </div>
+            )}
           </Button>
         </div>
       </div>
