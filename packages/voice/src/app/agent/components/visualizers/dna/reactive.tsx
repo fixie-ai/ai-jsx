@@ -1,20 +1,10 @@
-import { folder, useControls } from "leva";
-import BaseDoubleHelix from "./base";
-import { VisualProps } from "../common";
-import MultiStrand from "./multi";
-import {
-  Bloom,
-  DepthOfField,
-  EffectComposer,
-  Noise,
-  Vignette,
-} from "@react-three/postprocessing";
-import { COLOR_PALETTE } from "../palettes";
+import { folder, useControls } from 'leva';
+import BaseDoubleHelix from './base';
+import { VisualProps } from '../common';
+import MultiStrand from './multi';
+import { COLOR_PALETTE } from '../palettes';
 
-const DNAVisual = ({
-  coordinateMapper,
-  palette = COLOR_PALETTE.THREE_COOL_TO_WARM,
-}: VisualProps) => {
+const DNAVisual = ({ coordinateMapper, palette = COLOR_PALETTE.THREE_COOL_TO_WARM }: VisualProps) => {
   const {
     multi,
     helixLength,
@@ -26,7 +16,7 @@ const DNAVisual = ({
     mirrorEffects,
     fixedBaseGap,
   } = useControls({
-    "Visual - DNA": folder(
+    'Visual - DNA': folder(
       {
         multi: true,
         helixLength: { value: 50, min: 5, max: 100, step: 5 },
@@ -77,22 +67,7 @@ const DNAVisual = ({
 };
 
 const ComposedDNAVisual = ({ ...props }: VisualProps) => {
-  return (
-    <>
-      <DNAVisual {...props} />
-      <EffectComposer>
-        <DepthOfField
-          focusDistance={0}
-          focalLength={0.02}
-          bokehScale={3}
-          height={480}
-        />
-        <Bloom luminanceThreshold={0} luminanceSmoothing={0.9} height={300} />
-        <Noise opacity={0.02} />
-        <Vignette eskil={false} offset={0.1} darkness={1.1} />
-      </EffectComposer>
-    </>
-  );
+  return <></>;
 };
 
 export default ComposedDNAVisual;

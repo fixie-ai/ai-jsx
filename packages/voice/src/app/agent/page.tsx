@@ -9,7 +9,6 @@ import {
 } from 'ai-jsx/lib/asr/asr';
 import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
-import { View, AudioAnalyser, Iris } from './components/viz';
 import '../globals.css';
 import Image from 'next/image';
 import { useControls } from 'leva';
@@ -26,7 +25,7 @@ import Visual3DCanvas from './components/canvas/Visual3D';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-import { Play, Pause } from '@phosphor-icons/react';
+import { Leva } from 'leva';
 
 // 1. VAD triggers silence. (Latency here is frame size + VAD delay)
 // 2. ASR sends partial transcript. ASR latency = 2-1.
@@ -417,6 +416,9 @@ const PageComponent: React.FC = () => {
 
   return (
     <>
+      <Leva
+        hidden={false} // default = false, when true the GUI is hidden
+      />
       <div className="w-full h-full">
         <div className="text-center flex justify-center">
           <Image alt="Fixie Voice logo" src="/logo.png" width={200} height={200} />
@@ -455,12 +457,26 @@ const PageComponent: React.FC = () => {
           <Button disabled={false} onClick={toggleStartStop}>
             {active() ? (
               <div className="flex items-center justify-between w-14">
-                <Pause size={15} className="inline" weight="fill" />
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                  <path
+                    fillRule="evenodd"
+                    d="M6.75 5.25a.75.75 0 01.75-.75H9a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H7.5a.75.75 0 01-.75-.75V5.25zm7.5 0A.75.75 0 0115 4.5h1.5a.75.75 0 01.75.75v13.5a.75.75 0 01-.75.75H15a.75.75 0 01-.75-.75V5.25z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+
                 {'  Stop'}
               </div>
             ) : (
               <div className="flex items-center justify-between w-14">
-                <Play size={15} className="inline" weight="fill" />
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                  <path
+                    fillRule="evenodd"
+                    d="M4.5 5.653c0-1.426 1.529-2.33 2.779-1.643l11.54 6.348c1.295.712 1.295 2.573 0 3.285L7.28 19.991c-1.25.687-2.779-.217-2.779-1.643V5.653z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+
                 {'  Start'}
               </div>
             )}
