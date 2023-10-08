@@ -6757,9 +6757,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-three/drei@npm:^9.86.3":
-  version: 9.86.3
-  resolution: "@react-three/drei@npm:9.86.3"
+"@react-three/drei@npm:^9.86.4":
+  version: 9.87.0
+  resolution: "@react-three/drei@npm:9.87.0"
   dependencies:
     "@babel/runtime": ^7.11.2
     "@mediapipe/tasks-vision": 0.10.2
@@ -6793,7 +6793,7 @@ __metadata:
   peerDependenciesMeta:
     react-dom:
       optional: true
-  checksum: 30c11c9f802a02d7176842fbecc4b8777e8c8d6357c26e10910e263d221f5c3419087268165f3e279ce5620eff91b3e50b8758cbe86224f6eea29d2f59e5508d
+  checksum: 234dfbd418d03bdc4f9b3f0e9a7fa8daff4d85ccb35a4195c8c6b68042584ff6275694f04ffb91729792a27be8f624b5c99b59ca1acbf0a206082a4006561237
   languageName: node
   linkType: hard
 
@@ -27673,7 +27673,7 @@ __metadata:
     "@radix-ui/react-select": ^2.0.0
     "@radix-ui/react-slot": ^1.0.2
     "@radix-ui/themes": ^2.0.0
-    "@react-three/drei": ^9.86.3
+    "@react-three/drei": ^9.86.4
     "@react-three/fiber": ^8.14.5
     "@react-three/postprocessing": ^2.15.1
     "@tailwindcss/forms": ^0.5.3
