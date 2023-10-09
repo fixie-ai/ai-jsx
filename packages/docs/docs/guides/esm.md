@@ -1,6 +1,6 @@
 # ESM
 
-AI.JSX exports both CJS and ESM files. When you `import` or `require` `ai-jsx`, you'll get the file that matches the module system you're using. If you have a problem with this, please let us know by either [dropping us a line in Discord](https://discord.gg/tRMV7PW8f2) or by [opening an issue](https://github.com/fixie-ai/ai-jsx/issues) on GitHub.
+AI.JSX exports both CJS and ESM files. When you `import` or `require` `ai-jsx`, you'll get the file that matches the module system you're using. If you have a problem with this, please let us know by either [dropping us a line in Discord](https://discord.fixie.ai) or by [opening an issue](https://github.com/fixie-ai/ai-jsx/issues) on GitHub.
 
 ## Known Issues
 

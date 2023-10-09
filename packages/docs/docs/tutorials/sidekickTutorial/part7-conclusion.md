@@ -21,5 +21,5 @@ We would love to hear your feedback, entertain any PRs you might want to make, a
 
 - **AI.JSX Docs** → You are already here. There is a lot more detail in the Docs as well as other tutorials on AI.JSX.
 - **Fixie Docs** → All the details about the [Corpus API](https://docs.fixie.ai) (for working with Document Collections).
-- **Fixie on Discord** → Join our [community on Discord](https://discord.gg/tRMV7PW8f2) to get help and to connect with other builders.
+- **Fixie on Discord** → Join our [community on Discord](https://discord.fixie.ai) to get help and to connect with other builders.
 - **Fixie on GitHub** → Home of all the open source projects from [Fixie](https://github.com/fixie-ai/). Also home to [AI.JSX](https://github.com/fixie-ai/ai-jsx/) code.
