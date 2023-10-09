@@ -13,6 +13,15 @@ import { FixieAgent } from './agent.js';
 import { AuthenticateOrLogIn, FIXIE_CONFIG_FILE, loadConfig } from './auth.js';
 import { FixieClientError } from './isomorphic-client.js';
 
+const [major, ..._] = process.version
+  .slice(1)
+  .split('.')
+  .map((x) => parseInt(x));
+if (major < 18) {
+  console.error(`This CLI requires Node.js v18 or later. (Detected version ${process.version})`);
+  process.exit(1);
+}
+
 const { terminal: term } = terminal;
 
 /** Pretty-print a result as JSON. */
