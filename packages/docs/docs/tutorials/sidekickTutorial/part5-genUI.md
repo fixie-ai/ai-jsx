@@ -61,9 +61,8 @@ When rendered in the Sidekick UI, this will show a card with the given informati
 
 ## Standard GenUI Components
 
-The standard Sidekick UI renderer understands how to use three MDX components:
+The standard Sidekick UI renderer understands how to use two MDX components:
 
-- `<Card>` - A card with a header, some contents, and an optional more detail link.
 - `<Citation>` - A citation that includes a title and a link.
 - `<NextStepsButton>` - A button that, when pressed, sends the contents of the button text
   as the next query to the Sidekick.
@@ -73,38 +72,16 @@ there is nothing more you need to do to get the Sidekick to use these standard c
 
 ## Helping the Sidekick know when to use GenUI components
 
-Even though the `<Card>` , `<Citation>` , and `<NextStepsButton>` components are available
-to the Sidekick, it won't always use them. It is often helpful to give the Sidekick some
-additional examples in terms of when it should use these UI elements.
-
-For this, we are going to add a new `<SystemMessage>` that we'll pass to the Sidekick, giving
-it some concrete examples of when to use them.
-
-```tsx
-export const finalSystemMessageBeforeResponse = (
-  <SystemMessage>
-    Respond with a `Card`. If your API call produced a 4xx error, see if you can fix the request and try again.
-    Otherwise: Give the user suggested next queries, using `NextStepsButton`. Only suggest things you can actually do.
-    Here's an example of what the final outcome should look like:
-    {`
-        <NextStepsButton prompt='See more about this function' />
-        <NextStepsButton prompt='See all of the stars for this repository' />
-        `}
-    When you give next steps, phrase them as things the user would say to you. Also, only give next steps that are fully
-    actionable by you. You cannot call any write APIs, so do not make suggestions like `create a repository`.
-  </SystemMessage>
-);
-```
-
-To use this in our Sidekick, we're going to pass it in as a `finalSystemMessageBeforeResponse` ,
-like so:
+To use the `<Citation>` and `<NextStepsButton>` components, we need to update our Sidekick component as follows:
 
 ```tsx
 <Sidekick
   role="GitHub assistant"
   systemMessage={systemMessage}
   tools={tools}
-  finalSystemMessageBeforeResponse={finalSystemMessageBeforeResponse}
+  outputFormat="text/mdx"
+  includeNextStepsRecommendations
+  useCitationCard
 />
 ```
 
@@ -156,7 +133,6 @@ const mySidekick = (
     role="Github Assistant"
     systemMessage={systemMessage}
     tools={tools}
-    finalSystemMessageBeforeResponse={finalSystemMessageBeforeResponse}
     genUIComponentNames={genUIComponentNames}
     genUIExamples={genUIExamples}
   />
@@ -172,8 +148,7 @@ _This section provides some optional, suggested exercises you can do to go deepe
 **Changing up the `<SystemMessage>`**
 
 Try changing the `<SystemMessage>` to encourage the Sidekick to use different components
-for different use cases. For example, maybe you want it to always generate a `<Citation>`
-
-when it is giving a link to a GitHub issue or pull request, rather than using a `<Card>` .
+for different use cases. For example, maybe you want it to always generate a `<Citation>` when
+it is giving a link to a GitHub issue or pull request.
 
 :::
