@@ -386,7 +386,7 @@ const PageComponent: React.FC = () => {
               <MenuItem name="CHOCOLATE ICED" price={1.09} />
               <MenuItem name="CHOCOLATE ICED WITH SPRINKLES" price={1.09} />
               <MenuItem name="RASPBERRY FILLED" price={1.09} />
-              <MenuItem name="BLUEBERRY CAKE DOHNUT" price={1.09} />
+              <MenuItem name="BLUEBERRY CAKE" price={1.09} />
               <MenuItem name="STRAWBERRY ICED WITH SPRINKLES" price={1.09} />
               <MenuItem name="LEMON FILLED" price={1.09} />
               <MenuItem name="DOUGHNUT HOLES" price={3.99} />
