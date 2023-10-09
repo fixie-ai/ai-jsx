@@ -176,7 +176,7 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
         <span className="font-bold">WER: </span>
         {computeWer(output.current, transcript).toFixed(3)}
       </div>
-      <TranscriptRenderer value={output.current} disabled={!enabled}/>
+      <TranscriptRenderer value={output.current}/>
     </div>
   );
 };
