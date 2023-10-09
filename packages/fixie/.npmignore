@@ -1,2 +1,2 @@
-# Empty, but exists so that npm doesn't honor .gitignore
+# N.B. Because this file exists, npm will not honor the local .gitignore.
 .*
