@@ -63,6 +63,7 @@ interface AsrProps {
 }
 
 const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, transcript }) => {
+  const [enabled, setEnabled] = useState(true);
   const output = useRef<Transcript[]>([]);
   const [partialLatency, setPartialLatency] = useState<number[]>([]);
   const [finalLatency, setFinalLatency] = useState<number[]>([]);
@@ -143,15 +144,16 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
     }
   };
   useEffect(() => {
-    if (manager) {
+    if (manager && enabled) {
       start();
     } else {
       stop();
     }
-  }, [manager]);
+  }, [manager, enabled]);
   return (
     <div className="ml-2">
       <p className="text-xl font-bold mt-2">
+        <input className="mb-1 mr-2" type="checkbox" checked={enabled} onChange={() => setEnabled(!enabled)}/> 
         <a className="hover:underline" href={link}>
           {name}
         </a>
@@ -174,7 +176,7 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
         <span className="font-bold">WER: </span>
         {computeWer(output.current, transcript).toFixed(3)}
       </div>
-      <TranscriptRenderer value={output.current} />
+      <TranscriptRenderer value={output.current} disabled={!enabled}/>
     </div>
   );
 };
