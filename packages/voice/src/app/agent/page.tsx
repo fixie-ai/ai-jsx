@@ -9,6 +9,7 @@ import {
 } from 'ai-jsx/lib/asr/asr';
 import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import '../globals.css';
 
 // 1. VAD triggers silence. (Latency here is frame size + VAD delay)
@@ -278,7 +279,7 @@ const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React
     onClick={onClick}
     disabled={disabled}
     className={`ml-2 rounded-md ${
-      disabled ? 'bg-gray-300' : 'bg-fixie-fresh-salmon hover:bg-fixie-ripe-salmon'
+      disabled ? 'bg-gray-300' : 'bg-fixie-charcoal hover:bg-fixie-dark-gray'
     } px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon`}
   >
     {children}
@@ -296,6 +297,7 @@ const PageComponent: React.FC = () => {
   const searchParams = useSearchParams();
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
+  const showStats = searchParams.get('stats') || false;
   const ttsVoice = searchParams.get('ttsVoice') || undefined;
   const model = searchParams.get('llm') || 'gpt-4';
   const docs = Boolean(searchParams.get('docs'));
@@ -367,28 +369,31 @@ const PageComponent: React.FC = () => {
   return (
     <>
       <div className="w-full">
-        <p className="font-sm ml-2 mb-2">
+        <div className="flex justify-center mb-8">
+          <Image src="/voice-logo.png" alt="Fixie Voice" width={200} height={200} />
+        </div>
+        <p className="font-sm ml-2 mb-6 text-center">
           This demo allows you to chat (via voice) with a drive-thru agent at a fictional donut shop. Click Start
           Chatting (or tap the spacebar) to begin.
         </p>
-        <div className="grid grid-cols-2">
+        <div className="grid grid-cols-2 lg:gap-x-24">
           <div className="p-4">
             <p className="text-lg font-bold">🍩 DONUTS</p>
             <ul className="text-sm">
-              <MenuItem name="PUMPKIN SPICE ICED DOUGHNUT" price={1.29} />
-              <MenuItem name="PUMPKIN SPICE CAKE DOUGHNUT" price={1.29} />
-              <MenuItem name="OLD FASHIONED DOUGHNUT" price={0.99} />
-              <MenuItem name="CHOCOLATE ICED DOUGHNUT" price={1.09} />
-              <MenuItem name="CHOCOLATE ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
-              <MenuItem name="RASPBERRY FILLED DOUGHNUT" price={1.09} />
-              <MenuItem name="BLUEBERRY CAKE DOUGHNUT" price={1.09} />
-              <MenuItem name="STRAWBERRY ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
-              <MenuItem name="LEMON FILLED DOUGHNUT" price={1.09} />
+              <MenuItem name="PUMPKIN SPICE ICED" price={1.29} />
+              <MenuItem name="PUMPKIN SPICE CAKE" price={1.29} />
+              <MenuItem name="OLD FASHIONED" price={0.99} />
+              <MenuItem name="CHOCOLATE ICED" price={1.09} />
+              <MenuItem name="CHOCOLATE ICED WITH SPRINKLES" price={1.09} />
+              <MenuItem name="RASPBERRY FILLED" price={1.09} />
+              <MenuItem name="BLUEBERRY CAKE" price={1.09} />
+              <MenuItem name="STRAWBERRY ICED WITH SPRINKLES" price={1.09} />
+              <MenuItem name="LEMON FILLED" price={1.09} />
               <MenuItem name="DOUGHNUT HOLES" price={3.99} />
             </ul>
           </div>
           <div className="p-4">
-            <p className="text-lg font-bold">☕️ COFFEE & DRINKS</p>
+            <p className="text-lg font-bold">☕️ COFFEE</p>
             <ul className="text-sm">
               <MenuItem name="PUMPKIN SPICE COFFEE" price={2.59} />
               <MenuItem name="PUMPKIN SPICE LATTE" price={4.59} />
@@ -404,7 +409,7 @@ const PageComponent: React.FC = () => {
         </div>
         <div>
           <div
-            className="m-2 w-full text-xl h-32 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center"
+            className="text-center m-2 w-full text-md py-8 px-2 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center"
             id="output"
           >
             {output}
@@ -412,7 +417,7 @@ const PageComponent: React.FC = () => {
         </div>
         <div>
           <div
-            className={`m-2 w-full text-xl h-12 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center ${
+            className={`m-2 w-full text-md h-12 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center ${
               active() ? 'border-red-400' : ''
             }`}
             id="input"
@@ -420,22 +425,21 @@ const PageComponent: React.FC = () => {
             {input}
           </div>
         </div>
-        <div className="m-3 w-full flex justify-center">
-          <Button disabled={active()} onClick={handleStart}>
-            Start Chatting
-          </Button>
-          <Button disabled={!active()} onClick={handleStop}>
-            Stop Chatting
+        <div className="m-3 w-full flex justify-center mt-8">
+          <Button disabled={false} onClick={toggle}>
+            {active() ? 'Stop Chatting' : 'Start Chatting'}
           </Button>
         </div>
-        <div className="flex justify-center">
-          <span className="text-sm font-mono">
-            <Latency name="ASR" latency={asrLatency} /> |
-            <Latency name="LLM" latency={llmLatency} /> |
-            <Latency name="TTS" latency={ttsLatency} /> |
-            <Latency name="" latency={asrLatency + llmLatency + ttsLatency} />
-          </span>
-        </div>
+        {showStats && (
+          <div className="flex justify-center">
+            <span className="text-sm font-mono">
+              <Latency name="ASR" latency={asrLatency} /> |
+              <Latency name="LLM" latency={llmLatency} /> |
+              <Latency name="TTS" latency={ttsLatency} /> |
+              <Latency name="" latency={asrLatency + llmLatency + ttsLatency} />
+            </span>
+          </div>
+        )}
       </div>
     </>
   );
