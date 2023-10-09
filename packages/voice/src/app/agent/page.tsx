@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useRef, useState, Suspense } from 'react';
 import {
   createSpeechRecognition,
   normalizeText,
@@ -9,21 +9,17 @@ import {
 } from 'ai-jsx/lib/asr/asr';
 import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
-import { View, AudioAnalyser, Iris } from "./components/viz";
 import '../globals.css';
 import Image from 'next/image';
-import { useControls } from "leva";
+import { useControls } from 'leva';
 import {
   ApplicationMode,
   APPLICATION_MODE,
   getAppModeDisplayName,
   getPlatformSupportedApplicationModes,
-} from "./components/applicationModes";
-import AudioFFTAnalyzer from "./components/analyzers/audioFFTAnalyzer";
-import AudioExternalFFTAnalyzer from "./components/analyzers/audioExternalFFTAnalyzer";
-import AudioScopeAnalyzer from "./components/analyzers/audioScopeAnalyzer";
-import AudioScopeCanvas from "./components/canvas/AudioScope";
-import Visual3DCanvas from "./components/canvas/Visual3D";
+} from './components/applicationModes';
+import AudioFFTAnalyzer from './components/analyzers/audioFFTAnalyzer';
+import Visual3DCanvas from './components/canvas/Visual3D';
 
 // 1. VAD triggers silence. (Latency here is frame size + VAD delay)
 // 2. ASR sends partial transcript. ASR latency = 2-1.
@@ -130,6 +126,13 @@ class ChatRequest {
   }
 }
 
+enum ChatManagerState {
+  IDLE = 'idle',
+  LISTENING = 'listening',
+  THINKING = 'thinking',
+  SPEAKING = 'speaking',
+}
+
 class ChatManagerInit {
   constructor(
     public readonly asrProvider: string,
@@ -144,6 +147,7 @@ class ChatManagerInit {
  * Manages a single chat with a LLM, including speculative execution.
  */
 class ChatManager {
+  private state = ChatManagerState.IDLE;
   private history: ChatMessage[] = [];
   private pendingRequests: Record<string, ChatRequest> = {};
   private readonly micManager: MicManager;
@@ -151,6 +155,7 @@ class ChatManager {
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
   private readonly docs: boolean;
+  onStateChange?: (state: string) => void;
   onInputChange?: (text: string, final: boolean, latency?: number) => void;
   onOutputChange?: (text: string, final: boolean, latency: number) => void;
   onAudioStart?: (latency: number) => void;
@@ -161,6 +166,7 @@ class ChatManager {
     this.asr = createSpeechRecognition({ provider: asrProvider, manager: this.micManager, getToken: getAsrToken });
     this.tts = createTextToSpeech({
       provider: ttsProvider,
+      protocol: ttsProvider == 'eleven' ? 'ws' : 'rest',
       getToken: getTtsToken,
       buildUrl: buildTtsUrl,
       voice: ttsVoice,
@@ -168,16 +174,19 @@ class ChatManager {
     });
     this.model = model;
     this.docs = docs;
+    this.micManager.addEventListener('vad', (evt: CustomEventInit<VoiceActivity>) => {});
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const obj = event.detail!;
       this.handleInputUpdate(obj.text, obj.final);
       this.onInputChange?.(obj.text, obj.final, obj.observedLatency);
     });
     this.tts.onPlaying = () => {
+      this.changeState(ChatManagerState.SPEAKING);
       this.onAudioStart?.(this.tts.latency!);
     };
     this.tts.onComplete = () => {
       this.onAudioEnd?.();
+      this.changeState(ChatManagerState.IDLE);
     };
   }
   /**
@@ -204,13 +213,27 @@ class ChatManager {
     this.pendingRequests = {};
   }
 
-  getLocalAnalyzer() {
-    return this.micManager.localAnalyzer;
+  changeState(state: ChatManagerState) {
+    if (state != this.state) {
+      this.onStateChange?.(state);
+    }
   }
+  getInputAnalyzer() {
+    return this.micManager.getAnalyzer();
+  }
+  getOutputAnalyzer() {
+    return this.tts.getAnalyzer();
+  }
+
   /**
    * Handle new input from the ASR.
    */
   private handleInputUpdate(text: string, final: boolean) {
+    // If this is our first transcript, switch to listening mode (maybe use VAD instead)
+    if (this.state == ChatManagerState.IDLE && text.trim()) {
+      this.changeState(ChatManagerState.LISTENING);
+    }
+
     // Ignore partial transcripts if VAD indicates the user is still speaking.
     if (!final && this.micManager.isVoiceActive) {
       return;
@@ -221,6 +244,7 @@ class ChatManager {
     const newMessages = [...this.history, userMessage];
     if (final) {
       this.history = newMessages;
+      this.changeState(ChatManagerState.THINKING);
     }
 
     // If it doesn't match an existing request, kick off a new one.
@@ -309,27 +333,7 @@ const Latency: React.FC<{ name: string; latency: number }> = ({ name, latency })
   </>
 );
 
-const getAnalyzerComponent = (chatManager: ChatManager, mode: ApplicationMode) => {
-  switch (mode) {
-    case APPLICATION_MODE.AUDIO:
-      return <AudioExternalFFTAnalyzer localAnalyzer={chatManager.getLocalAnalyzer()}/>;
-    case APPLICATION_MODE.AUDIO_SCOPE:
-      return <AudioScopeAnalyzer />;  
-    default:
-      return null;
-  }
-};
-
 const AVAILABLE_MODES = getPlatformSupportedApplicationModes();
-
-const getCanvasComponent = (mode: ApplicationMode) => {
-  switch (mode) {
-    case APPLICATION_MODE.AUDIO_SCOPE:
-      return <AudioScopeCanvas />;
-    default:
-      return <Visual3DCanvas mode={mode} />;
-  }
-};
 
 const PageComponent: React.FC = () => {
   const searchParams = useSearchParams();
@@ -344,8 +348,8 @@ const PageComponent: React.FC = () => {
   const [asrLatency, setAsrLatency] = useState(0);
   const [llmLatency, setLlmLatency] = useState(0);
   const [ttsLatency, setTtsLatency] = useState(0);
-
-  
+  const [analyzer, setAnalyzer] = useState<AnalyserNode>();
+  const [mode, setMode] = useState<ApplicationMode>(APPLICATION_MODE.NOISE);
 
   const active = () => Boolean(chatManager);
   const handleStart = () => {
@@ -357,6 +361,26 @@ const PageComponent: React.FC = () => {
     setTtsLatency(0);
     setChatManager(manager);
     manager.start('');
+    manager.onStateChange = (state) => {
+      console.log(`state=${state}`);
+      if (state == ChatManagerState.LISTENING) {
+        const x = chatManager?.getInputAnalyzer();
+        console.log(`x=${x}`);
+        setAnalyzer(x);
+        setMode(APPLICATION_MODE.AUDIO);
+      } else if (state == ChatManagerState.THINKING) {
+        setAnalyzer(undefined);
+        setMode(APPLICATION_MODE.WAVE_FORM);
+      } else if (state == ChatManagerState.SPEAKING) {
+        const y = chatManager?.getOutputAnalyzer();
+        console.log(`y=${y}`);
+        setAnalyzer(y);
+        setMode(APPLICATION_MODE.AUDIO);
+      } else {
+        setAnalyzer(undefined);
+        setMode(APPLICATION_MODE.NOISE);
+      }
+    };
     manager.onInputChange = (text, final, latency) => {
       setInput(text);
       if (latency) {
@@ -405,23 +429,6 @@ const PageComponent: React.FC = () => {
     };
   }, [onKeyDown]);
 
-  const modeParam = new URLSearchParams(document.location.search).get(
-    "mode"
-  ) as ApplicationMode | null;
-  const { mode } = useControls({
-    mode: {
-      value:
-        modeParam && AVAILABLE_MODES.includes(modeParam)
-          ? modeParam
-          : AVAILABLE_MODES[2],
-      options: AVAILABLE_MODES.reduce(
-        (o, mode) => ({ ...o, [getAppModeDisplayName(mode)]: mode }),
-        {}
-      ),
-      order: -100,
-    },
-  });
-
   return (
     <>
       <div className="w-full h-full">
@@ -432,17 +439,12 @@ const PageComponent: React.FC = () => {
           This demo allows you to chat (via voice) with a drive-thru agent at a fictional donut shop. Click Start
           Chatting (or tap the spacebar) to begin.
         </p>
-        <div className="h-96 w-full flex justify-center">
-        <Suspense fallback={<span>loading...</span>}>
-      {getAnalyzerComponent(chatManager, mode as ApplicationMode)}
-      {getCanvasComponent(mode as ApplicationMode)}
-    </Suspense>
-    </div>
+        <div className="h-64 w-full flex justify-center">
+          <AudioFFTAnalyzer analyzerNode={analyzer} />
+          <Visual3DCanvas mode={mode} />;
+        </div>
         <div>
-          <div
-            className="m-2 w-full text-xl h-32 rounded-lg text-white flex items-center justify-center"
-            id="output"
-          >
+          <div className="m-2 w-full text-xl h-32 rounded-lg text-white flex items-center justify-center" id="output">
             {output}
           </div>
         </div>
@@ -457,11 +459,8 @@ const PageComponent: React.FC = () => {
           </div>
         </div>
         <div className="m-3 w-full flex justify-center">
-          <Button disabled={active()} onClick={handleStart}>
-            Start Chatting
-          </Button>
-          <Button disabled={!active()} onClick={handleStop}>
-            Stop Chatting
+          <Button disabled={false} onClick={toggle}>
+            Start/Stop
           </Button>
         </div>
       </div>
