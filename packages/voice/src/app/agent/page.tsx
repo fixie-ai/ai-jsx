@@ -427,8 +427,7 @@ const PageComponent: React.FC = () => {
         </div>
         <div className="m-3 w-full flex justify-center mt-8">
           <Button disabled={false} onClick={toggle}>
-            {active() && 'Stop Chatting'}
-            {!active() && 'Start Chatting'}
+            {active() ? 'Stop Chatting' : 'Start Chatting'}
           </Button>
         </div>
         {showStats && (
