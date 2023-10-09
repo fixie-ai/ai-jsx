@@ -7,6 +7,8 @@ import { StreamingTextResponse } from 'ai';
 import { toTextStream } from 'ai-jsx/stream';
 import { NextRequest } from 'next/server';
 
+export const runtime = 'edge'; // 'nodejs' is the default
+
 const AGENT_PROMPT = `
 You are a drive-thru order taker for a donut shop called "Dr. Donut". Local time is currently: ${new Date().toLocaleTimeString()}
 Respond according to the following script:
