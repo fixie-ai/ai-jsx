@@ -28,24 +28,16 @@ export interface ConversationTurn {
   id: string;
   timestamp: string;
   role: 'user' | 'assistant';
-  generationParams?: GenerationParams | null;
   messages: Message[];
   state: 'in-progress' | 'done' | 'stopped' | 'error';
   metadata?: Record<string, string | number | boolean | object | null> | null;
   errorDetail?: string | null;
 }
 
-export interface GenerationParams {
-  userTimeZoneOffset?: number | null;
-  model?: string | null;
-  modelProvider?: string | null;
-}
-
 export interface InvokeAgentRequest {
   conversationId: string;
   replyToTurnId?: string;
   conversation?: Conversation;
-  generationParams?: GenerationParams;
   parameters?: Record<string, Jsonifiable>;
 }
 
