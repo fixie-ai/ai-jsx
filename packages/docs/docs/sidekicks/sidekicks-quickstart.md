@@ -151,7 +151,7 @@ the cloud.
 Instead of `fixie deploy`, you run:
 
 ```terminal
-npx fixie@fixie serve
+npx fixie@latest serve
 ```
 
 This starts up the Sidekick running on your local machine, and sets
