@@ -144,7 +144,8 @@ export class MicManager extends EventTarget {
   get isVoiceActive() {
     return this.vad?.isVoiceActive ?? false;
   }
-  get analyzer() {
+  //get analyzer() {
+  getAnalyzer() {
     return this.analyzerNode;
   }
 
@@ -197,12 +198,11 @@ export class MicManager extends EventTarget {
     } else {
       throw new Error('No stream or streamElement');
     }
-    source.connect(this.analyzerNode);
-    this.analyzerNode.connect(this.processorNode);
+    source.connect(this.analyzerNode).connect(this.processorNode);
     // Only connect the destination if we're playing a file,
     // since we don't want to hear ourselves.
     if (this.streamElement) {
-      source.connect(this.context.destination);
+      source.connect(this.context.destination); //++++ proocessor?
     }
 
     this.vad = new LibfVoiceActivityDetector(this.sampleRate);

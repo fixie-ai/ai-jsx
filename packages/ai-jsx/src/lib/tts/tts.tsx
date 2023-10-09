@@ -90,7 +90,11 @@ class AudioChunk {
  */
 class AudioStream {
   nextSeqNum = 0;
-  constructor(public outputNode: AudioWorkletNode, public destNode: MediaStreamAudioDestinationNode) {}
+  constructor(
+    public outputNode: AudioWorkletNode,
+    public destNode: MediaStreamAudioDestinationNode,
+    public analyzerNode?: AnalyserNode
+  ) {}
 }
 
 /**
@@ -117,7 +121,7 @@ class AudioOutputManager extends EventTarget {
     this.context?.close();
     this.context = undefined;
   }
-  createStream() {
+  createStream(wantAnalyzer = true) {
     if (!this.context) {
       throw new Error('audio context not started');
     }
@@ -126,42 +130,55 @@ class AudioOutputManager extends EventTarget {
     const outputNode = new AudioWorkletNode(this.context, 'output-processor');
     const destNode = this.context.createMediaStreamDestination();
     const streamId = destNode.stream.id;
-    outputNode.connect(destNode);
+    let analyzerNode;
+    if (wantAnalyzer) {
+      analyzerNode = this.context.createAnalyser();
+      outputNode.connect(analyzerNode).connect(destNode);
+    } else {
+      outputNode.connect(destNode);
+    }
     outputNode.port.onmessage = (e) => {
       console.log(`stream ${streamId} buf consumed, seq num=${e.data.seqNum}`);
-      this.dispatchWaiting(destNode.stream);
+      this.dispatchWaiting(streamId);
     };
-    this.streams.set(streamId, new AudioStream(outputNode, destNode));
+    this.streams.set(streamId, new AudioStream(outputNode, destNode, analyzerNode));
     return destNode.stream;
   }
-  destroyStream(stream: MediaStream) {
-    const audioStream = this.streams.get(stream.id);
+  destroyStream(streamId: string) {
+    const audioStream = this.streams.get(streamId);
     if (!audioStream) {
       return;
     }
     audioStream.outputNode.port.onmessage = null;
     audioStream.outputNode.disconnect();
-    this.streams.delete(stream.id);
+    this.streams.delete(streamId);
   }
-  async appendBuffer(stream: MediaStream, chunk: AudioChunk) {
+  getAnalyzer(streamId: string) {
+    const audioStream = this.streams.get(streamId);
+    if (!audioStream) {
+      return;
+    }
+    return audioStream.analyzerNode;
+  }
+  async appendBuffer(streamId: string, chunk: AudioChunk) {
     if (chunk.isPcm) {
-      await this.appendPcmBuffer(stream, chunk.sampleRate, chunk.buffer);
+      await this.appendPcmBuffer(streamId, chunk.sampleRate, chunk.buffer);
     } else {
-      await this.appendEncodedBuffer(stream, chunk.buffer);
+      await this.appendEncodedBuffer(streamId, chunk.buffer);
     }
   }
-  private async appendEncodedBuffer(stream: MediaStream, encodedBuffer: ArrayBuffer) {
-    const seqNum = this.getNextSeqNum(stream);
+  private async appendEncodedBuffer(streamId: string, encodedBuffer: ArrayBuffer) {
+    const seqNum = this.getNextSeqNum(streamId);
     const buffer = await this.context?.decodeAudioData(encodedBuffer);
-    this.appendNativeBuffer(stream, seqNum, buffer!.getChannelData(0));
+    this.appendNativeBuffer(streamId, seqNum, buffer!.getChannelData(0));
   }
-  private async appendPcmBuffer(stream: MediaStream, sampleRate: number, inBuffer: ArrayBuffer) {
-    const seqNum = this.getNextSeqNum(stream);
+  private async appendPcmBuffer(streamId: string, sampleRate: number, inBuffer: ArrayBuffer) {
+    const seqNum = this.getNextSeqNum(streamId);
     const buffer = await this.resamplePcmBuffer(sampleRate, inBuffer);
-    this.appendNativeBuffer(stream, seqNum, buffer);
+    this.appendNativeBuffer(streamId, seqNum, buffer);
   }
-  private getNextSeqNum(stream: MediaStream) {
-    const audioStream = this.streams.get(stream.id);
+  private getNextSeqNum(streamId: string) {
+    const audioStream = this.streams.get(streamId);
     if (!audioStream) {
       throw new Error('stream not found');
     }
@@ -194,8 +211,8 @@ class AudioOutputManager extends EventTarget {
     });
     return outBuffer;
   }
-  private appendNativeBuffer(stream: MediaStream, seqNum: number, buffer: Float32Array) {
-    const audioStream = this.streams.get(stream.id);
+  private appendNativeBuffer(streamId: string, seqNum: number, buffer: Float32Array) {
+    const audioStream = this.streams.get(streamId);
     if (!audioStream) {
       return;
     }
@@ -203,8 +220,8 @@ class AudioOutputManager extends EventTarget {
     console.log(`buf added, seq num=${seqNum}`);
     audioStream.outputNode.port.postMessage({ seqNum, channelData });
   }
-  private dispatchWaiting(stream: MediaStream) {
-    this.dispatchEvent(new CustomEvent('waiting', { detail: stream }));
+  private dispatchWaiting(streamId: string) {
+    this.dispatchEvent(new CustomEvent('waiting', { detail: streamId }));
   }
 }
 
@@ -356,6 +373,7 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
  */
 export class WebAudioTextToSpeech extends TextToSpeechBase {
   private readonly chunkBuffer: AudioChunk[] = [];
+  private streamId?: string;
   private updating = false;
   private inProgress = false;
   constructor(name: string) {
@@ -366,6 +384,7 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     if (this.audio.readyState == 0) {
       console.log(`[${this.name}] tts starting play`);
       this.audio.srcObject = outputManager.createStream();
+      this.streamId = this.audio.srcObject.id;
       outputManager.addEventListener('waiting', (event: CustomEventInit<MediaStream>) => {
         if (event.detail == this.audio.srcObject) {
           this.setComplete();
@@ -390,7 +409,8 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     console.log(`[${this.name}] tts skipping`);
     // Cancel any pending requests, discard any chunks in our queue, and
     // reset our audio element.
-    outputManager.destroyStream(this.audio.srcObject as MediaStream);
+    outputManager.destroyStream(this.streamId!); //++++
+    this.streamId = undefined;
     this.chunkBuffer.length = 0;
     this.audio.srcObject = null;
     this.audio.currentTime = 0;
@@ -401,6 +421,10 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     console.log(`[${this.name}] tts stopping`);
     this.audio.pause();
     this.tearDown();
+  }
+
+  analyzer() {
+    return outputManager.getAnalyzer(this.streamId!); //++++
   }
 
   /**
@@ -422,7 +446,7 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
       this.updating = true;
       const chunk = this.chunkBuffer.shift()!;
       console.log(`[${this.name}] decoding chunk`);
-      await outputManager.appendBuffer(this.audio.srcObject as MediaStream, chunk);
+      await outputManager.appendBuffer(this.streamId!, chunk); //++++
       this.updating = false;
       if (!this.playing) {
         this.setPlaying();
@@ -847,7 +871,7 @@ class ElevenLabsOutboundMessage {
 export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
   private readonly contentType: string;
   constructor(private readonly tokenFunc: GetToken, voice = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
-    const model_id = 'eleven_monolingual_v1';
+    const model_id = 'eleven_monolingual_v2';
     const optimize_streaming_latency = '22'; // doesn't seem to have any effect
     const output_format = 'pcm_22050'; // 44100' requires $99/mo plan
     const params = new URLSearchParams({ model_id, optimize_streaming_latency, output_format });
