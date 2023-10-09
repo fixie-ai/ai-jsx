@@ -5,6 +5,8 @@ import _ from 'lodash';
 import aws4 from 'aws4';
 import * as PlayHTAPI from 'playht';
 
+export const runtime = 'edge'; // 'nodejs' is the default
+
 const AUDIO_MPEG_MIME_TYPE = 'audio/mpeg';
 const AUDIO_WAV_MIME_TYPE = 'audio/wav';
 const APPLICATION_JSON_MIME_TYPE = 'application/json';
