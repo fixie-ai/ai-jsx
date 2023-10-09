@@ -3,7 +3,7 @@
  * See https://github.com/hvianna/audioMotion-analyzer
  */
 
-import { AnalyzerInputControl } from "./common";
+import { AnalyzerInputControl } from './common';
 
 export interface FreqBinInfo {
   binLo: number;
@@ -32,27 +32,17 @@ export interface FreqRange {
   end: number;
 }
 
-export type EnergyMeasure =
-  | "overall"
-  | "peak"
-  | "bass"
-  | "lowMid"
-  | "mid"
-  | "highMid"
-  | "treble";
+export type EnergyMeasure = 'overall' | 'peak' | 'bass' | 'lowMid' | 'mid' | 'highMid' | 'treble';
 
 // internal constants
 const ROOT24 = 2 ** (1 / 24), // 24th root of 2
   C0 = 440 * ROOT24 ** -114; // ~16.35 Hz
 
 export default class FFTAnalyzer implements AnalyzerInputControl {
-  private _analyzer: AnalyserNode;
-  private _input: GainNode;
-  private _output: GainNode;
-  public readonly _audioCtx: AudioContext;
-  public readonly _sources: AudioNode[];
-  private _outNodes: AudioDestinationNode[];
-  private _fftData: Uint8Array;
+  private _analyzer?: AnalyserNode;
+  //private _input: GainNode;
+  //private _output: GainNode;
+  private _fftData?: Uint8Array;
   private _freqBinInfos: FreqBinInfo[] = [];
   public getBars(): FreqBinInfo[] {
     return this._freqBinInfos;
@@ -69,70 +59,46 @@ export default class FFTAnalyzer implements AnalyzerInputControl {
     this._updateFreqBins();
   }
   public get volume() {
-    return this._output.gain.value;
+    return 1.0; //this._output.gain.value;
   }
   public set volume(value: number) {
-    this._output.gain.value = value;
+    //this._output.gain.value = value;
   }
   private _runId: number | undefined = undefined;
   private get isOn(): boolean {
     return this._runId !== undefined;
   }
 
-  constructor(
-    source: HTMLAudioElement,
-    audioContext: AudioContext | undefined = undefined
-  ) {
-    if (audioContext === undefined) {
-      this._audioCtx = new window.AudioContext();
+  constructor(analyzer?: AnalyserNode) {
+    this.setAnalyzer(analyzer);
+  }
+  setAnalyzer(analyzer?: AnalyserNode) {
+    this._analyzer = analyzer;
+    if (this._analyzer) {
+      this._analyzer.smoothingTimeConstant = 0.5;
+      this._analyzer.minDecibels = -85;
+      this._analyzer.maxDecibels = -25;
+      this._analyzer.fftSize = 8192;
+      this._fftData = new Uint8Array(this._analyzer.frequencyBinCount);
+      this._updateFreqBins();
+      this.toggleAnalyzer(true);
     } else {
-      this._audioCtx = audioContext;
+      this.toggleAnalyzer(false);
+      this._fftData = undefined;
     }
-
-    if (!this._audioCtx.createGain) {
-      throw new Error("Provided audio context is not valid");
-    }
-
-    // Routing
-    // (source) -->  input  -->  analyzer  -->  output  --> (destination)
-    this._analyzer = this._audioCtx.createAnalyser();
-    this._input = this._audioCtx.createGain();
-    this._output = this._audioCtx.createGain();
-
-    this._sources = [];
-    this.connectInput(this._audioCtx.createMediaElementSource(source));
-
-    this._input.connect(this._analyzer);
-
-    this._analyzer.connect(this._output);
-
-    this._outNodes = [this._audioCtx.destination];
-    this._output.connect(this._outNodes[0]);
-
-    this._analyzer.smoothingTimeConstant = 0.5;
-    this._analyzer.minDecibels = -85;
-    this._analyzer.maxDecibels = -25;
-    this._analyzer.fftSize = 8192;
-    this._fftData = new Uint8Array(this._analyzer.frequencyBinCount);
-
-    this._updateFreqBins();
-    this.toggleAnalyzer(true);
+    console.log(`set analyzer to ${analyzer}`);
   }
 
   private _updateFreqBins(): void {
+    if (!this._analyzer) {
+      return;
+    }
+
     // Calculate the freq bin info
     const infos: FreqBinInfo[] = [];
-    const binToFreq = (bin: number) =>
-      (bin * this._audioCtx.sampleRate) / this._analyzer.fftSize || 1; // returns 1 for bin 0
+    const binToFreq = (bin: number) => (bin * this._analyzer!.context.sampleRate) / this._analyzer!.fftSize || 1; // returns 1 for bin 0
 
-    const barsPush = (
-      binLo: number,
-      binHi: number,
-      freqLo: number,
-      freqHi: number,
-      ratioLo: number,
-      ratioHi: number
-    ) =>
+    const barsPush = (binLo: number, binHi: number, freqLo: number, freqHi: number, ratioLo: number, ratioHi: number) =>
       infos.push({
         binLo,
         binHi,
@@ -181,11 +147,7 @@ export default class FFTAnalyzer implements AnalyzerInputControl {
     const steps = [0, 1, 2, 3, 4, 6, 8, 12, 24][this._mode]; // number of notes grouped per band for each mode
     for (let index = 0; index < temperedScale.length; index += steps) {
       let { freq: freqLo, bin: binLo, ratio: ratioLo } = temperedScale[index], // band start
-        {
-          freq: freqHi,
-          bin: binHi,
-          ratio: ratioHi,
-        } = temperedScale[index + steps - 1]; // band end
+        { freq: freqHi, bin: binHi, ratio: ratioHi } = temperedScale[index + steps - 1]; // band end
 
       const nBars = infos.length,
         prevBar = infos[nBars - 1];
@@ -211,11 +173,7 @@ export default class FFTAnalyzer implements AnalyzerInputControl {
             prevBar.freqHi = binToFreq(prevBar.binHi); // update ending frequency
 
             // if the previous bar doesn't share any bins with other bars, no need for interpolation
-            if (
-              nBars > 1 &&
-              prevBar.binHi > prevBar.binLo &&
-              prevBar.binLo > infos[nBars - 2].binHi
-            ) {
+            if (nBars > 1 && prevBar.binHi > prevBar.binLo && prevBar.binLo > infos[nBars - 2].binHi) {
               prevBar.ratioLo = 0;
               prevBar.freqLo = binToFreq(prevBar.binLo); // update starting frequency
             }
@@ -239,31 +197,31 @@ export default class FFTAnalyzer implements AnalyzerInputControl {
   }
 
   private _freqToBin(freq: number, round: boolean = true): number {
+    if (!this._analyzer) {
+      return 0;
+    }
     const max = this._analyzer.frequencyBinCount - 1,
-      bin = (round ? Math.round : Math.floor)(
-        (freq * this._analyzer.fftSize) / this._audioCtx.sampleRate
-      );
+      bin = (round ? Math.round : Math.floor)((freq * this._analyzer.fftSize) / this._analyzer!.context.sampleRate);
 
     return bin < max ? bin : max;
   }
 
   private _analyze(): void {
+    if (!this._analyzer) {
+      return;
+    }
     const n = this._freqBinInfos.length;
     // get a new array of data from the FFT
-    const fftData = this._fftData;
-    this._analyzer.getByteFrequencyData(fftData);
+    const fftData = this._fftData!;
+    this._analyzer!.getByteFrequencyData(fftData);
     // helper function for FFT data interpolation
-    const interpolate = (bin: number, ratio: number) =>
-      fftData[bin] + (fftData[bin + 1] - fftData[bin]) * ratio;
+    const interpolate = (bin: number, ratio: number) => fftData[bin] + (fftData[bin + 1] - fftData[bin]) * ratio;
 
     let currentEnergy = 0;
     for (let i = 0; i < n; i++) {
       const binInfo = this._freqBinInfos[i],
         { binLo, binHi, ratioLo, ratioHi } = binInfo;
-      let v = Math.max(
-        interpolate(binLo, ratioLo),
-        interpolate(binHi, ratioHi)
-      );
+      let v = Math.max(interpolate(binLo, ratioLo), interpolate(binHi, ratioHi));
       // check additional bins (if any) for this bar and keep the highest value
       for (let j = binLo + 1; j < binHi; j++) {
         if (fftData[j] > v) {
@@ -285,8 +243,7 @@ export default class FFTAnalyzer implements AnalyzerInputControl {
       this._energy.hold = 30;
     } else {
       if (this._energy.hold > 0) this._energy.hold--;
-      else if (this._energy.peak > 0)
-        this._energy.peak *= (30 + this._energy.hold--) / 30; // decay (drops to zero in 30 frames)
+      else if (this._energy.peak > 0) this._energy.peak *= (30 + this._energy.hold--) / 30; // decay (drops to zero in 30 frames)
     }
 
     // schedule next update
@@ -307,11 +264,11 @@ export default class FFTAnalyzer implements AnalyzerInputControl {
     return this.isOn;
   }
 
-  public getEnergy(freqRange: EnergyMeasure = "overall"): number {
-    if (freqRange === "overall") {
+  public getEnergy(freqRange: EnergyMeasure = 'overall'): number {
+    if (freqRange === 'overall') {
       return this._energy.val;
     }
-    if (freqRange == "peak") {
+    if (freqRange == 'peak') {
       return this._energy.peak;
     }
     const presets = {
@@ -333,26 +290,5 @@ export default class FFTAnalyzer implements AnalyzerInputControl {
     }
 
     return energy / (endBin - startBin + 1) / 1 / 255;
-  }
-
-  connectInput(source: AudioNode): void {
-    if (!source.connect) {
-      throw new Error("Audio source must be an instance of AudioNode");
-    }
-
-    if (!this._sources.includes(source)) {
-      source.connect(this._input);
-      this._sources.push(source);
-    }
-  }
-
-  disconnectInputs(): void {
-    for (const node of Array.from(this._sources)) {
-      const idx = this._sources.indexOf(node);
-      if (idx >= 0) {
-        node.disconnect(this._input);
-        this._sources.splice(idx, 1);
-      }
-    }
   }
 }
