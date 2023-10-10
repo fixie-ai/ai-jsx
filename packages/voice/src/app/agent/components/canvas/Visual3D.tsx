@@ -55,7 +55,7 @@ const Visual3DCanvas = ({ mode }: Visual3DCanvasProps) => {
       value:
         visualizerParam && AVAILABLE_VISUALS.includes(visualizerParam)
           ? visualizerParam
-          : AVAILABLE_VISUALS[1],
+          : AVAILABLE_VISUALS[3],
       options: AVAILABLE_VISUALS,
     },
   });
@@ -63,7 +63,7 @@ const Visual3DCanvas = ({ mode }: Visual3DCanvasProps) => {
     "Visual - Color": folder(
       {
         palette: {
-          value: COLOR_PALETTE.THREE_COOL_TO_WARM,
+          value: COLOR_PALETTE.THREE_RAINBOW,
           options: AVAILABLE_COLOR_PALETTES,
         },
         colorBackground: false,
@@ -80,7 +80,7 @@ const Visual3DCanvas = ({ mode }: Visual3DCanvasProps) => {
         fov: 45,
         near: 1,
         far: 1000,
-        position: [-17, -6, 6.5],
+        position: [0, 0, -7],
         up: [0, 0, 1],
       }}
     >

@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
   json.messages.forEach((message: ClientMessage) => console.log(`role=${message.role} content=${message.content}`));
 
   const personaId = json.personaId as string;
-  const persona = PERSONAS[personaId ?? 'rd'];
+  const persona = PERSONAS[personaId ?? 'dd'];
   let stream;
   if (json.messages.length == 1 && !json.messages[0].content) {
     stream = pseudoTextStream(_.sample(persona.initialResponses));
