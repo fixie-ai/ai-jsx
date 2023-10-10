@@ -876,7 +876,7 @@ class ElevenLabsOutboundMessage {
 export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
   private readonly contentType: string;
   constructor(private readonly tokenFunc: GetToken, voice = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
-    const model_id = 'eleven_monolingual_v2';
+    const model_id = 'eleven_monolingual_v1';
     const optimize_streaming_latency = '22'; // doesn't seem to have any effect
     const output_format = 'pcm_22050'; // 44100' requires $99/mo plan
     const params = new URLSearchParams({ model_id, optimize_streaming_latency, output_format });
