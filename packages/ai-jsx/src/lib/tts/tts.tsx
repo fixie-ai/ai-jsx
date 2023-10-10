@@ -717,13 +717,15 @@ export class WellSaidTextToSpeech extends RestTextToSpeech {
  * server and receives audio chunks as they are generated.
  */
 export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
-  protected socket: WebSocket;
+  private socket: WebSocket;
+  private socketReady: boolean;
   // Message buffer for when the socket is not yet open.
   private readonly socketBuffer: string[] = [];
   private pendingText: string = '';
   constructor(name: string, private readonly url: string, public readonly voice: string) {
     super(name);
     this.socket = this.createSocket(url);
+    this.socketReady = false;
   }
   protected generate(text: string) {
     // Only send complete words (i.e., followed by a space) to the server.
@@ -753,6 +755,7 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
     this.socketBuffer.length = 0;
     this.pendingText = '';
     this.socket = this.createSocket(this.url);
+    this.socketReady = false;
   }
   protected tearDown() {
     this.socket.close();
@@ -767,12 +770,16 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
     const connectMillis = performance.now();
     const socket = new WebSocket(url);
     socket.binaryType = 'arraybuffer';
-    socket.onopen = (_event) => {
+    socket.onopen = async (_event) => {
       const elapsed = performance.now() - connectMillis;
       console.log(`[${this.name}] socket opened, elapsed=${elapsed.toFixed(0)}`);
-      this.handleOpen();
+      const openMsg = await this.createOpenRequest();
+      if (openMsg) {
+        this.socketBuffer.unshift(JSON.stringify(openMsg));
+      }
       this.socketBuffer.forEach((json) => this.socket.send(json));
       this.socketBuffer.length = 0;
+      this.socketReady = true;
     };
     socket.onmessage = (event) => {
       let message;
@@ -796,39 +803,34 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
       console.log(`[${this.name}] socket closed, code=${event.code} reason=${event.reason}`);
       if (event.code == 1000) {
         this.socket = this.createSocket(this.socket.url);
+        this.socketReady = false;
       }
     };
     return socket;
   }
   protected sendObject(obj: unknown) {
     const json = JSON.stringify(obj);
-    if (this.socket.readyState == WebSocket.OPEN) {
+    if (this.socketReady) {
       this.socket.send(json);
     } else {
       this.socketBuffer.push(json);
     }
   }
 
-  protected abstract handleOpen(): void;
   protected handleMessage(_message: unknown) {}
+  protected abstract createOpenRequest(): unknown;
   protected abstract createChunkRequest(_text: string): unknown;
   protected abstract createFlushRequest(): unknown;
 }
 
-class ElevenLabsInboundMessage {
+interface ElevenLabsInboundMessage {
   audio?: string;
   isFinal?: boolean;
   message?: string;
   error?: string;
   code?: number;
 }
-class ElevenLabsOutboundMessage {
-  constructor({ text, try_trigger_generation, generation_config, xi_api_key }: ElevenLabsOutboundMessage) {
-    this.text = text;
-    this.try_trigger_generation = try_trigger_generation;
-    this.generation_config = generation_config;
-    this.xi_api_key = xi_api_key;
-  }
+interface ElevenLabsOutboundMessage {
   text: string;
   voice_settings?: {
     stability: number;
@@ -846,6 +848,7 @@ class ElevenLabsOutboundMessage {
  */
 export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
   private readonly contentType: string;
+  private readonly tokenPromise: Promise<string>;
   constructor(private readonly tokenFunc: GetToken, voice = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
     const model_id = 'eleven_monolingual_v1';
     const optimize_streaming_latency = '22'; // doesn't seem to have any effect
@@ -854,22 +857,7 @@ export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
     const url = `wss://api.elevenlabs.io/v1/text-to-speech/${voice}/stream-input?${params}`;
     super('eleven', url, voice);
     this.contentType = `${AUDIO_PCM_MIME_TYPE};rate=22050`;
-  }
-  protected async handleOpen() {
-    // A chunk_length_schedule of [50] means we'll try to generate a chunk
-    // once we have 50 characters of text buffered.
-    const obj = new ElevenLabsOutboundMessage({
-      text: ' ',
-      voice_settings: {
-        stability: 0.5,
-        similarity: 0.8,
-      },
-      generation_config: {
-        chunk_length_schedule: [50],
-      },
-      xi_api_key: await this.tokenFunc(this.name),
-    });
-    this.sendObject(obj);
+    this.tokenPromise = this.tokenFunc(this.name);
   }
   protected handleMessage(inMessage: unknown) {
     const message = inMessage as ElevenLabsInboundMessage;
@@ -883,12 +871,25 @@ export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
       console.error(`[${this.name}] error: ${message.message}`);
     }
   }
+  protected async createOpenRequest(): Promise<ElevenLabsOutboundMessage> {
+    return {
+      text: ' ',
+      voice_settings: {
+        stability: 0.5,
+        similarity: 0.8,
+      },
+      generation_config: {
+        chunk_length_schedule: [50],
+      },
+      xi_api_key: await this.tokenPromise,
+    };
+  }
   protected createChunkRequest(text: string): ElevenLabsOutboundMessage {
     // try_trigger_generation tries to force generation of chunks as soon as possible.
-    return new ElevenLabsOutboundMessage({ text: `${text} `, try_trigger_generation: true });
+    return { text: `${text} `, try_trigger_generation: true };
   }
   protected createFlushRequest(): ElevenLabsOutboundMessage {
-    return new ElevenLabsOutboundMessage({ text: '' });
+    return { text: '' };
   }
 }
 
@@ -902,22 +903,23 @@ class LmntOutboundMessage {
 }
 
 export class LmntWebSocketTextToSpeech extends WebSocketTextToSpeech {
+  private readonly tokenPromise: Promise<string>;
   constructor(private readonly tokenFunc: GetToken, voice = LmntTextToSpeech.DEFAULT_VOICE) {
     const url = 'wss://api.lmnt.com/speech/beta/synthesize_streaming';
     super('lmnt', url, voice);
+    this.tokenPromise = tokenFunc(this.name);
   }
-  protected async handleOpen() {
-    const obj = {
+  protected async createOpenRequest() {
+    return {
       voice: this.voice,
       'X-Api-Key': await this.tokenFunc(this.name),
     };
-    this.sendObject(obj);
   }
   protected createChunkRequest(text: string): LmntOutboundMessage {
-    return new LmntOutboundMessage({ text });
+    return { text };
   }
   protected createFlushRequest(): LmntOutboundMessage {
-    return new LmntOutboundMessage({ eof: true });
+    return { eof: true };
   }
 }
 
