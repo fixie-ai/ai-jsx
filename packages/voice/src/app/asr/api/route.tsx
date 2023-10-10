@@ -5,6 +5,8 @@ import { SpeechClient } from "@soniox/soniox-node";
 
 export const runtime = 'edge'; // 'nodejs' is the default
 
+export const runtime = 'edge'; // 'nodejs' is the default
+
 type GetTokenFunction = () => Promise<string>;
 interface FunctionMap {
   [key: string]: GetTokenFunction;
