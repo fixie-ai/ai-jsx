@@ -139,7 +139,10 @@ class AudioOutputManager extends EventTarget {
     }
     outputNode.port.onmessage = (e) => {
       console.log(`stream ${streamId} buf consumed, seq num=${e.data.seqNum}`);
-      this.dispatchWaiting(streamId);
+      const stream = this.streams.get(streamId);
+      if (stream && stream.nextSeqNum == e.data.seqNum + 1) {
+        this.dispatchWaiting(streamId); //++++
+      }
     };
     this.streams.set(streamId, new AudioStream(outputNode, destNode, analyzerNode));
     return destNode.stream;
@@ -386,7 +389,9 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
       this.audio.srcObject = outputManager.createStream();
       this.streamId = this.audio.srcObject.id;
       outputManager.addEventListener('waiting', (event: CustomEventInit<MediaStream>) => {
-        if (event.detail == this.audio.srcObject) {
+        console.log(`[${this.name}] tts Waiting`);
+        if (event.detail == this.streamId) {
+          console.log(`[${this.name}] tts waitinG`);
           this.setComplete();
         }
       });
@@ -423,7 +428,7 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     this.tearDown();
   }
 
-  analyzer() {
+  getAnalyzer() {
     return outputManager.getAnalyzer(this.streamId!); //++++
   }
 

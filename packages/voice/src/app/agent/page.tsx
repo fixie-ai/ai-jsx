@@ -215,6 +215,7 @@ class ChatManager {
 
   changeState(state: ChatManagerState) {
     if (state != this.state) {
+      this.state = state;
       this.onStateChange?.(state);
     }
   }
@@ -230,7 +231,7 @@ class ChatManager {
    */
   private handleInputUpdate(text: string, final: boolean) {
     // If this is our first transcript, switch to listening mode (maybe use VAD instead)
-    if (this.state == ChatManagerState.IDLE && text.trim()) {
+    if (/*this.state == ChatManagerState.IDLE && */text.trim()) {
       this.changeState(ChatManagerState.LISTENING);
     }
 
@@ -349,7 +350,7 @@ const PageComponent: React.FC = () => {
   const [llmLatency, setLlmLatency] = useState(0);
   const [ttsLatency, setTtsLatency] = useState(0);
   const [analyzer, setAnalyzer] = useState<AnalyserNode>();
-  const [mode, setMode] = useState<ApplicationMode>(APPLICATION_MODE.NOISE);
+  const [mode, setMode] = useState<ApplicationMode>(APPLICATION_MODE.AUDIO);
 
   const active = () => Boolean(chatManager);
   const handleStart = () => {
@@ -364,21 +365,19 @@ const PageComponent: React.FC = () => {
     manager.onStateChange = (state) => {
       console.log(`state=${state}`);
       if (state == ChatManagerState.LISTENING) {
-        const x = chatManager?.getInputAnalyzer();
-        console.log(`x=${x}`);
-        setAnalyzer(x);
-        setMode(APPLICATION_MODE.AUDIO);
+        setAnalyzer(manager?.getInputAnalyzer());
+        //setMode(APPLICATION_MODE.AUDIO);
       } else if (state == ChatManagerState.THINKING) {
         setAnalyzer(undefined);
-        setMode(APPLICATION_MODE.WAVE_FORM);
+        //setMode(APPLICATION_MODE.WAVE_FORM);
       } else if (state == ChatManagerState.SPEAKING) {
-        const y = chatManager?.getOutputAnalyzer();
-        console.log(`y=${y}`);
-        setAnalyzer(y);
-        setMode(APPLICATION_MODE.AUDIO);
+        const analyzer = manager?.getOutputAnalyzer();        
+        setAnalyzer(analyzer);
+        //setMode(APPLICATION_MODE.AUDIO);
       } else {
-        setAnalyzer(undefined);
-        setMode(APPLICATION_MODE.NOISE);
+        setAnalyzer(manager?.getInputAnalyzer());
+        //setAnalyzer(undefined);
+        //setMode(APPLICATION_MODE.NOISE);
       }
     };
     manager.onInputChange = (text, final, latency) => {

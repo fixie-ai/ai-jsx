@@ -39,7 +39,7 @@ const ROOT24 = 2 ** (1 / 24), // 24th root of 2
   C0 = 440 * ROOT24 ** -114; // ~16.35 Hz
 
 export default class FFTAnalyzer implements AnalyzerInputControl {
-  private _analyzer?: AnalyserNode;
+  public _analyzer?: AnalyserNode;
   //private _input: GainNode;
   //private _output: GainNode;
   private _fftData?: Uint8Array;
@@ -75,8 +75,8 @@ export default class FFTAnalyzer implements AnalyzerInputControl {
   setAnalyzer(analyzer?: AnalyserNode) {
     this._analyzer = analyzer;
     if (this._analyzer) {
-      this._analyzer.smoothingTimeConstant = 0.5;
-      this._analyzer.minDecibels = -85;
+      this._analyzer.smoothingTimeConstant = 0;
+      this._analyzer.minDecibels = -100;
       this._analyzer.maxDecibels = -25;
       this._analyzer.fftSize = 8192;
       this._fftData = new Uint8Array(this._analyzer.frequencyBinCount);
