@@ -11,7 +11,6 @@ import { createTextToSpeech, TextToSpeechBase, TextToSpeechProtocol } from 'ai-j
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import '../globals.css';
-import Image from 'next/image';
 import { useControls } from 'leva';
 import {
   ApplicationMode,
@@ -164,7 +163,6 @@ class ChatManagerInit {
  * Manages a single chat with a LLM, including speculative execution.
  */
 class ChatManager {
-  private state = ChatManagerState.IDLE;
   private history: ChatMessage[] = [];
   private pendingRequests: Record<string, ChatRequest> = {};
   private readonly micManager: MicManager;
@@ -494,7 +492,7 @@ const PageComponent: React.FC = () => {
         </p>
         <div className="h-64 w-full flex justify-center">
           <AudioFFTAnalyzer analyzerNode={analyzer} />
-          <Visual3DCanvas mode={APPLICATION_MODE.NOISE} />;
+          <Visual3DCanvas mode={APPLICATION_MODE.AUDIO}/>;
         </div>
         {showOutput && (
           <div>
