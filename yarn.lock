@@ -2178,6 +2178,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@deepgram/sdk@npm:^2.4.0":
+  version: 2.4.0
+  resolution: "@deepgram/sdk@npm:2.4.0"
+  dependencies:
+    bufferutil: ^4.0.6
+    dayjs: ^1.11.8
+    utf-8-validate: ^5.0.9
+    ws: ^7.5.5
+  checksum: 268a6d153ab1da216265e394e9eb9269f0eabba2dbf99b3ba3972351dc4217943f7b7d9e358368b0d0b5eac92ea34c5972d9686956f2d5af93eb8f2a2b4bc417
+  languageName: node
+  linkType: hard
+
 "@discoveryjs/json-ext@npm:0.5.7":
   version: 0.5.7
   resolution: "@discoveryjs/json-ext@npm:0.5.7"
@@ -3615,6 +3627,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grpc/grpc-js@npm:^1.6.10, @grpc/grpc-js@npm:^1.9.4":
+  version: 1.9.5
+  resolution: "@grpc/grpc-js@npm:1.9.5"
+  dependencies:
+    "@grpc/proto-loader": ^0.7.8
+    "@types/node": ">=12.12.47"
+  checksum: 06834554a0935906652b4b9c5c71f08dd9bdcd4a00d65465c569eae770a9856ecabf7711290bf6d935a8127779c1f35d9cc8cf029693493da02864a330c78e25
+  languageName: node
+  linkType: hard
+
 "@grpc/grpc-js@npm:^1.7.1":
   version: 1.8.16
   resolution: "@grpc/grpc-js@npm:1.8.16"
@@ -3622,16 +3644,6 @@ __metadata:
     "@grpc/proto-loader": ^0.7.0
     "@types/node": ">=12.12.47"
   checksum: 0b1390433c02be3a86d87dd1f2335b236a015bf070d5180b6eb6031c17bedaeb8bd339174ce59ccdeab1016c32a38a92fc52de05cef3ca32ef338e29a47065af
-  languageName: node
-  linkType: hard
-
-"@grpc/grpc-js@npm:^1.9.4":
-  version: 1.9.5
-  resolution: "@grpc/grpc-js@npm:1.9.5"
-  dependencies:
-    "@grpc/proto-loader": ^0.7.8
-    "@types/node": ">=12.12.47"
-  checksum: 06834554a0935906652b4b9c5c71f08dd9bdcd4a00d65465c569eae770a9856ecabf7711290bf6d935a8127779c1f35d9cc8cf029693493da02864a330c78e25
   languageName: node
   linkType: hard
 
@@ -3660,7 +3672,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grpc/proto-loader@npm:^0.7.8":
+"@grpc/proto-loader@npm:^0.7.2, @grpc/proto-loader@npm:^0.7.8":
   version: 0.7.10
   resolution: "@grpc/proto-loader@npm:0.7.10"
   dependencies:
@@ -5704,6 +5716,16 @@ __metadata:
     p-map: ^4.0.0
     webpack-sources: ^3.2.2
   checksum: a1e1d8b22dd51059524993f3fdd6861db10eb950debc389e5dd650702287fa2004eace03e6bc8f25b977bd7bc01d76a50aa271cbb73c58a8ec558945d728f307
+  languageName: node
+  linkType: hard
+
+"@soniox/soniox-node@npm:^1.2.2":
+  version: 1.2.2
+  resolution: "@soniox/soniox-node@npm:1.2.2"
+  dependencies:
+    "@grpc/grpc-js": ^1.6.10
+    "@grpc/proto-loader": ^0.7.2
+  checksum: 855b0df5b3494bfcb48e2a94bcb4fba3dce2c1e520049f26b7ba6ce36876ceb0fe1eec8384aaa90446c9eb64417a01c314f9ab8bbc6483c3ad5ce67c106b169e
   languageName: node
   linkType: hard
 
@@ -8727,6 +8749,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"bufferutil@npm:^4.0.6":
+  version: 4.0.7
+  resolution: "bufferutil@npm:4.0.7"
+  dependencies:
+    node-gyp: latest
+    node-gyp-build: ^4.3.0
+  checksum: f75aa87e3d1b99b87a95f60a855e63f70af07b57fb8443e75a2ddfef2e47788d130fdd46e3a78fd7e0c10176082b26dfbed970c5b8632e1cc299cafa0e93ce45
+  languageName: node
+  linkType: hard
+
 "bufrw@npm:^1.3.0":
   version: 1.3.0
   resolution: "bufrw@npm:1.3.0"
@@ -10641,6 +10673,13 @@ __metadata:
   version: 1.11.8
   resolution: "dayjs@npm:1.11.8"
   checksum: 4fe04b6df98ba6e5f89b49d80bba603cbf01e21a1b4a24ecb163c94c0ba5324a32ac234a139cee654f89d5277a2bcebca5347e6676c28a0a6d1a90f1d34a42b8
+  languageName: node
+  linkType: hard
+
+"dayjs@npm:^1.11.8":
+  version: 1.11.10
+  resolution: "dayjs@npm:1.11.10"
+  checksum: a6b5a3813b8884f5cd557e2e6b7fa569f4c5d0c97aca9558e38534af4f2d60daafd3ff8c2000fed3435cfcec9e805bcebd99f90130c6d1c5ef524084ced588c4
   languageName: node
   linkType: hard
 
@@ -19122,6 +19161,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"node-gyp-build@npm:^4.3.0":
+  version: 4.6.1
+  resolution: "node-gyp-build@npm:4.6.1"
+  bin:
+    node-gyp-build: bin.js
+    node-gyp-build-optional: optional.js
+    node-gyp-build-test: build-test.js
+  checksum: c3676d337b36803bc7792e35bf7fdcda7cdcb7e289b8f9855a5535702a82498eb976842fefcf487258c58005ca32ce3d537fbed91280b04409161dcd7232a882
+  languageName: node
+  linkType: hard
+
 "node-gyp@npm:latest":
   version: 9.4.0
   resolution: "node-gyp@npm:9.4.0"
@@ -25430,6 +25480,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"utf-8-validate@npm:^5.0.9":
+  version: 5.0.10
+  resolution: "utf-8-validate@npm:5.0.10"
+  dependencies:
+    node-gyp: latest
+    node-gyp-build: ^4.3.0
+  checksum: 5579350a023c66a2326752b6c8804cc7b39dcd251bb088241da38db994b8d78352e388dcc24ad398ab98385ba3c5ffcadb6b5b14b2637e43f767869055e46ba6
+  languageName: node
+  linkType: hard
+
 "util-deprecate@npm:^1.0.1, util-deprecate@npm:^1.0.2, util-deprecate@npm:~1.0.1":
   version: 1.0.2
   resolution: "util-deprecate@npm:1.0.2"
@@ -25602,12 +25662,14 @@ __metadata:
   dependencies:
     "@babel/core": ^7.22.5
     "@babel/plugin-transform-react-jsx": ^7.22.5
+    "@deepgram/sdk": ^2.4.0
     "@headlessui/react": ^1.7.15
     "@heroicons/react": ^2.0.18
     "@mdx-js/mdx": ^2.3.0
     "@mdx-js/react": ^2.3.0
     "@next/eslint-plugin-next": ^13.4.6
     "@octokit/graphql": ^5.0.6
+    "@soniox/soniox-node": ^1.2.2
     "@tailwindcss/forms": ^0.5.3
     "@types/aws4": ^1.11.3
     "@types/lodash": ^4.14.195
@@ -26428,7 +26490,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^7.3.1, ws@npm:^7.4.6":
+"ws@npm:^7.3.1, ws@npm:^7.4.6, ws@npm:^7.5.5":
   version: 7.5.9
   resolution: "ws@npm:7.5.9"
   peerDependencies:

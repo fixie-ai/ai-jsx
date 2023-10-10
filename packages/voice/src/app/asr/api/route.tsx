@@ -1,8 +1,7 @@
 /** @jsxImportSource ai-jsx */
 import { NextRequest, NextResponse } from 'next/server';
-// TODO(juberti): figure out why these packages make node unhappy
-// import { Deepgram  } from "@deepgram/sdk";
-// import { SpeechClient } from "@soniox/soniox-node";
+import { Deepgram  } from "@deepgram/sdk";
+import { SpeechClient } from "@soniox/soniox-node";
 
 type GetTokenFunction = () => Promise<string>;
 interface FunctionMap {
@@ -40,10 +39,8 @@ function getApiKey(keyName: string) {
   });
 }
 
-function getDeepgramToken() {
-  return getApiKey('DEEPGRAM_API_KEY');
-  /*
-  const client = new Deepgram(process.env.DEEPGRAM_API_KEY);
+async function getDeepgramToken() {
+  const client = new Deepgram(getApiKey(DEEPGRAM_API_KEY));
   const projectId = process.env.DEEPGRAM_PROJECT_ID;
   const { key } = await client.keys.create(
     projectId,
@@ -52,15 +49,11 @@ function getDeepgramToken() {
     { timeToLive: KEY_LIFETIME_SECONDS },
   );
   return key;
-  */
 }
 
-function getSonioxToken() {
-  return getApiKey('SONIOX_API_KEY');
-  /*
+async function getSonioxToken() {
   const client = new SpeechClient(process.env.SONIOX_API_KEY);
   return await client.getToken();
-  */
 }
 
 function getGladiaToken() {
