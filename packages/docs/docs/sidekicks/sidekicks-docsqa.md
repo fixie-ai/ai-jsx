@@ -93,7 +93,7 @@ The first step is to create an empty Corpus. You can do this on the
 and clicking on "New Document Collection". You can also do this via the Fixie CLI:
 
 ```terminal
-$ npx fixie corpus create "My test corpus"
+npx fixie corpus create "My test corpus"
 ```
 
 This will give you back a Corpus ID, which you will need for the later steps, so
@@ -124,14 +124,22 @@ makes for a good place to test out the query functionality!
 
 ## Adding Sources to the Corpus
 
+:::note Use The Correct ID
+
+The examples that follow use a Corpus ID of `66cd8b74-155f-45c8-83ed-28814ae7be89`.
+
+You will need to update the examples with the ID of the corpus you create.
+
+:::
+
 The next step is to add one or more Sources to the Corpus. Again, you can do this
 via the Fixie web UI, or using the CLI:
 
 ```terminal
-$ npx fixie corpus sources add 66cd8b74-155f-45c8-83ed-28814ae7be89 https://en.wikipedia.org/wiki/Fox
+npx fixie corpus sources add 66cd8b74-155f-45c8-83ed-28814ae7be89 https://en.wikipedia.org/wiki/Fox
 ```
 
-Here, the string `66cd8b74...` is the corpus ID returned when you first created the Corpus.
+Here, the string `66cd8b74...` is the corpus ID returned when you first created the Corpus. Make sure to update this to use the correct ID for your corpus.
 
 This adds a single web page Source to the Corpus. A Corpus can have multiple Sources, or a single
 Source can have multiple web pages -- this is just a simple example.
@@ -142,7 +150,7 @@ say, all of the pages linked to by the above Wikipedia page, but from the same d
 use:
 
 ```terminal
-$ npx fixie corpus sources add \
+npx fixie corpus sources add \
    66cd8b74-155f-45c8-83ed-28814ae7be89 \
    https://en.wikipedia.org/wiki/Fox \
    --max-depth 1 \
@@ -170,7 +178,12 @@ You can check on the progress of your Corpus build by running `npx fixie corpus 
 like so:
 
 ```terminal
-❯ npx fixie corpus get 44094d5a-f817-4c2e-a2a4-8f8a0c936d0f
+npx fixie corpus get 44094d5a-f817-4c2e-a2a4-8f8a0c936d0f
+```
+
+This will output something like this:
+
+```json
 {
   "corpus": {
     "corpusId": "44094d5a-f817-4c2e-a2a4-8f8a0c936d0f",
@@ -194,14 +207,19 @@ You can check out the Fixie API Documentation at [docs.fixie.ai](https://docs.fi
 which describes each of the fields in the API responses in detail.
 :::
 
-## Querying the corpus
+## Querying the Corpus
 
 You can run a manual corpus query on the Fixie Console, by navigating to the page
-for the Corpus you want to test, an selecting the **Query Test** tab. Alternately,
+for the Corpus you want to test, and selecting the **Query Test** tab. Alternately,
 you can use the `npx fixie corpus query` command:
 
+```terminal
+npx fixie corpus query 44094d5a-f817-4c2e-a2a4-8f8a0c936d0f "What is a fennec fox?"
+```
+
+Which will return something like this:
+
 ```json
-❯ npx fixie corpus query 44094d5a-f817-4c2e-a2a4-8f8a0c936d0f "What is a fennec fox?"
 {
   "results": [
     {

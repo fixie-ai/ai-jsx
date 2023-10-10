@@ -7,8 +7,9 @@ import {
   MicManager,
   Transcript,
 } from 'ai-jsx/lib/asr/asr';
-import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
+import { createTextToSpeech, TextToSpeechBase, TextToSpeechProtocol } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import '../globals.css';
 import Image from 'next/image';
 import { useControls } from 'leva';
@@ -41,6 +42,22 @@ import Visual3DCanvas from './components/canvas/Visual3D';
 const DEFAULT_ASR_FRAME_SIZE = 100;
 const DEFAULT_ASR_PROVIDER = 'deepgram';
 const DEFAULT_TTS_PROVIDER = 'azure';
+const DEFAULT_LLM = 'gpt-4';
+const ASR_PROVIDERS = ['aai', 'deepgram', 'gladia', 'revai', 'soniox'];
+const TTS_PROVIDERS = [
+  'aws',
+  'azure',
+  'eleven',
+  'eleven-ws',
+  'gcp',
+  'lmnt',
+  'lmnt-ws',
+  'murf',
+  'playht',
+  'resemble',
+  'wellsaid',
+];
+const LLM_MODELS = ['claude-2', 'claude-instant-1', 'gpt-4', 'gpt-3.5'];
 
 /**
  * Retrieves an ephemeral token from the server for use in an ASR service.
@@ -164,9 +181,10 @@ class ChatManager {
   constructor({ asrProvider, ttsProvider, ttsVoice, model, docs }: ChatManagerInit) {
     this.micManager = new MicManager();
     this.asr = createSpeechRecognition({ provider: asrProvider, manager: this.micManager, getToken: getAsrToken });
+    const ttsSplit = ttsProvider.split('-');
     this.tts = createTextToSpeech({
-      provider: ttsProvider,
-      protocol: ttsProvider == 'eleven' ? 'ws' : 'rest',
+      provider: ttsSplit[0],
+      proto: ttsSplit[1] as TextToSpeechProtocol,
       getToken: getTtsToken,
       buildUrl: buildTtsUrl,
       voice: ttsVoice,
@@ -304,6 +322,32 @@ class ChatManager {
   }
 }
 
+const Dropdown: React.FC<{ label: string; param: string; value: string; options: string[] }> = ({
+  param,
+  label,
+  value,
+  options,
+}) => (
+  <>
+    <label className="text-xs ml-2 font-bold">{label}</label>
+    <select
+      value={value}
+      onChange={(e) => {
+        const params = new URLSearchParams(window.location.search);
+        params.set(param, e.target.value);
+        window.location.search = params.toString();
+      }}
+      className="text-xs ml-1 pt-1 pb-1 border rounded"
+    >
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  </>
+);
+
 const MenuItem: React.FC<{ name: string; price: number }> = ({ name, price }) => (
   <li className="flex justify-between">
     <span className="text-left">{name}</span>
@@ -320,7 +364,7 @@ const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React
     onClick={onClick}
     disabled={disabled}
     className={`ml-2 rounded-md ${
-      disabled ? 'bg-gray-300' : 'bg-fixie-fresh-salmon hover:bg-fixie-ripe-salmon'
+      disabled ? 'bg-gray-300' : 'bg-fixie-charcoal hover:bg-fixie-dark-gray'
     } px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon`}
   >
     {children}
@@ -341,8 +385,12 @@ const PageComponent: React.FC = () => {
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
   const ttsVoice = searchParams.get('ttsVoice') || undefined;
-  const model = searchParams.get('llm') || 'gpt-4';
+  const model = searchParams.get('llm') || DEFAULT_LLM;
   const docs = Boolean(searchParams.get('docs'));
+  const showChooser = Boolean(searchParams.get('chooser'));
+  const showInput = Boolean(!searchParams.get('noInput'));
+  const showOutput = Boolean(!searchParams.get('noOutput'));
+  const showStats = Boolean(searchParams.get('stats'));
   const [chatManager, setChatManager] = useState<ChatManager | null>(null);
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
@@ -350,7 +398,6 @@ const PageComponent: React.FC = () => {
   const [llmLatency, setLlmLatency] = useState(0);
   const [ttsLatency, setTtsLatency] = useState(0);
   const [analyzer, setAnalyzer] = useState<AnalyserNode>();
-  const [mode, setMode] = useState<ApplicationMode>(APPLICATION_MODE.AUDIO);
 
   const active = () => Boolean(chatManager);
   const handleStart = () => {
@@ -415,8 +462,8 @@ const PageComponent: React.FC = () => {
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.keyCode == 32) {
       toggle();
+      event.preventDefault();
     }
-    event.preventDefault();
   };
   // Install a keydown handler, and clean it up on unmount.
   useEffect(() => {
@@ -430,6 +477,13 @@ const PageComponent: React.FC = () => {
 
   return (
     <>
+     {showChooser && (
+        <div className="absolute top-1 right-1">
+          <Dropdown label="ASR" param="asr" value={asrProvider} options={ASR_PROVIDERS} />
+          <Dropdown label="LLM" param="llm" value={model} options={LLM_MODELS} />
+          <Dropdown label="TTS" param="tts" value={ttsProvider} options={TTS_PROVIDERS} />
+        </div>
+      )}
       <div className="w-full h-full">
         <div className="text-center">
           <Image src="/logo.png" width={200} height={200} />
@@ -440,23 +494,27 @@ const PageComponent: React.FC = () => {
         </p>
         <div className="h-64 w-full flex justify-center">
           <AudioFFTAnalyzer analyzerNode={analyzer} />
-          <Visual3DCanvas mode={mode} />;
+          <Visual3DCanvas mode={APPLICATION_MODE.NOISE} />;
         </div>
-        <div>
-          <div className="m-2 w-full text-xl h-32 rounded-lg text-white flex items-center justify-center" id="output">
-            {output}
+        {showOutput && (
+          <div>
+            <div className="m-2 w-full text-xl h-32 rounded-lg text-white flex items-center justify-center" id="output">
+              {output}
+            </div>
           </div>
-        </div>
-        <div>
-          <div
-            className={`m-2 w-full text-xl h-12 rounded-lg text-white flex items-center justify-center ${
-              active() ? 'border-red-400' : ''
-            }`}
-            id="input"
-          >
-            {input}
+        )};
+        {showInput && (
+          <div>
+            <div
+              className={`m-2 w-full text-xl h-12 rounded-lg text-white flex items-center justify-center ${
+                active() ? 'border-red-400' : ''
+              }`}
+              id="input"
+            >
+              {input}
+            </div>          
           </div>
-        </div>
+        )};
         <div className="m-3 w-full flex justify-center">
           <Button disabled={false} onClick={toggle}>
             Start/Stop

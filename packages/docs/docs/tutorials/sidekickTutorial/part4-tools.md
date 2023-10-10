@@ -147,12 +147,9 @@ Next, we pass this `tools` object to the `<Sidekick>` component when we create i
 
 ```typescript
 return (
-  <Sidekick
-    role="GitHub assistant"
-    systemMessage={systemMessage}
-    tools={tools}
-    finalSystemMessageBeforeResponse={finalSystemMessageBeforeResponse}
-  />
+  <OpenAI chatModel="gpt-4-32k">
+    <Sidekick systemMessage={systemMessage} tools={tools} />
+  </OpenAI>
 );
 ```
 
