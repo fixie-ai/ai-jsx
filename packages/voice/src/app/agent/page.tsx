@@ -7,7 +7,7 @@ import {
   MicManager,
   Transcript,
 } from 'ai-jsx/lib/asr/asr';
-import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
+import { createTextToSpeech, TextToSpeechBase, TextToSpeechProtocol } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import '../globals.css';
@@ -165,7 +165,7 @@ class ChatManager {
     const ttsSplit = ttsProvider.split('-');
     this.tts = createTextToSpeech({
       provider: ttsSplit[0],
-      proto: ttsSplit[1],
+      proto: ttsSplit[1] as TextToSpeechProtocol,
       getToken: getTtsToken,
       buildUrl: buildTtsUrl,
       voice: ttsVoice,
