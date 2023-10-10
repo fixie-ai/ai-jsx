@@ -718,7 +718,7 @@ export class WellSaidTextToSpeech extends RestTextToSpeech {
  */
 export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
   private socket: WebSocket;
-  private socketReady : boolean;
+  private socketReady: boolean;
   // Message buffer for when the socket is not yet open.
   private readonly socketBuffer: string[] = [];
   private pendingText: string = '';
@@ -770,7 +770,7 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
     const connectMillis = performance.now();
     const socket = new WebSocket(url);
     socket.binaryType = 'arraybuffer';
-    socket.onopen = async (_event) => { 
+    socket.onopen = async (_event) => {
       const elapsed = performance.now() - connectMillis;
       console.log(`[${this.name}] socket opened, elapsed=${elapsed.toFixed(0)}`);
       const openMsg = await this.createOpenRequest();
@@ -871,7 +871,7 @@ export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
       console.error(`[${this.name}] error: ${message.message}`);
     }
   }
-  protected async createOpenRequest(): ElevenLabsOutboundMessage {
+  protected async createOpenRequest(): Promise<ElevenLabsOutboundMessage> {
     return {
       text: ' ',
       voice_settings: {
@@ -881,7 +881,7 @@ export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
       generation_config: {
         chunk_length_schedule: [50],
       },
-      xi_api_key: await this.tokenPromise
+      xi_api_key: await this.tokenPromise,
     };
   }
   protected createChunkRequest(text: string): ElevenLabsOutboundMessage {
