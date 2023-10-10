@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 // import { Deepgram  } from "@deepgram/sdk";
 // import { SpeechClient } from "@soniox/soniox-node";
 
+export const runtime = 'edge'; // 'nodejs' is the default
+
 type GetTokenFunction = () => Promise<string>;
 interface FunctionMap {
   [key: string]: GetTokenFunction;
