@@ -1,9 +1,8 @@
 /** @jsxImportSource ai-jsx */
 import { NextRequest, NextResponse } from 'next/server';
-import { Deepgram  } from "@deepgram/sdk";
+// TODO(juberti): figure out why these packages make node unhappy
+// import { Deepgram  } from "@deepgram/sdk";
 import { SpeechClient } from "@soniox/soniox-node";
-
-export const runtime = 'edge'; // 'nodejs' is the default
 
 export const runtime = 'edge'; // 'nodejs' is the default
 
@@ -33,9 +32,11 @@ export async function POST(request: NextRequest) {
   return new NextResponse(JSON.stringify({ token: await func() }));
 }
 
-async function getDeepgramToken() {
-  const client = new Deepgram(getEnvVar('DEEPGRAM_API_KEY'));
-  const projectId = getEnvVar('DEEPGRAM_PROJECT_ID');
+function getDeepgramToken() {
+  return getApiKey('DEEPGRAM_API_KEY');
+  /*
+  const client = new Deepgram(process.env.DEEPGRAM_API_KEY);
+  const projectId = process.env.DEEPGRAM_PROJECT_ID;
   const { key } = await client.keys.create(
     projectId,
     "Ephemeral websocket key",
@@ -43,11 +44,13 @@ async function getDeepgramToken() {
     { timeToLive: KEY_LIFETIME_SECONDS },
   );
   return key;
+  */
 }
 
 async function getSonioxToken() {
-  const client = new SpeechClient(getEnvVar('SONIOX_API_KEY'));
-  return await client.getToken();
+  //return getApiKey('SONIOX_API_KEY');
+  const client = new SpeechClient(getEnvVar("SONIOX_API_KEY"));
+  return await client.createTemporaryApiKey();
 }
 
 function getGladiaToken() {
