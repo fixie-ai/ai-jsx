@@ -395,8 +395,6 @@ const PageComponent: React.FC = () => {
   const [asrLatency, setAsrLatency] = useState(0);
   const [llmLatency, setLlmLatency] = useState(0);
   const [ttsLatency, setTtsLatency] = useState(0);
-  const [analyzer, setAnalyzer] = useState<AnalyserNode>();
-
   const active = () => Boolean(chatManager);
   const handleStart = () => {
     const manager = new ChatManager({ asrProvider, ttsProvider, ttsVoice, model, docs });
@@ -475,11 +473,16 @@ const PageComponent: React.FC = () => {
 
   return (
     <>
-     {showChooser && (
+      {showChooser && (
         <div className="absolute top-1 right-1">
           <Dropdown label="ASR" param="asr" value={asrProvider} options={ASR_PROVIDERS} />
           <Dropdown label="LLM" param="llm" value={model} options={LLM_MODELS} />
           <Dropdown label="TTS" param="tts" value={ttsProvider} options={TTS_PROVIDERS} />
+        </div>
+      )}
+      <div className="w-full">
+        <div className="flex justify-center mb-8">
+          <Image src="/voice-logo.png" alt="Fixie Voice" width={322} height={98} priority={true} />
         </div>
       )}
       <div className="w-full h-full">
@@ -494,26 +497,29 @@ const PageComponent: React.FC = () => {
           <AudioFFTAnalyzer analyzerNode={analyzer} />
           <Visual3DCanvas mode={APPLICATION_MODE.AUDIO}/>;
         </div>
-        {showOutput && (
-          <div>
-            <div className="m-2 w-full text-xl h-32 rounded-lg text-white flex items-center justify-center" id="output">
+        <div>
+          {showOutput && (
+            <div
+              className="text-center m-2 w-full text-md py-8 px-2 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center"
+              id="output"
+            >
               {output}
             </div>
-          </div>
-        )};
-        {showInput && (
-          <div>
+          )}
+        </div>
+        <div>
+          {showInput && (
             <div
-              className={`m-2 w-full text-xl h-12 rounded-lg text-white flex items-center justify-center ${
+              className={`m-2 w-full text-md h-12 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center ${
                 active() ? 'border-red-400' : ''
               }`}
               id="input"
             >
               {input}
-            </div>          
-          </div>
-        )};
-        <div className="m-3 w-full flex justify-center">
+            </div>
+          )}
+        </div>
+        <div className="m-3 w-full flex justify-center mt-8">
           <Button disabled={false} onClick={toggle}>
             Start/Stop
           </Button>
