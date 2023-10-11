@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useRef, useState, Suspense } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   createSpeechRecognition,
   normalizeText,
@@ -11,15 +11,6 @@ import { createTextToSpeech, TextToSpeechBase, TextToSpeechProtocol } from 'ai-j
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import '../globals.css';
-import { useControls } from 'leva';
-import {
-  ApplicationMode,
-  APPLICATION_MODE,
-  getAppModeDisplayName,
-  getPlatformSupportedApplicationModes,
-} from './components/applicationModes';
-import AudioFFTAnalyzer from './components/analyzers/audioFFTAnalyzer';
-import Visual3DCanvas from './components/canvas/Visual3D';
 
 // 1. VAD triggers silence. (Latency here is frame size + VAD delay)
 // 2. ASR sends partial transcript. ASR latency = 2-1.
@@ -142,13 +133,6 @@ class ChatRequest {
   }
 }
 
-enum ChatManagerState {
-  IDLE = 'idle',
-  LISTENING = 'listening',
-  THINKING = 'thinking',
-  SPEAKING = 'speaking',
-}
-
 class ChatManagerInit {
   constructor(
     public readonly asrProvider: string,
@@ -170,7 +154,6 @@ class ChatManager {
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
   private readonly docs: boolean;
-  onStateChange?: (state: string) => void;
   onInputChange?: (text: string, final: boolean, latency?: number) => void;
   onOutputChange?: (text: string, final: boolean, latency: number) => void;
   onAudioStart?: (latency: number) => void;
@@ -190,19 +173,16 @@ class ChatManager {
     });
     this.model = model;
     this.docs = docs;
-    this.micManager.addEventListener('vad', (evt: CustomEventInit<VoiceActivity>) => {});
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const obj = event.detail!;
       this.handleInputUpdate(obj.text, obj.final);
       this.onInputChange?.(obj.text, obj.final, obj.observedLatency);
     });
     this.tts.onPlaying = () => {
-      this.changeState(ChatManagerState.SPEAKING);
       this.onAudioStart?.(this.tts.latency!);
     };
     this.tts.onComplete = () => {
       this.onAudioEnd?.();
-      this.changeState(ChatManagerState.IDLE);
     };
   }
   /**
@@ -229,28 +209,10 @@ class ChatManager {
     this.pendingRequests = {};
   }
 
-  changeState(state: ChatManagerState) {
-    if (state != this.state) {
-      this.state = state;
-      this.onStateChange?.(state);
-    }
-  }
-  getInputAnalyzer() {
-    return this.micManager.getAnalyzer();
-  }
-  getOutputAnalyzer() {
-    return this.tts.getAnalyzer();
-  }
-
   /**
    * Handle new input from the ASR.
    */
   private handleInputUpdate(text: string, final: boolean) {
-    // If this is our first transcript, switch to listening mode (maybe use VAD instead)
-    if (/*this.state == ChatManagerState.IDLE && */text.trim()) {
-      this.changeState(ChatManagerState.LISTENING);
-    }
-
     // Ignore partial transcripts if VAD indicates the user is still speaking.
     if (!final && this.micManager.isVoiceActive) {
       return;
@@ -261,7 +223,6 @@ class ChatManager {
     const newMessages = [...this.history, userMessage];
     if (final) {
       this.history = newMessages;
-      this.changeState(ChatManagerState.THINKING);
     }
 
     // If it doesn't match an existing request, kick off a new one.
@@ -376,8 +337,6 @@ const Latency: React.FC<{ name: string; latency: number }> = ({ name, latency })
   </>
 );
 
-const AVAILABLE_MODES = getPlatformSupportedApplicationModes();
-
 const PageComponent: React.FC = () => {
   const searchParams = useSearchParams();
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
@@ -405,24 +364,6 @@ const PageComponent: React.FC = () => {
     setTtsLatency(0);
     setChatManager(manager);
     manager.start('');
-    manager.onStateChange = (state) => {
-      console.log(`state=${state}`);
-      if (state == ChatManagerState.LISTENING) {
-        setAnalyzer(manager?.getInputAnalyzer());
-        //setMode(APPLICATION_MODE.AUDIO);
-      } else if (state == ChatManagerState.THINKING) {
-        setAnalyzer(undefined);
-        //setMode(APPLICATION_MODE.WAVE_FORM);
-      } else if (state == ChatManagerState.SPEAKING) {
-        const analyzer = manager?.getOutputAnalyzer();        
-        setAnalyzer(analyzer);
-        //setMode(APPLICATION_MODE.AUDIO);
-      } else {
-        setAnalyzer(manager?.getInputAnalyzer());
-        //setAnalyzer(undefined);
-        //setMode(APPLICATION_MODE.NOISE);
-      }
-    };
     manager.onInputChange = (text, final, latency) => {
       setInput(text);
       if (latency) {
@@ -484,18 +425,40 @@ const PageComponent: React.FC = () => {
         <div className="flex justify-center mb-8">
           <Image src="/voice-logo.png" alt="Fixie Voice" width={322} height={98} priority={true} />
         </div>
-      )}
-      <div className="w-full h-full">
-        <div className="text-center">
-          <Image src="/logo.png" width={200} height={200} />
-        </div>
-        <p className="font-sm ml-2 mb-2">
+        <p className="font-sm ml-2 mb-6 text-center">
           This demo allows you to chat (via voice) with a drive-thru agent at a fictional donut shop. Click Start
           Chatting (or tap the spacebar) to begin.
         </p>
-        <div className="h-64 w-full flex justify-center">
-          <AudioFFTAnalyzer analyzerNode={analyzer} />
-          <Visual3DCanvas mode={APPLICATION_MODE.AUDIO}/>;
+        <div className="grid grid-cols-2 lg:gap-x-24">
+          <div className="p-4">
+            <p className="text-lg font-bold">🍩 DONUTS</p>
+            <ul className="text-sm">
+              <MenuItem name="PUMPKIN SPICE ICED" price={1.29} />
+              <MenuItem name="PUMPKIN SPICE CAKE" price={1.29} />
+              <MenuItem name="OLD FASHIONED" price={0.99} />
+              <MenuItem name="CHOCOLATE ICED" price={1.09} />
+              <MenuItem name="CHOCOLATE ICED WITH SPRINKLES" price={1.09} />
+              <MenuItem name="RASPBERRY FILLED" price={1.09} />
+              <MenuItem name="BLUEBERRY CAKE" price={1.09} />
+              <MenuItem name="STRAWBERRY ICED WITH SPRINKLES" price={1.09} />
+              <MenuItem name="LEMON FILLED" price={1.09} />
+              <MenuItem name="DOUGHNUT HOLES" price={3.99} />
+            </ul>
+          </div>
+          <div className="p-4">
+            <p className="text-lg font-bold">☕️ COFFEE</p>
+            <ul className="text-sm">
+              <MenuItem name="PUMPKIN SPICE COFFEE" price={2.59} />
+              <MenuItem name="PUMPKIN SPICE LATTE" price={4.59} />
+              <MenuItem name="REGULAR BREWED COFFEE" price={1.79} />
+              <MenuItem name="DECAF BREWED COFFEE" price={1.79} />
+              <MenuItem name="LATTE" price={3.49} />
+              <MenuItem name="CAPPUCINO" price={3.49} />
+              <MenuItem name="CARAMEL MACCHIATO" price={3.49} />
+              <MenuItem name="MOCHA LATTE" price={3.49} />
+              <MenuItem name="CARAMEL MOCHA LATTE" price={3.49} />
+            </ul>
+          </div>
         </div>
         <div>
           {showOutput && (
@@ -521,9 +484,19 @@ const PageComponent: React.FC = () => {
         </div>
         <div className="m-3 w-full flex justify-center mt-8">
           <Button disabled={false} onClick={toggle}>
-            Start/Stop
+            {active() ? 'Stop Chatting' : 'Start Chatting'}
           </Button>
         </div>
+        {showStats && (
+          <div className="flex justify-center">
+            <span className="text-sm font-mono">
+              <Latency name="ASR" latency={asrLatency} /> |
+              <Latency name="LLM" latency={llmLatency} /> |
+              <Latency name="TTS" latency={ttsLatency} /> |
+              <Latency name="" latency={asrLatency + llmLatency + ttsLatency} />
+            </span>
+          </div>
+        )}
       </div>
     </>
   );
