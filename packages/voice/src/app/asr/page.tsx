@@ -63,19 +63,25 @@ interface AsrProps {
 }
 
 const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, transcript }) => {
+  const [disabled, setDisabled] = useState(false);
   const output = useRef<Transcript[]>([]);
   const [partialLatency, setPartialLatency] = useState<number[]>([]);
   const [finalLatency, setFinalLatency] = useState<number[]>([]);
   const [recognizer, setRecognizer] = useState<SpeechRecognitionBase | null>(null);
   const justFinals = (transcripts: Transcript[]) => transcripts.filter((transcript) => transcript.final);
-  const computeCostColor = (cost: number) => {
+  const computeCostColor = (cost: number, disabled: boolean) => {
+    let color;
     if (cost < 0.01) {
-      return 'text-green-700';
+      color = 'text-green-700';
+    } else if (cost < 0.02) {
+      color = 'text-yellow-700';
+    } else {
+      color = 'text-red-700';
     }
-    if (cost < 0.02) {
-      return 'text-yellow-700';
+    if (disabled) {
+      color += '/40';
     }
-    return 'text-red-700';
+    return color;
   };
   const computeLatency = (values: number[]) => _.mean(values);
   const computeWer = (transcripts: Transcript[], refText?: string) => {
@@ -143,22 +149,23 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
     }
   };
   useEffect(() => {
-    if (manager) {
+    if (manager && !disabled) {
       start();
     } else {
       stop();
     }
-  }, [manager]);
+  }, [manager, disabled]);
   return (
-    <div className="ml-2">
+    <div className={`ml-2 ${disabled ? 'text-black/40' : ''}`}>
       <p className="text-xl font-bold mt-2">
+        <input className="mb-1 mr-2" type="checkbox" checked={!disabled} onChange={() => setDisabled(!disabled)} />
         <a className="hover:underline" href={link}>
           {name}
         </a>
       </p>
       <div className="text-sm">
         <span className="font-bold">Cost: </span>
-        <a className={`hover:underline ${computeCostColor(costPerMinute)}`} href={`${link}/pricing`}>
+        <a className={`hover:underline ${computeCostColor(costPerMinute, disabled)}`} href={`${link}/pricing`}>
           ${costPerMinute}/min
         </a>
       </div>
