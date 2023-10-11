@@ -6,11 +6,10 @@ import { Anthropic, ValidChatModel as AnthropicValidChatModel } from 'ai-jsx/lib
 import { StreamingTextResponse } from 'ai';
 import { toTextStream } from 'ai-jsx/stream';
 import { NextRequest } from 'next/server';
-import _ from 'lodash';
 
 export const runtime = 'edge'; // 'nodejs' is the default
 
-const DD_PROMPT = `
+const AGENT_PROMPT = `
 You are a drive-thru order taker for a donut shop called "Dr. Donut". Local time is currently: ${new Date().toLocaleTimeString()}
 Respond according to the following script:
 1. Greet the user using a time-appropriate greeting based on their local time, e.g., "Good afternoon, what can I get started for you today?",
@@ -71,48 +70,8 @@ const DD_INITIAL_RESPONSES = [
 /**
  * The id of the corpus, from https://console.fixie.ai.
  */
-const DD_CORPUS_ID = 'bd69dce6-7b56-4d0b-8b2f-226500780ebd';
+const AGENT_CORPUS_ID = 'bd69dce6-7b56-4d0b-8b2f-226500780ebd';
 const MAX_CHUNKS = 4;
-
-const LC_PROMPT = `You are a coach helping students learn to speak Spanish. Talk to them in basic Spanish, but
-correct them in English if they say something that's not quite right.
-Respond according to the following script:
-1. Greet the student, and ask them how they are doing.
-2. Ask them what they did today.
-3. Ask followup questions based on the above.
-`;
-
-const LC_INITIAL_RESPONSES = [
-  'Hola, ¿cómo estás?',
-  'Hola, ¿qué tal?',
-  'Hola, ¿qué pasa?',
-  'Hola, ¿qué haces?',
-  'Hola, ¿qué hiciste hoy?',
-];
-
-const RUBBER_DUCK = `You are a rubber duck. Your job is to listen to the user's problems and concerns and respond with responses
-designed to help the user solve their own problems. You are not a therapist, and you are not a friend. You are a rubber duck.
-`;
-
-const RD_INITIAL_RESPONSES = [
-  "Hi, what's on your mind?",
-  'Hi, how are you today?',
-  'Hi! What can I help you with?',
-  'Anything you want to talk about?',
-  "What's new?",
-];
-
-interface AgentPersona {
-  prompt: string;
-  initialResponses: string[];
-  corpusId: string;
-}
-
-const PERSONAS: Record<string, AgentPersona> = {
-  dd: { prompt: DD_PROMPT, initialResponses: DD_INITIAL_RESPONSES, corpusId: DD_CORPUS_ID },
-  lc: { prompt: LC_PROMPT, initialResponses: LC_INITIAL_RESPONSES, corpusId: '' },
-  rd: { prompt: RUBBER_DUCK, initialResponses: RD_INITIAL_RESPONSES, corpusId: '' },
-};
 
 /**
  * The user and assistant messages exchanged by client and server.
@@ -124,8 +83,8 @@ class ClientMessage {
 /**
  * Creates an initial response from the agent.
  */
-function sample(initialResponses: string[]) {
-  return initialResponses[Math.floor(Math.random() * initialResponses.length)];
+function createInitialResponse() {
+  return DD_INITIAL_RESPONSES[Math.floor(Math.random() * DD_INITIAL_RESPONSES.length)];
 }
 
 /**
@@ -146,20 +105,18 @@ function pseudoTextStream(text: string, interWordDelay = 20) {
 }
 
 async function ChatAgent({
-  persona,
   conversation,
   model,
   docs,
 }: {
-  persona: AgentPersona;
   conversation: ClientMessage[];
   model: string;
   docs?: number;
 }) {
+  let prompt = AGENT_PROMPT;
   const query = conversation.at(-1)?.content;
-  let prompt = persona.prompt;
   if (docs && query) {
-    const corpus = new FixieCorpus(persona.corpusId);
+    const corpus = new FixieCorpus(AGENT_CORPUS_ID);
     const chunks = await corpus.search(query, { limit: MAX_CHUNKS });
     const chunkText = chunks.map((chunk) => chunk.chunk.content).join('\n');
     console.log(`Chunks:\n${chunkText}`);
@@ -188,18 +145,14 @@ async function ChatAgent({
 
 export async function POST(request: NextRequest) {
   const json = await request.json();
-  console.log(`New request (persona=${json.persona} model=${json.model} docs=${json.docs})`);
+  console.log(`New request (model=${json.model} docs=${json.docs})`);
   json.messages.forEach((message: ClientMessage) => console.log(`role=${message.role} content=${message.content}`));
 
-  const personaId = json.personaId as string;
-  const persona = PERSONAS[personaId ?? 'dd'];
   let stream;
   if (json.messages.length == 1 && !json.messages[0].content) {
-    stream = pseudoTextStream(_.sample(persona.initialResponses));
+    stream = pseudoTextStream(createInitialResponse());
   } else {
-    stream = toTextStream(
-      <ChatAgent persona={persona} conversation={json.messages} model={json.model} docs={json.docs} />
-    );
+    stream = toTextStream(<ChatAgent conversation={json.messages} model={json.model} docs={json.docs} />);
   }
   return new StreamingTextResponse(stream);
 }
