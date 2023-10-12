@@ -144,8 +144,10 @@ export class MicManager extends EventTarget {
   get isVoiceActive() {
     return this.vad?.isVoiceActive ?? false;
   }
-  //get analyzer() {
-  getAnalyzer() {
+  /**
+   * Returns an analyzer node, which can be queried for audio levels and other info.
+   */
+  get analyzer() {
     return this.analyzerNode;
   }
 
@@ -178,8 +180,6 @@ export class MicManager extends EventTarget {
       this.vad?.processFrame(event.data);
     };
 
-    this.analyzerNode = this.context.createAnalyser();
-
     let source;
     if (this.stream) {
       source = this.context.createMediaStreamSource(this.stream);
@@ -198,11 +198,13 @@ export class MicManager extends EventTarget {
     } else {
       throw new Error('No stream or streamElement');
     }
+
+    this.analyzerNode = this.context.createAnalyser();
     source.connect(this.analyzerNode).connect(this.processorNode);
     // Only connect the destination if we're playing a file,
     // since we don't want to hear ourselves.
     if (this.streamElement) {
-      source.connect(this.context.destination); //++++ proocessor?
+      source.connect(this.context.destination);
     }
 
     this.vad = new LibfVoiceActivityDetector(this.sampleRate);

@@ -429,7 +429,7 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     this.tearDown();
   }
 
-  getAnalyzer() {
+  get analyzer() {
     return outputManager.getAnalyzer(this.streamId);
   }
 
