@@ -864,7 +864,6 @@ interface ElevenLabsOutboundMessage {
   text: string;
   voice_settings?: {
     stability: number;
-    similarity: number;
   };
   generation_config?: {
     chunk_length_schedule: number[];
