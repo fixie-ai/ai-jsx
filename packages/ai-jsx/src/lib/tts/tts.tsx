@@ -864,6 +864,7 @@ interface ElevenLabsOutboundMessage {
   text: string;
   voice_settings?: {
     stability: number;
+    similarity_boost: boolean;
   };
   generation_config?: {
     chunk_length_schedule: number[];
@@ -905,6 +906,10 @@ export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
       text: ' ',
       generation_config: {
         chunk_length_schedule: [50],
+      },
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: false,
       },
       xi_api_key: await this.tokenPromise,
     };
