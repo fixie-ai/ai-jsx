@@ -47,7 +47,8 @@ const TTS_PROVIDERS = [
   'resemble',
   'wellsaid',
 ];
-const LLM_MODELS = ['claude-2', 'claude-instant-1', 'gpt-4', 'gpt-3.5'];
+const LLM_MODELS = ['claude-2', 'claude-instant-1', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'];
+const PERSONAS = ['catch-phrase', 'dr-donut', 'rubber-duck'];
 
 /**
  * Retrieves an ephemeral token from the server for use in an ASR service.
@@ -101,6 +102,7 @@ class ChatRequest {
   constructor(
     private readonly inMessages: ChatMessage[],
     private readonly model: string,
+    private readonly persona: string,
     private readonly docs: boolean,
     public active: boolean
   ) {}
@@ -112,7 +114,7 @@ class ChatRequest {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ messages: this.inMessages, model: this.model, docs: this.docs }),
+      body: JSON.stringify({ messages: this.inMessages, model: this.model, persona: this.persona, docs: this.docs }),
     });
     this.requestLatency = performance.now() - this.startMillis;
     console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
@@ -133,14 +135,13 @@ class ChatRequest {
   }
 }
 
-class ChatManagerInit {
-  constructor(
-    public readonly asrProvider: string,
-    public readonly ttsProvider: string,
-    public readonly model: string,
-    public readonly docs: boolean,
-    public readonly ttsVoice?: string
-  ) {}
+interface ChatManagerInit {
+  asrProvider: string;
+  ttsProvider: string;
+  model: string;
+  persona: string;
+  docs: boolean;
+  ttsVoice?: string;
 }
 
 /**
@@ -153,13 +154,14 @@ class ChatManager {
   private readonly asr: SpeechRecognitionBase;
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
+  private readonly persona: string;
   private readonly docs: boolean;
   onInputChange?: (text: string, final: boolean, latency?: number) => void;
   onOutputChange?: (text: string, final: boolean, latency: number) => void;
   onAudioStart?: (latency: number) => void;
   onAudioEnd?: () => void;
   onError?: () => void;
-  constructor({ asrProvider, ttsProvider, ttsVoice, model, docs }: ChatManagerInit) {
+  constructor({ asrProvider, ttsProvider, ttsVoice, model, persona, docs }: ChatManagerInit) {
     this.micManager = new MicManager();
     this.asr = createSpeechRecognition({ provider: asrProvider, manager: this.micManager, getToken: getAsrToken });
     const ttsSplit = ttsProvider.split('-');
@@ -172,6 +174,7 @@ class ChatManager {
       rate: 1.2,
     });
     this.model = model;
+    this.persona = persona;
     this.docs = docs;
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const obj = event.detail!;
@@ -232,7 +235,7 @@ class ChatManager {
     const hit = normalized in this.pendingRequests;
     console.log(`${final ? 'final' : 'partial'}: ${normalized} ${hit ? 'HIT' : 'MISS'}`);
     if (!hit) {
-      const request = new ChatRequest(newMessages, this.model, this.docs, final);
+      const request = new ChatRequest(newMessages, this.model, this.persona, this.docs, final);
       request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
       request.onComplete = (request) => this.handleRequestDone(request);
       this.pendingRequests[normalized] = request;
@@ -343,6 +346,7 @@ const PageComponent: React.FC = () => {
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
   const ttsVoice = searchParams.get('ttsVoice') || undefined;
   const model = searchParams.get('llm') || DEFAULT_LLM;
+  const persona = searchParams.get('persona') || 'dr-donut';
   const docs = Boolean(searchParams.get('docs'));
   const showChooser = Boolean(searchParams.get('chooser'));
   const showInput = Boolean(!searchParams.get('noInput'));
@@ -356,7 +360,7 @@ const PageComponent: React.FC = () => {
   const [ttsLatency, setTtsLatency] = useState(0);
   const active = () => Boolean(chatManager);
   const handleStart = () => {
-    const manager = new ChatManager({ asrProvider, ttsProvider, ttsVoice, model, docs });
+    const manager = new ChatManager({ asrProvider, ttsProvider, ttsVoice, model, persona, docs });
     setInput('');
     setOutput('');
     setAsrLatency(0);
@@ -416,6 +420,7 @@ const PageComponent: React.FC = () => {
     <>
       {showChooser && (
         <div className="absolute top-1 right-1">
+          <Dropdown label="Persona" param="persona" value={persona} options={PERSONAS} />
           <Dropdown label="ASR" param="asr" value={asrProvider} options={ASR_PROVIDERS} />
           <Dropdown label="LLM" param="llm" value={model} options={LLM_MODELS} />
           <Dropdown label="TTS" param="tts" value={ttsProvider} options={TTS_PROVIDERS} />
