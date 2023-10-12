@@ -141,6 +141,7 @@ interface ChatManagerInit {
   model: string;
   persona: string;
   docs: boolean;
+  asrLanguage?: string,
   ttsVoice?: string;
 }
 
@@ -161,9 +162,14 @@ class ChatManager {
   onAudioStart?: (latency: number) => void;
   onAudioEnd?: () => void;
   onError?: () => void;
-  constructor({ asrProvider, ttsProvider, ttsVoice, model, persona, docs }: ChatManagerInit) {
+  constructor({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, persona, docs }: ChatManagerInit) {
     this.micManager = new MicManager();
-    this.asr = createSpeechRecognition({ provider: asrProvider, manager: this.micManager, getToken: getAsrToken });
+    this.asr = createSpeechRecognition({
+      provider: asrProvider,
+      manager: this.micManager,
+      getToken: getAsrToken,
+      language: asrLanguage,
+    });
     const ttsSplit = ttsProvider.split('-');
     this.tts = createTextToSpeech({
       provider: ttsSplit[0],
@@ -343,6 +349,7 @@ const Latency: React.FC<{ name: string; latency: number }> = ({ name, latency })
 const PageComponent: React.FC = () => {
   const searchParams = useSearchParams();
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
+  const asrLanguage = searchParams.get('asrLanguage') || undefined;
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
   const ttsVoice = searchParams.get('ttsVoice') || undefined;
   const model = searchParams.get('llm') || DEFAULT_LLM;
@@ -360,7 +367,7 @@ const PageComponent: React.FC = () => {
   const [ttsLatency, setTtsLatency] = useState(0);
   const active = () => Boolean(chatManager);
   const handleStart = () => {
-    const manager = new ChatManager({ asrProvider, ttsProvider, ttsVoice, model, persona, docs });
+    const manager = new ChatManager({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, persona, docs });
     setInput('');
     setOutput('');
     setAsrLatency(0);
