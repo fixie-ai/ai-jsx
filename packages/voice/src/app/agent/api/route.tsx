@@ -6,7 +6,7 @@ import { Anthropic, ValidChatModel as AnthropicValidChatModel } from 'ai-jsx/lib
 import { StreamingTextResponse } from 'ai';
 import { toTextStream } from 'ai-jsx/stream';
 import { NextRequest } from 'next/server';
-import { CatchPhrase, DrDonut, RubberDuck } from './personas';
+import { CatchPhrase, DrDonut, RubberDuck, SpanishTutor } from './personas';
 import _ from 'lodash';
 
 export const runtime = 'edge'; // 'nodejs' is the default
@@ -20,7 +20,7 @@ interface AgentPersona {
   corpusId?: string;
 }
 
-const PERSONAS: AgentPersona[] = [CatchPhrase, DrDonut, RubberDuck];
+const PERSONAS: AgentPersona[] = [CatchPhrase, DrDonut, RubberDuck, SpanishTutor];
 function getPersona(name: string) {
   const persona = PERSONAS.find((persona) => persona.name == name);
   if (!persona) {

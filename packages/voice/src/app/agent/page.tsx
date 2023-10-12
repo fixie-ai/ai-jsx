@@ -48,6 +48,7 @@ const TTS_PROVIDERS = [
   'wellsaid',
 ];
 const LLM_MODELS = ['claude-2', 'claude-instant-1', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'];
+const PERSONAS = ['catch-phrase', 'dr-donut', 'rubber-duck', 'spanish-tutor'];
 
 /**
  * Retrieves an ephemeral token from the server for use in an ASR service.
