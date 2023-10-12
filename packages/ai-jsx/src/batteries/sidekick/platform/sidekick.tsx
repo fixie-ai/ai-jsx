@@ -1,14 +1,18 @@
-import { present } from './conversation.js';
-import { UseTools } from './use-tools-eject.js';
+import { getNextConversationStep, present } from './conversation.js';
 import { SidekickSystemMessage } from './system-message.js';
 import { UseToolsProps } from '../../use-tools.js';
 import * as AI from '../../../index.js';
-import { ConversationHistory, ShowConversation } from '../../../core/conversation.js';
+import { ConversationHistory, Converse, ShowConversation } from '../../../core/conversation.js';
 import { MergeExclusive } from 'type-fest';
 
 interface UniversalSidekickProps {
   tools?: UseToolsProps['tools'];
   systemMessage?: AI.Node;
+
+  /**
+   * The conversation to act on. If not specified, uses the <ConversationHistory /> component.
+   */
+  children?: AI.Node;
 }
 
 type OutputFormatSidekickProps = MergeExclusive<
@@ -77,21 +81,30 @@ type OutputFormatSidekickProps = MergeExclusive<
 
 export type SidekickProps = UniversalSidekickProps & OutputFormatSidekickProps;
 
+export type SidekickOutputFormat = Exclude<SidekickProps['outputFormat'], undefined>;
+
 export function Sidekick(props: SidekickProps) {
+  const outputFormat = props.outputFormat ?? 'text/mdx';
   return (
-    <ShowConversation present={present}>
-      <UseTools tools={props.tools ?? undefined} showSteps>
+    <ShowConversation present={(msg) => present(msg, outputFormat)}>
+      <Converse
+        reply={(messages, fullConversation) =>
+          getNextConversationStep(messages, fullConversation, outputFormat, props.tools)
+        }
+      >
+        {props.systemMessage}
         <SidekickSystemMessage
           timeZone="America/Los_Angeles"
-          includeNextStepsRecommendations={props.includeNextStepsRecommendations ?? true}
-          useCitationCard={props.useCitationCard ?? true}
-          outputFormat={props.outputFormat ?? 'text/mdx'}
+          includeNextStepsRecommendations={
+            outputFormat === 'text/mdx' && (props.includeNextStepsRecommendations ?? true)
+          }
+          useCitationCard={outputFormat === 'text/mdx' && (props.useCitationCard ?? true)}
+          outputFormat={outputFormat}
           userProvidedGenUIUsageExamples={props.genUIExamples}
           userProvidedGenUIComponentNames={props.genUIComponentNames}
         />
-        <ConversationHistory />
-        {props.systemMessage}
-      </UseTools>
+        {props.children ?? <ConversationHistory />}
+      </Converse>
     </ShowConversation>
   );
 }
