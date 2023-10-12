@@ -154,12 +154,13 @@ export class MicManager extends EventTarget {
   /**
    * Starts the audio graph based on either `this.stream` or `this.streamElement`.
    */
-  private async startGraph(timeslice: number, onEnded?: () => void) {
+  private async startGraph(timeslice: number, onEnded?: () => void, wantAnalyzer = true) {
     this.numSamples = 0;
     this.outBuffer = [];
     this.context = new window.AudioContext({ sampleRate: 16000 });
     console.log(`MicManager starting graph, sample rate=${this.context.sampleRate}`);
 
+    // Set up our input processor worklet.
     const workletSrcBlob = new Blob([AUDIO_WORKLET_SRC], {
       type: 'application/javascript',
     });
@@ -180,6 +181,7 @@ export class MicManager extends EventTarget {
       this.vad?.processFrame(event.data);
     };
 
+    // Set up our source to wrap the provider input.
     let source;
     if (this.stream) {
       source = this.context.createMediaStreamSource(this.stream);
@@ -199,14 +201,20 @@ export class MicManager extends EventTarget {
       throw new Error('No stream or streamElement');
     }
 
-    this.analyzerNode = this.context.createAnalyser();
-    source.connect(this.analyzerNode).connect(this.processorNode);
+    // Connect the graph.
     // Only connect the destination if we're playing a file,
-    // since we don't want to hear ourselves.
+    // since we don't want to hear our own mic.
+    if (wantAnalyzer) {
+      this.analyzerNode = this.context.createAnalyser();
+      source.connect(this.analyzerNode).connect(this.processorNode);
+    } else {
+      source.connect(this.processorNode);
+    }
     if (this.streamElement) {
       source.connect(this.context.destination);
     }
 
+    // Start the VAD.
     this.vad = new LibfVoiceActivityDetector(this.sampleRate);
     this.vad.onVoiceStart = () => {
       console.log(`Speech begin: ${this.currentMillis.toFixed(0)} ms`);
@@ -217,6 +225,7 @@ export class MicManager extends EventTarget {
       this.dispatchEvent(new CustomEvent('vad', { detail: new VoiceActivity(false, this.currentMillis) }));
     };
     this.vad.start();
+
     console.log('MicManager graph started');
   }
 
