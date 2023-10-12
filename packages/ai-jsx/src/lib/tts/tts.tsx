@@ -904,10 +904,6 @@ export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
   protected async createOpenRequest(): Promise<ElevenLabsOutboundMessage> {
     return {
       text: ' ',
-      voice_settings: {
-        stability: 0.5,
-        similarity: 0.8,
-      },
       generation_config: {
         chunk_length_schedule: [50],
       },
