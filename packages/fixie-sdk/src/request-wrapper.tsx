@@ -3,8 +3,8 @@ import { InvokeAgentRequest } from './types.js';
 import { ShowConversation, ConversationHistoryContext } from 'ai-jsx/core/conversation';
 import { Json } from './json.js';
 import { FixieConversation } from './conversation.js';
-import { OpenAI, OpenAIClient, ValidChatModel as OpenAIChatModel } from 'ai-jsx/lib/openai';
-import { Anthropic, AnthropicClient, ValidChatModel as AnthropicChatModel } from 'ai-jsx/lib/anthropic';
+import { OpenAI, OpenAIClient } from 'ai-jsx/lib/openai';
+import { Anthropic, AnthropicClient } from 'ai-jsx/lib/anthropic';
 import { cohereContext } from 'ai-jsx/lib/cohere';
 import { FixieAPIContext } from 'ai-jsx/batteries/fixie';
 
@@ -70,18 +70,7 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
 
   const { url: apiBaseUrl, authToken } = getContext(FixieAPIContext);
 
-  const requestContext = getContext(RequestContext);
-  if (!requestContext) {
-    throw new Error('RequestContext must be provided to FixieRequestWrapper.');
-  }
-  const { request } = requestContext;
-
-  const modelProvider = request.generationParams?.modelProvider?.toLowerCase() ?? 'openai';
-  if (modelProvider !== 'openai' && modelProvider !== 'anthropic') {
-    throw new Error(`The model provider ("${request.generationParams?.modelProvider}") is not supported.`);
-  }
-
-  // Set both OpenAI and Anthropic Clients, but only configure the requested one as the default ChatCompletion model.
+  // Set both OpenAI and Anthropic Clients, but set the default chat/completion models to OpenAI.
   wrappedNode = (
     <OpenAI
       client={
@@ -91,11 +80,8 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
           fetch: globalThis.fetch,
         })
       }
-      chatModel={
-        !request.generationParams?.modelProvider || request.generationParams.modelProvider.toLowerCase() === 'openai'
-          ? (request.generationParams?.model as OpenAIChatModel | undefined) ?? 'gpt-3.5-turbo'
-          : undefined
-      }
+      chatModel="gpt-3.5-turbo"
+      completionModel="text-davinci-003"
     >
       {wrappedNode}
     </OpenAI>
@@ -105,11 +91,6 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
     <Anthropic
       client={
         new AnthropicClient({ authToken, apiKey: null, baseURL: new URL('api/anthropic-proxy', apiBaseUrl).toString() })
-      }
-      chatModel={
-        request.generationParams?.modelProvider?.toLowerCase() === 'anthropic'
-          ? (request.generationParams.model as AnthropicChatModel | undefined) ?? 'claude-instant-1'
-          : undefined
       }
     >
       {wrappedNode}
