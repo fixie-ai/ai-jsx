@@ -199,7 +199,7 @@ You should see a stream of response messages from the Sidekick, as it sends back
 a response to your question. The last line of the response will show:
 
 ```
-{"id": "7a1c57c1-4068-4668-8878-ede11bcb81d6", "turns": [{"id": "8c747526-ac3c-45d2-94d6-c637993e7759", "timestamp": "2023-09-23T21:47:40.956489", "role": "user", "messages": [{"kind": "text", "content": "Tell me about yourself"}], "generationParams": null, "state": "done"}, {"id": "bc716f1b-8eba-4f4f-8df0-4a078fd8359e", "timestamp": "2023-09-23T21:47:41.267027+00:00", "role": "assistant", "messages": [{"kind": "text", "content": "Sure, I'm an AI assistant designed to help you with Git and GitHub."}], "generationParams": null, "state": "done", "inReplyToId": "8c747526-ac3c-45d2-94d6-c637993e7759"}]}
+{"id": "7a1c57c1-4068-4668-8878-ede11bcb81d6", "turns": [{"id": "8c747526-ac3c-45d2-94d6-c637993e7759", "timestamp": "2023-09-23T21:47:40.956489", "role": "user", "messages": [{"kind": "text", "content": "Tell me about yourself"}], "state": "done"}, {"id": "bc716f1b-8eba-4f4f-8df0-4a078fd8359e", "timestamp": "2023-09-23T21:47:41.267027+00:00", "role": "assistant", "messages": [{"kind": "text", "content": "Sure, I'm an AI assistant designed to help you with Git and GitHub."}], "state": "done", "inReplyToId": "8c747526-ac3c-45d2-94d6-c637993e7759"}]}
 ```
 
 It's a little ugly, of course, but if you pipe the output to `jq`, you can see a nicely-formatted
@@ -219,7 +219,6 @@ JSON object:
           "content": "Tell me about yourself"
         }
       ],
-      "generationParams": null,
       "state": "done"
     },
     {
@@ -232,7 +231,6 @@ JSON object:
           "content": "Sure, I'm an AI assistant designed to help you with Git and GitHub."
         }
       ],
-      "generationParams": null,
       "state": "done",
       "inReplyToId": "ef865d96-73c9-421a-9651-fee15ed23528"
     }

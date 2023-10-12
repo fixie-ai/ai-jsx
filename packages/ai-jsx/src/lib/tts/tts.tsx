@@ -123,7 +123,7 @@ class AudioOutputManager extends EventTarget {
   }
   createStream(wantAnalyzer = true) {
     if (!this.context) {
-      throw new Error('audio context not started');
+      throw new Error('AudioOutputManager not started');
     }
 
     this.context.resume();
@@ -138,11 +138,7 @@ class AudioOutputManager extends EventTarget {
       outputNode.connect(destNode);
     }
     outputNode.port.onmessage = (e) => {
-      console.log(`stream ${streamId} buf consumed, seq num=${e.data.seqNum}`);
-      const stream = this.streams.get(streamId);
-      if (stream && stream.nextSeqNum == e.data.seqNum + 1) {
-        this.dispatchWaiting(streamId); //++++
-      }
+      this.handleBufferProcessed(streamId, e.data.seqNum);
     };
     this.streams.set(streamId, new AudioStream(outputNode, destNode, analyzerNode));
     return destNode.stream;
@@ -223,8 +219,15 @@ class AudioOutputManager extends EventTarget {
     console.log(`buf added, seq num=${seqNum}`);
     audioStream.outputNode.port.postMessage({ seqNum, channelData });
   }
-  private dispatchWaiting(streamId: string) {
-    this.dispatchEvent(new CustomEvent('waiting', { detail: streamId }));
+  private handleBufferProcessed(streamId: string, seqNum: number) {
+    const audioStream = this.streams.get(streamId);
+    if (!audioStream) {
+      return;
+    }
+    console.log(`buf consumed, seq num=${seqNum}`);
+    if (audioStream.nextSeqNum == seqNum + 1) {
+      this.dispatchEvent(new CustomEvent('waiting', { detail: streamId }));
+    }
   }
 }
 
@@ -376,7 +379,7 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
  */
 export class WebAudioTextToSpeech extends TextToSpeechBase {
   private readonly chunkBuffer: AudioChunk[] = [];
-  private streamId?: string;
+  private streamId: string = '';
   private updating = false;
   private inProgress = false;
   constructor(name: string) {
@@ -388,10 +391,8 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
       console.log(`[${this.name}] tts starting play`);
       this.audio.srcObject = outputManager.createStream();
       this.streamId = this.audio.srcObject.id;
-      outputManager.addEventListener('waiting', (event: CustomEventInit<MediaStream>) => {
-        console.log(`[${this.name}] tts Waiting`);
+      outputManager.addEventListener('waiting', (event: CustomEventInit<string>) => {
         if (event.detail == this.streamId) {
-          console.log(`[${this.name}] tts waitinG`);
           this.setComplete();
         }
       });
@@ -414,8 +415,8 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     console.log(`[${this.name}] tts skipping`);
     // Cancel any pending requests, discard any chunks in our queue, and
     // reset our audio element.
-    outputManager.destroyStream(this.streamId!); //++++
-    this.streamId = undefined;
+    outputManager.destroyStream(this.streamId!);
+    this.streamId = '';
     this.chunkBuffer.length = 0;
     this.audio.srcObject = null;
     this.audio.currentTime = 0;
@@ -428,8 +429,8 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     this.tearDown();
   }
 
-  getAnalyzer() {
-    return outputManager.getAnalyzer(this.streamId!); //++++
+  get analyzer() {
+    return outputManager.getAnalyzer(this.streamId);
   }
 
   /**
@@ -451,7 +452,7 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
       this.updating = true;
       const chunk = this.chunkBuffer.shift()!;
       console.log(`[${this.name}] decoding chunk`);
-      await outputManager.appendBuffer(this.streamId!, chunk); //++++
+      await outputManager.appendBuffer(this.streamId, chunk);
       this.updating = false;
       if (!this.playing) {
         this.setPlaying();
