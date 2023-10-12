@@ -44,7 +44,7 @@ In the Fixie Dashboard, go into [Documents](https://console.fixie.ai/documents).
 
 For each query that you run, you will notice that you are getting back a list of chunks. These chunks were created when Fixie crawled the sources for the document collection. Each chunk also has a score that indicates how similar the chunk is to the query (higher scores mean higher similarity).
 
-### Hooking up to our Sidekick
+### Hooking up the GitHub Collection to our Sidekick
 
 1. Add the following line to your project's index.tsx file:
 

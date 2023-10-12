@@ -76,7 +76,6 @@ To use the `<Citation>` and `<NextStepsButton>` components, we need to update ou
 
 ```tsx
 <Sidekick
-  role="GitHub assistant"
   systemMessage={systemMessage}
   tools={tools}
   outputFormat="text/mdx"
@@ -130,7 +129,6 @@ const genUIExamples = (
 
 const mySidekick = (
   <Sidekick
-    role="Github Assistant"
     systemMessage={systemMessage}
     tools={tools}
     genUIComponentNames={genUIComponentNames}
