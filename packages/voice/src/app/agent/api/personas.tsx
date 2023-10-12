@@ -110,7 +110,6 @@ export const CatchPhrase = {
   initialResponses: CP_INITIAL_RESPONSES,
 };
 
-
 const ST_PROMPT = `You are a coach helping students learn to speak Spanish. Talk to them in basic Spanish, but
 correct them in English if they say something that's not quite right.
 Respond according to the following script:
