@@ -4,6 +4,6 @@ export {
   FloatingFixieEmbed,
   ControlledFloatingFixieEmbed,
   getBaseIframeProps,
-  FixieEmbedProps,
+  type FixieEmbedProps,
 } from './src/fixie-embed.js';
 export * from './src/use-fixie.js';
