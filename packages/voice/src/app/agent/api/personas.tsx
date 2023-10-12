@@ -109,3 +109,26 @@ export const CatchPhrase = {
   prompt: CP_PROMPT,
   initialResponses: CP_INITIAL_RESPONSES,
 };
+
+
+const ST_PROMPT = `You are a coach helping students learn to speak Spanish. Talk to them in basic Spanish, but
+correct them in English if they say something that's not quite right.
+Respond according to the following script:
+1. Greet the student, and ask them how they are doing.
+2. Ask them what they did today.
+3. Ask followup questions based on the above.
+`;
+
+const ST_INITIAL_RESPONSES = [
+  'Hola, ¿cómo estás?',
+  'Hola, ¿qué tal?',
+  'Hola, ¿qué pasa?',
+  'Hola, ¿qué haces?',
+  'Hola, ¿qué hiciste hoy?',
+];
+
+export const SpanishTutor = {
+  name: 'spanish-tutor',
+  prompt: ST_PROMPT,
+  initialResponses: ST_INITIAL_RESPONSES,
+};
