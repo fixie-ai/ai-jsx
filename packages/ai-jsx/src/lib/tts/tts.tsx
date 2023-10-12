@@ -681,8 +681,9 @@ export class AzureTextToSpeech extends RestTextToSpeech {
  */
 export class ElevenLabsTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM';
+  static readonly DEFAULT_MODEL = 'eleven_monolingual_v1';
   constructor(urlFunc: BuildUrl, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
-    super('eleven', urlFunc, voice, rate);
+    super('eleven', urlFunc, voice, rate, model);
   }
 }
 
@@ -879,8 +880,8 @@ interface ElevenLabsOutboundMessage {
 export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
   private readonly contentType: string;
   private readonly tokenPromise: Promise<string>;
-  constructor(private readonly tokenFunc: GetToken, voice = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
-    const model_id = 'eleven_monolingual_v1';
+  constructor(private readonly tokenFunc: GetToken, voice = ElevenLabsTextToSpeech.DEFAULT_VOICE, model=ElevenLabsTextToSpeech.DEFAULT_MODEL) {
+    const model_id = model;
     const optimize_streaming_latency = '22'; // doesn't seem to have any effect
     const output_format = 'pcm_22050'; // 44100' requires $99/mo plan
     const params = new URLSearchParams({ model_id, optimize_streaming_latency, output_format });
@@ -967,7 +968,7 @@ export interface TextToSpeechOptions {
 /**
  * Factory function to create a text-to-speech service for the specified provider.
  */
-export function createTextToSpeech({ provider, proto, rate, voice, getToken, buildUrl }: TextToSpeechOptions) {
+export function createTextToSpeech({ provider, proto, voice, rate, model, getToken, buildUrl }: TextToSpeechOptions) {
   if (!proto || proto == 'rest') {
     switch (provider) {
       case 'azure':
@@ -975,7 +976,7 @@ export function createTextToSpeech({ provider, proto, rate, voice, getToken, bui
       case 'aws':
         return new AwsTextToSpeech(buildUrl!, voice, rate);
       case 'eleven':
-        return new ElevenLabsTextToSpeech(buildUrl!, voice);
+        return new ElevenLabsTextToSpeech(buildUrl!, voice, model);
       case 'gcp':
         return new GcpTextToSpeech(buildUrl!, voice, rate);
       case 'lmnt':
@@ -994,7 +995,7 @@ export function createTextToSpeech({ provider, proto, rate, voice, getToken, bui
   } else {
     switch (provider) {
       case 'eleven':
-        return new ElevenLabsWebSocketTextToSpeech(getToken!, voice);
+        return new ElevenLabsWebSocketTextToSpeech(getToken!, voice, model);
       case 'lmnt':
         return new LmntWebSocketTextToSpeech(getToken!, voice);
       default:
