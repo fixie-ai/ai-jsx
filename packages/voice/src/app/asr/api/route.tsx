@@ -1,8 +1,13 @@
 /** @jsxImportSource ai-jsx */
 import { NextRequest, NextResponse } from 'next/server';
 // TODO(juberti): figure out why these packages make node unhappy
-// import { Deepgram  } from "@deepgram/sdk";
-// import { SpeechClient } from "@soniox/soniox-node";
+//import { Deepgram } from '@deepgram/sdk';
+//import { SpeechClient } from '@soniox/soniox-node';
+
+//const sonioxClient = new SpeechClient({api_key: getEnvVar("SONIOX_API_KEY")});
+//const deepgramClient = new Deepgram(process.env.DEEPGRAM_API_KEY);
+
+export const runtime = 'edge'; // 'nodejs' is the default
 
 type GetTokenFunction = () => Promise<string>;
 interface FunctionMap {
@@ -30,22 +35,11 @@ export async function POST(request: NextRequest) {
   return new NextResponse(JSON.stringify({ token: await func() }));
 }
 
-function getApiKey(keyName: string) {
-  const key = process.env[keyName];
-  if (!key) {
-    throw new Error('API key not provided ');
-  }
-  return new Promise<string>((resolve) => {
-    setTimeout(() => resolve(key), 0);
-  });
-}
-
 function getDeepgramToken() {
   return getApiKey('DEEPGRAM_API_KEY');
   /*
-  const client = new Deepgram(process.env.DEEPGRAM_API_KEY);
   const projectId = process.env.DEEPGRAM_PROJECT_ID;
-  const { key } = await client.keys.create(
+  const { key } = await deepgramClient.keys.create(
     projectId,
     "Ephemeral websocket key",
     ["usage:write"],
@@ -55,12 +49,10 @@ function getDeepgramToken() {
   */
 }
 
-function getSonioxToken() {
+async function getSonioxToken() {
   return getApiKey('SONIOX_API_KEY');
-  /*
-  const client = new SpeechClient(process.env.SONIOX_API_KEY);
-  return await client.getToken();
-  */
+  //const response = await sonioxClient.createTemporaryApiKey({usage_type: "blah", expires_in_s: KEY_LIFETIME_SECONDS, client_request_reference: "foo"});
+  //return response.key;
 }
 
 function getGladiaToken() {
@@ -72,7 +64,7 @@ function getRevAIToken() {
 }
 
 async function getSpeechmaticsToken() {
-  const apiKey = process.env.SPEECHMATICS_API_KEY;
+  const apiKey = getEnvVar('SPEECHMATICS_API_KEY');
   const response = await fetch('https://mp.speechmatics.com/v1/api_keys?type=rt', {
     method: 'POST',
     headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
@@ -83,7 +75,7 @@ async function getSpeechmaticsToken() {
 }
 
 async function getAssemblyAIToken() {
-  const apiKey = process.env.AAI_API_KEY;
+  const apiKey = getEnvVar('AAI_API_KEY');
   const response = await fetch('https://api.assemblyai.com/v2/realtime/token', {
     method: 'POST',
     headers: { Authorization: `${apiKey}`, 'Content-Type': 'application/json' },
@@ -91,4 +83,22 @@ async function getAssemblyAIToken() {
   });
   const json = await response.json();
   return json.token;
+}
+
+function getApiKey(keyName: string) {
+  const key = getEnvVar(keyName);
+  if (!key) {
+    throw new Error('API key not provided ');
+  }
+  return new Promise<string>((resolve) => {
+    setTimeout(() => resolve(key), 0);
+  });
+}
+
+function getEnvVar(keyName: string) {
+  const key = process.env[keyName];
+  if (!key) {
+    throw new Error(`API key "${keyName}" not provided. Please set it as an env var.`);
+  }
+  return key;
 }
