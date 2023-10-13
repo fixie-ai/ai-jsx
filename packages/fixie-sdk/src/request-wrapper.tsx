@@ -18,8 +18,30 @@ export const RequestContext = AI.createContext<{
  *
  * Emits newline-delimited JSON for each message.
  */
-export function FixieRequestWrapper({ children }: { children: AI.Node }, { getContext, memo }: AI.ComponentContext) {
-  let wrappedNode: AI.Node = (
+export function FixieRequestWrapper(
+  {
+    children,
+    fixieApiUrl,
+    fixieAuthToken,
+    request,
+    agentId,
+  }: { children: AI.Node; fixieApiUrl: string; fixieAuthToken: string; agentId: string; request: InvokeAgentRequest },
+  { logger }: AI.ComponentContext
+) {
+  // Set OpenTelemetry span attributes to relate the telemetry with the request.
+  logger.setAttribute('ai.fixie.agent_id', agentId);
+  logger.setAttribute('ai.fixie.conversation_id', request.conversationId);
+  logger.setAttribute('ai.fixie.message_id', request.turnId);
+
+  let wrappedNode = children;
+
+  wrappedNode = (
+    <ConversationHistoryContext.Provider value={<FixieConversation />}>
+      {wrappedNode}
+    </ConversationHistoryContext.Provider>
+  );
+
+  wrappedNode = (
     <ShowConversation
       present={(message) => {
         switch (message.type) {
@@ -64,19 +86,17 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
         }
       }}
     >
-      {children}
+      {wrappedNode}
     </ShowConversation>
   );
-
-  const { url: apiBaseUrl, authToken } = getContext(FixieAPIContext);
 
   // Set both OpenAI and Anthropic Clients, but set the default chat/completion models to OpenAI.
   wrappedNode = (
     <OpenAI
       client={
         new OpenAIClient({
-          apiKey: authToken,
-          baseURL: new URL('api/openai-proxy/v1', apiBaseUrl).toString(),
+          apiKey: fixieAuthToken,
+          baseURL: new URL('api/openai-proxy/v1', fixieApiUrl).toString(),
           fetch: globalThis.fetch,
         })
       }
@@ -90,7 +110,11 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
   wrappedNode = (
     <Anthropic
       client={
-        new AnthropicClient({ authToken, apiKey: null, baseURL: new URL('api/anthropic-proxy', apiBaseUrl).toString() })
+        new AnthropicClient({
+          authToken: fixieAuthToken,
+          apiKey: null,
+          baseURL: new URL('api/anthropic-proxy', fixieApiUrl).toString(),
+        })
       }
     >
       {wrappedNode}
@@ -100,15 +124,19 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
   // Add the Cohere client.
   wrappedNode = (
     <cohereContext.Provider
-      value={{ api_key: authToken, api_url: new URL('api/cohere-proxy/v1', apiBaseUrl).toString() }}
+      value={{ api_key: fixieAuthToken, api_url: new URL('api/cohere-proxy/v1', fixieApiUrl).toString() }}
     >
       {wrappedNode}
     </cohereContext.Provider>
   );
 
-  return (
-    <ConversationHistoryContext.Provider value={memo(<FixieConversation />)}>
+  wrappedNode = <RequestContext.Provider value={{ request, agentId }}>{wrappedNode}</RequestContext.Provider>;
+
+  wrappedNode = (
+    <FixieAPIContext.Provider value={{ url: fixieApiUrl, authToken: fixieAuthToken }}>
       {wrappedNode}
-    </ConversationHistoryContext.Provider>
+    </FixieAPIContext.Provider>
   );
+
+  return wrappedNode;
 }
