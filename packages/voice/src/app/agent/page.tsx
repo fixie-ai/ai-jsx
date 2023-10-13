@@ -422,7 +422,7 @@ const PageComponent: React.FC = () => {
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [onKeyDown]);
-
+  const showMenu = false;
   return (
     <>
       {showChooser && (
@@ -437,41 +437,45 @@ const PageComponent: React.FC = () => {
         <div className="flex justify-center mb-8">
           <Image src="/voice-logo.png" alt="Fixie Voice" width={322} height={98} priority={true} />
         </div>
-        <p className="font-sm ml-2 mb-6 text-center">
-          This demo allows you to chat (via voice) with a drive-thru agent at a fictional donut shop. Click Start
-          Chatting (or tap the spacebar) to begin.
-        </p>
-        <div className="grid grid-cols-2 lg:gap-x-24">
-          <div className="p-4">
-            <p className="text-lg font-bold">🍩 DONUTS</p>
-            <ul className="text-sm">
-              <MenuItem name="PUMPKIN SPICE ICED" price={1.29} />
-              <MenuItem name="PUMPKIN SPICE CAKE" price={1.29} />
-              <MenuItem name="OLD FASHIONED" price={0.99} />
-              <MenuItem name="CHOCOLATE ICED" price={1.09} />
-              <MenuItem name="CHOCOLATE ICED WITH SPRINKLES" price={1.09} />
-              <MenuItem name="RASPBERRY FILLED" price={1.09} />
-              <MenuItem name="BLUEBERRY CAKE" price={1.09} />
-              <MenuItem name="STRAWBERRY ICED WITH SPRINKLES" price={1.09} />
-              <MenuItem name="LEMON FILLED" price={1.09} />
-              <MenuItem name="DOUGHNUT HOLES" price={3.99} />
-            </ul>
-          </div>
-          <div className="p-4">
-            <p className="text-lg font-bold">☕️ COFFEE</p>
-            <ul className="text-sm">
-              <MenuItem name="PUMPKIN SPICE COFFEE" price={2.59} />
-              <MenuItem name="PUMPKIN SPICE LATTE" price={4.59} />
-              <MenuItem name="REGULAR BREWED COFFEE" price={1.79} />
-              <MenuItem name="DECAF BREWED COFFEE" price={1.79} />
-              <MenuItem name="LATTE" price={3.49} />
-              <MenuItem name="CAPPUCINO" price={3.49} />
-              <MenuItem name="CARAMEL MACCHIATO" price={3.49} />
-              <MenuItem name="MOCHA LATTE" price={3.49} />
-              <MenuItem name="CARAMEL MOCHA LATTE" price={3.49} />
-            </ul>
-          </div>
-        </div>
+        {showMenu && (
+          <>
+            <p className="font-sm ml-2 mb-6 text-center">
+              This demo allows you to chat (via voice) with a drive-thru agent at a fictional donut shop. Click Start
+              Chatting (or tap the spacebar) to begin.
+            </p>
+            <div className="grid grid-cols-2 lg:gap-x-24">
+              <div className="p-4">
+                <p className="text-lg font-bold">🍩 DONUTS</p>
+                <ul className="text-sm">
+                  <MenuItem name="PUMPKIN SPICE ICED" price={1.29} />
+                  <MenuItem name="PUMPKIN SPICE CAKE" price={1.29} />
+                  <MenuItem name="OLD FASHIONED" price={0.99} />
+                  <MenuItem name="CHOCOLATE ICED" price={1.09} />
+                  <MenuItem name="CHOCOLATE ICED WITH SPRINKLES" price={1.09} />
+                  <MenuItem name="RASPBERRY FILLED" price={1.09} />
+                  <MenuItem name="BLUEBERRY CAKE" price={1.09} />
+                  <MenuItem name="STRAWBERRY ICED WITH SPRINKLES" price={1.09} />
+                  <MenuItem name="LEMON FILLED" price={1.09} />
+                  <MenuItem name="DOUGHNUT HOLES" price={3.99} />
+                </ul>
+              </div>
+              <div className="p-4">
+                <p className="text-lg font-bold">☕️ COFFEE</p>
+                <ul className="text-sm">
+                  <MenuItem name="PUMPKIN SPICE COFFEE" price={2.59} />
+                  <MenuItem name="PUMPKIN SPICE LATTE" price={4.59} />
+                  <MenuItem name="REGULAR BREWED COFFEE" price={1.79} />
+                  <MenuItem name="DECAF BREWED COFFEE" price={1.79} />
+                  <MenuItem name="LATTE" price={3.49} />
+                  <MenuItem name="CAPPUCINO" price={3.49} />
+                  <MenuItem name="CARAMEL MACCHIATO" price={3.49} />
+                  <MenuItem name="MOCHA LATTE" price={3.49} />
+                  <MenuItem name="CARAMEL MOCHA LATTE" price={3.49} />
+                </ul>
+              </div>
+            </div>
+          </>
+        )}
         <div>
           {showOutput && (
             <div

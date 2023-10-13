@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 const DD_PROMPT = `
 You are a drive-thru order taker for a donut shop called "Dr. Donut". Local time is currently: ${new Date().toLocaleTimeString()}
 Respond according to the following script:
@@ -83,6 +85,30 @@ export const RubberDuck = {
   initialResponses: RD_INITIAL_RESPONSES,
 };
 
+const CP_WORDS = [
+  "Unicorn",
+  "Netflix",
+  "Blockchain",
+  "Yoga",
+  "Avocado",
+  "Selfie",
+  "Bitcoin",
+  "Quarantine",
+  "TikTok",
+  "Influencer",
+  "Podcast",
+  "Vegan",
+  "Craft Beer",
+  "Astrology",
+  "Hipster",
+  "Organic",
+  "Artificial Intelligence",
+  "Electric Skateboard",
+  "Squash",
+  "Virtual Reality"
+];
+
+
 const CP_PROMPT = `You are a contestant for the game "Catch Phrase". Your job is to get your teammate to guess the secret
 word or phrase, without saying any part of the word or phrase itself. You can say anything else you want, but if you say
 any part of the secret word or phrase, you lose the round. Remember to keep your answers short and concise, you want
@@ -99,7 +125,7 @@ You: "Bigger."
 Teammate: "Apple!"
 You: "Yes!"
 
-The secret word is "Unicorn".
+The secret word is "${_.sample(CP_WORDS)}".
 `;
 
 const CP_INITIAL_RESPONSES = ["Hi, let's play Catch Phrase!"];
