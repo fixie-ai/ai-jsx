@@ -1,8 +1,10 @@
 /** @jsxImportSource ai-jsx */
 import { NextRequest, NextResponse } from 'next/server';
 import _ from 'lodash';
-import { AwsClient } from 'aws4fetch';
 import { getEnvVar } from '../../common';
+// TODO(juberti): get proper typescript definitions for aws4fetch
+const aws4fetch = require('aws4fetch');
+const { AwsClient } = aws4fetch;
 
 export const runtime = 'edge'; // 'nodejs' is the default
 
@@ -128,29 +130,6 @@ export async function GET(request: NextRequest) {
   }
   const stream = makeStreamFromReader(timer, response.body!.getReader());
   return new NextResponse(stream, { headers: response.headers, status: response.status });
-}
-
-async function ttsPlayHTGrpc(voice: string, rate: number, text: string) {
-  const opts: PlayHTAPI.SpeechStreamOptions = {
-    voiceEngine: 'PlayHT2.0-turbo',
-    voiceId: voice,
-    outputFormat: 'mp3',
-    quality: 'draft',
-    speed: rate,
-  };
-  let controller: ReadableStreamDefaultController;
-  const stream = new ReadableStream({
-    start(c) {
-      controller = c;
-    },
-  });
-  PlayHTAPI.init({ apiKey: getEnvVar('PLAYHT_API_KEY'), userId: getEnvVar('PLAYHT_USER_ID') });
-  const nodeStream = await PlayHTAPI.stream(text, opts);
-  nodeStream.on('data', (chunk) => controller.enqueue(new Uint8Array(chunk)));
-  nodeStream.on('end', () => controller.close());
-  nodeStream.on('error', (err) => controller.error(err));
-  const mimeType = AUDIO_MPEG_MIME_TYPE;
-  return new NextResponse(stream, { headers: { 'Content-Type': mimeType } });
 }
 
 /**
