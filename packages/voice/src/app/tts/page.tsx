@@ -31,19 +31,19 @@ interface TtsProps {
   model?: string;
 }
 
-const buildUrl = ({provider, text, voice, rate, model?}: BuildUrlOptions) => {
+const buildUrl = ({provider, text, voice, rate, model?, runtime = 'edge'}: BuildUrlOptions) => {
   const params = new URLSearchParams({
     provider,
     text,
     voice,
     rate: rate.toString(),
-    model
+    model,
   });
-  return `/tts/api?${params}`;
+  return `/tts/api/generate/${runtime}?${params}`;
 };
 
 const getToken = async (provider: string) => {
-  const response = await fetch('/tts/api', {
+  const response = await fetch('/tts/api/token/edge', {
     method: 'POST',
     body: JSON.stringify({ provider }),
   });

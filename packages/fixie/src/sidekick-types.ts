@@ -1,18 +1,11 @@
 import { Jsonifiable } from 'type-fest';
 
-export type MessageGenerationParams = Partial<{
-  modelProvider: string | null;
-  model: string | null;
-  userTimeZoneOffset: number;
-}>;
-
 export type AgentId = string;
 export type ConversationId = string;
 export type Metadata = Record<string, Jsonifiable | undefined>;
 export interface MessageRequestParams {
   message: string;
   metadata?: Metadata;
-  generationParams: MessageGenerationParams | null;
 }
 
 export interface BaseConversationTurn<Role extends string> {
@@ -58,8 +51,6 @@ export interface AssistantConversationTurn extends UserOrAssistantConversationTu
    * The user turn that this turn was a reply to.
    */
   inReplyToId: string;
-
-  generationParams: MessageGenerationParams | null;
 }
 
 export interface UserConversationTurn extends UserOrAssistantConversationTurn<'user'> {}
