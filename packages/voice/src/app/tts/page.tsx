@@ -31,15 +31,10 @@ interface TtsProps {
   model?: string;
 }
 
-const buildUrl = ({provider, text, voice, rate, model?, runtime = 'edge'}: BuildUrlOptions) => {
-  const params = new URLSearchParams({
-    provider,
-    text,
-    voice,
-    rate: rate.toString(),
-    model,
-  });
-  return `/tts/api/generate/${runtime}?${params}`;
+const buildUrl = (options: BuildUrlOptions) => {
+  const params = new URLSearchParams();
+  Object.entries(options).forEach(([key, value]) => params.set(key, value.toString()));
+  return `/tts/api/generate/edge?${params}`;
 };
 
 const getToken = async (provider: string) => {

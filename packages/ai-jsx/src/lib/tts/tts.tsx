@@ -362,7 +362,7 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
   }
   play(text: string) {
     this.playMillis = performance.now();
-    this.audio.src = this.urlFunc({provider: this.name, text, voice: this.voice, rate: this.rate});
+    this.audio.src = this.urlFunc({ provider: this.name, text, voice: this.voice, rate: this.rate });
     this.audio.play();
   }
   flush() {}
@@ -649,7 +649,9 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     const shortText = req.text.length > 20 ? `${req.text.substring(0, 20)}...` : req.text;
     console.debug(`[${this.name}] requesting chunk: ${shortText}`);
     req.sendTimestamp = performance.now();
-    const res = await fetch(this.urlFunc({provider: this.name, text: req.text, voice: this.voice, rate: this.rate, model: this.model}));
+    const res = await fetch(
+      this.urlFunc({ provider: this.name, text: req.text, voice: this.voice, rate: this.rate, model: this.model })
+    );
     if (!res.ok) {
       this.stop();
       this.setComplete(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
@@ -691,7 +693,12 @@ export class AzureTextToSpeech extends RestTextToSpeech {
 export class ElevenLabsTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM';
   static readonly DEFAULT_MODEL = 'eleven_monolingual_v1';
-  constructor(urlFunc: BuildUrl, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+  constructor(
+    urlFunc: BuildUrl,
+    voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE,
+    rate: number = 1.0,
+    model = ElevenLabsTextToSpeech.DEFAULT_MODEL
+  ) {
     super('eleven', urlFunc, voice, rate, model);
   }
 }
@@ -889,7 +896,11 @@ interface ElevenLabsOutboundMessage {
 export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
   private readonly contentType: string;
   private readonly tokenPromise: Promise<string>;
-  constructor(private readonly tokenFunc: GetToken, voice = ElevenLabsTextToSpeech.DEFAULT_VOICE, model=ElevenLabsTextToSpeech.DEFAULT_MODEL) {
+  constructor(
+    private readonly tokenFunc: GetToken,
+    voice = ElevenLabsTextToSpeech.DEFAULT_VOICE,
+    model = ElevenLabsTextToSpeech.DEFAULT_MODEL
+  ) {
     const model_id = model;
     const optimize_streaming_latency = '22'; // doesn't seem to have any effect
     const output_format = 'pcm_22050'; // 44100' requires $99/mo plan
@@ -986,7 +997,7 @@ export function createTextToSpeech({ provider, proto, voice, rate, model, getTok
       case 'aws':
         return new AwsTextToSpeech(buildUrl!, voice, rate);
       case 'eleven':
-        return new ElevenLabsTextToSpeech(buildUrl!, voice, model);
+        return new ElevenLabsTextToSpeech(buildUrl!, voice, rate, model);
       case 'gcp':
         return new GcpTextToSpeech(buildUrl!, voice, rate);
       case 'lmnt':
