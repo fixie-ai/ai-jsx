@@ -234,12 +234,20 @@ class AudioOutputManager extends EventTarget {
 const outputManager = new AudioOutputManager();
 outputManager.start();
 
+export interface BuildUrlOptions {
+  provider: string;
+  voice: string;
+  rate: number;
+  text: string;
+  model?: string;
+}
+
 /**
  * A function that can be used to build a URL for a text-to-speech
  * service. This URL will be used to retrieve an audio file that can be
  * played by an HTML5 audio element.
  */
-export type BuildUrl = (provider: string, voice: string, rate: number, text: string) => string;
+export type BuildUrl = (options: BuildUrlOptions) => string;
 
 /**
  * Defines a function that can be used to retrieve an ephemeral access token
@@ -354,7 +362,7 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
   }
   play(text: string) {
     this.playMillis = performance.now();
-    this.audio.src = this.urlFunc(this.name, this.voice, this.rate, text);
+    this.audio.src = this.urlFunc({provider: this.name, text, voice: this.voice, rate: this.rate});
     this.audio.play();
   }
   flush() {}
@@ -588,7 +596,8 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     name: string,
     private readonly urlFunc: BuildUrl,
     public readonly voice: string,
-    public readonly rate: number = 1.0
+    public readonly rate: number = 1.0,
+    public readonly model?: string
   ) {
     super(name);
   }
@@ -640,7 +649,7 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     const shortText = req.text.length > 20 ? `${req.text.substring(0, 20)}...` : req.text;
     console.debug(`[${this.name}] requesting chunk: ${shortText}`);
     req.sendTimestamp = performance.now();
-    const res = await fetch(this.urlFunc(this.name, this.voice, this.rate, req.text));
+    const res = await fetch(this.urlFunc({provider: this.name, text: req.text, voice: this.voice, rate: this.rate, model: this.model}));
     if (!res.ok) {
       this.stop();
       this.setComplete(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
@@ -961,6 +970,7 @@ export interface TextToSpeechOptions {
   proto?: TextToSpeechProtocol;
   rate?: number;
   voice?: string;
+  model?: string;
   getToken?: GetToken;
   buildUrl?: BuildUrl;
 }
