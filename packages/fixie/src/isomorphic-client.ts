@@ -1,5 +1,5 @@
 import type { Jsonifiable } from 'type-fest';
-import { AgentId, ConversationId, MessageGenerationParams, MessageRequestParams } from './sidekick-types.js';
+import { AgentId, ConversationId, MessageRequestParams } from './sidekick-types.js';
 
 export interface UserInfo {
   id: number;
@@ -188,7 +188,8 @@ export class IsomorphicFixieClient {
     excludeGlobs?: string[],
     maxDocuments?: number,
     maxDepth?: number,
-    description?: string
+    description?: string,
+    displayName?: string
   ): Promise<Jsonifiable> {
     /**
      * Mike says Apify won't like the querystring and fragment, so we'll remove them.
@@ -204,6 +205,7 @@ export class IsomorphicFixieClient {
     const body = {
       corpus_id: corpusId,
       source: {
+        displayName,
         description,
         corpus_id: corpusId,
         load_spec: {
@@ -296,16 +298,11 @@ export class IsomorphicFixieClient {
    * @see stopGeneration
    * @see regenerate
    */
-  async startConversation(agentId: AgentId, generationParams: MessageGenerationParams, message?: string) {
+  async startConversation(agentId: AgentId, message?: string) {
     const abortController = new AbortController();
     const signal = abortController.signal;
 
-    const conversation = await this.request(
-      `/api/v1/agents/${agentId}/conversations`,
-      { generationParams, message },
-      'POST',
-      { signal }
-    );
+    const conversation = await this.request(`/api/v1/agents/${agentId}/conversations`, { message }, 'POST', { signal });
     if (!conversation.body) {
       throw new Error('Request to start a new conversation was empty');
     }
@@ -380,14 +377,11 @@ export class IsomorphicFixieClient {
    *            Stream entry 1: text: hello world I am
    *            Stream entry 2: text: hello world
    */
-  regenerate(
-    agentId: AgentId,
-    conversationId: ConversationId,
-    messageId: string,
-    messageGenerationParams: MessageGenerationParams
-  ) {
-    return this.request(`/api/v1/agents/${agentId}/conversations/${conversationId}/messages/${messageId}/regenerate`, {
-      generationParams: messageGenerationParams,
-    });
+  regenerate(agentId: AgentId, conversationId: ConversationId, messageId: string) {
+    return this.request(
+      `/api/v1/agents/${agentId}/conversations/${conversationId}/messages/${messageId}/regenerate`,
+      undefined,
+      'POST'
+    );
   }
 }

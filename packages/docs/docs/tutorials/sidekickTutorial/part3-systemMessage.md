@@ -103,8 +103,6 @@ export function YourSidekickSystemMessage() {
     </>
   );
 }
-
-export const finalSystemMessageBeforeResponse = <></>;
 ```
 
 Now, in `index.tsx` replace the tools constant with the following code:

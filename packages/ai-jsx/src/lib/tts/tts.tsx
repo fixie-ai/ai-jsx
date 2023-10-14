@@ -193,10 +193,11 @@ class WavDemuxer extends Demuxer {
 class AudioStream {
   nextSeqNum = 0;
   demuxer?: Mp3Demuxer;
-  constructor(public outputNode: AudioWorkletNode, public destNode: MediaStreamAudioDestinationNode) {}
-  getNextSeqNum() {
-    return this.nextSeqNum++;
-  }
+  constructor(
+    public outputNode: AudioWorkletNode,
+    public destNode: MediaStreamAudioDestinationNode,
+    public analyzerNode?: AnalyserNode
+  ) {}
 }
 
 /**
@@ -223,41 +224,65 @@ class AudioOutputManager extends EventTarget {
     this.context?.close();
     this.context = undefined;
   }
-  createStream() {
+  createStream(wantAnalyzer = true) {
     if (!this.context) {
-      throw new Error('audio context not started');
+      throw new Error('AudioOutputManager not started');
     }
 
     this.context.resume();
     const outputNode = new AudioWorkletNode(this.context, 'output-processor');
     const destNode = this.context.createMediaStreamDestination();
     const streamId = destNode.stream.id;
-    outputNode.connect(destNode);
+    let analyzerNode;
+    if (wantAnalyzer) {
+      analyzerNode = this.context.createAnalyser();
+      outputNode.connect(analyzerNode).connect(destNode);
+    } else {
+      outputNode.connect(destNode);
+    }
     outputNode.port.onmessage = (e) => {
-      console.log(`stream ${streamId} buf consumed, seq num=${e.data.seqNum}`);
-      this.dispatchWaiting(destNode.stream);
+      this.handleBufferProcessed(streamId, e.data.seqNum);
     };
-    this.streams.set(streamId, new AudioStream(outputNode, destNode));
+    this.streams.set(streamId, new AudioStream(outputNode, destNode, analyzerNode));
     return destNode.stream;
   }
-  destroyStream(stream: MediaStream) {
-    const audioStream = this.streams.get(stream.id);
+  destroyStream(streamId: string) {
+    const audioStream = this.streams.get(streamId);
     if (!audioStream) {
       return;
     }
     audioStream.outputNode.port.onmessage = null;
     audioStream.outputNode.disconnect();
-    this.streams.delete(stream.id);
+    this.streams.delete(streamId);
   }
-  async appendBuffer(stream: MediaStream, chunk: AudioChunk) {
+  getAnalyzer(streamId: string) {
+    const audioStream = this.streams.get(streamId);
+    if (!audioStream) {
+      return;
+    }
+    return audioStream.analyzerNode;
+  }
+  async appendBuffer(streamId: string, chunk: AudioChunk) {
     if (chunk.isPcm) {
-      await this.appendPcmBuffer(stream, chunk);
+      await this.appendPcmBuffer(streamId, chunk.sampleRate, chunk.buffer);
     } else {
-      await this.appendEncodedBuffer(stream, chunk);
+      await this.appendEncodedBuffer(streamId, chunk.buffer);
     }
   }
-  private async appendEncodedBuffer(stream: MediaStream, encodedBuffer: AudioChunk) {
-    const audioStream = this.streams.get(stream.id);
+
+  ncodedBuffer: AudioChunk)
+  private async appendEncodedBuffer(streamId: string, encodedBuffer: ArrayBuffer) {
+    const seqNum = this.getNextSeqNum(streamId);
+    const buffer = await this.context?.decodeAudioData(encodedBuffer);
+    this.appendNativeBuffer(streamId, seqNum, buffer!.getChannelData(0));
+  }
+  private async appendPcmBuffer(streamId: string, sampleRate: number, inBuffer: ArrayBuffer) {
+    const seqNum = this.getNextSeqNum(streamId);
+    const buffer = await this.resamplePcmBuffer(sampleRate, inBuffer);
+    this.appendNativeBuffer(streamId, seqNum, buffer);
+  }
+  private getNextSeqNum(streamId: string) {
+    const audioStream = this.streams.get(streamId);
     if (!audioStream) {
       throw new Error('stream not found');
     }
@@ -309,8 +334,8 @@ class AudioOutputManager extends EventTarget {
     });
     return outBuffer;
   }
-  private appendNativeBuffer(stream: MediaStream, seqNum: number, buffer: Float32Array) {
-    const audioStream = this.streams.get(stream.id);
+  private appendNativeBuffer(streamId: string, seqNum: number, buffer: Float32Array) {
+    const audioStream = this.streams.get(streamId);
     if (!audioStream) {
       return;
     }
@@ -318,20 +343,35 @@ class AudioOutputManager extends EventTarget {
     console.log(`buf added, seq num=${seqNum}`);
     audioStream.outputNode.port.postMessage({ seqNum, channelData });
   }
-  private dispatchWaiting(stream: MediaStream) {
-    this.dispatchEvent(new CustomEvent('waiting', { detail: stream }));
+  private handleBufferProcessed(streamId: string, seqNum: number) {
+    const audioStream = this.streams.get(streamId);
+    if (!audioStream) {
+      return;
+    }
+    console.log(`buf consumed, seq num=${seqNum}`);
+    if (audioStream.nextSeqNum == seqNum + 1) {
+      this.dispatchEvent(new CustomEvent('waiting', { detail: streamId }));
+    }
   }
 }
 
 const outputManager = new AudioOutputManager();
 outputManager.start();
 
+export interface BuildUrlOptions {
+  provider: string;
+  voice: string;
+  rate: number;
+  text: string;
+  model?: string;
+}
+
 /**
  * A function that can be used to build a URL for a text-to-speech
  * service. This URL will be used to retrieve an audio file that can be
  * played by an HTML5 audio element.
  */
-export type BuildUrl = (provider: string, voice: string, rate: number, text: string) => string;
+export type BuildUrl = (options: BuildUrlOptions) => string;
 
 /**
  * Defines a function that can be used to retrieve an ephemeral access token
@@ -438,15 +478,15 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
   constructor(
     name: string,
     protected readonly urlFunc: BuildUrl,
-    private readonly voice: string,
-    private readonly rate = 1.0
+    public readonly voice: string,
+    public readonly rate = 1.0
   ) {
     super(name);
     this.audio.onplaying = () => this.setPlaying();
   }
   play(text: string) {
     this.playMillis = performance.now();
-    this.audio.src = this.urlFunc(this.name, this.voice, this.rate, text);
+    this.audio.src = this.urlFunc({ provider: this.name, text, voice: this.voice, rate: this.rate });
     this.audio.play();
   }
   flush() {}
@@ -471,6 +511,7 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
  */
 export class WebAudioTextToSpeech extends TextToSpeechBase {
   private readonly chunkBuffer: AudioChunk[] = [];
+  private streamId: string = '';
   private updating = false;
   private inProgress = false;
   constructor(name: string) {
@@ -481,8 +522,9 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     if (this.audio.readyState == 0) {
       console.log(`[${this.name}] tts starting play`);
       this.audio.srcObject = outputManager.createStream();
-      outputManager.addEventListener('waiting', (event: CustomEventInit<MediaStream>) => {
-        if (event.detail == this.audio.srcObject) {
+      this.streamId = this.audio.srcObject.id;
+      outputManager.addEventListener('waiting', (event: CustomEventInit<string>) => {
+        if (event.detail == this.streamId) {
           this.setComplete();
         }
       });
@@ -505,7 +547,8 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     console.log(`[${this.name}] tts skipping`);
     // Cancel any pending requests, discard any chunks in our queue, and
     // reset our audio element.
-    outputManager.destroyStream(this.audio.srcObject as MediaStream);
+    outputManager.destroyStream(this.streamId!);
+    this.streamId = '';
     this.chunkBuffer.length = 0;
     this.audio.srcObject = null;
     this.audio.currentTime = 0;
@@ -516,6 +559,10 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     console.log(`[${this.name}] tts stopping`);
     this.audio.pause();
     this.tearDown();
+  }
+
+  get analyzer() {
+    return outputManager.getAnalyzer(this.streamId);
   }
 
   /**
@@ -537,7 +584,7 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
       this.updating = true;
       const chunk = this.chunkBuffer.shift()!;
       console.log(`[${this.name}] decoding chunk`);
-      await outputManager.appendBuffer(this.audio.srcObject as MediaStream, chunk);
+      await outputManager.appendBuffer(this.streamId, chunk);
       this.updating = false;
       if (!this.playing) {
         this.setPlaying();
@@ -672,8 +719,9 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
   constructor(
     name: string,
     private readonly urlFunc: BuildUrl,
-    private readonly voice: string,
-    private readonly rate: number = 1.0
+    public readonly voice: string,
+    public readonly rate: number = 1.0,
+    public readonly model?: string
   ) {
     super(name);
   }
@@ -725,7 +773,9 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     const shortText = req.text.length > 20 ? `${req.text.substring(0, 20)}...` : req.text;
     console.debug(`[${this.name}] requesting chunk: ${shortText}`);
     req.sendTimestamp = performance.now();
-    const res = await fetch(this.urlFunc(this.name, this.voice, this.rate, req.text));
+    const res = await fetch(
+      this.urlFunc({ provider: this.name, text: req.text, voice: this.voice, rate: this.rate, model: this.model })
+    );
     if (!res.ok) {
       this.stop();
       this.setComplete(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
@@ -772,8 +822,14 @@ export class AzureTextToSpeech extends RestTextToSpeech {
  */
 export class ElevenLabsTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM';
-  constructor(urlFunc: BuildUrl, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
-    super('eleven', urlFunc, voice, rate);
+  static readonly DEFAULT_MODEL = 'eleven_monolingual_v1';
+  constructor(
+    urlFunc: BuildUrl,
+    voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE,
+    rate: number = 1.0,
+    model = ElevenLabsTextToSpeech.DEFAULT_MODEL
+  ) {
+    super('eleven', urlFunc, voice, rate, model);
   }
 }
 
@@ -805,7 +861,9 @@ export class MurfTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the Play.HT text-to-speech service.
  */
 export class PlayHTTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = 'victor'; // AKA 'Ariana'
+  // static readonly DEFAULT_VOICE = 'victor'; // AKA 'Ariana'
+  static readonly DEFAULT_VOICE =
+    's3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json';
   constructor(urlFunc: BuildUrl, voice: string = PlayHTTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('playht', urlFunc, voice, rate);
   }
@@ -836,13 +894,15 @@ export class WellSaidTextToSpeech extends RestTextToSpeech {
  * server and receives audio chunks as they are generated.
  */
 export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
-  protected socket: WebSocket;
+  private socket: WebSocket;
+  private socketReady: boolean;
   // Message buffer for when the socket is not yet open.
   private readonly socketBuffer: string[] = [];
   private pendingText: string = '';
-  constructor(name: string, private readonly url: string) {
+  constructor(name: string, private readonly url: string, public readonly voice: string) {
     super(name);
     this.socket = this.createSocket(url);
+    this.socketReady = false;
   }
   protected generate(text: string) {
     // Only send complete words (i.e., followed by a space) to the server.
@@ -872,6 +932,7 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
     this.socketBuffer.length = 0;
     this.pendingText = '';
     this.socket = this.createSocket(this.url);
+    this.socketReady = false;
   }
   protected tearDown() {
     this.socket.close();
@@ -886,12 +947,16 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
     const connectMillis = performance.now();
     const socket = new WebSocket(url);
     socket.binaryType = 'arraybuffer';
-    socket.onopen = (_event) => {
+    socket.onopen = async (_event) => {
       const elapsed = performance.now() - connectMillis;
       console.log(`[${this.name}] socket opened, elapsed=${elapsed.toFixed(0)}`);
-      this.handleOpen();
+      const openMsg = await this.createOpenRequest();
+      if (openMsg) {
+        this.socketBuffer.unshift(JSON.stringify(openMsg));
+      }
       this.socketBuffer.forEach((json) => this.socket.send(json));
       this.socketBuffer.length = 0;
+      this.socketReady = true;
     };
     socket.onmessage = (event) => {
       let message;
@@ -915,43 +980,38 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
       console.log(`[${this.name}] socket closed, code=${event.code} reason=${event.reason}`);
       if (event.code == 1000) {
         this.socket = this.createSocket(this.socket.url);
+        this.socketReady = false;
       }
     };
     return socket;
   }
   protected sendObject(obj: unknown) {
     const json = JSON.stringify(obj);
-    if (this.socket.readyState == WebSocket.OPEN) {
+    if (this.socketReady) {
       this.socket.send(json);
     } else {
       this.socketBuffer.push(json);
     }
   }
 
-  protected abstract handleOpen(): void;
   protected handleMessage(_message: unknown) {}
+  protected abstract createOpenRequest(): unknown;
   protected abstract createChunkRequest(_text: string): unknown;
   protected abstract createFlushRequest(): unknown;
 }
 
-class ElevenLabsInboundMessage {
+interface ElevenLabsInboundMessage {
   audio?: string;
   isFinal?: boolean;
   message?: string;
   error?: string;
   code?: number;
 }
-class ElevenLabsOutboundMessage {
-  constructor({ text, try_trigger_generation, generation_config, xi_api_key }: ElevenLabsOutboundMessage) {
-    this.text = text;
-    this.try_trigger_generation = try_trigger_generation;
-    this.generation_config = generation_config;
-    this.xi_api_key = xi_api_key;
-  }
+interface ElevenLabsOutboundMessage {
   text: string;
   voice_settings?: {
     stability: number;
-    similarity: number;
+    similarity_boost: boolean;
   };
   generation_config?: {
     chunk_length_schedule: number[];
@@ -965,30 +1025,20 @@ class ElevenLabsOutboundMessage {
  */
 export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
   private readonly contentType: string;
-  constructor(private readonly tokenFunc: GetToken, voice = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
-    const model_id = 'eleven_monolingual_v1';
+  private readonly tokenPromise: Promise<string>;
+  constructor(
+    private readonly tokenFunc: GetToken,
+    voice = ElevenLabsTextToSpeech.DEFAULT_VOICE,
+    model = ElevenLabsTextToSpeech.DEFAULT_MODEL
+  ) {
+    const model_id = model;
     const optimize_streaming_latency = '22'; // doesn't seem to have any effect
     const output_format = 'pcm_22050'; // 44100' requires $99/mo plan
     const params = new URLSearchParams({ model_id, optimize_streaming_latency, output_format });
     const url = `wss://api.elevenlabs.io/v1/text-to-speech/${voice}/stream-input?${params}`;
-    super('eleven', url);
+    super('eleven', url, voice);
     this.contentType = `${AUDIO_PCM_MIME_TYPE};rate=22050`;
-  }
-  protected async handleOpen() {
-    // A chunk_length_schedule of [50] means we'll try to generate a chunk
-    // once we have 50 characters of text buffered.
-    const obj = new ElevenLabsOutboundMessage({
-      text: ' ',
-      voice_settings: {
-        stability: 0.5,
-        similarity: 0.8,
-      },
-      generation_config: {
-        chunk_length_schedule: [50],
-      },
-      xi_api_key: await this.tokenFunc(this.name),
-    });
-    this.sendObject(obj);
+    this.tokenPromise = this.tokenFunc(this.name);
   }
   protected handleMessage(inMessage: unknown) {
     const message = inMessage as ElevenLabsInboundMessage;
@@ -1002,12 +1052,25 @@ export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
       console.error(`[${this.name}] error: ${message.message}`);
     }
   }
+  protected async createOpenRequest(): Promise<ElevenLabsOutboundMessage> {
+    return {
+      text: ' ',
+      voice_settings: {
+        stability: 0.5,
+        similarity_boost: false,
+      },
+      generation_config: {
+        chunk_length_schedule: [50],
+      },
+      xi_api_key: await this.tokenPromise,
+    };
+  }
   protected createChunkRequest(text: string): ElevenLabsOutboundMessage {
     // try_trigger_generation tries to force generation of chunks as soon as possible.
-    return new ElevenLabsOutboundMessage({ text: `${text} `, try_trigger_generation: true });
+    return { text: `${text} `, try_trigger_generation: true };
   }
   protected createFlushRequest(): ElevenLabsOutboundMessage {
-    return new ElevenLabsOutboundMessage({ text: '' });
+    return { text: '' };
   }
 }
 
@@ -1021,22 +1084,23 @@ class LmntOutboundMessage {
 }
 
 export class LmntWebSocketTextToSpeech extends WebSocketTextToSpeech {
-  constructor(private readonly tokenFunc: GetToken, private readonly voice = LmntTextToSpeech.DEFAULT_VOICE) {
+  private readonly tokenPromise: Promise<string>;
+  constructor(private readonly tokenFunc: GetToken, voice = LmntTextToSpeech.DEFAULT_VOICE) {
     const url = 'wss://api.lmnt.com/speech/beta/synthesize_streaming';
-    super('lmnt', url);
+    super('lmnt', url, voice);
+    this.tokenPromise = tokenFunc(this.name);
   }
-  protected async handleOpen() {
-    const obj = {
+  protected async createOpenRequest() {
+    return {
       voice: this.voice,
       'X-Api-Key': await this.tokenFunc(this.name),
     };
-    this.sendObject(obj);
   }
   protected createChunkRequest(text: string): LmntOutboundMessage {
-    return new LmntOutboundMessage({ text });
+    return { text };
   }
   protected createFlushRequest(): LmntOutboundMessage {
-    return new LmntOutboundMessage({ eof: true });
+    return { eof: true };
   }
 }
 
@@ -1047,6 +1111,7 @@ export interface TextToSpeechOptions {
   proto?: TextToSpeechProtocol;
   rate?: number;
   voice?: string;
+  model?: string;
   getToken?: GetToken;
   buildUrl?: BuildUrl;
 }
@@ -1054,7 +1119,7 @@ export interface TextToSpeechOptions {
 /**
  * Factory function to create a text-to-speech service for the specified provider.
  */
-export function createTextToSpeech({ provider, proto, rate, voice, getToken, buildUrl }: TextToSpeechOptions) {
+export function createTextToSpeech({ provider, proto, voice, rate, model, getToken, buildUrl }: TextToSpeechOptions) {
   if (!proto || proto == 'rest') {
     switch (provider) {
       case 'azure':
@@ -1062,7 +1127,7 @@ export function createTextToSpeech({ provider, proto, rate, voice, getToken, bui
       case 'aws':
         return new AwsTextToSpeech(buildUrl!, voice, rate);
       case 'eleven':
-        return new ElevenLabsTextToSpeech(buildUrl!, voice);
+        return new ElevenLabsTextToSpeech(buildUrl!, voice, rate, model);
       case 'gcp':
         return new GcpTextToSpeech(buildUrl!, voice, rate);
       case 'lmnt':
@@ -1081,7 +1146,7 @@ export function createTextToSpeech({ provider, proto, rate, voice, getToken, bui
   } else {
     switch (provider) {
       case 'eleven':
-        return new ElevenLabsWebSocketTextToSpeech(getToken!, voice);
+        return new ElevenLabsWebSocketTextToSpeech(getToken!, voice, model);
       case 'lmnt':
         return new LmntWebSocketTextToSpeech(getToken!, voice);
       default:

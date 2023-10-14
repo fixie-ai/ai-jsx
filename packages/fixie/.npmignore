@@ -1,0 +1,2 @@
+# N.B. Because this file exists, npm will not honor the local .gitignore.
+.*

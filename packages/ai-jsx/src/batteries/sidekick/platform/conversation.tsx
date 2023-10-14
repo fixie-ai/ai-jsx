@@ -15,6 +15,7 @@ import {
 import { LargeFunctionResponseWrapper, redactedFunctionTools } from './large-response-handler.js';
 import { ExecuteFunction, UseToolsProps } from '../../use-tools.js';
 import _ from 'lodash';
+import { SidekickOutputFormat } from './sidekick.js';
 
 /**
  * This function defines the shrinking policy. It's activated when the conversation history overflows the context
@@ -54,8 +55,8 @@ export function getShrinkableConversation(messages: ConversationMessage[], fullC
   });
 }
 
-export function present(conversationElement: ConversationMessage) {
-  if (conversationElement.type === 'assistant') {
+export function present(conversationElement: ConversationMessage, outputFormat: SidekickOutputFormat) {
+  if (conversationElement.type === 'assistant' && outputFormat === 'text/mdx') {
     return (
       <AssistantMessage>
         <LimitToValidMdx>{conversationElement.element}</LimitToValidMdx>
@@ -78,6 +79,7 @@ export function present(conversationElement: ConversationMessage) {
 export function getNextConversationStep(
   messages: ConversationMessage[],
   fullConversation: ConversationMessage[],
+  outputFormat: SidekickOutputFormat,
   tools?: UseToolsProps['tools']
 ) {
   const shrinkableConversation = getShrinkableConversation(messages, fullConversation);
@@ -118,14 +120,12 @@ export function getNextConversationStep(
      */
     case 'system':
     case 'user':
-    case 'functionResponse':
-      return (
-        <RepairMdxInConversation>
-          <ChatCompletion functionDefinitions={tools ? updatedTools : undefined}>
-            {shrinkableConversation}
-          </ChatCompletion>
-        </RepairMdxInConversation>
+    case 'functionResponse': {
+      const generation = (
+        <ChatCompletion functionDefinitions={tools ? updatedTools : undefined}>{shrinkableConversation}</ChatCompletion>
       );
+      return outputFormat === 'text/mdx' ? <RepairMdxInConversation>{generation}</RepairMdxInConversation> : generation;
+    }
     default:
       return null;
   }

@@ -2,10 +2,12 @@ import { SystemMessage } from '../../../core/conversation.js';
 import { MdxSystemMessage } from '../../../react/jit-ui/mdx.js';
 import { MdxUsageExamples } from './gen-ui.js';
 import { Node } from '../../../index.js';
-import { SidekickProps } from './sidekick.js';
+import { SidekickOutputFormat } from './sidekick.js';
 
-export interface SidekickSystemMessageProps
-  extends Pick<SidekickProps, 'outputFormat' | 'includeNextStepsRecommendations' | 'useCitationCard'> {
+export interface SidekickSystemMessageProps {
+  outputFormat: SidekickOutputFormat;
+  includeNextStepsRecommendations: boolean;
+  useCitationCard: boolean;
   timeZone: string;
   userProvidedGenUIUsageExamples?: Node;
   userProvidedGenUIComponentNames?: string[];

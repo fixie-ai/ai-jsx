@@ -283,7 +283,7 @@ export class FixieAgent {
       tempPath,
       `
       import Handler from '${handlerPath}';
-      export type RuntimeParameters = Parameters<typeof Handler>[0] extends infer T ? T : {};
+      export type RuntimeParameters = Parameters<typeof Handler> extends [infer T, ...any] ? T : {};
       `
     );
     const program = TJS.programFromConfig(tsconfigPath, [tempPath]);

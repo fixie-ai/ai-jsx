@@ -7,8 +7,9 @@ import {
   MicManager,
   Transcript,
 } from 'ai-jsx/lib/asr/asr';
-import { createTextToSpeech, TextToSpeechBase } from 'ai-jsx/lib/tts/tts';
+import { createTextToSpeech, BuildUrlOptions, TextToSpeechBase, TextToSpeechProtocol } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import '../globals.css';
 
 // 1. VAD triggers silence. (Latency here is frame size + VAD delay)
@@ -31,6 +32,22 @@ import '../globals.css';
 const DEFAULT_ASR_FRAME_SIZE = 100;
 const DEFAULT_ASR_PROVIDER = 'deepgram';
 const DEFAULT_TTS_PROVIDER = 'azure';
+const DEFAULT_LLM = 'gpt-4';
+const ASR_PROVIDERS = ['aai', 'deepgram', 'gladia', 'revai', 'soniox'];
+const TTS_PROVIDERS = [
+  'aws',
+  'azure',
+  'eleven',
+  'eleven-ws',
+  'gcp',
+  'lmnt',
+  'lmnt-ws',
+  'murf',
+  'playht',
+  'resemble',
+  'wellsaid',
+];
+const LLM_MODELS = ['claude-2', 'claude-instant-1', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'];
 
 /**
  * Retrieves an ephemeral token from the server for use in an ASR service.
@@ -48,7 +65,7 @@ async function getAsrToken(provider: string) {
  * Retrieves an ephemeral token from the server for use in an ASR service.
  */
 async function getTtsToken(provider: string) {
-  const response = await fetch('/tts/api', {
+  const response = await fetch('/tts/api/token/edge', {
     method: 'POST',
     body: JSON.stringify({ provider }),
   });
@@ -59,8 +76,10 @@ async function getTtsToken(provider: string) {
 /**
  * Builds a URL for use in a TTS service.
  */
-function buildTtsUrl(provider: string, voice: string, rate: number, text: string) {
-  return `/tts/api?provider=${provider}&voice=${voice}&rate=${rate}&text=${text}`;
+function buildTtsUrl(options: BuildUrlOptions) {
+  const params = new URLSearchParams();
+  Object.entries(options).forEach(([key, value]) => params.set(key, value.toString()));
+  return `/tts/api/generate/edge?${params}`;
 }
 
 /**
@@ -122,6 +141,7 @@ class ChatManagerInit {
     public readonly ttsProvider: string,
     public readonly model: string,
     public readonly docs: boolean,
+    public readonly asrLanguage?: string,
     public readonly ttsVoice?: string
   ) {}
 }
@@ -142,11 +162,18 @@ class ChatManager {
   onAudioStart?: (latency: number) => void;
   onAudioEnd?: () => void;
   onError?: () => void;
-  constructor({ asrProvider, ttsProvider, ttsVoice, model, docs }: ChatManagerInit) {
+  constructor({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, docs }: ChatManagerInit) {
     this.micManager = new MicManager();
-    this.asr = createSpeechRecognition({ provider: asrProvider, manager: this.micManager, getToken: getAsrToken });
+    this.asr = createSpeechRecognition({
+      provider: asrProvider,
+      manager: this.micManager,
+      getToken: getAsrToken,
+      language: asrLanguage,
+    });
+    const ttsSplit = ttsProvider.split('-');
     this.tts = createTextToSpeech({
-      provider: ttsProvider,
+      provider: ttsSplit[0],
+      proto: ttsSplit[1] as TextToSpeechProtocol,
       getToken: getTtsToken,
       buildUrl: buildTtsUrl,
       voice: ttsVoice,
@@ -262,6 +289,32 @@ class ChatManager {
   }
 }
 
+const Dropdown: React.FC<{ label: string; param: string; value: string; options: string[] }> = ({
+  param,
+  label,
+  value,
+  options,
+}) => (
+  <>
+    <label className="text-xs ml-2 font-bold">{label}</label>
+    <select
+      value={value}
+      onChange={(e) => {
+        const params = new URLSearchParams(window.location.search);
+        params.set(param, e.target.value);
+        window.location.search = params.toString();
+      }}
+      className="text-xs ml-1 pt-1 pb-1 border rounded"
+    >
+      {options.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  </>
+);
+
 const MenuItem: React.FC<{ name: string; price: number }> = ({ name, price }) => (
   <li className="flex justify-between">
     <span className="text-left">{name}</span>
@@ -278,7 +331,7 @@ const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React
     onClick={onClick}
     disabled={disabled}
     className={`ml-2 rounded-md ${
-      disabled ? 'bg-gray-300' : 'bg-fixie-fresh-salmon hover:bg-fixie-ripe-salmon'
+      disabled ? 'bg-gray-300' : 'bg-fixie-charcoal hover:bg-fixie-dark-gray'
     } px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon`}
   >
     {children}
@@ -295,20 +348,24 @@ const Latency: React.FC<{ name: string; latency: number }> = ({ name, latency })
 const PageComponent: React.FC = () => {
   const searchParams = useSearchParams();
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
+  const asrLanguage = searchParams.get('asrLanguage') || undefined;
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
   const ttsVoice = searchParams.get('ttsVoice') || undefined;
-  const model = searchParams.get('llm') || 'gpt-4';
+  const model = searchParams.get('llm') || DEFAULT_LLM;
   const docs = Boolean(searchParams.get('docs'));
+  const showChooser = Boolean(searchParams.get('chooser'));
+  const showInput = Boolean(!searchParams.get('noInput'));
+  const showOutput = Boolean(!searchParams.get('noOutput'));
+  const showStats = Boolean(searchParams.get('stats'));
   const [chatManager, setChatManager] = useState<ChatManager | null>(null);
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
   const [asrLatency, setAsrLatency] = useState(0);
   const [llmLatency, setLlmLatency] = useState(0);
   const [ttsLatency, setTtsLatency] = useState(0);
-
   const active = () => Boolean(chatManager);
   const handleStart = () => {
-    const manager = new ChatManager({ asrProvider, ttsProvider, ttsVoice, model, docs });
+    const manager = new ChatManager({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, docs });
     setInput('');
     setOutput('');
     setAsrLatency(0);
@@ -351,8 +408,8 @@ const PageComponent: React.FC = () => {
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.keyCode == 32) {
       toggle();
+      event.preventDefault();
     }
-    event.preventDefault();
   };
   // Install a keydown handler, and clean it up on unmount.
   useEffect(() => {
@@ -366,29 +423,39 @@ const PageComponent: React.FC = () => {
 
   return (
     <>
+      {showChooser && (
+        <div className="absolute top-1 right-1">
+          <Dropdown label="ASR" param="asr" value={asrProvider} options={ASR_PROVIDERS} />
+          <Dropdown label="LLM" param="llm" value={model} options={LLM_MODELS} />
+          <Dropdown label="TTS" param="tts" value={ttsProvider} options={TTS_PROVIDERS} />
+        </div>
+      )}
       <div className="w-full">
-        <p className="font-sm ml-2 mb-2">
+        <div className="flex justify-center mb-8">
+          <Image src="/voice-logo.png" alt="Fixie Voice" width={322} height={98} priority={true} />
+        </div>
+        <p className="font-sm ml-2 mb-6 text-center">
           This demo allows you to chat (via voice) with a drive-thru agent at a fictional donut shop. Click Start
           Chatting (or tap the spacebar) to begin.
         </p>
-        <div className="grid grid-cols-2">
+        <div className="grid grid-cols-2 lg:gap-x-24">
           <div className="p-4">
             <p className="text-lg font-bold">🍩 DONUTS</p>
             <ul className="text-sm">
-              <MenuItem name="PUMPKIN SPICE ICED DOUGHNUT" price={1.29} />
-              <MenuItem name="PUMPKIN SPICE CAKE DOUGHNUT" price={1.29} />
-              <MenuItem name="OLD FASHIONED DOUGHNUT" price={0.99} />
-              <MenuItem name="CHOCOLATE ICED DOUGHNUT" price={1.09} />
-              <MenuItem name="CHOCOLATE ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
-              <MenuItem name="RASPBERRY FILLED DOUGHNUT" price={1.09} />
-              <MenuItem name="BLUEBERRY CAKE DOUGHNUT" price={1.09} />
-              <MenuItem name="STRAWBERRY ICED DOUGHNUT WITH SPRINKLES" price={1.09} />
-              <MenuItem name="LEMON FILLED DOUGHNUT" price={1.09} />
+              <MenuItem name="PUMPKIN SPICE ICED" price={1.29} />
+              <MenuItem name="PUMPKIN SPICE CAKE" price={1.29} />
+              <MenuItem name="OLD FASHIONED" price={0.99} />
+              <MenuItem name="CHOCOLATE ICED" price={1.09} />
+              <MenuItem name="CHOCOLATE ICED WITH SPRINKLES" price={1.09} />
+              <MenuItem name="RASPBERRY FILLED" price={1.09} />
+              <MenuItem name="BLUEBERRY CAKE" price={1.09} />
+              <MenuItem name="STRAWBERRY ICED WITH SPRINKLES" price={1.09} />
+              <MenuItem name="LEMON FILLED" price={1.09} />
               <MenuItem name="DOUGHNUT HOLES" price={3.99} />
             </ul>
           </div>
           <div className="p-4">
-            <p className="text-lg font-bold">☕️ COFFEE & DRINKS</p>
+            <p className="text-lg font-bold">☕️ COFFEE</p>
             <ul className="text-sm">
               <MenuItem name="PUMPKIN SPICE COFFEE" price={2.59} />
               <MenuItem name="PUMPKIN SPICE LATTE" price={4.59} />
@@ -403,39 +470,42 @@ const PageComponent: React.FC = () => {
           </div>
         </div>
         <div>
-          <div
-            className="m-2 w-full text-xl h-32 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center"
-            id="output"
-          >
-            {output}
-          </div>
+          {showOutput && (
+            <div
+              className="text-center m-2 w-full text-md py-8 px-2 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center"
+              id="output"
+            >
+              {output}
+            </div>
+          )}
         </div>
         <div>
-          <div
-            className={`m-2 w-full text-xl h-12 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center ${
-              active() ? 'border-red-400' : ''
-            }`}
-            id="input"
-          >
-            {input}
+          {showInput && (
+            <div
+              className={`m-2 w-full text-md h-12 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center ${
+                active() ? 'border-red-400' : ''
+              }`}
+              id="input"
+            >
+              {input}
+            </div>
+          )}
+        </div>
+        <div className="m-3 w-full flex justify-center mt-8">
+          <Button disabled={false} onClick={toggle}>
+            {active() ? 'Stop Chatting' : 'Start Chatting'}
+          </Button>
+        </div>
+        {showStats && (
+          <div className="flex justify-center">
+            <span className="text-sm font-mono">
+              <Latency name="ASR" latency={asrLatency} /> |
+              <Latency name="LLM" latency={llmLatency} /> |
+              <Latency name="TTS" latency={ttsLatency} /> |
+              <Latency name="" latency={asrLatency + llmLatency + ttsLatency} />
+            </span>
           </div>
-        </div>
-        <div className="m-3 w-full flex justify-center">
-          <Button disabled={active()} onClick={handleStart}>
-            Start Chatting
-          </Button>
-          <Button disabled={!active()} onClick={handleStop}>
-            Stop Chatting
-          </Button>
-        </div>
-        <div className="flex justify-center">
-          <span className="text-sm font-mono">
-            <Latency name="ASR" latency={asrLatency} /> |
-            <Latency name="LLM" latency={llmLatency} /> |
-            <Latency name="TTS" latency={ttsLatency} /> |
-            <Latency name="" latency={asrLatency + llmLatency + ttsLatency} />
-          </span>
-        </div>
+        )}
       </div>
     </>
   );

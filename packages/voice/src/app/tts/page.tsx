@@ -1,5 +1,5 @@
 'use client';
-import { TextToSpeechBase, createTextToSpeech } from 'ai-jsx/lib/tts/tts';
+import { BuildUrlOptions, TextToSpeechBase, createTextToSpeech } from 'ai-jsx/lib/tts/tts';
 import React, { useState, useEffect } from 'react';
 import '../globals.css';
 
@@ -28,20 +28,17 @@ interface TtsProps {
   costPerKChar: number;
   defaultVoice: string;
   text: string;
+  model?: string;
 }
 
-const buildUrl = (provider: string, voice: string, rate: number, text: string) => {
-  const params = new URLSearchParams({
-    provider,
-    voice,
-    rate: rate.toString(),
-    text,
-  });
-  return `/tts/api?${params}`;
+const buildUrl = (options: BuildUrlOptions) => {
+  const params = new URLSearchParams();
+  Object.entries(options).forEach(([key, value]) => params.set(key, value.toString()));
+  return `/tts/api/generate/edge?${params}`;
 };
 
 const getToken = async (provider: string) => {
-  const response = await fetch('/tts/api', {
+  const response = await fetch('/tts/api/token/edge', {
     method: 'POST',
     body: JSON.stringify({ provider }),
   });
@@ -56,6 +53,7 @@ const Tts: React.FC<TtsProps> = ({
   link,
   costPerKChar,
   defaultVoice,
+  model,
   text,
 }: TtsProps) => {
   const [voice, setVoice] = useState(defaultVoice);
@@ -64,9 +62,9 @@ const Tts: React.FC<TtsProps> = ({
   const [restTts, setRestTts] = useState<TextToSpeechBase | null>();
   const [wsTts, setWsTts] = useState<TextToSpeechBase | null>();
   useEffect(() => {
-    setRestTts(createTextToSpeech({ provider, proto: 'rest', buildUrl, getToken, voice, rate: 1.2 }));
+    setRestTts(createTextToSpeech({ provider, proto: 'rest', buildUrl, getToken, voice, rate: 1.2, model }));
     if (supportsWs) {
-      setWsTts(createTextToSpeech({ provider, proto: 'ws', buildUrl, getToken, voice, rate: 1.2 }));
+      setWsTts(createTextToSpeech({ provider, proto: 'ws', buildUrl, getToken, voice, rate: 1.2, model }));
     }
   }, [provider, voice]);
   const toggle = (tts: TextToSpeechBase) => {
@@ -144,12 +142,22 @@ const PageComponent: React.FC = () => {
       <p className="ml-2 mb-2 text-sm">{countWords(text)} words</p>
       <div className="grid grid-cols-1 md:grid-cols-2 w-full">
         <Tts
-          display="ElevenLabs"
+          display="ElevenLabs v1"
           provider="eleven"
           supportsWs
           link="https://elevenlabs.io"
           costPerKChar={0.18}
           defaultVoice="21m00Tcm4TlvDq8ikWAM"
+          text={text}
+        />
+        <Tts
+          display="ElevenLabs v2"
+          provider="eleven"
+          supportsWs
+          link="https://elevenlabs.io"
+          costPerKChar={0.18}
+          defaultVoice="21m00Tcm4TlvDq8ikWAM"
+          model="eleven_english_v2"
           text={text}
         />
         <Tts
@@ -174,7 +182,7 @@ const PageComponent: React.FC = () => {
           provider="playht"
           link="https://play.ht"
           costPerKChar={0.04125}
-          defaultVoice="victor"
+          defaultVoice="s3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json"
           text={text}
         />
         <Tts

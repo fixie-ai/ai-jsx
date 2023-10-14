@@ -3,14 +3,7 @@ import { initializeApp } from 'firebase/app';
 
 import { useState, SetStateAction, Dispatch, useEffect } from 'react';
 import _ from 'lodash';
-import {
-  MessageGenerationParams,
-  AgentId,
-  AssistantConversationTurn,
-  ConversationTurn,
-  TextMessage,
-  ConversationId,
-} from './sidekick-types.js';
+import { AgentId, AssistantConversationTurn, ConversationTurn, TextMessage, ConversationId } from './sidekick-types.js';
 import { Jsonifiable } from 'type-fest';
 import { IsomorphicFixieClient } from './isomorphic-client.js';
 
@@ -112,8 +105,6 @@ export interface UseFixieArgs {
    * Use this to show fixture data.
    */
   conversationFixtures?: ConversationTurn[];
-
-  messageGenerationParams?: Partial<Pick<MessageGenerationParams, 'model' | 'modelProvider'>>;
 
   logPerformanceTraces?: (message: string, metadata: object) => void;
 
@@ -361,7 +352,7 @@ export class FixieConversationClient extends EventTarget {
     return this.turns;
   }
 
-  public sendMessage(agentId: AgentId, message: string, messageGenerationParams: MessageGenerationParams) {
+  public sendMessage(agentId: AgentId, message: string) {
     // TODO: Optimistically update with the new message.
 
     this.performanceTrace = [];
@@ -370,11 +361,10 @@ export class FixieConversationClient extends EventTarget {
     this.lastSeenMostRecentAgentTextMessage = '';
     return this.fixieClient.sendMessage(agentId, this.conversationId, {
       message,
-      generationParams: messageGenerationParams,
     });
   }
 
-  public regenerate(agentId: AgentId, fullMessageGenerationParams: MessageGenerationParams) {
+  public regenerate(agentId: AgentId) {
     this.performanceTrace = [];
     this.addPerfCheckpoint('regenerate');
     this.lastGeneratedTurnId = this.turns.at(-1)?.id;
@@ -384,8 +374,7 @@ export class FixieConversationClient extends EventTarget {
     const requestStart = this.fixieClient.regenerate(
       agentId,
       this.conversationId,
-      this.getMostRecentAssistantTurn()!.id,
-      fullMessageGenerationParams
+      this.getMostRecentAssistantTurn()!.id
     );
     requestStart
       .then((response) => response.text())
@@ -448,9 +437,8 @@ export class FixieChatClient {
     this.fixieClient = IsomorphicFixieClient.CreateWithoutApiKey(fixieAPIUrl);
   }
 
-  async createNewConversation(input: string, agentId: AgentId, fullMessageGenerationParams: MessageGenerationParams) {
-    const conversationId = (await this.fixieClient.startConversation(agentId, fullMessageGenerationParams, input))
-      .conversationId;
+  async createNewConversation(input: string, agentId: AgentId) {
+    const conversationId = (await this.fixieClient.startConversation(agentId, input)).conversationId;
 
     const conversation = this.getConversation(conversationId);
     conversation.optimisticallyExists = true;
@@ -486,7 +474,6 @@ export function useFixie({
   conversationId: userPassedConversationId,
   conversationFixtures,
   onNewTokens,
-  messageGenerationParams,
   logPerformanceTraces,
   agentId,
   fixieAPIUrl,
@@ -560,19 +547,8 @@ export function useFixie({
     };
   }, [conversationId]);
 
-  const fullMessageGenerationParams: MessageGenerationParams = {
-    model: 'gpt-4-32k',
-    modelProvider: 'openai',
-    ...messageGenerationParams,
-    userTimeZoneOffset: new Date().getTimezoneOffset(),
-  };
-
   async function createNewConversation(overriddenInput?: string) {
-    const conversation = await fixieChatClient.createNewConversation(
-      overriddenInput ?? input,
-      agentId,
-      fullMessageGenerationParams
-    );
+    const conversation = await fixieChatClient.createNewConversation(overriddenInput ?? input, agentId);
     setConversationId(conversation.conversationId);
     onNewConversation?.(conversation.conversationId);
   }
@@ -602,7 +578,7 @@ export function useFixie({
     if (!conversationId) {
       return Promise.resolve();
     }
-    return conversation.sendMessage(agentId, message ?? input, fullMessageGenerationParams);
+    return conversation.sendMessage(agentId, message ?? input);
   }
 
   // if (modelResponseRequested === 'regenerate' && mostRecentAssistantTurn) {
@@ -625,7 +601,7 @@ export function useFixie({
     if (!conversationId) {
       return Promise.resolve();
     }
-    return conversation.regenerate(agentId, fullMessageGenerationParams);
+    return conversation.regenerate(agentId);
   }
 
   function stop() {
