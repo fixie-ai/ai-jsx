@@ -33,7 +33,7 @@ interface TtsProps {
 
 const buildUrl = (options: BuildUrlOptions) => {
   const params = new URLSearchParams();
-  Object.entries(options).forEach(([key, value]) => params.set(key, value.toString()));
+  Object.entries(options).forEach(([k, v]) => v != undefined && params.set(k, v.toString()));
   return `/tts/api/generate/edge?${params}`;
 };
 
