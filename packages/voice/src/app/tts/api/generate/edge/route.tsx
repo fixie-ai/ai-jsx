@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import _ from 'lodash';
 import { AwsClient } from 'aws4fetch';
-import * as PlayHTAPI from 'playht';
 import { getEnvVar } from '../../common';
 
 export const runtime = 'edge'; // 'nodejs' is the default
@@ -110,11 +109,6 @@ export async function GET(request: NextRequest) {
 
   const timer = new Timer();
   console.log(`${timer.startTime} TTS for: ${providerName} ${text}`);
-
-  if (providerName == 'playht') {
-    return ttsPlayHTGrpc(voice!, rate, text!);
-  }
-
   const provider = PROVIDER_MAP[providerName];
   const response = await provider.func(voice, rate, text);
   if (!response.ok) {
