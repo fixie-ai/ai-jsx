@@ -1,14 +1,19 @@
 /** @jsxImportSource ai-jsx */
 import { NextRequest, NextResponse } from 'next/server';
-import { assert } from 'console';
 import _ from 'lodash';
-import aws4 from 'aws4';
+import { AwsClient } from 'aws4fetch';
 import * as PlayHTAPI from 'playht';
+import { getEnvVar } from '../../common';
+
+export const runtime = 'edge'; // 'nodejs' is the default
 
 const AUDIO_MPEG_MIME_TYPE = 'audio/mpeg';
 const AUDIO_WAV_MIME_TYPE = 'audio/wav';
 const APPLICATION_JSON_MIME_TYPE = 'application/json';
 const APPLICATION_X_WWW_FORM_URLENCODED_MIME_TYPE = 'application/x-www-form-urlencoded';
+
+const awsClient = new AwsClient({ accessKeyId: getEnvVar('AWS_ACCESS_KEY_ID'), secretAccessKey: getEnvVar('AWS_SECRET_ACCESS_KEY') });
+
 
 type Generate = (voiceId: string, rate: number, text: string) => Promise<Response>;
 class Provider {
@@ -30,18 +35,38 @@ const PROVIDER_MAP: ProviderMap = {
   wellsaid: { func: ttsWellSaid },
 };
 
-function makeStreamFromReader(startMillis: number, reader: ReadableStreamDefaultReader) {
+class Timer {
+  private startMillis = this.now();
+  get startTime() {
+    return this.startMillis;
+  }
+  get elapsed() {
+    return this.now() - this.startMillis;
+  }
+  get elapsedString() {
+    return this.elapsed.toFixed(0);
+  }
+  private now() {
+    if (typeof performance !== 'undefined') {
+      return performance.now();
+    } else {
+      return (new Date()).getTime();
+    }
+  }
+}
+
+function makeStreamFromReader(timer: Timer, reader: ReadableStreamDefaultReader) {
   let firstRead = true;
   const stream = new ReadableStream({
     start(controller) {
       async function read() {
         const { done, value } = await reader.read();
         if (firstRead) {
-          console.log(`${startMillis} TTS first byte latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
+          console.log(`${timer.startTime} TTS first byte latency: ${timer.elapsedString} ms`);
           firstRead = false;
         }
         if (done) {
-          console.log(`${startMillis} TTS complete latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
+          console.log(`${timer.startTime} TTS complete latency: ${timer.elapsedString} ms`);
           controller.close();
           return;
         }
@@ -54,10 +79,10 @@ function makeStreamFromReader(startMillis: number, reader: ReadableStreamDefault
   return stream;
 }
 
-function getBlobFromJson(startMillis: number, json: any, keyPath: string) {
+function getBlobFromJson(timer: Timer, json: any, keyPath: string) {
   const value = _.get(json, keyPath);
   const binary = Buffer.from(value, 'base64');
-  console.log(`${startMillis} TTS complete latency: ${(performance.now() - startMillis).toFixed(0)} ms`);
+  console.log(`${timer.startTime} TTS complete latency: ${timer.elapsedString} ms`);
   return binary;
 }
 
@@ -81,34 +106,59 @@ export async function GET(request: NextRequest) {
     return new NextResponse(JSON.stringify({ error: `unknown provider ${providerName}` }), { status: 400 });
   }
 
-  const startMillis = performance.now();
-  console.log(`${startMillis} TTS for: ${providerName} ${text}`);
+  const timer = new Timer();
+  console.log(`${timer.startTime} TTS for: ${providerName} ${text}`);
+
   if (providerName == 'playht') {
-    return ttsPlayHTGrpc(voice, rate, text);
+    return ttsPlayHTGrpc(voice!, rate, text!);
   }
 
   const provider = PROVIDER_MAP[providerName];
   const response = await provider.func(voice, rate, text);
   if (!response.ok) {
     console.log(await response.text());
-    console.log(`${startMillis} TTS error: ${response.status} ${response.statusText}`);
+    console.log(`${timer.startTime} TTS error: ${response.status} ${response.statusText}`);
     return new NextResponse(await response.json(), { status: response.status });
   }
   const contentType = response.headers.get('Content-Type');
   console.log(
-    `${startMillis} TTS response latency: ${(performance.now() - startMillis).toFixed(
-      0
-    )} ms, content-type: ${contentType}`
+    `${timer.startTime} TTS response latency: ${timer.elapsedString} ms, content-type: ${contentType}`
   );
   if (provider.keyPath) {
-    assert(contentType?.startsWith(APPLICATION_JSON_MIME_TYPE));
-    const binary = await getBlobFromJson(startMillis, await response.json(), provider.keyPath);
+    if (!contentType?.startsWith(APPLICATION_JSON_MIME_TYPE)) {
+      console.warn(`${timer.startTime} TTS expected JSON response, got ${contentType}`);
+    }
+    const binary = await getBlobFromJson(timer, await response.json(), provider.keyPath);
     const mimeType = provider.mimeType ?? AUDIO_MPEG_MIME_TYPE;
     return new NextResponse(binary, { headers: { 'Content-Type': mimeType } });
   }
-  const stream = makeStreamFromReader(startMillis, response.body!.getReader());
+  const stream = makeStreamFromReader(timer, response.body!.getReader());
   return new NextResponse(stream, { headers: response.headers, status: response.status });
 }
+
+async function ttsPlayHTGrpc(voice: string, rate: number, text: string) {
+  const opts: PlayHTAPI.SpeechStreamOptions = {
+    voiceEngine: 'PlayHT2.0-turbo',
+    voiceId: voice,
+    outputFormat: 'mp3',
+    quality: 'draft',
+    speed: rate,
+  };
+  let controller: ReadableStreamDefaultController;
+  const stream = new ReadableStream({
+    start(c) {
+      controller = c;
+    },
+  });
+  PlayHTAPI.init({ apiKey: getEnvVar('PLAYHT_API_KEY'), userId: getEnvVar('PLAYHT_USER_ID') });
+  const nodeStream = await PlayHTAPI.stream(text, opts);
+  nodeStream.on('data', (chunk) => controller.enqueue(new Uint8Array(chunk)));
+  nodeStream.on('end', () => controller.close());
+  nodeStream.on('error', (err) => controller.error(err));
+  const mimeType = AUDIO_MPEG_MIME_TYPE;
+  return new NextResponse(stream, { headers: { 'Content-Type': mimeType } });
+}
+
 
 /**
  * Converts a decimal rate to a percent, e.g. 1.1 -> 10, 0.9 -> -10.
@@ -188,14 +238,8 @@ function ttsAws(voice: string, rate: number, text: string) {
     },
     body: JSON.stringify(params),
   };
-  const credentials = {
-    accessKeyId: getEnvVar('AWS_ACCESS_KEY_ID'),
-    secretAccessKey: getEnvVar('AWS_SECRET_ACCESS_KEY'),
-    region,
-  };
-  aws4.sign(opts, credentials);
   const url = `https://${opts.host}${opts.path}`;
-  return fetch(url, opts);
+  return awsClient.fetch(url, opts);
 }
 
 /**
@@ -260,32 +304,6 @@ function ttsPlayHT(voice: string, rate: number, text: string) {
   };
   const url = 'https://play.ht/api/v2/tts/stream';
   return postJson(url, headers, obj);
-}
-
-/**
- * GRPC client for Play.HT TTS (https://play.ht)
- */
-async function ttsPlayHTGrpc(voice: string, rate: number, text: string) {
-  const opts: PlayHTAPI.SpeechStreamOptions = {
-    voiceEngine: 'PlayHT2.0-turbo',
-    voiceId: voice,
-    outputFormat: 'mp3',
-    quality: 'draft',
-    speed: rate,
-  };
-  let controller: ReadableStreamDefaultController;
-  const stream = new ReadableStream({
-    start(c) {
-      controller = c;
-    },
-  });
-  PlayHTAPI.init({ apiKey: getEnvVar('PLAYHT_API_KEY'), userId: getEnvVar('PLAYHT_USER_ID') });
-  const nodeStream = await PlayHTAPI.stream(text, opts);
-  nodeStream.on('data', (chunk) => controller.enqueue(new Uint8Array(chunk)));
-  nodeStream.on('end', () => controller.close());
-  nodeStream.on('error', (err) => controller.error(err));
-  const mimeType = AUDIO_MPEG_MIME_TYPE;
-  return new NextResponse(stream, { headers: { 'Content-Type': mimeType } });
 }
 
 /**
@@ -411,12 +429,4 @@ export async function POST(request: NextRequest) {
     return new NextResponse(JSON.stringify({ error: 'unknown provider' }));
   }
   return new NextResponse(JSON.stringify({ token }));
-}
-
-function getEnvVar(keyName: string) {
-  const key = process.env[keyName];
-  if (!key) {
-    throw new Error(`API key "${keyName}" not provided. Please set it as an env var.`);
-  }
-  return key;
 }

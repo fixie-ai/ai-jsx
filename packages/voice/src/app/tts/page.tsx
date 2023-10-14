@@ -30,18 +30,18 @@ interface TtsProps {
   text: string;
 }
 
-const buildUrl = (provider: string, voice: string, rate: number, text: string) => {
+const buildUrl = (provider: string, voice: string, rate: number, text: string, runtime = 'edge') => {
   const params = new URLSearchParams({
     provider,
     voice,
     rate: rate.toString(),
     text,
   });
-  return `/tts/api?${params}`;
+  return `/tts/api/generate/${runtime}?${params}`;
 };
 
 const getToken = async (provider: string) => {
-  const response = await fetch('/tts/api', {
+  const response = await fetch('/tts/api/token/edge', {
     method: 'POST',
     body: JSON.stringify({ provider }),
   });
