@@ -12,11 +12,7 @@ const AUDIO_MPEG_MIME_TYPE = 'audio/mpeg';
 const AUDIO_WAV_MIME_TYPE = 'audio/wav';
 const APPLICATION_JSON_MIME_TYPE = 'application/json';
 const APPLICATION_X_WWW_FORM_URLENCODED_MIME_TYPE = 'application/x-www-form-urlencoded';
-
-const awsClient = new AwsClient({
-  accessKeyId: getEnvVar('AWS_ACCESS_KEY_ID'),
-  secretAccessKey: getEnvVar('AWS_SECRET_ACCESS_KEY'),
-});
+let awsClient: typeof AwsClient | undefined;
 
 type Generate = (voiceId: string, rate: number, text: string) => Promise<Response>;
 class Provider {
@@ -211,6 +207,12 @@ function ttsAws(voice: string, rate: number, text: string) {
     body: JSON.stringify(params),
   };
   const url = `https://${opts.host}${opts.path}`;
+  if (!awsClient) {
+    awsClient = new AwsClient({
+      accessKeyId: getEnvVar('AWS_ACCESS_KEY_ID'),
+      secretAccessKey: getEnvVar('AWS_SECRET_ACCESS_KEY'),
+    });
+  }
   return awsClient.fetch(url, opts);
 }
 
