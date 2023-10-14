@@ -20,13 +20,12 @@ export async function GET(request: NextRequest) {
       status: 400,
     });
   }
-  
+
   if (providerName == 'playht') {
     return ttsPlayHTGrpc(voice!, rate, text!);
   }
   return new NextResponse(JSON.stringify({ error: 'Unknown provider.' }), { status: 400 });
 }
-
 
 /**
  * GRPC client for Play.HT TTS (https://play.ht)

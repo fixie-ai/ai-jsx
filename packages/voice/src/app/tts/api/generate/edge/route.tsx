@@ -12,8 +12,10 @@ const AUDIO_WAV_MIME_TYPE = 'audio/wav';
 const APPLICATION_JSON_MIME_TYPE = 'application/json';
 const APPLICATION_X_WWW_FORM_URLENCODED_MIME_TYPE = 'application/x-www-form-urlencoded';
 
-const awsClient = new AwsClient({ accessKeyId: getEnvVar('AWS_ACCESS_KEY_ID'), secretAccessKey: getEnvVar('AWS_SECRET_ACCESS_KEY') });
-
+const awsClient = new AwsClient({
+  accessKeyId: getEnvVar('AWS_ACCESS_KEY_ID'),
+  secretAccessKey: getEnvVar('AWS_SECRET_ACCESS_KEY'),
+});
 
 type Generate = (voiceId: string, rate: number, text: string) => Promise<Response>;
 class Provider {
@@ -50,7 +52,7 @@ class Timer {
     if (typeof performance !== 'undefined') {
       return performance.now();
     } else {
-      return (new Date()).getTime();
+      return new Date().getTime();
     }
   }
 }
@@ -121,9 +123,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(await response.json(), { status: response.status });
   }
   const contentType = response.headers.get('Content-Type');
-  console.log(
-    `${timer.startTime} TTS response latency: ${timer.elapsedString} ms, content-type: ${contentType}`
-  );
+  console.log(`${timer.startTime} TTS response latency: ${timer.elapsedString} ms, content-type: ${contentType}`);
   if (provider.keyPath) {
     if (!contentType?.startsWith(APPLICATION_JSON_MIME_TYPE)) {
       console.warn(`${timer.startTime} TTS expected JSON response, got ${contentType}`);
@@ -158,7 +158,6 @@ async function ttsPlayHTGrpc(voice: string, rate: number, text: string) {
   const mimeType = AUDIO_MPEG_MIME_TYPE;
   return new NextResponse(stream, { headers: { 'Content-Type': mimeType } });
 }
-
 
 /**
  * Converts a decimal rate to a percent, e.g. 1.1 -> 10, 0.9 -> -10.
