@@ -63,6 +63,7 @@ registerProcessor("output-processor", OutputProcessor);
 `;
 
 const AUDIO_MPEG_MIME_TYPE = 'audio/mpeg';
+const AUDIO_WAV_MIME_TYPE = 'audio/wav';
 const AUDIO_PCM_MIME_TYPE = 'audio/pcm';
 const AUDIO_L16_MIME_TYPE = 'audio/L16';
 
@@ -85,47 +86,38 @@ class AudioChunk {
   }
 }
 
-class Demuxer {
+class AudioPcmBuffer {
+  constructor(public sampleRate: number, public buffer: ArrayBuffer) {}
+}
+
+abstract class AudioDecoder {
   protected buffer: Uint8Array = new Uint8Array(0);
-  addChunk(chunk: ArrayBuffer) {
-    const totalLen = this.buffer.length + chunk.byteLength;
-    const newBuffer = new Uint8Array(totalLen);
+  addData(encodedBuffer: ArrayBuffer) {
+    const newBuffer = new Uint8Array(this.buffer.length + encodedBuffer.byteLength);
     newBuffer.set(new Uint8Array(this.buffer), 0);
-    newBuffer.set(new Uint8Array(chunk), this.buffer.byteLength);
+    newBuffer.set(new Uint8Array(encodedBuffer), this.buffer.byteLength);
     this.buffer = newBuffer;
+    this.processBuffer();
   }
-  getFrame() {
-    let totalLen = 0;
-    while (true) {
-      const frameLen = this.getFrameLen(totalLen);
-      console.log(`getFrames: totalLen=${totalLen} frameLen=${frameLen}`);
-      if (!frameLen) {
-        break;
-      }
-      totalLen += frameLen;
-    }
-    if (totalLen == 0) {
-      return null;
-    }
-    const out = this.buffer.slice(0, totalLen);
-    this.buffer = this.buffer.slice(totalLen);
-    return out.buffer;
-  }
-};
+  onData?: (pcmBuffer: AudioPcmBuffer) => void;
+  onError?: (error: Error) => void;
+  protected abstract processBuffer(): void;
+}
 
 /**
  * An internal demuxer that allows us to easily go from network chunks to complete MP3 frames.
  */
-class Mp3Demuxer extends Demuxer {
+class Mp3Decoder extends AudioDecoder {
   // See https://www.mp3-tech.org/programmer/frame_header.html
-  private readonly BIT_RATES = [
+  private static readonly BIT_RATES = [
     [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320], // v1
     [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160], // v2
   ];
-  private readonly SAMPLE_RATES = [
+  private static readonly SAMPLE_RATES = [
     [44100, 48000, 32000], // v1
-    [22050, 24000, 16000] // v2
+    [22050, 24000, 16000], // v2
   ];
+  protected processBuffer() {}
   private getFrameLen(offset: number) {
     // Check we have enough bytes.
     if (this.buffer.length < offset + 4) {
@@ -141,11 +133,11 @@ class Mp3Demuxer extends Demuxer {
     const versionBits = (b2 & 0x18) >> 3;
     const index = versionBits == 3 ? 0 : 1;
     // Extract the bit rate, sample rate, and padding from byte 3.
-    const bitRate = this.BIT_RATES[index][(b3 & 0xF0) >> 4];
-    const sampleRate = this.SAMPLE_RATES[index][(b3 & 0x0C) >> 2];
+    const bitRate = Mp3Decoder.BIT_RATES[index][(b3 & 0xf0) >> 4];
+    const sampleRate = Mp3Decoder.SAMPLE_RATES[index][(b3 & 0x0c) >> 2];
     const padding = (b3 & 0x02) >> 1;
     // Extract the channel mode from byte 4.
-    const channelMode = (b4 & 0xC0) >> 6;
+    const channelMode = (b4 & 0xc0) >> 6;
     if (channelMode != 3) {
       console.warn(`invalid channel mode ${channelMode}`);
       return 0;
@@ -156,48 +148,205 @@ class Mp3Demuxer extends Demuxer {
   }
 }
 
-class WavDemuxer extends Demuxer {
+class WavDecoder extends AudioDecoder {
+  private static readonly RIFF_TAG = 'RIFF';
+  private static readonly FMT_TAG = 'fmt ';
+  private static readonly DATA_TAG = 'data';
   private gotRiff = false;
-  getFrameLen(offset: number) {
-    if (this.buffer.length < offset + 8) {
-      return 0;
-    }
-    if (!this.gotRiff) {
-      this.gotRiff = true;
-      return 8;
-    } else {
-      const view = new DataView(this.buffer.buffer, offset);
-      const tag = view.getUint32(0, true);
-      const len = view.getUint32(4, true);
-      if (this.buffer.length < offset + len + 8)
-        return 0;
+  private sampleRate?: number;
+  private numChannels?: number;
+  private dataRead = 0;
+  protected processBuffer() {
+    const HEADER_LEN = 8;
+    while (true) {
+      // Read a complete type + length header.
+      if (this.buffer.length < HEADER_LEN) {
+        break;
       }
-      return len + 8;
+      const view = new DataView(this.buffer.buffer);
+      const tag = this.getFourCC(view);
+      const len = view.getUint32(4, true);
+
+      // Process the header, depending on our state and the header type.
+      if (!this.gotRiff) {
+        // First header must be RIFF.
+        if (!this.processRiffHeader(tag, len)) {
+          this.onError?.(new Error(`expected RIFF tag, got ${tag}`));
+          break;
+        }
+        this.buffer = this.buffer.slice(HEADER_LEN);
+      } else if (tag == WavDecoder.DATA_TAG) {
+        // When reading the DATA tag, emit data as it's received.
+        let available = Math.min(len, this.buffer.length - HEADER_LEN) - this.dataRead;
+        if (available % 2 != 0) {
+          available--;
+        }
+        this.processData(available);
+        if (this.dataRead == len) {
+          this.buffer = this.buffer.slice(HEADER_LEN + len);
+        }
+      } else if (this.buffer.length >= len) {
+        // For other tags, we need to have the complete chunk.
+        const chunk = this.buffer.slice(0, len);
+        if (!this.processChunk(tag, chunk)) {
+          this.onError?.(new Error(`error processing chunk ${tag}`));
+          break;
+        }
+        this.buffer = this.buffer.slice(HEADER_LEN + len);
+      }
+    }
+  }
+  private getFourCC(view: DataView): string {
+    let str = '';
+    for (let i = 0; i < 4; i++) {
+      str += String.fromCharCode(view.getUint8(i));
+    }
+    return str;
+  }
+  private processRiffHeader(tag: string, len: number) {
+    if (tag != WavDecoder.RIFF_TAG) {
+      console.error(`expected RIFF tag, got ${tag}`);
+      return false;
+    }
+    this.gotRiff = true;
+    console.log(`got RIFF chunk, len=${len}`);
+    return true;
+  }
+  private processChunk(tag: string, chunk: Uint8Array) {
+    console.log(`got chunk, tag=${tag} len=${chunk.byteLength}`);
+    if (tag == WavDecoder.FMT_TAG) {
+      const view = new DataView(chunk.buffer);
+      const format = view.getUint16(0, true);
+      if (format != 1) {
+        console.error(`expected PCM format, got ${format}`);
+        return false;
+      }
+      this.numChannels = view.getUint16(2, true);
+      if (this.numChannels != 1) {
+        console.error(`expected 1 channel, got ${this.numChannels}`);
+        return false;
+      }
+      this.sampleRate = view.getUint32(4, true);
+      const bitsPerSample = view.getUint16(14, true);
+      if (bitsPerSample != 16) {
+        console.error(`expected 16 bits per sample, got ${bitsPerSample}`);
+        return false;
+      }
+      console.log(`got fmt chunk, channels=${this.numChannels} sampleRate=${this.sampleRate}`);
+    }
+    return true;
+  }
+  private processData(available: number) {
+    if (available > 0) {
+      const pcmBuffer = new AudioPcmBuffer(this.sampleRate!, this.buffer.slice(8, available + 8));
+      this.dataRead += available;
+      this.onData?.(pcmBuffer);
     }
   }
 }
-
-  
-
-
-
-
-
-
-
-    
 
 /**
  * An internal object used to manage an active audio stream.
  */
 class AudioStream {
-  nextSeqNum = 0;
-  demuxer?: Mp3Demuxer;
-  constructor(
-    public outputNode: AudioWorkletNode,
-    public destNode: MediaStreamAudioDestinationNode,
-    public analyzerNode?: AnalyserNode
-  ) {}
+  private readonly outputNode: AudioWorkletNode;
+  private readonly destNode: MediaStreamAudioDestinationNode;
+  private readonly analyzerNode?: AnalyserNode;
+  private nextSeqNum = 0;
+  private decoder?: AudioDecoder;
+  constructor(private readonly context: AudioContext, wantAnalyzer: boolean) {
+    this.outputNode = new AudioWorkletNode(context, 'output-processor');
+    this.destNode = context.createMediaStreamDestination();
+    if (wantAnalyzer) {
+      this.analyzerNode = this.context.createAnalyser();
+      this.outputNode.connect(this.analyzerNode).connect(this.destNode);
+    } else {
+      this.outputNode.connect(this.destNode);
+    }
+    this.outputNode.port.onmessage = (e) => {
+      this.handleBufferProcessed(e.data.seqNum);
+    };
+  }
+  get stream() {
+    return this.destNode.stream;
+  }
+  get streamId() {
+    return this.destNode.stream.id;
+  }
+  get analyzer() {
+    return this.analyzerNode;
+  }
+  appendBuffer(chunk: AudioChunk) {
+    if (chunk.isPcm) {
+      this.appendPcmBuffer(new AudioPcmBuffer(chunk.sampleRate, chunk.buffer));
+      return;
+    }
+    const decoder = this.getDecoder(chunk.mimeType);
+    decoder.addData(chunk.buffer);
+  }
+  close() {
+    this.outputNode.port.onmessage = null;
+    this.outputNode.disconnect();
+  }
+  onWaiting?: (streamId: string) => void;
+
+  private async appendPcmBuffer(pcmBuffer: AudioPcmBuffer) {
+    const seqNum = this.nextSeqNum++;
+    const buffer = await this.resamplePcmBuffer(pcmBuffer.sampleRate, pcmBuffer.buffer);
+    this.appendNativeBuffer(seqNum, buffer);
+  }
+  private getDecoder(mimeType: string) {
+    if (!this.decoder) {
+      if (mimeType == AUDIO_MPEG_MIME_TYPE) {
+        this.decoder = new Mp3Decoder();
+      } else if (mimeType == AUDIO_WAV_MIME_TYPE) {
+        this.decoder = new WavDecoder();
+      } else {
+        throw new Error(`unsupported mime type ${mimeType}`);
+      }
+      this.decoder.onData = (pcmBuffer) => this.appendPcmBuffer(pcmBuffer);
+      this.decoder.onError = (error) => console.error(error); //++++ need better error handling
+    }
+    return this.decoder;
+  }
+  private async resamplePcmBuffer(inSampleRate: number, inBuffer: ArrayBuffer) {
+    const floatBuffer = this.makeNativeBuffer(inBuffer);
+    if (inSampleRate == this.context!.sampleRate) {
+      return floatBuffer;
+    }
+    const outSamples = Math.floor((floatBuffer.length * this.context!.sampleRate) / inSampleRate);
+    const offlineContext = new OfflineAudioContext({
+      sampleRate: this.context!.sampleRate,
+      numberOfChannels: 1,
+      length: outSamples,
+    });
+    const source = offlineContext.createBufferSource();
+    source.buffer = new AudioBuffer({ sampleRate: inSampleRate, length: floatBuffer.length, numberOfChannels: 1 });
+    source.buffer.copyToChannel(this.makeNativeBuffer(inBuffer), 0);
+    source.connect(offlineContext.destination);
+    source.start(0);
+    const outBuffer = await offlineContext.startRendering();
+    return outBuffer.getChannelData(0);
+  }
+  private makeNativeBuffer(inBuffer: ArrayBuffer) {
+    const view = new Int16Array(inBuffer);
+    const outBuffer = new Float32Array(view.length);
+    view.forEach((sample, index) => {
+      outBuffer[index] = sample / 32768;
+    });
+    return outBuffer;
+  }
+  private appendNativeBuffer(seqNum: number, buffer: Float32Array) {
+    console.log(`buf added, seq num=${seqNum}`);
+    const channelData = [buffer];
+    this.outputNode.port.postMessage({ seqNum, channelData });
+  }
+  private handleBufferProcessed(seqNum: number) {
+    console.log(`buf consumed, seq num=${seqNum}`);
+    if (seqNum == this.nextSeqNum) {
+      this.onWaiting?.(this.streamId);
+    }
+  }
 }
 
 /**
@@ -228,31 +377,18 @@ class AudioOutputManager extends EventTarget {
     if (!this.context) {
       throw new Error('AudioOutputManager not started');
     }
-
     this.context.resume();
-    const outputNode = new AudioWorkletNode(this.context, 'output-processor');
-    const destNode = this.context.createMediaStreamDestination();
-    const streamId = destNode.stream.id;
-    let analyzerNode;
-    if (wantAnalyzer) {
-      analyzerNode = this.context.createAnalyser();
-      outputNode.connect(analyzerNode).connect(destNode);
-    } else {
-      outputNode.connect(destNode);
-    }
-    outputNode.port.onmessage = (e) => {
-      this.handleBufferProcessed(streamId, e.data.seqNum);
-    };
-    this.streams.set(streamId, new AudioStream(outputNode, destNode, analyzerNode));
-    return destNode.stream;
+    const audioStream = new AudioStream(this.context!, wantAnalyzer);
+    audioStream.onWaiting = (streamId) => this.handleWaiting(streamId);
+    this.streams.set(audioStream.streamId, audioStream);
+    return audioStream.stream;
   }
   destroyStream(streamId: string) {
     const audioStream = this.streams.get(streamId);
     if (!audioStream) {
       return;
     }
-    audioStream.outputNode.port.onmessage = null;
-    audioStream.outputNode.disconnect();
+    audioStream.close();
     this.streams.delete(streamId);
   }
   getAnalyzer(streamId: string) {
@@ -260,98 +396,22 @@ class AudioOutputManager extends EventTarget {
     if (!audioStream) {
       return;
     }
-    return audioStream.analyzerNode;
+    return audioStream.analyzer;
   }
-  async appendBuffer(streamId: string, chunk: AudioChunk) {
-    if (chunk.isPcm) {
-      await this.appendPcmBuffer(streamId, chunk.sampleRate, chunk.buffer);
-    } else {
-      await this.appendEncodedBuffer(streamId, chunk.buffer);
-    }
-  }
-
-  ncodedBuffer: AudioChunk)
-  private async appendEncodedBuffer(streamId: string, encodedBuffer: ArrayBuffer) {
-    const seqNum = this.getNextSeqNum(streamId);
-    const buffer = await this.context?.decodeAudioData(encodedBuffer);
-    this.appendNativeBuffer(streamId, seqNum, buffer!.getChannelData(0));
-  }
-  private async appendPcmBuffer(streamId: string, sampleRate: number, inBuffer: ArrayBuffer) {
-    const seqNum = this.getNextSeqNum(streamId);
-    const buffer = await this.resamplePcmBuffer(sampleRate, inBuffer);
-    this.appendNativeBuffer(streamId, seqNum, buffer);
-  }
-  private getNextSeqNum(streamId: string) {
+  appendBuffer(streamId: string, chunk: AudioChunk) {
     const audioStream = this.streams.get(streamId);
     if (!audioStream) {
-      throw new Error('stream not found');
+      throw new Error(`stream ${streamId} not found`);
     }
-    if (!audioStream.demuxer && encodedBuffer.mimeType == AUDIO_MPEG_MIME_TYPE) {
-      audioStream.demuxer = new Mp3Demuxer();
-    }
-    audioStream.demuxer!.addChunk(encodedBuffer.buffer);
-    const decodableBuffer = audioStream.demuxer!.getFrames();
-    if (!decodableBuffer) {
-      return;
-    }
-    const seqNum = audioStream.getNextSeqNum();
-    const buffer = await this.context?.decodeAudioData(decodableBuffer);
-    this.appendNativeBuffer(stream, seqNum, buffer!.getChannelData(0));
+    audioStream.appendBuffer(chunk);
   }
-  private async appendPcmBuffer(stream: MediaStream, pcmBuffer: AudioChunk) {
-    const audioStream = this.streams.get(stream.id);
-    if (!audioStream) {
-      throw new Error('stream not found');
-    }
-    const seqNum = audioStream.getNextSeqNum();
-    const buffer = await this.resamplePcmBuffer(pcmBuffer.sampleRate, pcmBuffer.buffer);
-    this.appendNativeBuffer(stream, seqNum, buffer);
-  }
-  private async resamplePcmBuffer(inSampleRate: number, inBuffer: ArrayBuffer) {
-    const floatBuffer = this.makeAudioBuffer(inBuffer);
-    if (inSampleRate == this.context!.sampleRate) {
-      return floatBuffer;
-    }
-    const outSamples = Math.floor((floatBuffer.length * this.context!.sampleRate) / inSampleRate);
-    const offlineContext = new OfflineAudioContext({
-      sampleRate: this.context!.sampleRate,
-      numberOfChannels: 1,
-      length: outSamples,
-    });
-    const source = offlineContext.createBufferSource();
-    source.buffer = new AudioBuffer({ sampleRate: inSampleRate, length: floatBuffer.length, numberOfChannels: 1 });
-    source.buffer.copyToChannel(this.makeAudioBuffer(inBuffer), 0);
-    source.connect(offlineContext.destination);
-    source.start(0);
-    const outBuffer = await offlineContext.startRendering();
-    return outBuffer.getChannelData(0);
-  }
-  private makeAudioBuffer(inBuffer: ArrayBuffer) {
-    const view = new Int16Array(inBuffer);
-    const outBuffer = new Float32Array(view.length);
-    view.forEach((sample, index) => {
-      outBuffer[index] = sample / 32768;
-    });
-    return outBuffer;
-  }
-  private appendNativeBuffer(streamId: string, seqNum: number, buffer: Float32Array) {
+  private handleWaiting(streamId: string) {
+    // Ensure the stream is still alive.
     const audioStream = this.streams.get(streamId);
     if (!audioStream) {
       return;
     }
-    const channelData = [buffer];
-    console.log(`buf added, seq num=${seqNum}`);
-    audioStream.outputNode.port.postMessage({ seqNum, channelData });
-  }
-  private handleBufferProcessed(streamId: string, seqNum: number) {
-    const audioStream = this.streams.get(streamId);
-    if (!audioStream) {
-      return;
-    }
-    console.log(`buf consumed, seq num=${seqNum}`);
-    if (audioStream.nextSeqNum == seqNum + 1) {
-      this.dispatchEvent(new CustomEvent('waiting', { detail: streamId }));
-    }
+    this.dispatchEvent(new CustomEvent('waiting', { detail: streamId }));
   }
 }
 
