@@ -18,21 +18,19 @@ export const RequestContext = AI.createContext<{
  *
  * Emits newline-delimited JSON for each message.
  */
-export function FixieRequestWrapper(
-  {
-    children,
-    fixieApiUrl,
-    fixieAuthToken,
-    request,
-    agentId,
-  }: { children: AI.Node; fixieApiUrl: string; fixieAuthToken: string; agentId: string; request: InvokeAgentRequest },
-  { logger }: AI.ComponentContext
-) {
-  // Set OpenTelemetry span attributes to relate the telemetry with the request.
-  logger.setAttribute('ai.fixie.agent_id', agentId);
-  logger.setAttribute('ai.fixie.conversation_id', request.conversationId);
-  logger.setAttribute('ai.fixie.message_id', request.turnId);
-
+export function FixieRequestWrapper({
+  children,
+  fixieApiUrl,
+  fixieAuthToken,
+  request,
+  agentId,
+}: {
+  children: AI.Node;
+  fixieApiUrl: string;
+  fixieAuthToken: string;
+  agentId: string;
+  request: InvokeAgentRequest;
+}) {
   let wrappedNode = children;
 
   wrappedNode = (

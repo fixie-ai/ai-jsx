@@ -36,7 +36,6 @@ export interface ConversationTurn {
 
 export interface InvokeAgentRequest {
   conversationId: string;
-  turnId: string;
   replyToTurnId?: string;
   conversation?: Conversation;
   parameters?: Record<string, Jsonifiable>;
