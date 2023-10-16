@@ -30,7 +30,7 @@ To get started with AI.JSX, follow these steps:
 1. Run through the [AI.JSX Tutorial](https://docs.ai-jsx.com/category/tutorial).
 1. Say "Hello AI World" by cloning the [ai-jsx-template](https://github.com/fixie-ai/ai-jsx-template).
 1. Discover many more use cases in the [examples package](https://github.com/fixie-ai/ai-jsx/tree/main/packages/examples).
-1. If you're new to AI, read the [Guide for AI Newcomers](https://docs.ai-jsx.com/guides/brand-new).
+1. If you're new to AI, read the [Guide for AI Newcomers](https://docs.ai-jsx.com/ai-newcomers).
 
 ## Examples
 

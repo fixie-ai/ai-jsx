@@ -234,12 +234,20 @@ class AudioOutputManager extends EventTarget {
 const outputManager = new AudioOutputManager();
 outputManager.start();
 
+export interface BuildUrlOptions {
+  provider: string;
+  voice: string;
+  rate: number;
+  text: string;
+  model?: string;
+}
+
 /**
  * A function that can be used to build a URL for a text-to-speech
  * service. This URL will be used to retrieve an audio file that can be
  * played by an HTML5 audio element.
  */
-export type BuildUrl = (provider: string, voice: string, rate: number, text: string) => string;
+export type BuildUrl = (options: BuildUrlOptions) => string;
 
 /**
  * Defines a function that can be used to retrieve an ephemeral access token
@@ -354,7 +362,7 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
   }
   play(text: string) {
     this.playMillis = performance.now();
-    this.audio.src = this.urlFunc(this.name, this.voice, this.rate, text);
+    this.audio.src = this.urlFunc({ provider: this.name, text, voice: this.voice, rate: this.rate });
     this.audio.play();
   }
   flush() {}
@@ -588,7 +596,8 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     name: string,
     private readonly urlFunc: BuildUrl,
     public readonly voice: string,
-    public readonly rate: number = 1.0
+    public readonly rate: number = 1.0,
+    public readonly model?: string
   ) {
     super(name);
   }
@@ -640,7 +649,9 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     const shortText = req.text.length > 20 ? `${req.text.substring(0, 20)}...` : req.text;
     console.debug(`[${this.name}] requesting chunk: ${shortText}`);
     req.sendTimestamp = performance.now();
-    const res = await fetch(this.urlFunc(this.name, this.voice, this.rate, req.text));
+    const res = await fetch(
+      this.urlFunc({ provider: this.name, text: req.text, voice: this.voice, rate: this.rate, model: this.model })
+    );
     if (!res.ok) {
       this.stop();
       this.setComplete(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
@@ -681,8 +692,14 @@ export class AzureTextToSpeech extends RestTextToSpeech {
  */
 export class ElevenLabsTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM';
-  constructor(urlFunc: BuildUrl, voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
-    super('eleven', urlFunc, voice, rate);
+  static readonly DEFAULT_MODEL = 'eleven_monolingual_v1';
+  constructor(
+    urlFunc: BuildUrl,
+    voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE,
+    rate: number = 1.0,
+    model = ElevenLabsTextToSpeech.DEFAULT_MODEL
+  ) {
+    super('eleven', urlFunc, voice, rate, model);
   }
 }
 
@@ -879,8 +896,12 @@ interface ElevenLabsOutboundMessage {
 export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
   private readonly contentType: string;
   private readonly tokenPromise: Promise<string>;
-  constructor(private readonly tokenFunc: GetToken, voice = ElevenLabsTextToSpeech.DEFAULT_VOICE) {
-    const model_id = 'eleven_monolingual_v1';
+  constructor(
+    private readonly tokenFunc: GetToken,
+    voice = ElevenLabsTextToSpeech.DEFAULT_VOICE,
+    model = ElevenLabsTextToSpeech.DEFAULT_MODEL
+  ) {
+    const model_id = model;
     const optimize_streaming_latency = '22'; // doesn't seem to have any effect
     const output_format = 'pcm_22050'; // 44100' requires $99/mo plan
     const params = new URLSearchParams({ model_id, optimize_streaming_latency, output_format });
@@ -960,6 +981,7 @@ export interface TextToSpeechOptions {
   proto?: TextToSpeechProtocol;
   rate?: number;
   voice?: string;
+  model?: string;
   getToken?: GetToken;
   buildUrl?: BuildUrl;
 }
@@ -967,7 +989,7 @@ export interface TextToSpeechOptions {
 /**
  * Factory function to create a text-to-speech service for the specified provider.
  */
-export function createTextToSpeech({ provider, proto, rate, voice, getToken, buildUrl }: TextToSpeechOptions) {
+export function createTextToSpeech({ provider, proto, voice, rate, model, getToken, buildUrl }: TextToSpeechOptions) {
   if (!proto || proto == 'rest') {
     switch (provider) {
       case 'azure':
@@ -975,7 +997,7 @@ export function createTextToSpeech({ provider, proto, rate, voice, getToken, bui
       case 'aws':
         return new AwsTextToSpeech(buildUrl!, voice, rate);
       case 'eleven':
-        return new ElevenLabsTextToSpeech(buildUrl!, voice);
+        return new ElevenLabsTextToSpeech(buildUrl!, voice, rate, model);
       case 'gcp':
         return new GcpTextToSpeech(buildUrl!, voice, rate);
       case 'lmnt':
@@ -994,7 +1016,7 @@ export function createTextToSpeech({ provider, proto, rate, voice, getToken, bui
   } else {
     switch (provider) {
       case 'eleven':
-        return new ElevenLabsWebSocketTextToSpeech(getToken!, voice);
+        return new ElevenLabsWebSocketTextToSpeech(getToken!, voice, model);
       case 'lmnt':
         return new LmntWebSocketTextToSpeech(getToken!, voice);
       default:
