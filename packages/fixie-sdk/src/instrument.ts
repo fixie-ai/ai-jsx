@@ -22,7 +22,7 @@ class CustomSpanProcessor extends BatchSpanProcessor {
     // Attach any Fixie baggage to the span.
     const baggage = propagation.getBaggage(parentContext);
     baggage?.getAllEntries().forEach(([key, value]) => {
-      if (key.startsWith('ai.fixie')) {
+      if (key.startsWith('ai.fixie.')) {
         span.setAttribute(key, value.value);
       }
     });
@@ -36,7 +36,7 @@ class CustomLogProcessor extends BatchLogRecordProcessor {
     // Attach any Fixie baggage to the log record.
     const baggage = propagation.getActiveBaggage();
     baggage?.getAllEntries().forEach(([key, value]) => {
-      if (key.startsWith('ai.fixie')) {
+      if (key.startsWith('ai.fixie.')) {
         logRecord.attributes[key] = value.value;
       }
     });
