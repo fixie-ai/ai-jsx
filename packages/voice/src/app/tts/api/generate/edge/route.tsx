@@ -269,12 +269,13 @@ function ttsMurf({ text, voice, rate }: GenerateOptions): Promise<Response> {
 /**
  * REST client for Play.HT TTS (https://play.ht)
  */
-function ttsPlayHT({ text, voice, rate }: GenerateOptions): Promise<Response> {
+function ttsPlayHT({ text, voice, rate, model }: GenerateOptions): Promise<Response> {
   const headers = createHeaders({ authorization: makeAuth('PLAYHT_API_KEY') });
   headers.append('X-User-Id', getEnvVar('PLAYHT_USER_ID'));
   const obj = {
     voice,
     text,
+    voice_engine: model ?? 'PlayHT2.0-turbo',
     quality: 'draft',
     output_format: 'mp3',
     speed: rate,
