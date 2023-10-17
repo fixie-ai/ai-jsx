@@ -99,16 +99,17 @@ abstract class AudioDecoder {
     this.buffer = newBuffer;
     this.processBuffer();
   }
+  flush() {}
   onData?: (pcmBuffer: AudioPcmBuffer) => void;
   onError?: (error: Error) => void;
   protected abstract processBuffer(): void;
 }
 
 /**
- * An internal demuxer that allows us to easily go from network chunks to complete MP3 frames.
+ * A streaming MP3 decoder.
+ * See https://www.mp3-tech.org/programmer/frame_header.html
  */
 class Mp3Decoder extends AudioDecoder {
-  // See https://www.mp3-tech.org/programmer/frame_header.html
   private static readonly BIT_RATES = [
     [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320], // v1
     [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160], // v2
@@ -117,7 +118,16 @@ class Mp3Decoder extends AudioDecoder {
     [44100, 48000, 32000], // v1
     [22050, 24000, 16000], // v2
   ];
+  constructor(private readonly context: AudioContext) {
+    super();
+  }
+  async flush() {
+    const audioBuffer = await this.context.decodeAudioData(this.buffer.buffer);
+    const pcmBuffer = new AudioPcmBuffer(audioBuffer.sampleRate, audioBuffer.getChannelData(0));
+    this.onData?.(pcmBuffer);
+  }
   protected processBuffer() {}
+  /*
   private getFrameLen(offset: number) {
     // Check we have enough bytes.
     if (this.buffer.length < offset + 4) {
@@ -146,66 +156,85 @@ class Mp3Decoder extends AudioDecoder {
     const frameLen = Math.floor((144 * bitRate * 1000) / sampleRate) + padding;
     return frameLen;
   }
+  */
 }
 
+/**
+ * A streaming WAV decoder.
+ * See http://midi.teragonaudio.com/tech/wave.htm
+ */
 class WavDecoder extends AudioDecoder {
   private static readonly RIFF_TAG = 'RIFF';
   private static readonly FMT_TAG = 'fmt ';
   private static readonly DATA_TAG = 'data';
+  private static readonly WAVE_TYPE = 'WAVE';
+  private static readonly RIFF_HEADER_LEN = 12;
+  private static readonly CHUNK_HEADER_LEN = 8;
   private gotRiff = false;
   private sampleRate?: number;
   private numChannels?: number;
   private dataRead = 0;
   protected processBuffer() {
-    const HEADER_LEN = 8;
     while (true) {
-      // Read a complete type + length header.
-      if (this.buffer.length < HEADER_LEN) {
+      // The first thing we'll encounter is the RIFF header, which is 12 bytes.
+      // Everything after that is a TLV chunk, where the type + len are 8 bytes.
+      if (this.buffer.length < WavDecoder.CHUNK_HEADER_LEN) {
         break;
       }
-      const view = new DataView(this.buffer.buffer);
-      const tag = this.getFourCC(view);
-      const len = view.getUint32(4, true);
 
       // Process the header, depending on our state and the header type.
+      const view = new DataView(this.buffer.buffer);
+      const tag = this.getTag(view);
+      const len = view.getUint32(4, true);
       if (!this.gotRiff) {
-        // First header must be RIFF.
-        if (!this.processRiffHeader(tag, len)) {
+        if (this.buffer.length < WavDecoder.RIFF_HEADER_LEN) {
+          break;
+        }
+
+        // Make sure it's a valid RIFF.
+        if (!this.processRiffHeader(tag, len, this.getTag(view, 8))) {
           this.onError?.(new Error(`expected RIFF tag, got ${tag}`));
           break;
         }
-        this.buffer = this.buffer.slice(HEADER_LEN);
+        this.buffer = this.buffer.slice(WavDecoder.RIFF_HEADER_LEN);
       } else if (tag == WavDecoder.DATA_TAG) {
         // When reading the DATA tag, emit data as it's received.
-        let available = Math.min(len, this.buffer.length - HEADER_LEN) - this.dataRead;
-        if (available % 2 != 0) {
-          available--;
+        const available = Math.min(len, this.buffer.length - headerLen) - this.dataRead / 2 * 2;
+        if (available == 0) {
+          break;
         }
         this.processData(available);
         if (this.dataRead == len) {
-          this.buffer = this.buffer.slice(HEADER_LEN + len);
+          this.buffer = this.buffer.slice(headerLen + len);
         }
-      } else if (this.buffer.length >= len) {
+      } else {
+        if (this.buffer.length < headerLen + len) {
+          break;
+        }
         // For other tags, we need to have the complete chunk.
-        const chunk = this.buffer.slice(0, len);
+        const chunk = this.buffer.slice(headerLen, headerLen + len);
         if (!this.processChunk(tag, chunk)) {
           this.onError?.(new Error(`error processing chunk ${tag}`));
           break;
         }
-        this.buffer = this.buffer.slice(HEADER_LEN + len);
+        this.buffer = this.buffer.slice(headerLen + len);
       }
     }
   }
-  private getFourCC(view: DataView): string {
+  private getTag(view: DataView, offset = 0): string {
     let str = '';
     for (let i = 0; i < 4; i++) {
-      str += String.fromCharCode(view.getUint8(i));
+      str += String.fromCharCode(view.getUint8(offset + i));
     }
     return str;
   }
-  private processRiffHeader(tag: string, len: number) {
+  private processRiffHeader(tag: string, len: number, type: string) {
     if (tag != WavDecoder.RIFF_TAG) {
       console.error(`expected RIFF tag, got ${tag}`);
+      return false;
+    }
+    if (type != WavDecoder.WAVE_TYPE) {
+      console.error(`expected WAVE type, got ${type}`);
       return false;
     }
     this.gotRiff = true;
@@ -238,7 +267,8 @@ class WavDecoder extends AudioDecoder {
   }
   private processData(available: number) {
     if (available > 0) {
-      const pcmBuffer = new AudioPcmBuffer(this.sampleRate!, this.buffer.slice(8, available + 8));
+      const startPos = WavDecoder.CHUNK_HEADER_LEN + this.dataRead;
+      const pcmBuffer = new AudioPcmBuffer(this.sampleRate!, this.buffer.slice(startPos, startPos));
       this.dataRead += available;
       this.onData?.(pcmBuffer);
     }
@@ -284,6 +314,9 @@ class AudioStream {
     const decoder = this.getDecoder(chunk.mimeType);
     decoder.addData(chunk.buffer);
   }
+  flush() {
+    this.decoder?.flush();
+  }
   close() {
     this.outputNode.port.onmessage = null;
     this.outputNode.disconnect();
@@ -298,7 +331,7 @@ class AudioStream {
   private getDecoder(mimeType: string) {
     if (!this.decoder) {
       if (mimeType == AUDIO_MPEG_MIME_TYPE) {
-        this.decoder = new Mp3Decoder();
+        this.decoder = new Mp3Decoder(this.context);
       } else if (mimeType == AUDIO_WAV_MIME_TYPE) {
         this.decoder = new WavDecoder();
       } else {
@@ -404,6 +437,13 @@ class AudioOutputManager extends EventTarget {
       throw new Error(`stream ${streamId} not found`);
     }
     audioStream.appendBuffer(chunk);
+  }
+  flush(streamId: string) {
+    const audioStream = this.streams.get(streamId);
+    if (!audioStream) {
+      throw new Error(`stream ${streamId} not found`);
+    }
+    audioStream.flush();
   }
   private handleWaiting(streamId: string) {
     // Ensure the stream is still alive.
@@ -852,6 +892,7 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       console.debug(`[${this.name}] received chunk buffer: ${shortText}, len=${value.length}`);
       this.queueChunk(new AudioChunk(contentType, value.buffer));
     }
+    this.processChunkQueue(); //+++++ flush???
     this.requestQueue.shift();
     this.processRequestQueue();
   }

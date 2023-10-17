@@ -175,7 +175,7 @@ function ttsEleven({ text, voice, model }: GenerateOptions): Promise<Response> {
 function ttsAzure({ text, voice, rate }: GenerateOptions): Promise<Response> {
   const region = 'westus';
   const apiKey = getEnvVar('AZURE_TTS_API_KEY');
-  const outputFormat = 'audio-24khz-48kbitrate-mono-mp3';
+  const outputFormat = 'raw-24khz-16bit-mono-pcm';
   const url = `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`;
   const headers = createHeaders({});
   headers.append('Ocp-Apim-Subscription-Key', apiKey);
@@ -194,7 +194,7 @@ function ttsAzure({ text, voice, rate }: GenerateOptions): Promise<Response> {
  */
 function ttsAws({ text, voice, rate }: GenerateOptions): Promise<Response> {
   const region = 'us-west-2';
-  const outputFormat = 'mp3';
+  const outputFormat = 'wav';
   const params = {
     Text: text,
     OutputFormat: outputFormat,
@@ -228,7 +228,7 @@ function ttsGcp({ text, voice, rate }: GenerateOptions): Promise<Response> {
   const obj = {
     input: { text },
     voice: { languageCode: 'en-US', name: voice },
-    audioConfig: { audioEncoding: 'MP3', speakingRate: rate },
+    audioConfig: { audioEncoding: 'WAV', speakingRate: rate },
   };
   const apiKey = getEnvVar('GOOGLE_TTS_API_KEY');
   const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
@@ -277,7 +277,7 @@ function ttsPlayHT({ text, voice, rate, model }: GenerateOptions): Promise<Respo
     text,
     voice_engine: model ?? 'PlayHT2.0-turbo',
     quality: 'draft',
-    output_format: 'mp3',
+    output_format: 'wav',
     speed: rate,
     sample_rate: 24000,
   };
@@ -298,7 +298,7 @@ function ttsResembleV1({ text, voice, rate }: GenerateOptions): Promise<Response
     voice_uuid: voice,
     precision: 'PCM_16',
     sample_rate: 44100,
-    output_type: 'mp3',
+    output_type: 'wav',
     raw: true,
   };
   const url = `https://app.resemble.ai/api/v2/projects/${getEnvVar('RESEMBLE_PROJECT_ID')}/clips`;
@@ -331,7 +331,7 @@ function ttsLmnt({ text, voice, rate }: GenerateOptions): Promise<Response> {
     voice,
     text,
     speed: rate.toString(),
-    format: 'mp3', // || "wav"
+    format: 'wav',
   });
   const url = 'https://api.lmnt.com/speech/beta/synthesize';
   return postForm(url, headers, obj);
