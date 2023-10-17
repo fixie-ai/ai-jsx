@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
     if (!contentType?.startsWith(APPLICATION_JSON_MIME_TYPE)) {
       console.warn(`${timer.startTime} TTS expected JSON response, got ${contentType}`);
     }
-    const binary = await getBlobFromJson(timer, await response.json(), provider.keyPath);
+    const binary = getBlobFromJson(timer, await response.json(), provider.keyPath);
     const mimeType = provider.mimeType ?? AUDIO_MPEG_MIME_TYPE;
     return new NextResponse(binary, { headers: { 'Content-Type': mimeType } });
   }
@@ -175,7 +175,7 @@ function ttsEleven({ text, voice, model }: GenerateOptions): Promise<Response> {
 function ttsAzure({ text, voice, rate }: GenerateOptions): Promise<Response> {
   const region = 'westus';
   const apiKey = getEnvVar('AZURE_TTS_API_KEY');
-  const outputFormat = 'raw-24khz-16bit-mono-pcm';
+  const outputFormat = 'audio-24khz-48kbitrate-mono-mp3';
   const url = `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`;
   const headers = createHeaders({});
   headers.append('Ocp-Apim-Subscription-Key', apiKey);
@@ -194,7 +194,7 @@ function ttsAzure({ text, voice, rate }: GenerateOptions): Promise<Response> {
  */
 function ttsAws({ text, voice, rate }: GenerateOptions): Promise<Response> {
   const region = 'us-west-2';
-  const outputFormat = 'wav';
+  const outputFormat = 'mp3';
   const params = {
     Text: text,
     OutputFormat: outputFormat,
@@ -228,7 +228,7 @@ function ttsGcp({ text, voice, rate }: GenerateOptions): Promise<Response> {
   const obj = {
     input: { text },
     voice: { languageCode: 'en-US', name: voice },
-    audioConfig: { audioEncoding: 'WAV', speakingRate: rate },
+    audioConfig: { audioEncoding: 'MP3', speakingRate: rate },
   };
   const apiKey = getEnvVar('GOOGLE_TTS_API_KEY');
   const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
@@ -270,14 +270,14 @@ function ttsMurf({ text, voice, rate }: GenerateOptions): Promise<Response> {
  * REST client for Play.HT TTS (https://play.ht)
  */
 function ttsPlayHT({ text, voice, rate, model }: GenerateOptions): Promise<Response> {
-  const headers = createHeaders({ authorization: makeAuth('PLAYHT_API_KEY') });
+  const headers = createHeaders({ authorization: makeAuth('PLAYHT_API_KEY'), accept: AUDIO_MPEG_MIME_TYPE });
   headers.append('X-User-Id', getEnvVar('PLAYHT_USER_ID'));
   const obj = {
     voice,
     text,
     voice_engine: model ?? 'PlayHT2.0-turbo',
     quality: 'draft',
-    output_format: 'wav',
+    output_format: 'mp3',
     speed: rate,
     sample_rate: 24000,
   };
@@ -326,7 +326,7 @@ function ttsResembleV2({ text, voice, rate }: GenerateOptions): Promise<Response
  * Streaming REST client for LMNT TTS (https://www.lmnt.com)
  */
 function ttsLmnt({ text, voice, rate }: GenerateOptions): Promise<Response> {
-  const headers = createHeaders({ x_api_key: getEnvVar('LMNT_API_KEY') });
+  const headers = createHeaders({ x_api_key: getEnvVar('LMNT_API_KEY'), accept: AUDIO_WAV_MIME_TYPE });
   const obj = new URLSearchParams({
     voice,
     text,
@@ -358,7 +358,9 @@ function createHeaders({ authorization, api_key, x_api_key, accept }: TtsHeaders
   if (x_api_key) {
     headers.append('X-Api-Key', x_api_key);
   }
-  headers.append('Accept', accept ?? AUDIO_MPEG_MIME_TYPE);
+  if (accept) {
+    headers.append('Accept', accept);
+  }
   return headers;
 }
 
