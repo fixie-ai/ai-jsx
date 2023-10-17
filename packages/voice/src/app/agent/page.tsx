@@ -7,7 +7,7 @@ import {
   MicManager,
   Transcript,
 } from 'ai-jsx/lib/asr/asr';
-import { createTextToSpeech, TextToSpeechBase, TextToSpeechProtocol } from 'ai-jsx/lib/tts/tts';
+import { createTextToSpeech, BuildUrlOptions, TextToSpeechBase, TextToSpeechProtocol } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import '../globals.css';
@@ -66,7 +66,7 @@ async function getAsrToken(provider: string) {
  * Retrieves an ephemeral token from the server for use in an ASR service.
  */
 async function getTtsToken(provider: string) {
-  const response = await fetch('/tts/api', {
+  const response = await fetch('/tts/api/token/edge', {
     method: 'POST',
     body: JSON.stringify({ provider }),
   });
@@ -77,8 +77,10 @@ async function getTtsToken(provider: string) {
 /**
  * Builds a URL for use in a TTS service.
  */
-function buildTtsUrl(provider: string, voice: string, rate: number, text: string) {
-  return `/tts/api?provider=${provider}&voice=${voice}&rate=${rate}&text=${text}`;
+function buildTtsUrl(options: BuildUrlOptions) {
+  const params = new URLSearchParams();
+  Object.entries(options).forEach(([k, v]) => v != undefined && params.set(k, v.toString()));
+  return `/tts/api/generate/edge?${params}`;
 }
 
 /**
