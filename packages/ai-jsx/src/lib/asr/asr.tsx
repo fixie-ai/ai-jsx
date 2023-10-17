@@ -211,7 +211,7 @@ export class MicManager extends EventTarget {
       source.connect(this.processorNode);
     }
     if (this.streamElement) {
-      source.connect(this.context.destination); //++++ proocessor?
+      source.connect(this.context.destination);
     }
 
     // Start the VAD.
@@ -290,7 +290,7 @@ export class Transcript {
 /**
  * Base class for live speech recognizers that wraps a web socket
  * connection to a speech recognition server.
- * Override createOpenRequest/handleMessage/sendChunk to customize for a particular
+ * Override handleOpen/handleMessage/sendChunk to customize for a particular
  * speech recognition service.
  */
 export abstract class SpeechRecognitionBase extends EventTarget {
@@ -306,7 +306,6 @@ export abstract class SpeechRecognitionBase extends EventTarget {
   protected streamLastVoiceEndMillis: number = 0;
   private outBuffer: ArrayBuffer[] = [];
   protected socket?: WebSocket;
-  protected socketReady: boolean = false;
 
   constructor(
     protected name: string,
@@ -339,17 +338,12 @@ export abstract class SpeechRecognitionBase extends EventTarget {
     console.log(`[${this.name}] socket connecting...`);
     this.outBuffer = [];
     this.socket = new WebSocket(url, protocols);
-    this.socketReady = false;
     this.socket.binaryType = 'arraybuffer';
-    this.socket.onopen = async (_event) => {
+    this.socket.onopen = (_event) => {
       const elapsed = performance.now() - startTime;
       console.log(`[${this.name}] socket opened, elapsed=${elapsed.toFixed(0)}`);
-      const req = await this.createOpenRequest();
-      if (req) {
-        this.socket!.send(JSON.stringify(req));
-      }
+      this.handleOpen();
       this.flush();
-      this.socketReady = true;
     };
     this.socket.onmessage = (event) => {
       let result;
@@ -369,15 +363,17 @@ export abstract class SpeechRecognitionBase extends EventTarget {
     };
     this.manager.addEventListener('chunk', (evt: CustomEventInit<ArrayBuffer>) => {
       const chunk = evt.detail!;
-      if (this.socketReady) {
+      if (this.socket!.readyState == 1) {
         this.sendChunk(chunk);
         // Set our reference time for computing latency when sending our first unbuffered chunk.
         if (this.initialChunkMillis == 0) {
           this.initialChunkMillis = performance.now() - this.streamSentMillis;
         }
-      } else {
+      } else if (this.socket!.readyState == 0) {
         // If the web socket isn't open yet, buffer the chunk.
         this.outBuffer.push(chunk);
+      } else {
+        console.error(`[${this.name}] socket closed`);
       }
       this.streamSentMillis += (chunk.byteLength / (2 * this.manager.sampleRate)) * 1000;
     });
@@ -429,7 +425,7 @@ export abstract class SpeechRecognitionBase extends EventTarget {
     });
     this.dispatchEvent(event);
   }
-  protected createOpenRequest(): any {}
+  protected handleOpen() {}
   protected handleMessage(_result: any) {}
   protected sendChunk(chunk: ArrayBuffer) {
     this.socket!.send(chunk);
@@ -450,9 +446,10 @@ export abstract class SpeechRecognitionBase extends EventTarget {
  * https://developers.deepgram.com/reference/streaming
  */
 export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
-  private buf = '';
+  private buf: string;
   constructor(manager: MicManager, tokenFunc: GetToken, language?: string, model?: string) {
     super('deepgram', manager, tokenFunc, language, model);
+    this.buf = '';
   }
   async start() {
     this.buf = '';
@@ -525,26 +522,24 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
  * https://github.com/soniox/web_voice/blob/master/src/web_voice.js
  */
 export class SonioxSpeechRecognition extends SpeechRecognitionBase {
-  private static readonly END_TOKEN = '<end>';
-  private tokenPromise?: Promise<string>;
-  private buf = '';
+  private token?: string;
   constructor(manager: MicManager, tokenFunc: GetToken, language?: string) {
     super('soniox', manager, tokenFunc, language);
   }
-  start() {
-    this.buf = '';
-    this.tokenPromise = this.fetchToken();
+  async start() {
+    this.token = await this.fetchToken();
     super.startInternal('wss://api.soniox.com/transcribe-websocket');
   }
-  protected async createOpenRequest() {
-    return {
-      api_key: await this.tokenPromise!,
+  protected handleOpen() {
+    const obj = {
+      api_key: this.token,
       sample_rate_hertz: this.manager.sampleRate,
       include_nonfinal: true,
       enable_endpoint_detection: true,
       speech_context: null,
-      model: `${(this.language ?? 'en').slice(0, 2)}_v2_lowlatency`,
+      model: this.language ? `${this.language.slice(0, 2)}_v2_lowlatency` : null,
     };
+    this.socket!.send(JSON.stringify(obj));
   }
   /**
    * Parses a transcript message in the following format:
@@ -560,32 +555,28 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
    * }
    */
   protected handleMessage(result: any) {
-    const nonFinalWords = this.concatWords(result.nfw);
-    const finalWords = this.concatWords(result.fw);
-    let transcript = (this.buf + finalWords.transcript).trimStart();
-    if (finalWords.done) {
-      this.dispatchTranscript(transcript, true, result.tpt);
-      this.buf = '';
-    } else {
-      this.buf = transcript;
+    const append = (transcript: string, w: any) => {
+      if (w.t == '<end>') {
+        return transcript;
+      }
+      let out = transcript;
+      if (out && !',.?!'.includes(w.t[0])) {
+        out += ' ';
+      }
+      out += w.t;
+      return out;
+    };
+    const partialTranscript = result.nfw.reduce(append, '');
+    if (partialTranscript) {
+      this.dispatchTranscript(partialTranscript, false, result.tpt);
     }
-    if (nonFinalWords.transcript) {
-      transcript = (this.buf + nonFinalWords.transcript).trimStart();
-      this.dispatchTranscript(transcript, false, result.tpt);
+    const finalTranscript = result.fw.reduce(append, '');
+    if (finalTranscript) {
+      this.dispatchTranscript(finalTranscript, true, result.tpt);
     }
   }
   protected sendClose() {
     this.socket!.send('');
-  }
-  private concatWords(words: any[]) {
-    const append = (transcript: string, w: any) => transcript + w.t;
-    let transcript = words.reduce(append, '');
-    let done = false;
-    if (transcript.endsWith(SonioxSpeechRecognition.END_TOKEN)) {
-      transcript = transcript.slice(0, -SonioxSpeechRecognition.END_TOKEN.length);
-      done = true;
-    }
-    return { transcript, done };
   }
 }
 
@@ -594,22 +585,23 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
  * https://docs.gladia.io/reference/live-audio
  */
 export class GladiaSpeechRecognition extends SpeechRecognitionBase {
-  private tokenPromise?: Promise<string>;
+  private token?: string;
   constructor(manager: MicManager, tokenFunc: GetToken, language?: string) {
     super('gladia', manager, tokenFunc, language);
   }
-  start() {
-    this.tokenPromise = this.fetchToken();
+  async start() {
+    this.token = await this.fetchToken();
     super.startInternal('wss://api.gladia.io/audio/text/audio-transcription');
   }
-  protected async createOpenRequest() {
-    return {
-      x_gladia_key: await this.tokenPromise,
+  protected handleOpen() {
+    const obj = {
+      x_gladia_key: this.token,
       sample_rate: this.manager.sampleRate,
       encoding: 'wav',
       // 300ms endpointing by default
       language: this.language?.slice(0, 2) == 'en' ? 'english' : null,
     };
+    this.socket!.send(JSON.stringify(obj));
   }
   /**
    * Parses a transcript message in the following format:
@@ -685,17 +677,18 @@ export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
  * https://docs.speechmatics.com/rt-api-ref
  */
 export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
-  private buf = '';
+  private buf: string;
   constructor(manager: MicManager, tokenFunc: GetToken, language?: string) {
     super('speechmatics', manager, tokenFunc, language);
+    this.buf = '';
   }
   async start() {
-    this.buf = '';
     const languageCode = this.language?.slice(0, 2) ?? 'en';
     super.startInternal(`wss://eu.rt.speechmatics.com/v2/${languageCode}?jwt=${await this.fetchToken()}`);
   }
-  protected createOpenRequest() {
-    return {
+  protected handleOpen() {
+    this.buf = '';
+    const obj = {
       message: 'StartRecognition',
       audio_format: {
         type: 'raw',
@@ -708,6 +701,7 @@ export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
         max_delay: 2, // the minimum (seconds)
       },
     };
+    this.socket!.send(JSON.stringify(obj));
   }
   /**
    * Parses a transcript message in the following format:
