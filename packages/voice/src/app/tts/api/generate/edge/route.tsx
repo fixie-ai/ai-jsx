@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
     if (!contentType?.startsWith(APPLICATION_JSON_MIME_TYPE)) {
       console.warn(`${timer.startTime} TTS expected JSON response, got ${contentType}`);
     }
-    const binary = await getBlobFromJson(timer, await response.json(), provider.keyPath);
+    const binary = getBlobFromJson(timer, await response.json(), provider.keyPath);
     const mimeType = provider.mimeType ?? AUDIO_MPEG_MIME_TYPE;
     return new NextResponse(binary, { headers: { 'Content-Type': mimeType } });
   }
@@ -270,7 +270,7 @@ function ttsMurf({ text, voice, rate }: GenerateOptions): Promise<Response> {
  * REST client for Play.HT TTS (https://play.ht)
  */
 function ttsPlayHT({ text, voice, rate, model }: GenerateOptions): Promise<Response> {
-  const headers = createHeaders({ authorization: makeAuth('PLAYHT_API_KEY') });
+  const headers = createHeaders({ authorization: makeAuth('PLAYHT_API_KEY'), accept: AUDIO_MPEG_MIME_TYPE });
   headers.append('X-User-Id', getEnvVar('PLAYHT_USER_ID'));
   const obj = {
     voice,
@@ -298,7 +298,7 @@ function ttsResembleV1({ text, voice, rate }: GenerateOptions): Promise<Response
     voice_uuid: voice,
     precision: 'PCM_16',
     sample_rate: 44100,
-    output_type: 'mp3',
+    output_type: 'wav',
     raw: true,
   };
   const url = `https://app.resemble.ai/api/v2/projects/${getEnvVar('RESEMBLE_PROJECT_ID')}/clips`;
@@ -326,12 +326,12 @@ function ttsResembleV2({ text, voice, rate }: GenerateOptions): Promise<Response
  * Streaming REST client for LMNT TTS (https://www.lmnt.com)
  */
 function ttsLmnt({ text, voice, rate }: GenerateOptions): Promise<Response> {
-  const headers = createHeaders({ x_api_key: getEnvVar('LMNT_API_KEY') });
+  const headers = createHeaders({ x_api_key: getEnvVar('LMNT_API_KEY'), accept: AUDIO_WAV_MIME_TYPE });
   const obj = new URLSearchParams({
     voice,
     text,
     speed: rate.toString(),
-    format: 'mp3', // || "wav"
+    format: 'wav',
   });
   const url = 'https://api.lmnt.com/speech/beta/synthesize';
   return postForm(url, headers, obj);
@@ -358,7 +358,9 @@ function createHeaders({ authorization, api_key, x_api_key, accept }: TtsHeaders
   if (x_api_key) {
     headers.append('X-Api-Key', x_api_key);
   }
-  headers.append('Accept', accept ?? AUDIO_MPEG_MIME_TYPE);
+  if (accept) {
+    headers.append('Accept', accept);
+  }
   return headers;
 }
 
