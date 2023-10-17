@@ -1,6 +1,17 @@
 # Changelog
 
-## 0.21.2
+# 0.22.1
+
+- In the OpenTelemetry logger, ensure that SeverityNumber is set.
+
+## [0.22.0](https://github.com/fixie-ai/ai-jsx/commit/b5337176cd0d50c1691c2ae4bcc02e71a37b407c)
+
+- In the `Sidekick` component:
+  - Put the user system messages before the built-in system messages.
+  - Make the MDX formatting logic is conditional on using MDX
+  - Accept `children` as the conversation to act on (defaults to `<ConversationHistory>`)
+
+## [0.21.2](https://github.com/fixie-ai/ai-jsx/commit/f59cd9990d9f64f94dc961dd0308f0c0eca44e00)
 
 - Fix a bug in `LimitToValidMdx` where a whitespace character was initially yieled.
 
