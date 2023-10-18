@@ -10,10 +10,6 @@ import {
 import { createTextToSpeech, BuildUrlOptions, TextToSpeechBase, TextToSpeechProtocol } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
-// The import fails with https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/CJSResolvesToESM.md
-// but ostensibly the bundler is able to muddle through it, so we suppress the error for TS.
-// @ts-expect-error
-import { IsomorphicFixieClient } from 'fixie/web.js';
 import '../globals.css';
 
 // 1. VAD triggers silence. (Latency here is frame size + VAD delay)
@@ -94,6 +90,25 @@ class ChatMessage {
 }
 
 /**
+ * Transforms a text stream of JSON lines into a stream of JSON objects.
+ */
+function jsonLinesTransformer() {
+  let buffer = '';
+  return new TransformStream<string, any>({
+    async transform(chunk, controller) {
+      buffer += chunk;
+      const lines = buffer.split('\n');
+      buffer = lines.pop()!;
+      for (const line of lines) {
+        if (line.trim()) {
+          controller.enqueue(JSON.parse(line));
+        }
+      }
+    },
+  });
+}
+
+/**
  * A single request to the LLM, which may be speculative.
  */
 class ChatRequest {
@@ -111,101 +126,12 @@ class ChatRequest {
     private readonly docs: boolean,
     public active: boolean
   ) {
-    this.conversationId = inMessages.find((m) => m.conversationId !== null)?.conversationId;
-  }
-
-  get didStart() {
-    return this.startMillis !== undefined;
+    this.conversationId = inMessages.find((m) => m.conversationId)?.conversationId;
   }
 
   async start() {
     if (this.model.startsWith('fixie/')) {
-      if (!this.active) {
-        // Fixie doesn't support speculative execution yet.
-        console.log('Ignoring speculative execution request for Fixie.');
-        return;
-      }
-
-      console.log(`calling Fixie for ${this.inMessages.at(-1)?.content}`);
-      this.startMillis = performance.now();
-
-      const agentId = this.model.split('/', 2)[1];
-      const fixieClient = IsomorphicFixieClient.CreateWithoutApiKey();
-      let isStartConversationRequest;
-      let response;
-      if (this.conversationId) {
-        isStartConversationRequest = false;
-        response = await fixieClient.sendMessage(agentId, this.conversationId, {
-          message: this.inMessages.at(-1)!.content,
-        });
-      } else {
-        isStartConversationRequest = true;
-        const conversationResult = await fixieClient.startConversation(agentId, this.inMessages.at(-1)!.content);
-        this.conversationId = conversationResult.conversationId;
-        response = conversationResult.response;
-      }
-
-      const reader = response.body!.pipeThrough(new TextDecoderStream()).getReader();
-      this.requestLatency = performance.now() - this.startMillis;
-      console.log(`Got Fixie response, latency=${this.requestLatency.toFixed(0)}`);
-
-      let bufferedText = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          if (!this.done) {
-            this.done = true;
-            this.streamLatency = performance.now() - this.startMillis - this.requestLatency;
-            this.onComplete?.(this);
-          }
-          break;
-        }
-
-        if (!this.done) {
-          bufferedText += value;
-
-          const lines = bufferedText.split('\n');
-          bufferedText = lines.pop()!;
-          for (const line of lines) {
-            const json = JSON.parse(line);
-            const currentTurn = isStartConversationRequest ? json.turns.at(-1) : json;
-            console.log(currentTurn, json);
-            const currentMessage = currentTurn.messages
-              .filter((m: any) => m.kind === 'text')
-              .map((m: any) => m.content)
-              .join('');
-
-            if (currentMessage === this.outMessage) {
-              continue;
-            }
-
-            // Find the longest matching prefix.
-            let i = 0;
-            while (
-              i < currentMessage.length &&
-              i < this.outMessage.length &&
-              currentMessage[i] === this.outMessage[i]
-            ) {
-              i++;
-            }
-            if (i !== this.outMessage.length) {
-              console.error('Result was not an append to the previous result.');
-            }
-            const delta = currentMessage.slice(i);
-            this.outMessage = currentMessage;
-            this.onUpdate?.(this, delta);
-
-            if (currentTurn.state === 'done') {
-              if (!this.done) {
-                this.done = true;
-                this.streamLatency = performance.now() - this.startMillis - this.requestLatency;
-                this.onComplete?.(this);
-              }
-              break;
-            }
-          }
-        }
-      }
+      await this.startWithFixie(this.model.slice('fixie/'.length));
     } else {
       console.log(`calling LLM for ${this.inMessages.at(-1)?.content}`);
       this.startMillis = performance.now();
@@ -217,22 +143,109 @@ class ChatRequest {
         },
         body: JSON.stringify({ messages: this.inMessages, model: this.model, docs: this.docs }),
       });
-      this.requestLatency = performance.now() - this.startMillis;
-      console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
       const reader = res.body!.getReader();
       // eslint-disable-next-line no-constant-condition
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
-          this.done = true;
-          this.streamLatency = performance.now() - this.startMillis - this.requestLatency;
-          this.onComplete?.(this);
+          this.ensureComplete();
           break;
         }
         const newText = new TextDecoder().decode(value);
+        if (newText.trim() && this.requestLatency === undefined) {
+          this.requestLatency = performance.now() - this.startMillis;
+          console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
+        }
+
         this.outMessage += newText;
         this.onUpdate?.(this, newText);
       }
+    }
+  }
+
+  private async startWithFixie(agentId: string) {
+    console.log(`calling Fixie for ${this.inMessages.at(-1)?.content}`);
+    this.startMillis = performance.now();
+
+    let isStartConversationRequest;
+    let response;
+    if (this.conversationId) {
+      isStartConversationRequest = false;
+      response = await fetch(
+        `https://api.fixie.ai/api/v1/agents/${agentId}/conversations/${this.conversationId}/messages`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            message: this.inMessages.at(-1)!.content,
+          }),
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    } else {
+      isStartConversationRequest = true;
+      response = await fetch(`https://api.fixie.ai/api/v1/agents/${agentId}/conversations`, {
+        method: 'POST',
+        body: JSON.stringify({
+          message: this.inMessages.at(-1)!.content,
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      this.conversationId = response.headers.get('X-Fixie-Conversation-Id')!;
+    }
+
+    const reader = response.body!.pipeThrough(new TextDecoderStream()).pipeThrough(jsonLinesTransformer()).getReader();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        this.ensureComplete();
+        break;
+      }
+
+      if (!this.done) {
+        const currentTurn = isStartConversationRequest ? value.turns.at(-1) : value;
+        const currentMessage = currentTurn.messages
+          .filter((m: any) => m.kind === 'text')
+          .map((m: any) => m.content)
+          .join('');
+
+        if (currentMessage === this.outMessage) {
+          continue;
+        }
+
+        // Find the longest matching prefix.
+        let i = 0;
+        while (i < currentMessage.length && i < this.outMessage.length && currentMessage[i] === this.outMessage[i]) {
+          i++;
+        }
+        if (i !== this.outMessage.length) {
+          console.error('Result was not an append to the previous result.');
+        }
+        const delta = currentMessage.slice(i);
+
+        if (delta.trim() && this.requestLatency === undefined) {
+          this.requestLatency = performance.now() - this.startMillis;
+          console.log(`Got Fixie response, latency=${this.requestLatency.toFixed(0)}`);
+        }
+
+        this.outMessage = currentMessage;
+        this.onUpdate?.(this, delta);
+
+        if (currentTurn.state === 'done') {
+          this.ensureComplete();
+          break;
+        }
+      }
+    }
+  }
+
+  private ensureComplete() {
+    if (!this.done) {
+      this.done = true;
+      if (this.startMillis !== undefined && this.requestLatency !== undefined) {
+        this.streamLatency = performance.now() - this.startMillis - this.requestLatency;
+      }
+      this.onComplete?.(this);
     }
   }
 }
@@ -253,7 +266,6 @@ class ChatManagerInit {
  */
 class ChatManager {
   private history: ChatMessage[] = [];
-  private fixieConversationId: string | null = null;
   private pendingRequests: Record<string, ChatRequest> = {};
   private readonly micManager: MicManager;
   private readonly asr: SpeechRecognitionBase;
@@ -343,7 +355,7 @@ class ChatManager {
     const normalized = normalizeText(text);
     const hit = normalized in this.pendingRequests;
     console.log(`${final ? 'final' : 'partial'}: ${normalized} ${hit ? 'HIT' : 'MISS'}`);
-    if (!hit) {
+    if (!hit || (final && this.model.startsWith('fixie/'))) {
       const request = new ChatRequest(newMessages, this.model, this.docs, final);
       request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
       request.onComplete = (request) => this.handleRequestDone(request);
@@ -352,15 +364,11 @@ class ChatManager {
     } else if (final) {
       const request = this.pendingRequests[normalized];
       request.active = true;
-      if (!request.didStart) {
-        request.start();
+      this.tts.play(request.outMessage);
+      if (!request.done) {
+        this.onOutputChange?.(request.outMessage, false, request.requestLatency!);
       } else {
-        this.tts.play(request.outMessage);
-        if (!request.done) {
-          this.onOutputChange?.(request.outMessage, false, request.requestLatency!);
-        } else {
-          this.finishRequest(request);
-        }
+        this.finishRequest(request);
       }
     }
   }
