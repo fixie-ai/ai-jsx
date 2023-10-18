@@ -13,7 +13,7 @@ import Image from 'next/image';
 // The import fails with https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/CJSResolvesToESM.md
 // but ostensibly the bundler is able to muddle through it, so we suppress the error for TS.
 // @ts-expect-error
-import { IsomorphicFixieClient } from 'fixie/web';
+import { IsomorphicFixieClient } from 'fixie/src/isomorphic-client';
 import '../globals.css';
 
 // 1. VAD triggers silence. (Latency here is frame size + VAD delay)
