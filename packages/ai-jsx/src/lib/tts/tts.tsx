@@ -164,7 +164,7 @@ class Mp3Decoder extends AudioDecoder {
   async addData(encodedBuffer: ArrayBuffer) {
     await this.decoderReadyPromise;
     const byteBuffer = new Uint8Array(encodedBuffer);
-    const {channelData, samplesDecoded, sampleRate, errors } = this.decoder.decode(byteBuffer);
+    const { channelData, samplesDecoded, sampleRate, errors } = this.decoder.decode(byteBuffer);
     if (errors.length > 0) {
       this.onError?.(new Error(errors[0].message));
     } else if (samplesDecoded > 0) {
