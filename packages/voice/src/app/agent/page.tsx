@@ -355,7 +355,8 @@ class ChatManager {
     const normalized = normalizeText(text);
     const hit = normalized in this.pendingRequests;
     console.log(`${final ? 'final' : 'partial'}: ${normalized} ${hit ? 'HIT' : 'MISS'}`);
-    if (!hit || (final && this.model.startsWith('fixie/'))) {
+    const supportsSpeculativeExecution = !this.model.startsWith('fixie/');
+    if (!hit && (final || supportsSpeculativeExecution)) {
       const request = new ChatRequest(newMessages, this.model, this.docs, final);
       request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
       request.onComplete = (request) => this.handleRequestDone(request);
