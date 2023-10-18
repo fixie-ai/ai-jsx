@@ -29,6 +29,7 @@
     "classnames": "^2.3.2",
     "eslint": "8.42.0",
     "eslint-config-next": "^13.4.6",
+    "fixie": "^2.1.0",
     "lodash": "^4.17.21",
     "next": "^13.4.6",
     "playht": "^0.9.0-beta.7",
