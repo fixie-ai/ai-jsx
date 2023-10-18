@@ -856,6 +856,8 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     const reader = res.body!.getReader();
     while (true) {
       const { value, done } = await reader.read();
+      // eslint seems to think req.cancelled must be false, perhaps due to the earlier check.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (req.cancelled) {
         return;
       }
