@@ -19,6 +19,7 @@ import { MergeExclusive } from 'type-fest';
 
 /** Represents metadata about an agent managed by the Fixie service. */
 export interface AgentMetadata {
+  uuid: string;
   agentId: string;
   handle: string;
   name?: string;
@@ -51,28 +52,35 @@ export interface AgentRevision {
  * This class provides an interface to the Fixie Agent API.
  */
 export class FixieAgent {
-  owner: string;
-  handle: string;
-
   /** Use GetAgent or CreateAgent instead. */
-  private constructor(readonly client: FixieClient, readonly agentId: string, public metadata: AgentMetadata) {
-    const parts = agentId.split('/');
-    this.owner = parts[0];
-    this.handle = parts[1];
+  private constructor(readonly client: FixieClient, public metadata: AgentMetadata) {}
+
+  public get agentId(): string {
+    return this.metadata.agentId;
+  }
+
+  public get owner(): string {
+    return this.metadata.owner;
+  }
+
+  public get handle(): string {
+    return this.metadata.handle;
   }
 
   /** Return the URL for this agent's page on Fixie. */
-  public agentUrl(): string {
-    // TODO(mdw): We need a way to know what the appropriate 'console' URL
-    // is for a given API URL. Since for now this is always console.fixie.ai,
-    // we can just hardcode it.
-    return `https://console.fixie.ai/agents/${this.agentId}`;
+  public agentUrl(baseUrl?: string): string {
+    const url = new URL(`agents/${this.owner}/${this.handle}`, baseUrl ?? 'https://api.fixie.ai');
+    // If using the default API host, change it to the console host.
+    if (url.hostname === 'api.fixie.ai') {
+      url.hostname = 'console.fixie.ai';
+    }
+    return url.toString();
   }
 
   /** Get the agent with the given agent ID. */
   public static async GetAgent(client: FixieClient, agentId: string): Promise<FixieAgent> {
     const metadata = await FixieAgent.getAgentById(client, agentId);
-    const agent = new FixieAgent(client, agentId, metadata);
+    const agent = new FixieAgent(client, metadata);
     return agent;
   }
 
@@ -83,12 +91,12 @@ export class FixieAgent {
       query: gql`
         {
           allAgentsForUser {
-            agentId
+            uuid
           }
         }
       `,
     });
-    return Promise.all(result.data.allAgentsForUser.map((agent: any) => this.GetAgent(client, agent.agentId)));
+    return Promise.all(result.data.allAgentsForUser.map((agent: any) => this.GetAgent(client, agent.uuid)));
   }
 
   /** Return the metadata associated with the given agent. */
@@ -99,6 +107,7 @@ export class FixieAgent {
         query GetAgentById($agentId: String!) {
           agent: agentById(agentId: $agentId) {
             agentId
+            uuid
             handle
             name
             description
@@ -131,6 +140,7 @@ export class FixieAgent {
 
     return {
       agentId: result.data.agent.agentId,
+      uuid: result.data.agent.uuid,
       handle: result.data.agent.handle,
       name: result.data.agent.name,
       description: result.data.agent.description,
@@ -205,7 +215,7 @@ export class FixieAgent {
     moreInfoUrl?: string;
     published?: boolean;
   }) {
-    this.client.gqlClient().mutate({
+    await this.client.gqlClient().mutate({
       mutation: gql`
         mutation UpdateAgent(
           $handle: String!
@@ -224,7 +234,7 @@ export class FixieAgent {
             }
           ) {
             agent {
-              agentId
+              uuid
             }
           }
         }
@@ -434,7 +444,7 @@ export class FixieAgent {
     let agent: FixieAgent;
     try {
       agent = await FixieAgent.GetAgent(client, agentId);
-      agent.update({
+      await agent.update({
         name: config.name,
         description: config.description,
         moreInfoUrl: config.moreInfoUrl,
@@ -519,7 +529,7 @@ export class FixieAgent {
     const tarball = FixieAgent.getCodePackage(agentPath);
     const spinner = ora(' 🚀 Deploying... (hang tight, this takes a minute or two!)').start();
     const revision = await agent.createRevision({ tarball, environmentVariables, runtimeParametersSchema });
-    spinner.succeed(`Agent ${config.handle} is running at: ${agent.agentUrl()}`);
+    spinner.succeed(`Agent ${config.handle} is running at: ${agent.agentUrl(client.url)}`);
     return revision;
   }
 
@@ -670,7 +680,7 @@ export class FixieAgent {
         }
         currentRevision = await agent.createRevision({ externalUrl: currentUrl, runtimeParametersSchema });
         term('🥡 Created temporary agent revision ').green(currentRevision.id)('\n');
-        term('🥡 Agent ').green(config.handle)(' is running at: ').green(agent.agentUrl())('\n');
+        term('🥡 Agent ').green(config.handle)(' is running at: ').green(agent.agentUrl(client.url))('\n');
       } catch (e: any) {
         term('🥡 Got error trying to create agent revision: ').red(e.message)('\n');
         console.error(e);
