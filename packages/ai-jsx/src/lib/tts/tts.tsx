@@ -779,10 +779,13 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
 }
 
 class TextToSpeechRequest {
+  public shortText: string;
   public readonly createTimestamp: number;
   public sendTimestamp?: number;
+  public cancelled: boolean = false;
   constructor(public text: string) {
     this.createTimestamp = performance.now();
+    this.shortText = text.length > 20 ? `${text.substring(0, 20)}...` : text;
   }
 }
 
@@ -831,6 +834,10 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       this.queueRequest(utterance);
     }
   }
+  protected stopGeneration(): void {
+    console.log(`[${this.name}] cancelling requests`);
+    this.requestQueue.forEach((req) => (req.cancelled = true));
+  }
   protected tearDown() {
     this.pendingText = '';
     super.tearDown();
@@ -846,10 +853,17 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       return;
     }
 
-    const req = this.requestQueue[0];
-    const shortText = req.text.length > 20 ? `${req.text.substring(0, 20)}...` : req.text;
-    console.debug(`[${this.name}] requesting chunk: ${shortText}`);
+    await this.dispatchRequest(this.requestQueue[0]);
+    this.requestQueue.shift();
+    this.processRequestQueue();
+  }
+  private async dispatchRequest(req: TextToSpeechRequest) {
+    if (req.cancelled) {
+      console.log(`[${this.name}] ignoring cancelled request: ${req.shortText}`);
+      return;
+    }
     req.sendTimestamp = performance.now();
+    console.log(`[${this.name}] requesting chunk: ${req.shortText}`);
     const res = await fetch(
       this.urlFunc({ provider: this.name, text: req.text, voice: this.voice, rate: this.rate, model: this.model })
     );
@@ -858,20 +872,22 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       this.setComplete(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
       return;
     }
+
     const contentType = res.headers.get('content-type') ?? AUDIO_MPEG_MIME_TYPE;
-    console.debug(`[${this.name}] received chunk: ${shortText}, type=${res.headers.get('content-type')}`);
+    console.log(`[${this.name}] received response: ${req.shortText}, type=${res.headers.get('content-type')}`);
     const reader = res.body!.getReader();
     while (true) {
       const { value, done } = await reader.read();
+      if (req.cancelled) {
+        return;
+      }
       if (done) {
         break;
       }
-      console.debug(`[${this.name}] received chunk buffer: ${shortText}, len=${value.length}`);
+      console.debug(`[${this.name}] received chunk buffer: ${req.shortText}, len=${value.length}`);
       this.appendChunk(new AudioChunk(contentType, value.buffer));
     }
     this.finishGeneration();
-    this.requestQueue.shift();
-    this.processRequestQueue();
   }
 }
 
