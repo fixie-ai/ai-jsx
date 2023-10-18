@@ -976,6 +976,9 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
   private pendingText: string = '';
   constructor(name: string, private readonly url: string, public readonly voice: string) {
     super(name);
+    this.warmup();
+  }
+  warmup() {
     this.ensureSocket();
   }
   protected generate(text: string) {
