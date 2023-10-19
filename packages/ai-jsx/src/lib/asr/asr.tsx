@@ -522,24 +522,26 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
  * https://github.com/soniox/web_voice/blob/master/src/web_voice.js
  */
 export class SonioxSpeechRecognition extends SpeechRecognitionBase {
-  private token?: string;
+  private static readonly END_TOKEN = '<end>';
+  private tokenPromise?: Promise<string>;
+  private buf = '';
   constructor(manager: MicManager, tokenFunc: GetToken, language?: string) {
     super('soniox', manager, tokenFunc, language);
   }
-  async start() {
-    this.token = await this.fetchToken();
+  start() {
+    this.buf = '';
+    this.tokenPromise = this.fetchToken();
     super.startInternal('wss://api.soniox.com/transcribe-websocket');
   }
-  protected handleOpen() {
-    const obj = {
-      api_key: this.token,
+  protected async createOpenRequest() {
+    return {
+      api_key: await this.tokenPromise!,
       sample_rate_hertz: this.manager.sampleRate,
       include_nonfinal: true,
       enable_endpoint_detection: true,
       speech_context: null,
-      model: this.language ? `${this.language.slice(0, 2)}_v2_lowlatency` : null,
+      model: `${(this.language ?? 'en').slice(0, 2)}_v2_lowlatency`,
     };
-    this.socket!.send(JSON.stringify(obj));
   }
   /**
    * Parses a transcript message in the following format:
@@ -555,28 +557,32 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
    * }
    */
   protected handleMessage(result: any) {
-    const append = (transcript: string, w: any) => {
-      if (w.t == '<end>') {
-        return transcript;
-      }
-      let out = transcript;
-      if (out && !',.?!'.includes(w.t[0])) {
-        out += ' ';
-      }
-      out += w.t;
-      return out;
-    };
-    const partialTranscript = result.nfw.reduce(append, '');
-    if (partialTranscript) {
-      this.dispatchTranscript(partialTranscript, false, result.tpt);
+    const nonFinalWords = this.concatWords(result.nfw);
+    const finalWords = this.concatWords(result.fw);
+    let transcript = (this.buf + finalWords.transcript).trimStart();
+    if (finalWords.done) {
+      this.dispatchTranscript(transcript, true, result.tpt);
+      this.buf = '';
+    } else {
+      this.buf = transcript;
     }
-    const finalTranscript = result.fw.reduce(append, '');
-    if (finalTranscript) {
-      this.dispatchTranscript(finalTranscript, true, result.tpt);
+    if (nonFinalWords.transcript) {
+      transcript = (this.buf + nonFinalWords.transcript).trimStart();
+      this.dispatchTranscript(transcript, false, result.tpt);
     }
   }
   protected sendClose() {
     this.socket!.send('');
+  }
+  private concatWords(words: any[]) {
+    const append = (transcript: string, w: any) => transcript + w.t;
+    let transcript = words.reduce(append, '');
+    let done = false;
+    if (transcript.endsWith(SonioxSpeechRecognition.END_TOKEN)) {
+      transcript = transcript.slice(0, -SonioxSpeechRecognition.END_TOKEN.length);
+      done = true;
+    }
+    return { transcript, done };
   }
 }
 
