@@ -69,7 +69,7 @@ const Tts: React.FC<TtsProps> = ({
     }
     setVoice(tts.voice);
   }, []);
-  useEffect(() => {    
+  useEffect(() => {
     if (restTts) restTts.voice = voice;
     if (wsTts) wsTts.voice = voice;
   }, [voice]);
@@ -166,35 +166,10 @@ const PageComponent: React.FC = () => {
           model="eleven_english_v2"
           text={text}
         />
-        <Tts
-          display="LMNT"
-          provider="lmnt"
-          supportsWs
-          link="https://lmnt.com"
-          costPerKChar={0.2}
-          text={text}
-        />
-        <Tts
-          display="Murf AI"
-          provider="murf"
-          link="https://murf.ai"
-          costPerKChar={1.0}
-          text={text}
-        />
-        <Tts
-          display="PlayHT"
-          provider="playht"
-          link="https://play.ht"
-          costPerKChar={0.04125}
-          text={text}
-        />
-        <Tts
-          display="Resemble AI"
-          provider="resemble"
-          link="https://resemble.ai"
-          costPerKChar={0.4}
-          text={text}
-        />
+        <Tts display="LMNT" provider="lmnt" supportsWs link="https://lmnt.com" costPerKChar={0.2} text={text} />
+        <Tts display="Murf AI" provider="murf" link="https://murf.ai" costPerKChar={1.0} text={text} />
+        <Tts display="PlayHT" provider="playht" link="https://play.ht" costPerKChar={0.04125} text={text} />
+        <Tts display="Resemble AI" provider="resemble" link="https://resemble.ai" costPerKChar={0.4} text={text} />
         <Tts
           display="WellSaid Labs"
           provider="wellsaid"
@@ -209,13 +184,7 @@ const PageComponent: React.FC = () => {
           costPerKChar={0.016}
           text={text}
         />
-        <Tts
-          display="AWS Polly"
-          provider="aws"
-          link="https://aws.amazon.com/polly"
-          costPerKChar={0.016}
-          text={text}
-        />
+        <Tts display="AWS Polly" provider="aws" link="https://aws.amazon.com/polly" costPerKChar={0.016} text={text} />
         <Tts
           display="Google"
           provider="gcp"
