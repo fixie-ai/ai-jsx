@@ -11423,6 +11423,7 @@ __metadata:
     clsx: ^1.2.1
     docusaurus-plugin-typedoc: ^0.19.2
     dotenv: ^16.3.1
+    fixie: latest
     mixpanel-browser: ^2.47.0
     prism-react-renderer: ^1.3.5
     react: ^17.0.2
@@ -13485,6 +13486,44 @@ __metadata:
     fixie: ./src/main.js
   languageName: unknown
   linkType: soft
+
+"fixie@npm:latest":
+  version: 2.0.1
+  resolution: "fixie@npm:2.0.1"
+  dependencies:
+    "@apollo/client": ^3.8.1
+    "@types/apollo-upload-client": ^17.0.2
+    apollo-upload-client: ^17.0.0
+    axios: ^1.5.1
+    commander: ^11.0.0
+    execa: ^8.0.1
+    extract-files: ^13.0.0
+    firebase: ^10.4.0
+    graphql: ^16.8.0
+    js-yaml: ^4.1.0
+    lodash: ^4.17.21
+    open: ^9.1.0
+    ora: ^7.0.1
+    terminal-kit: ^3.0.0
+    type-fest: ^4.3.1
+    typescript-json-schema: ^0.61.0
+    untildify: ^5.0.0
+    watcher: ^2.3.0
+  peerDependencies:
+    react: ^18.2.0
+    react-dom: ^18.2.0
+  peerDependenciesMeta:
+    "@types/react-dom":
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+  bin:
+    fixie: src/main.js
+  checksum: 559d9efa6b0ca082363ce99dd0de8b2f6bc11dd6ddbfd693c9970c53d5e827c144275240b81824d95082f8a1d97540a67571c871d9d60a9b2324028314957d9a
+  languageName: node
+  linkType: hard
 
 "flat-cache@npm:^3.0.4":
   version: 3.0.4
