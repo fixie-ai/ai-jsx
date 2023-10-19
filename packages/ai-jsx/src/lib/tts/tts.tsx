@@ -963,7 +963,7 @@ export class PlayHTTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the Resemble.AI text-to-speech service.
  */
 export class ResembleTextToSpeech extends RestTextToSpeech {
-  //static readonly DEFAULT_VOICE = 'e28236ee'; // Samantha (v2)
+  // static readonly DEFAULT_VOICE = 'e28236ee'; // Samantha (v2)
   static readonly DEFAULT_VOICE = '266bfae9'; // Samantha (v1)
   constructor(urlFunc: BuildUrl, voice: string = ResembleTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('resemble', urlFunc, voice, rate);
