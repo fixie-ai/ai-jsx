@@ -782,9 +782,9 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
   constructor(
     name: string,
     private readonly urlFunc: BuildUrl,
-    public readonly voice: string,
-    public readonly rate: number = 1.0,
-    public readonly model?: string
+    public voice: string,
+    public rate: number = 1.0,
+    public model?: string
   ) {
     super(name);
   }
@@ -963,7 +963,8 @@ export class PlayHTTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the Resemble.AI text-to-speech service.
  */
 export class ResembleTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = 'e28236ee'; // Samantha (v2)
+  //static readonly DEFAULT_VOICE = 'e28236ee'; // Samantha (v2)
+  static readonly DEFAULT_VOICE = '266bfae9'; // Samantha (v1)
   constructor(urlFunc: BuildUrl, voice: string = ResembleTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('resemble', urlFunc, voice, rate);
   }
@@ -973,7 +974,7 @@ export class ResembleTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the WellSaid Labs text-to-speech service.
  */
 export class WellSaidTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = '42'; // Sofia H. (Conversational)
+  static readonly DEFAULT_VOICE = '43'; // Ava M. (Conversational)
   constructor(urlFunc: BuildUrl, voice: string = WellSaidTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('wellsaid', urlFunc, voice, rate);
   }
@@ -990,7 +991,7 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
   // Message buffer for when the socket is not yet ready.
   private readonly socketBuffer: string[] = [];
   private pendingText: string = '';
-  constructor(name: string, private readonly url: string, public readonly voice: string) {
+  constructor(name: string, private readonly url: string, public voice: string) {
     super(name);
     this.warmup();
   }
