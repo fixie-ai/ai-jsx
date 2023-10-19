@@ -33,7 +33,7 @@ interface TtsProps {
 }
 
 const buildUrl = (options: BuildUrlOptions) => {
-  const runtime = options.provider.endsWith("-grpc") ? "nodejs" : "edge";
+  const runtime = options.provider.endsWith('-grpc') ? 'nodejs' : 'edge';
   const params = new URLSearchParams();
   Object.entries(options).forEach(([k, v]) => v != undefined && params.set(k, v.toString()));
   return `/tts/api/generate/${runtime}?${params}`;
@@ -126,7 +126,7 @@ const countWords = (text: string) => text.split(/\s+/).length;
 
 const PageComponent: React.FC = () => {
   const searchParams = useSearchParams();
-  const textParam = searchParams.get('text') 
+  const textParam = searchParams.get('text');
   const [text, setText] = useState(DEFAULT_TEXT);
   if (textParam && !text) {
     setText(textParam);
