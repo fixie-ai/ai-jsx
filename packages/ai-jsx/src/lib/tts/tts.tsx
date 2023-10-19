@@ -854,9 +854,7 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
 
     req.sendTimestamp = performance.now();
     console.log(`[${this.name}] requesting chunk: ${req.shortText}`);
-    const res = await fetch(
-      this.urlFunc({ provider: this.name, text: req.text, voice: this.voice, rate: this.rate, model: this.model })
-    );
+    const res = await this.fetch(req.text);
     if (!res.ok) {
       this.stop();
       this.setComplete(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
