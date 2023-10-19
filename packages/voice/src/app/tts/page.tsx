@@ -1,6 +1,7 @@
 'use client';
 import { BuildUrlOptions, TextToSpeechBase, createTextToSpeech } from 'ai-jsx/lib/tts/tts';
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import '../globals.css';
 
 const DEFAULT_TEXT =
@@ -32,9 +33,10 @@ interface TtsProps {
 }
 
 const buildUrl = (options: BuildUrlOptions) => {
+  const runtime = options.provider.endsWith("-grpc") ? "nodejs" : "edge";
   const params = new URLSearchParams();
   Object.entries(options).forEach(([k, v]) => v != undefined && params.set(k, v.toString()));
-  return `/tts/api/generate/edge?${params}`;
+  return `/tts/api/generate/${runtime}?${params}`;
 };
 
 const getToken = async (provider: string) => {
@@ -123,7 +125,12 @@ const Tts: React.FC<TtsProps> = ({
 const countWords = (text: string) => text.split(/\s+/).length;
 
 const PageComponent: React.FC = () => {
+  const searchParams = useSearchParams();
+  const textParam = searchParams.get('text') 
   const [text, setText] = useState(DEFAULT_TEXT);
+  if (textParam && !text) {
+    setText(textParam);
+  }
   return (
     <>
       <p className="font-sm ml-2 mb-2">
