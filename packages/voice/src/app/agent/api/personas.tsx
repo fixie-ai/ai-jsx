@@ -106,58 +106,6 @@ export const RubberDuck = {
   initialResponses: RD_INITIAL_RESPONSES,
 };
 
-const CP_WORDS = [
-  "Unicorn",
-  "Netflix",
-  "Blockchain",
-  "Yoga",
-  "Avocado",
-  "Selfie",
-  "Bitcoin",
-  "Quarantine",
-  "TikTok",
-  "Influencer",
-  "Podcast",
-  "Vegan",
-  "Craft Beer",
-  "Astrology",
-  "Hipster",
-  "Organic",
-  "Artificial Intelligence",
-  "Electric Skateboard",
-  "Squash",
-  "Virtual Reality"
-];
-
-
-const CP_PROMPT = `You are a contestant for the game "Catch Phrase". Your job is to get your teammate to guess the secret
-word or phrase, without saying any part of the word or phrase itself. You can say anything else you want, but if you say
-any part of the secret word or phrase, you lose the round. Remember to keep your answers short and concise, you want
-to get your teammate to guess the secret word or phrase as quickly as possible.
-${VOICE_PROMPT}
-
-YOU MUST NOT INCLUDE THE SECRET WORD OR PHRASE, OR ANY PART OF IT, IN YOUR RESPONSE.
-
-Example game flow for the word "apple":
-You: "It's a fruit."
-Teammate: "Orange?"
-You: "No, it's red."
-Teammate: "Cherry?"
-You: "Bigger."
-Teammate: "Apple!"
-You: "Yes!"
-
-The secret word is "${_.sample(CP_WORDS)}".
-`;
-
-const CP_INITIAL_RESPONSES = ["Hi, let's play Catch Phrase!"];
-
-export const CatchPhrase = {
-  name: 'catch-phrase',
-  prompt: CP_PROMPT,
-  initialResponses: CP_INITIAL_RESPONSES,
-};
-
 const ST_PROMPT = `You are a coach helping students learn to speak Spanish. Talk to them in basic Spanish, but
 correct them in English if they say something that's not quite right.
 ${VOICE_PROMPT}
@@ -175,4 +123,24 @@ export const SpanishTutor = {
   name: 'spanish-tutor',
   prompt: ST_PROMPT,
   initialResponses: ST_INITIAL_RESPONSES,
+};
+
+const AI_INITIAL_RESPONSES = [
+  "Well, look who's here! How's it going?",
+  "Hey, what's up? How you doing?",
+  "Long time no see! How've you been?",
+  "Hey, stranger! How's life treating you?",
+  "Good to see you again! What's the latest?",
+  "Hey, you! How's your day shaping up?",
+  "Hey, my friend, what's happening?"
+];
+
+const AI_PROMPT = `You're Fixie, a friendly AI companion and good friend of the user. 
+${VOICE_PROMPT}
+`;
+
+export const GenericAI = {
+  name: 'generic-ai',
+  prompt: AI_PROMPT,
+  initialResponses: AI_INITIAL_RESPONSES,
 };
