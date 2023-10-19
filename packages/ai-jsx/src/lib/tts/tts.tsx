@@ -953,6 +953,7 @@ export class PlayHTTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE =
     's3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json';
   constructor(urlFunc: BuildUrl, voice: string = PlayHTTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    // We call the non-edge version so we can use the PlayHT gRPC client, which is faster.
     super('playht-grpc', urlFunc, voice, rate);
     this.warmup();
   }
