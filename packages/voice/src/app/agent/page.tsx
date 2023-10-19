@@ -442,8 +442,8 @@ const PageComponent: React.FC = () => {
         {showMenu && (
           <>
             <p className="font-sm ml-2 mb-6 text-center">
-              This demo allows you to chat (via voice) with a drive-thru agent at a fictional donut shop. Click Start
-              Chatting (or tap the spacebar) to begin.
+              This demo allows you to chat (via voice) with an AI agent. 
+              Click Start Chatting (or tap the spacebar) to begin.
             </p>
             <div className="grid grid-cols-2 lg:gap-x-24">
               <div className="p-4">
