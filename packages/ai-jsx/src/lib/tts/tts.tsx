@@ -762,10 +762,13 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
 }
 
 class TextToSpeechRequest {
+  public shortText: string;
   public readonly createTimestamp: number;
   public sendTimestamp?: number;
+  public cancelled: boolean = false;
   constructor(public text: string) {
     this.createTimestamp = performance.now();
+    this.shortText = text.length > 20 ? `${text.substring(0, 20)}...` : text;
   }
 }
 
@@ -820,6 +823,10 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       this.queueRequest(utterance);
     }
   }
+  protected stopGeneration(): void {
+    console.log(`[${this.name}] cancelling requests`);
+    this.requestQueue.forEach((req) => (req.cancelled = true));
+  }
   protected tearDown() {
     this.pendingText = '';
     super.tearDown();
@@ -835,10 +842,18 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       return;
     }
 
-    const req = this.requestQueue[0];
-    const shortText = req.text.length > 20 ? `${req.text.substring(0, 20)}...` : req.text;
-    console.log(`[${this.name}] requesting chunk: ${shortText}`);
+    await this.dispatchRequest(this.requestQueue[0]);
+    this.requestQueue.shift();
+    this.processRequestQueue();
+  }
+  private async dispatchRequest(req: TextToSpeechRequest) {
+    if (req.cancelled) {
+      console.log(`[${this.name}] ignoring cancelled request: ${req.shortText}`);
+      return;
+    }
+
     req.sendTimestamp = performance.now();
+    console.log(`[${this.name}] requesting chunk: ${req.shortText}`);
     const res = await fetch(
       this.urlFunc({ provider: this.name, text: req.text, voice: this.voice, rate: this.rate, model: this.model })
     );
@@ -847,20 +862,24 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       this.setComplete(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
       return;
     }
+
     const contentType = res.headers.get('content-type') ?? AUDIO_MPEG_MIME_TYPE;
-    console.debug(`[${this.name}] received chunk: ${shortText}, type=${res.headers.get('content-type')}`);
+    console.log(`[${this.name}] received response: ${req.shortText}, type=${res.headers.get('content-type')}`);
     const reader = res.body!.getReader();
     while (true) {
       const { value, done } = await reader.read();
+      // eslint seems to think req.cancelled must be false, perhaps due to the earlier check.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (req.cancelled) {
+        return;
+      }
       if (done) {
         break;
       }
-      console.debug(`[${this.name}] received chunk buffer: ${shortText}, len=${value.length}`);
+      console.debug(`[${this.name}] received chunk buffer: ${req.shortText}, len=${value.length}`);
       this.appendChunk(new AudioChunk(contentType, value.buffer));
     }
     this.finishGeneration();
-    this.requestQueue.shift();
-    this.processRequestQueue();
   }
   private fetch(text: string) {
     const url = this.urlFunc({ provider: this.name, text, voice: this.voice, rate: this.rate, model: this.model });
@@ -966,17 +985,23 @@ export class WellSaidTextToSpeech extends RestTextToSpeech {
  * server and receives audio chunks as they are generated.
  */
 export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
-  private socket: WebSocket;
-  private socketReady: boolean;
-  // Message buffer for when the socket is not yet open.
+  private socket?: WebSocket;
+  // Whether the socket is open and authed so that we can send requests.
+  private socketReady: boolean = false;
+  // Message buffer for when the socket is not yet ready.
   private readonly socketBuffer: string[] = [];
   private pendingText: string = '';
   constructor(name: string, private readonly url: string, public readonly voice: string) {
     super(name);
-    this.socket = this.createSocket(url);
-    this.socketReady = false;
+    this.warmup();
+  }
+  warmup() {
+    this.ensureSocket();
   }
   protected generate(text: string) {
+    // Reopen our socket if it timed out.
+    this.ensureSocket();
+
     // Only send complete words (i.e., followed by a space) to the server.
     this.pendingText += text;
     const index = this.pendingText.lastIndexOf(' ');
@@ -1000,24 +1025,26 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
   }
   protected stopGeneration() {
     // Close our socket and create a new one so that we're not blocked by stale generation.
-    this.socket.close();
+    this.socket?.close();
     this.socketBuffer.length = 0;
     this.pendingText = '';
-    this.socket = this.createSocket(this.url);
-    this.socketReady = false;
+    this.ensureSocket();
   }
   protected tearDown() {
-    this.socket.close();
+    this.socket?.close();
     super.tearDown();
   }
 
   /**
    * Set up a web socket to the given URL, and reconnect if it closes normally
-   * so that we're always ready to generate with minimal latency.
+   * so that we're usually ready to generate with minimal latency.
    */
-  protected createSocket(url: string) {
+  protected ensureSocket() {
+    if (this.socket) {
+      return;
+    }
     const connectMillis = performance.now();
-    const socket = new WebSocket(url);
+    const socket = new WebSocket(this.url);
     socket.binaryType = 'arraybuffer';
     socket.onopen = async (_event) => {
       const elapsed = performance.now() - connectMillis;
@@ -1026,7 +1053,7 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
       if (openMsg) {
         this.socketBuffer.unshift(JSON.stringify(openMsg));
       }
-      this.socketBuffer.forEach((json) => this.socket.send(json));
+      this.socketBuffer.forEach((json) => this.socket!.send(json));
       this.socketBuffer.length = 0;
       this.socketReady = true;
     };
@@ -1051,16 +1078,19 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
       // Reopen the socket if it closed normally, i.e., not due to an error.
       console.log(`[${this.name}] socket closed, code=${event.code} reason=${event.reason}`);
       if (event.code == 1000) {
-        this.socket = this.createSocket(this.socket.url);
+        this.ensureSocket();
+      } else {
+        this.socket = undefined;
         this.socketReady = false;
       }
     };
-    return socket;
+    this.socket = socket;
+    this.socketReady = false;
   }
   protected sendObject(obj: unknown) {
     const json = JSON.stringify(obj);
     if (this.socketReady) {
-      this.socket.send(json);
+      this.socket!.send(json);
     } else {
       this.socketBuffer.push(json);
     }
@@ -1157,7 +1187,7 @@ class LmntOutboundMessage {
 
 export class LmntWebSocketTextToSpeech extends WebSocketTextToSpeech {
   private readonly tokenPromise: Promise<string>;
-  constructor(private readonly tokenFunc: GetToken, voice = LmntTextToSpeech.DEFAULT_VOICE) {
+  constructor(tokenFunc: GetToken, voice = LmntTextToSpeech.DEFAULT_VOICE) {
     const url = 'wss://api.lmnt.com/speech/beta/synthesize_streaming';
     super('lmnt', url, voice);
     this.tokenPromise = tokenFunc(this.name);
@@ -1165,7 +1195,7 @@ export class LmntWebSocketTextToSpeech extends WebSocketTextToSpeech {
   protected async createOpenRequest() {
     return {
       voice: this.voice,
-      'X-Api-Key': await this.tokenFunc(this.name),
+      'X-Api-Key': await this.tokenPromise,
     };
   }
   protected createChunkRequest(text: string): LmntOutboundMessage {
