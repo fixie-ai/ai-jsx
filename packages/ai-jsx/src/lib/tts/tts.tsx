@@ -1,6 +1,9 @@
 'use client';
 import { split } from 'sentence-splitter';
 
+// @ts-expect-error
+import { MPEGDecoder } from 'mpg123-decoder';
+
 const AUDIO_WORKLET_SRC = `
 class OutputProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -128,17 +131,10 @@ class AudioPcmBuffer {
  * Consumes chunks of encoded audio data and emits chunks of PCM data.
  */
 abstract class AudioDecoder {
-  protected buffer: Uint8Array = new Uint8Array(0);
   /**
    * Appends a chunk of encoded audio data to the decoder.
    */
-  addData(encodedBuffer: ArrayBuffer) {
-    const newBuffer = new Uint8Array(this.buffer.length + encodedBuffer.byteLength);
-    newBuffer.set(new Uint8Array(this.buffer), 0);
-    newBuffer.set(new Uint8Array(encodedBuffer), this.buffer.byteLength);
-    this.buffer = newBuffer;
-    this.processBuffer();
-  }
+  abstract addData(encodedBuffer: ArrayBuffer): void;
   /**
    * Flushes any remaining data from the decoder and resets its state.
    */
@@ -151,62 +147,35 @@ abstract class AudioDecoder {
    * Called when the decoder encounters an error.
    */
   onError?: (error: Error) => void;
-  protected abstract processBuffer(): void;
 }
 
 /**
- * A streaming MP3 decoder.
+ * A streaming MP3 decoder, using mpg123-decoder.
  * See https://www.mp3-tech.org/programmer/frame_header.html
  */
 class Mp3Decoder extends AudioDecoder {
-  private static readonly BIT_RATES = [
-    [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320], // v1
-    [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160], // v2
-  ];
-  private static readonly SAMPLE_RATES = [
-    [44100, 48000, 32000], // v1
-    [22050, 24000, 16000], // v2
-  ];
-  constructor(private readonly context: AudioContext) {
+  private readonly decoder: MPEGDecoder;
+  private readonly decoderReadyPromise: Promise<void>;
+  constructor() {
     super();
+    this.decoder = new MPEGDecoder();
+    this.decoderReadyPromise = this.decoder.ready;
+  }
+  async addData(encodedBuffer: ArrayBuffer) {
+    await this.decoderReadyPromise;
+    const byteBuffer = new Uint8Array(encodedBuffer);
+    const { channelData, samplesDecoded, sampleRate, errors } = this.decoder.decode(byteBuffer);
+    if (errors.length > 0) {
+      this.onError?.(new Error(errors[0].message));
+    } else if (samplesDecoded > 0) {
+      console.debug(`decoded ${samplesDecoded} samples, sample rate=${sampleRate}`);
+      const pcmBuffer = new AudioPcmBuffer(sampleRate, channelData[0]);
+      this.onData?.(pcmBuffer);
+    }
   }
   async flush() {
-    const audioBuffer = await this.context.decodeAudioData(this.buffer.buffer);
-    const pcmBuffer = new AudioPcmBuffer(audioBuffer.sampleRate, audioBuffer.getChannelData(0));
-    this.onData?.(pcmBuffer);
-    this.buffer = new Uint8Array(0);
+    await this.decoder.reset();
   }
-  protected processBuffer() {}
-  /*
-  private getFrameLen(offset: number) {
-    // Check we have enough bytes.
-    if (this.buffer.length < offset + 4) {
-      return 0;
-    }
-    // Check this is a valid MP3 header (version 1 or 2, layer 3, no CRC)
-    const [b1, b2, b3, b4] = this.buffer.slice(offset, offset + 4);
-    if (b1 != 0xff || (b2 & 0xf7) != 0xf3) {
-      console.warn(`invalid frame header ${b1.toString(16)} ${b2.toString(16)} ${b3.toString(16)} ${b4.toString(16)}`);
-      return 0;
-    }
-    // Get the version from byte 2 (v1=11, v2=10)
-    const versionBits = (b2 & 0x18) >> 3;
-    const index = versionBits == 3 ? 0 : 1;
-    // Extract the bit rate, sample rate, and padding from byte 3.
-    const bitRate = Mp3Decoder.BIT_RATES[index][(b3 & 0xf0) >> 4];
-    const sampleRate = Mp3Decoder.SAMPLE_RATES[index][(b3 & 0x0c) >> 2];
-    const padding = (b3 & 0x02) >> 1;
-    // Extract the channel mode from byte 4.
-    const channelMode = (b4 & 0xc0) >> 6;
-    if (channelMode != 3) {
-      console.warn(`invalid channel mode ${channelMode}`);
-      return 0;
-    }
-    // Calculate and return the frame length.
-    const frameLen = Math.floor((144 * bitRate * 1000) / sampleRate) + padding;
-    return frameLen;
-  }
-  */
 }
 
 /**
@@ -220,10 +189,18 @@ class WavDecoder extends AudioDecoder {
   private static readonly WAVE_TYPE = 'WAVE';
   private static readonly RIFF_HEADER_LEN = 12;
   private static readonly CHUNK_HEADER_LEN = 8;
+  private buffer: Uint8Array = new Uint8Array(0);
   private gotRiff = false;
   private sampleRate?: number;
   private numChannels?: number;
   private dataRead = 0;
+  addData(encodedBuffer: ArrayBuffer) {
+    const newBuffer = new Uint8Array(this.buffer.length + encodedBuffer.byteLength);
+    newBuffer.set(new Uint8Array(this.buffer), 0);
+    newBuffer.set(new Uint8Array(encodedBuffer), this.buffer.byteLength);
+    this.buffer = newBuffer;
+    this.processBuffer();
+  }
   flush() {
     this.gotRiff = false;
     this.sampleRate = undefined;
@@ -394,7 +371,7 @@ class AudioStream {
   private getDecoder(mimeType: string) {
     if (!this.decoder) {
       if (mimeType == AUDIO_MPEG_MIME_TYPE) {
-        this.decoder = new Mp3Decoder(this.context);
+        this.decoder = new Mp3Decoder();
       } else if (mimeType == AUDIO_WAV_MIME_TYPE) {
         this.decoder = new WavDecoder();
       } else {
@@ -630,6 +607,11 @@ export abstract class TextToSpeechBase {
   }
 
   /**
+   * Warms up the text-to-speech service to prepare for an upcoming generation.
+   */
+  abstract warmup(): void;
+
+  /**
    * Converts the given text to speech and plays it using the HTML5 audio element.
    * This method may be called multiple times, and the audio will be played serially.
    * Generation may be buffered, use the flush() method to indicate all text has been provided.
@@ -675,6 +657,7 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
     this.audio.play();
   }
   flush() {}
+  warmup() {}
   stop() {
     console.log(`[${this.name}] tts stopping`);
     this.audio.src = '';
@@ -694,7 +677,7 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
  * class is not meant to be used directly, but provides infrastructure for
  * RestTextToSpeech and WebSocketTextToSpeech.
  */
-export class WebAudioTextToSpeech extends TextToSpeechBase {
+export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
   private streamId: string = '';
   private inProgress = false;
   constructor(name: string) {
@@ -770,19 +753,22 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     outputManager.flush(this.streamId);
   }
 
-  protected generate(_text: string) {}
-  protected doFlush() {}
-  protected stopGeneration() {}
+  protected abstract generate(_text: string): void;
+  protected abstract doFlush(): void;
+  protected abstract stopGeneration(): void;
   protected tearDown() {
     this.inProgress = false;
   }
 }
 
 class TextToSpeechRequest {
+  public shortText: string;
   public readonly createTimestamp: number;
   public sendTimestamp?: number;
+  public cancelled: boolean = false;
   constructor(public text: string) {
     this.createTimestamp = performance.now();
+    this.shortText = text.length > 20 ? `${text.substring(0, 20)}...` : text;
   }
 }
 
@@ -801,6 +787,12 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     public readonly model?: string
   ) {
     super(name);
+  }
+  async warmup() {
+    const warmupMillis = performance.now();
+    await this.fetch(' ');
+    const elapsed = performance.now() - warmupMillis;
+    console.log(`[${this.name}] warmup complete, elapsed=${elapsed.toFixed(0)} ms`);
   }
   protected generate(text: string) {
     // Only send complete sentences to the server, one at a time.
@@ -831,6 +823,10 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       this.queueRequest(utterance);
     }
   }
+  protected stopGeneration(): void {
+    console.log(`[${this.name}] cancelling requests`);
+    this.requestQueue.forEach((req) => (req.cancelled = true));
+  }
   protected tearDown() {
     this.pendingText = '';
     super.tearDown();
@@ -846,32 +842,46 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       return;
     }
 
-    const req = this.requestQueue[0];
-    const shortText = req.text.length > 20 ? `${req.text.substring(0, 20)}...` : req.text;
-    console.debug(`[${this.name}] requesting chunk: ${shortText}`);
+    await this.dispatchRequest(this.requestQueue[0]);
+    this.requestQueue.shift();
+    this.processRequestQueue();
+  }
+  private async dispatchRequest(req: TextToSpeechRequest) {
+    if (req.cancelled) {
+      console.log(`[${this.name}] ignoring cancelled request: ${req.shortText}`);
+      return;
+    }
+
     req.sendTimestamp = performance.now();
-    const res = await fetch(
-      this.urlFunc({ provider: this.name, text: req.text, voice: this.voice, rate: this.rate, model: this.model })
-    );
+    console.log(`[${this.name}] requesting chunk: ${req.shortText}`);
+    const res = await this.fetch(req.text);
     if (!res.ok) {
       this.stop();
       this.setComplete(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
       return;
     }
+
     const contentType = res.headers.get('content-type') ?? AUDIO_MPEG_MIME_TYPE;
-    console.debug(`[${this.name}] received chunk: ${shortText}, type=${res.headers.get('content-type')}`);
+    console.log(`[${this.name}] received response: ${req.shortText}, type=${res.headers.get('content-type')}`);
     const reader = res.body!.getReader();
     while (true) {
       const { value, done } = await reader.read();
+      // eslint seems to think req.cancelled must be false, perhaps due to the earlier check.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (req.cancelled) {
+        return;
+      }
       if (done) {
         break;
       }
-      console.debug(`[${this.name}] received chunk buffer: ${shortText}, len=${value.length}`);
+      console.debug(`[${this.name}] received chunk buffer: ${req.shortText}, len=${value.length}`);
       this.appendChunk(new AudioChunk(contentType, value.buffer));
     }
     this.finishGeneration();
-    this.requestQueue.shift();
-    this.processRequestQueue();
+  }
+  private fetch(text: string) {
+    const url = this.urlFunc({ provider: this.name, text, voice: this.voice, rate: this.rate, model: this.model });
+    return fetch(url);
   }
 }
 
@@ -943,7 +953,9 @@ export class PlayHTTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE =
     's3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json';
   constructor(urlFunc: BuildUrl, voice: string = PlayHTTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
-    super('playht', urlFunc, voice, rate);
+    // We call the non-edge version so we can use the PlayHT gRPC client, which is faster.
+    super('playht-grpc', urlFunc, voice, rate);
+    this.warmup();
   }
 }
 
@@ -972,17 +984,23 @@ export class WellSaidTextToSpeech extends RestTextToSpeech {
  * server and receives audio chunks as they are generated.
  */
 export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
-  private socket: WebSocket;
-  private socketReady: boolean;
-  // Message buffer for when the socket is not yet open.
+  private socket?: WebSocket;
+  // Whether the socket is open and authed so that we can send requests.
+  private socketReady: boolean = false;
+  // Message buffer for when the socket is not yet ready.
   private readonly socketBuffer: string[] = [];
   private pendingText: string = '';
   constructor(name: string, private readonly url: string, public readonly voice: string) {
     super(name);
-    this.socket = this.createSocket(url);
-    this.socketReady = false;
+    this.warmup();
+  }
+  warmup() {
+    this.ensureSocket();
   }
   protected generate(text: string) {
+    // Reopen our socket if it timed out.
+    this.ensureSocket();
+
     // Only send complete words (i.e., followed by a space) to the server.
     this.pendingText += text;
     const index = this.pendingText.lastIndexOf(' ');
@@ -1006,24 +1024,26 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
   }
   protected stopGeneration() {
     // Close our socket and create a new one so that we're not blocked by stale generation.
-    this.socket.close();
+    this.socket?.close();
     this.socketBuffer.length = 0;
     this.pendingText = '';
-    this.socket = this.createSocket(this.url);
-    this.socketReady = false;
+    this.ensureSocket();
   }
   protected tearDown() {
-    this.socket.close();
+    this.socket?.close();
     super.tearDown();
   }
 
   /**
    * Set up a web socket to the given URL, and reconnect if it closes normally
-   * so that we're always ready to generate with minimal latency.
+   * so that we're usually ready to generate with minimal latency.
    */
-  protected createSocket(url: string) {
+  protected ensureSocket() {
+    if (this.socket) {
+      return;
+    }
     const connectMillis = performance.now();
-    const socket = new WebSocket(url);
+    const socket = new WebSocket(this.url);
     socket.binaryType = 'arraybuffer';
     socket.onopen = async (_event) => {
       const elapsed = performance.now() - connectMillis;
@@ -1032,7 +1052,7 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
       if (openMsg) {
         this.socketBuffer.unshift(JSON.stringify(openMsg));
       }
-      this.socketBuffer.forEach((json) => this.socket.send(json));
+      this.socketBuffer.forEach((json) => this.socket!.send(json));
       this.socketBuffer.length = 0;
       this.socketReady = true;
     };
@@ -1057,16 +1077,19 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
       // Reopen the socket if it closed normally, i.e., not due to an error.
       console.log(`[${this.name}] socket closed, code=${event.code} reason=${event.reason}`);
       if (event.code == 1000) {
-        this.socket = this.createSocket(this.socket.url);
+        this.ensureSocket();
+      } else {
+        this.socket = undefined;
         this.socketReady = false;
       }
     };
-    return socket;
+    this.socket = socket;
+    this.socketReady = false;
   }
   protected sendObject(obj: unknown) {
     const json = JSON.stringify(obj);
     if (this.socketReady) {
-      this.socket.send(json);
+      this.socket!.send(json);
     } else {
       this.socketBuffer.push(json);
     }
@@ -1164,7 +1187,7 @@ class LmntOutboundMessage {
 
 export class LmntWebSocketTextToSpeech extends WebSocketTextToSpeech {
   private readonly tokenPromise: Promise<string>;
-  constructor(private readonly tokenFunc: GetToken, voice = LmntTextToSpeech.DEFAULT_VOICE) {
+  constructor(tokenFunc: GetToken, voice = LmntTextToSpeech.DEFAULT_VOICE) {
     const url = 'wss://api.lmnt.com/speech/beta/synthesize_streaming';
     super('lmnt', url, voice);
     this.tokenPromise = tokenFunc(this.name);
@@ -1172,7 +1195,7 @@ export class LmntWebSocketTextToSpeech extends WebSocketTextToSpeech {
   protected async createOpenRequest() {
     return {
       voice: this.voice,
-      'X-Api-Key': await this.tokenFunc(this.name),
+      'X-Api-Key': await this.tokenPromise,
     };
   }
   protected createChunkRequest(text: string): LmntOutboundMessage {

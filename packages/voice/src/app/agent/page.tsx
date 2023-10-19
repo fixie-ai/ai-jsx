@@ -31,7 +31,7 @@ import '../globals.css';
 
 const DEFAULT_ASR_FRAME_SIZE = 100;
 const DEFAULT_ASR_PROVIDER = 'deepgram';
-const DEFAULT_TTS_PROVIDER = 'azure';
+const DEFAULT_TTS_PROVIDER = 'playht-grpc';
 const DEFAULT_LLM = 'gpt-4';
 const ASR_PROVIDERS = ['aai', 'deepgram', 'gladia', 'revai', 'soniox'];
 const TTS_PROVIDERS = [
@@ -44,6 +44,7 @@ const TTS_PROVIDERS = [
   'lmnt-ws',
   'murf',
   'playht',
+  'playht-grpc',
   'resemble',
   'wellsaid',
 ];
@@ -78,16 +79,36 @@ async function getTtsToken(provider: string) {
  * Builds a URL for use in a TTS service.
  */
 function buildTtsUrl(options: BuildUrlOptions) {
+  const runtime = options.provider.endsWith('-grpc') ? 'nodejs' : 'edge';
   const params = new URLSearchParams();
   Object.entries(options).forEach(([k, v]) => v != undefined && params.set(k, v.toString()));
-  return `/tts/api/generate/edge?${params}`;
+  return `/tts/api/generate/${runtime}?${params}`;
 }
 
 /**
  * A single message in the chat history.
  */
 class ChatMessage {
-  constructor(public readonly role: string, public readonly content: string) {}
+  constructor(public readonly role: string, public readonly content: string, public readonly conversationId?: string) {}
+}
+
+/**
+ * Transforms a text stream of JSON lines into a stream of JSON objects.
+ */
+function jsonLinesTransformer() {
+  let buffer = '';
+  return new TransformStream<string, any>({
+    async transform(chunk, controller) {
+      buffer += chunk;
+      const lines = buffer.split('\n');
+      buffer = lines.pop()!;
+      for (const line of lines) {
+        if (line.trim()) {
+          controller.enqueue(JSON.parse(line));
+        }
+      }
+    },
+  });
 }
 
 /**
@@ -95,6 +116,7 @@ class ChatMessage {
  */
 class ChatRequest {
   public outMessage = '';
+  public conversationId?: string;
   public done = false;
   public onUpdate?: (request: ChatRequest, newText: string) => void;
   public onComplete?: (request: ChatRequest) => void;
@@ -104,35 +126,134 @@ class ChatRequest {
   constructor(
     private readonly inMessages: ChatMessage[],
     private readonly model: string,
-    private readonly persona: string,
+    private readonly agentId: string,
     private readonly docs: boolean,
     public active: boolean
-  ) {}
+  ) {
+    this.conversationId = inMessages.find((m) => m.conversationId)?.conversationId;
+  }
+
   async start() {
+    if (this.agentId.includes('/')) {
+      await this.startWithFixie(this.agentId);
+    } else {
+      await this.startWithLlm(this.agentId);
+    }
+  }
+
+  private async startWithLlm(agentId: string) {
     console.log(`calling LLM for ${this.inMessages.at(-1)?.content}`);
     this.startMillis = performance.now();
+
     const res = await fetch('/agent/api', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ messages: this.inMessages, model: this.model, persona: this.persona, docs: this.docs }),
+      body: JSON.stringify({ messages: this.inMessages, model: this.model, agentId, docs: this.docs }),
     });
-    this.requestLatency = performance.now() - this.startMillis;
-    console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
     const reader = res.body!.getReader();
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
-        this.done = true;
-        this.streamLatency = performance.now() - this.startMillis - this.requestLatency;
-        this.onComplete?.(this);
+        this.ensureComplete();
         break;
       }
       const newText = new TextDecoder().decode(value);
+      if (newText.trim() && this.requestLatency === undefined) {
+        this.requestLatency = performance.now() - this.startMillis;
+        console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
+      }
+
       this.outMessage += newText;
       this.onUpdate?.(this, newText);
+    }
+  }
+
+  private async startWithFixie(agentId: string) {
+    console.log(`calling Fixie for ${this.inMessages.at(-1)?.content}`);
+    this.startMillis = performance.now();
+
+    let isStartConversationRequest;
+    let response;
+    if (this.conversationId) {
+      isStartConversationRequest = false;
+      response = await fetch(
+        `https://api.fixie.ai/api/v1/agents/${agentId}/conversations/${this.conversationId}/messages`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            message: this.inMessages.at(-1)!.content,
+          }),
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    } else {
+      isStartConversationRequest = true;
+      response = await fetch(`https://api.fixie.ai/api/v1/agents/${agentId}/conversations`, {
+        method: 'POST',
+        body: JSON.stringify({
+          message: this.inMessages.at(-1)!.content,
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      this.conversationId = response.headers.get('X-Fixie-Conversation-Id')!;
+    }
+
+    const reader = response.body!.pipeThrough(new TextDecoderStream()).pipeThrough(jsonLinesTransformer()).getReader();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        this.ensureComplete();
+        break;
+      }
+
+      if (!this.done) {
+        const currentTurn = isStartConversationRequest ? value.turns.at(-1) : value;
+        const currentMessage = currentTurn.messages
+          .filter((m: any) => m.kind === 'text')
+          .map((m: any) => m.content)
+          .join('');
+
+        if (currentMessage === this.outMessage) {
+          continue;
+        }
+
+        // Find the longest matching prefix.
+        let i = 0;
+        while (i < currentMessage.length && i < this.outMessage.length && currentMessage[i] === this.outMessage[i]) {
+          i++;
+        }
+        if (i !== this.outMessage.length) {
+          console.error('Result was not an append to the previous result.');
+        }
+        const delta = currentMessage.slice(i);
+
+        if (delta.trim() && this.requestLatency === undefined) {
+          this.requestLatency = performance.now() - this.startMillis;
+          console.log(`Got Fixie response, latency=${this.requestLatency.toFixed(0)}`);
+        }
+
+        this.outMessage = currentMessage;
+        this.onUpdate?.(this, delta);
+
+        if (currentTurn.state === 'done') {
+          this.ensureComplete();
+          break;
+        }
+      }
+    }
+  }
+
+  private ensureComplete() {
+    if (!this.done) {
+      this.done = true;
+      if (this.startMillis !== undefined && this.requestLatency !== undefined) {
+        this.streamLatency = performance.now() - this.startMillis - this.requestLatency;
+      }
+      this.onComplete?.(this);
     }
   }
 }
@@ -196,6 +317,7 @@ class ChatManager {
       this.onAudioEnd?.();
     };
   }
+
   /**
    * Starts the chat.
    */
@@ -242,8 +364,9 @@ class ChatManager {
     const normalized = normalizeText(text);
     const hit = normalized in this.pendingRequests;
     console.log(`${final ? 'final' : 'partial'}: ${normalized} ${hit ? 'HIT' : 'MISS'}`);
-    if (!hit) {
-      const request = new ChatRequest(newMessages, this.model, this.persona, this.docs, final);
+    const supportsSpeculativeExecution = !this.model.startsWith('fixie/');
+    if (!hit && (final || supportsSpeculativeExecution)) {
+      const request = new ChatRequest(newMessages, this.model, this.agentId, this.docs, final);
       request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
       request.onComplete = (request) => this.handleRequestDone(request);
       this.pendingRequests[normalized] = request;
@@ -285,7 +408,7 @@ class ChatManager {
    */
   private finishRequest(request: ChatRequest) {
     this.tts.flush();
-    const assistantMessage = new ChatMessage('assistant', request.outMessage);
+    const assistantMessage = new ChatMessage('assistant', request.outMessage, request.conversationId);
     this.history.push(assistantMessage);
     this.pendingRequests = {};
     this.onOutputChange?.(request.outMessage, true, request.requestLatency!);
