@@ -127,10 +127,7 @@ const countWords = (text: string) => text.split(/\s+/).length;
 const PageComponent: React.FC = () => {
   const searchParams = useSearchParams();
   const textParam = searchParams.get('text');
-  const [text, setText] = useState(DEFAULT_TEXT);
-  if (textParam && !text) {
-    setText(textParam);
-  }
+  const [text, setText] = useState(textParam || DEFAULT_TEXT);
   return (
     <>
       <p className="font-sm ml-2 mb-2">
