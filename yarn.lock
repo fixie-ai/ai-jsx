@@ -2975,6 +2975,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@eshaz/web-worker@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@eshaz/web-worker@npm:1.2.1"
+  checksum: 515dd7d4ad28116c843e79f9092b673de5c0414739f95b095338db50d136eb912ec6a8b9e3e0ec336e8e9880a52aa2081a564a9e13dfc343c5e80b367b7c44d6
+  languageName: node
+  linkType: hard
+
 "@eslint-community/eslint-utils@npm:^4.2.0":
   version: 4.4.0
   resolution: "@eslint-community/eslint-utils@npm:4.4.0"
@@ -7491,6 +7498,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@wasm-audio-decoders/common@npm:9.0.1":
+  version: 9.0.1
+  resolution: "@wasm-audio-decoders/common@npm:9.0.1"
+  dependencies:
+    "@eshaz/web-worker": 1.2.1
+  checksum: 69cdd2e422f2792c21ca836ead308f7f7c778a3451d741aa3aba7c07f721995c3b870c7d25deec6559a4ce0d8d372b2688e5ec3a0b0193e8cd0149564704172f
+  languageName: node
+  linkType: hard
+
 "@webassemblyjs/ast@npm:1.11.6, @webassemblyjs/ast@npm:^1.11.5":
   version: 1.11.6
   resolution: "@webassemblyjs/ast@npm:1.11.6"
@@ -7914,6 +7930,7 @@ __metadata:
     load-json-file: ^7.0.1
     lodash: ^4.17.21
     ml-distance: ^4.0.1
+    mpg123-decoder: ^0.4.9
     node-fetch: ^3.3.1
     openai: ^4.1.0
     pino: ^8.14.1
@@ -11406,6 +11423,7 @@ __metadata:
     clsx: ^1.2.1
     docusaurus-plugin-typedoc: ^0.19.2
     dotenv: ^16.3.1
+    fixie: latest
     mixpanel-browser: ^2.47.0
     prism-react-renderer: ^1.3.5
     react: ^17.0.2
@@ -13468,6 +13486,44 @@ __metadata:
     fixie: ./src/main.js
   languageName: unknown
   linkType: soft
+
+"fixie@npm:latest":
+  version: 2.0.1
+  resolution: "fixie@npm:2.0.1"
+  dependencies:
+    "@apollo/client": ^3.8.1
+    "@types/apollo-upload-client": ^17.0.2
+    apollo-upload-client: ^17.0.0
+    axios: ^1.5.1
+    commander: ^11.0.0
+    execa: ^8.0.1
+    extract-files: ^13.0.0
+    firebase: ^10.4.0
+    graphql: ^16.8.0
+    js-yaml: ^4.1.0
+    lodash: ^4.17.21
+    open: ^9.1.0
+    ora: ^7.0.1
+    terminal-kit: ^3.0.0
+    type-fest: ^4.3.1
+    typescript-json-schema: ^0.61.0
+    untildify: ^5.0.0
+    watcher: ^2.3.0
+  peerDependencies:
+    react: ^18.2.0
+    react-dom: ^18.2.0
+  peerDependenciesMeta:
+    "@types/react-dom":
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+  bin:
+    fixie: src/main.js
+  checksum: 559d9efa6b0ca082363ce99dd0de8b2f6bc11dd6ddbfd693c9970c53d5e827c144275240b81824d95082f8a1d97540a67571c871d9d60a9b2324028314957d9a
+  languageName: node
+  linkType: hard
 
 "flat-cache@npm:^3.0.4":
   version: 3.0.4
@@ -18973,6 +19029,15 @@ __metadata:
   version: 1.0.3
   resolution: "module-details-from-path@npm:1.0.3"
   checksum: 378a8a26013889aa3086bfb0776b7860c5bb957336253e1ba5d779c2f239a218930b145ca76e52c1dd7c8079d52b2af64b8eec30822f81ffdb0dfa27d6fe6f33
+  languageName: node
+  linkType: hard
+
+"mpg123-decoder@npm:^0.4.9":
+  version: 0.4.9
+  resolution: "mpg123-decoder@npm:0.4.9"
+  dependencies:
+    "@wasm-audio-decoders/common": 9.0.1
+  checksum: 81cc0af5cf454e1e66de640f845d4f1286934a6bc1a6e09b62573ee1fffaa5cc34d9f3a1bf061e83e1e5cc3b7ef3b388b46143f548c03ca231c0c874918ba3fd
   languageName: node
   linkType: hard
 

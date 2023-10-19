@@ -86,7 +86,26 @@ function buildTtsUrl(options: BuildUrlOptions) {
  * A single message in the chat history.
  */
 class ChatMessage {
-  constructor(public readonly role: string, public readonly content: string) {}
+  constructor(public readonly role: string, public readonly content: string, public readonly conversationId?: string) {}
+}
+
+/**
+ * Transforms a text stream of JSON lines into a stream of JSON objects.
+ */
+function jsonLinesTransformer() {
+  let buffer = '';
+  return new TransformStream<string, any>({
+    async transform(chunk, controller) {
+      buffer += chunk;
+      const lines = buffer.split('\n');
+      buffer = lines.pop()!;
+      for (const line of lines) {
+        if (line.trim()) {
+          controller.enqueue(JSON.parse(line));
+        }
+      }
+    },
+  });
 }
 
 /**
@@ -94,6 +113,7 @@ class ChatMessage {
  */
 class ChatRequest {
   public outMessage = '';
+  public conversationId?: string;
   public done = false;
   public onUpdate?: (request: ChatRequest, newText: string) => void;
   public onComplete?: (request: ChatRequest) => void;
@@ -105,32 +125,127 @@ class ChatRequest {
     private readonly model: string,
     private readonly docs: boolean,
     public active: boolean
-  ) {}
+  ) {
+    this.conversationId = inMessages.find((m) => m.conversationId)?.conversationId;
+  }
+
   async start() {
-    console.log(`calling LLM for ${this.inMessages.at(-1)?.content}`);
+    if (this.model.startsWith('fixie/')) {
+      await this.startWithFixie(this.model.slice('fixie/'.length));
+    } else {
+      console.log(`calling LLM for ${this.inMessages.at(-1)?.content}`);
+      this.startMillis = performance.now();
+
+      const res = await fetch('/agent/api', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messages: this.inMessages, model: this.model, docs: this.docs }),
+      });
+      const reader = res.body!.getReader();
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          this.ensureComplete();
+          break;
+        }
+        const newText = new TextDecoder().decode(value);
+        if (newText.trim() && this.requestLatency === undefined) {
+          this.requestLatency = performance.now() - this.startMillis;
+          console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
+        }
+
+        this.outMessage += newText;
+        this.onUpdate?.(this, newText);
+      }
+    }
+  }
+
+  private async startWithFixie(agentId: string) {
+    console.log(`calling Fixie for ${this.inMessages.at(-1)?.content}`);
     this.startMillis = performance.now();
-    const res = await fetch('/agent/api', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ messages: this.inMessages, model: this.model, docs: this.docs }),
-    });
-    this.requestLatency = performance.now() - this.startMillis;
-    console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
-    const reader = res.body!.getReader();
-    // eslint-disable-next-line no-constant-condition
+
+    let isStartConversationRequest;
+    let response;
+    if (this.conversationId) {
+      isStartConversationRequest = false;
+      response = await fetch(
+        `https://api.fixie.ai/api/v1/agents/${agentId}/conversations/${this.conversationId}/messages`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            message: this.inMessages.at(-1)!.content,
+          }),
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    } else {
+      isStartConversationRequest = true;
+      response = await fetch(`https://api.fixie.ai/api/v1/agents/${agentId}/conversations`, {
+        method: 'POST',
+        body: JSON.stringify({
+          message: this.inMessages.at(-1)!.content,
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+      this.conversationId = response.headers.get('X-Fixie-Conversation-Id')!;
+    }
+
+    const reader = response.body!.pipeThrough(new TextDecoderStream()).pipeThrough(jsonLinesTransformer()).getReader();
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) {
-        this.done = true;
-        this.streamLatency = performance.now() - this.startMillis - this.requestLatency;
-        this.onComplete?.(this);
+        this.ensureComplete();
         break;
       }
-      const newText = new TextDecoder().decode(value);
-      this.outMessage += newText;
-      this.onUpdate?.(this, newText);
+
+      if (!this.done) {
+        const currentTurn = isStartConversationRequest ? value.turns.at(-1) : value;
+        const currentMessage = currentTurn.messages
+          .filter((m: any) => m.kind === 'text')
+          .map((m: any) => m.content)
+          .join('');
+
+        if (currentMessage === this.outMessage) {
+          continue;
+        }
+
+        // Find the longest matching prefix.
+        let i = 0;
+        while (i < currentMessage.length && i < this.outMessage.length && currentMessage[i] === this.outMessage[i]) {
+          i++;
+        }
+        if (i !== this.outMessage.length) {
+          console.error('Result was not an append to the previous result.');
+        }
+        const delta = currentMessage.slice(i);
+
+        if (delta.trim() && this.requestLatency === undefined) {
+          this.requestLatency = performance.now() - this.startMillis;
+          console.log(`Got Fixie response, latency=${this.requestLatency.toFixed(0)}`);
+        }
+
+        this.outMessage = currentMessage;
+        this.onUpdate?.(this, delta);
+
+        if (currentTurn.state === 'done') {
+          this.ensureComplete();
+          break;
+        }
+      }
+    }
+  }
+
+  private ensureComplete() {
+    if (!this.done) {
+      this.done = true;
+      if (this.startMillis !== undefined && this.requestLatency !== undefined) {
+        this.streamLatency = performance.now() - this.startMillis - this.requestLatency;
+      }
+      this.onComplete?.(this);
     }
   }
 }
@@ -193,6 +308,7 @@ class ChatManager {
       this.onAudioEnd?.();
     };
   }
+
   /**
    * Starts the chat.
    */
@@ -239,7 +355,8 @@ class ChatManager {
     const normalized = normalizeText(text);
     const hit = normalized in this.pendingRequests;
     console.log(`${final ? 'final' : 'partial'}: ${normalized} ${hit ? 'HIT' : 'MISS'}`);
-    if (!hit) {
+    const supportsSpeculativeExecution = !this.model.startsWith('fixie/');
+    if (!hit && (final || supportsSpeculativeExecution)) {
       const request = new ChatRequest(newMessages, this.model, this.docs, final);
       request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
       request.onComplete = (request) => this.handleRequestDone(request);
@@ -282,7 +399,7 @@ class ChatManager {
    */
   private finishRequest(request: ChatRequest) {
     this.tts.flush();
-    const assistantMessage = new ChatMessage('assistant', request.outMessage);
+    const assistantMessage = new ChatMessage('assistant', request.outMessage, request.conversationId);
     this.history.push(assistantMessage);
     this.pendingRequests = {};
     this.onOutputChange?.(request.outMessage, true, request.requestLatency!);
