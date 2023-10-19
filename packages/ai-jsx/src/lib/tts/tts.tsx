@@ -607,6 +607,11 @@ export abstract class TextToSpeechBase {
   }
 
   /**
+   * Warms up the text-to-speech service to prepare for an upcoming generation.
+   */
+  abstract warmup(): void;
+
+  /**
    * Converts the given text to speech and plays it using the HTML5 audio element.
    * This method may be called multiple times, and the audio will be played serially.
    * Generation may be buffered, use the flush() method to indicate all text has been provided.
@@ -652,6 +657,7 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
     this.audio.play();
   }
   flush() {}
+  warmup() {}
   stop() {
     console.log(`[${this.name}] tts stopping`);
     this.audio.src = '';
@@ -671,7 +677,7 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
  * class is not meant to be used directly, but provides infrastructure for
  * RestTextToSpeech and WebSocketTextToSpeech.
  */
-export class WebAudioTextToSpeech extends TextToSpeechBase {
+export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
   private streamId: string = '';
   private inProgress = false;
   constructor(name: string) {
@@ -747,9 +753,9 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     outputManager.flush(this.streamId);
   }
 
-  protected generate(_text: string) {}
-  protected doFlush() {}
-  protected stopGeneration() {}
+  protected abstract generate(_text: string): void;
+  protected abstract doFlush(): void;
+  protected abstract stopGeneration(): void;
   protected tearDown() {
     this.inProgress = false;
   }
@@ -781,6 +787,12 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     public readonly model?: string
   ) {
     super(name);
+  }
+  async warmup() {
+    const warmupMillis = performance.now();
+    await this.fetch(' ');
+    const elapsed = performance.now() - warmupMillis;
+    console.log(`[${this.name}] warmup complete, elapsed=${elapsed.toFixed(0)} ms`);
   }
   protected generate(text: string) {
     // Only send complete sentences to the server, one at a time.
@@ -842,9 +854,7 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
 
     req.sendTimestamp = performance.now();
     console.log(`[${this.name}] requesting chunk: ${req.shortText}`);
-    const res = await fetch(
-      this.urlFunc({ provider: this.name, text: req.text, voice: this.voice, rate: this.rate, model: this.model })
-    );
+    const res = await this.fetch(req.text);
     if (!res.ok) {
       this.stop();
       this.setComplete(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
@@ -868,6 +878,10 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       this.appendChunk(new AudioChunk(contentType, value.buffer));
     }
     this.finishGeneration();
+  }
+  private fetch(text: string) {
+    const url = this.urlFunc({ provider: this.name, text, voice: this.voice, rate: this.rate, model: this.model });
+    return fetch(url);
   }
 }
 
@@ -939,7 +953,9 @@ export class PlayHTTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE =
     's3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json';
   constructor(urlFunc: BuildUrl, voice: string = PlayHTTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
-    super('playht', urlFunc, voice, rate);
+    // We call the non-edge version so we can use the PlayHT gRPC client, which is faster.
+    super('playht-grpc', urlFunc, voice, rate);
+    this.warmup();
   }
 }
 
