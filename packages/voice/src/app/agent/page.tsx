@@ -31,7 +31,7 @@ import '../globals.css';
 
 const DEFAULT_ASR_FRAME_SIZE = 100;
 const DEFAULT_ASR_PROVIDER = 'deepgram';
-const DEFAULT_TTS_PROVIDER = 'azure';
+const DEFAULT_TTS_PROVIDER = 'playht';
 const DEFAULT_LLM = 'gpt-4';
 const ASR_PROVIDERS = ['aai', 'deepgram', 'gladia', 'revai', 'soniox'];
 const TTS_PROVIDERS = [
@@ -78,9 +78,10 @@ async function getTtsToken(provider: string) {
  * Builds a URL for use in a TTS service.
  */
 function buildTtsUrl(options: BuildUrlOptions) {
+  const runtime = options.provider.endsWith('-grpc') ? 'nodejs' : 'edge';
   const params = new URLSearchParams();
   Object.entries(options).forEach(([k, v]) => v != undefined && params.set(k, v.toString()));
-  return `/tts/api/generate/edge?${params}`;
+  return `/tts/api/generate/${runtime}?${params}`;
 }
 
 /**
