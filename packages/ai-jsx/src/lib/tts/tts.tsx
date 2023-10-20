@@ -572,7 +572,8 @@ export abstract class TextToSpeechBase {
    */
   public onError?: (error: Error) => void;
 
-  constructor(protected readonly name: string) {
+  // TODO(juberti): prevent these params from being mutated while the TTS is active.
+  constructor(protected readonly name: string, public voice: string, public rate: number, public model?: string) {
     this.audio = new Audio();
     this.audio.onplay = () => console.log(`[${this.name}] tts playing`);
     this.audio.onpause = () => console.log(`[${this.name}] tts paused`);
@@ -642,13 +643,8 @@ export abstract class TextToSpeechBase {
  * allowing this class to be used with a variety of text-to-speech services.
  */
 export class SimpleTextToSpeech extends TextToSpeechBase {
-  constructor(
-    name: string,
-    protected readonly urlFunc: BuildUrl,
-    public readonly voice: string,
-    public readonly rate = 1.0
-  ) {
-    super(name);
+  constructor(name: string, private readonly urlFunc: BuildUrl, voice: string, rate = 1.0) {
+    super(name, voice, rate);
     this.audio.onplaying = () => this.setPlaying();
   }
   play(text: string) {
@@ -680,8 +676,8 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
 export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
   private streamId: string = '';
   private inProgress = false;
-  constructor(name: string) {
-    super(name);
+  constructor(name: string, voice: string, rate: number = 1.0, model?: string) {
+    super(name, voice, rate, model);
     this.audio.onwaiting = () => console.log(`[${this.name}] tts waiting`);
   }
   play(text: string) {
@@ -779,14 +775,8 @@ class TextToSpeechRequest {
 export class RestTextToSpeech extends WebAudioTextToSpeech {
   private pendingText: string = '';
   private readonly requestQueue: TextToSpeechRequest[] = [];
-  constructor(
-    name: string,
-    private readonly urlFunc: BuildUrl,
-    public voice: string,
-    public rate: number = 1.0,
-    public model?: string
-  ) {
-    super(name);
+  constructor(name: string, private readonly urlFunc: BuildUrl, voice: string, rate: number, model?: string) {
+    super(name, voice, rate, model);
   }
   async warmup() {
     const warmupMillis = performance.now();
@@ -992,7 +982,7 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
   private readonly socketBuffer: string[] = [];
   private pendingText: string = '';
   constructor(name: string, private readonly url: string, public voice: string) {
-    super(name);
+    super(name, voice);
     this.warmup();
   }
   warmup() {
