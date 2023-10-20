@@ -522,9 +522,7 @@ const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React
   <button
     onClick={onClick}
     disabled={disabled}
-    className={`ml-2 rounded-md ${
-      disabled ? 'bg-gray-300' : 'bg-fixie-charcoal hover:bg-fixie-dark-gray'
-    } px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon`}
+    className={`${disabled ? 'bg-gray-300' : 'bg-fixie-charcoal hover:bg-fixie-dark-gray'} px-4 py-2 text-md font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon`}
   >
     {children}
   </button>
@@ -547,11 +545,11 @@ const PageComponent: React.FC = () => {
   const ttsVoice = searchParams.get('ttsVoice') || undefined;
   const model = searchParams.get('llm') || DEFAULT_LLM;
   const agentId = searchParams.get('agent') || 'dr-donut';
-  const docs = Boolean(searchParams.get('docs'));
-  const showChooser = Boolean(searchParams.get('chooser'));
-  const showInput = Boolean(searchParams.get('input'));
-  const showOutput = Boolean(searchParams.get('output'));
-  const showStats = Boolean(searchParams.get('stats'));
+  const docs = searchParams.get('docs') !== null;
+  const showChooser = searchParams.get('chooser') !== null;
+  const showInput = searchParams.get('input') !== null;
+  const showOutput = searchParams.get('output') !== null;
+  const showStats = searchParams.get('stats') !== null;
   const [chatManager, setChatManager] = useState<ChatManager | null>(null);
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
@@ -653,13 +651,15 @@ const PageComponent: React.FC = () => {
         </div>
       )}
       <div className="w-full">
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center">
           <Image src="/voice-logo.png" alt="Fixie Voice" width={322} height={98} priority={true} />
         </div>
-        <div className="flex justify-center">
-          <p className="font-sm ml-2 mb-6 text-center">{helpText}</p>
-          <div className="p-4">
+        <div>          
+          <div className="flex justify-center p-4">
             <Image priority={true} width="512" height="512" src={`/agents/${agentId}.webp`} alt={agentId} />
+          </div>
+          <div>
+            <p className="p-4 text-xl text-center">{helpText}</p>
           </div>
         </div>        
         <div>
@@ -684,11 +684,9 @@ const PageComponent: React.FC = () => {
             </div>
           )}
         </div>
-        <div className="m-3 w-full flex justify-center mt-8">
+        <div className="w-full flex justify-center mt-3">
           {active() && (
-            <Button disabled={false} onClick={handleStop}>
-              End Chat
-            </Button>
+            <Button disabled={false} onClick={handleStop}>End Chat</Button>
           )}
         </div>
         {showStats && (
