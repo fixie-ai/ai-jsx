@@ -281,7 +281,7 @@ class ChatManager {
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
   private readonly docs: boolean;
-  onStateChange?: (state: string) => void;
+  onStateChange?: (state: ChatManagerState) => void;
   onInputChange?: (text: string, final: boolean, latency?: number) => void;
   onOutputChange?: (text: string, final: boolean, latency: number) => void;
   onAudioStart?: (latency: number) => void;
@@ -307,8 +307,8 @@ class ChatManager {
     this.model = model;
     this.docs = docs;
     this.micManager.addEventListener('vad', (evt: CustomEventInit<VoiceActivity>) => {});
-    this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
-      const obj = event.detail!;
+    this.asr.addEventListener('transcript', (evt: CustomEventInit<Transcript>) => {
+      const obj = evt.detail!;
       this.handleInputUpdate(obj.text, obj.final);
       this.onInputChange?.(obj.text, obj.final, obj.observedLatency);
     });
@@ -318,7 +318,8 @@ class ChatManager {
     };
     this.tts.onComplete = () => {
       this.onAudioEnd?.();
-      this.changeState(ChatManagerState.IDLE);
+      this.micManager.isEnabled = true;
+      this.changeState(ChatManagerState.LISTENING);
     };
   }
 
@@ -333,6 +334,8 @@ class ChatManager {
     this.asr.start();
     if (initialMessage !== undefined) {
       this.handleInputUpdate(initialMessage, true);
+    } else {      
+      this.changeState(ChatManagerState.LISTENING);
     }
   }
   /**
@@ -344,6 +347,7 @@ class ChatManager {
     this.micManager.stop();
     this.history = [];
     this.pendingRequests = {};
+    this.state = ChatManagerState.IDLE;
   }
 
   changeState(state: ChatManagerState) {
@@ -356,18 +360,13 @@ class ChatManager {
     return this.micManager.analyzer;
   }
   getOutputAnalyzer() {
-    return this.tts.analyzer; ///++++
+    return this.tts.analyzer;
   }
 
   /**
    * Handle new input from the ASR.
    */
   private handleInputUpdate(text: string, final: boolean) {
-    // If this is our first transcript, switch to listening mode (maybe use VAD instead)
-    if (/*this.state == ChatManagerState.IDLE && */ text.trim()) {
-      this.changeState(ChatManagerState.LISTENING);
-    }
-
     // Ignore partial transcripts if VAD indicates the user is still speaking.
     if (!final && this.micManager.isVoiceActive) {
       return;
@@ -378,6 +377,7 @@ class ChatManager {
     const newMessages = [...this.history, userMessage];
     if (final) {
       this.history = newMessages;
+      this.micManager.isEnabled = false;
       this.changeState(ChatManagerState.THINKING);
     }
 
@@ -524,11 +524,6 @@ const PageComponent: React.FC = () => {
     manager.start('');
     manager.onStateChange = (state) => {
       console.log(`state=${state}`);
-      if (state == ChatManagerState.LISTENING) {
-      } else if (state == ChatManagerState.THINKING) {
-      } else if (state == ChatManagerState.SPEAKING) {
-      } else {
-      }
     };
     manager.onInputChange = (text, final, latency) => {
       setInput(text);

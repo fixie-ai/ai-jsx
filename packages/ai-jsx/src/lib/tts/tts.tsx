@@ -608,6 +608,11 @@ export abstract class TextToSpeechBase {
   }
 
   /**
+   * Gets an analyzer node for the current audio stream.
+   */
+  abstract get analyzer(): AnalyserNode | undefined;
+
+  /**
    * Warms up the text-to-speech service to prepare for an upcoming generation.
    */
   abstract warmup(): void;
@@ -647,6 +652,7 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
     super(name, voice, rate);
     this.audio.onplaying = () => this.setPlaying();
   }
+  get analyzer() { return undefined; }
   play(text: string) {
     this.playMillis = performance.now();
     this.audio.src = this.urlFunc({ provider: this.name, text, voice: this.voice, rate: this.rate });
