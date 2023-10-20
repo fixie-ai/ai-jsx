@@ -392,7 +392,7 @@ class ChatManager {
     const newMessages = [...this.history, userMessage];
     if (final) {
       this.history = newMessages;
-      this.micManager.isEnabled = false;      
+      this.micManager.isEnabled = false;
     }
     this.changeState(ChatManagerState.THINKING);
 
@@ -532,7 +532,7 @@ const Latency: React.FC<{ name: string; latency: number }> = ({ name, latency })
 
 const PageComponent: React.FC = () => {
   const searchParams = useSearchParams();
-  const tapOrClick = typeof window != 'undefined' && 'isTouchDevice' in window ? 'Tap' : 'Click';      
+  const tapOrClick = typeof window != 'undefined' && 'isTouchDevice' in window ? 'Tap' : 'Click';
   const idleText = `${tapOrClick} anywhere to start!`;
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
   const asrLanguage = searchParams.get('asrLanguage') || undefined;
