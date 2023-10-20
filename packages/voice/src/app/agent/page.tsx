@@ -6,7 +6,6 @@ import {
   SpeechRecognitionBase,
   MicManager,
   Transcript,
-  VoiceActivity
 } from 'ai-jsx/lib/asr/asr';
 import { createTextToSpeech, BuildUrlOptions, TextToSpeechBase, TextToSpeechProtocol } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
@@ -306,7 +305,6 @@ class ChatManager {
     });
     this.model = model;
     this.docs = docs;
-    this.micManager.addEventListener('vad', (evt: CustomEventInit<VoiceActivity>) => {});
     this.asr.addEventListener('transcript', (evt: CustomEventInit<Transcript>) => {
       const obj = evt.detail!;
       this.handleInputUpdate(obj.text, obj.final);
