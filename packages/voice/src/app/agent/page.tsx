@@ -291,10 +291,10 @@ class ChatManager {
       getToken: getAsrToken,
       language: asrLanguage,
     });
-    const proto = ttsProvider.endsWith('-ws') ? TextToSpeechProtocol.WS : TextToSpeechProtocol.REST;
+    const ttsSplit = ttsProvider.split('-');
     this.tts = createTextToSpeech({
       provider: ttsSplit[0],
-      proto,
+      proto: ttsSplit[1] as TextToSpeechProtocol,
       getToken: getTtsToken,
       buildUrl: buildTtsUrl,
       voice: ttsVoice,
