@@ -27,7 +27,6 @@ interface TtsProps {
   supportsWs?: boolean;
   link: string;
   costPerKChar: number;
-  defaultVoice: string;
   text: string;
   model?: string;
 }
@@ -54,21 +53,26 @@ const Tts: React.FC<TtsProps> = ({
   supportsWs = false,
   link,
   costPerKChar,
-  defaultVoice,
   model,
   text,
 }: TtsProps) => {
-  const [voice, setVoice] = useState(defaultVoice);
+  const [voice, setVoice] = useState('');
   const [playing, setPlaying] = useState(false);
   const [latency, setLatency] = useState<number>();
   const [restTts, setRestTts] = useState<TextToSpeechBase | null>();
   const [wsTts, setWsTts] = useState<TextToSpeechBase | null>();
   useEffect(() => {
-    setRestTts(createTextToSpeech({ provider, proto: 'rest', buildUrl, getToken, voice, rate: 1.2, model }));
+    const tts = createTextToSpeech({ provider, proto: 'rest', buildUrl, getToken, rate: 1.2, model });
+    setRestTts(tts);
     if (supportsWs) {
-      setWsTts(createTextToSpeech({ provider, proto: 'ws', buildUrl, getToken, voice, rate: 1.2, model }));
+      setWsTts(createTextToSpeech({ provider, proto: 'ws', buildUrl, getToken, rate: 1.2, model }));
     }
-  }, [provider, voice]);
+    setVoice(tts.voice);
+  }, []);
+  useEffect(() => {
+    if (restTts) restTts.voice = voice;
+    if (wsTts) wsTts.voice = voice;
+  }, [voice]);
   const toggle = (tts: TextToSpeechBase) => {
     if (!playing) {
       setPlaying(true);
@@ -151,7 +155,6 @@ const PageComponent: React.FC = () => {
           supportsWs
           link="https://elevenlabs.io"
           costPerKChar={0.18}
-          defaultVoice="21m00Tcm4TlvDq8ikWAM"
           text={text}
         />
         <Tts
@@ -160,49 +163,18 @@ const PageComponent: React.FC = () => {
           supportsWs
           link="https://elevenlabs.io"
           costPerKChar={0.18}
-          defaultVoice="21m00Tcm4TlvDq8ikWAM"
           model="eleven_english_v2"
           text={text}
         />
-        <Tts
-          display="LMNT"
-          provider="lmnt"
-          supportsWs
-          link="https://lmnt.com"
-          costPerKChar={0.2}
-          defaultVoice="mrnmrz72"
-          text={text}
-        />
-        <Tts
-          display="Murf AI"
-          provider="murf"
-          link="https://murf.ai"
-          costPerKChar={1.0}
-          defaultVoice="en-US-natalie"
-          text={text}
-        />
-        <Tts
-          display="PlayHT"
-          provider="playht"
-          link="https://play.ht"
-          costPerKChar={0.04125}
-          defaultVoice="s3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json"
-          text={text}
-        />
-        <Tts
-          display="Resemble AI"
-          provider="resemble"
-          link="https://resemble.ai"
-          costPerKChar={0.4}
-          defaultVoice="e28236ee"
-          text={text}
-        />
+        <Tts display="LMNT" provider="lmnt" supportsWs link="https://lmnt.com" costPerKChar={0.2} text={text} />
+        <Tts display="Murf AI" provider="murf" link="https://murf.ai" costPerKChar={1.0} text={text} />
+        <Tts display="PlayHT" provider="playht" link="https://play.ht" costPerKChar={0.04125} text={text} />
+        <Tts display="Resemble AI" provider="resemble" link="https://resemble.ai" costPerKChar={0.4} text={text} />
         <Tts
           display="WellSaid Labs"
           provider="wellsaid"
           link="https://wellsaidlabs.com"
           costPerKChar={1.0}
-          defaultVoice="43"
           text={text}
         />
         <Tts
@@ -210,23 +182,14 @@ const PageComponent: React.FC = () => {
           provider="azure"
           link="https://azure.microsoft.com/en-us/pricing/details/cognitive-services/speech-services"
           costPerKChar={0.016}
-          defaultVoice="en-US-JennyNeural"
           text={text}
         />
-        <Tts
-          display="AWS Polly"
-          provider="aws"
-          link="https://aws.amazon.com/polly"
-          costPerKChar={0.016}
-          defaultVoice="Joanna"
-          text={text}
-        />
+        <Tts display="AWS Polly" provider="aws" link="https://aws.amazon.com/polly" costPerKChar={0.016} text={text} />
         <Tts
           display="Google"
           provider="gcp"
           link="https://cloud.google.com/text-to-speech"
           costPerKChar={0.016}
-          defaultVoice="en-US-Neural2-C"
           text={text}
         />
       </div>
