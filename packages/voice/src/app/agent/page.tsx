@@ -6,6 +6,7 @@ import {
   SpeechRecognitionBase,
   MicManager,
   Transcript,
+  VoiceActivity
 } from 'ai-jsx/lib/asr/asr';
 import { createTextToSpeech, BuildUrlOptions, TextToSpeechBase, TextToSpeechProtocol } from 'ai-jsx/lib/tts/tts';
 import { useSearchParams } from 'next/navigation';
@@ -250,6 +251,13 @@ class ChatRequest {
   }
 }
 
+enum ChatManagerState {
+  IDLE = 'idle',
+  LISTENING = 'listening',
+  THINKING = 'thinking',
+  SPEAKING = 'speaking',
+}
+
 class ChatManagerInit {
   constructor(
     public readonly asrProvider: string,
@@ -265,6 +273,7 @@ class ChatManagerInit {
  * Manages a single chat with a LLM, including speculative execution.
  */
 class ChatManager {
+  private state = ChatManagerState.IDLE;
   private history: ChatMessage[] = [];
   private pendingRequests: Record<string, ChatRequest> = {};
   private readonly micManager: MicManager;
@@ -272,6 +281,7 @@ class ChatManager {
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
   private readonly docs: boolean;
+  onStateChange?: (state: string) => void;
   onInputChange?: (text: string, final: boolean, latency?: number) => void;
   onOutputChange?: (text: string, final: boolean, latency: number) => void;
   onAudioStart?: (latency: number) => void;
@@ -296,16 +306,19 @@ class ChatManager {
     });
     this.model = model;
     this.docs = docs;
+    this.micManager.addEventListener('vad', (evt: CustomEventInit<VoiceActivity>) => {});
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const obj = event.detail!;
       this.handleInputUpdate(obj.text, obj.final);
       this.onInputChange?.(obj.text, obj.final, obj.observedLatency);
     });
     this.tts.onPlaying = () => {
+      this.changeState(ChatManagerState.SPEAKING);
       this.onAudioStart?.(this.tts.latency!);
     };
     this.tts.onComplete = () => {
       this.onAudioEnd?.();
+      this.changeState(ChatManagerState.IDLE);
     };
   }
 
@@ -333,10 +346,28 @@ class ChatManager {
     this.pendingRequests = {};
   }
 
+  changeState(state: ChatManagerState) {
+    if (state != this.state) {
+      this.state = state;
+      this.onStateChange?.(state);
+    }
+  }
+  getInputAnalyzer() {
+    return this.micManager.analyzer;
+  }
+  getOutputAnalyzer() {
+    return this.tts.analyzer; ///++++
+  }
+
   /**
    * Handle new input from the ASR.
    */
   private handleInputUpdate(text: string, final: boolean) {
+    // If this is our first transcript, switch to listening mode (maybe use VAD instead)
+    if (/*this.state == ChatManagerState.IDLE && */ text.trim()) {
+      this.changeState(ChatManagerState.LISTENING);
+    }
+
     // Ignore partial transcripts if VAD indicates the user is still speaking.
     if (!final && this.micManager.isVoiceActive) {
       return;
@@ -347,6 +378,7 @@ class ChatManager {
     const newMessages = [...this.history, userMessage];
     if (final) {
       this.history = newMessages;
+      this.changeState(ChatManagerState.THINKING);
     }
 
     // If it doesn't match an existing request, kick off a new one.
@@ -490,6 +522,14 @@ const PageComponent: React.FC = () => {
     setTtsLatency(0);
     setChatManager(manager);
     manager.start('');
+    manager.onStateChange = (state) => {
+      console.log(`state=${state}`);
+      if (state == ChatManagerState.LISTENING) {
+      } else if (state == ChatManagerState.THINKING) {
+      } else if (state == ChatManagerState.SPEAKING) {
+      } else {
+      }
+    };
     manager.onInputChange = (text, final, latency) => {
       setInput(text);
       if (latency) {
