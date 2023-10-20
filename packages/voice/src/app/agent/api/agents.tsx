@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 export interface AgentConfig {
   id: string;
   prompt: string;
