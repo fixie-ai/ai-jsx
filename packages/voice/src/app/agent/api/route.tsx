@@ -6,27 +6,20 @@ import { Anthropic, ValidChatModel as AnthropicValidChatModel } from 'ai-jsx/lib
 import { StreamingTextResponse } from 'ai';
 import { toTextStream } from 'ai-jsx/stream';
 import { NextRequest } from 'next/server';
-import { CatchPhrase, DrDonut, RubberDuck, SpanishTutor } from './personas';
+import { AgentConfig, AiFriend, DrDonut, RubberDuck, SpanishTutor } from './agents';
 import _ from 'lodash';
 
 export const runtime = 'edge'; // 'nodejs' is the default
 
 const MAX_CHUNKS = 4;
 
-interface AgentPersona {
-  name: string;
-  prompt: string;
-  initialResponses: string[];
-  corpusId?: string;
-}
-
-const PERSONAS: AgentPersona[] = [CatchPhrase, DrDonut, RubberDuck, SpanishTutor];
-function getPersona(name: string) {
-  const persona = PERSONAS.find((persona) => persona.name == name);
-  if (!persona) {
-    throw new Error(`Unknown persona: ${name}`);
+const AGENTS: AgentConfig[] = [AiFriend, DrDonut, RubberDuck, SpanishTutor];
+function getAgent(agentId: string) {
+  const agent = AGENTS.find((agent) => agent.id == agentId);
+  if (!agent) {
+    throw new Error(`Unknown agentId: ${agentId}`);
   }
-  return persona;
+  return agent;
 }
 
 /**
@@ -54,20 +47,20 @@ function pseudoTextStream(text: string, interWordDelay = 20) {
 }
 
 async function ChatAgent({
-  persona,
+  agent,
   conversation,
   model,
   docs,
 }: {
-  persona: AgentPersona;
+  agent: AgentConfig;
   conversation: ClientMessage[];
   model: string;
   docs?: number;
 }) {
   const query = conversation.at(-1)?.content;
-  let prompt = persona.prompt;
-  if (docs && query) {
-    const corpus = new FixieCorpus(persona.corpusId);
+  let prompt = agent.prompt;
+  if (docs && agent.corpusId && query) {
+    const corpus = new FixieCorpus(agent.corpusId);
     const chunks = await corpus.search(query, { limit: MAX_CHUNKS });
     const chunkText = chunks.map((chunk) => chunk.chunk.content).join('\n');
     console.log(`Chunks:\n${chunkText}`);
@@ -96,18 +89,16 @@ async function ChatAgent({
 
 export async function POST(request: NextRequest) {
   const json = await request.json();
-  console.log(`New request (persona=${json.persona} model=${json.model} docs=${json.docs})`);
+  console.log(`New request (agentId=${json.agentId} model=${json.model} docs=${json.docs})`);
   json.messages.forEach((message: ClientMessage) => console.log(`role=${message.role} content=${message.content}`));
 
-  const persona = getPersona((json.persona as string) ?? 'dr-donut');
+  const agent = getAgent((json.agentId as string) ?? 'dr-donut');
   let stream;
   if (json.messages.length == 1 && !json.messages[0].content) {
-    const initialResponse = _.sample(persona.initialResponses)!;
+    const initialResponse = _.sample(agent.initialResponses)!;
     stream = pseudoTextStream(initialResponse);
   } else {
-    stream = toTextStream(
-      <ChatAgent persona={persona} conversation={json.messages} model={json.model} docs={json.docs} />
-    );
+    stream = toTextStream(<ChatAgent agent={agent} conversation={json.messages} model={json.model} docs={json.docs} />);
   }
   return new StreamingTextResponse(stream);
 }

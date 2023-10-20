@@ -49,7 +49,7 @@ const TTS_PROVIDERS = [
   'wellsaid',
 ];
 const LLM_MODELS = ['claude-2', 'claude-instant-1', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'];
-const PERSONAS = ['catch-phrase', 'dr-donut', 'rubber-duck', 'spanish-tutor'];
+const AGENT_IDS = ['ai-friend', 'dr-donut', 'rubber-duck', 'spanish-tutor'];
 
 /**
  * Retrieves an ephemeral token from the server for use in an ASR service.
@@ -262,9 +262,9 @@ interface ChatManagerInit {
   asrProvider: string;
   ttsProvider: string;
   model: string;
-  persona: string;
+  agentId: string;
   docs: boolean;
-  asrLanguage?: string,
+  asrLanguage?: string;
   ttsVoice?: string;
 }
 
@@ -278,14 +278,14 @@ class ChatManager {
   private readonly asr: SpeechRecognitionBase;
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
-  private readonly persona: string;
+  private readonly agentId: string;
   private readonly docs: boolean;
   onInputChange?: (text: string, final: boolean, latency?: number) => void;
   onOutputChange?: (text: string, final: boolean, latency: number) => void;
   onAudioStart?: (latency: number) => void;
   onAudioEnd?: () => void;
   onError?: () => void;
-  constructor({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, persona, docs }: ChatManagerInit) {
+  constructor({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, agentId, docs }: ChatManagerInit) {
     this.micManager = new MicManager();
     this.asr = createSpeechRecognition({
       provider: asrProvider,
@@ -293,17 +293,17 @@ class ChatManager {
       getToken: getAsrToken,
       language: asrLanguage,
     });
-    const ttsSplit = ttsProvider.split('-');
+    const proto = ttsProvider.endsWith('-ws') ? TextToSpeechProtocol.WS : TextToSpeechProtocol.REST;
     this.tts = createTextToSpeech({
       provider: ttsSplit[0],
-      proto: ttsSplit[1] as TextToSpeechProtocol,
+      proto,
       getToken: getTtsToken,
       buildUrl: buildTtsUrl,
       voice: ttsVoice,
       rate: 1.2,
     });
     this.model = model;
-    this.persona = persona;
+    this.agentId = agentId;
     this.docs = docs;
     this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
       const obj = event.detail!;
@@ -478,7 +478,7 @@ const PageComponent: React.FC = () => {
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
   const ttsVoice = searchParams.get('ttsVoice') || undefined;
   const model = searchParams.get('llm') || DEFAULT_LLM;
-  const persona = searchParams.get('persona') || 'dr-donut';
+  const agentId = searchParams.get('agent') || 'dr-donut';
   const docs = Boolean(searchParams.get('docs'));
   const showChooser = Boolean(searchParams.get('chooser'));
   const showInput = Boolean(!searchParams.get('noInput'));
@@ -492,7 +492,7 @@ const PageComponent: React.FC = () => {
   const [ttsLatency, setTtsLatency] = useState(0);
   const active = () => Boolean(chatManager);
   const handleStart = () => {
-    const manager = new ChatManager({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, persona, docs });
+    const manager = new ChatManager({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, agentId, docs });
     setInput('');
     setOutput('');
     setAsrLatency(0);
@@ -552,7 +552,7 @@ const PageComponent: React.FC = () => {
     <>
       {showChooser && (
         <div className="absolute top-1 right-1">
-          <Dropdown label="Persona" param="persona" value={persona} options={PERSONAS} />
+          <Dropdown label="Agent" param="agent" value={agentId} options={AGENT_IDS} />
           <Dropdown label="ASR" param="asr" value={asrProvider} options={ASR_PROVIDERS} />
           <Dropdown label="LLM" param="llm" value={model} options={LLM_MODELS} />
           <Dropdown label="TTS" param="tts" value={ttsProvider} options={TTS_PROVIDERS} />
@@ -565,11 +565,11 @@ const PageComponent: React.FC = () => {
         {showImage && (
           <>
             <p className="font-sm ml-2 mb-6 text-center">
-              This demo allows you to chat (via voice) with an AI agent. 
-              Click Start Chatting (or tap the spacebar) to begin.
+              This demo allows you to chat (via voice) with an AI agent. Click Start Chatting (or tap the spacebar) to
+              begin.
             </p>
-            <div className="p-4">
-             <Image width="512" height="512" src={`/`}
+            <div className="p-4 flex justify-center">
+              <Image width="512" height="512" src={`/agents/${agentId}.jpg`} alt={agentId} />
             </div>
           </>
         )}
