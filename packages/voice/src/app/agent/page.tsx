@@ -31,7 +31,7 @@ import '../globals.css';
 
 const DEFAULT_ASR_FRAME_SIZE = 100;
 const DEFAULT_ASR_PROVIDER = 'deepgram';
-const DEFAULT_TTS_PROVIDER = 'playht-grpc';
+const DEFAULT_TTS_PROVIDER = 'playht';
 const DEFAULT_LLM = 'gpt-4';
 const ASR_PROVIDERS = ['aai', 'deepgram', 'gladia', 'revai', 'soniox'];
 const TTS_PROVIDERS = [
@@ -44,7 +44,6 @@ const TTS_PROVIDERS = [
   'lmnt-ws',
   'murf',
   'playht',
-  'playht-grpc',
   'resemble',
   'wellsaid',
 ];
