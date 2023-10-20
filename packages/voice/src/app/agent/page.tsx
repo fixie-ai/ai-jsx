@@ -48,6 +48,7 @@ const TTS_PROVIDERS = [
   'wellsaid',
 ];
 const LLM_MODELS = ['claude-2', 'claude-instant-1', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'];
+const AGENT_IDS = ['ai-friend', 'dr-donut', 'rubber-duck', 'spanish-tutor'];
 
 /**
  * Retrieves an ephemeral token from the server for use in an ASR service.
@@ -123,6 +124,7 @@ class ChatRequest {
   constructor(
     private readonly inMessages: ChatMessage[],
     private readonly model: string,
+    private readonly agentId: string,
     private readonly docs: boolean,
     public active: boolean
   ) {
@@ -130,36 +132,40 @@ class ChatRequest {
   }
 
   async start() {
-    if (this.model.startsWith('fixie/')) {
-      await this.startWithFixie(this.model.slice('fixie/'.length));
+    if (this.agentId.includes('/')) {
+      await this.startWithFixie(this.agentId);
     } else {
-      console.log(`calling LLM for ${this.inMessages.at(-1)?.content}`);
-      this.startMillis = performance.now();
+      await this.startWithLlm(this.agentId);
+    }
+  }
 
-      const res = await fetch('/agent/api', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ messages: this.inMessages, model: this.model, docs: this.docs }),
-      });
-      const reader = res.body!.getReader();
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          this.ensureComplete();
-          break;
-        }
-        const newText = new TextDecoder().decode(value);
-        if (newText.trim() && this.requestLatency === undefined) {
-          this.requestLatency = performance.now() - this.startMillis;
-          console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
-        }
+  private async startWithLlm(agentId: string) {
+    console.log(`calling LLM for ${this.inMessages.at(-1)?.content}`);
+    this.startMillis = performance.now();
 
-        this.outMessage += newText;
-        this.onUpdate?.(this, newText);
+    const res = await fetch('/agent/api', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messages: this.inMessages, model: this.model, agentId, docs: this.docs }),
+    });
+    const reader = res.body!.getReader();
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        this.ensureComplete();
+        break;
       }
+      const newText = new TextDecoder().decode(value);
+      if (newText.trim() && this.requestLatency === undefined) {
+        this.requestLatency = performance.now() - this.startMillis;
+        console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
+      }
+
+      this.outMessage += newText;
+      this.onUpdate?.(this, newText);
     }
   }
 
@@ -257,15 +263,14 @@ enum ChatManagerState {
   SPEAKING = 'speaking',
 }
 
-class ChatManagerInit {
-  constructor(
-    public readonly asrProvider: string,
-    public readonly ttsProvider: string,
-    public readonly model: string,
-    public readonly docs: boolean,
-    public readonly asrLanguage?: string,
-    public readonly ttsVoice?: string
-  ) {}
+interface ChatManagerInit {
+  asrProvider: string;
+  ttsProvider: string;
+  model: string;
+  agentId: string;
+  docs: boolean;
+  asrLanguage?: string;
+  ttsVoice?: string;
 }
 
 /**
@@ -279,6 +284,7 @@ class ChatManager {
   private readonly asr: SpeechRecognitionBase;
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
+  private readonly agentId: string;
   private readonly docs: boolean;
   onStateChange?: (state: ChatManagerState) => void;
   onInputChange?: (text: string, final: boolean, latency?: number) => void;
@@ -286,7 +292,7 @@ class ChatManager {
   onAudioStart?: (latency: number) => void;
   onAudioEnd?: () => void;
   onError?: () => void;
-  constructor({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, docs }: ChatManagerInit) {
+  constructor({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, agentId, docs }: ChatManagerInit) {
     this.micManager = new MicManager();
     this.asr = createSpeechRecognition({
       provider: asrProvider,
@@ -304,6 +310,7 @@ class ChatManager {
       rate: 1.2,
     });
     this.model = model;
+    this.agentId = agentId;
     this.docs = docs;
     this.asr.addEventListener('transcript', (evt: CustomEventInit<Transcript>) => {
       const obj = evt.detail!;
@@ -414,7 +421,7 @@ class ChatManager {
    * Send off a new request to the LLM.
    */
   private dispatchRequest(normalized: string, messages: ChatMessage[], final: boolean) {
-    const request = new ChatRequest(messages, this.model, this.docs, final);
+    const request = new ChatRequest(messages, this.model, this.agentId, this.docs, final);
     request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
     request.onComplete = (request) => this.handleRequestDone(request);
     this.pendingRequests.set(normalized, request);
@@ -539,10 +546,11 @@ const PageComponent: React.FC = () => {
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
   const ttsVoice = searchParams.get('ttsVoice') || undefined;
   const model = searchParams.get('llm') || DEFAULT_LLM;
+  const agentId = searchParams.get('agent') || 'dr-donut';
   const docs = Boolean(searchParams.get('docs'));
   const showChooser = Boolean(searchParams.get('chooser'));
-  const showInput = Boolean(!searchParams.get('noInput'));
-  const showOutput = Boolean(!searchParams.get('noOutput'));
+  const showInput = Boolean(searchParams.get('input'));
+  const showOutput = Boolean(searchParams.get('output'));
   const showStats = Boolean(searchParams.get('stats'));
   const [chatManager, setChatManager] = useState<ChatManager | null>(null);
   const [input, setInput] = useState('');
@@ -553,7 +561,7 @@ const PageComponent: React.FC = () => {
   const [ttsLatency, setTtsLatency] = useState(0);
   const active = () => Boolean(chatManager);
   const handleStart = () => {
-    const manager = new ChatManager({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, docs });
+    const manager = new ChatManager({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, agentId, docs });
     setInput('');
     setOutput('');
     setAsrLatency(0);
@@ -634,11 +642,11 @@ const PageComponent: React.FC = () => {
       document.removeEventListener('click', onClick);
     };
   }, [onKeyDown]);
-
   return (
     <>
       {showChooser && (
         <div className="absolute top-1 right-1">
+          <Dropdown label="Agent" param="agent" value={agentId} options={AGENT_IDS} />
           <Dropdown label="ASR" param="asr" value={asrProvider} options={ASR_PROVIDERS} />
           <Dropdown label="LLM" param="llm" value={model} options={LLM_MODELS} />
           <Dropdown label="TTS" param="tts" value={ttsProvider} options={TTS_PROVIDERS} />
@@ -648,38 +656,12 @@ const PageComponent: React.FC = () => {
         <div className="flex justify-center mb-8">
           <Image src="/voice-logo.png" alt="Fixie Voice" width={322} height={98} priority={true} />
         </div>
-        <p className="font-sm ml-2 mb-6 text-center">{helpText}</p>
-        <div className="grid grid-cols-2 lg:gap-x-24">
+        <div className="flex justify-center">
+          <p className="font-sm ml-2 mb-6 text-center">{helpText}</p>
           <div className="p-4">
-            <p className="text-lg font-bold">🍩 DONUTS</p>
-            <ul className="text-sm">
-              <MenuItem name="PUMPKIN SPICE ICED" price={1.29} />
-              <MenuItem name="PUMPKIN SPICE CAKE" price={1.29} />
-              <MenuItem name="OLD FASHIONED" price={0.99} />
-              <MenuItem name="CHOCOLATE ICED" price={1.09} />
-              <MenuItem name="CHOCOLATE ICED WITH SPRINKLES" price={1.09} />
-              <MenuItem name="RASPBERRY FILLED" price={1.09} />
-              <MenuItem name="BLUEBERRY CAKE" price={1.09} />
-              <MenuItem name="STRAWBERRY ICED WITH SPRINKLES" price={1.09} />
-              <MenuItem name="LEMON FILLED" price={1.09} />
-              <MenuItem name="DOUGHNUT HOLES" price={3.99} />
-            </ul>
+            <Image priority={true} width="512" height="512" src={`/agents/${agentId}.webp`} alt={agentId} />
           </div>
-          <div className="p-4">
-            <p className="text-lg font-bold">☕️ COFFEE</p>
-            <ul className="text-sm">
-              <MenuItem name="PUMPKIN SPICE COFFEE" price={2.59} />
-              <MenuItem name="PUMPKIN SPICE LATTE" price={4.59} />
-              <MenuItem name="REGULAR BREWED COFFEE" price={1.79} />
-              <MenuItem name="DECAF BREWED COFFEE" price={1.79} />
-              <MenuItem name="LATTE" price={3.49} />
-              <MenuItem name="CAPPUCINO" price={3.49} />
-              <MenuItem name="CARAMEL MACCHIATO" price={3.49} />
-              <MenuItem name="MOCHA LATTE" price={3.49} />
-              <MenuItem name="CARAMEL MOCHA LATTE" price={3.49} />
-            </ul>
-          </div>
-        </div>
+        </div>        
         <div>
           {showOutput && (
             <div

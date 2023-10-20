@@ -1119,7 +1119,8 @@ interface ElevenLabsOutboundMessage {
 }
 
 /**
- * Text-to-speech implementation that uses Eleven Labs' text-to-speech service.
+ * Text-to-speech implementation that uses Eleven Labs' text-to-speech service,
+ * as described at https://docs.elevenlabs.io/api-reference/text-to-speech-websockets
  */
 export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
   private readonly contentType: string;
