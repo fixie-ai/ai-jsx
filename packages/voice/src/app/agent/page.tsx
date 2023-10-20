@@ -575,10 +575,10 @@ const PageComponent: React.FC = () => {
           setHelpText('Listening...');
           break;
         case ChatManagerState.THINKING:
-          setHelpText(`${tapOrClick} to cancel`);
+          setHelpText(`Thinking... ${tapOrClick.toLowerCase()} to cancel`);
           break;
         case ChatManagerState.SPEAKING:
-          setHelpText(`${tapOrClick} to interrupt`);
+          setHelpText(`Speaking... ${tapOrClick.toLowerCase()} to interrupt`);
           break;
         default:
           setHelpText(idleText);
