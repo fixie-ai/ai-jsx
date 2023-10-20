@@ -567,7 +567,7 @@ const PageComponent: React.FC = () => {
               begin.
             </p>
             <div className="p-4 flex justify-center">
-              <Image width="512" height="512" src={`/agents/${agentId}.jpg`} alt={agentId} />
+              <Image priority={true} width="512" height="512" src={`/agents/${agentId}.webp`} alt={agentId} />
             </div>
           </>
         )}
