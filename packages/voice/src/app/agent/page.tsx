@@ -1,14 +1,7 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import {
-  createSpeechRecognition,
-  normalizeText,
-  SpeechRecognitionBase,
-  MicManager,
-  Transcript,
-} from 'ai-jsx/lib/asr/asr';
-import { createTextToSpeech, BuildUrlOptions, TextToSpeechBase, TextToSpeechProtocol } from 'ai-jsx/lib/tts/tts';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { ChatManager, ChatManagerState } from './chat';
 import Image from 'next/image';
 import '../globals.css';
 
@@ -29,7 +22,6 @@ import '../globals.css';
 // Claude v1: 40 tps (approx 0.4s for 50 chars)
 // Claude Instant v1: 70 tps (approx 0.2s for 50 chars)
 
-const DEFAULT_ASR_FRAME_SIZE = 100;
 const DEFAULT_ASR_PROVIDER = 'deepgram';
 const DEFAULT_TTS_PROVIDER = 'playht';
 const DEFAULT_LLM = 'gpt-4';
@@ -49,438 +41,6 @@ const TTS_PROVIDERS = [
 ];
 const LLM_MODELS = ['claude-2', 'claude-instant-1', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'];
 const AGENT_IDS = ['ai-friend', 'dr-donut', 'rubber-duck', 'spanish-tutor'];
-
-/**
- * Retrieves an ephemeral token from the server for use in an ASR service.
- */
-async function getAsrToken(provider: string) {
-  const response = await fetch('/asr/api', {
-    method: 'POST',
-    body: JSON.stringify({ provider }),
-  });
-  const json = await response.json();
-  return json.token;
-}
-
-/**
- * Retrieves an ephemeral token from the server for use in an ASR service.
- */
-async function getTtsToken(provider: string) {
-  const response = await fetch('/tts/api/token/edge', {
-    method: 'POST',
-    body: JSON.stringify({ provider }),
-  });
-  const json = await response.json();
-  return json.token;
-}
-
-/**
- * Builds a URL for use in a TTS service.
- */
-function buildTtsUrl(options: BuildUrlOptions) {
-  const runtime = options.provider.endsWith('-grpc') ? 'nodejs' : 'edge';
-  const params = new URLSearchParams();
-  Object.entries(options).forEach(([k, v]) => v != undefined && params.set(k, v.toString()));
-  return `/tts/api/generate/${runtime}?${params}`;
-}
-
-/**
- * A single message in the chat history.
- */
-class ChatMessage {
-  constructor(public readonly role: string, public readonly content: string, public readonly conversationId?: string) {}
-}
-
-/**
- * Transforms a text stream of JSON lines into a stream of JSON objects.
- */
-function jsonLinesTransformer() {
-  let buffer = '';
-  return new TransformStream<string, any>({
-    async transform(chunk, controller) {
-      buffer += chunk;
-      const lines = buffer.split('\n');
-      buffer = lines.pop()!;
-      for (const line of lines) {
-        if (line.trim()) {
-          controller.enqueue(JSON.parse(line));
-        }
-      }
-    },
-  });
-}
-
-/**
- * A single request to the LLM, which may be speculative.
- */
-class ChatRequest {
-  public outMessage = '';
-  public conversationId?: string;
-  public done = false;
-  public onUpdate?: (request: ChatRequest, newText: string) => void;
-  public onComplete?: (request: ChatRequest) => void;
-  private startMillis?: number;
-  public requestLatency?: number;
-  public streamLatency?: number;
-  constructor(
-    private readonly inMessages: ChatMessage[],
-    private readonly model: string,
-    private readonly agentId: string,
-    private readonly docs: boolean,
-    public active: boolean
-  ) {
-    this.conversationId = inMessages.find((m) => m.conversationId)?.conversationId;
-  }
-
-  async start() {
-    if (this.agentId.includes('/')) {
-      await this.startWithFixie(this.agentId);
-    } else {
-      await this.startWithLlm(this.agentId);
-    }
-  }
-
-  private async startWithLlm(agentId: string) {
-    console.log(`calling LLM for ${this.inMessages.at(-1)?.content}`);
-    this.startMillis = performance.now();
-
-    const res = await fetch('/agent/api', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ messages: this.inMessages, model: this.model, agentId, docs: this.docs }),
-    });
-    const reader = res.body!.getReader();
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        this.ensureComplete();
-        break;
-      }
-      const newText = new TextDecoder().decode(value);
-      if (newText.trim() && this.requestLatency === undefined) {
-        this.requestLatency = performance.now() - this.startMillis;
-        console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
-      }
-
-      this.outMessage += newText;
-      this.onUpdate?.(this, newText);
-    }
-  }
-
-  private async startWithFixie(agentId: string) {
-    console.log(`calling Fixie for ${this.inMessages.at(-1)?.content}`);
-    this.startMillis = performance.now();
-
-    let isStartConversationRequest;
-    let response;
-    if (this.conversationId) {
-      isStartConversationRequest = false;
-      response = await fetch(
-        `https://api.fixie.ai/api/v1/agents/${agentId}/conversations/${this.conversationId}/messages`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            message: this.inMessages.at(-1)!.content,
-          }),
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-    } else {
-      isStartConversationRequest = true;
-      response = await fetch(`https://api.fixie.ai/api/v1/agents/${agentId}/conversations`, {
-        method: 'POST',
-        body: JSON.stringify({
-          message: this.inMessages.at(-1)!.content,
-        }),
-        headers: { 'Content-Type': 'application/json' },
-      });
-      this.conversationId = response.headers.get('X-Fixie-Conversation-Id')!;
-    }
-
-    const reader = response.body!.pipeThrough(new TextDecoderStream()).pipeThrough(jsonLinesTransformer()).getReader();
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        this.ensureComplete();
-        break;
-      }
-
-      if (!this.done) {
-        const currentTurn = isStartConversationRequest ? value.turns.at(-1) : value;
-        const currentMessage = currentTurn.messages
-          .filter((m: any) => m.kind === 'text')
-          .map((m: any) => m.content)
-          .join('');
-
-        if (currentMessage === this.outMessage) {
-          continue;
-        }
-
-        // Find the longest matching prefix.
-        let i = 0;
-        while (i < currentMessage.length && i < this.outMessage.length && currentMessage[i] === this.outMessage[i]) {
-          i++;
-        }
-        if (i !== this.outMessage.length) {
-          console.error('Result was not an append to the previous result.');
-        }
-        const delta = currentMessage.slice(i);
-
-        if (delta.trim() && this.requestLatency === undefined) {
-          this.requestLatency = performance.now() - this.startMillis;
-          console.log(`Got Fixie response, latency=${this.requestLatency.toFixed(0)}`);
-        }
-
-        this.outMessage = currentMessage;
-        this.onUpdate?.(this, delta);
-
-        if (currentTurn.state === 'done') {
-          this.ensureComplete();
-          break;
-        }
-      }
-    }
-  }
-
-  private ensureComplete() {
-    if (!this.done) {
-      this.done = true;
-      if (this.startMillis !== undefined && this.requestLatency !== undefined) {
-        this.streamLatency = performance.now() - this.startMillis - this.requestLatency;
-      }
-      this.onComplete?.(this);
-    }
-  }
-}
-
-enum ChatManagerState {
-  IDLE = 'idle',
-  LISTENING = 'listening',
-  THINKING = 'thinking',
-  SPEAKING = 'speaking',
-}
-
-interface ChatManagerInit {
-  asrProvider: string;
-  ttsProvider: string;
-  model: string;
-  agentId: string;
-  docs: boolean;
-  asrLanguage?: string;
-  ttsVoice?: string;
-}
-
-/**
- * Manages a single chat with a LLM, including speculative execution.
- */
-class ChatManager {
-  private _state = ChatManagerState.IDLE;
-  private history: ChatMessage[] = [];
-  private pendingRequests = new Map<string, ChatRequest>();
-  private readonly micManager: MicManager;
-  private readonly asr: SpeechRecognitionBase;
-  private readonly tts: TextToSpeechBase;
-  private readonly model: string;
-  private readonly agentId: string;
-  private readonly docs: boolean;
-  onStateChange?: (state: ChatManagerState) => void;
-  onInputChange?: (text: string, final: boolean, latency?: number) => void;
-  onOutputChange?: (text: string, final: boolean, latency: number) => void;
-  onAudioStart?: (latency: number) => void;
-  onAudioEnd?: () => void;
-  onError?: () => void;
-  constructor({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, agentId, docs }: ChatManagerInit) {
-    this.micManager = new MicManager();
-    this.asr = createSpeechRecognition({
-      provider: asrProvider,
-      manager: this.micManager,
-      getToken: getAsrToken,
-      language: asrLanguage,
-    });
-    const ttsSplit = ttsProvider.split('-');
-    this.tts = createTextToSpeech({
-      provider: ttsSplit[0],
-      proto: ttsSplit[1] as TextToSpeechProtocol,
-      getToken: getTtsToken,
-      buildUrl: buildTtsUrl,
-      voice: ttsVoice,
-      rate: 1.2,
-    });
-    this.model = model;
-    this.agentId = agentId;
-    this.docs = docs;
-    this.asr.addEventListener('transcript', (evt: CustomEventInit<Transcript>) => {
-      const obj = evt.detail!;
-      this.handleInputUpdate(obj.text, obj.final);
-      this.onInputChange?.(obj.text, obj.final, obj.observedLatency);
-    });
-    this.tts.onPlaying = () => {
-      this.changeState(ChatManagerState.SPEAKING);
-      this.onAudioStart?.(this.tts.latency!);
-    };
-    this.tts.onComplete = () => {
-      this.onAudioEnd?.();
-      this.micManager.isEnabled = true;
-      this.changeState(ChatManagerState.LISTENING);
-    };
-  }
-
-  get state() {
-    return this._state;
-  }
-  get inputAnalyzer() {
-    return this.micManager.analyzer;
-  }
-  get outputAnalyzer() {
-    return this.tts.analyzer;
-  }
-
-  /**
-   * Starts the chat.
-   */
-  async start(initialMessage?: string) {
-    await this.micManager.startMic(DEFAULT_ASR_FRAME_SIZE, () => {
-      console.log('Mic stream closed unexpectedly');
-      this.onError?.();
-    });
-    this.asr.start();
-    if (initialMessage !== undefined) {
-      this.handleInputUpdate(initialMessage, true);
-    } else {
-      this.changeState(ChatManagerState.LISTENING);
-    }
-  }
-  /**
-   * Stops the chat.
-   */
-  stop() {
-    this.asr.close();
-    this.tts.close();
-    this.micManager.stop();
-    this.history = [];
-    this.pendingRequests.clear();
-    this.changeState(ChatManagerState.IDLE);
-  }
-
-  /**
-   * If the assistant is thinking or speaking, interrupt it and start listening again.
-   * If the assistant is speaking, the generated assistant message will be retained in history.
-   */
-  interrupt() {
-    if (this._state == ChatManagerState.THINKING || this._state == ChatManagerState.SPEAKING) {
-      this.cancelRequests();
-      this.tts.stop();
-      this.micManager.isEnabled = true;
-      this.changeState(ChatManagerState.LISTENING);
-    }
-  }
-
-  private changeState(state: ChatManagerState) {
-    if (state != this._state) {
-      this._state = state;
-      this.onStateChange?.(state);
-    }
-  }
-
-  /**
-   * Handle new input from the ASR.
-   */
-  private handleInputUpdate(text: string, final: boolean) {
-    // Ignore partial transcripts if VAD indicates the user is still speaking.
-    if (!final && this.micManager.isVoiceActive) {
-      return;
-    }
-
-    // If the input text has been finalized, add it to the message history.
-    const userMessage = new ChatMessage('user', text.trim());
-    const newMessages = [...this.history, userMessage];
-    if (final) {
-      this.history = newMessages;
-      this.micManager.isEnabled = false;
-    }
-    this.changeState(ChatManagerState.THINKING);
-
-    // If it doesn't match an existing request, kick off a new one.
-    // If it matches an existing request and the text is finalized, speculative
-    // execution worked! Snap forward to the current state of that request.
-    const normalized = normalizeText(text);
-    const request = this.pendingRequests.get(normalized);
-    const hit = Boolean(request);
-    console.log(`${final ? 'final' : 'partial'}: ${normalized} ${hit ? 'HIT' : 'MISS'}`);
-    const supportsSpeculativeExecution = !this.model.startsWith('fixie/');
-    if (!request && (final || supportsSpeculativeExecution)) {
-      this.dispatchRequest(normalized, newMessages, final);
-    } else if (final) {
-      this.activateRequest(request!);
-    }
-  }
-  /**
-   * Send off a new request to the LLM.
-   */
-  private dispatchRequest(normalized: string, messages: ChatMessage[], final: boolean) {
-    const request = new ChatRequest(messages, this.model, this.agentId, this.docs, final);
-    request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
-    request.onComplete = (request) => this.handleRequestDone(request);
-    this.pendingRequests.set(normalized, request);
-    request.start();
-  }
-  /**
-   * Activate a request that was previously dispatched.
-   */
-  private activateRequest(request: ChatRequest) {
-    request.active = true;
-    this.tts.play(request.outMessage);
-    if (!request.done) {
-      this.onOutputChange?.(request.outMessage, false, request.requestLatency!);
-    } else {
-      this.finishRequest(request);
-    }
-  }
-  /**
-   * Cancel all pending requests.
-   */
-  private cancelRequests() {
-    for (const request of this.pendingRequests.values()) {
-      request.active = false;
-    }
-    this.pendingRequests.clear();
-  }
-  /**
-   * Handle new in-progress responses from the LLM. If the request is not marked
-   * as active, it's a speculative request that we ignore for now.
-   */
-  private handleRequestUpdate(request: ChatRequest, newText: string) {
-    if (request.active) {
-      this.onOutputChange?.(request.outMessage, false, request.requestLatency!);
-      this.tts.play(newText);
-    }
-  }
-  /**
-   * Handle a completed response from the LLM. If the request is not marked as
-   * active, it's a speculative request that we ignore for now.
-   */
-  private handleRequestDone(request: ChatRequest) {
-    // console.log(`request done, active=${request.active}`);
-    if (request.active) {
-      this.finishRequest(request);
-    }
-  }
-  /**
-   * Once a response is finalized, we can flush the TTS buffer and update the
-   * chat history.
-   */
-  private finishRequest(request: ChatRequest) {
-    this.tts.flush();
-    const assistantMessage = new ChatMessage('assistant', request.outMessage, request.conversationId);
-    this.history.push(assistantMessage);
-    this.pendingRequests.clear();
-    this.onOutputChange?.(request.outMessage, true, request.requestLatency!);
-  }
-}
 
 const Dropdown: React.FC<{ label: string; param: string; value: string; options: string[] }> = ({
   param,
@@ -508,12 +68,72 @@ const Dropdown: React.FC<{ label: string; param: string; value: string; options:
   </>
 );
 
-const MenuItem: React.FC<{ name: string; price: number }> = ({ name, price }) => (
-  <li className="flex justify-between">
-    <span className="text-left">{name}</span>
-    <span className="text-right">${price}</span>
-  </li>
-);
+const Visualizer: React.FC<{ width: number, height: number, state?: ChatManagerState, inputAnalyzer?: AnalyserNode, outputAnalyzer?: AnalyserNode }> = ({ width, height, state, inputAnalyzer, outputAnalyzer }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  if (inputAnalyzer) {
+    inputAnalyzer.maxDecibels = 0;
+    inputAnalyzer.minDecibels = -70;
+    //inputAnalyzer.smoothingTimeConstant = 0.8;
+    inputAnalyzer.fftSize = 64;
+  }
+  if (outputAnalyzer) {
+    outputAnalyzer.fftSize = 64;
+    outputAnalyzer.maxDecibels = 0;
+    outputAnalyzer.minDecibels = -70;
+  }
+  const draw = (canvas: HTMLCanvasElement, state: ChatManagerState, freqData: Uint8Array) => {
+    const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+    const marginWidth = 2;
+    const barWidth = (canvas.width / freqData.length) - marginWidth * 2;
+    const totalWidth = barWidth + marginWidth * 2;
+    const segmentHeight = 8;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    freqData.forEach((barHeight, i) => {
+      const x = barHeight + (25 * (i/freqData.length));
+      const y = 250 * (i/freqData.length);
+      const z = 50;
+      if (state == ChatManagerState.LISTENING) {
+        ctx.fillStyle = `rgb(${x},${y},${z})`;
+      } else if (state == ChatManagerState.THINKING) {
+        ctx.fillStyle = `rgb(${z},${x},${y})`;
+      } else if (state == ChatManagerState.SPEAKING) {
+        ctx.fillStyle = `rgb(${y},${z},${x})`;
+      }
+      for (let j = 0; j < barHeight; j += segmentHeight) {
+        ctx.fillRect(i * totalWidth + marginWidth, canvas.height - j - segmentHeight, barWidth, segmentHeight);
+      }
+    });
+  };
+  const render = useCallback(() => {
+    let freqData: Uint8Array = new Uint8Array(0);
+    switch (state) {
+      case ChatManagerState.LISTENING:
+        if (!inputAnalyzer) return;
+        freqData = new Uint8Array(inputAnalyzer!.frequencyBinCount);
+        inputAnalyzer!.getByteFrequencyData(freqData);
+        freqData = freqData.slice(0, 16);
+        break;
+      case ChatManagerState.THINKING:
+        freqData = new Uint8Array(16);
+        // make the data have random pulses based on performance.now, which decay over time
+        const now = performance.now();
+        for (let i = 0; i < freqData.length; i++) {
+          freqData[i] = Math.max(0, Math.sin((now + i * 100) / 100) * 128 + 128); 
+        }
+        break;
+      case ChatManagerState.SPEAKING:
+        if (!outputAnalyzer) return;
+        freqData = new Uint8Array(outputAnalyzer!.frequencyBinCount);
+        outputAnalyzer!.getByteFrequencyData(freqData);
+        freqData = freqData.slice(0, 16);
+        break;      
+    }
+    draw(canvasRef.current!, state ?? ChatManagerState.IDLE, freqData);
+    requestAnimationFrame(render);
+  }, [state, inputAnalyzer, outputAnalyzer]);
+  useEffect(() => render(), [state]);
+  return (<canvas ref={canvasRef} width={width} height={height} />);
+};
 
 const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
   onClick,
@@ -653,39 +273,32 @@ const PageComponent: React.FC = () => {
           <Dropdown label="TTS" param="tts" value={ttsProvider} options={TTS_PROVIDERS} />
         </div>
       )}
-      <div className="w-full">
-        <div className="flex justify-center">
+      <div className="w-full flex flex-col items-center justify-center text-center">
+        <div>
           <Image src="/voice-logo.png" alt="Fixie Voice" width={322} height={98} priority={true} />
         </div>
-        <div>
-          <div className="flex justify-center p-4">
-            <Image priority={true} width="512" height="512" src={`/agents/${agentId}.webp`} alt={agentId} />
-          </div>
-          <div>
-            <p className="p-4 text-xl text-center">{helpText}</p>
-          </div>
-        </div>
+        <div className="flex justify-center p-4">
+          <Image priority={true} width="512" height="512" src={`/agents/${agentId}.webp`} alt={agentId} />
+        </div>             
         <div>
           {showOutput && (
-            <div
-              className="text-center m-2 w-full text-md py-8 px-2 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center"
-              id="output"
-            >
+            <div className="m-2 w-full text-md py-8 px-2 rounded-lg border-2 bg-fixie-light-dust">
               {output}
             </div>
           )}
         </div>
         <div>
           {showInput && (
-            <div
-              className={`m-2 w-full text-md h-12 rounded-lg border-2 bg-fixie-light-dust flex items-center justify-center ${
-                active() ? 'border-red-400' : ''
-              }`}
-              id="input"
-            >
+            <div className={`m-2 w-full text-md h-12 rounded-lg border-2 bg-fixie-light-dust ${active() ? 'border-red-400' : ''}`}>
               {input}
             </div>
           )}
+        </div>          
+        <div>
+          <p className="p-4 text-xl">{helpText}</p>
+          <div className="p-4">
+            <Visualizer width={512} height={64} state={chatManager?.state} inputAnalyzer={chatManager?.inputAnalyzer} outputAnalyzer={chatManager?.outputAnalyzer} />
+          </div>
         </div>
         <div className="w-full flex justify-center mt-3">
           {active() && (
