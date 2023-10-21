@@ -523,7 +523,9 @@ const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React
   <button
     onClick={onClick}
     disabled={disabled}
-    className={`${disabled ? 'bg-gray-300' : 'bg-fixie-charcoal hover:bg-fixie-dark-gray'} rounded-md px-4 py-2 text-md font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon`}
+    className={`${
+      disabled ? 'bg-gray-300' : 'bg-fixie-charcoal hover:bg-fixie-dark-gray'
+    } rounded-md px-4 py-2 text-md font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon`}
   >
     {children}
   </button>
@@ -655,14 +657,14 @@ const PageComponent: React.FC = () => {
         <div className="flex justify-center">
           <Image src="/voice-logo.png" alt="Fixie Voice" width={322} height={98} priority={true} />
         </div>
-        <div>          
+        <div>
           <div className="flex justify-center p-4">
             <Image priority={true} width="512" height="512" src={`/agents/${agentId}.webp`} alt={agentId} />
           </div>
           <div>
             <p className="p-4 text-xl text-center">{helpText}</p>
           </div>
-        </div>        
+        </div>
         <div>
           {showOutput && (
             <div
@@ -687,7 +689,9 @@ const PageComponent: React.FC = () => {
         </div>
         <div className="w-full flex justify-center mt-3">
           {active() && (
-            <Button disabled={false} onClick={handleStop}>End Chat</Button>
+            <Button disabled={false} onClick={handleStop}>
+              End Chat
+            </Button>
           )}
         </div>
         {showStats && (
