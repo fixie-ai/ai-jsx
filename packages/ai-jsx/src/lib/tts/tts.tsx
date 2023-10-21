@@ -456,6 +456,9 @@ class AudioOutputManager extends EventTarget {
     this.context = new AudioContext();
     console.log(`AudioOutputManager starting, sample rate=${this.context.sampleRate}`);
 
+    // Precompile the WASM for the MP3 decoder to ensure it's ready when needed.
+    new Mp3Decoder();
+
     const workletSrcBlob = new Blob([AUDIO_WORKLET_SRC], {
       type: 'application/javascript',
     });
@@ -608,6 +611,11 @@ export abstract class TextToSpeechBase {
   }
 
   /**
+   * Gets an analyzer node for the current audio stream.
+   */
+  abstract get analyzer(): AnalyserNode | undefined;
+
+  /**
    * Warms up the text-to-speech service to prepare for an upcoming generation.
    */
   abstract warmup(): void;
@@ -646,6 +654,9 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
   constructor(name: string, private readonly urlFunc: BuildUrl, voice: string, rate = 1.0) {
     super(name, voice, rate);
     this.audio.onplaying = () => this.setPlaying();
+  }
+  get analyzer() {
+    return undefined;
   }
   play(text: string) {
     this.playMillis = performance.now();
@@ -686,12 +697,12 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
       this.audio.srcObject = outputManager.createStream();
       this.streamId = this.audio.srcObject.id;
       outputManager.addEventListener('playing', (event: CustomEventInit<string>) => {
-        if (event.detail == this.streamId) {
+        if (event.detail == this.streamId && !this.isPlaying) {
           this.setPlaying();
         }
       });
       outputManager.addEventListener('waiting', (event: CustomEventInit<string>) => {
-        if (event.detail == this.streamId) {
+        if (event.detail == this.streamId && !this.isGenerating()) {
           this.setComplete();
         }
       });
@@ -750,6 +761,7 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
   }
 
   protected abstract generate(_text: string): void;
+  protected abstract isGenerating(): boolean;
   protected abstract doFlush(): void;
   protected abstract stopGeneration(): void;
   protected tearDown() {
@@ -805,6 +817,9 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       }
     }
     this.pendingText = pendingText;
+  }
+  protected isGenerating() {
+    return this.requestQueue.length > 0;
   }
   protected doFlush() {
     const utterance = this.pendingText.trim();
@@ -1002,6 +1017,10 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
     const completeText = this.pendingText.substring(0, index);
     this.sendObject(this.createChunkRequest(completeText));
     this.pendingText = this.pendingText.substring(index + 1);
+  }
+  protected isGenerating() {
+    // TODO(juberti): implement this for Eleven (LMNT doesn't tell us this info)
+    return false;
   }
   protected doFlush() {
     console.log(`[${this.name}] flushing`);
