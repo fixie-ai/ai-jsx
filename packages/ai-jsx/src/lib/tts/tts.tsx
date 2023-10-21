@@ -686,7 +686,7 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
       this.audio.srcObject = outputManager.createStream();
       this.streamId = this.audio.srcObject.id;
       outputManager.addEventListener('playing', (event: CustomEventInit<string>) => {
-        if (event.detail == this.streamId) {
+        if (event.detail == this.streamId && !this.isPlaying) {
           this.setPlaying();
         }
       });
@@ -807,7 +807,7 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     }
     this.pendingText = pendingText;
   }
-  protected isGenerating(): boolean {
+  protected isGenerating() {
     return this.requestQueue.length > 0;
   }
   protected doFlush() {
@@ -1007,7 +1007,8 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
     this.sendObject(this.createChunkRequest(completeText));
     this.pendingText = this.pendingText.substring(index + 1);
   }
-  protected isGenerating(): boolean {
+  protected isGenerating() {
+    // TODO(juberti): implement this for Eleven (LMNT doesn't tell us this info)
     return false;
   }
   protected doFlush() {
