@@ -150,6 +150,20 @@ export class MicManager extends EventTarget {
   get analyzer() {
     return this.analyzerNode;
   }
+  /**
+   * Returns whether the capturer is unmuted.
+   */
+  get isEnabled() {
+    return this.stream?.getAudioTracks()[0].enabled ?? false;
+  }
+  /**
+   * Enables or disables the capturer.
+   */
+  set isEnabled(enabled: boolean) {
+    if (this.stream) {
+      this.stream.getAudioTracks()[0].enabled = enabled;
+    }
+  }
 
   /**
    * Starts the audio graph based on either `this.stream` or `this.streamElement`.

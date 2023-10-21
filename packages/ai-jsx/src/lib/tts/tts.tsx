@@ -456,6 +456,9 @@ class AudioOutputManager extends EventTarget {
     this.context = new AudioContext();
     console.log(`AudioOutputManager starting, sample rate=${this.context.sampleRate}`);
 
+    // Precompile the WASM for the MP3 decoder to ensure it's ready when needed.
+    new Mp3Decoder();
+
     const workletSrcBlob = new Blob([AUDIO_WORKLET_SRC], {
       type: 'application/javascript',
     });
@@ -608,6 +611,11 @@ export abstract class TextToSpeechBase {
   }
 
   /**
+   * Gets an analyzer node for the current audio stream.
+   */
+  abstract get analyzer(): AnalyserNode | undefined;
+
+  /**
    * Warms up the text-to-speech service to prepare for an upcoming generation.
    */
   abstract warmup(): void;
@@ -646,6 +654,9 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
   constructor(name: string, private readonly urlFunc: BuildUrl, voice: string, rate = 1.0) {
     super(name, voice, rate);
     this.audio.onplaying = () => this.setPlaying();
+  }
+  get analyzer() {
+    return undefined;
   }
   play(text: string) {
     this.playMillis = performance.now();
