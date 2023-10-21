@@ -691,7 +691,7 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
         }
       });
       outputManager.addEventListener('waiting', (event: CustomEventInit<string>) => {
-        if (event.detail == this.streamId) {
+        if (event.detail == this.streamId && !this.isGenerating()) {
           this.setComplete();
         }
       });
@@ -750,6 +750,7 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
   }
 
   protected abstract generate(_text: string): void;
+  protected abstract isGenerating(): boolean;
   protected abstract doFlush(): void;
   protected abstract stopGeneration(): void;
   protected tearDown() {
@@ -805,6 +806,9 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       }
     }
     this.pendingText = pendingText;
+  }
+  protected isGenerating(): boolean {
+    return this.requestQueue.length > 0;
   }
   protected doFlush() {
     const utterance = this.pendingText.trim();
@@ -1002,6 +1006,9 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
     const completeText = this.pendingText.substring(0, index);
     this.sendObject(this.createChunkRequest(completeText));
     this.pendingText = this.pendingText.substring(index + 1);
+  }
+  protected isGenerating(): boolean {
+    return false;
   }
   protected doFlush() {
     console.log(`[${this.name}] flushing`);
