@@ -456,6 +456,9 @@ class AudioOutputManager extends EventTarget {
     this.context = new AudioContext();
     console.log(`AudioOutputManager starting, sample rate=${this.context.sampleRate}`);
 
+    // Precompile the WASM for the MP3 decoder to ensure it's ready when needed.
+    new Mp3Decoder();
+
     const workletSrcBlob = new Blob([AUDIO_WORKLET_SRC], {
       type: 'application/javascript',
     });
