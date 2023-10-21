@@ -79,7 +79,6 @@ const Visualizer: React.FC<{
   if (inputAnalyzer) {
     inputAnalyzer.maxDecibels = 0;
     inputAnalyzer.minDecibels = -70;
-    //inputAnalyzer.smoothingTimeConstant = 0.8;
     inputAnalyzer.fftSize = 64;
   }
   if (outputAnalyzer) {
@@ -300,17 +299,15 @@ const PageComponent: React.FC = () => {
             </div>
           )}
         </div>
-        <div>
-          <p className="p-4 text-xl">{helpText}</p>
-          <div className="p-4">
-            <Visualizer
-              width={512}
-              height={64}
-              state={chatManager?.state}
-              inputAnalyzer={chatManager?.inputAnalyzer}
-              outputAnalyzer={chatManager?.outputAnalyzer}
-            />
-          </div>
+        <p className="py-4 text-xl">{helpText}</p>
+        <div className="w-full max-w-lg py-4">
+          <Visualizer
+            width={490}
+            height={64}
+            state={chatManager?.state}
+            inputAnalyzer={chatManager?.inputAnalyzer}
+            outputAnalyzer={chatManager?.outputAnalyzer}
+          />
         </div>
         <div className="w-full flex justify-center mt-3">
           {active() && (
