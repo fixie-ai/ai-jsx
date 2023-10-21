@@ -86,9 +86,9 @@ const Visualizer: React.FC<{ width: number, height: number, state?: ChatManagerS
     const marginWidth = 2;
     const barWidth = (canvas.width / freqData.length) - marginWidth * 2;
     const totalWidth = barWidth + marginWidth * 2;
-    const segmentHeight = 8;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    freqData.forEach((barHeight, i) => {
+    freqData.forEach((freqVal, i) => {
+      const barHeight = freqVal * canvas.height / 128;
       const x = barHeight + (25 * (i/freqData.length));
       const y = 250 * (i/freqData.length);
       const z = 50;
@@ -99,9 +99,7 @@ const Visualizer: React.FC<{ width: number, height: number, state?: ChatManagerS
       } else if (state == ChatManagerState.SPEAKING) {
         ctx.fillStyle = `rgb(${y},${z},${x})`;
       }
-      for (let j = 0; j < barHeight; j += segmentHeight) {
-        ctx.fillRect(i * totalWidth + marginWidth, canvas.height - j - segmentHeight, barWidth, segmentHeight);
-      }
+      ctx.fillRect(i * totalWidth + marginWidth, canvas.height - barHeight, barWidth, barHeight);      
     });
   };
   const render = useCallback(() => {
@@ -118,7 +116,7 @@ const Visualizer: React.FC<{ width: number, height: number, state?: ChatManagerS
         // make the data have random pulses based on performance.now, which decay over time
         const now = performance.now();
         for (let i = 0; i < freqData.length; i++) {
-          freqData[i] = Math.max(0, Math.sin((now + i * 100) / 100) * 128 + 128); 
+          freqData[i] = Math.max(0, Math.sin((now + i * 100) / 100) * 128 + 128) / 2; 
         }
         break;
       case ChatManagerState.SPEAKING:
