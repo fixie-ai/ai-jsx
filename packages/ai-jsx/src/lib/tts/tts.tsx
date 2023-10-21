@@ -655,7 +655,9 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
     super(name, voice, rate);
     this.audio.onplaying = () => this.setPlaying();
   }
-  get analyzer() { return undefined; }
+  get analyzer() {
+    return undefined;
+  }
   play(text: string) {
     this.playMillis = performance.now();
     this.audio.src = this.urlFunc({ provider: this.name, text, voice: this.voice, rate: this.rate });
