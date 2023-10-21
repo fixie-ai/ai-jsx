@@ -68,7 +68,13 @@ const Dropdown: React.FC<{ label: string; param: string; value: string; options:
   </>
 );
 
-const Visualizer: React.FC<{ width: number, height: number, state?: ChatManagerState, inputAnalyzer?: AnalyserNode, outputAnalyzer?: AnalyserNode }> = ({ width, height, state, inputAnalyzer, outputAnalyzer }) => {
+const Visualizer: React.FC<{
+  width: number;
+  height: number;
+  state?: ChatManagerState;
+  inputAnalyzer?: AnalyserNode;
+  outputAnalyzer?: AnalyserNode;
+}> = ({ width, height, state, inputAnalyzer, outputAnalyzer }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   if (inputAnalyzer) {
     inputAnalyzer.maxDecibels = 0;
@@ -82,15 +88,15 @@ const Visualizer: React.FC<{ width: number, height: number, state?: ChatManagerS
     outputAnalyzer.minDecibels = -70;
   }
   const draw = (canvas: HTMLCanvasElement, state: ChatManagerState, freqData: Uint8Array) => {
-    const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
     const marginWidth = 2;
-    const barWidth = (canvas.width / freqData.length) - marginWidth * 2;
+    const barWidth = canvas.width / freqData.length - marginWidth * 2;
     const totalWidth = barWidth + marginWidth * 2;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     freqData.forEach((freqVal, i) => {
-      const barHeight = freqVal * canvas.height / 128;
-      const x = barHeight + (25 * (i/freqData.length));
-      const y = 250 * (i/freqData.length);
+      const barHeight = (freqVal * canvas.height) / 128;
+      const x = barHeight + 25 * (i / freqData.length);
+      const y = 250 * (i / freqData.length);
       const z = 50;
       if (state == ChatManagerState.LISTENING) {
         ctx.fillStyle = `rgb(${x},${y},${z})`;
@@ -99,7 +105,7 @@ const Visualizer: React.FC<{ width: number, height: number, state?: ChatManagerS
       } else if (state == ChatManagerState.SPEAKING) {
         ctx.fillStyle = `rgb(${y},${z},${x})`;
       }
-      ctx.fillRect(i * totalWidth + marginWidth, canvas.height - barHeight, barWidth, barHeight);      
+      ctx.fillRect(i * totalWidth + marginWidth, canvas.height - barHeight, barWidth, barHeight);
     });
   };
   const render = useCallback(() => {
@@ -116,7 +122,7 @@ const Visualizer: React.FC<{ width: number, height: number, state?: ChatManagerS
         // make the data have random pulses based on performance.now, which decay over time
         const now = performance.now();
         for (let i = 0; i < freqData.length; i++) {
-          freqData[i] = Math.max(0, Math.sin((now + i * 100) / 100) * 128 + 128) / 2; 
+          freqData[i] = Math.max(0, Math.sin((now + i * 100) / 100) * 128 + 128) / 2;
         }
         break;
       case ChatManagerState.SPEAKING:
@@ -124,13 +130,13 @@ const Visualizer: React.FC<{ width: number, height: number, state?: ChatManagerS
         freqData = new Uint8Array(outputAnalyzer!.frequencyBinCount);
         outputAnalyzer!.getByteFrequencyData(freqData);
         freqData = freqData.slice(0, 16);
-        break;      
+        break;
     }
     draw(canvasRef.current!, state ?? ChatManagerState.IDLE, freqData);
     requestAnimationFrame(render);
   }, [state, inputAnalyzer, outputAnalyzer]);
   useEffect(() => render(), [state]);
-  return (<canvas ref={canvasRef} width={width} height={height} />);
+  return <canvas ref={canvasRef} width={width} height={height} />;
 };
 
 const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
@@ -277,25 +283,33 @@ const PageComponent: React.FC = () => {
         </div>
         <div className="flex justify-center p-4">
           <Image priority={true} width="512" height="512" src={`/agents/${agentId}.webp`} alt={agentId} />
-        </div>             
+        </div>
         <div>
           {showOutput && (
-            <div className="m-2 w-full text-md py-8 px-2 rounded-lg border-2 bg-fixie-light-dust">
-              {output}
-            </div>
+            <div className="m-2 w-full text-md py-8 px-2 rounded-lg border-2 bg-fixie-light-dust">{output}</div>
           )}
         </div>
         <div>
           {showInput && (
-            <div className={`m-2 w-full text-md h-12 rounded-lg border-2 bg-fixie-light-dust ${active() ? 'border-red-400' : ''}`}>
+            <div
+              className={`m-2 w-full text-md h-12 rounded-lg border-2 bg-fixie-light-dust ${
+                active() ? 'border-red-400' : ''
+              }`}
+            >
               {input}
             </div>
           )}
-        </div>          
+        </div>
         <div>
           <p className="p-4 text-xl">{helpText}</p>
           <div className="p-4">
-            <Visualizer width={512} height={64} state={chatManager?.state} inputAnalyzer={chatManager?.inputAnalyzer} outputAnalyzer={chatManager?.outputAnalyzer} />
+            <Visualizer
+              width={512}
+              height={64}
+              state={chatManager?.state}
+              inputAnalyzer={chatManager?.inputAnalyzer}
+              outputAnalyzer={chatManager?.outputAnalyzer}
+            />
           </div>
         </div>
         <div className="w-full flex justify-center mt-3">
