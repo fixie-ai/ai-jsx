@@ -655,7 +655,7 @@ const PageComponent: React.FC = () => {
       )}
       <div className="w-full">
         <div className="flex justify-center">
-          <Image src="/voice-logo.png" alt="Fixie Voice" width={322} height={98} priority={true} />
+          <Image src="/voice-logo.svg" alt="Fixie Voice" width={322} height={98} priority={true} />
         </div>
         <div>
           <div className="flex justify-center p-4">
