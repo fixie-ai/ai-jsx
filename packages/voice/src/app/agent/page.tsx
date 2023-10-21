@@ -257,6 +257,13 @@ class ChatRequest {
   }
 }
 
+enum ChatManagerState {
+  IDLE = 'idle',
+  LISTENING = 'listening',
+  THINKING = 'thinking',
+  SPEAKING = 'speaking',
+}
+
 interface ChatManagerInit {
   asrProvider: string;
   ttsProvider: string;
@@ -271,14 +278,16 @@ interface ChatManagerInit {
  * Manages a single chat with a LLM, including speculative execution.
  */
 class ChatManager {
+  private _state = ChatManagerState.IDLE;
   private history: ChatMessage[] = [];
-  private pendingRequests: Record<string, ChatRequest> = {};
+  private pendingRequests = new Map<string, ChatRequest>();
   private readonly micManager: MicManager;
   private readonly asr: SpeechRecognitionBase;
   private readonly tts: TextToSpeechBase;
   private readonly model: string;
   private readonly agentId: string;
   private readonly docs: boolean;
+  onStateChange?: (state: ChatManagerState) => void;
   onInputChange?: (text: string, final: boolean, latency?: number) => void;
   onOutputChange?: (text: string, final: boolean, latency: number) => void;
   onAudioStart?: (latency: number) => void;
@@ -304,17 +313,30 @@ class ChatManager {
     this.model = model;
     this.agentId = agentId;
     this.docs = docs;
-    this.asr.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
-      const obj = event.detail!;
+    this.asr.addEventListener('transcript', (evt: CustomEventInit<Transcript>) => {
+      const obj = evt.detail!;
       this.handleInputUpdate(obj.text, obj.final);
       this.onInputChange?.(obj.text, obj.final, obj.observedLatency);
     });
     this.tts.onPlaying = () => {
+      this.changeState(ChatManagerState.SPEAKING);
       this.onAudioStart?.(this.tts.latency!);
     };
     this.tts.onComplete = () => {
       this.onAudioEnd?.();
+      this.micManager.isEnabled = true;
+      this.changeState(ChatManagerState.LISTENING);
     };
+  }
+
+  get state() {
+    return this._state;
+  }
+  get inputAnalyzer() {
+    return this.micManager.analyzer;
+  }
+  get outputAnalyzer() {
+    return this.tts.analyzer;
   }
 
   /**
@@ -328,6 +350,8 @@ class ChatManager {
     this.asr.start();
     if (initialMessage !== undefined) {
       this.handleInputUpdate(initialMessage, true);
+    } else {
+      this.changeState(ChatManagerState.LISTENING);
     }
   }
   /**
@@ -338,7 +362,28 @@ class ChatManager {
     this.tts.close();
     this.micManager.stop();
     this.history = [];
-    this.pendingRequests = {};
+    this.pendingRequests.clear();
+    this.changeState(ChatManagerState.IDLE);
+  }
+
+  /**
+   * If the assistant is thinking or speaking, interrupt it and start listening again.
+   * If the assistant is speaking, the generated assistant message will be retained in history.
+   */
+  interrupt() {
+    if (this._state == ChatManagerState.THINKING || this._state == ChatManagerState.SPEAKING) {
+      this.cancelRequests();
+      this.tts.stop();
+      this.micManager.isEnabled = true;
+      this.changeState(ChatManagerState.LISTENING);
+    }
+  }
+
+  private changeState(state: ChatManagerState) {
+    if (state != this._state) {
+      this._state = state;
+      this.onStateChange?.(state);
+    }
   }
 
   /**
@@ -355,31 +400,54 @@ class ChatManager {
     const newMessages = [...this.history, userMessage];
     if (final) {
       this.history = newMessages;
+      this.micManager.isEnabled = false;
     }
+    this.changeState(ChatManagerState.THINKING);
 
     // If it doesn't match an existing request, kick off a new one.
     // If it matches an existing request and the text is finalized, speculative
     // execution worked! Snap forward to the current state of that request.
     const normalized = normalizeText(text);
-    const hit = normalized in this.pendingRequests;
+    const request = this.pendingRequests.get(normalized);
+    const hit = Boolean(request);
     console.log(`${final ? 'final' : 'partial'}: ${normalized} ${hit ? 'HIT' : 'MISS'}`);
     const supportsSpeculativeExecution = !this.model.startsWith('fixie/');
-    if (!hit && (final || supportsSpeculativeExecution)) {
-      const request = new ChatRequest(newMessages, this.model, this.agentId, this.docs, final);
-      request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
-      request.onComplete = (request) => this.handleRequestDone(request);
-      this.pendingRequests[normalized] = request;
-      request.start();
+    if (!request && (final || supportsSpeculativeExecution)) {
+      this.dispatchRequest(normalized, newMessages, final);
     } else if (final) {
-      const request = this.pendingRequests[normalized];
-      request.active = true;
-      this.tts.play(request.outMessage);
-      if (!request.done) {
-        this.onOutputChange?.(request.outMessage, false, request.requestLatency!);
-      } else {
-        this.finishRequest(request);
-      }
+      this.activateRequest(request!);
     }
+  }
+  /**
+   * Send off a new request to the LLM.
+   */
+  private dispatchRequest(normalized: string, messages: ChatMessage[], final: boolean) {
+    const request = new ChatRequest(messages, this.model, this.agentId, this.docs, final);
+    request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
+    request.onComplete = (request) => this.handleRequestDone(request);
+    this.pendingRequests.set(normalized, request);
+    request.start();
+  }
+  /**
+   * Activate a request that was previously dispatched.
+   */
+  private activateRequest(request: ChatRequest) {
+    request.active = true;
+    this.tts.play(request.outMessage);
+    if (!request.done) {
+      this.onOutputChange?.(request.outMessage, false, request.requestLatency!);
+    } else {
+      this.finishRequest(request);
+    }
+  }
+  /**
+   * Cancel all pending requests.
+   */
+  private cancelRequests() {
+    for (const request of this.pendingRequests.values()) {
+      request.active = false;
+    }
+    this.pendingRequests.clear();
   }
   /**
    * Handle new in-progress responses from the LLM. If the request is not marked
@@ -409,7 +477,7 @@ class ChatManager {
     this.tts.flush();
     const assistantMessage = new ChatMessage('assistant', request.outMessage, request.conversationId);
     this.history.push(assistantMessage);
-    this.pendingRequests = {};
+    this.pendingRequests.clear();
     this.onOutputChange?.(request.outMessage, true, request.requestLatency!);
   }
 }
@@ -455,9 +523,9 @@ const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React
   <button
     onClick={onClick}
     disabled={disabled}
-    className={`ml-2 rounded-md ${
+    className={`${
       disabled ? 'bg-gray-300' : 'bg-fixie-charcoal hover:bg-fixie-dark-gray'
-    } px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon`}
+    } rounded-md px-4 py-2 text-md font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fixie-fresh-salmon`}
   >
     {children}
   </button>
@@ -472,20 +540,23 @@ const Latency: React.FC<{ name: string; latency: number }> = ({ name, latency })
 
 const PageComponent: React.FC = () => {
   const searchParams = useSearchParams();
+  const tapOrClick = typeof window != 'undefined' && 'isTouchDevice' in window ? 'Tap' : 'Click';
+  const idleText = `${tapOrClick} anywhere to start!`;
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
   const asrLanguage = searchParams.get('asrLanguage') || undefined;
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
   const ttsVoice = searchParams.get('ttsVoice') || undefined;
   const model = searchParams.get('llm') || DEFAULT_LLM;
   const agentId = searchParams.get('agent') || 'dr-donut';
-  const docs = Boolean(searchParams.get('docs'));
-  const showChooser = Boolean(searchParams.get('chooser'));
-  const showInput = Boolean(!searchParams.get('noInput'));
-  const showOutput = Boolean(!searchParams.get('noOutput'));
-  const showStats = Boolean(searchParams.get('stats'));
+  const docs = searchParams.get('docs') !== null;
+  const showChooser = searchParams.get('chooser') !== null;
+  const showInput = searchParams.get('input') !== null;
+  const showOutput = searchParams.get('output') !== null;
+  const showStats = searchParams.get('stats') !== null;
   const [chatManager, setChatManager] = useState<ChatManager | null>(null);
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
+  const [helpText, setHelpText] = useState(idleText);
   const [asrLatency, setAsrLatency] = useState(0);
   const [llmLatency, setLlmLatency] = useState(0);
   const [ttsLatency, setTtsLatency] = useState(0);
@@ -499,6 +570,22 @@ const PageComponent: React.FC = () => {
     setTtsLatency(0);
     setChatManager(manager);
     manager.start('');
+    manager.onStateChange = (state) => {
+      console.log(`state=${state}`);
+      switch (state) {
+        case ChatManagerState.LISTENING:
+          setHelpText('Listening...');
+          break;
+        case ChatManagerState.THINKING:
+          setHelpText(`Thinking... ${tapOrClick.toLowerCase()} to cancel`);
+          break;
+        case ChatManagerState.SPEAKING:
+          setHelpText(`Speaking... ${tapOrClick.toLowerCase()} to interrupt`);
+          break;
+        default:
+          setHelpText(idleText);
+      }
+    };
     manager.onInputChange = (text, final, latency) => {
       setInput(text);
       if (latency) {
@@ -529,24 +616,33 @@ const PageComponent: React.FC = () => {
     chatManager!.stop();
     setChatManager(null);
   };
-  const toggle = () => (chatManager ? handleStop() : handleStart());
-  // Handle spacebar to start/stop.
+  const speak = () => (chatManager ? chatManager.interrupt() : handleStart());
+  // Click/tap starts or interrupts.
+  const onClick = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    if (!target.matches('button')) {
+      speak();
+    }
+  };
+  // Spacebar starts or interrupts. Esc quits.
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.keyCode == 32) {
-      toggle();
+      speak();
+      event.preventDefault();
+    } else if (event.keyCode == 27) {
+      handleStop();
       event.preventDefault();
     }
   };
-  // Install a keydown handler, and clean it up on unmount.
+  // Install our handlers, and clean them up on unmount.
   useEffect(() => {
-    // eslint-disable-next-line no-undef
+    document.addEventListener('click', onClick);
     document.addEventListener('keydown', onKeyDown);
     return () => {
-      // eslint-disable-next-line no-undef
       document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('click', onClick);
     };
   }, [onKeyDown]);
-  const showImage = true;
   return (
     <>
       {showChooser && (
@@ -558,20 +654,17 @@ const PageComponent: React.FC = () => {
         </div>
       )}
       <div className="w-full">
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center">
           <Image src="/voice-logo.png" alt="Fixie Voice" width={322} height={98} priority={true} />
         </div>
-        {showImage && (
-          <>
-            <p className="font-sm ml-2 mb-6 text-center">
-              This demo allows you to chat (via voice) with an AI agent. Click Start Chatting (or tap the spacebar) to
-              begin.
-            </p>
-            <div className="p-4 flex justify-center">
-              <Image priority={true} width="512" height="512" src={`/agents/${agentId}.webp`} alt={agentId} />
-            </div>
-          </>
-        )}
+        <div>
+          <div className="flex justify-center p-4">
+            <Image priority={true} width="512" height="512" src={`/agents/${agentId}.webp`} alt={agentId} />
+          </div>
+          <div>
+            <p className="p-4 text-xl text-center">{helpText}</p>
+          </div>
+        </div>
         <div>
           {showOutput && (
             <div
@@ -594,10 +687,12 @@ const PageComponent: React.FC = () => {
             </div>
           )}
         </div>
-        <div className="m-3 w-full flex justify-center mt-8">
-          <Button disabled={false} onClick={toggle}>
-            {active() ? 'Stop Chatting' : 'Start Chatting'}
-          </Button>
+        <div className="w-full flex justify-center mt-3">
+          {active() && (
+            <Button disabled={false} onClick={handleStop}>
+              End Chat
+            </Button>
+          )}
         </div>
         {showStats && (
           <div className="flex justify-center">
