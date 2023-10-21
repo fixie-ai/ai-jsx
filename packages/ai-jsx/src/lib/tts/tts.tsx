@@ -153,7 +153,7 @@ abstract class AudioDecoder {
  * A streaming MP3 decoder, using mpg123-decoder.
  * See https://www.mp3-tech.org/programmer/frame_header.html
  */
-class Mp3Decoder extends AudioDecoder {
+export class Mp3Decoder extends AudioDecoder {
   private readonly decoder: MPEGDecoder;
   private readonly decoderReadyPromise: Promise<void>;
   constructor() {
@@ -182,7 +182,7 @@ class Mp3Decoder extends AudioDecoder {
  * A streaming WAV decoder.
  * See http://midi.teragonaudio.com/tech/wave.htm
  */
-class WavDecoder extends AudioDecoder {
+export class WavDecoder extends AudioDecoder {
   private static readonly RIFF_TAG = 'RIFF';
   private static readonly FMT_TAG = 'fmt ';
   private static readonly DATA_TAG = 'data';
@@ -202,6 +202,7 @@ class WavDecoder extends AudioDecoder {
     this.processBuffer();
   }
   flush() {
+    this.buffer = new Uint8Array(0);
     this.gotRiff = false;
     this.sampleRate = undefined;
     this.numChannels = undefined;
@@ -446,7 +447,7 @@ class AudioStream {
  * playout avoids some of the problems associated with using WebAudio
  * directly, e.g., audio not playing on iOS when the phone is on silent.
  */
-class AudioOutputManager extends EventTarget {
+export class AudioOutputManager extends EventTarget {
   private context?: AudioContext;
   private readonly streams: Map<string, AudioStream> = new Map<string, AudioStream>();
   async start() {
