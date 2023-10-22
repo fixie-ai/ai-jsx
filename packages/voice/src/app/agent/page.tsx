@@ -89,7 +89,7 @@ const Visualizer: React.FC<{
     // We use a larger FFT size for the output analyzer because it's typically fullband,
     // versus the wideband input analyzer, resulting in a similar bin size for each.
     // Then, when we grab the lowest 16 bins from each, we get a similar spectrum.
-    outputAnalyzer.fftSize = 256; 
+    outputAnalyzer.fftSize = 256;
     outputAnalyzer.maxDecibels = 0;
     outputAnalyzer.minDecibels = -70;
   }
@@ -144,7 +144,7 @@ const Visualizer: React.FC<{
   useEffect(() => render(), [state]);
   let className = '';
   if (!width) className += ' w-full';
-  if (!height) className += ' h-full';  
+  if (!height) className += ' h-full';
   return <canvas className={className} ref={canvasRef} width={width} height={height} />;
 };
 
@@ -311,7 +311,7 @@ const PageComponent: React.FC = () => {
         </div>
         <p className="py-4 text-xl">{helpText}</p>
         <div className="w-full max-w-lg p-4">
-          <Visualizer            
+          <Visualizer
             height={64}
             state={chatManager?.state}
             inputAnalyzer={chatManager?.inputAnalyzer}
