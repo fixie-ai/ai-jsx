@@ -552,17 +552,20 @@ export type GetToken = (provider: string) => Promise<string>;
  * infrastructure for playing audio using the HTML5 audio element.
  */
 export abstract class TextToSpeechBase {
-  protected audio: HTMLAudioElement;
-  protected playing = false;
+  constructor(protected readonly name: string, public voice: string, public rate: number, public model?: string) {}
 
   /**
-   * The time (performance.now()) when the play() method was first called.
+   * The latency between when the play() method is called and when the first TTS request is made.
    */
-  protected playMillis: number = 0;
+  public bufferLatency: number = 0.0;
   /**
    * The latency between when the play() method is called and when the audio starts playing.
    */
   public latency: number = 0.0;
+  /**
+   * Called when the first TTS request is made.
+   */
+  public onGenerating?: () => void;
   /**
    * Called when the generated audio has started playing.
    */
@@ -576,40 +579,10 @@ export abstract class TextToSpeechBase {
    */
   public onError?: (error: Error) => void;
 
-  // TODO(juberti): prevent these params from being mutated while the TTS is active.
-  constructor(protected readonly name: string, public voice: string, public rate: number, public model?: string) {
-    this.audio = new Audio();
-    this.audio.onplay = () => console.log(`[${this.name}] tts playing`);
-    this.audio.onpause = () => console.log(`[${this.name}] tts paused`);
-    this.audio.onloadstart = () => console.log(`[${this.name}] tts loadstart`);
-    this.audio.onloadeddata = () => console.log(`[${this.name}] tts loadeddata`);
-    this.audio.oncanplay = () => console.log(`[${this.name}] tts canplay`);
-  }
-  protected setPlaying() {
-    console.log(`[${this.name}] tts playing`);
-    if (this.playMillis) {
-      this.latency = Math.floor(performance.now() - this.playMillis);
-      console.log(`[${this.name}] tts play latency: ${this.latency} ms`);
-    }
-    this.playing = true;
-    this.onPlaying?.();
-  }
-  protected setComplete(error?: Error) {
-    console.log(`[${this.name}] tts complete`);
-    this.playing = false;
-    if (error) {
-      this.onError?.(error);
-    } else {
-      this.onComplete?.();
-    }
-  }
-
   /**
    * Whether audio is currently playing.
    */
-  get isPlaying(): boolean {
-    return this.playing;
-  }
+  abstract get isPlaying(): boolean;
 
   /**
    * Gets an analyzer node for the current audio stream.
@@ -646,37 +619,6 @@ export abstract class TextToSpeechBase {
 }
 
 /**
- * A text-to-speech service that requests audio from a server and
- * plays it in one shot using the HTML5 audio element. The URL to request
- * audio from the server is constructed using the provided BuildUrl function,
- * allowing this class to be used with a variety of text-to-speech services.
- */
-export class SimpleTextToSpeech extends TextToSpeechBase {
-  constructor(name: string, private readonly urlFunc: BuildUrl, voice: string, rate = 1.0) {
-    super(name, voice, rate);
-    this.audio.onplaying = () => this.setPlaying();
-  }
-  get analyzer() {
-    return undefined;
-  }
-  play(text: string) {
-    this.playMillis = performance.now();
-    this.audio.src = this.urlFunc({ provider: this.name, text, voice: this.voice, rate: this.rate });
-    this.audio.play();
-  }
-  flush() {}
-  warmup() {}
-  stop() {
-    console.log(`[${this.name}] tts stopping`);
-    this.audio.src = '';
-  }
-  close() {
-    console.log(`[${this.name}] tts closing`);
-    this.audio.pause();
-  }
-}
-
-/**
  * Defines a text-to-speech service that requests individual audio utterances
  * from a server and plays them out using Web Audio and <audio> elements.
  * This approach reduces latency by allowing the audio to be streamed as it is
@@ -686,12 +628,27 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
  * RestTextToSpeech and WebSocketTextToSpeech.
  */
 export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
-  private streamId: string = '';
+  private readonly audio: HTMLAudioElement;
   private inProgress = false;
-  constructor(name: string, voice: string, rate: number = 1.0, model?: string) {
+  private playing = false;
+  protected playMillis = 0;
+  private streamId: string = '';
+  // TODO(juberti): prevent these params from being mutated while the TTS is active.
+  constructor(name: string, voice: string, rate: number, model?: string) {
     super(name, voice, rate, model);
+    this.audio = new Audio();
+    this.audio.onplay = () => console.log(`[${this.name}] tts playing`);
+    this.audio.onpause = () => console.debug(`[${this.name}] tts paused`);
+    this.audio.onloadstart = () => console.debug(`[${this.name}] tts loadstart`);
+    this.audio.onloadeddata = () => console.debug(`[${this.name}] tts loadeddata`);
+    this.audio.oncanplay = () => console.debug(`[${this.name}] tts canplay`);
     this.audio.onwaiting = () => console.log(`[${this.name}] tts waiting`);
   }
+
+  get isPlaying() {
+    return this.playing;
+  }
+
   play(text: string) {
     if (this.audio.readyState == 0) {
       console.log(`[${this.name}] tts starting play`);
@@ -711,6 +668,7 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
     }
     if (!this.inProgress) {
       this.playMillis = performance.now();
+      this.bufferLatency = this.latency = 0;
       this.inProgress = true;
     }
     this.generate(text);
@@ -741,6 +699,33 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
 
   get analyzer() {
     return outputManager.getAnalyzer(this.streamId);
+  }
+
+  protected setGenerating(_text: string) {
+    console.log(`[${this.name}] tts generating`);
+    this.onGenerating?.();
+  }
+  protected setPlaying() {
+    console.log(`[${this.name}] tts playing`);
+    if (this.playMillis) {
+      this.latency = Math.floor(performance.now() - this.playMillis);
+      console.log(
+        `[${this.name}] tts latency: buffer=${this.bufferLatency} ms request=${
+          this.latency - this.bufferLatency
+        } total=${this.latency} ms`
+      );
+    }
+    this.playing = true;
+    this.onPlaying?.();
+  }
+  protected setComplete(error?: Error) {
+    console.log(`[${this.name}] tts complete`);
+    this.playing = false;
+    if (error) {
+      this.onError?.(error);
+    } else {
+      this.onComplete?.();
+    }
   }
 
   /**
@@ -859,6 +844,10 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     }
 
     req.sendTimestamp = performance.now();
+    if (!this.bufferLatency) {
+      this.bufferLatency = Math.floor(req.sendTimestamp - this.playMillis);
+      this.setGenerating(req.text);
+    }
     console.log(`[${this.name}] requesting chunk: ${req.shortText}`);
     const res = await this.fetch(req.text);
     if (!res.ok) {
@@ -998,7 +987,7 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
   private readonly socketBuffer: string[] = [];
   private pendingText: string = '';
   constructor(name: string, private readonly url: string, public voice: string) {
-    super(name, voice);
+    super(name, voice, 1.0);
     this.warmup();
   }
   warmup() {

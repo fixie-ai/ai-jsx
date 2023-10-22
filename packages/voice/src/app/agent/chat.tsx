@@ -249,6 +249,7 @@ export class ChatManager {
   onStateChange?: (state: ChatManagerState) => void;
   onInputChange?: (text: string, final: boolean, latency?: number) => void;
   onOutputChange?: (text: string, final: boolean, latency: number) => void;
+  onAudioGenerate?: (latency: number) => void;
   onAudioStart?: (latency: number) => void;
   onAudioEnd?: () => void;
   onError?: () => void;
@@ -272,20 +273,6 @@ export class ChatManager {
     this.model = model;
     this.agentId = agentId;
     this.docs = docs;
-    this.asr.addEventListener('transcript', (evt: CustomEventInit<Transcript>) => {
-      const obj = evt.detail!;
-      this.handleInputUpdate(obj.text, obj.final);
-      this.onInputChange?.(obj.text, obj.final, obj.observedLatency);
-    });
-    this.tts.onPlaying = () => {
-      this.changeState(ChatManagerState.SPEAKING);
-      this.onAudioStart?.(this.tts.latency!);
-    };
-    this.tts.onComplete = () => {
-      this.onAudioEnd?.();
-      this.micManager.isEnabled = true;
-      this.changeState(ChatManagerState.LISTENING);
-    };
   }
 
   get state() {
@@ -312,11 +299,20 @@ export class ChatManager {
     } else {
       this.changeState(ChatManagerState.LISTENING);
     }
+    this.asr.addEventListener('transcript', this.handleTranscript);
+    this.tts.onGenerating = () => this.handleGenerationStart();
+    this.tts.onPlaying = () => this.handlePlaybackStart();
+    this.tts.onComplete = () => this.handlePlaybackComplete();
   }
   /**
    * Stops the chat.
    */
   stop() {
+    // Remove installed callbacks to avoid any late updates.
+    this.asr.removeEventListener('transcript', this.handleTranscript);
+    this.tts.onComplete = undefined;
+    this.tts.onPlaying = undefined;
+    this.tts.onGenerating = undefined;
     this.asr.close();
     this.tts.close();
     this.micManager.stop();
@@ -348,6 +344,12 @@ export class ChatManager {
   /**
    * Handle new input from the ASR.
    */
+  private handleTranscript(evt: Event) {
+    const obj = (evt as CustomEventInit<Transcript>).detail!;
+    this.handleInputUpdate(obj.text, obj.final);
+    this.onInputChange?.(obj.text, obj.final, obj.observedLatency);
+  }
+
   private handleInputUpdate(text: string, final: boolean) {
     // Ignore partial transcripts if VAD indicates the user is still speaking.
     if (!final && this.micManager.isVoiceActive) {
@@ -438,5 +440,26 @@ export class ChatManager {
     this.history.push(assistantMessage);
     this.pendingRequests.clear();
     this.onOutputChange?.(request.outMessage, true, request.requestLatency!);
+  }
+  /**
+   * Handle the start of generation from the TTS.
+   */
+  private handleGenerationStart() {
+    this.onAudioGenerate?.(this.tts.bufferLatency!);
+  }
+  /**
+   * Handle the start of playout from the TTS.
+   */
+  private handlePlaybackStart() {
+    this.changeState(ChatManagerState.SPEAKING);
+    this.onAudioStart?.(this.tts.latency! - this.tts.bufferLatency!);
+  }
+  /**
+   * Handle the end of playout from the TTS.
+   */
+  private handlePlaybackComplete() {
+    this.onAudioEnd?.();
+    this.micManager.isEnabled = true;
+    this.changeState(ChatManagerState.LISTENING);
   }
 }
