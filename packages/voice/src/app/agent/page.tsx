@@ -171,7 +171,7 @@ const Latency: React.FC<{ name: string; latency: number }> = ({ name, latency })
   </>
 );
 
-const PageComponent: React.FC = () => {
+const AgentPageComponent: React.FC = () => {
   const searchParams = useSearchParams();
   const tapOrClick = typeof window != 'undefined' && 'isTouchDevice' in window ? 'Tap' : 'Click';
   const idleText = `${tapOrClick} anywhere to start!`;
@@ -288,7 +288,7 @@ const PageComponent: React.FC = () => {
       )}
       <div className="w-full flex flex-col items-center justify-center text-center">
         <div>
-          <Image src="/voice-logo.png" alt="Fixie Voice" width={322} height={98} priority={true} />
+          <Image src="/voice-logo.svg" alt="Fixie Voice" width={322} height={98} priority={true} />
         </div>
         <div className="flex justify-center p-4">
           <Image priority={true} width="512" height="512" src={`/agents/${agentId}.webp`} alt={agentId} />
@@ -340,4 +340,4 @@ const PageComponent: React.FC = () => {
   );
 };
 
-export default PageComponent;
+export default AgentPageComponent;
