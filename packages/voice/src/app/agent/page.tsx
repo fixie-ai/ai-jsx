@@ -69,20 +69,27 @@ const Dropdown: React.FC<{ label: string; param: string; value: string; options:
 );
 
 const Visualizer: React.FC<{
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
   state?: ChatManagerState;
   inputAnalyzer?: AnalyserNode;
   outputAnalyzer?: AnalyserNode;
 }> = ({ width, height, state, inputAnalyzer, outputAnalyzer }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  if (canvasRef.current) {
+    canvasRef.current.width = canvasRef.current.offsetWidth;
+    canvasRef.current.height = canvasRef.current.offsetHeight;
+  }
   if (inputAnalyzer) {
+    inputAnalyzer.fftSize = 64;
     inputAnalyzer.maxDecibels = 0;
     inputAnalyzer.minDecibels = -70;
-    inputAnalyzer.fftSize = 64;
   }
   if (outputAnalyzer) {
-    outputAnalyzer.fftSize = 64;
+    // We use a larger FFT size for the output analyzer because it's typically fullband,
+    // versus the wideband input analyzer, resulting in a similar bin size for each.
+    // Then, when we grab the lowest 16 bins from each, we get a similar spectrum.
+    outputAnalyzer.fftSize = 256; 
     outputAnalyzer.maxDecibels = 0;
     outputAnalyzer.minDecibels = -70;
   }
@@ -135,7 +142,10 @@ const Visualizer: React.FC<{
     requestAnimationFrame(render);
   }, [state, inputAnalyzer, outputAnalyzer]);
   useEffect(() => render(), [state]);
-  return <canvas ref={canvasRef} width={width} height={height} />;
+  let className = '';
+  if (!width) className += ' w-full';
+  if (!height) className += ' h-full';  
+  return <canvas className={className} ref={canvasRef} width={width} height={height} />;
 };
 
 const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode }> = ({
@@ -183,7 +193,7 @@ const PageComponent: React.FC = () => {
   const [asrLatency, setAsrLatency] = useState(0);
   const [llmLatency, setLlmLatency] = useState(0);
   const [ttsLatency, setTtsLatency] = useState(0);
-  const active = () => Boolean(chatManager);
+  const active = () => Boolean(chatManager) && chatManager!.state != ChatManagerState.IDLE;
   const handleStart = () => {
     const manager = new ChatManager({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, agentId, docs });
     setInput('');
@@ -300,9 +310,8 @@ const PageComponent: React.FC = () => {
           )}
         </div>
         <p className="py-4 text-xl">{helpText}</p>
-        <div className="w-full max-w-lg py-4">
-          <Visualizer
-            width={490}
+        <div className="w-full max-w-lg p-4">
+          <Visualizer            
             height={64}
             state={chatManager?.state}
             inputAnalyzer={chatManager?.inputAnalyzer}
