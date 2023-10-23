@@ -231,11 +231,11 @@ export class MicManager extends EventTarget {
     // Start the VAD.
     this.vad = new LibfVoiceActivityDetector(this.sampleRate);
     this.vad.onVoiceStart = () => {
-      console.log(`Speech begin: ${this.currentMillis.toFixed(0)} ms`);
+      console.debug(`[vad] speech start: ${this.currentMillis.toFixed(0)} ms`);
       this.dispatchEvent(new CustomEvent('vad', { detail: new VoiceActivity(true, this.currentMillis) }));
     };
     this.vad.onVoiceEnd = () => {
-      console.log(`Speech FINAL: ${this.currentMillis.toFixed(0)} ms`);
+      console.debug(`[vad] speech end: ${this.currentMillis.toFixed(0)} ms`);
       this.dispatchEvent(new CustomEvent('vad', { detail: new VoiceActivity(false, this.currentMillis) }));
     };
     this.vad.start();

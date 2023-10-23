@@ -160,7 +160,7 @@ const Visualizer: React.FC<{
         // make the data have random pulses based on performance.now, which decay over time
         const now = performance.now();
         for (let i = 0; i < freqData.length; i++) {
-          freqData[i] = Math.max(0, Math.sin((now + i * 100) / 100) * 128 + 128) / 2;
+          freqData[i] = Math.max(0, Math.sin((now - i * 100) / 100) * 128 + 128) / 2;
         }
         break;
       case ChatManagerState.SPEAKING:
@@ -222,11 +222,10 @@ const AgentPageComponent: React.FC = () => {
   const active = () => chatManager && chatManager!.state != ChatManagerState.IDLE;
   useEffect(() => init(), [asrProvider, asrLanguage, ttsProvider, ttsVoice, model, agentId, docs]);
   const init = () => {
-    console.log(`init asr=${asrProvider} tts=${ttsProvider} llm=${model} agent=${agentId} docs=${docs}`);
+    console.log(`[page] init asr=${asrProvider} tts=${ttsProvider} llm=${model} agent=${agentId} docs=${docs}`);
     const manager = new ChatManager({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, agentId, docs });
     setChatManager(manager);
     manager.onStateChange = (state) => {
-      console.log(`state=${state}`);
       switch (state) {
         case ChatManagerState.LISTENING:
           setHelpText('Listening...');
@@ -258,11 +257,9 @@ const AgentPageComponent: React.FC = () => {
       setLlmResponseLatency((prev) => (prev ? prev : latency));
     };
     manager.onAudioGenerate = (latency) => {
-      console.log('onAudioGenerate');
       setLlmTokenLatency(latency);
     };
     manager.onAudioStart = (latency) => {
-      console.log('onAudioStart');
       setTtsLatency(latency);
     };
     manager.onError = () => {

@@ -709,10 +709,9 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
     console.log(`[${this.name}] tts playing`);
     if (this.playMillis) {
       this.latency = Math.floor(performance.now() - this.playMillis);
+      const requestLatency = this.latency - this.bufferLatency;
       console.log(
-        `[${this.name}] tts latency: buffer=${this.bufferLatency} ms request=${
-          this.latency - this.bufferLatency
-        } total=${this.latency} ms`
+        `[${this.name}] tts latency: buffer=${this.bufferLatency} ms request=${requestLatency} ms total=${this.latency} ms`
       );
     }
     this.playing = true;
