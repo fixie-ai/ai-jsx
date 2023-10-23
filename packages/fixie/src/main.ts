@@ -13,7 +13,7 @@ import { FixieAgent } from './agent.js';
 import { AuthenticateOrLogIn, FIXIE_CONFIG_FILE, loadConfig } from './auth.js';
 import { FixieClientError } from './isomorphic-client.js';
 
-const [major, ..._] = process.version
+const [major] = process.version
   .slice(1)
   .split('.')
   .map((x) => parseInt(x));

@@ -1,5 +1,11 @@
 import type { Jsonifiable } from 'type-fest';
-import { AgentId, ConversationId, MessageRequestParams } from './sidekick-types.js';
+import {
+  AgentId,
+  AssistantConversationTurn,
+  Conversation,
+  ConversationId,
+  MessageRequestParams,
+} from './sidekick-types.js';
 
 export interface UserInfo {
   id: number;
@@ -119,9 +125,42 @@ export class IsomorphicFixieClient {
     return res;
   }
 
-  async requestJson(path: string, bodyData?: unknown, method?: string): Promise<Jsonifiable> {
+  async requestJson<T = Jsonifiable>(path: string, bodyData?: unknown, method?: string): Promise<T> {
     const response = await this.request(path, bodyData, method);
     return response.json();
+  }
+
+  async requestJsonLines<T = Jsonifiable>(
+    path: string,
+    bodyData?: unknown,
+    method?: string
+  ): Promise<ReadableStream<T>> {
+    const response = await this.request(path, bodyData, method);
+    if (response.body === null) {
+      throw new FixieClientError(path, response.status, response.statusText, 'Response body was null');
+    }
+
+    let buffer = '';
+    return response.body.pipeThrough(new TextDecoderStream()).pipeThrough(
+      new TransformStream<string, T>({
+        flush(controller) {
+          if (buffer.trim()) {
+            controller.enqueue(JSON.parse(buffer));
+            buffer = '';
+          }
+        },
+        transform(chunk, controller) {
+          buffer += chunk;
+          const lines = buffer.split('\n');
+          buffer = lines.pop()!;
+          for (const line of lines) {
+            if (line.trim()) {
+              controller.enqueue(JSON.parse(line));
+            }
+          }
+        },
+      })
+    );
   }
 
   /** Return information on the currently logged-in user. */
@@ -272,81 +311,54 @@ export class IsomorphicFixieClient {
   }
 
   /**
-   * @experimental this API may change at any time.
-   *
    * Start a new conversation with an agent, optionally sending the initial message. (If you don't send the initial
    * message, the agent may.)
    *
-   * @returns {Object} An object with the following properties:
-   *    @property {string} conversationId - The conversation ID, which can be used with the other API methods to continue the
-   *                                         conversation.
-   *    @property {Object} response - The fetch response. The response will be a stream of newline-delimited JSON objects,
-   *                                  each of which be of the shape ConversationTurn. Each member of the stream is the latest
-   *                                  value of the turn as the agent streams its response. So, if you're driving a UI with this
-   *                                  response, you always want to render the most recently emitted value from the stream.
-   *
-   *          If the generation is stopped via the stopGeneration() API, the final value emitted from the stream will be
-   *          the same as what's persisted to the conversation history. However, intermediate stream values may include
-   *          extra content that then disappears. For example:
-   *
-   *            Stream entry 0: text: hello wor
-   *            <the stop occurs>
-   *            Stream entry 1: text: hello world I am
-   *            Stream entry 2: text: hello world
+   * @returns {Promise<ReadableStream<Conversation>>} A stream of Conversation objects. Each member of the stream is
+   * the latest value of the conversation as the agent streams its response. So, if you're driving a UI with thisresponse,
+   * you always want to render the most recently emitted value from the stream.
    *
    * @see sendMessage
    * @see stopGeneration
    * @see regenerate
    */
-  async startConversation(agentId: AgentId, message?: string) {
-    const abortController = new AbortController();
-    const signal = abortController.signal;
-
-    const conversation = await this.request(`/api/v1/agents/${agentId}/conversations`, { message }, 'POST', { signal });
-    if (!conversation.body) {
-      throw new Error('Request to start a new conversation was empty');
-    }
-    if (conversation.status === 404) {
-      throw new AgentDoesNotExistError(`Agent ${agentId} does not exist, or is private.`);
-    }
-
-    const headerName = 'X-Fixie-Conversation-Id';
-    const conversationId = conversation.headers.get(headerName);
-    if (!conversationId) {
-      throw new Error(`Fixie bug: Fixie backend did not return the "${headerName}" header.`);
-    }
-    return { conversationId, response: conversation };
+  startConversation(agentId: AgentId, message?: string) {
+    return this.requestJsonLines<Conversation>(
+      `/api/v1/agents/${agentId}/conversations`,
+      message ? { message } : undefined,
+      'POST'
+    );
   }
 
   /**
-   * @experimental this API may change at any time.
+   * Get a conversation by ID.
+   *
+   * @returns {Promise<Conversation>} The conversation.
+   */
+  getConversation(agentId: AgentId, conversationId: ConversationId) {
+    return this.requestJson<Conversation>(`/api/v1/agents/${agentId}/conversations/${conversationId}`);
+  }
+
+  /**
    *
    * Send a message to a conversation. If the conversationId does not refer to a conversation that already exists,
    * this will throw an error.
    *
-   * @returns a fetch response. The response will be a stream of newline-delimited JSON objects, each of which will be
-   *          of shape AssistantConversationTurn. Each member of the stream is the latest value of the turn as the agent
-   *          streams its response. So, if you're driving a UI with this response, you always want to render the
-   *          most recently emitted value from the stream.
-   *
-   *          If the generation is stopped via the stopGeneration() API, the final value emitted from the stream will be
-   *          the same as what's persisted to the conversation history. However, intermediate stream values may include
-   *          extra content that then disappears. For example:
-   *
-   *            Stream entry 0: text: hello wor
-   *            <the stop occurs>
-   *            Stream entry 1: text: hello world I am
-   *            Stream entry 2: text: hello world
+   * @returns {Promise<ReadableStream<AssistantConversationTurn>>} A stream of ConversationTurn objects. Each member of the
+   * stream is the latest value of the turn as the agent streams its response. So, if you're driving a UI with this
+   * response, you always want to render the most recently emitted value from the stream.
    *
    * @see startConversation
    */
   sendMessage(agentId: AgentId, conversationId: ConversationId, message: MessageRequestParams) {
-    return this.request(`/api/v1/agents/${agentId}/conversations/${conversationId}/messages`, message);
+    return this.requestJsonLines<AssistantConversationTurn>(
+      `/api/v1/agents/${agentId}/conversations/${conversationId}/messages`,
+      message,
+      'POST'
+    );
   }
 
   /**
-   * @experimental this API may change at any time.
-   *
    * Stop a message that is currently being generated.
    */
   stopGeneration(agentId: AgentId, conversationId: ConversationId, messageId: string) {
@@ -358,27 +370,17 @@ export class IsomorphicFixieClient {
   }
 
   /**
-   * @experimental this API may change at any time.
-   *
    * Regenerate a message that has already been generated. If `messageId` is not the most recent message in the
    * conversation, this request will fail.
    *
-   * @returns a fetch response. The response will be a stream of newline-delimited JSON objects, each of which will be
-   *          of shape AssistantConversationTurn. Each member of the stream is the latest value of the turn as the agent
-   *          streams its response. So, if you're driving a UI with this response, you always want to render the
-   *          most recently emitted value from the stream.
+   * @returns {Promise<ReadableStream<AssistantConversationTurn>>} A stream of ConversationTurn objects. Each member of the
+   * stream is the latest value of the turn as the agent streams its response. So, if you're driving a UI with this
+   * response, you always want to render the most recently emitted value from the stream.
    *
-   *          If the generation is stopped via the stopGeneration() API, the final value emitted from the stream will be
-   *          the same as what's persisted to the conversation history. However, intermediate stream values may include
-   *          extra content that then disappears. For example:
-   *
-   *            Stream entry 0: text: hello wor
-   *            <the stop occurs>
-   *            Stream entry 1: text: hello world I am
-   *            Stream entry 2: text: hello world
+   * @see stopGeneration
    */
   regenerate(agentId: AgentId, conversationId: ConversationId, messageId: string) {
-    return this.request(
+    return this.requestJsonLines<AssistantConversationTurn>(
       `/api/v1/agents/${agentId}/conversations/${conversationId}/messages/${messageId}/regenerate`,
       undefined,
       'POST'

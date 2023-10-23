@@ -1,74 +1,53 @@
-import { getFirestore, collection, doc, query, orderBy, FirestoreError, onSnapshot } from 'firebase/firestore';
-import { initializeApp } from 'firebase/app';
-
-import { useState, SetStateAction, Dispatch, useEffect } from 'react';
-import _ from 'lodash';
-import { AgentId, AssistantConversationTurn, ConversationTurn, TextMessage, ConversationId } from './sidekick-types.js';
-import { Jsonifiable } from 'type-fest';
+import { useState, SetStateAction, Dispatch, useEffect, useRef } from 'react';
+import { AgentId, AssistantConversationTurn, TextMessage, ConversationId, Conversation } from './sidekick-types.js';
 import { IsomorphicFixieClient } from './isomorphic-client.js';
+import { useVisibilityChange } from '@uidotdev/usehooks';
 
 /**
  * The result of the useFixie hook.
  */
 export interface UseFixieResult {
   /**
-   * The conversation history.
+   * The conversation that is currently being managed.
    */
-  turns: ConversationTurn[];
+  conversation: Conversation | undefined;
 
   /**
-   * A signal indicating how the data is being loaded from Firebase.
+   * A value that indicates whether the initial conversation (if any) has loaded.
    * This is _not_ an indicator of whether the LLM is currently generating a response.
    */
-  loadState: 'loading' | 'loaded' | FirestoreError | 'no-conversation-set';
+  loadState: 'loading' | 'loaded' | 'error';
 
   /**
-   * Whether the model is currently responding to the most recent message.
-   */
-  modelResponseInProgress: boolean;
-
-  /**
-   * Regenerate the most recent model response.
-   */
-  regenerate: () => Promise<void> | Promise<Response>;
-
-  /**
-   * Request a stop of the current model response.
+   * Regenerate the most recent model response. Only has an effect if the most recent response is not in progress.
    *
-   * The model will stop generation after it gets the request, but you may see a few more
-   * tokens stream in before that happens.
+   * Returns true if the most recent response was not in progress, false otherwise.
    */
-  stop: () => Promise<void> | Promise<Response>;
+  regenerate: () => boolean;
 
   /**
-   * Append `message` to the conversation. This does not change `input`.
+   * Request a stop of the current model response. Only has an effect if the most recent response is in progress.
    *
-   * If you omit `message`, the current value of `input` will be used instead.
+   * Returns true if the most recent response was in progress, false otherwise.
+   */
+  stop: () => boolean;
+
+  /**
+   * Append `message` to the conversation. Only sends a message if the model is not currently generating a response.
    *
+   * Returns true if the message was sent, false otherwise.
    */
-  sendMessage: (message?: string) => Promise<void> | Promise<Response>;
+  sendMessage: (message?: string) => boolean;
 
   /**
-   * A managed input value. This is the text the user is currently typing.
+   * Starts a new conversation.
    */
-  input: string;
+  newConversation: () => void;
 
   /**
-   * If reading from Firebase resulted in an error, it'll be stored in this object.
+   * If the loadState is `"error"`, contains additional details about the error.
    */
-  error: FirestoreError | undefined;
-
-  /**
-   * A function to set the input.
-   */
-  setInput: Dispatch<SetStateAction<string>>;
-
-  /**
-   * True if the conversation exists; false if it does not.
-   *
-   * If the Firebase connection hasn't loaded yet, this will be undefined.
-   */
-  conversationExists?: boolean;
+  error: any;
 }
 
 /**
@@ -76,18 +55,19 @@ export interface UseFixieResult {
  */
 export interface UseFixieArgs {
   /**
-   * The ID of the conversation to use.
-   *
-   * If omitted, the hook will return a no-op for most functions.
-   */
-  conversationId?: string;
-
-  /**
-   * The agentID to use.
-   *
-   * @example my-username/my-agent-name
+   * The agent UUID to use.
    */
   agentId: AgentId;
+
+  /**
+   * The ID of the conversation to use.
+   */
+  conversationId?: ConversationId;
+
+  /**
+   * If true, the agent will send the first message in conversations.
+   */
+  agentStartsConversation?: boolean;
 
   /**
    * A function that will be called whenever the model generates new text.
@@ -101,369 +81,445 @@ export interface UseFixieArgs {
   onNewTokens?: (tokens: string) => void;
 
   /**
-   * If passed, this conversation value will be used instead of whatever's in the database.
-   * Use this to show fixture data.
+   * A function that will be called whenever the conversation ID changes.
    */
-  conversationFixtures?: ConversationTurn[];
-
-  logPerformanceTraces?: (message: string, metadata: object) => void;
-
-  fixieAPIUrl?: string;
-  fixieAPIKey?: string;
-  onNewConversation?: (conversationId: ConversationId) => void;
-}
-
-const firebaseConfig = {
-  apiKey: 'AIzaSyDvFy5eMzIiq3UHfDPwYa2ro90p84-j0lg',
-  authDomain: 'fixie-frame.firebaseapp.com',
-  projectId: 'fixie-frame',
-  storageBucket: 'fixie-frame.appspot.com',
-  messagingSenderId: '548385236069',
-  appId: '1:548385236069:web:b99de8c5ebd0a66078928c',
-  measurementId: 'G-EZNCJS94S7',
-};
-
-type ModelRequestedState = 'stop' | 'regenerate' | null;
-
-/**
- * An event that will be fired when the model has emitted new tokens.
- */
-export class NewTokensEvent extends Event {
-  constructor(public readonly tokens: string) {
-    super('newTokens');
-  }
-}
-
-/**
- * An event that will be emitted when there are perf traces to log.
- * If you would like to log them, listen for this event, and use the `data` and `message` properties to log to whatever
- * your monitoring system is.
- */
-export class PerfLogEvent extends Event {
-  // I think using `data` as a var name is fine here.
-  /* eslint-disable-next-line id-blacklist */
-  constructor(public readonly message: string, public readonly data: object) {
-    super('perfLog');
-  }
-}
-
-/**
- * A client that maintains a connection to a particular conversation.
- */
-export class FixieConversationClient extends EventTarget {
-  // I think using `data` as a var name is fine here.
-  /* eslint-disable id-blacklist */
-  private performanceTrace: { name: string; timeMs: number; data?: Jsonifiable }[] = [];
-  private lastGeneratedTurnId: ConversationTurn['id'] | undefined = undefined;
-  private lastTurnForWhichHandleNewTokensWasCalled: ConversationTurn['id'] | undefined = undefined;
-
-  addPerfCheckpoint(name: string, data?: Jsonifiable) {
-    this.performanceTrace.push({ name, timeMs: performance.now(), data });
-  }
-  /* eslint-enable id-blacklist */
+  onNewConversation?: (conversationId?: ConversationId) => void;
 
   /**
-   * We do state management for optimistic UI.
-   *
-   * For stop/regenerate, if we simply request a stop/regenerate, the UI won't update until Fixie Frame updates
-   * Firebase and that update is seen by the client. Instead, we'd rather optimistically update.This requires managing
-   * an intermediate layer of state.
+   * An optional URL to use for the Fixie API instead of the default.
    */
-  private modelResponseRequested: ModelRequestedState = null;
-  private lastAssistantMessagesAtStop: ConversationTurn['messages'] = [];
+  fixieApiUrl?: string;
+}
 
-  private readonly conversationFirebaseDoc: ReturnType<typeof doc>;
-  private loadState: UseFixieResult['loadState'] = 'loading';
-  private turns: UseFixieResult['turns'] = [];
-  private isEmpty?: boolean;
-  public optimisticallyExists = false;
+/**
+ * A hook that fires the `onNewTokens` callback whenever text is generated.
+ */
+function useTokenNotifications(conversation: Conversation | undefined, onNewTokens: UseFixieArgs['onNewTokens']) {
+  const conversationRef = useRef<Conversation | undefined>(conversation);
 
-  private lastSeenMostRecentAgentTextMessage = '';
-
-  // TODO: Unsubscribe eventually
-  constructor(
-    public readonly conversationId: ConversationId,
-    private readonly fixieClient: IsomorphicFixieClient,
-    conversationsRoot: ReturnType<typeof collection>
-  ) {
-    super();
-
-    this.conversationFirebaseDoc = doc(conversationsRoot, conversationId);
-
-    const turnCollection = collection(this.conversationFirebaseDoc, 'turns');
-    const turnsQuery = query(turnCollection, orderBy('timestamp', 'asc')).withConverter({
-      toFirestore: _.identity,
-      fromFirestore: (snapshot, options) => {
-        const snapshotData = snapshot.data(options);
-        return {
-          id: snapshot.id,
-          ...snapshotData,
-        };
-      },
-    });
-
-    onSnapshot(
-      turnsQuery,
-      (snapshot) => {
-        this.isEmpty = snapshot.empty;
-
-        this.loadState = 'loaded';
-        // If we use snapshot.docs.forEach, it doesn't execute synchronously,
-        // which feels unnecessarily surprising.
-        this.turns = Array.from(snapshot.docs.values()).map((doc) => doc.data() as ConversationTurn);
-
-        snapshot.docChanges().forEach((change) => {
-          if (change.type === 'modified') {
-            const turn = change.doc.data() as ConversationTurn;
-            if (turn.role === 'assistant') {
-              /**
-               * We only want to call onNewTokens when the model is generating new tokens. If turn.state is 'stopped', it'll
-               * still generate a new `modified` change, and thus this callback will be called, but we don't want to call
-               * onNewTokens.
-               *
-               * Because we do optimistic UI, it's possible that we've requested a stop, but generation hasn't actually
-               * stopped. In this case, we don't wnat to call onNewTokens, so we check modelResponseRequested.
-               */
-              if (['in-progress', 'done'].includes(turn.state) && this.modelResponseRequested !== 'stop') {
-                const lastMessageFromAgent = this.lastSeenMostRecentAgentTextMessage;
-                const mostRecentAssistantTextMessage = _.findLast(turn.messages, {
-                  kind: 'text',
-                }) as TextMessage | undefined;
-                if (mostRecentAssistantTextMessage) {
-                  const messageIsContinuation =
-                    lastMessageFromAgent && mostRecentAssistantTextMessage.content.startsWith(lastMessageFromAgent);
-                  const newMessagePart = messageIsContinuation
-                    ? mostRecentAssistantTextMessage.content.slice(lastMessageFromAgent.length)
-                    : mostRecentAssistantTextMessage.content;
-
-                  if (!messageIsContinuation && this.lastTurnForWhichHandleNewTokensWasCalled === turn.id) {
-                    return;
-                  }
-
-                  this.lastSeenMostRecentAgentTextMessage = mostRecentAssistantTextMessage.content;
-
-                  if (newMessagePart) {
-                    this.lastTurnForWhichHandleNewTokensWasCalled = turn.id;
-                    this.addPerfCheckpoint('chat:delta:text', { newText: newMessagePart });
-                    this.dispatchEvent(new NewTokensEvent(newMessagePart));
-                  }
-                }
-              }
-            }
-          }
-        });
-
-        if (
-          snapshot.docChanges().length &&
-          this.turns.every(({ state }) => state === 'done' || state === 'stopped' || state === 'error') &&
-          this.performanceTrace.length &&
-          this.turns.at(-1)?.id !== this.lastGeneratedTurnId
-        ) {
-          // I'm not sure if this is at all valuable.
-          this.addPerfCheckpoint('all-turns-done-or-stopped-or-errored');
-          this.flushPerfTrace();
-        }
-        this.dispatchStateChangeEvent();
-      },
-      (error) => {
-        this.loadState = error;
-        this.dispatchStateChangeEvent();
-      }
-    );
-  }
-
-  private dispatchStateChangeEvent() {
-    super.dispatchEvent(new Event('stateChange'));
-  }
-
-  public addStateChangeEventListener(listener: EventListenerOrEventListenerObject) {
-    super.addEventListener('stateChange', listener);
-  }
-  public removeStateChangeEventListener(listener: EventListenerOrEventListenerObject) {
-    super.removeEventListener('stateChange', listener);
-  }
-
-  public exists() {
-    if (this.loadState === 'loading' || this.loadState === 'no-conversation-set') {
-      return undefined;
-    }
-    return this.isEmpty === false || this.optimisticallyExists;
-  }
-
-  private flushPerfTrace() {
-    if (!this.performanceTrace.length) {
+  useEffect(() => {
+    if (
+      !conversation ||
+      !onNewTokens ||
+      !conversationRef.current ||
+      conversation === conversationRef.current ||
+      conversationRef.current.id !== conversation.id
+    ) {
+      // Only fire notifications when we observe a change within the same conversation.
+      conversationRef.current = conversation;
       return;
     }
 
-    const latestTurnId = this.turns.at(-1)?.id;
-    /**
-     * It would be nice to include function calls here too, but we can do that later.
-     */
-    const textCharactersInMostRecentTurn = _.sumBy(this.turns.at(-1)?.messages, (message) => {
-      switch (message.kind) {
-        case 'text':
-          return message.content.length;
-        case 'functionCall':
-        case 'functionResponse':
-          return 0;
+    const lastTurn = conversation.turns.at(-1);
+    if (!lastTurn || lastTurn.role !== 'assistant') {
+      conversationRef.current = conversation;
+      return;
+    }
+
+    const lastTurnText = lastTurn.messages
+      .filter((m) => m.kind === 'text')
+      .map((m) => (m as TextMessage).content)
+      .join('');
+
+    const previousLastTurn = conversationRef.current.turns.at(-1);
+    const previousLastTurnText =
+      previousLastTurn?.id !== lastTurn.id
+        ? ''
+        : previousLastTurn.messages
+            .filter((m) => m.kind === 'text')
+            .map((m) => (m as TextMessage).content)
+            .join('');
+
+    // Find the longest matching prefix.
+    let i = 0;
+    while (i < lastTurnText.length && i < previousLastTurnText.length && lastTurnText[i] === previousLastTurnText[i]) {
+      i++;
+    }
+    const newTokens = lastTurnText.slice(i);
+    if (newTokens.length > 0) {
+      onNewTokens(newTokens);
+    }
+    conversationRef.current = conversation;
+  }, [conversation, onNewTokens]);
+}
+
+/**
+ * A hook that fires the `onNewConversation` callback whenever the conversation ID changes.
+ */
+function useNewConversationNotfications(
+  conversation: Conversation | undefined,
+  onNewConversation: UseFixieArgs['onNewConversation']
+) {
+  const conversationIdRef = useRef(conversation?.id);
+
+  useEffect(() => {
+    if (conversation?.id !== conversationIdRef.current) {
+      onNewConversation?.(conversation?.id);
+    }
+    conversationIdRef.current = conversation?.id;
+  }, [conversation, onNewConversation]);
+}
+
+/**
+ * A hook that polls the Fixie API for updates to the conversation.
+ */
+function useConversationPoller(
+  fixieApiUrl: string | undefined,
+  agentId: string,
+  conversation: Conversation | undefined,
+  setConversation: Dispatch<SetStateAction<Conversation | undefined>>,
+  isStreamingFromApi: boolean
+) {
+  const isVisible = useVisibilityChange();
+
+  const conversationId = conversation?.id;
+  const anyTurnInProgress = Boolean(conversation?.turns.find((t) => t.state === 'in-progress'));
+  const delay = isVisible && anyTurnInProgress ? 100 : isVisible ? 1000 : 60000;
+
+  useEffect(() => {
+    if (conversationId === undefined || isStreamingFromApi) {
+      return;
+    }
+
+    let abandoned = false;
+    let timeout: ReturnType<typeof setTimeout>;
+
+    const updateConversation = () =>
+      IsomorphicFixieClient.CreateWithoutApiKey(fixieApiUrl)
+        .getConversation(agentId, conversationId)
+        .then((newConversation) => {
+          setConversation((existing) => {
+            if (
+              abandoned ||
+              !existing ||
+              existing.id !== newConversation.id ||
+              JSON.stringify(existing) === JSON.stringify(newConversation)
+            ) {
+              return existing;
+            }
+
+            return newConversation;
+          });
+
+          if (!abandoned) {
+            timeout = setTimeout(updateConversation, delay);
+          }
+        });
+
+    timeout = setTimeout(updateConversation, delay);
+    return () => {
+      abandoned = true;
+      clearTimeout(timeout);
+    };
+  }, [fixieApiUrl, agentId, conversationId, setConversation, isStreamingFromApi, delay]);
+}
+
+/**
+ * A hook that manages mutations to the conversation.
+ */
+function useConversationMutations(
+  fixieApiUrl: string | undefined,
+  agentId: string,
+  conversation: Conversation | undefined,
+  setConversation: Dispatch<SetStateAction<Conversation | undefined>>
+): {
+  sendMessage: (message?: string) => boolean;
+  regenerate: (messageId?: string) => boolean;
+  stop: (messageId?: string) => boolean;
+  isStreamingFromApi: boolean;
+} {
+  // Track in-progress requests.
+  const nextRequestId = useRef(0);
+  const [activeRequests, setActiveRequests] = useState<Record<number, boolean>>({});
+  const startRequest = () => {
+    const requestId = nextRequestId.current++;
+    setActiveRequests((existing) => ({ ...existing, [requestId]: true }));
+    return {
+      requestId,
+      endRequest: () => {
+        setActiveRequests((existing) => {
+          if (!(requestId in existing)) {
+            return existing;
+          }
+
+          const { [requestId]: _, ...rest } = existing;
+          return rest;
+        });
+      },
+    };
+  };
+
+  // If stop/regenerate are triggered referencing an optimistic ID, we'll queue them up and handle them when the
+  // optimistic ID can resolve to the real one.
+  const [localIdMap, setLocalIdMap] = useState<Record<string, string>>({});
+  const [pendingRequests, setPendingRequests] = useState<
+    { type: 'stop' | 'regenerate'; conversationId: string; localMessageId: string }[]
+  >([]);
+  const setLocalId = (localId: string, remoteId: string) => {
+    setLocalIdMap((existing) => (localId in existing ? existing : { ...existing, [localId]: remoteId }));
+  };
+  useEffect(() => {
+    if (pendingRequests.length === 0) {
+      return;
+    }
+
+    const nextPendingRequest = pendingRequests[0];
+    if (nextPendingRequest.conversationId !== conversation?.id) {
+      setPendingRequests((existing) => existing.slice(1));
+      return;
+    }
+
+    if (nextPendingRequest.localMessageId in localIdMap) {
+      const action = nextPendingRequest.type === 'regenerate' ? regenerate : stop;
+      action(localIdMap[nextPendingRequest.localMessageId]);
+      setPendingRequests((existing) => existing.slice(1));
+    }
+  }, [pendingRequests, localIdMap, conversation?.id, regenerate, stop]);
+
+  const client = IsomorphicFixieClient.CreateWithoutApiKey(fixieApiUrl);
+
+  async function handleTurnStream(
+    stream: ReadableStream<AssistantConversationTurn>,
+    optimisticUserTurnId: string,
+    optimisticAssistantTurnId: string,
+    endRequest: () => void
+  ) {
+    const reader = stream.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
       }
-    });
 
-    const commonData = { latestTurnId, textCharactersInMostRecentTurn };
+      setLocalId(optimisticAssistantTurnId, value.id);
+      if (value.inReplyToId) {
+        setLocalId(optimisticUserTurnId, value.inReplyToId);
+      }
 
-    const firstPerfTrace = this.performanceTrace[0].timeMs;
-    const firstFirebaseDelta = _.find(this.performanceTrace, {
-      name: 'chat:delta:text',
-    })?.timeMs;
-    const lastFirebaseDelta = _.findLast(this.performanceTrace, {
-      name: 'chat:delta:text',
-    })?.timeMs;
+      setConversation((existingConversation) => {
+        // If the conversation ID has changed in the meantime, ignore it.
+        if (!existingConversation || !conversation || existingConversation.id !== conversation.id) {
+          endRequest();
+          return existingConversation;
+        }
 
-    this.dispatchEvent(
-      new PerfLogEvent('[DD] All traces', {
-        traces: this.performanceTrace,
-        ...commonData,
-      })
-    );
-    if (firstFirebaseDelta) {
-      this.dispatchEvent(
-        new PerfLogEvent('[DD] All traces after first Firebase delta', {
-          ...commonData,
-          timeMs: firstFirebaseDelta - firstPerfTrace,
-        })
-      );
-      const totalFirebaseTimeMs = lastFirebaseDelta! - firstPerfTrace;
-      this.dispatchEvent(
-        new PerfLogEvent('[DD] Time to last Firebase delta', {
-          ...commonData,
-          timeMs: totalFirebaseTimeMs,
-          charactersPerMs: textCharactersInMostRecentTurn / totalFirebaseTimeMs,
-        })
-      );
-    }
+        return {
+          ...existingConversation,
+          turns: existingConversation.turns.map((t) => {
+            if (
+              (t.id === value.id || t.id === optimisticAssistantTurnId) &&
+              (t.state === 'in-progress' || value.state !== 'in-progress')
+            ) {
+              return value;
+            }
 
-    this.performanceTrace = [];
-  }
+            if (t.id === optimisticUserTurnId && value.inReplyToId) {
+              // We have the actual ID now.
+              return {
+                ...t,
+                id: value.inReplyToId,
+              };
+            }
 
-  public getLoadState() {
-    return this.loadState;
-  }
-  public getTurns() {
-    return this.turns;
-  }
-
-  public sendMessage(agentId: AgentId, message: string) {
-    // TODO: Optimistically update with the new message.
-
-    this.performanceTrace = [];
-    this.addPerfCheckpoint('send-message');
-    this.lastGeneratedTurnId = this.turns.at(-1)?.id;
-    this.lastSeenMostRecentAgentTextMessage = '';
-    return this.fixieClient.sendMessage(agentId, this.conversationId, {
-      message,
-    });
-  }
-
-  public regenerate(agentId: AgentId) {
-    this.performanceTrace = [];
-    this.addPerfCheckpoint('regenerate');
-    this.lastGeneratedTurnId = this.turns.at(-1)?.id;
-    this.lastSeenMostRecentAgentTextMessage = '';
-    this.modelResponseRequested = 'regenerate';
-    this.dispatchStateChangeEvent();
-    const requestStart = this.fixieClient.regenerate(
-      agentId,
-      this.conversationId,
-      this.getMostRecentAssistantTurn()!.id
-    );
-    requestStart
-      .then((response) => response.text())
-      .then(() => {
-        this.modelResponseRequested = null;
-        this.dispatchStateChangeEvent();
+            return t;
+          }),
+        };
       });
-    return requestStart;
-  }
-
-  public stop(agentId: AgentId) {
-    this.lastSeenMostRecentAgentTextMessage = '';
-    this.lastGeneratedTurnId = this.turns.at(-1)?.id;
-    this.modelResponseRequested = 'stop';
-    this.flushPerfTrace();
-    this.addPerfCheckpoint('stop');
-    const mostRecentAssistantTurn = this.getMostRecentAssistantTurn();
-    if (mostRecentAssistantTurn) {
-      this.lastAssistantMessagesAtStop = mostRecentAssistantTurn.messages;
     }
-    this.dispatchStateChangeEvent();
-    const requestStart = this.fixieClient.stopGeneration(agentId, this.conversationId, mostRecentAssistantTurn!.id);
-    requestStart
-      .then((response) => response.text())
-      .then(() => {
-        this.modelResponseRequested = null;
-        this.dispatchStateChangeEvent();
-      });
-    return requestStart;
   }
 
-  private getMostRecentAssistantTurn() {
-    return _.findLast(this.turns, { role: 'assistant' }) as AssistantConversationTurn | undefined;
-  }
+  function sendMessage(message?: string) {
+    if (!conversation) {
+      // Start a new conversation.
+      const { endRequest } = startRequest();
+      client
+        .startConversation(agentId, message)
+        .then(async (newConversationStream) => {
+          const reader = newConversationStream.getReader();
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              break;
+            }
 
-  public getModelResponseInProgress() {
-    if (this.modelResponseRequested === 'regenerate') {
+            // If the conversation ID has changed in the meantime, ignore the update.
+            setConversation((existing) => {
+              if (existing && existing.id !== value.id) {
+                endRequest();
+                return existing;
+              }
+              return value;
+            });
+          }
+        })
+        .finally(endRequest);
+
       return true;
     }
-    if (this.modelResponseRequested === 'stop') {
+
+    // Send a message to the existing conversation.
+    if (conversation.turns.find((t) => t.state === 'in-progress')) {
+      // Can't send a message if the model is already generating a response.
       return false;
     }
-    return this.loadState === 'loaded' && this.getMostRecentAssistantTurn()?.state === 'in-progress';
-  }
-}
 
-/**
- * A client that maintains a connection to the Fixie conversation API.
- */
-// This may be of minimal value, and we should just consolidate into using FixieConversationClient directly. Maybe the
-// methods on this class should just be static methods on FixieConversationClient.
-export class FixieChatClient {
-  private readonly conversationsRoot: ReturnType<typeof collection>;
-  private readonly fixieClient: IsomorphicFixieClient;
-  private conversations: Record<ConversationId, FixieConversationClient> = {};
-
-  constructor(fixieAPIUrl = 'https://api.fixie.ai') {
-    const firebaseApp = initializeApp(firebaseConfig);
-    this.conversationsRoot = collection(getFirestore(firebaseApp), 'schemas/v0/conversations');
-    this.fixieClient = IsomorphicFixieClient.CreateWithoutApiKey(fixieAPIUrl);
-  }
-
-  async createNewConversation(input: string, agentId: AgentId) {
-    const conversationId = (await this.fixieClient.startConversation(agentId, input)).conversationId;
-
-    const conversation = this.getConversation(conversationId);
-    conversation.optimisticallyExists = true;
-    return conversation;
-  }
-
-  getConversation(conversationId: ConversationId) {
-    if (!(conversationId in this.conversations)) {
-      this.conversations[conversationId] = new FixieConversationClient(
-        conversationId,
-        this.fixieClient,
-        this.conversationsRoot
-      );
+    if (message === undefined) {
+      return false;
     }
-    return this.conversations[conversationId];
-  }
-}
 
-/**
- * A map of Fixie API URLs to FixieChatClients.
- *
- * In practice, this will only ever have a single entry. But the useFixie hook takes a fixieAPIUrl argument, so if we don't
- * handle multiple possible values, it'll be a footgun.
- */
-const fixieChatClients: Record<string, FixieChatClient> = {};
+    const { requestId, endRequest } = startRequest();
+    const optimisticUserTurnId = `local-user-${requestId}`;
+    const optimisticAssistantTurnId = `local-assistant-${requestId}`;
+    client
+      .sendMessage(agentId, conversation.id, { message })
+      .then((stream) => handleTurnStream(stream, optimisticUserTurnId, optimisticAssistantTurnId, endRequest))
+      .finally(endRequest);
+
+    setConversation((existingConversation) => {
+      if (
+        !existingConversation ||
+        existingConversation.id !== conversation.id ||
+        existingConversation.turns.find((t) => t.state === 'in-progress')
+      ) {
+        endRequest();
+        return existingConversation;
+      }
+
+      // Do an optimistic update.
+      return {
+        ...existingConversation,
+        turns: [
+          ...existingConversation.turns,
+          {
+            id: optimisticUserTurnId,
+            role: 'user',
+            state: 'done',
+            timestamp: new Date().toISOString(),
+            messages: [{ kind: 'text', content: message }],
+          },
+          {
+            id: optimisticAssistantTurnId,
+            role: 'assistant',
+            state: 'in-progress',
+            timestamp: new Date().toISOString(),
+            inReplyToId: optimisticUserTurnId,
+            messages: [],
+          },
+        ],
+      };
+    });
+
+    return true;
+  }
+
+  function regenerate(messageId: string | undefined = conversation?.turns.at(-1)?.id) {
+    const lastTurn = conversation?.turns.at(-1);
+    if (
+      conversation === undefined ||
+      lastTurn === undefined ||
+      lastTurn.role !== 'assistant' ||
+      lastTurn.state === 'in-progress' ||
+      lastTurn.id !== messageId
+    ) {
+      return false;
+    }
+
+    if (lastTurn.id.startsWith('local-')) {
+      setPendingRequests((existing) => [
+        ...existing,
+        { type: 'regenerate', conversationId: conversation.id, localMessageId: messageId },
+      ]);
+      return true;
+    }
+
+    const { requestId, endRequest } = startRequest();
+    const optimisticUserTurnId = `local-user-${requestId}`;
+    const optimisticAssistantTurnId = `local-assistant-${requestId}`;
+    client
+      .regenerate(agentId, conversation.id, messageId)
+      .then((stream) => handleTurnStream(stream, optimisticUserTurnId, optimisticAssistantTurnId, endRequest))
+      .finally(endRequest);
+
+    // Do an optimistic update.
+    setConversation((existingConversation) => {
+      const lastTurn = existingConversation?.turns.at(-1);
+      if (
+        !existingConversation ||
+        existingConversation.id !== conversation.id ||
+        existingConversation.turns.length === 0 ||
+        !lastTurn ||
+        lastTurn.role !== 'assistant' ||
+        lastTurn.id !== messageId
+      ) {
+        endRequest();
+        return existingConversation;
+      }
+
+      return {
+        ...existingConversation,
+        turns: [
+          ...existingConversation.turns.slice(0, -1),
+          {
+            id: optimisticAssistantTurnId,
+            role: 'assistant',
+            state: 'in-progress',
+            timestamp: new Date().toISOString(),
+            inReplyToId: lastTurn.inReplyToId,
+            messages: [],
+          },
+        ],
+      };
+    });
+
+    return true;
+  }
+
+  function stop(messageId: string | undefined = conversation?.turns.at(-1)?.id) {
+    const lastTurn = conversation?.turns.at(-1);
+    if (
+      conversation === undefined ||
+      lastTurn === undefined ||
+      lastTurn.state !== 'in-progress' ||
+      lastTurn.id !== messageId
+    ) {
+      return false;
+    }
+
+    if (lastTurn.id.startsWith('local-')) {
+      setPendingRequests((existing) => [
+        ...existing,
+        { type: 'stop', conversationId: conversation.id, localMessageId: messageId },
+      ]);
+      return true;
+    }
+
+    const { endRequest } = startRequest();
+    client.stopGeneration(agentId, conversation.id, lastTurn.id).finally(endRequest);
+
+    setConversation((existingConversation) => {
+      if (existingConversation?.id !== conversation.id || existingConversation.turns.at(-1)?.id !== messageId) {
+        endRequest();
+        return existingConversation;
+      }
+
+      return {
+        ...existingConversation,
+        turns: existingConversation.turns.map((t) =>
+          t.id === lastTurn.id && t.state === 'in-progress' ? { ...t, state: 'stopped' } : t
+        ),
+      };
+    });
+
+    return true;
+  }
+
+  return {
+    isStreamingFromApi: Object.keys(activeRequests).length > 0,
+    sendMessage,
+    regenerate,
+    stop,
+  };
+}
 
 /**
  * @experimental this API may change at any time.
@@ -471,156 +527,84 @@ const fixieChatClients: Record<string, FixieChatClient> = {};
  * This hook manages the state of a Fixie-hosted conversation.
  */
 export function useFixie({
-  conversationId: userPassedConversationId,
-  conversationFixtures,
+  conversationId: userProvidedConversationId,
   onNewTokens,
-  logPerformanceTraces,
   agentId,
-  fixieAPIUrl,
+  fixieApiUrl: fixieAPIUrl,
   onNewConversation,
+  agentStartsConversation,
 }: UseFixieArgs): UseFixieResult {
-  const fixieAPIUrlToUse = fixieAPIUrl ?? 'https://api.fixie.ai';
-  if (!(fixieAPIUrlToUse in fixieChatClients)) {
-    fixieChatClients[fixieAPIUrlToUse] = new FixieChatClient(fixieAPIUrl);
+  const [loadState, setLoadState] = useState<UseFixieResult['loadState']>('loading');
+  const [loadError, setLoadError] = useState<UseFixieResult['error']>(undefined);
+  const [conversation, setConversation] = useState<Conversation>();
+
+  function reset() {
+    setLoadState('loading');
+    setLoadError(undefined);
+    setConversation(undefined);
   }
-  const fixieChatClient = fixieChatClients[fixieAPIUrlToUse];
 
-  /**
-   * In general, you're supposed to use setState for values that impact render, and ref for values that don't.
-   * Because any value that gets returned from this hook may impact render, it seems like we'd want to use setState.
-   * However, I've noticed some timing issues where, because setState is async, the value is not actually read when
-   * we need it.
-   *
-   * For instance, if we manage a value X via setState, and on a hook invocation, we call setState(X + 1), all our
-   * reads of X in this hook invocation will read the old value of X, not the new value.
-   *
-   * Thus, to manage state where we need the update to be reflected immediately, I've used refs. I'm not sure if
-   * this is bad or there's something else I'm supposed to do in this situation.
-   */
+  // If the agent ID changes, reset everything.
+  useEffect(() => reset(), [agentId, fixieAPIUrl]);
 
-  const [input, setInput] = useState('');
-  const [conversationId, setConversationId] = useState(userPassedConversationId);
+  const { sendMessage, regenerate, stop, isStreamingFromApi } = useConversationMutations(
+    fixieAPIUrl,
+    agentId,
+    conversation,
+    setConversation
+  );
 
+  useConversationPoller(fixieAPIUrl, agentId, conversation, setConversation, isStreamingFromApi);
+  useTokenNotifications(conversation, onNewTokens);
+  useNewConversationNotfications(conversation, onNewConversation);
+
+  // Do the initial load if the user passed a conversation ID.
   useEffect(() => {
-    setConversationId(userPassedConversationId);
-  }, [userPassedConversationId]);
-
-  const [loadState, setLoadState] = useState<UseFixieResult['loadState']>('no-conversation-set');
-  const [turns, setTurns] = useState<UseFixieResult['turns']>([]);
-  const [modelResponseInProgress, setModelResponseInProgress] = useState(false);
-  const [conversationExists, setConversationExists] = useState<boolean | undefined>(undefined);
-
-  useEffect(() => {
-    function handleNewTokens(event: Event) {
-      onNewTokens?.((event as NewTokensEvent).tokens);
+    if (loadState === 'error') {
+      return;
     }
-    function handlePerfLog(event: Event) {
-      const perfLogEvent = event as PerfLogEvent;
-      logPerformanceTraces?.(perfLogEvent.message, perfLogEvent.data);
+    if (!userProvidedConversationId || userProvidedConversationId === conversation?.id) {
+      setLoadState('loaded');
+      return;
     }
 
-    let conversation: FixieConversationClient;
-
-    function updateLocalStateFromConversation() {
-      setLoadState(conversation.getLoadState());
-      setTurns(conversation.getTurns());
-      setModelResponseInProgress(conversation.getModelResponseInProgress());
-      setConversationExists(conversation.exists());
-    }
-    if (conversationId) {
-      conversation = fixieChatClient.getConversation(conversationId);
-      conversation.addEventListener('newTokens', handleNewTokens);
-      conversation.addEventListener('perfLog', handlePerfLog);
-
-      updateLocalStateFromConversation();
-
-      conversation.addStateChangeEventListener(updateLocalStateFromConversation);
-    }
+    let abandoned = false;
+    setLoadState('loading');
+    IsomorphicFixieClient.CreateWithoutApiKey(fixieAPIUrl)
+      .getConversation(agentId, userProvidedConversationId)
+      .then((conversation) => {
+        if (!abandoned) {
+          onNewConversation?.(conversation.id);
+          setConversation(conversation);
+          setLoadState('loaded');
+        }
+      })
+      .catch((error) => {
+        if (!abandoned) {
+          setLoadState('error');
+          setLoadError(error);
+        }
+      });
 
     return () => {
-      if (conversationId) {
-        const conversation = fixieChatClient.getConversation(conversationId);
-        conversation.removeEventListener('newTokens', handleNewTokens);
-        conversation.removeEventListener('perfLog', handlePerfLog);
-        conversation.removeStateChangeEventListener(updateLocalStateFromConversation);
-      }
+      abandoned = true;
     };
-  }, [conversationId]);
+  }, [fixieAPIUrl, agentId, userProvidedConversationId, conversation?.id, loadState]);
 
-  async function createNewConversation(overriddenInput?: string) {
-    const conversation = await fixieChatClient.createNewConversation(overriddenInput ?? input, agentId);
-    setConversationId(conversation.conversationId);
-    onNewConversation?.(conversation.conversationId);
-  }
-
-  /**
-   * If there's no conversation ID, we return noops for everything. This allows the caller of this hook to be largely
-   * agnostic to whether a conversation actually exists. However, because hooks must be called unconditionally,
-   * we have the awkwardness of needing to call all the hooks above this spot in the code.
-   */
-  if (!conversationId) {
-    return {
-      turns: conversationFixtures ?? turns,
-      loadState,
-      modelResponseInProgress,
-      regenerate,
-      stop,
-      sendMessage: createNewConversation,
-      error: undefined,
-      input,
-      setInput,
-    };
-  }
-
-  const conversation = fixieChatClient.getConversation(conversationId);
-
-  function sendMessage(message?: string) {
-    if (!conversationId) {
-      return Promise.resolve();
+  // If the agent should start the conversation, do it.
+  useEffect(() => {
+    if (agentStartsConversation && loadState === 'loaded' && conversation === undefined && !isStreamingFromApi) {
+      sendMessage();
     }
-    return conversation.sendMessage(agentId, message ?? input);
-  }
-
-  // if (modelResponseRequested === 'regenerate' && mostRecentAssistantTurn) {
-  //   mostRecentAssistantTurn.messages = [];
-  // }
-  // /**
-  //  * This strategy means that if the UI will optimistically update to stop the stream. However, once the user
-  //  * refreshes, they'll see more content when the client discards the local `lastAssistantMessagesAtStop` state
-  //  * and instead reads from Firebase.
-  //  */
-  // turns.forEach((turn) => {
-  //   // The types are wrong here.
-  //   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  //   if (lastAssistantMessagesAtStop[turn.id]) {
-  //     turn.messages = lastAssistantMessagesAtStop[turn.id];
-  //   }
-  // });
-
-  function regenerate() {
-    if (!conversationId) {
-      return Promise.resolve();
-    }
-    return conversation.regenerate(agentId);
-  }
-
-  function stop() {
-    if (!conversationId) {
-      return Promise.resolve();
-    }
-    return conversation.stop(agentId);
-  }
+  }, [agentStartsConversation, loadState, conversation === undefined, isStreamingFromApi, sendMessage]);
 
   return {
-    turns: conversationFixtures ?? turns,
+    conversation,
     loadState,
-    input,
-    error: undefined,
+    error: loadError,
     stop,
     regenerate,
-    modelResponseInProgress,
-    setInput,
     sendMessage,
-    conversationExists,
+    newConversation: reset,
   };
 }
