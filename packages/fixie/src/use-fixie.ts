@@ -1,7 +1,6 @@
 import { useState, SetStateAction, Dispatch, useEffect, useRef } from 'react';
 import { AgentId, AssistantConversationTurn, TextMessage, ConversationId, Conversation } from './sidekick-types.js';
 import { IsomorphicFixieClient } from './isomorphic-client.js';
-import { useVisibilityChange } from '@uidotdev/usehooks';
 
 /**
  * The result of the useFixie hook.
@@ -170,11 +169,23 @@ function useConversationPoller(
   setConversation: Dispatch<SetStateAction<Conversation | undefined>>,
   isStreamingFromApi: boolean
 ) {
-  const isVisible = useVisibilityChange();
-
   const conversationId = conversation?.id;
   const anyTurnInProgress = Boolean(conversation?.turns.find((t) => t.state === 'in-progress'));
+  const [isVisible, setIsVisible] = useState(true);
   const delay = isVisible && anyTurnInProgress ? 100 : isVisible ? 1000 : 60000;
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      setIsVisible(document.visibilityState === 'visible');
+    }
+
+    setIsVisible(document.visibilityState === 'visible');
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (conversationId === undefined || isStreamingFromApi) {
