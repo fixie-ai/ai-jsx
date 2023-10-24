@@ -78,7 +78,7 @@ export class ChatRequest {
   public done = false;
   public onUpdate?: (request: ChatRequest, newText: string) => void;
   public onComplete?: (request: ChatRequest) => void;
-  private startMillis?: number;
+  public startMillis?: number;
   public requestLatency?: number;
   public streamLatency?: number;
   constructor(
@@ -343,14 +343,25 @@ export class ChatManager {
     if (this._state != ChatManagerState.LISTENING && this._state != ChatManagerState.THINKING) return;
     const obj = (evt as CustomEventInit<Transcript>).detail!;
     this.handleInputUpdate(obj.text, obj.final, obj.observedLatency);
-    this.onInputChange?.(obj.text, obj.final, obj.observedLatency);
   }
 
   private handleInputUpdate(text: string, final: boolean, latency?: number) {
+    // Update the received ASR latency stat to account for our speculative execution.
+    const normalized = normalizeText(text);
+    const request = this.pendingRequests.get(normalized);
+    let adjustedLatency = latency;
+    if (adjustedLatency && final && request) {
+      adjustedLatency -= (performance.now() - request.startMillis!);
+    }
+    console.log(`[chat] asr transcript="${normalized}" ${request ? 'HIT' : 'MISS'}${final ? ' FINAL' : ''} latency=${adjustedLatency?.toFixed(0)} ms`);
+    this.onInputChange?.(text, final, latency);
+
     // Ignore partial transcripts if VAD indicates the user is still speaking.
     if (!final && this.micManager.isVoiceActive) {
       return;
     }
+
+    this.changeState(ChatManagerState.THINKING);
 
     // If the input text has been finalized, add it to the message history.
     const userMessage = new ChatMessage('user', text.trim());
@@ -359,15 +370,10 @@ export class ChatManager {
       this.history = newMessages;
       this.micManager.isEnabled = false;
     }
-    this.changeState(ChatManagerState.THINKING);
 
     // If it doesn't match an existing request, kick off a new one.
     // If it matches an existing request and the text is finalized, speculative
     // execution worked! Snap forward to the current state of that request.
-    const normalized = normalizeText(text);
-    const request = this.pendingRequests.get(normalized);
-    const hit = Boolean(request);
-    console.log(`[chat] asr transcript="${normalized}" ${hit ? 'HIT' : 'MISS'}${final ? ' FINAL' : ''} latency=${latency?.toFixed(0)} ms`);
     const supportsSpeculativeExecution = !this.model.startsWith('fixie/');
     if (!request && (final || supportsSpeculativeExecution)) {
       this.dispatchRequest(normalized, newMessages, final);

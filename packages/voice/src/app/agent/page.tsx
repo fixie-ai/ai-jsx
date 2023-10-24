@@ -47,11 +47,11 @@ const TTS_PROVIDERS = [
 const LLM_MODELS = ['claude-2', 'claude-instant-1', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'];
 const AGENT_IDS = ['ai-friend', 'dr-donut', 'rubber-duck', 'spanish-tutor', 'justin/ultravox', 'justin/fixie'];
 const LATENCY_THRESHOLDS: { [key: string]: LatencyThreshold } = {
-  ASR: { good: 200, fair: 300 },
-  LLM: { good: 400, fair: 600 },
-  LLMT: { good: 500, fair: 750 },
+  ASR: { good: 300, fair: 500 },
+  LLM: { good: 300, fair: 500 },
+  LLMT: { good: 300, fair: 400 },
   TTS: { good: 400, fair: 600 },
-  Total: { good: 1200, fair: 1800 },
+  Total: { good: 1300, fair: 2000 },
 };
 
 const Dropdown: React.FC<{ label: string; param: string; value: string; options: string[] }> = ({
@@ -81,7 +81,6 @@ const Dropdown: React.FC<{ label: string; param: string; value: string; options:
 );
 
 const Stat: React.FC<{ name: string; latency: number }> = ({ name, latency }) => {
-  // pad vlaueText to be 4 characters wide
   let valueText = (latency ? `${latency.toFixed(0)}` : '-').padStart(4, ' ');
   for (let i = valueText.length; i < 4; i++) {
     valueText = ' ' + valueText;
