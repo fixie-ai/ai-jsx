@@ -32,14 +32,16 @@ class ClientMessage {
 /**
  * Makes a text stream that simulates LLM output from a specified string.
  */
-function pseudoTextStream(text: string, interWordDelay = 20) {
+function pseudoTextStream(text: string, interWordDelay = 0) {
   return new ReadableStream({
     async pull(controller) {
       const words = text.split(' ');
       for (let index = 0; index < words.length; index++) {
         const word = words[index];
         controller.enqueue(index > 0 ? ` ${word}` : word);
-        await new Promise((resolve) => setTimeout(resolve, interWordDelay));
+        if (interWordDelay > 0) {
+          await new Promise((resolve) => setTimeout(resolve, interWordDelay));
+        }
       }
       controller.close();
     },

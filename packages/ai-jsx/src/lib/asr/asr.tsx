@@ -56,7 +56,7 @@ export function normalizeText(text: string) {
  * in milliseconds when the voice activity changed, as reported by the VAD.
  */
 export class VoiceActivity {
-  constructor(public active: boolean, public timestamp: number) {}
+  constructor(public active: boolean, public timestamp: number, public duration?: number) {}
 }
 
 /**
@@ -77,6 +77,7 @@ export class MicManager extends EventTarget {
   private processorNode?: AudioWorkletNode;
   private analyzerNode?: AnalyserNode;
   private vad?: VoiceActivityDetectorBase;
+  private vadStartMillis: number = 0;
 
   /**
    * Starts capture from the microphone.
@@ -119,6 +120,12 @@ export class MicManager extends EventTarget {
     this.stream = undefined;
     this.context = undefined;
     this.outBuffer = [];
+  }
+  /**
+   * Returns the sample rate of the capturer.
+   */
+  get capturedSamples() {
+    return this.numSamples;
   }
   /**
    * Returns the sample rate of the capturer.
@@ -231,12 +238,17 @@ export class MicManager extends EventTarget {
     // Start the VAD.
     this.vad = new LibfVoiceActivityDetector(this.sampleRate);
     this.vad.onVoiceStart = () => {
-      console.log(`Speech begin: ${this.currentMillis.toFixed(0)} ms`);
-      this.dispatchEvent(new CustomEvent('vad', { detail: new VoiceActivity(true, this.currentMillis) }));
+      const now = this.currentMillis;
+      console.debug(`[vad] speech start: ${now.toFixed(0)} ms`);
+      this.vadStartMillis = now;
+      this.dispatchEvent(new CustomEvent('vad', { detail: new VoiceActivity(true, now) }));
     };
     this.vad.onVoiceEnd = () => {
-      console.log(`Speech FINAL: ${this.currentMillis.toFixed(0)} ms`);
-      this.dispatchEvent(new CustomEvent('vad', { detail: new VoiceActivity(false, this.currentMillis) }));
+      const now = this.currentMillis;
+      const duration = now - this.vadStartMillis;
+      console.debug(`[vad] speech end: ${now.toFixed(0)} ms`);
+      this.vadStartMillis = 0;
+      this.dispatchEvent(new CustomEvent('vad', { detail: new VoiceActivity(false, now, duration) }));
     };
     this.vad.start();
 
@@ -308,16 +320,10 @@ export class Transcript {
  * speech recognition service.
  */
 export abstract class SpeechRecognitionBase extends EventTarget {
-  /** A wall time representing when the first chunk was sent. */
-  private initialChunkMillis: number = 0;
-  /** A relative time indicating how much audio data has been sent. */
-  private streamSentMillis: number = 0;
   /** A relative time indicating how much audio data has been recognized. */
   protected streamRecognizedMillis: number = 0;
-  /** A relative time indicating the first time a transcript was received for the current utterance. */
-  protected streamFirstTranscriptMillis: number = 0;
-  /** A relative time indicating when local VAD indicated the end of the current utterance. */
-  protected streamLastVoiceEndMillis: number = 0;
+  /** The voice activity object for the most recent utterance. */
+  protected streamLastVoiceActivity?: VoiceActivity;
   private outBuffer: ArrayBuffer[] = [];
   protected socket?: WebSocket;
   protected socketReady: boolean = false;
@@ -385,35 +391,24 @@ export abstract class SpeechRecognitionBase extends EventTarget {
       const chunk = evt.detail!;
       if (this.socketReady) {
         this.sendChunk(chunk);
-        // Set our reference time for computing latency when sending our first unbuffered chunk.
-        if (this.initialChunkMillis == 0) {
-          this.initialChunkMillis = performance.now() - this.streamSentMillis;
-        }
       } else {
         // If the web socket isn't open yet, buffer the chunk.
         this.outBuffer.push(chunk);
       }
-      this.streamSentMillis += (chunk.byteLength / (2 * this.manager.sampleRate)) * 1000;
     });
     this.manager.addEventListener('vad', (evt: CustomEventInit<VoiceActivity>) => {
       const update = evt.detail!;
       if (!update.active) {
-        if (this.streamLastVoiceEndMillis === 0 && this.streamFirstTranscriptMillis !== 0) {
-          this.streamLastVoiceEndMillis = update.timestamp;
+        if (!this.streamLastVoiceActivity || update.duration! > this.streamLastVoiceActivity.duration!) {
+          console.log(`[${this.name}] voice activity end ts=${update.timestamp} duration=${update.duration} ms`);
+          this.streamLastVoiceActivity = update;
         } else {
-          console.log(`[${this.name}] unexpected voice end at ${update.timestamp}`);
+          console.log(
+            `[${this.name}] ignoring spurious voice activity, ts=${update.timestamp} duration=${update.duration}`
+          );
         }
       }
     });
-  }
-  /**
-   * Computes the delta between now and a relative time in the stream.
-   */
-  private computeLatency(streamMillis: number) {
-    if (!this.initialChunkMillis) {
-      return;
-    }
-    return performance.now() - (this.initialChunkMillis + streamMillis);
   }
 
   protected dispatchTranscript(transcript: string, final: boolean, recognizedMillis: number) {
@@ -423,19 +418,21 @@ export abstract class SpeechRecognitionBase extends EventTarget {
     }
 
     this.streamRecognizedMillis = recognizedMillis;
-    const reportedLatency = this.computeLatency(recognizedMillis);
+    const reportedLatency = this.manager.currentMillis - recognizedMillis;
     let observedLatency;
     if (final) {
-      observedLatency = this.computeLatency(this.streamLastVoiceEndMillis);
-      this.streamFirstTranscriptMillis = this.streamLastVoiceEndMillis = 0;
-    } else if (this.streamFirstTranscriptMillis == 0) {
-      this.streamFirstTranscriptMillis = recognizedMillis;
+      if (this.streamLastVoiceActivity) {
+        observedLatency = this.manager.currentMillis - this.streamLastVoiceActivity.timestamp;
+        this.streamLastVoiceActivity = undefined;
+      } else {
+        console.warn(`[${this.name}] no voice activity end detected prior to final transcript`);
+      }
     }
     const event = new CustomEvent('transcript', {
       detail: new Transcript(
         transcript,
         final,
-        performance.now() - this.initialChunkMillis,
+        this.manager.currentMillis,
         recognizedMillis,
         reportedLatency,
         observedLatency
