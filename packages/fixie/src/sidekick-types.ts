@@ -50,7 +50,7 @@ export interface AssistantConversationTurn extends UserOrAssistantConversationTu
   /**
    * The user turn that this turn was a reply to.
    */
-  inReplyToId: string;
+  inReplyToId?: string;
 }
 
 export interface UserConversationTurn extends UserOrAssistantConversationTurn<'user'> {}
@@ -58,14 +58,12 @@ export interface UserConversationTurn extends UserOrAssistantConversationTurn<'u
 export type ConversationTurn = AssistantConversationTurn | UserConversationTurn;
 
 /** A message in the conversation. */
-export interface BaseMessage extends StateFields {
+export interface BaseMessage {
   /** Any metadata the client or server would like to attach to the message.
       For instance, the client might include UI state from the host app,
       or the server might include debugging info.
   */
   metadata?: Jsonifiable;
-
-  id: string;
 }
 
 export interface FunctionCall extends BaseMessage {
