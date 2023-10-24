@@ -197,7 +197,7 @@ const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React
 
 const AgentPageComponent: React.FC = () => {
   const searchParams = useSearchParams();
-  const tapOrClick = typeof window != 'undefined' && 'isTouchDevice' in window ? 'Tap' : 'Click';
+  const tapOrClick = typeof window != 'undefined' && 'ontouchstart' in window ? 'Tap' : 'Click';
   const idleText = `${tapOrClick} anywhere to start!`;
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
   const asrLanguage = searchParams.get('asrLanguage') || undefined;
