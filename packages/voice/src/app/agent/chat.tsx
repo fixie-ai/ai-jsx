@@ -78,7 +78,7 @@ export class ChatRequest {
   public done = false;
   public onUpdate?: (request: ChatRequest, newText: string) => void;
   public onComplete?: (request: ChatRequest) => void;
-  private startMillis?: number;
+  public startMillis?: number;
   public requestLatency?: number;
   public streamLatency?: number;
   constructor(
@@ -92,6 +92,7 @@ export class ChatRequest {
   }
 
   async start() {
+    console.log(`[chat] calling agent for "${this.inMessages.at(-1)?.content}"`);
     if (this.agentId.includes('/')) {
       await this.startWithFixie(this.agentId);
     } else {
@@ -100,7 +101,6 @@ export class ChatRequest {
   }
 
   private async startWithLlm(agentId: string) {
-    console.log(`calling LLM for ${this.inMessages.at(-1)?.content}`);
     this.startMillis = performance.now();
 
     const res = await fetch('/agent/api', {
@@ -121,7 +121,7 @@ export class ChatRequest {
       const newText = new TextDecoder().decode(value);
       if (newText.trim() && this.requestLatency === undefined) {
         this.requestLatency = performance.now() - this.startMillis;
-        console.log(`Got LLM response, latency=${this.requestLatency.toFixed(0)}`);
+        console.log(`[chat] received agent response, latency=${this.requestLatency.toFixed(0)} ms`);
       }
 
       this.outMessage += newText;
@@ -130,7 +130,6 @@ export class ChatRequest {
   }
 
   private async startWithFixie(agentId: string) {
-    console.log(`calling Fixie for ${this.inMessages.at(-1)?.content}`);
     this.startMillis = performance.now();
 
     let isStartConversationRequest;
@@ -249,6 +248,7 @@ export class ChatManager {
   onStateChange?: (state: ChatManagerState) => void;
   onInputChange?: (text: string, final: boolean, latency?: number) => void;
   onOutputChange?: (text: string, final: boolean, latency: number) => void;
+  onAudioGenerate?: (latency: number) => void;
   onAudioStart?: (latency: number) => void;
   onAudioEnd?: () => void;
   onError?: () => void;
@@ -272,20 +272,10 @@ export class ChatManager {
     this.model = model;
     this.agentId = agentId;
     this.docs = docs;
-    this.asr.addEventListener('transcript', (evt: CustomEventInit<Transcript>) => {
-      const obj = evt.detail!;
-      this.handleInputUpdate(obj.text, obj.final);
-      this.onInputChange?.(obj.text, obj.final, obj.observedLatency);
-    });
-    this.tts.onPlaying = () => {
-      this.changeState(ChatManagerState.SPEAKING);
-      this.onAudioStart?.(this.tts.latency!);
-    };
-    this.tts.onComplete = () => {
-      this.onAudioEnd?.();
-      this.micManager.isEnabled = true;
-      this.changeState(ChatManagerState.LISTENING);
-    };
+    this.asr.addEventListener('transcript', (evt: Event) => this.handleTranscript(evt));
+    this.tts.onGenerating = () => this.handleGenerationStart();
+    this.tts.onPlaying = () => this.handlePlaybackStart();
+    this.tts.onComplete = () => this.handlePlaybackComplete();
   }
 
   get state() {
@@ -303,7 +293,7 @@ export class ChatManager {
    */
   async start(initialMessage?: string) {
     await this.micManager.startMic(DEFAULT_ASR_FRAME_SIZE, () => {
-      console.log('Mic stream closed unexpectedly');
+      console.warn('[chat] Mic stream closed unexpectedly');
       this.onError?.();
     });
     this.asr.start();
@@ -340,6 +330,7 @@ export class ChatManager {
 
   private changeState(state: ChatManagerState) {
     if (state != this._state) {
+      console.log(`[chat] ${this._state} -> ${state}`);
       this._state = state;
       this.onStateChange?.(state);
     }
@@ -348,11 +339,33 @@ export class ChatManager {
   /**
    * Handle new input from the ASR.
    */
-  private handleInputUpdate(text: string, final: boolean) {
+  private handleTranscript(evt: Event) {
+    if (this._state != ChatManagerState.LISTENING && this._state != ChatManagerState.THINKING) return;
+    const obj = (evt as CustomEventInit<Transcript>).detail!;
+    this.handleInputUpdate(obj.text, obj.final, obj.observedLatency);
+  }
+
+  private handleInputUpdate(text: string, final: boolean, latency?: number) {
+    // Update the received ASR latency stat to account for our speculative execution.
+    const normalized = normalizeText(text);
+    const request = this.pendingRequests.get(normalized);
+    let adjustedLatency = latency;
+    if (adjustedLatency && final && request) {
+      adjustedLatency -= performance.now() - request.startMillis!;
+    }
+    console.log(
+      `[chat] asr transcript="${normalized}" ${request ? 'HIT' : 'MISS'}${
+        final ? ' FINAL' : ''
+      } latency=${adjustedLatency?.toFixed(0)} ms`
+    );
+    this.onInputChange?.(text, final, latency);
+
     // Ignore partial transcripts if VAD indicates the user is still speaking.
     if (!final && this.micManager.isVoiceActive) {
       return;
     }
+
+    this.changeState(ChatManagerState.THINKING);
 
     // If the input text has been finalized, add it to the message history.
     const userMessage = new ChatMessage('user', text.trim());
@@ -361,15 +374,10 @@ export class ChatManager {
       this.history = newMessages;
       this.micManager.isEnabled = false;
     }
-    this.changeState(ChatManagerState.THINKING);
 
     // If it doesn't match an existing request, kick off a new one.
     // If it matches an existing request and the text is finalized, speculative
     // execution worked! Snap forward to the current state of that request.
-    const normalized = normalizeText(text);
-    const request = this.pendingRequests.get(normalized);
-    const hit = Boolean(request);
-    console.log(`${final ? 'final' : 'partial'}: ${normalized} ${hit ? 'HIT' : 'MISS'}`);
     const supportsSpeculativeExecution = !this.model.startsWith('fixie/');
     if (!request && (final || supportsSpeculativeExecution)) {
       this.dispatchRequest(normalized, newMessages, final);
@@ -438,5 +446,29 @@ export class ChatManager {
     this.history.push(assistantMessage);
     this.pendingRequests.clear();
     this.onOutputChange?.(request.outMessage, true, request.requestLatency!);
+  }
+  /**
+   * Handle the start of generation from the TTS.
+   */
+  private handleGenerationStart() {
+    if (this._state != ChatManagerState.THINKING) return;
+    this.onAudioGenerate?.(this.tts.bufferLatency!);
+  }
+  /**
+   * Handle the start of playout from the TTS.
+   */
+  private handlePlaybackStart() {
+    if (this._state != ChatManagerState.THINKING) return;
+    this.changeState(ChatManagerState.SPEAKING);
+    this.onAudioStart?.(this.tts.latency! - this.tts.bufferLatency!);
+  }
+  /**
+   * Handle the end of playout from the TTS.
+   */
+  private handlePlaybackComplete() {
+    if (this._state != ChatManagerState.SPEAKING) return;
+    this.onAudioEnd?.();
+    this.micManager.isEnabled = true;
+    this.changeState(ChatManagerState.LISTENING);
   }
 }

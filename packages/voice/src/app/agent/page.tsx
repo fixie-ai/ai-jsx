@@ -22,6 +22,11 @@ import '../globals.css';
 // Claude v1: 40 tps (approx 0.4s for 50 chars)
 // Claude Instant v1: 70 tps (approx 0.2s for 50 chars)
 
+interface LatencyThreshold {
+  good: number;
+  fair: number;
+}
+
 const DEFAULT_ASR_PROVIDER = 'deepgram';
 const DEFAULT_TTS_PROVIDER = 'playht';
 const DEFAULT_LLM = 'gpt-4';
@@ -40,7 +45,14 @@ const TTS_PROVIDERS = [
   'wellsaid',
 ];
 const LLM_MODELS = ['claude-2', 'claude-instant-1', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'];
-const AGENT_IDS = ['ai-friend', 'dr-donut', 'rubber-duck', 'spanish-tutor'];
+const AGENT_IDS = ['ai-friend', 'dr-donut', 'rubber-duck', 'spanish-tutor', 'justin/ultravox', 'justin/fixie'];
+const LATENCY_THRESHOLDS: { [key: string]: LatencyThreshold } = {
+  ASR: { good: 300, fair: 500 },
+  LLM: { good: 300, fair: 500 },
+  LLMT: { good: 300, fair: 400 },
+  TTS: { good: 400, fair: 600 },
+  Total: { good: 1300, fair: 2000 },
+};
 
 const Dropdown: React.FC<{ label: string; param: string; value: string; options: string[] }> = ({
   param,
@@ -67,6 +79,25 @@ const Dropdown: React.FC<{ label: string; param: string; value: string; options:
     </select>
   </>
 );
+
+const Stat: React.FC<{ name: string; latency: number }> = ({ name, latency }) => {
+  let valueText = (latency ? `${latency.toFixed(0)}` : '-').padStart(4, ' ');
+  for (let i = valueText.length; i < 4; i++) {
+    valueText = ' ' + valueText;
+  }
+  const color =
+    latency < LATENCY_THRESHOLDS[name].good
+      ? ''
+      : latency < LATENCY_THRESHOLDS[name].fair
+      ? 'text-yellow-500'
+      : 'text-red-500';
+  return (
+    <span className={`font-mono text-xs mr-2 ${color}`}>
+      {' '}
+      <span className="font-bold">{name}</span> <pre className="inline">{valueText}</pre> ms
+    </span>
+  );
+};
 
 const Visualizer: React.FC<{
   width?: number;
@@ -128,7 +159,7 @@ const Visualizer: React.FC<{
         // make the data have random pulses based on performance.now, which decay over time
         const now = performance.now();
         for (let i = 0; i < freqData.length; i++) {
-          freqData[i] = Math.max(0, Math.sin((now + i * 100) / 100) * 128 + 128) / 2;
+          freqData[i] = Math.max(0, Math.sin((now - i * 100) / 100) * 128 + 128) / 2;
         }
         break;
       case ChatManagerState.SPEAKING:
@@ -164,16 +195,9 @@ const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React
   </button>
 );
 
-const Latency: React.FC<{ name: string; latency: number }> = ({ name, latency }) => (
-  <>
-    {' '}
-    {name} <span className="font-bold">{latency ? latency.toFixed(0) : '-'}</span> ms
-  </>
-);
-
 const AgentPageComponent: React.FC = () => {
   const searchParams = useSearchParams();
-  const tapOrClick = typeof window != 'undefined' && 'isTouchDevice' in window ? 'Tap' : 'Click';
+  const tapOrClick = typeof window != 'undefined' && 'ontouchstart' in window ? 'Tap' : 'Click';
   const idleText = `${tapOrClick} anywhere to start!`;
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
   const asrLanguage = searchParams.get('asrLanguage') || undefined;
@@ -182,29 +206,25 @@ const AgentPageComponent: React.FC = () => {
   const model = searchParams.get('llm') || DEFAULT_LLM;
   const agentId = searchParams.get('agent') || 'dr-donut';
   const docs = searchParams.get('docs') !== null;
-  const showChooser = searchParams.get('chooser') !== null;
+  const [showChooser, setShowChooser] = useState(searchParams.get('chooser') !== null);
   const showInput = searchParams.get('input') !== null;
   const showOutput = searchParams.get('output') !== null;
-  const showStats = searchParams.get('stats') !== null;
-  const [chatManager, setChatManager] = useState<ChatManager | null>(null);
+  const [showStats, setShowStats] = useState(searchParams.get('stats') !== null);
+  const [chatManager, setChatManager] = useState<ChatManager | null>();
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
   const [helpText, setHelpText] = useState(idleText);
   const [asrLatency, setAsrLatency] = useState(0);
-  const [llmLatency, setLlmLatency] = useState(0);
+  const [llmResponseLatency, setLlmResponseLatency] = useState(0);
+  const [llmTokenLatency, setLlmTokenLatency] = useState(0);
   const [ttsLatency, setTtsLatency] = useState(0);
-  const active = () => Boolean(chatManager) && chatManager!.state != ChatManagerState.IDLE;
-  const handleStart = () => {
+  const active = () => chatManager && chatManager!.state != ChatManagerState.IDLE;
+  useEffect(() => init(), [asrProvider, asrLanguage, ttsProvider, ttsVoice, model, agentId, docs]);
+  const init = () => {
+    console.log(`[page] init asr=${asrProvider} tts=${ttsProvider} llm=${model} agent=${agentId} docs=${docs}`);
     const manager = new ChatManager({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, agentId, docs });
-    setInput('');
-    setOutput('');
-    setAsrLatency(0);
-    setLlmLatency(0);
-    setTtsLatency(0);
     setChatManager(manager);
-    manager.start('');
     manager.onStateChange = (state) => {
-      console.log(`state=${state}`);
       switch (state) {
         case ChatManagerState.LISTENING:
           setHelpText('Listening...');
@@ -221,35 +241,43 @@ const AgentPageComponent: React.FC = () => {
     };
     manager.onInputChange = (text, final, latency) => {
       setInput(text);
-      if (latency) {
+      if (final && latency) {
         setAsrLatency(latency);
+        setLlmResponseLatency(0);
+        setLlmTokenLatency(0);
+        setTtsLatency(0);
       }
-      setLlmLatency(0);
-      setTtsLatency(0);
     };
     manager.onOutputChange = (text, final, latency) => {
       setOutput(text);
       if (final) {
         setInput('');
       }
-      setLlmLatency((prev) => (prev ? prev : latency));
+      setLlmResponseLatency((prev) => (prev ? prev : latency));
+    };
+    manager.onAudioGenerate = (latency) => {
+      setLlmTokenLatency(latency);
     };
     manager.onAudioStart = (latency) => {
       setTtsLatency(latency);
     };
     manager.onError = () => {
-      chatManager!.stop();
-      setChatManager(null);
+      manager.stop();
     };
   };
-  const handleStop = () => {
-    if (!chatManager) {
-      return;
-    }
-    chatManager!.stop();
-    setChatManager(null);
+  const handleStart = () => {
+    setInput('');
+    setOutput('');
+    setAsrLatency(0);
+    setLlmResponseLatency(0);
+    setLlmTokenLatency(0);
+    setTtsLatency(0);
+    chatManager!.start('');
   };
-  const speak = () => (chatManager ? chatManager.interrupt() : handleStart());
+  const handleStop = () => {
+    chatManager!.stop();
+  };
+  const speak = () => (active() ? chatManager!.interrupt() : handleStart());
   // Click/tap starts or interrupts.
   const onClick = (event: MouseEvent) => {
     const target = event.target as HTMLElement;
@@ -258,12 +286,19 @@ const AgentPageComponent: React.FC = () => {
     }
   };
   // Spacebar starts or interrupts. Esc quits.
+  // C toggles the chooser. S toggles the stats.
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.keyCode == 32) {
       speak();
       event.preventDefault();
     } else if (event.keyCode == 27) {
       handleStop();
+      event.preventDefault();
+    } else if (event.keyCode == 67) {
+      setShowChooser((prev) => !prev);
+      event.preventDefault();
+    } else if (event.keyCode == 83) {
+      setShowStats((prev) => !prev);
       event.preventDefault();
     }
   };
@@ -279,11 +314,20 @@ const AgentPageComponent: React.FC = () => {
   return (
     <>
       {showChooser && (
-        <div className="absolute top-1 right-1">
+        <div className="absolute top-1 left-1">
           <Dropdown label="Agent" param="agent" value={agentId} options={AGENT_IDS} />
           <Dropdown label="ASR" param="asr" value={asrProvider} options={ASR_PROVIDERS} />
           <Dropdown label="LLM" param="llm" value={model} options={LLM_MODELS} />
           <Dropdown label="TTS" param="tts" value={ttsProvider} options={TTS_PROVIDERS} />
+        </div>
+      )}
+      {showStats && (
+        <div className="absolute top-1 right-1">
+          <Stat name="ASR" latency={asrLatency} />
+          <Stat name="LLM" latency={llmResponseLatency} />
+          <Stat name="LLMT" latency={llmTokenLatency} />
+          <Stat name="TTS" latency={ttsLatency} />
+          <Stat name="Total" latency={asrLatency + llmResponseLatency + llmTokenLatency + ttsLatency} />
         </div>
       )}
       <div className="w-full flex flex-col items-center justify-center text-center">
@@ -325,16 +369,6 @@ const AgentPageComponent: React.FC = () => {
             </Button>
           )}
         </div>
-        {showStats && (
-          <div className="flex justify-center">
-            <span className="text-sm font-mono">
-              <Latency name="ASR" latency={asrLatency} /> |
-              <Latency name="LLM" latency={llmLatency} /> |
-              <Latency name="TTS" latency={ttsLatency} /> |
-              <Latency name="" latency={asrLatency + llmLatency + ttsLatency} />
-            </span>
-          </div>
-        )}
       </div>
     </>
   );
