@@ -12800,8 +12800,8 @@ __metadata:
     untildify: ^5.0.0
     watcher: ^2.3.0
   peerDependencies:
-    react: ^18.2.0
-    react-dom: ^18.2.0
+    react: ^16.8.0  || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0  || ^17.0.0 || ^18.0.0
   peerDependenciesMeta:
     "@types/react-dom":
       optional: true
