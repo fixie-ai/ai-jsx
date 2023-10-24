@@ -34,12 +34,12 @@ export class AgentDoesNotExistError extends Error {
  * the API endxpoint.
  */
 export class FixieClientError extends Error {
-  url: string;
+  url: URL;
   statusCode: number;
   statusText: string;
   detail: unknown;
 
-  constructor(url: string, statusCode: number, statusText: string, message?: string, detail: unknown = {}) {
+  constructor(url: URL, statusCode: number, statusText: string, message?: string, detail: unknown = {}) {
     super(message);
     this.url = url;
     this.statusCode = statusCode;
@@ -98,10 +98,10 @@ export class IsomorphicFixieClient {
     if (this.apiKey) {
       headers.Authorization = `Bearer ${this.apiKey}`;
     }
+    const url = new URL(path, this.url);
     if (debug) {
-      console.log(`[Fixie request] ${this.url}${path}`, bodyData);
+      console.log(`[Fixie request] ${url}`, bodyData);
     }
-    const url = `${this.url}${path}`;
     const res = await fetch(url, {
       ...options,
       method: fetchMethod,
@@ -137,7 +137,12 @@ export class IsomorphicFixieClient {
   ): Promise<ReadableStream<T>> {
     const response = await this.request(path, bodyData, method);
     if (response.body === null) {
-      throw new FixieClientError(path, response.status, response.statusText, 'Response body was null');
+      throw new FixieClientError(
+        new URL(path, this.url),
+        response.status,
+        response.statusText,
+        'Response body was null'
+      );
     }
 
     let buffer = '';
