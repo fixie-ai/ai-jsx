@@ -403,7 +403,9 @@ export abstract class SpeechRecognitionBase extends EventTarget {
           console.log(`[${this.name}] voice activity end ts=${update.timestamp} duration=${update.duration} ms`);
           this.streamLastVoiceActivity = update;
         } else {
-          console.log(`[${this.name}] ignoring spurious voice activity, ts=${update.timestamp} duration=${update.duration}`);
+          console.log(
+            `[${this.name}] ignoring spurious voice activity, ts=${update.timestamp} duration=${update.duration}`
+          );
         }
       }
     });

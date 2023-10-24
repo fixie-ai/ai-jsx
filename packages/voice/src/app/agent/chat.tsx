@@ -351,9 +351,13 @@ export class ChatManager {
     const request = this.pendingRequests.get(normalized);
     let adjustedLatency = latency;
     if (adjustedLatency && final && request) {
-      adjustedLatency -= (performance.now() - request.startMillis!);
+      adjustedLatency -= performance.now() - request.startMillis!;
     }
-    console.log(`[chat] asr transcript="${normalized}" ${request ? 'HIT' : 'MISS'}${final ? ' FINAL' : ''} latency=${adjustedLatency?.toFixed(0)} ms`);
+    console.log(
+      `[chat] asr transcript="${normalized}" ${request ? 'HIT' : 'MISS'}${
+        final ? ' FINAL' : ''
+      } latency=${adjustedLatency?.toFixed(0)} ms`
+    );
     this.onInputChange?.(text, final, latency);
 
     // Ignore partial transcripts if VAD indicates the user is still speaking.
