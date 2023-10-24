@@ -206,10 +206,10 @@ const AgentPageComponent: React.FC = () => {
   const model = searchParams.get('llm') || DEFAULT_LLM;
   const agentId = searchParams.get('agent') || 'dr-donut';
   const docs = searchParams.get('docs') !== null;
-  const showChooser = searchParams.get('chooser') !== null;
+  const [showChooser, setShowChooser] = useState(searchParams.get('chooser') !== null);
   const showInput = searchParams.get('input') !== null;
   const showOutput = searchParams.get('output') !== null;
-  const showStats = searchParams.get('stats') !== null;
+  const [showStats, setShowStats] = useState(searchParams.get('stats') !== null);
   const [chatManager, setChatManager] = useState<ChatManager | null>();
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
@@ -286,12 +286,19 @@ const AgentPageComponent: React.FC = () => {
     }
   };
   // Spacebar starts or interrupts. Esc quits.
+  // C toggles the chooser. S toggles the stats.
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.keyCode == 32) {
       speak();
       event.preventDefault();
     } else if (event.keyCode == 27) {
       handleStop();
+      event.preventDefault();
+    } else if (event.keyCode == 67) {
+      setShowChooser((prev) => !prev);
+      event.preventDefault();
+    } else if (event.keyCode == 83) {
+      setShowStats((prev) => !prev);
       event.preventDefault();
     }
   };
