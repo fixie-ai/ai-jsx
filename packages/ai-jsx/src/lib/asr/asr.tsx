@@ -56,7 +56,7 @@ export function normalizeText(text: string) {
  * in milliseconds when the voice activity changed, as reported by the VAD.
  */
 export class VoiceActivity {
-  constructor(public active: boolean, public timestamp: number) {}
+  constructor(public active: boolean, public timestamp: number, public duration?: number) {}
 }
 
 /**
@@ -77,6 +77,7 @@ export class MicManager extends EventTarget {
   private processorNode?: AudioWorkletNode;
   private analyzerNode?: AnalyserNode;
   private vad?: VoiceActivityDetectorBase;
+  private vadStartMillis: number = 0;
 
   /**
    * Starts capture from the microphone.
@@ -123,6 +124,12 @@ export class MicManager extends EventTarget {
   /**
    * Returns the sample rate of the capturer.
    */
+  get capturedSamples() {
+    return this.numSamples;
+  }
+  /**
+   * Returns the sample rate of the capturer.
+   */
   get sampleRate() {
     return this.context ? this.context.sampleRate : 0;
   }
@@ -149,6 +156,20 @@ export class MicManager extends EventTarget {
    */
   get analyzer() {
     return this.analyzerNode;
+  }
+  /**
+   * Returns whether the capturer is unmuted.
+   */
+  get isEnabled() {
+    return this.stream?.getAudioTracks()[0].enabled ?? false;
+  }
+  /**
+   * Enables or disables the capturer.
+   */
+  set isEnabled(enabled: boolean) {
+    if (this.stream) {
+      this.stream.getAudioTracks()[0].enabled = enabled;
+    }
   }
 
   /**
@@ -217,12 +238,17 @@ export class MicManager extends EventTarget {
     // Start the VAD.
     this.vad = new LibfVoiceActivityDetector(this.sampleRate);
     this.vad.onVoiceStart = () => {
-      console.log(`Speech begin: ${this.currentMillis.toFixed(0)} ms`);
-      this.dispatchEvent(new CustomEvent('vad', { detail: new VoiceActivity(true, this.currentMillis) }));
+      const now = this.currentMillis;
+      console.debug(`[vad] speech start: ${now.toFixed(0)} ms`);
+      this.vadStartMillis = now;
+      this.dispatchEvent(new CustomEvent('vad', { detail: new VoiceActivity(true, now) }));
     };
     this.vad.onVoiceEnd = () => {
-      console.log(`Speech FINAL: ${this.currentMillis.toFixed(0)} ms`);
-      this.dispatchEvent(new CustomEvent('vad', { detail: new VoiceActivity(false, this.currentMillis) }));
+      const now = this.currentMillis;
+      const duration = now - this.vadStartMillis;
+      console.debug(`[vad] speech end: ${now.toFixed(0)} ms`);
+      this.vadStartMillis = 0;
+      this.dispatchEvent(new CustomEvent('vad', { detail: new VoiceActivity(false, now, duration) }));
     };
     this.vad.start();
 
@@ -290,22 +316,17 @@ export class Transcript {
 /**
  * Base class for live speech recognizers that wraps a web socket
  * connection to a speech recognition server.
- * Override handleOpen/handleMessage/sendChunk to customize for a particular
+ * Override createOpenRequest/handleMessage/sendChunk to customize for a particular
  * speech recognition service.
  */
 export abstract class SpeechRecognitionBase extends EventTarget {
-  /** A wall time representing when the first chunk was sent. */
-  private initialChunkMillis: number = 0;
-  /** A relative time indicating how much audio data has been sent. */
-  private streamSentMillis: number = 0;
   /** A relative time indicating how much audio data has been recognized. */
   protected streamRecognizedMillis: number = 0;
-  /** A relative time indicating the first time a transcript was received for the current utterance. */
-  protected streamFirstTranscriptMillis: number = 0;
-  /** A relative time indicating when local VAD indicated the end of the current utterance. */
-  protected streamLastVoiceEndMillis: number = 0;
+  /** The voice activity object for the most recent utterance. */
+  protected streamLastVoiceActivity?: VoiceActivity;
   private outBuffer: ArrayBuffer[] = [];
   protected socket?: WebSocket;
+  protected socketReady: boolean = false;
 
   constructor(
     protected name: string,
@@ -338,12 +359,17 @@ export abstract class SpeechRecognitionBase extends EventTarget {
     console.log(`[${this.name}] socket connecting...`);
     this.outBuffer = [];
     this.socket = new WebSocket(url, protocols);
+    this.socketReady = false;
     this.socket.binaryType = 'arraybuffer';
-    this.socket.onopen = (_event) => {
+    this.socket.onopen = async (_event) => {
       const elapsed = performance.now() - startTime;
       console.log(`[${this.name}] socket opened, elapsed=${elapsed.toFixed(0)}`);
-      this.handleOpen();
+      const req = await this.createOpenRequest();
+      if (req) {
+        this.socket!.send(JSON.stringify(req));
+      }
       this.flush();
+      this.socketReady = true;
     };
     this.socket.onmessage = (event) => {
       let result;
@@ -363,39 +389,26 @@ export abstract class SpeechRecognitionBase extends EventTarget {
     };
     this.manager.addEventListener('chunk', (evt: CustomEventInit<ArrayBuffer>) => {
       const chunk = evt.detail!;
-      if (this.socket!.readyState == 1) {
+      if (this.socketReady) {
         this.sendChunk(chunk);
-        // Set our reference time for computing latency when sending our first unbuffered chunk.
-        if (this.initialChunkMillis == 0) {
-          this.initialChunkMillis = performance.now() - this.streamSentMillis;
-        }
-      } else if (this.socket!.readyState == 0) {
+      } else {
         // If the web socket isn't open yet, buffer the chunk.
         this.outBuffer.push(chunk);
-      } else {
-        console.error(`[${this.name}] socket closed`);
       }
-      this.streamSentMillis += (chunk.byteLength / (2 * this.manager.sampleRate)) * 1000;
     });
     this.manager.addEventListener('vad', (evt: CustomEventInit<VoiceActivity>) => {
       const update = evt.detail!;
       if (!update.active) {
-        if (this.streamLastVoiceEndMillis === 0 && this.streamFirstTranscriptMillis !== 0) {
-          this.streamLastVoiceEndMillis = update.timestamp;
+        if (!this.streamLastVoiceActivity || update.duration! > this.streamLastVoiceActivity.duration!) {
+          console.log(`[${this.name}] voice activity end ts=${update.timestamp} duration=${update.duration} ms`);
+          this.streamLastVoiceActivity = update;
         } else {
-          console.log(`[${this.name}] unexpected voice end at ${update.timestamp}`);
+          console.log(
+            `[${this.name}] ignoring spurious voice activity, ts=${update.timestamp} duration=${update.duration}`
+          );
         }
       }
     });
-  }
-  /**
-   * Computes the delta between now and a relative time in the stream.
-   */
-  private computeLatency(streamMillis: number) {
-    if (!this.initialChunkMillis) {
-      return;
-    }
-    return performance.now() - (this.initialChunkMillis + streamMillis);
   }
 
   protected dispatchTranscript(transcript: string, final: boolean, recognizedMillis: number) {
@@ -405,19 +418,21 @@ export abstract class SpeechRecognitionBase extends EventTarget {
     }
 
     this.streamRecognizedMillis = recognizedMillis;
-    const reportedLatency = this.computeLatency(recognizedMillis);
+    const reportedLatency = this.manager.currentMillis - recognizedMillis;
     let observedLatency;
     if (final) {
-      observedLatency = this.computeLatency(this.streamLastVoiceEndMillis);
-      this.streamFirstTranscriptMillis = this.streamLastVoiceEndMillis = 0;
-    } else if (this.streamFirstTranscriptMillis == 0) {
-      this.streamFirstTranscriptMillis = recognizedMillis;
+      if (this.streamLastVoiceActivity) {
+        observedLatency = this.manager.currentMillis - this.streamLastVoiceActivity.timestamp;
+        this.streamLastVoiceActivity = undefined;
+      } else {
+        console.warn(`[${this.name}] no voice activity end detected prior to final transcript`);
+      }
     }
     const event = new CustomEvent('transcript', {
       detail: new Transcript(
         transcript,
         final,
-        performance.now() - this.initialChunkMillis,
+        this.manager.currentMillis,
         recognizedMillis,
         reportedLatency,
         observedLatency
@@ -425,7 +440,7 @@ export abstract class SpeechRecognitionBase extends EventTarget {
     });
     this.dispatchEvent(event);
   }
-  protected handleOpen() {}
+  protected createOpenRequest(): any {}
   protected handleMessage(_result: any) {}
   protected sendChunk(chunk: ArrayBuffer) {
     this.socket!.send(chunk);
@@ -446,10 +461,9 @@ export abstract class SpeechRecognitionBase extends EventTarget {
  * https://developers.deepgram.com/reference/streaming
  */
 export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
-  private buf: string;
+  private buf = '';
   constructor(manager: MicManager, tokenFunc: GetToken, language?: string, model?: string) {
     super('deepgram', manager, tokenFunc, language, model);
-    this.buf = '';
   }
   async start() {
     this.buf = '';
@@ -591,23 +605,22 @@ export class SonioxSpeechRecognition extends SpeechRecognitionBase {
  * https://docs.gladia.io/reference/live-audio
  */
 export class GladiaSpeechRecognition extends SpeechRecognitionBase {
-  private token?: string;
+  private tokenPromise?: Promise<string>;
   constructor(manager: MicManager, tokenFunc: GetToken, language?: string) {
     super('gladia', manager, tokenFunc, language);
   }
-  async start() {
-    this.token = await this.fetchToken();
+  start() {
+    this.tokenPromise = this.fetchToken();
     super.startInternal('wss://api.gladia.io/audio/text/audio-transcription');
   }
-  protected handleOpen() {
-    const obj = {
-      x_gladia_key: this.token,
+  protected async createOpenRequest() {
+    return {
+      x_gladia_key: await this.tokenPromise,
       sample_rate: this.manager.sampleRate,
       encoding: 'wav',
       // 300ms endpointing by default
       language: this.language?.slice(0, 2) == 'en' ? 'english' : null,
     };
-    this.socket!.send(JSON.stringify(obj));
   }
   /**
    * Parses a transcript message in the following format:
@@ -683,18 +696,17 @@ export class AssemblyAISpeechRecognition extends SpeechRecognitionBase {
  * https://docs.speechmatics.com/rt-api-ref
  */
 export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
-  private buf: string;
+  private buf = '';
   constructor(manager: MicManager, tokenFunc: GetToken, language?: string) {
     super('speechmatics', manager, tokenFunc, language);
-    this.buf = '';
   }
   async start() {
+    this.buf = '';
     const languageCode = this.language?.slice(0, 2) ?? 'en';
     super.startInternal(`wss://eu.rt.speechmatics.com/v2/${languageCode}?jwt=${await this.fetchToken()}`);
   }
-  protected handleOpen() {
-    this.buf = '';
-    const obj = {
+  protected createOpenRequest() {
+    return {
       message: 'StartRecognition',
       audio_format: {
         type: 'raw',
@@ -707,7 +719,6 @@ export class SpeechmaticsSpeechRecognition extends SpeechRecognitionBase {
         max_delay: 2, // the minimum (seconds)
       },
     };
-    this.socket!.send(JSON.stringify(obj));
   }
   /**
    * Parses a transcript message in the following format:

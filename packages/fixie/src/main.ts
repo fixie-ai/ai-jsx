@@ -502,6 +502,17 @@ agent
     )
   );
 
+agent
+  .command('logs <agentId>')
+  .description('Fetch agent logs.')
+  .action(
+    catchErrors(async (agentId: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await FixieAgent.GetAgent(client, agentId);
+      showResult(await result.getLogs(), program.opts().raw);
+    })
+  );
+
 registerDeployCommand(agent);
 registerServeCommand(agent);
 

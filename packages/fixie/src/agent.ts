@@ -48,6 +48,15 @@ export interface AgentRevision {
   created: Date;
 }
 
+/** Represents an Agent Log entry. */
+export interface AgentLogEntry {
+  timestamp: Date;
+  traceId?: string;
+  spanId?: string;
+  severity?: number;
+  message?: string;
+}
+
 /**
  * This class provides an interface to the Fixie Agent API.
  */
@@ -248,6 +257,17 @@ export class FixieAgent {
       },
     });
     this.metadata = await FixieAgent.getAgentById(this.client, this.agentId);
+  }
+
+  /** Return logs for this Agent. Returns the last 15 minutes of agent logs. */
+  async getLogs(): Promise<AgentLogEntry[]> {
+    // TODO: Expand parameters here to specify start/end times, deal with pagination, etc.
+    const retval = await this.client.request(`/api/v1/agents/${this.metadata.uuid}/logs`);
+    if (retval.status !== 200) {
+      return [];
+    }
+    const logs = (await retval.json()) as { logs: AgentLogEntry[] };
+    return logs.logs;
   }
 
   /** Load an agent configuration from the given directory. */

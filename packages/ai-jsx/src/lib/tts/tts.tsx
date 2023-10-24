@@ -153,7 +153,7 @@ abstract class AudioDecoder {
  * A streaming MP3 decoder, using mpg123-decoder.
  * See https://www.mp3-tech.org/programmer/frame_header.html
  */
-class Mp3Decoder extends AudioDecoder {
+export class Mp3Decoder extends AudioDecoder {
   private readonly decoder: MPEGDecoder;
   private readonly decoderReadyPromise: Promise<void>;
   constructor() {
@@ -182,7 +182,7 @@ class Mp3Decoder extends AudioDecoder {
  * A streaming WAV decoder.
  * See http://midi.teragonaudio.com/tech/wave.htm
  */
-class WavDecoder extends AudioDecoder {
+export class WavDecoder extends AudioDecoder {
   private static readonly RIFF_TAG = 'RIFF';
   private static readonly FMT_TAG = 'fmt ';
   private static readonly DATA_TAG = 'data';
@@ -202,6 +202,7 @@ class WavDecoder extends AudioDecoder {
     this.processBuffer();
   }
   flush() {
+    this.buffer = new Uint8Array(0);
     this.gotRiff = false;
     this.sampleRate = undefined;
     this.numChannels = undefined;
@@ -446,7 +447,7 @@ class AudioStream {
  * playout avoids some of the problems associated with using WebAudio
  * directly, e.g., audio not playing on iOS when the phone is on silent.
  */
-class AudioOutputManager extends EventTarget {
+export class AudioOutputManager extends EventTarget {
   private context?: AudioContext;
   private readonly streams: Map<string, AudioStream> = new Map<string, AudioStream>();
   async start() {
@@ -455,6 +456,9 @@ class AudioOutputManager extends EventTarget {
     }
     this.context = new AudioContext();
     console.log(`AudioOutputManager starting, sample rate=${this.context.sampleRate}`);
+
+    // Precompile the WASM for the MP3 decoder to ensure it's ready when needed.
+    new Mp3Decoder();
 
     const workletSrcBlob = new Blob([AUDIO_WORKLET_SRC], {
       type: 'application/javascript',
@@ -548,17 +552,20 @@ export type GetToken = (provider: string) => Promise<string>;
  * infrastructure for playing audio using the HTML5 audio element.
  */
 export abstract class TextToSpeechBase {
-  protected audio: HTMLAudioElement;
-  protected playing = false;
+  constructor(protected readonly name: string, public voice: string, public rate: number, public model?: string) {}
 
   /**
-   * The time (performance.now()) when the play() method was first called.
+   * The latency between when the play() method is called and when the first TTS request is made.
    */
-  protected playMillis: number = 0;
+  public bufferLatency: number = 0.0;
   /**
    * The latency between when the play() method is called and when the audio starts playing.
    */
   public latency: number = 0.0;
+  /**
+   * Called when the first TTS request is made.
+   */
+  public onGenerating?: () => void;
   /**
    * Called when the generated audio has started playing.
    */
@@ -572,39 +579,15 @@ export abstract class TextToSpeechBase {
    */
   public onError?: (error: Error) => void;
 
-  constructor(protected readonly name: string) {
-    this.audio = new Audio();
-    this.audio.onplay = () => console.log(`[${this.name}] tts playing`);
-    this.audio.onpause = () => console.log(`[${this.name}] tts paused`);
-    this.audio.onloadstart = () => console.log(`[${this.name}] tts loadstart`);
-    this.audio.onloadeddata = () => console.log(`[${this.name}] tts loadeddata`);
-    this.audio.oncanplay = () => console.log(`[${this.name}] tts canplay`);
-  }
-  protected setPlaying() {
-    console.log(`[${this.name}] tts playing`);
-    if (this.playMillis) {
-      this.latency = Math.floor(performance.now() - this.playMillis);
-      console.log(`[${this.name}] tts play latency: ${this.latency} ms`);
-    }
-    this.playing = true;
-    this.onPlaying?.();
-  }
-  protected setComplete(error?: Error) {
-    console.log(`[${this.name}] tts complete`);
-    this.playing = false;
-    if (error) {
-      this.onError?.(error);
-    } else {
-      this.onComplete?.();
-    }
-  }
-
   /**
    * Whether audio is currently playing.
    */
-  get isPlaying(): boolean {
-    return this.playing;
-  }
+  abstract get isPlaying(): boolean;
+
+  /**
+   * Gets an analyzer node for the current audio stream.
+   */
+  abstract get analyzer(): AnalyserNode | undefined;
 
   /**
    * Warms up the text-to-speech service to prepare for an upcoming generation.
@@ -636,39 +619,6 @@ export abstract class TextToSpeechBase {
 }
 
 /**
- * A text-to-speech service that requests audio from a server and
- * plays it in one shot using the HTML5 audio element. The URL to request
- * audio from the server is constructed using the provided BuildUrl function,
- * allowing this class to be used with a variety of text-to-speech services.
- */
-export class SimpleTextToSpeech extends TextToSpeechBase {
-  constructor(
-    name: string,
-    protected readonly urlFunc: BuildUrl,
-    public readonly voice: string,
-    public readonly rate = 1.0
-  ) {
-    super(name);
-    this.audio.onplaying = () => this.setPlaying();
-  }
-  play(text: string) {
-    this.playMillis = performance.now();
-    this.audio.src = this.urlFunc({ provider: this.name, text, voice: this.voice, rate: this.rate });
-    this.audio.play();
-  }
-  flush() {}
-  warmup() {}
-  stop() {
-    console.log(`[${this.name}] tts stopping`);
-    this.audio.src = '';
-  }
-  close() {
-    console.log(`[${this.name}] tts closing`);
-    this.audio.pause();
-  }
-}
-
-/**
  * Defines a text-to-speech service that requests individual audio utterances
  * from a server and plays them out using Web Audio and <audio> elements.
  * This approach reduces latency by allowing the audio to be streamed as it is
@@ -678,24 +628,39 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
  * RestTextToSpeech and WebSocketTextToSpeech.
  */
 export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
-  private streamId: string = '';
+  private readonly audio: HTMLAudioElement;
   private inProgress = false;
-  constructor(name: string) {
-    super(name);
+  private playing = false;
+  protected playMillis = 0;
+  private streamId: string = '';
+  // TODO(juberti): prevent these params from being mutated while the TTS is active.
+  constructor(name: string, voice: string, rate: number, model?: string) {
+    super(name, voice, rate, model);
+    this.audio = new Audio();
+    this.audio.onplay = () => console.log(`[${this.name}] tts playing`);
+    this.audio.onpause = () => console.debug(`[${this.name}] tts paused`);
+    this.audio.onloadstart = () => console.debug(`[${this.name}] tts loadstart`);
+    this.audio.onloadeddata = () => console.debug(`[${this.name}] tts loadeddata`);
+    this.audio.oncanplay = () => console.debug(`[${this.name}] tts canplay`);
     this.audio.onwaiting = () => console.log(`[${this.name}] tts waiting`);
   }
+
+  get isPlaying() {
+    return this.playing;
+  }
+
   play(text: string) {
     if (this.audio.readyState == 0) {
       console.log(`[${this.name}] tts starting play`);
       this.audio.srcObject = outputManager.createStream();
       this.streamId = this.audio.srcObject.id;
       outputManager.addEventListener('playing', (event: CustomEventInit<string>) => {
-        if (event.detail == this.streamId) {
+        if (event.detail == this.streamId && !this.isPlaying) {
           this.setPlaying();
         }
       });
       outputManager.addEventListener('waiting', (event: CustomEventInit<string>) => {
-        if (event.detail == this.streamId) {
+        if (event.detail == this.streamId && !this.isGenerating()) {
           this.setComplete();
         }
       });
@@ -703,6 +668,7 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
     }
     if (!this.inProgress) {
       this.playMillis = performance.now();
+      this.bufferLatency = this.latency = 0;
       this.inProgress = true;
     }
     this.generate(text);
@@ -735,6 +701,32 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
     return outputManager.getAnalyzer(this.streamId);
   }
 
+  protected setGenerating(_text: string) {
+    console.log(`[${this.name}] tts generating`);
+    this.onGenerating?.();
+  }
+  protected setPlaying() {
+    console.log(`[${this.name}] tts playing`);
+    if (this.playMillis) {
+      this.latency = Math.floor(performance.now() - this.playMillis);
+      const requestLatency = this.latency - this.bufferLatency;
+      console.log(
+        `[${this.name}] tts latency: buffer=${this.bufferLatency} ms request=${requestLatency} ms total=${this.latency} ms`
+      );
+    }
+    this.playing = true;
+    this.onPlaying?.();
+  }
+  protected setComplete(error?: Error) {
+    console.log(`[${this.name}] tts complete`);
+    this.playing = false;
+    if (error) {
+      this.onError?.(error);
+    } else {
+      this.onComplete?.();
+    }
+  }
+
   /**
    * Adds a chunk to the pending chunk buffer, and starts processing the buffer, if possible.
    * The chunk can be a placeholder without any data if the data will be added later;
@@ -754,6 +746,7 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
   }
 
   protected abstract generate(_text: string): void;
+  protected abstract isGenerating(): boolean;
   protected abstract doFlush(): void;
   protected abstract stopGeneration(): void;
   protected tearDown() {
@@ -779,14 +772,8 @@ class TextToSpeechRequest {
 export class RestTextToSpeech extends WebAudioTextToSpeech {
   private pendingText: string = '';
   private readonly requestQueue: TextToSpeechRequest[] = [];
-  constructor(
-    name: string,
-    private readonly urlFunc: BuildUrl,
-    public readonly voice: string,
-    public readonly rate: number = 1.0,
-    public readonly model?: string
-  ) {
-    super(name);
+  constructor(name: string, private readonly urlFunc: BuildUrl, voice: string, rate: number, model?: string) {
+    super(name, voice, rate, model);
   }
   async warmup() {
     const warmupMillis = performance.now();
@@ -815,6 +802,9 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       }
     }
     this.pendingText = pendingText;
+  }
+  protected isGenerating() {
+    return this.requestQueue.length > 0;
   }
   protected doFlush() {
     const utterance = this.pendingText.trim();
@@ -853,6 +843,10 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     }
 
     req.sendTimestamp = performance.now();
+    if (!this.bufferLatency) {
+      this.bufferLatency = Math.floor(req.sendTimestamp - this.playMillis);
+      this.setGenerating(req.text);
+    }
     console.log(`[${this.name}] requesting chunk: ${req.shortText}`);
     const res = await this.fetch(req.text);
     if (!res.ok) {
@@ -963,7 +957,8 @@ export class PlayHTTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the Resemble.AI text-to-speech service.
  */
 export class ResembleTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = 'e28236ee'; // Samantha (v2)
+  // static readonly DEFAULT_VOICE = 'e28236ee'; // Samantha (v2)
+  static readonly DEFAULT_VOICE = '266bfae9'; // Samantha (v1)
   constructor(urlFunc: BuildUrl, voice: string = ResembleTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('resemble', urlFunc, voice, rate);
   }
@@ -973,7 +968,7 @@ export class ResembleTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the WellSaid Labs text-to-speech service.
  */
 export class WellSaidTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = '42'; // Sofia H. (Conversational)
+  static readonly DEFAULT_VOICE = '43'; // Ava M. (Conversational)
   constructor(urlFunc: BuildUrl, voice: string = WellSaidTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('wellsaid', urlFunc, voice, rate);
   }
@@ -990,8 +985,8 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
   // Message buffer for when the socket is not yet ready.
   private readonly socketBuffer: string[] = [];
   private pendingText: string = '';
-  constructor(name: string, private readonly url: string, public readonly voice: string) {
-    super(name);
+  constructor(name: string, private readonly url: string, public voice: string) {
+    super(name, voice, 1.0);
     this.warmup();
   }
   warmup() {
@@ -1011,6 +1006,10 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
     const completeText = this.pendingText.substring(0, index);
     this.sendObject(this.createChunkRequest(completeText));
     this.pendingText = this.pendingText.substring(index + 1);
+  }
+  protected isGenerating() {
+    // TODO(juberti): implement this for Eleven (LMNT doesn't tell us this info)
+    return false;
   }
   protected doFlush() {
     console.log(`[${this.name}] flushing`);
@@ -1122,7 +1121,8 @@ interface ElevenLabsOutboundMessage {
 }
 
 /**
- * Text-to-speech implementation that uses Eleven Labs' text-to-speech service.
+ * Text-to-speech implementation that uses Eleven Labs' text-to-speech service,
+ * as described at https://docs.elevenlabs.io/api-reference/text-to-speech-websockets
  */
 export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
   private readonly contentType: string;
