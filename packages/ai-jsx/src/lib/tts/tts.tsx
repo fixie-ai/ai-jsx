@@ -1,6 +1,9 @@
 'use client';
 import { split } from 'sentence-splitter';
 
+// @ts-expect-error
+import { MPEGDecoder } from 'mpg123-decoder';
+
 const AUDIO_WORKLET_SRC = `
 class OutputProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -63,6 +66,7 @@ registerProcessor("output-processor", OutputProcessor);
 `;
 
 const AUDIO_MPEG_MIME_TYPE = 'audio/mpeg';
+const AUDIO_WAV_MIME_TYPE = 'audio/wav';
 const AUDIO_PCM_MIME_TYPE = 'audio/pcm';
 const AUDIO_L16_MIME_TYPE = 'audio/L16';
 
@@ -86,15 +90,355 @@ class AudioChunk {
 }
 
 /**
+ * A chunk of PCM audio data with the specified sample rate in either S16 or F32 format.
+ */
+class AudioPcmBuffer {
+  intBuffer?: Int16Array;
+  floatBuffer?: Float32Array;
+  constructor(public sampleRate: number, buffer: Int16Array | Float32Array) {
+    if (buffer instanceof Int16Array) {
+      this.intBuffer = buffer;
+    } else if (buffer instanceof Float32Array) {
+      this.floatBuffer = buffer;
+    } else {
+      throw new Error('unsupported buffer type');
+    }
+  }
+  get intData() {
+    if (!this.intBuffer) {
+      this.intBuffer = new Int16Array(this.floatBuffer!.length);
+      this.floatBuffer!.forEach((sample, index) => {
+        const i16 = Math.max(-32768, Math.min(32767, Math.floor(sample * 32768)));
+        this.intBuffer![index] = i16;
+      });
+    }
+    return this.intBuffer;
+  }
+  get floatData() {
+    if (!this.floatBuffer) {
+      this.floatBuffer = new Float32Array(this.intBuffer!.length);
+      this.intBuffer!.forEach((sample, index) => {
+        const f32 = sample / 32768;
+        this.floatBuffer![index] = f32;
+      });
+    }
+    return this.floatBuffer;
+  }
+}
+
+/**
+ * A streaming audio decoder.
+ * Consumes chunks of encoded audio data and emits chunks of PCM data.
+ */
+abstract class AudioDecoder {
+  /**
+   * Appends a chunk of encoded audio data to the decoder.
+   */
+  abstract addData(encodedBuffer: ArrayBuffer): void;
+  /**
+   * Flushes any remaining data from the decoder and resets its state.
+   */
+  abstract flush(): void;
+  /**
+   * Called when the decoder has decoded a chunk of PCM data.
+   */
+  onData?: (pcmBuffer: AudioPcmBuffer) => void;
+  /**
+   * Called when the decoder encounters an error.
+   */
+  onError?: (error: Error) => void;
+}
+
+/**
+ * A streaming MP3 decoder, using mpg123-decoder.
+ * See https://www.mp3-tech.org/programmer/frame_header.html
+ */
+export class Mp3Decoder extends AudioDecoder {
+  private readonly decoder: MPEGDecoder;
+  private readonly decoderReadyPromise: Promise<void>;
+  constructor() {
+    super();
+    this.decoder = new MPEGDecoder();
+    this.decoderReadyPromise = this.decoder.ready;
+  }
+  async addData(encodedBuffer: ArrayBuffer) {
+    await this.decoderReadyPromise;
+    const byteBuffer = new Uint8Array(encodedBuffer);
+    const { channelData, samplesDecoded, sampleRate, errors } = this.decoder.decode(byteBuffer);
+    if (errors.length > 0) {
+      this.onError?.(new Error(errors[0].message));
+    } else if (samplesDecoded > 0) {
+      console.debug(`decoded ${samplesDecoded} samples, sample rate=${sampleRate}`);
+      const pcmBuffer = new AudioPcmBuffer(sampleRate, channelData[0]);
+      this.onData?.(pcmBuffer);
+    }
+  }
+  async flush() {
+    await this.decoder.reset();
+  }
+}
+
+/**
+ * A streaming WAV decoder.
+ * See http://midi.teragonaudio.com/tech/wave.htm
+ */
+export class WavDecoder extends AudioDecoder {
+  private static readonly RIFF_TAG = 'RIFF';
+  private static readonly FMT_TAG = 'fmt ';
+  private static readonly DATA_TAG = 'data';
+  private static readonly WAVE_TYPE = 'WAVE';
+  private static readonly RIFF_HEADER_LEN = 12;
+  private static readonly CHUNK_HEADER_LEN = 8;
+  private buffer: Uint8Array = new Uint8Array(0);
+  private gotRiff = false;
+  private sampleRate?: number;
+  private numChannels?: number;
+  private dataRead = 0;
+  addData(encodedBuffer: ArrayBuffer) {
+    const newBuffer = new Uint8Array(this.buffer.length + encodedBuffer.byteLength);
+    newBuffer.set(new Uint8Array(this.buffer), 0);
+    newBuffer.set(new Uint8Array(encodedBuffer), this.buffer.byteLength);
+    this.buffer = newBuffer;
+    this.processBuffer();
+  }
+  flush() {
+    this.buffer = new Uint8Array(0);
+    this.gotRiff = false;
+    this.sampleRate = undefined;
+    this.numChannels = undefined;
+    this.dataRead = 0;
+  }
+  protected processBuffer() {
+    let ok = true;
+    while (ok) {
+      // Our buffer should always start with a chunk header, with a 4-byte tag and length.
+      ok = this.buffer.length >= WavDecoder.CHUNK_HEADER_LEN;
+      if (ok) {
+        const view = new DataView(this.buffer.buffer);
+        const tag = this.getTag(view);
+        const len = view.getUint32(4, true);
+        if (!this.gotRiff) {
+          ok = this.processRiffHeader(tag, len, view);
+        } else if (tag != WavDecoder.DATA_TAG) {
+          ok = this.processMetaChunk(tag, len);
+        } else {
+          ok = this.processData(len);
+        }
+      }
+    }
+  }
+  private getTag(view: DataView, offset = 0): string {
+    let str = '';
+    for (let i = 0; i < 4; i++) {
+      str += String.fromCharCode(view.getUint8(offset + i));
+    }
+    return str;
+  }
+  private processRiffHeader(tag: string, len: number, view: DataView) {
+    // Make sure we have the entire header.
+    if (view.byteLength < WavDecoder.RIFF_HEADER_LEN) {
+      return false;
+    }
+    if (tag != WavDecoder.RIFF_TAG) {
+      this.dispatchError(`expected RIFF tag, got ${tag}`);
+      return false;
+    }
+    const type = this.getTag(view, 8);
+    if (type != WavDecoder.WAVE_TYPE) {
+      this.dispatchError(`expected WAVE type, got ${type}`);
+      return false;
+    }
+    this.gotRiff = true;
+    this.buffer = this.buffer.slice(WavDecoder.RIFF_HEADER_LEN);
+    console.debug(`got RIFF chunk, len=${len}`);
+    return true;
+  }
+  private processMetaChunk(tag: string, len: number) {
+    // We only process complete chunks, so make sure it's all here.
+    const headerLen = WavDecoder.CHUNK_HEADER_LEN;
+    if (this.buffer.length < headerLen + len) {
+      return false;
+    }
+    console.debug(`got chunk, tag=${tag} len=${len}`);
+    if (tag == WavDecoder.FMT_TAG) {
+      const chunk = this.buffer.slice(headerLen, headerLen + len);
+      if (!this.processFmtChunk(chunk)) {
+        return false;
+      }
+    }
+    this.buffer = this.buffer.slice(headerLen + len);
+    return true;
+  }
+  private processFmtChunk(chunk: Uint8Array) {
+    const view = new DataView(chunk.buffer);
+    const format = view.getUint16(0, true);
+    if (format != 1) {
+      this.dispatchError(`expected PCM format, got ${format}`);
+      return false;
+    }
+    this.numChannels = view.getUint16(2, true);
+    if (this.numChannels != 1) {
+      this.dispatchError(`expected 1 channel, got ${this.numChannels}`);
+      return false;
+    }
+    this.sampleRate = view.getUint32(4, true);
+    const bitsPerSample = view.getUint16(14, true);
+    if (bitsPerSample != 16) {
+      this.dispatchError(`expected 16 bits per sample, got ${bitsPerSample}`);
+      return false;
+    }
+    console.debug(`got fmt chunk, channels=${this.numChannels} sampleRate=${this.sampleRate}`);
+    return true;
+  }
+  private processData(len: number) {
+    // When reading the DATA tag, emit data as it's received, rather than waiting for the full chunk.
+    // We only handle L16 PCM data, so we read in multiples of 2.
+    const headerLen = WavDecoder.CHUNK_HEADER_LEN;
+    let available = Math.min(len, this.buffer.length - headerLen) - this.dataRead;
+    if (available % 2 != 0) {
+      available--;
+    }
+    if (available == 0) {
+      return false;
+    }
+    const startPos = WavDecoder.CHUNK_HEADER_LEN + this.dataRead;
+    const dataBuffer = this.buffer.slice(startPos, startPos + available);
+    // The Int16Array must be created from the ArrayBuffer, not the Uint8Array.
+    const pcmBuffer = new AudioPcmBuffer(this.sampleRate!, new Int16Array(dataBuffer.buffer));
+    this.dataRead += available;
+    if (this.dataRead == len) {
+      this.buffer = this.buffer.slice(headerLen + len);
+    }
+    // console.log(`got data chunk, len=${len} available=${available} dataRead=${this.dataRead}`);
+    this.onData?.(pcmBuffer);
+    return true;
+  }
+  private dispatchError(error: string) {
+    this.onError?.(new Error(error));
+  }
+}
+
+/**
  * An internal object used to manage an active audio stream.
  */
 class AudioStream {
-  nextSeqNum = 0;
-  constructor(
-    public outputNode: AudioWorkletNode,
-    public destNode: MediaStreamAudioDestinationNode,
-    public analyzerNode?: AnalyserNode
-  ) {}
+  private readonly outputNode: AudioWorkletNode;
+  private readonly destNode: MediaStreamAudioDestinationNode;
+  private readonly analyzerNode?: AnalyserNode;
+  private nextSeqNum = 0;
+  private decoder?: AudioDecoder;
+  private playing = false;
+  constructor(private readonly context: AudioContext, wantAnalyzer: boolean) {
+    this.outputNode = new AudioWorkletNode(context, 'output-processor');
+    this.destNode = context.createMediaStreamDestination();
+    if (wantAnalyzer) {
+      this.analyzerNode = this.context.createAnalyser();
+      this.outputNode.connect(this.analyzerNode).connect(this.destNode);
+    } else {
+      this.outputNode.connect(this.destNode);
+    }
+    this.outputNode.port.onmessage = (e) => {
+      this.handleBufferProcessed(e.data.seqNum);
+    };
+  }
+  get stream() {
+    return this.destNode.stream;
+  }
+  get streamId() {
+    return this.destNode.stream.id;
+  }
+  get analyzer() {
+    return this.analyzerNode;
+  }
+  appendBuffer(chunk: AudioChunk) {
+    if (chunk.isPcm) {
+      const pcmBuffer = new AudioPcmBuffer(chunk.sampleRate, new Int16Array(chunk.buffer));
+      this.appendPcmBuffer(pcmBuffer);
+      return;
+    }
+    const decoder = this.getDecoder(chunk.mimeType);
+    decoder.addData(chunk.buffer);
+  }
+  flush() {
+    this.decoder?.flush();
+  }
+  close() {
+    this.outputNode.port.onmessage = null;
+    this.outputNode.disconnect();
+  }
+  onPlaying?: (streamId: string) => void;
+  onWaiting?: (streamId: string) => void;
+
+  private getDecoder(mimeType: string) {
+    if (!this.decoder) {
+      if (mimeType == AUDIO_MPEG_MIME_TYPE) {
+        this.decoder = new Mp3Decoder();
+      } else if (mimeType == AUDIO_WAV_MIME_TYPE) {
+        this.decoder = new WavDecoder();
+      } else {
+        throw new Error(`unsupported mime type ${mimeType}`);
+      }
+      this.decoder.onData = (pcmBuffer) => this.appendPcmBuffer(pcmBuffer);
+      this.decoder.onError = (error) => console.error(error);
+    }
+    return this.decoder;
+  }
+  /**
+   * Appends PCM audio data to the output node, converting and resampling if necessary.
+   */
+  private async appendPcmBuffer(inBuffer: AudioPcmBuffer) {
+    const seqNum = this.nextSeqNum++;
+    let buffer = inBuffer;
+    if (buffer.sampleRate != this.context.sampleRate) {
+      buffer = await this.resamplePcmBuffer(buffer);
+    }
+    this.appendNativeBuffer(seqNum, buffer.floatData);
+  }
+  /**
+   * Resamples PCM audio data to the output node's sample rate, converting to f32 if necessary.
+   */
+  private async resamplePcmBuffer(inBuffer: AudioPcmBuffer) {
+    const floatBuffer = inBuffer.floatData;
+    const outSamples = Math.floor((floatBuffer.length * this.context!.sampleRate) / inBuffer.sampleRate);
+    console.debug(
+      `resampling, in len=${floatBuffer.length} out sample rate=${this.context!.sampleRate} out len=${outSamples}`
+    );
+    const offlineContext = new OfflineAudioContext({
+      sampleRate: this.context!.sampleRate,
+      numberOfChannels: 1,
+      length: outSamples,
+    });
+    const source = offlineContext.createBufferSource();
+    source.buffer = new AudioBuffer({
+      sampleRate: inBuffer.sampleRate,
+      length: floatBuffer.length,
+      numberOfChannels: 1,
+    });
+    source.buffer.copyToChannel(floatBuffer, 0);
+    source.connect(offlineContext.destination);
+    source.start(0);
+    const audioBuffer = await offlineContext.startRendering();
+    return new AudioPcmBuffer(audioBuffer.sampleRate, audioBuffer.getChannelData(0));
+  }
+  /**
+   * Appends f32 PCM audio data (with the correct sample rate) to the output node.
+   */
+  private appendNativeBuffer(seqNum: number, buffer: Float32Array) {
+    console.debug(`buf added, seq num=${seqNum} len=${buffer.length}`);
+    const channelData = [buffer];
+    this.outputNode.port.postMessage({ seqNum, channelData });
+    if (!this.playing) {
+      this.playing = true;
+      this.onPlaying?.(this.streamId);
+    }
+  }
+  private handleBufferProcessed(seqNum: number) {
+    console.debug(`buf consumed, seq num=${seqNum}`);
+    if (seqNum == this.nextSeqNum - 1) {
+      this.playing = false;
+      this.onWaiting?.(this.streamId);
+    }
+  }
 }
 
 /**
@@ -103,7 +447,7 @@ class AudioStream {
  * playout avoids some of the problems associated with using WebAudio
  * directly, e.g., audio not playing on iOS when the phone is on silent.
  */
-class AudioOutputManager extends EventTarget {
+export class AudioOutputManager extends EventTarget {
   private context?: AudioContext;
   private readonly streams: Map<string, AudioStream> = new Map<string, AudioStream>();
   async start() {
@@ -111,6 +455,11 @@ class AudioOutputManager extends EventTarget {
       return;
     }
     this.context = new AudioContext();
+    console.log(`AudioOutputManager starting, sample rate=${this.context.sampleRate}`);
+
+    // Precompile the WASM for the MP3 decoder to ensure it's ready when needed.
+    new Mp3Decoder();
+
     const workletSrcBlob = new Blob([AUDIO_WORKLET_SRC], {
       type: 'application/javascript',
     });
@@ -125,31 +474,19 @@ class AudioOutputManager extends EventTarget {
     if (!this.context) {
       throw new Error('AudioOutputManager not started');
     }
-
     this.context.resume();
-    const outputNode = new AudioWorkletNode(this.context, 'output-processor');
-    const destNode = this.context.createMediaStreamDestination();
-    const streamId = destNode.stream.id;
-    let analyzerNode;
-    if (wantAnalyzer) {
-      analyzerNode = this.context.createAnalyser();
-      outputNode.connect(analyzerNode).connect(destNode);
-    } else {
-      outputNode.connect(destNode);
-    }
-    outputNode.port.onmessage = (e) => {
-      this.handleBufferProcessed(streamId, e.data.seqNum);
-    };
-    this.streams.set(streamId, new AudioStream(outputNode, destNode, analyzerNode));
-    return destNode.stream;
+    const audioStream = new AudioStream(this.context!, wantAnalyzer);
+    audioStream.onPlaying = (streamId) => this.handleStreamStateChange(streamId, true);
+    audioStream.onWaiting = (streamId) => this.handleStreamStateChange(streamId, false);
+    this.streams.set(audioStream.streamId, audioStream);
+    return audioStream.stream;
   }
   destroyStream(streamId: string) {
     const audioStream = this.streams.get(streamId);
     if (!audioStream) {
       return;
     }
-    audioStream.outputNode.port.onmessage = null;
-    audioStream.outputNode.disconnect();
+    audioStream.close();
     this.streams.delete(streamId);
   }
   getAnalyzer(streamId: string) {
@@ -157,77 +494,30 @@ class AudioOutputManager extends EventTarget {
     if (!audioStream) {
       return;
     }
-    return audioStream.analyzerNode;
+    return audioStream.analyzer;
   }
-  async appendBuffer(streamId: string, chunk: AudioChunk) {
-    if (chunk.isPcm) {
-      await this.appendPcmBuffer(streamId, chunk.sampleRate, chunk.buffer);
-    } else {
-      await this.appendEncodedBuffer(streamId, chunk.buffer);
-    }
-  }
-  private async appendEncodedBuffer(streamId: string, encodedBuffer: ArrayBuffer) {
-    const seqNum = this.getNextSeqNum(streamId);
-    const buffer = await this.context?.decodeAudioData(encodedBuffer);
-    this.appendNativeBuffer(streamId, seqNum, buffer!.getChannelData(0));
-  }
-  private async appendPcmBuffer(streamId: string, sampleRate: number, inBuffer: ArrayBuffer) {
-    const seqNum = this.getNextSeqNum(streamId);
-    const buffer = await this.resamplePcmBuffer(sampleRate, inBuffer);
-    this.appendNativeBuffer(streamId, seqNum, buffer);
-  }
-  private getNextSeqNum(streamId: string) {
+  appendBuffer(streamId: string, chunk: AudioChunk) {
     const audioStream = this.streams.get(streamId);
     if (!audioStream) {
-      throw new Error('stream not found');
+      throw new Error(`stream ${streamId} not found`);
     }
-    return audioStream.nextSeqNum++;
+    audioStream.appendBuffer(chunk);
   }
-  private async resamplePcmBuffer(inSampleRate: number, inBuffer: ArrayBuffer) {
-    const floatBuffer = this.makeAudioBuffer(inBuffer);
-    if (inSampleRate == this.context!.sampleRate) {
-      return floatBuffer;
+  flush(streamId: string) {
+    const audioStream = this.streams.get(streamId);
+    if (!audioStream) {
+      throw new Error(`stream ${streamId} not found`);
     }
-    const outSamples = Math.floor((floatBuffer.length * this.context!.sampleRate) / inSampleRate);
-    const offlineContext = new OfflineAudioContext({
-      sampleRate: this.context!.sampleRate,
-      numberOfChannels: 1,
-      length: outSamples,
-    });
-    const source = offlineContext.createBufferSource();
-    source.buffer = new AudioBuffer({ sampleRate: inSampleRate, length: floatBuffer.length, numberOfChannels: 1 });
-    source.buffer.copyToChannel(this.makeAudioBuffer(inBuffer), 0);
-    source.connect(offlineContext.destination);
-    source.start(0);
-    const outBuffer = await offlineContext.startRendering();
-    return outBuffer.getChannelData(0);
+    audioStream.flush();
   }
-  private makeAudioBuffer(inBuffer: ArrayBuffer) {
-    const view = new Int16Array(inBuffer);
-    const outBuffer = new Float32Array(view.length);
-    view.forEach((sample, index) => {
-      outBuffer[index] = sample / 32768;
-    });
-    return outBuffer;
-  }
-  private appendNativeBuffer(streamId: string, seqNum: number, buffer: Float32Array) {
+  private handleStreamStateChange(streamId: string, playing: boolean) {
+    // Ensure the stream is still alive.
     const audioStream = this.streams.get(streamId);
     if (!audioStream) {
       return;
     }
-    const channelData = [buffer];
-    console.log(`buf added, seq num=${seqNum}`);
-    audioStream.outputNode.port.postMessage({ seqNum, channelData });
-  }
-  private handleBufferProcessed(streamId: string, seqNum: number) {
-    const audioStream = this.streams.get(streamId);
-    if (!audioStream) {
-      return;
-    }
-    console.log(`buf consumed, seq num=${seqNum}`);
-    if (audioStream.nextSeqNum == seqNum + 1) {
-      this.dispatchEvent(new CustomEvent('waiting', { detail: streamId }));
-    }
+    const event = playing ? 'playing' : 'waiting';
+    this.dispatchEvent(new CustomEvent(event, { detail: streamId }));
   }
 }
 
@@ -262,17 +552,20 @@ export type GetToken = (provider: string) => Promise<string>;
  * infrastructure for playing audio using the HTML5 audio element.
  */
 export abstract class TextToSpeechBase {
-  protected audio: HTMLAudioElement;
-  protected playing = false;
+  constructor(protected readonly name: string, public voice: string, public rate: number, public model?: string) {}
 
   /**
-   * The time (performance.now()) when the play() method was first called.
+   * The latency between when the play() method is called and when the first TTS request is made.
    */
-  protected playMillis: number = 0;
+  public bufferLatency: number = 0.0;
   /**
    * The latency between when the play() method is called and when the audio starts playing.
    */
   public latency: number = 0.0;
+  /**
+   * Called when the first TTS request is made.
+   */
+  public onGenerating?: () => void;
   /**
    * Called when the generated audio has started playing.
    */
@@ -286,39 +579,20 @@ export abstract class TextToSpeechBase {
    */
   public onError?: (error: Error) => void;
 
-  constructor(protected readonly name: string) {
-    this.audio = new Audio();
-    this.audio.onplay = () => console.log(`[${this.name}] tts playing`);
-    this.audio.onpause = () => console.log(`[${this.name}] tts paused`);
-    this.audio.onloadstart = () => console.log(`[${this.name}] tts loadstart`);
-    this.audio.onloadeddata = () => console.log(`[${this.name}] tts loadeddata`);
-    this.audio.oncanplay = () => console.log(`[${this.name}] tts canplay`);
-  }
-  protected setPlaying() {
-    console.log(`[${this.name}] tts playing`);
-    if (this.playMillis) {
-      this.latency = Math.floor(performance.now() - this.playMillis);
-      console.log(`[${this.name}] tts play latency: ${this.latency} ms`);
-    }
-    this.playing = true;
-    this.onPlaying?.();
-  }
-  protected setComplete(error?: Error) {
-    console.log(`[${this.name}] tts complete`);
-    this.playing = false;
-    if (error) {
-      this.onError?.(error);
-    } else {
-      this.onComplete?.();
-    }
-  }
-
   /**
    * Whether audio is currently playing.
    */
-  get isPlaying(): boolean {
-    return this.playing;
-  }
+  abstract get isPlaying(): boolean;
+
+  /**
+   * Gets an analyzer node for the current audio stream.
+   */
+  abstract get analyzer(): AnalyserNode | undefined;
+
+  /**
+   * Warms up the text-to-speech service to prepare for an upcoming generation.
+   */
+  abstract warmup(): void;
 
   /**
    * Converts the given text to speech and plays it using the HTML5 audio element.
@@ -345,38 +619,6 @@ export abstract class TextToSpeechBase {
 }
 
 /**
- * A text-to-speech service that requests audio from a server and
- * plays it in one shot using the HTML5 audio element. The URL to request
- * audio from the server is constructed using the provided BuildUrl function,
- * allowing this class to be used with a variety of text-to-speech services.
- */
-export class SimpleTextToSpeech extends TextToSpeechBase {
-  constructor(
-    name: string,
-    protected readonly urlFunc: BuildUrl,
-    public readonly voice: string,
-    public readonly rate = 1.0
-  ) {
-    super(name);
-    this.audio.onplaying = () => this.setPlaying();
-  }
-  play(text: string) {
-    this.playMillis = performance.now();
-    this.audio.src = this.urlFunc({ provider: this.name, text, voice: this.voice, rate: this.rate });
-    this.audio.play();
-  }
-  flush() {}
-  stop() {
-    console.log(`[${this.name}] tts stopping`);
-    this.audio.src = '';
-  }
-  close() {
-    console.log(`[${this.name}] tts closing`);
-    this.audio.pause();
-  }
-}
-
-/**
  * Defines a text-to-speech service that requests individual audio utterances
  * from a server and plays them out using Web Audio and <audio> elements.
  * This approach reduces latency by allowing the audio to be streamed as it is
@@ -385,22 +627,40 @@ export class SimpleTextToSpeech extends TextToSpeechBase {
  * class is not meant to be used directly, but provides infrastructure for
  * RestTextToSpeech and WebSocketTextToSpeech.
  */
-export class WebAudioTextToSpeech extends TextToSpeechBase {
-  private readonly chunkBuffer: AudioChunk[] = [];
-  private streamId: string = '';
-  private updating = false;
+export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
+  private readonly audio: HTMLAudioElement;
   private inProgress = false;
-  constructor(name: string) {
-    super(name);
+  private playing = false;
+  protected playMillis = 0;
+  private streamId: string = '';
+  // TODO(juberti): prevent these params from being mutated while the TTS is active.
+  constructor(name: string, voice: string, rate: number, model?: string) {
+    super(name, voice, rate, model);
+    this.audio = new Audio();
+    this.audio.onplay = () => console.log(`[${this.name}] tts playing`);
+    this.audio.onpause = () => console.debug(`[${this.name}] tts paused`);
+    this.audio.onloadstart = () => console.debug(`[${this.name}] tts loadstart`);
+    this.audio.onloadeddata = () => console.debug(`[${this.name}] tts loadeddata`);
+    this.audio.oncanplay = () => console.debug(`[${this.name}] tts canplay`);
     this.audio.onwaiting = () => console.log(`[${this.name}] tts waiting`);
   }
+
+  get isPlaying() {
+    return this.playing;
+  }
+
   play(text: string) {
     if (this.audio.readyState == 0) {
       console.log(`[${this.name}] tts starting play`);
       this.audio.srcObject = outputManager.createStream();
       this.streamId = this.audio.srcObject.id;
+      outputManager.addEventListener('playing', (event: CustomEventInit<string>) => {
+        if (event.detail == this.streamId && !this.isPlaying) {
+          this.setPlaying();
+        }
+      });
       outputManager.addEventListener('waiting', (event: CustomEventInit<string>) => {
-        if (event.detail == this.streamId) {
+        if (event.detail == this.streamId && !this.isGenerating()) {
           this.setComplete();
         }
       });
@@ -408,6 +668,7 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     }
     if (!this.inProgress) {
       this.playMillis = performance.now();
+      this.bufferLatency = this.latency = 0;
       this.inProgress = true;
     }
     this.generate(text);
@@ -425,10 +686,9 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     // reset our audio element.
     outputManager.destroyStream(this.streamId!);
     this.streamId = '';
-    this.chunkBuffer.length = 0;
     this.audio.srcObject = null;
     this.audio.currentTime = 0;
-    this.inProgress = false;
+    this.inProgress = this.playing = false;
     this.stopGeneration();
   }
   close() {
@@ -441,147 +701,67 @@ export class WebAudioTextToSpeech extends TextToSpeechBase {
     return outputManager.getAnalyzer(this.streamId);
   }
 
+  protected setGenerating(_text: string) {
+    console.log(`[${this.name}] tts generating`);
+    this.onGenerating?.();
+  }
+  protected setPlaying() {
+    console.log(`[${this.name}] tts playing`);
+    if (this.playMillis) {
+      this.latency = Math.floor(performance.now() - this.playMillis);
+      const requestLatency = this.latency - this.bufferLatency;
+      console.log(
+        `[${this.name}] tts latency: buffer=${this.bufferLatency} ms request=${requestLatency} ms total=${this.latency} ms`
+      );
+    }
+    this.playing = true;
+    this.onPlaying?.();
+  }
+  protected setComplete(error?: Error) {
+    console.log(`[${this.name}] tts complete`);
+    this.playing = false;
+    if (error) {
+      this.onError?.(error);
+    } else {
+      this.onComplete?.();
+    }
+  }
+
   /**
    * Adds a chunk to the pending chunk buffer, and starts processing the buffer, if possible.
    * The chunk can be a placeholder without any data if the data will be added later;
    * this is useful to ensure chunks are played in the correct order.
    */
-  protected queueChunk(chunk: AudioChunk) {
-    this.chunkBuffer.push(chunk);
-    this.processChunkQueue();
+  protected appendChunk(chunk: AudioChunk) {
+    console.debug(`[${this.name}] decoding chunk`);
+    outputManager.appendBuffer(this.streamId, chunk);
   }
 
   /**
    * Processes the first chunk in the ordered chunk buffer, creating a new source node
    * and connecting it to the destination node. If the chunk is pending, no-op.
    */
-  protected async processChunkQueue() {
-    if (!this.updating && this.chunkBuffer.length > 0) {
-      this.updating = true;
-      const chunk = this.chunkBuffer.shift()!;
-      console.log(`[${this.name}] decoding chunk`);
-      await outputManager.appendBuffer(this.streamId, chunk);
-      this.updating = false;
-      if (!this.playing) {
-        this.setPlaying();
-      }
-      setTimeout(() => this.processChunkQueue(), 0);
-    }
+  protected finishGeneration() {
+    outputManager.flush(this.streamId);
   }
 
-  protected generate(_text: string) {}
-  protected doFlush() {}
-  protected stopGeneration() {}
+  protected abstract generate(_text: string): void;
+  protected abstract isGenerating(): boolean;
+  protected abstract doFlush(): void;
+  protected abstract stopGeneration(): void;
   protected tearDown() {
-    this.chunkBuffer.length = 0;
-    this.inProgress = false;
-  }
-}
-
-/**
- * Defines a text-to-speech service that requests individual audio utterances
- * from a server and plays them in series using HTML5's Media Source Extensions.
- * This approach reduces latency by allowing the audio to be streamed as it is
- * generated, rather than waiting for the entire audio file to be generated. It also
- * allows text to be fed to the service in a stream rather than all at once. This
- * class is not meant to be used directly, but provides infrastructure for
- * RestTextToSpeech and WebSocketTextToSpeech.
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-class MseTextToSpeech extends TextToSpeechBase {
-  private readonly mediaSource: MediaSource = new MediaSource();
-  private sourceBuffer?: SourceBuffer;
-  private readonly chunkQueue: ArrayBuffer[] = [];
-  private inProgress = false;
-
-  constructor(name: string) {
-    super(name);
-    this.audio.src = URL.createObjectURL(this.mediaSource);
-    this.audio.onplaying = () => {
-      console.log(`[${this.name}] tts playing`);
-      this.setPlaying();
-    };
-    this.audio.onwaiting = () => {
-      console.log(`[${this.name}] tts waiting`);
-      if (!this.inProgress) {
-        this.setComplete();
-      }
-    };
-    this.mediaSource.onsourceopen = () => {
-      if (!this.sourceBuffer) {
-        this.sourceBuffer = this.mediaSource.addSourceBuffer('audio/mpeg');
-        this.sourceBuffer.onupdateend = () => {
-          this.processChunkQueue();
-        };
-      }
-    };
-  }
-  play(text: string) {
-    if (this.audio.readyState == 0) {
-      console.log(`[${this.name}] tts starting play`);
-      this.audio.play();
-    }
-    if (!this.inProgress) {
-      this.playMillis = performance.now();
-      this.inProgress = true;
-    }
-    this.generate(text);
-  }
-  flush() {
-    if (this.inProgress) {
-      this.doFlush();
-    }
-  }
-
-  stop() {
-    console.log(`[${this.name}] tts skipping`);
-    // Cancel any pending requests, discard any chunks in our queue, and
-    // skip over any audio data already buffered by the audio element.
-    this.sourceBuffer?.abort();
-    this.chunkQueue.length = 0;
-    this.audio.currentTime = this.audio.buffered.end(0);
-    this.inProgress = false;
-    this.stopGeneration();
-  }
-  close() {
-    console.log(`[${this.name}] tts stopping`);
-    this.audio.pause();
-    this.tearDown();
-  }
-
-  /**
-   * Adds a chunk to the pending chunk buffer, and starts processing the buffer, if possible.
-   * The chunk can be a placeholder without any data if the data will be added later;
-   * this is useful to ensure chunks are played in the correct order.
-   */
-  protected queueChunk(chunk: ArrayBuffer) {
-    this.chunkQueue.push(chunk);
-    this.processChunkQueue();
-  }
-
-  /**
-   * Processes the first chunk in the ordered chunk buffer, appending it to the
-   * MSE source buffer if possible. If the chunk is pending, no-op.
-   */
-  protected processChunkQueue() {
-    if (!this.sourceBuffer?.updating && this.chunkQueue.length > 0) {
-      this.sourceBuffer?.appendBuffer(this.chunkQueue.shift()!);
-    }
-  }
-  protected generate(_text: string) {}
-  protected doFlush() {}
-  protected stopGeneration() {}
-  protected tearDown() {
-    this.chunkQueue.length = 0;
     this.inProgress = false;
   }
 }
 
 class TextToSpeechRequest {
+  public shortText: string;
   public readonly createTimestamp: number;
   public sendTimestamp?: number;
+  public cancelled: boolean = false;
   constructor(public text: string) {
     this.createTimestamp = performance.now();
+    this.shortText = text.length > 20 ? `${text.substring(0, 20)}...` : text;
   }
 }
 
@@ -592,14 +772,14 @@ class TextToSpeechRequest {
 export class RestTextToSpeech extends WebAudioTextToSpeech {
   private pendingText: string = '';
   private readonly requestQueue: TextToSpeechRequest[] = [];
-  constructor(
-    name: string,
-    private readonly urlFunc: BuildUrl,
-    public readonly voice: string,
-    public readonly rate: number = 1.0,
-    public readonly model?: string
-  ) {
-    super(name);
+  constructor(name: string, private readonly urlFunc: BuildUrl, voice: string, rate: number, model?: string) {
+    super(name, voice, rate, model);
+  }
+  async warmup() {
+    const warmupMillis = performance.now();
+    await this.fetch(' ');
+    const elapsed = performance.now() - warmupMillis;
+    console.log(`[${this.name}] warmup complete, elapsed=${elapsed.toFixed(0)} ms`);
   }
   protected generate(text: string) {
     // Only send complete sentences to the server, one at a time.
@@ -623,12 +803,19 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     }
     this.pendingText = pendingText;
   }
-  protected async doFlush() {
+  protected isGenerating() {
+    return this.requestQueue.length > 0;
+  }
+  protected doFlush() {
     const utterance = this.pendingText.trim();
     this.pendingText = '';
     if (utterance) {
-      await this.queueRequest(utterance);
+      this.queueRequest(utterance);
     }
+  }
+  protected stopGeneration(): void {
+    console.log(`[${this.name}] cancelling requests`);
+    this.requestQueue.forEach((req) => (req.cancelled = true));
   }
   protected tearDown() {
     this.pendingText = '';
@@ -645,13 +832,23 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
       return;
     }
 
-    const req = this.requestQueue[0];
-    const shortText = req.text.length > 20 ? `${req.text.substring(0, 20)}...` : req.text;
-    console.debug(`[${this.name}] requesting chunk: ${shortText}`);
+    await this.dispatchRequest(this.requestQueue[0]);
+    this.requestQueue.shift();
+    this.processRequestQueue();
+  }
+  private async dispatchRequest(req: TextToSpeechRequest) {
+    if (req.cancelled) {
+      console.log(`[${this.name}] ignoring cancelled request: ${req.shortText}`);
+      return;
+    }
+
     req.sendTimestamp = performance.now();
-    const res = await fetch(
-      this.urlFunc({ provider: this.name, text: req.text, voice: this.voice, rate: this.rate, model: this.model })
-    );
+    if (!this.bufferLatency) {
+      this.bufferLatency = Math.floor(req.sendTimestamp - this.playMillis);
+      this.setGenerating(req.text);
+    }
+    console.log(`[${this.name}] requesting chunk: ${req.shortText}`);
+    const res = await this.fetch(req.text);
     if (!res.ok) {
       this.stop();
       this.setComplete(new Error(`[${this.name}] generation request failed: ${res.status} ${res.statusText}`));
@@ -659,11 +856,26 @@ export class RestTextToSpeech extends WebAudioTextToSpeech {
     }
 
     const contentType = res.headers.get('content-type') ?? AUDIO_MPEG_MIME_TYPE;
-    const chunk = new AudioChunk(contentType, await res.arrayBuffer());
-    console.debug(`[${this.name}] received chunk: ${shortText}, type=${res.headers.get('content-type')}`);
-    this.queueChunk(chunk);
-    this.requestQueue.shift();
-    this.processRequestQueue();
+    console.log(`[${this.name}] received response: ${req.shortText}, type=${res.headers.get('content-type')}`);
+    const reader = res.body!.getReader();
+    while (true) {
+      const { value, done } = await reader.read();
+      // eslint seems to think req.cancelled must be false, perhaps due to the earlier check.
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (req.cancelled) {
+        return;
+      }
+      if (done) {
+        break;
+      }
+      console.debug(`[${this.name}] received chunk buffer: ${req.shortText}, len=${value.length}`);
+      this.appendChunk(new AudioChunk(contentType, value.buffer));
+    }
+    this.finishGeneration();
+  }
+  private fetch(text: string) {
+    const url = this.urlFunc({ provider: this.name, text, voice: this.voice, rate: this.rate, model: this.model });
+    return fetch(url);
   }
 }
 
@@ -735,7 +947,9 @@ export class PlayHTTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE =
     's3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json';
   constructor(urlFunc: BuildUrl, voice: string = PlayHTTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
-    super('playht', urlFunc, voice, rate);
+    // We call the non-edge version so we can use the PlayHT gRPC client, which is faster.
+    super('playht-grpc', urlFunc, voice, rate);
+    this.warmup();
   }
 }
 
@@ -743,7 +957,8 @@ export class PlayHTTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the Resemble.AI text-to-speech service.
  */
 export class ResembleTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = 'e28236ee'; // Samantha (v2)
+  // static readonly DEFAULT_VOICE = 'e28236ee'; // Samantha (v2)
+  static readonly DEFAULT_VOICE = '266bfae9'; // Samantha (v1)
   constructor(urlFunc: BuildUrl, voice: string = ResembleTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('resemble', urlFunc, voice, rate);
   }
@@ -753,7 +968,7 @@ export class ResembleTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the WellSaid Labs text-to-speech service.
  */
 export class WellSaidTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = '42'; // Sofia H. (Conversational)
+  static readonly DEFAULT_VOICE = '43'; // Ava M. (Conversational)
   constructor(urlFunc: BuildUrl, voice: string = WellSaidTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('wellsaid', urlFunc, voice, rate);
   }
@@ -764,17 +979,23 @@ export class WellSaidTextToSpeech extends RestTextToSpeech {
  * server and receives audio chunks as they are generated.
  */
 export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
-  private socket: WebSocket;
-  private socketReady: boolean;
-  // Message buffer for when the socket is not yet open.
+  private socket?: WebSocket;
+  // Whether the socket is open and authed so that we can send requests.
+  private socketReady: boolean = false;
+  // Message buffer for when the socket is not yet ready.
   private readonly socketBuffer: string[] = [];
   private pendingText: string = '';
-  constructor(name: string, private readonly url: string, public readonly voice: string) {
-    super(name);
-    this.socket = this.createSocket(url);
-    this.socketReady = false;
+  constructor(name: string, private readonly url: string, public voice: string) {
+    super(name, voice, 1.0);
+    this.warmup();
+  }
+  warmup() {
+    this.ensureSocket();
   }
   protected generate(text: string) {
+    // Reopen our socket if it timed out.
+    this.ensureSocket();
+
     // Only send complete words (i.e., followed by a space) to the server.
     this.pendingText += text;
     const index = this.pendingText.lastIndexOf(' ');
@@ -785,6 +1006,10 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
     const completeText = this.pendingText.substring(0, index);
     this.sendObject(this.createChunkRequest(completeText));
     this.pendingText = this.pendingText.substring(index + 1);
+  }
+  protected isGenerating() {
+    // TODO(juberti): implement this for Eleven (LMNT doesn't tell us this info)
+    return false;
   }
   protected doFlush() {
     console.log(`[${this.name}] flushing`);
@@ -798,24 +1023,26 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
   }
   protected stopGeneration() {
     // Close our socket and create a new one so that we're not blocked by stale generation.
-    this.socket.close();
+    this.socket?.close();
     this.socketBuffer.length = 0;
     this.pendingText = '';
-    this.socket = this.createSocket(this.url);
-    this.socketReady = false;
+    this.ensureSocket();
   }
   protected tearDown() {
-    this.socket.close();
+    this.socket?.close();
     super.tearDown();
   }
 
   /**
    * Set up a web socket to the given URL, and reconnect if it closes normally
-   * so that we're always ready to generate with minimal latency.
+   * so that we're usually ready to generate with minimal latency.
    */
-  protected createSocket(url: string) {
+  protected ensureSocket() {
+    if (this.socket) {
+      return;
+    }
     const connectMillis = performance.now();
-    const socket = new WebSocket(url);
+    const socket = new WebSocket(this.url);
     socket.binaryType = 'arraybuffer';
     socket.onopen = async (_event) => {
       const elapsed = performance.now() - connectMillis;
@@ -824,7 +1051,7 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
       if (openMsg) {
         this.socketBuffer.unshift(JSON.stringify(openMsg));
       }
-      this.socketBuffer.forEach((json) => this.socket.send(json));
+      this.socketBuffer.forEach((json) => this.socket!.send(json));
       this.socketBuffer.length = 0;
       this.socketReady = true;
     };
@@ -839,7 +1066,7 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
         }
         this.handleMessage(message);
       } else if (event.data instanceof ArrayBuffer) {
-        this.queueChunk(new AudioChunk(AUDIO_MPEG_MIME_TYPE, event.data));
+        this.appendChunk(new AudioChunk(AUDIO_MPEG_MIME_TYPE, event.data));
       }
     };
     socket.onerror = (_event) => {
@@ -849,16 +1076,19 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
       // Reopen the socket if it closed normally, i.e., not due to an error.
       console.log(`[${this.name}] socket closed, code=${event.code} reason=${event.reason}`);
       if (event.code == 1000) {
-        this.socket = this.createSocket(this.socket.url);
+        this.ensureSocket();
+      } else {
+        this.socket = undefined;
         this.socketReady = false;
       }
     };
-    return socket;
+    this.socket = socket;
+    this.socketReady = false;
   }
   protected sendObject(obj: unknown) {
     const json = JSON.stringify(obj);
     if (this.socketReady) {
-      this.socket.send(json);
+      this.socket!.send(json);
     } else {
       this.socketBuffer.push(json);
     }
@@ -891,7 +1121,8 @@ interface ElevenLabsOutboundMessage {
 }
 
 /**
- * Text-to-speech implementation that uses Eleven Labs' text-to-speech service.
+ * Text-to-speech implementation that uses Eleven Labs' text-to-speech service,
+ * as described at https://docs.elevenlabs.io/api-reference/text-to-speech-websockets
  */
 export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
   private readonly contentType: string;
@@ -915,7 +1146,7 @@ export class ElevenLabsWebSocketTextToSpeech extends WebSocketTextToSpeech {
     console.debug(message);
     if (message.audio) {
       console.debug(`[${this.name}] chunk received`);
-      this.queueChunk(new AudioChunk(this.contentType, Buffer.from(message.audio!, 'base64').buffer));
+      this.appendChunk(new AudioChunk(this.contentType, Buffer.from(message.audio!, 'base64').buffer));
     } else if (message.isFinal) {
       console.log(`[${this.name}] utterance complete`);
     } else if (message.error) {
@@ -955,7 +1186,7 @@ class LmntOutboundMessage {
 
 export class LmntWebSocketTextToSpeech extends WebSocketTextToSpeech {
   private readonly tokenPromise: Promise<string>;
-  constructor(private readonly tokenFunc: GetToken, voice = LmntTextToSpeech.DEFAULT_VOICE) {
+  constructor(tokenFunc: GetToken, voice = LmntTextToSpeech.DEFAULT_VOICE) {
     const url = 'wss://api.lmnt.com/speech/beta/synthesize_streaming';
     super('lmnt', url, voice);
     this.tokenPromise = tokenFunc(this.name);
@@ -963,7 +1194,7 @@ export class LmntWebSocketTextToSpeech extends WebSocketTextToSpeech {
   protected async createOpenRequest() {
     return {
       voice: this.voice,
-      'X-Api-Key': await this.tokenFunc(this.name),
+      'X-Api-Key': await this.tokenPromise,
     };
   }
   protected createChunkRequest(text: string): LmntOutboundMessage {

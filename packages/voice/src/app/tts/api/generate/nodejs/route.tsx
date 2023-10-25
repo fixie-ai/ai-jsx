@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import * as PlayHTAPI from 'playht';
+import * as PlayHT from 'playht';
 import { getEnvVar } from '../../common';
 
 const AUDIO_MPEG_MIME_TYPE = 'audio/mpeg';
+let playHTInited = false;
 
 /**
  * Calls out to the requested TTS provider to generate speech with the given parameters.
@@ -21,8 +22,8 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  if (providerName == 'playht') {
-    return ttsPlayHTGrpc(voice!, rate, text!);
+  if (providerName == 'playht-grpc') {
+    return ttsPlayHTGrpc(voice, rate, text);
   }
   return new NextResponse(JSON.stringify({ error: 'Unknown provider.' }), { status: 400 });
 }
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
  * GRPC client for Play.HT TTS (https://play.ht)
  */
 async function ttsPlayHTGrpc(voice: string, rate: number, text: string) {
-  const opts: PlayHTAPI.SpeechStreamOptions = {
+  const opts: PlayHT.SpeechStreamOptions = {
     voiceEngine: 'PlayHT2.0-turbo',
     voiceId: voice,
     outputFormat: 'mp3',
@@ -44,8 +45,11 @@ async function ttsPlayHTGrpc(voice: string, rate: number, text: string) {
       controller = c;
     },
   });
-  PlayHTAPI.init({ apiKey: getEnvVar('PLAYHT_API_KEY'), userId: getEnvVar('PLAYHT_USER_ID') });
-  const nodeStream = await PlayHTAPI.stream(text, opts);
+  if (!playHTInited) {
+    PlayHT.init({ apiKey: getEnvVar('PLAYHT_API_KEY'), userId: getEnvVar('PLAYHT_USER_ID') });
+    playHTInited = true;
+  }
+  const nodeStream = await PlayHT.stream(text, opts);
   nodeStream.on('data', (chunk) => controller.enqueue(new Uint8Array(chunk)));
   nodeStream.on('end', () => controller.close());
   nodeStream.on('error', (err) => controller.error(err));

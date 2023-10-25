@@ -13,7 +13,7 @@ import { FixieAgent } from './agent.js';
 import { AuthenticateOrLogIn, FIXIE_CONFIG_FILE, loadConfig } from './auth.js';
 import { FixieClientError } from './isomorphic-client.js';
 
-const [major, ..._] = process.version
+const [major] = process.version
   .slice(1)
   .split('.')
   .map((x) => parseInt(x));
@@ -500,6 +500,17 @@ agent
         showResult(result.metadata, program.opts().raw);
       }
     )
+  );
+
+agent
+  .command('logs <agentId>')
+  .description('Fetch agent logs.')
+  .action(
+    catchErrors(async (agentId: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await FixieAgent.GetAgent(client, agentId);
+      showResult(await result.getLogs(), program.opts().raw);
+    })
   );
 
 registerDeployCommand(agent);
