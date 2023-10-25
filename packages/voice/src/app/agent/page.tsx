@@ -332,7 +332,7 @@ const AgentPageComponent: React.FC = () => {
   }, [onKeyDown]);
   const swipeHandlers = useSwipeable({
     onSwipedLeft: (eventData) => changeAgent(-1),
-    onSwipedRight: (eventData) => changeAgent(1)
+    onSwipedRight: (eventData) => changeAgent(1),
   });
   return (
     <>
