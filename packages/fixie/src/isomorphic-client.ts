@@ -64,13 +64,16 @@ export class IsomorphicFixieClient {
   /**
    * Use the `Create*` methods instead.
    */
-  protected constructor(public readonly url: string, public readonly apiKey?: string) {}
+  protected constructor(
+    public readonly url: string,
+    public readonly apiKey?: string,
+  ) {}
 
   static Create(url: string, apiKey?: string) {
     const apiKeyToUse = apiKey ?? process.env.FIXIE_API_KEY;
     if (!apiKeyToUse) {
       throw new Error(
-        'You must pass apiKey to the constructor, or set the FIXIE_API_KEY environment variable. The API key can be found at: https://console.fixie.ai/profile'
+        'You must pass apiKey to the constructor, or set the FIXIE_API_KEY environment variable. The API key can be found at: https://console.fixie.ai/profile',
       );
     }
     return new this(url, apiKey);
@@ -119,7 +122,7 @@ export class IsomorphicFixieClient {
         res.status,
         res.statusText,
         `Error accessing Fixie API: ${url}`,
-        await res.text()
+        await res.text(),
       );
     }
     return res;
@@ -133,7 +136,7 @@ export class IsomorphicFixieClient {
   async requestJsonLines<T = Jsonifiable>(
     path: string,
     bodyData?: unknown,
-    method?: string
+    method?: string,
   ): Promise<ReadableStream<T>> {
     const response = await this.request(path, bodyData, method);
     if (response.body === null) {
@@ -141,7 +144,7 @@ export class IsomorphicFixieClient {
         new URL(path, this.url),
         response.status,
         response.statusText,
-        'Response body was null'
+        'Response body was null',
       );
     }
 
@@ -164,7 +167,7 @@ export class IsomorphicFixieClient {
             }
           }
         },
-      })
+      }),
     );
   }
 
@@ -181,11 +184,15 @@ export class IsomorphicFixieClient {
    *   OWNER_PUBLIC: Only list public corpora.
    *   OWNER_ALL: List all corpora visible to the current user.
    */
-  listCorpora(ownerType?: 'OWNER_USER' | 'OWNER_ORG' | 'OWNER_PUBLIC' | 'OWNER_ALL'): Promise<Jsonifiable> {
+  listCorpora(
+    ownerType?: 'OWNER_USER' | 'OWNER_ORG' | 'OWNER_PUBLIC' | 'OWNER_ALL',
+    offset: number = 0,
+    limit: number = 100,
+  ): Promise<Jsonifiable> {
     if (ownerType !== undefined) {
-      return this.requestJson(`/api/v1/corpora?owner_type=${ownerType}`);
+      return this.requestJson(`/api/v1/corpora?owner_type=${ownerType}&offset=${offset}&limit=${limit}`);
     }
-    return this.requestJson('/api/v1/corpora');
+    return this.requestJson('/api/v1/corpora?offset=${offset}&limit=${limit}');
   }
 
   /** Get information about a given Corpus. */
@@ -215,8 +222,8 @@ export class IsomorphicFixieClient {
   }
 
   /** List the Sources in a given Corpus. */
-  listCorpusSources(corpusId: string): Promise<Jsonifiable> {
-    return this.requestJson(`/api/v1/corpora/${corpusId}/sources`);
+  listCorpusSources(corpusId: string, offset: number = 0, limit: number = 100): Promise<Jsonifiable> {
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources&offset=${offset}&limit=${limit}`);
   }
 
   /** Get information about a given Source. */
@@ -233,7 +240,7 @@ export class IsomorphicFixieClient {
     maxDocuments?: number,
     maxDepth?: number,
     description?: string,
-    displayName?: string
+    displayName?: string,
   ): Promise<Jsonifiable> {
     /**
      * Mike says Apify won't like the querystring and fragment, so we'll remove them.
@@ -296,8 +303,13 @@ export class IsomorphicFixieClient {
   }
 
   /** List Jobs associated with a given Source. */
-  listCorpusSourceJobs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
-    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs`);
+  listCorpusSourceJobs(
+    corpusId: string,
+    sourceId: string,
+    offset: number = 0,
+    limit: number = 100,
+  ): Promise<Jsonifiable> {
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs?offset=${offset}&limit=${limit}`);
   }
 
   /** Get information about a given Job. */
@@ -306,8 +318,15 @@ export class IsomorphicFixieClient {
   }
 
   /** List Documents in a given Corpus Source. */
-  listCorpusSourceDocs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
-    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents`);
+  listCorpusSourceDocs(
+    corpusId: string,
+    sourceId: string,
+    offset: number = 0,
+    limit: number = 100,
+  ): Promise<Jsonifiable> {
+    return this.requestJson(
+      `/api/v1/corpora/${corpusId}/sources/${sourceId}/documents?offset=${offset}&limit=${limit}`,
+    );
   }
 
   /** Get information about a given Document. */
@@ -331,7 +350,7 @@ export class IsomorphicFixieClient {
     return this.requestJsonLines<Conversation>(
       `/api/v1/agents/${agentId}/conversations`,
       message ? { message } : undefined,
-      'POST'
+      'POST',
     );
   }
 
@@ -359,7 +378,7 @@ export class IsomorphicFixieClient {
     return this.requestJsonLines<AssistantConversationTurn>(
       `/api/v1/agents/${agentId}/conversations/${conversationId}/messages`,
       message,
-      'POST'
+      'POST',
     );
   }
 
@@ -370,7 +389,7 @@ export class IsomorphicFixieClient {
     return this.request(
       `/api/v1/agents/${agentId}/conversations/${conversationId}/messages/${messageId}/stop`,
       undefined,
-      'POST'
+      'POST',
     );
   }
 
@@ -388,7 +407,7 @@ export class IsomorphicFixieClient {
     return this.requestJsonLines<AssistantConversationTurn>(
       `/api/v1/agents/${agentId}/conversations/${conversationId}/messages/${messageId}/regenerate`,
       undefined,
-      'POST'
+      'POST',
     );
   }
 }

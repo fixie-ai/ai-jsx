@@ -138,7 +138,7 @@ async function oauthFlow(apiUrl: string): Promise<string> {
   const redirectUri = `http://localhost:${port}`;
   const state = crypto.randomBytes(16).toString('base64url');
   const url = `${apiUrl}/authorize?client_id=${CLIENT_ID}&scope=${SCOPES.join(
-    ' '
+    ' ',
   )}&state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
 
   const serverPromise = new Promise((resolve, reject) => {

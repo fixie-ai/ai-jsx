@@ -122,7 +122,7 @@ export function ControlledFloatingFixieEmbed({
           {...iframeProps}
           style={chatStyle}
         ></iframe>,
-        document.body
+        document.body,
       )}
     </>
   );
@@ -182,7 +182,7 @@ export function FloatingFixieEmbed({ fixieHost, ...restProps }: FixieEmbedProps)
 
           <iframe style={launcherStyle} src={launcherUrl.toString()} ref={launcherRef}></iframe>
         </>,
-        document.body
+        document.body,
       )}
     </>
   );
@@ -202,7 +202,7 @@ export function getBaseIframeProps({
 >) {
   const embedUrl = new URL(
     agentId.includes('/') ? `/embed/${agentId}` : `/agents/${agentId}`,
-    fixieHost ?? defaultFixieHost
+    fixieHost ?? defaultFixieHost,
   );
   if (speak) {
     embedUrl.searchParams.set('speak', '1');

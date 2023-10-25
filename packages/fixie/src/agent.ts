@@ -62,7 +62,10 @@ export interface AgentLogEntry {
  */
 export class FixieAgent {
   /** Use GetAgent or CreateAgent instead. */
-  private constructor(readonly client: FixieClient, public metadata: AgentMetadata) {}
+  private constructor(
+    readonly client: FixieClient,
+    public metadata: AgentMetadata,
+  ) {}
 
   public get agentId(): string {
     return this.metadata.agentId;
@@ -170,7 +173,7 @@ export class FixieAgent {
     name?: string,
     description?: string,
     moreInfoUrl?: string,
-    published?: boolean
+    published?: boolean,
   ): Promise<FixieAgent> {
     const result = await client.gqlClient().mutate({
       mutation: gql`
@@ -314,7 +317,7 @@ export class FixieAgent {
       `
       import Handler from '${handlerPath}';
       export type RuntimeParameters = Parameters<typeof Handler> extends [infer T, ...any] ? T : {};
-      `
+      `,
     );
     const program = TJS.programFromConfig(tsconfigPath, [tempPath]);
     const schema = TJS.generateSchema(program, 'RuntimeParameters', settings);
@@ -347,7 +350,7 @@ export class FixieAgent {
     opts: MergeExclusive<{ externalUrl: string }, { tarball: string; environmentVariables: Record<string, string> }> & {
       defaultRuntimeParameters?: Record<string, unknown> | null;
       runtimeParametersSchema?: TJS.Definition | null;
-    }
+    },
   ): Promise<AgentRevision> {
     const uploadFile = opts.tarball ? fs.readFileSync(fs.realpathSync(opts.tarball)) : undefined;
 
@@ -518,7 +521,7 @@ export class FixieAgent {
   public static async DeployAgent(
     client: FixieClient,
     agentPath: string,
-    environmentVariables: Record<string, string> = {}
+    environmentVariables: Record<string, string> = {},
   ): Promise<AgentRevision> {
     const config = await FixieAgent.LoadConfig(agentPath);
     const agentId = `${(await client.userInfo()).username}/${config.handle}`;
@@ -535,12 +538,12 @@ export class FixieAgent {
 
     if (fs.existsSync(yarnLockPath)) {
       term.yellow(
-        '⚠️ Detected yarn.lock file, but Fixie only supports npm. Fixie will try to install your package with npm, which may produce unexpected results.'
+        '⚠️ Detected yarn.lock file, but Fixie only supports npm. Fixie will try to install your package with npm, which may produce unexpected results.',
       );
     }
     if (fs.existsSync(pnpmLockPath)) {
       term.yellow(
-        '⚠️ Detected pnpm-lock.yaml file, but Fixie only supports npm. Fixie will try to install your package with npm, which may produce unexpected results.'
+        '⚠️ Detected pnpm-lock.yaml file, but Fixie only supports npm. Fixie will try to install your package with npm, which may produce unexpected results.',
       );
     }
 
@@ -687,7 +690,7 @@ export class FixieAgent {
     // agent revision each time.
     for await (const [currentUrl, runtimeParametersSchema] of this.zipAsyncIterables(
       deploymentUrlsIter,
-      schemaGenerator
+      schemaGenerator,
     )) {
       await FixieAgent.pollPortUntilReady(port);
 
@@ -747,7 +750,7 @@ export class FixieAgent {
 
   private static async *zipAsyncIterables<T, U>(
     gen1: AsyncIterator<T>,
-    gen2: AsyncIterator<U>
+    gen2: AsyncIterator<U>,
   ): AsyncGenerator<[T, U]> {
     const generators = [gen1, gen2] as const;
     const currentValues = (await Promise.all(generators.map((g) => g.next()))).map((v) => v.value) as [T, U];
