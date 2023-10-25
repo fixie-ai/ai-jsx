@@ -85,7 +85,10 @@ export async function POST(request: NextRequest) {
   console.log(`New request (agentId=${json.agentId} model=${json.model} docs=${json.docs})`);
   json.messages.forEach((message: ClientMessage) => console.log(`role=${message.role} content=${message.content}`));
 
+  console.time("a")
   const agent = getAgent((json.agentId as string) ?? 'dr-donut');
+  console.timeEnd("a")
+  console.time("b")
   let stream;
   if (json.messages.length == 1 && !json.messages[0].content) {
     const initialResponse = _.sample(agent.initialResponses)!;
@@ -93,5 +96,6 @@ export async function POST(request: NextRequest) {
   } else {
     stream = toTextStream(<ChatAgent agent={agent} conversation={json.messages} model={json.model} docs={json.docs} />);
   }
+  console.timeEnd("b")
   return new StreamingTextResponse(stream);
 }
