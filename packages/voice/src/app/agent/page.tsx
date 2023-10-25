@@ -47,7 +47,7 @@ const TTS_PROVIDERS = [
   'wellsaid',
 ];
 const LLM_MODELS = ['claude-2', 'claude-instant-1', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'];
-const AGENT_IDS = ['ai-friend', 'dr-donut', 'rubber-duck', 'spanish-tutor', 'justin/ultravox', 'justin/fixie'];
+const AGENT_IDS = ['ai-friend', 'dr-donut', 'rubber-duck'] //, 'spanish-tutor', 'justin/ultravox', 'justin/fixie'];
 const LATENCY_THRESHOLDS: { [key: string]: LatencyThreshold } = {
   ASR: { good: 300, fair: 500 },
   LLM: { good: 300, fair: 500 },
