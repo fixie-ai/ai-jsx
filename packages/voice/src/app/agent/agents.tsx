@@ -3,6 +3,7 @@ export interface AgentConfig {
   prompt: string;
   initialResponses: string[];
   corpusId?: string;
+  ttsVoice?: string;
 }
 
 const VOICE_PROMPT = `
@@ -105,10 +106,11 @@ const RD_INITIAL_RESPONSES = [
   "What's new?",
 ];
 
-export const RubberDuck: AgentConfig = {
+const RubberDuck: AgentConfig = {
   id: 'rubber-duck',
   prompt: RD_PROMPT,
   initialResponses: RD_INITIAL_RESPONSES,
+  ttsVoice: 's3://peregrine-voices/donna_meditation_saad/manifest.json',
 };
 
 const ST_PROMPT = `You are a coach helping students learn to speak Spanish. Talk to them in basic Spanish, but
@@ -124,7 +126,7 @@ const ST_INITIAL_RESPONSES = [
   'Hola, ¿qué hiciste hoy?',
 ];
 
-export const SpanishTutor: AgentConfig = {
+const SpanishTutor: AgentConfig = {
   id: 'spanish-tutor',
   prompt: ST_PROMPT,
   initialResponses: ST_INITIAL_RESPONSES,
@@ -144,8 +146,18 @@ const AI_PROMPT = `You're Fixie, a friendly AI companion and good friend of the 
 ${VOICE_PROMPT}
 `;
 
-export const AiFriend: AgentConfig = {
+const AiFriend: AgentConfig = {
   id: 'ai-friend',
   prompt: AI_PROMPT,
   initialResponses: AI_INITIAL_RESPONSES,
+  ttsVoice: 's3://voice-cloning-zero-shot/09b5c0cc-a8f4-4450-aaab-3657b9965d0b/podcaster/manifest.json'
 };
+
+const AGENTS: AgentConfig[] = [AiFriend, DrDonut, RubberDuck, SpanishTutor];
+export function getAgent(agentId: string) {
+  const agent = AGENTS.find((agent) => agent.id == agentId);
+  if (!agent) {
+    throw new Error(`Unknown agentId: ${agentId}`);
+  }
+  return agent;
+}

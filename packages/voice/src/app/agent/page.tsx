@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ChatManager, ChatManagerState } from './chat';
+import { getAgent } from './agents';
 import Image from 'next/image';
 import '../globals.css';
 
@@ -54,6 +55,12 @@ const LATENCY_THRESHOLDS: { [key: string]: LatencyThreshold } = {
   Total: { good: 1300, fair: 2000 },
 };
 
+const updateSearchParams = (param: string, value: string) => {
+  const params = new URLSearchParams(window.location.search);
+  params.set(param, value);
+  window.location.search = params.toString();
+};
+
 const Dropdown: React.FC<{ label: string; param: string; value: string; options: string[] }> = ({
   param,
   label,
@@ -64,11 +71,7 @@ const Dropdown: React.FC<{ label: string; param: string; value: string; options:
     <label className="text-xs ml-2 font-bold">{label}</label>
     <select
       value={value}
-      onChange={(e) => {
-        const params = new URLSearchParams(window.location.search);
-        params.set(param, e.target.value);
-        window.location.search = params.toString();
-      }}
+      onChange={(e) => updateSearchParams(param, e.target.value)}
       className="text-xs ml-1 pt-1 pb-1 border rounded"
     >
       {options.map((option) => (
@@ -197,14 +200,15 @@ const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React
 
 const AgentPageComponent: React.FC = () => {
   const searchParams = useSearchParams();
+  const agentId = searchParams.get('agent') || 'dr-donut';
+  const agentVoice = getAgent(agentId).ttsVoice;
   const tapOrClick = typeof window != 'undefined' && 'ontouchstart' in window ? 'Tap' : 'Click';
   const idleText = `${tapOrClick} anywhere to start!`;
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
   const asrLanguage = searchParams.get('asrLanguage') || undefined;
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
-  const ttsVoice = searchParams.get('ttsVoice') || undefined;
+  const ttsVoice = searchParams.get('ttsVoice') || agentVoice;
   const model = searchParams.get('llm') || DEFAULT_LLM;
-  const agentId = searchParams.get('agent') || 'dr-donut';
   const docs = searchParams.get('docs') !== null;
   const [showChooser, setShowChooser] = useState(searchParams.get('chooser') !== null);
   const showInput = searchParams.get('input') !== null;
@@ -265,6 +269,11 @@ const AgentPageComponent: React.FC = () => {
       manager.stop();
     };
   };
+  const changeAgent = (delta: number) => {
+    const index = AGENT_IDS.indexOf(agentId);
+    const newIndex = (index + delta + AGENT_IDS.length) % AGENT_IDS.length;
+    updateSearchParams('agent', AGENT_IDS[newIndex]);
+  };
   const handleStart = () => {
     setInput('');
     setOutput('');
@@ -300,7 +309,16 @@ const AgentPageComponent: React.FC = () => {
     } else if (event.keyCode == 83) {
       setShowStats((prev) => !prev);
       event.preventDefault();
+    } else if (event.keyCode == 37) {
+      handleStop();
+      changeAgent(-1);
+      event.preventDefault();
+    } else if (event.keyCode == 39) {
+      handleStop();
+      changeAgent(1);
+      event.preventDefault();
     }
+
   };
   // Install our handlers, and clean them up on unmount.
   useEffect(() => {
