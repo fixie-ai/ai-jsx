@@ -650,7 +650,7 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
   }
 
   play(text: string) {
-    if (this.audio.readyState == 0) {
+    if (this.audio.readyState == 0 || this.audio.paused) {
       console.log(`[${this.name}] tts starting play`);
       this.audio.srcObject = outputManager.createStream();
       this.streamId = this.audio.srcObject.id;
@@ -750,7 +750,7 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
   protected abstract doFlush(): void;
   protected abstract stopGeneration(): void;
   protected tearDown() {
-    this.inProgress = false;
+    this.inProgress = this.playing = false;
   }
 }
 
