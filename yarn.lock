@@ -21456,6 +21456,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-swipeable@npm:^7.0.1":
+  version: 7.0.1
+  resolution: "react-swipeable@npm:7.0.1"
+  peerDependencies:
+    react: ^16.8.3 || ^17 || ^18
+  checksum: 1cd19275c5608cb202ca7717afc73e336fb51d6ae4c9353ef409e1779dfb90f36ac4c06aa870d3d862f15fb439f82b96d41395738d04b8d2290aefc670fd6b5b
+  languageName: node
+  linkType: hard
+
 "react-textarea-autosize@npm:^8.3.2":
   version: 8.5.0
   resolution: "react-textarea-autosize@npm:8.5.0"
@@ -25309,6 +25318,7 @@ __metadata:
     postcss: 8.4.24
     react: 18.2.0
     react-dom: 18.2.0
+    react-swipeable: ^7.0.1
     remark-gfm: ^3.0.1
     tailwindcss: 3.3.2
     typescript: ^5.1.3

@@ -688,7 +688,7 @@ export abstract class WebAudioTextToSpeech extends TextToSpeechBase {
     this.streamId = '';
     this.audio.srcObject = null;
     this.audio.currentTime = 0;
-    this.inProgress = false;
+    this.inProgress = this.playing = false;
     this.stopGeneration();
   }
   close() {

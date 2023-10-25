@@ -1,6 +1,7 @@
 'use client';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useSwipeable } from 'react-swipeable';
 import { ChatManager, ChatManagerState } from './chat';
 import { getAgent } from './agents';
 import Image from 'next/image';
@@ -290,7 +291,8 @@ const AgentPageComponent: React.FC = () => {
   // Click/tap starts or interrupts.
   const onClick = (event: MouseEvent) => {
     const target = event.target as HTMLElement;
-    if (!target.matches('button')) {
+    console.log(`[page] click target=${target.tagName}`);
+    if (!target.matches('button') && !target.matches('select') && !target.matches('a')) {
       speak();
     }
   };
@@ -328,6 +330,10 @@ const AgentPageComponent: React.FC = () => {
       document.removeEventListener('click', onClick);
     };
   }, [onKeyDown]);
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: (eventData) => changeAgent(-1),
+    onSwipedRight: (eventData) => changeAgent(1)
+  });
   return (
     <>
       {showChooser && (
@@ -351,7 +357,7 @@ const AgentPageComponent: React.FC = () => {
         <div>
           <Image src="/voice-logo.svg" alt="Fixie Voice" width={322} height={98} priority={true} />
         </div>
-        <div className="flex justify-center p-4">
+        <div className="flex justify-center p-4" {...swipeHandlers}>
           <Image priority={true} width="384" height="384" src={`/agents/${agentId}.webp`} alt={agentId} />
         </div>
         <div>

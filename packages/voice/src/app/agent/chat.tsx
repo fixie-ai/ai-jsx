@@ -307,12 +307,12 @@ export class ChatManager {
    * Stops the chat.
    */
   stop() {
+    this.changeState(ChatManagerState.IDLE);
     this.asr.close();
     this.tts.close();
     this.micManager.stop();
     this.history = [];
     this.pendingRequests.clear();
-    this.changeState(ChatManagerState.IDLE);
   }
 
   /**
