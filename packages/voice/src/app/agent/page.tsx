@@ -291,7 +291,6 @@ const AgentPageComponent: React.FC = () => {
   // Click/tap starts or interrupts.
   const onClick = (event: MouseEvent) => {
     const target = event.target as HTMLElement;
-    console.log(`[page] click target=${target.tagName}`);
     if (!target.matches('button') && !target.matches('select') && !target.matches('a')) {
       speak();
     }
