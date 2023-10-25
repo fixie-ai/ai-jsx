@@ -49,7 +49,7 @@ function registerDeployCommand(command: Command) {
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           [key]: value ?? '',
         };
-      },
+      }
     )
     .action(async (path: string | undefined, options: { env: Record<string, string> }) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
@@ -77,7 +77,7 @@ function registerServeCommand(command: Command) {
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           [key]: value ?? '',
         };
-      },
+      }
     )
     .action(async (path: string | undefined, options: { port: string; env: Record<string, string> }) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
@@ -158,7 +158,7 @@ program
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.userInfo();
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 program
@@ -177,7 +177,7 @@ program
         // Truncate the key.
         term('🔑 Your FIXIE_API_KEY is: ').red(`${client.apiKey?.slice(0, 12)}...`)('\n');
       }
-    }),
+    })
   );
 
 const config = program.command('config').description('Configuration related commands');
@@ -189,7 +189,7 @@ config
     catchErrors(async () => {
       const config = loadConfig(FIXIE_CONFIG_FILE);
       showResult(config, program.opts().raw);
-    }),
+    })
   );
 
 const corpus = program.command('corpus').description('Corpus related commands');
@@ -199,7 +199,7 @@ corpus
   .command('list')
   .description('List all corpora.')
   .addOption(
-    new Option('-o, --owner <ownerType>', 'Type of corpora to list.').choices(['user', 'org', 'public', 'all']),
+    new Option('-o, --owner <ownerType>', 'Type of corpora to list.').choices(['user', 'org', 'public', 'all'])
   )
   .option('--offset <number>', 'Start offset for results to return')
   .option('--limit <number>', 'Limit on the number of results to return')
@@ -217,7 +217,7 @@ corpus
       }
       const result = await client.listCorpora(ownerType, opts.offset, opts.limit);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 corpus
@@ -228,7 +228,7 @@ corpus
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.getCorpus(corpusId);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 corpus
@@ -239,7 +239,7 @@ corpus
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.createCorpus(name, description);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 corpus
@@ -250,7 +250,7 @@ corpus
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.queryCorpus(corpusId, query);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 const source = corpus.command('source').description('Corpus source related commands');
@@ -279,14 +279,14 @@ source
           includePatterns?: string[];
           excludePatterns?: string[];
           description: string;
-        },
+        }
       ) => {
         if (!includePatterns) {
           term.yellow('Warning: ')(
-            'No --include-patterns specfied. This is equivalent to only crawling the URLs specified as startUrls.\n',
+            'No --include-patterns specfied. This is equivalent to only crawling the URLs specified as startUrls.\n'
           );
           term.yellow('Warning: ')('Use ').red("--include-patterns '*'")(
-            ' if you want to allow all URLs in the crawl.\n',
+            ' if you want to allow all URLs in the crawl.\n'
           );
         }
         const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
@@ -297,11 +297,11 @@ source
           excludePatterns,
           maxDocuments,
           maxDepth,
-          description,
+          description
         );
         showResult(result, program.opts().raw);
-      },
-    ),
+      }
+    )
   );
 
 source
@@ -312,7 +312,7 @@ source
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.addFileCorpusSource(corpusId, filenames, mimeType);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 source
@@ -325,7 +325,7 @@ source
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.listCorpusSources(corpusId, opts.offset, opts.limit);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 source
@@ -336,7 +336,7 @@ source
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.getCorpusSource(corpusId, sourceId);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 source
@@ -347,7 +347,7 @@ source
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.deleteCorpusSource(corpusId, sourceId);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 source
@@ -355,14 +355,14 @@ source
   .description('Refresh a corpus source.')
   .option(
     '--force',
-    'By default, this command will fail if you try to refresh a source that currently has a job running. If you want to refresh the source regardless, pass this flag.',
+    'By default, this command will fail if you try to refresh a source that currently has a job running. If you want to refresh the source regardless, pass this flag.'
   )
   .action(
     catchErrors(async (corpusId: string, sourceId: string, { force }) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.refreshCorpusSource(corpusId, sourceId, force);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 source
@@ -370,14 +370,14 @@ source
   .description('Clear a corpus source.')
   .option(
     '--force',
-    'By default, this command will fail if you try to clear a source that currently has a job running. If you want to clear the source regardless, pass this flag.',
+    'By default, this command will fail if you try to clear a source that currently has a job running. If you want to clear the source regardless, pass this flag.'
   )
   .action(
     catchErrors(async (corpusId: string, sourceId: string, { force }) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.clearCorpusSource(corpusId, sourceId, force);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 const job = source.command('job').description('Job-related commands');
@@ -393,7 +393,7 @@ job
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.listCorpusSourceJobs(corpusId, sourceId, opts.offset, opts.limit);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 job
@@ -404,7 +404,7 @@ job
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.getCorpusSourceJob(corpusId, sourceId, jobId);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 const doc = source.command('doc').description('Document-related commands');
@@ -420,7 +420,7 @@ doc
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.listCorpusSourceDocs(corpusId, sourceId, opts.offset, opts.limit);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 doc
@@ -431,7 +431,7 @@ doc
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.getCorpusSourceDoc(corpusId, sourceId, docId);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 const agent = program.command('agent').description('Agent related commands');
@@ -445,7 +445,7 @@ agent
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await FixieAgent.ListAgents(client);
       showResult(await Promise.all(result.map((agent) => agent.agentId)), program.opts().raw);
-    }),
+    })
   );
 
 agent
@@ -456,7 +456,7 @@ agent
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await FixieAgent.GetAgent(client, agentId);
       showResult(result.metadata, program.opts().raw);
-    }),
+    })
   );
 
 agent
@@ -468,7 +468,7 @@ agent
       const agent = await FixieAgent.GetAgent(client, agentHandle);
       const result = agent.delete();
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 agent
@@ -480,7 +480,7 @@ agent
       const agent = await FixieAgent.GetAgent(client, agentHandle);
       const result = agent.update({ published: true });
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 agent
@@ -492,7 +492,7 @@ agent
       const agent = await FixieAgent.GetAgent(client, agentHandle);
       const result = agent.update({ published: false });
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 agent
@@ -504,8 +504,8 @@ agent
         const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
         const result = await FixieAgent.CreateAgent(client, agentHandle, agentName, agentDescription, agentMoreInfoUrl);
         showResult(result.metadata, program.opts().raw);
-      },
-    ),
+      }
+    )
   );
 
 agent
@@ -516,7 +516,7 @@ agent
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await FixieAgent.GetAgent(client, agentId);
       showResult(await result.getLogs(), program.opts().raw);
-    }),
+    })
   );
 
 registerDeployCommand(agent);
@@ -533,7 +533,7 @@ revision
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = (await FixieAgent.GetAgent(client, agentId)).metadata.allRevisions;
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 revision
@@ -545,7 +545,7 @@ revision
       const agent = await FixieAgent.GetAgent(client, agentId);
       const result = await agent.getCurrentRevision();
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 revision
@@ -557,7 +557,7 @@ revision
       const agent = await FixieAgent.GetAgent(client, agentId);
       const result = await agent.setCurrentRevision(revisionId);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 revision
@@ -569,7 +569,7 @@ revision
       const agent = await FixieAgent.GetAgent(client, agentId);
       const result = await agent.deleteRevision(revisionId);
       showResult(result, program.opts().raw);
-    }),
+    })
   );
 
 program.parse(process.argv);

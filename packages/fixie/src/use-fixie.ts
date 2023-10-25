@@ -147,7 +147,7 @@ function useTokenNotifications(conversation: Conversation | undefined, onNewToke
  */
 function useNewConversationNotfications(
   conversation: Conversation | undefined,
-  onNewConversation: UseFixieArgs['onNewConversation'],
+  onNewConversation: UseFixieArgs['onNewConversation']
 ) {
   const conversationIdRef = useRef(conversation?.id);
 
@@ -167,7 +167,7 @@ function useConversationPoller(
   agentId: string,
   conversation: Conversation | undefined,
   setConversation: Dispatch<SetStateAction<Conversation | undefined>>,
-  isStreamingFromApi: boolean,
+  isStreamingFromApi: boolean
 ) {
   const conversationId = conversation?.id;
   const anyTurnInProgress = Boolean(conversation?.turns.find((t) => t.state === 'in-progress'));
@@ -232,7 +232,7 @@ function useConversationMutations(
   fixieApiUrl: string | undefined,
   agentId: string,
   conversation: Conversation | undefined,
-  setConversation: Dispatch<SetStateAction<Conversation | undefined>>,
+  setConversation: Dispatch<SetStateAction<Conversation | undefined>>
 ): {
   sendMessage: (message?: string) => boolean;
   regenerate: (messageId?: string) => boolean;
@@ -293,7 +293,7 @@ function useConversationMutations(
     stream: ReadableStream<AssistantConversationTurn>,
     optimisticUserTurnId: string,
     optimisticAssistantTurnId: string,
-    endRequest: () => void,
+    endRequest: () => void
   ) {
     const reader = stream.getReader();
     while (true) {
@@ -516,7 +516,7 @@ function useConversationMutations(
       return {
         ...existingConversation,
         turns: existingConversation.turns.map((t) =>
-          t.id === lastTurn.id && t.state === 'in-progress' ? { ...t, state: 'stopped' } : t,
+          t.id === lastTurn.id && t.state === 'in-progress' ? { ...t, state: 'stopped' } : t
         ),
       };
     });
@@ -562,7 +562,7 @@ export function useFixie({
     fixieAPIUrl,
     agentId,
     conversation,
-    setConversation,
+    setConversation
   );
 
   useConversationPoller(fixieAPIUrl, agentId, conversation, setConversation, isStreamingFromApi);

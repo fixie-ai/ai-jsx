@@ -19,7 +19,7 @@ export class FixieClient extends IsomorphicFixieClient {
     const apiKeyToUse = apiKey ?? process.env.FIXIE_API_KEY;
     if (!apiKeyToUse) {
       throw new Error(
-        'You must pass apiKey to the constructor, or set the FIXIE_API_KEY environment variable. The API key can be found at: https://console.fixie.ai/profile',
+        'You must pass apiKey to the constructor, or set the FIXIE_API_KEY environment variable. The API key can be found at: https://console.fixie.ai/profile'
       );
     }
     return new this(urlToUse, apiKeyToUse);
