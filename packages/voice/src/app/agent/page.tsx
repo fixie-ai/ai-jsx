@@ -318,7 +318,6 @@ const AgentPageComponent: React.FC = () => {
       changeAgent(1);
       event.preventDefault();
     }
-
   };
   // Install our handlers, and clean them up on unmount.
   useEffect(() => {

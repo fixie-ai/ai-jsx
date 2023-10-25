@@ -150,7 +150,7 @@ const AiFriend: AgentConfig = {
   id: 'ai-friend',
   prompt: AI_PROMPT,
   initialResponses: AI_INITIAL_RESPONSES,
-  ttsVoice: 's3://voice-cloning-zero-shot/09b5c0cc-a8f4-4450-aaab-3657b9965d0b/podcaster/manifest.json'
+  ttsVoice: 's3://voice-cloning-zero-shot/09b5c0cc-a8f4-4450-aaab-3657b9965d0b/podcaster/manifest.json',
 };
 
 const AGENTS: AgentConfig[] = [AiFriend, DrDonut, RubberDuck, SpanishTutor];
