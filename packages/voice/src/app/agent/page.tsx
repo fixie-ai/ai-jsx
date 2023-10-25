@@ -353,7 +353,7 @@ const AgentPageComponent: React.FC = () => {
           <Image src="/voice-logo.svg" alt="Fixie Voice" width={322} height={98} priority={true} />
         </div>
         <div className="flex justify-center p-4">
-          <Image priority={true} width="512" height="512" src={`/agents/${agentId}.webp`} alt={agentId} />
+          <Image priority={true} width="384" height="384" src={`/agents/${agentId}.webp`} alt={agentId} />
         </div>
         <div>
           {showOutput && (
@@ -372,7 +372,7 @@ const AgentPageComponent: React.FC = () => {
           )}
         </div>
         <p className="py-4 text-xl">{helpText}</p>
-        <div className="w-full max-w-lg p-4">
+        <div className="w-full max-w-sm p-4">
           <Visualizer
             height={64}
             state={chatManager?.state}
