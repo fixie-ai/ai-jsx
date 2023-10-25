@@ -6,21 +6,12 @@ import { Anthropic, ValidChatModel as AnthropicValidChatModel } from 'ai-jsx/lib
 import { StreamingTextResponse } from 'ai';
 import { toTextStream } from 'ai-jsx/stream';
 import { NextRequest } from 'next/server';
-import { AgentConfig, AiFriend, DrDonut, RubberDuck, SpanishTutor } from './agents';
+import { AgentConfig, getAgent } from '../agents';
 import _ from 'lodash';
 
 export const runtime = 'edge'; // 'nodejs' is the default
 
 const MAX_CHUNKS = 4;
-
-const AGENTS: AgentConfig[] = [AiFriend, DrDonut, RubberDuck, SpanishTutor];
-function getAgent(agentId: string) {
-  const agent = AGENTS.find((agent) => agent.id == agentId);
-  if (!agent) {
-    throw new Error(`Unknown agentId: ${agentId}`);
-  }
-  return agent;
-}
 
 /**
  * The user and assistant messages exchanged by client and server.
