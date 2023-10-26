@@ -444,7 +444,10 @@ agent
     catchErrors(async () => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await FixieAgent.ListAgents(client);
-      showResult(await Promise.all(result.map((agent) => agent.agentId)), program.opts().raw);
+      showResult(
+        await Promise.all(result.map((agent) => ({ uuid: agent.metadata.uuid, name: agent.metadata.name }))),
+        program.opts().raw
+      );
     })
   );
 

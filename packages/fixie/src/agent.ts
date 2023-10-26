@@ -20,7 +20,6 @@ import { MergeExclusive } from 'type-fest';
 /** Represents metadata about an agent managed by the Fixie service. */
 export interface AgentMetadata {
   uuid: string;
-  agentId: string;
   handle: string;
   name?: string;
   description?: string;
@@ -28,7 +27,6 @@ export interface AgentMetadata {
   published?: boolean;
   created: Date;
   modified: Date;
-  owner: string;
   currentRevision?: AgentRevision;
   allRevisions?: AgentRevision[];
 }
@@ -64,21 +62,13 @@ export class FixieAgent {
   /** Use GetAgent or CreateAgent instead. */
   private constructor(readonly client: FixieClient, public metadata: AgentMetadata) {}
 
-  public get agentId(): string {
-    return this.metadata.agentId;
-  }
-
-  public get owner(): string {
-    return this.metadata.owner;
-  }
-
   public get handle(): string {
     return this.metadata.handle;
   }
 
   /** Return the URL for this agent's page on Fixie. */
   public agentUrl(baseUrl?: string): string {
-    const url = new URL(`agents/${this.owner}/${this.handle}`, baseUrl ?? 'https://api.fixie.ai');
+    const url = new URL(`agents/${this.metadata.uuid}`, baseUrl ?? 'https://api.fixie.ai');
     // If using the default API host, change it to the console host.
     if (url.hostname === 'api.fixie.ai') {
       url.hostname = 'console.fixie.ai';
@@ -132,15 +122,6 @@ export class FixieAgent {
               id
               created
             }
-            owner {
-              __typename
-              ... on UserType {
-                username
-              }
-              ... on OrganizationType {
-                handle
-              }
-            }
           }
         }
       `,
@@ -148,7 +129,6 @@ export class FixieAgent {
     });
 
     return {
-      agentId: result.data.agent.agentId,
       uuid: result.data.agent.uuid,
       handle: result.data.agent.handle,
       name: result.data.agent.name,
@@ -157,7 +137,6 @@ export class FixieAgent {
       published: result.data.agent.published,
       created: new Date(result.data.agent.created),
       modified: new Date(result.data.agent.modified),
-      owner: result.data.agent.owner.username || result.data.agent.owner.handle,
       currentRevision: result.data.agent.currentRevision,
       allRevisions: result.data.agent.allRevisions,
     };
@@ -179,7 +158,7 @@ export class FixieAgent {
             agentData: { handle: $handle, description: $description, moreInfoUrl: $moreInfoUrl, published: $published }
           ) {
             agent {
-              agentId
+              uuid
             }
           }
         }
@@ -192,7 +171,7 @@ export class FixieAgent {
         published: published ?? true,
       },
     });
-    const agentId = result.data.createAgent.agent.agentId;
+    const agentId = result.data.createAgent.agent.uuid;
     return FixieAgent.GetAgent(client, agentId);
   }
 
@@ -256,7 +235,7 @@ export class FixieAgent {
         published,
       },
     });
-    this.metadata = await FixieAgent.getAgentById(this.client, this.agentId);
+    this.metadata = await FixieAgent.getAgentById(this.client, this.metadata.uuid);
   }
 
   /** Return logs for this Agent. Returns the last 15 minutes of agent logs. */
@@ -417,7 +396,7 @@ export class FixieAgent {
           }
         }
       `,
-      variables: { agentId: this.agentId },
+      variables: { agentId: this.metadata.uuid },
     });
     return result.data.agentById.currentRevision as AgentRevision;
   }
