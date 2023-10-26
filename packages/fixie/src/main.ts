@@ -201,8 +201,10 @@ corpus
   .addOption(
     new Option('-o, --owner <ownerType>', 'Type of corpora to list.').choices(['user', 'org', 'public', 'all'])
   )
+  .option('--offset <number>', 'Start offset for results to return')
+  .option('--limit <number>', 'Limit on the number of results to return')
   .action(
-    catchErrors(async ({ owner }) => {
+    catchErrors(async ({ owner, opts }) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
 
       let ownerType: 'OWNER_ALL' | 'OWNER_USER' | 'OWNER_ORG' | 'OWNER_PUBLIC' = 'OWNER_ALL';
@@ -213,7 +215,7 @@ corpus
       } else if (owner === 'public') {
         ownerType = 'OWNER_PUBLIC';
       }
-      const result = await client.listCorpora(ownerType);
+      const result = await client.listCorpora(ownerType, opts.offset, opts.limit);
       showResult(result, program.opts().raw);
     })
   );
@@ -257,8 +259,6 @@ source.alias('sources');
 source
   .command('add <corpusId> <startUrls...>')
   .description('Add a web source to a corpus.')
-  .option('--max-documents <number>', 'Maximum number of documents to crawl')
-  .option('--max-depth <number>', 'Maximum depth to crawl')
   .option('--description <string>', 'A human-readable description for the source')
   .option('--include-patterns <pattern...>', 'URL patterns to include in the crawl')
   .option('--exclude-patterns <pattern...>', 'URL patterns to exclude from the crawl')
@@ -318,10 +318,12 @@ source
 source
   .command('list <corpusId>')
   .description('List sources of a corpus.')
+  .option('--offset <number>', 'Start offset for results to return')
+  .option('--limit <number>', 'Limit on the number of results to return')
   .action(
-    catchErrors(async (corpusId: string) => {
+    catchErrors(async (corpusId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.listCorpusSources(corpusId);
+      const result = await client.listCorpusSources(corpusId, opts.offset, opts.limit);
       showResult(result, program.opts().raw);
     })
   );
@@ -384,10 +386,12 @@ job.alias('jobs');
 job
   .command('list <corpusId> <sourceId>')
   .description('List jobs for a given source.')
+  .option('--offset <number>', 'Start offset for results to return')
+  .option('--limit <number>', 'Limit on the number of results to return')
   .action(
-    catchErrors(async (corpusId: string, sourceId: string) => {
+    catchErrors(async (corpusId: string, sourceId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.listCorpusSourceJobs(corpusId, sourceId);
+      const result = await client.listCorpusSourceJobs(corpusId, sourceId, opts.offset, opts.limit);
       showResult(result, program.opts().raw);
     })
   );
@@ -409,10 +413,12 @@ doc.alias('docs');
 doc
   .command('list <corpusId> <sourceId>')
   .description('List documents for a given corpus source.')
+  .option('--offset <number>', 'Start offset for results to return')
+  .option('--limit <number>', 'Limit on the number of results to return')
   .action(
-    catchErrors(async (corpusId: string, sourceId: string) => {
+    catchErrors(async (corpusId: string, sourceId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.listCorpusSourceDocs(corpusId, sourceId);
+      const result = await client.listCorpusSourceDocs(corpusId, sourceId, opts.offset, opts.limit);
       showResult(result, program.opts().raw);
     })
   );

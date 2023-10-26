@@ -181,11 +181,15 @@ export class IsomorphicFixieClient {
    *   OWNER_PUBLIC: Only list public corpora.
    *   OWNER_ALL: List all corpora visible to the current user.
    */
-  listCorpora(ownerType?: 'OWNER_USER' | 'OWNER_ORG' | 'OWNER_PUBLIC' | 'OWNER_ALL'): Promise<Jsonifiable> {
+  listCorpora(
+    ownerType?: 'OWNER_USER' | 'OWNER_ORG' | 'OWNER_PUBLIC' | 'OWNER_ALL',
+    offset: number = 0,
+    limit: number = 100
+  ): Promise<Jsonifiable> {
     if (ownerType !== undefined) {
-      return this.requestJson(`/api/v1/corpora?owner_type=${ownerType}`);
+      return this.requestJson(`/api/v1/corpora?owner_type=${ownerType}&offset=${offset}&limit=${limit}`);
     }
-    return this.requestJson('/api/v1/corpora');
+    return this.requestJson('/api/v1/corpora?offset=${offset}&limit=${limit}');
   }
 
   /** Get information about a given Corpus. */
@@ -215,8 +219,8 @@ export class IsomorphicFixieClient {
   }
 
   /** List the Sources in a given Corpus. */
-  listCorpusSources(corpusId: string): Promise<Jsonifiable> {
-    return this.requestJson(`/api/v1/corpora/${corpusId}/sources`);
+  listCorpusSources(corpusId: string, offset: number = 0, limit: number = 100): Promise<Jsonifiable> {
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources&offset=${offset}&limit=${limit}`);
   }
 
   /** Get information about a given Source. */
@@ -296,8 +300,13 @@ export class IsomorphicFixieClient {
   }
 
   /** List Jobs associated with a given Source. */
-  listCorpusSourceJobs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
-    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs`);
+  listCorpusSourceJobs(
+    corpusId: string,
+    sourceId: string,
+    offset: number = 0,
+    limit: number = 100
+  ): Promise<Jsonifiable> {
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/jobs?offset=${offset}&limit=${limit}`);
   }
 
   /** Get information about a given Job. */
@@ -306,8 +315,15 @@ export class IsomorphicFixieClient {
   }
 
   /** List Documents in a given Corpus Source. */
-  listCorpusSourceDocs(corpusId: string, sourceId: string): Promise<Jsonifiable> {
-    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}/documents`);
+  listCorpusSourceDocs(
+    corpusId: string,
+    sourceId: string,
+    offset: number = 0,
+    limit: number = 100
+  ): Promise<Jsonifiable> {
+    return this.requestJson(
+      `/api/v1/corpora/${corpusId}/sources/${sourceId}/documents?offset=${offset}&limit=${limit}`
+    );
   }
 
   /** Get information about a given Document. */
