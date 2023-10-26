@@ -35,15 +35,23 @@ async function getToken(provider: string) {
   return json.token;
 }
 
-const TranscriptRenderer: React.FC<{ finals: string[], partial: string}> = ({ finals, partial }) => {
+const TranscriptRenderer: React.FC<{ finals: string[]; partial: string }> = ({ finals, partial }) => {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     ref.current!.scrollTop = ref.current!.scrollHeight;
   });
   return (
     <div className="mt-4 mr-4 mb-4 w-96 h-36 p-4 bg-fixie-dust overflow-y-scroll" ref={ref}>
-      {finals.map((text, index) => <p key={index} className="text-black">{text}</p>)}
-      {partial && <p key={finals.length} className="text-black/40">{partial}</p>}
+      {finals.map((text, index) => (
+        <p key={index} className="text-black">
+          {text}
+        </p>
+      ))}
+      {partial && (
+        <p key={finals.length} className="text-black/40">
+          {partial}
+        </p>
+      )}
     </div>
   );
 };
