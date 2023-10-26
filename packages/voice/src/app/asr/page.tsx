@@ -35,18 +35,23 @@ async function getToken(provider: string) {
   return json.token;
 }
 
-const TranscriptRenderer: React.FC<{ value: Transcript[] }> = ({ value }) => {
+const TranscriptRenderer: React.FC<{ finals: string[]; partial: string }> = ({ finals, partial }) => {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     ref.current!.scrollTop = ref.current!.scrollHeight;
   });
   return (
     <div className="mt-4 mr-4 mb-4 w-96 h-36 p-4 bg-fixie-dust overflow-y-scroll" ref={ref}>
-      {value.map((transcript, index) => (
-        <p key={index} className={transcript.final ? 'text-black' : 'text-black/40'}>
-          {transcript.text}
+      {finals.map((text, index) => (
+        <p key={index} className="text-black">
+          {text}
         </p>
       ))}
+      {partial && (
+        <p key={finals.length} className="text-black/40">
+          {partial}
+        </p>
+      )}
     </div>
   );
 };
@@ -64,11 +69,13 @@ interface AsrProps {
 
 const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, transcript }) => {
   const [disabled, setDisabled] = useState(false);
-  const output = useRef<Transcript[]>([]);
+  const partialTranscriptRef = useRef<Transcript | null>();
+  const [partialTranscript, setPartialTranscript] = useState<Transcript | null>();
+  const [finalTranscripts, setFinalTranscripts] = useState<Transcript[]>([]);
   const [partialLatency, setPartialLatency] = useState<number[]>([]);
   const [finalLatency, setFinalLatency] = useState<number[]>([]);
   const [recognizer, setRecognizer] = useState<SpeechRecognitionBase | null>(null);
-  const justFinals = (transcripts: Transcript[]) => transcripts.filter((transcript) => transcript.final);
+  const transcriptsToStrings = (transcripts: Transcript[]) => transcripts.map((transcript) => transcript.text);
   const computeCostColor = (cost: number, disabled: boolean) => {
     let color;
     if (cost < 0.01) {
@@ -88,19 +95,17 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
     if (!transcripts.length || !refText) {
       return 0;
     }
-    const numLines = justFinals(transcripts).length;
+    const numLines = transcripts.length;
     const refClean = normalizeText(refText.split('\n').slice(0, numLines).join(' '));
-    const inClean = normalizeText(
-      justFinals(transcripts)
-        .map((transcript) => transcript.text)
-        .join(' ')
-    );
+    const inClean = normalizeText(transcriptsToStrings(transcripts).join(' '));
     return wordErrorRate(refClean, inClean);
   };
   const start = () => {
-    output.current = [];
     const recognizer = createSpeechRecognition({ provider: id, manager: manager!, getToken });
     setRecognizer(recognizer);
+    partialTranscriptRef.current = null;
+    setPartialTranscript(null);
+    setFinalTranscripts([]);
     setPartialLatency([]);
     setFinalLatency([]);
     recognizer.addEventListener('transcript', (event: CustomEventInit<Transcript>) => {
@@ -115,29 +120,28 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
       // If so, we'll use that to compute the partial latency.
       // We'll also skip any duplicate partial transcripts.
       let partialLatency = transcript.observedLatency!;
-      const currOutput = output.current;
-      if (currOutput.length > 0) {
-        const lastTranscript = currOutput.at(-1)!;
-        if (!lastTranscript.final) {
-          if (normalizeText(lastTranscript.text) == normalizeText(transcript.text)) {
-            console.debug(`[${id}] Duplicate transcript "${transcript.text}"`);
-            if (!transcript.final) {
-              return;
-            }
-            partialLatency -= transcript.timestamp - lastTranscript.timestamp;
+      if (partialTranscriptRef.current?.text) {
+        if (normalizeText(partialTranscriptRef.current!.text) == normalizeText(transcript.text)) {
+          console.debug(`[${id}] Duplicate transcript "${transcript.text}"`);
+          if (!transcript.final) {
+            return;
           }
+          partialLatency -= transcript.timestamp - partialTranscriptRef.current!.timestamp;
         }
       }
 
       // Update our list of transcripts and latency counters.
       // The final latency is just the transcript timestamp minus the VAD timestamp.
       // The partial latency takes into account any matching partials, or the final latency if there are no matches.
-      const prevOutput = output.current;
-      output.current = [...prevOutput.slice(0, justFinals(prevOutput).length), transcript];
-      if (transcript.final && transcript.observedLatency) {
+      if (!transcript.final) {
+        partialTranscriptRef.current = transcript;
+        setPartialTranscript(transcript);
+      } else {
+        setPartialTranscript(null);
+        setFinalTranscripts((prev) => [...prev, transcript]);
         setFinalLatency((prev) => [...prev, transcript.observedLatency!]);
         setPartialLatency((prev) => [...prev, partialLatency]);
-        console.log(`[${id}] latency=${transcript.observedLatency.toFixed(0)}, partial=${partialLatency.toFixed(0)}`);
+        console.log(`[${id}] latency=${transcript.observedLatency?.toFixed(0)}, partial=${partialLatency.toFixed(0)}`);
       }
     });
     recognizer.start();
@@ -179,9 +183,9 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
       </div>
       <div className="text-sm">
         <span className="font-bold">WER: </span>
-        {computeWer(output.current, transcript).toFixed(3)}
+        {computeWer(finalTranscripts, transcript).toFixed(3)}
       </div>
-      <TranscriptRenderer value={output.current} />
+      <TranscriptRenderer finals={transcriptsToStrings(finalTranscripts)} partial={partialTranscript?.text ?? ''} />
     </div>
   );
 };
