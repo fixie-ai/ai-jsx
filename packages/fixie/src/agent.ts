@@ -396,7 +396,7 @@ export class FixieAgent {
           }
         }
       `,
-      variables: { agentId: this.metadata },
+      variables: { agentId: this.metadata.uuid },
     });
     return result.data.agentById.currentRevision as AgentRevision;
   }
