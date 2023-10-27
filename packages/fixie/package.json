@@ -1,14 +1,17 @@
 {
   "name": "fixie",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://fixie.ai",
   "type": "module",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "rm -rf dist && tsc",
-    "start": "node --no-warnings src/main.js",
+    "start": "node --no-warnings dist/main.js",
     "build-start": "yarn run build && yarn run start",
     "format": "prettier --write .",
     "test": "yarn run build && yarn run lint",
@@ -19,7 +22,13 @@
   "volta": {
     "extends": "../../package.json"
   },
-  "bin": "./src/main.js",
+  "bin": "./dist/main.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./web": "./dist/web.js"
+  },
   "dependencies": {
     "@apollo/client": "^3.8.1",
     "@types/apollo-upload-client": "^17.0.2",

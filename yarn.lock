@@ -12810,7 +12810,7 @@ __metadata:
     react-dom:
       optional: true
   bin:
-    fixie: ./src/main.js
+    fixie: ./dist/main.js
   languageName: unknown
   linkType: soft
 
