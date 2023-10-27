@@ -260,6 +260,8 @@ source
   .command('add <corpusId> <startUrls...>')
   .description('Add a web source to a corpus.')
   .option('--description <string>', 'A human-readable description for the source')
+  .option('--max-documents <number>', 'Maximum number of documents to crawl')
+  .option('--max-depth <number>', 'Maximum depth to crawl')
   .option('--include-patterns <pattern...>', 'URL patterns to include in the crawl')
   .option('--exclude-patterns <pattern...>', 'URL patterns to exclude from the crawl')
   .action(
