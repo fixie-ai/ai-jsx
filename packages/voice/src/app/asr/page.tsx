@@ -67,7 +67,7 @@ interface AsrProps {
   transcript?: string;
 }
 
-const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, transcript }) => {
+const Asr: React.FC<AsrProps> = ({ name, link, id, model, costPerMinute, manager, transcript }) => {
   const [disabled, setDisabled] = useState(false);
   const partialTranscriptRef = useRef<Transcript | null>();
   const [partialTranscript, setPartialTranscript] = useState<Transcript | null>();
@@ -101,7 +101,7 @@ const Asr: React.FC<AsrProps> = ({ name, link, id, costPerMinute, manager, trans
     return wordErrorRate(refClean, inClean);
   };
   const start = () => {
-    const recognizer = createSpeechRecognition({ provider: id, manager: manager!, getToken });
+    const recognizer = createSpeechRecognition({ provider: id, manager: manager!, getToken, model });
     setRecognizer(recognizer);
     partialTranscriptRef.current = null;
     setPartialTranscript(null);
@@ -248,10 +248,28 @@ const PageComponent: React.FC = () => {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2">
         <Asr
-          name="Deepgram"
+          name="Deepgram (Nova)"
           link="https://deepgram.com"
           id="deepgram"
           costPerMinute={0.0059}
+          manager={manager}
+          transcript={transcript}
+          model="nova"
+        />
+        <Asr
+          name="Deepgram (Nova-2)"
+          link="https://deepgram.com"
+          id="deepgram"
+          costPerMinute={0.0059}
+          manager={manager}
+          transcript={transcript}
+          model="nova-2-ea"
+        />
+        <Asr
+          name="Soniox"
+          link="https://soniox.com"
+          id="soniox"
+          costPerMinute={0.0067}
           manager={manager}
           transcript={transcript}
         />
@@ -264,10 +282,10 @@ const PageComponent: React.FC = () => {
           transcript={transcript}
         />
         <Asr
-          name="Speechmatics"
-          link="https://speechmatics.com"
-          id="speechmatics"
-          costPerMinute={0.0173}
+          name="Gladia"
+          link="https://gladia.io"
+          id="gladia"
+          costPerMinute={0.0126}
           manager={manager}
           transcript={transcript}
         />
@@ -280,18 +298,10 @@ const PageComponent: React.FC = () => {
           transcript={transcript}
         />
         <Asr
-          name="Soniox"
-          link="https://soniox.com"
-          id="soniox"
-          costPerMinute={0.0067}
-          manager={manager}
-          transcript={transcript}
-        />
-        <Asr
-          name="Gladia"
-          link="https://gladia.io"
-          id="gladia"
-          costPerMinute={0.0126}
+          name="Speechmatics"
+          link="https://speechmatics.com"
+          id="speechmatics"
+          costPerMinute={0.0173}
           manager={manager}
           transcript={transcript}
         />
