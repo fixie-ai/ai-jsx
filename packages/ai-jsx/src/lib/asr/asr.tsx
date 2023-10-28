@@ -468,13 +468,13 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
   async start() {
     this.buf = '';
     const params = new URLSearchParams({
-      tier: 'nova',
-      model: this.model ?? 'general',
+      model: this.model ?? 'nova-2-ea',
       version: 'latest',
       encoding: 'linear16',
       channels: '1',
       sample_rate: this.manager.sampleRate.toString(),
       punctuate: 'true',
+      filler_words: 'true',
       interim_results: 'true',
       endpointing: '300',
     });
