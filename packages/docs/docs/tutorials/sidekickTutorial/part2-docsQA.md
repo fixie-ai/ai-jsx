@@ -39,7 +39,7 @@ In the Fixie Dashboard, go into [Documents](https://console.fixie.ai/documents).
 
 <img src={DocsDropdown} alt="" width="800"/>
 
-*Make sure you select "Public" or "All" in the drop-down.*
+_Make sure you select "Public" or "All" in the drop-down._
 
 1. Click on the card for the ["Git + GitHub" Collection](https://console.fixie.ai/documents/286b5a7d-2bcd-483f-aef5-acf157c5aea5).
 1. Click on ["Query Test"](https://console.fixie.ai/documents/286b5a7d-2bcd-483f-aef5-acf157c5aea5/query-test).
@@ -48,7 +48,6 @@ In the Fixie Dashboard, go into [Documents](https://console.fixie.ai/documents).
 - `what is a repository`
 - `what is the gh cli`
 - `how does rerere work`
-
 
 For each query that you run, you will notice that you are getting back a list of chunks. These chunks were created when Fixie crawled the sources for the document collection. Each chunk also has a score that indicates how similar the chunk is to the query (higher scores mean higher similarity).
 
