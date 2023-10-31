@@ -254,7 +254,7 @@ function ttsCoqui({ text, voice, rate }: GenerateOptions): Promise<Response> {
   const obj = {
     voice_id: voice,
     text,
-    language: 'en'
+    language: 'en',
   };
   return postJson(url, headers, obj);
 }

@@ -149,13 +149,7 @@ const PageComponent: React.FC = () => {
       ></textarea>
       <p className="ml-2 mb-2 text-sm">{countWords(text)} words</p>
       <div className="grid grid-cols-1 md:grid-cols-2 w-full">
-        <Tts
-          display="Coqui"
-          provider="coqui"          
-          link="https://coqui.ai"
-          costPerKChar={0.09}
-          text={text}
-        />
+        <Tts display="Coqui" provider="coqui" link="https://coqui.ai" costPerKChar={0.09} text={text} />
         <Tts
           display="ElevenLabs v1"
           provider="eleven"
