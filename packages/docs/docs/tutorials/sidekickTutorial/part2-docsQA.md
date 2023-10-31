@@ -2,6 +2,9 @@
 sidebar_position: 2
 ---
 
+import DocsDropdown from '../../../static/img/fixie-docs-dropdown.png'
+import DocsQuery from '../../../static/img/fixie-docs-query.png'
+
 # Part 2 - Document Question + Answering (DocsQA)
 
 :::note What we cover in part 2
@@ -26,13 +29,17 @@ _For more details about DocsQA in Sidekicks, read the [Sidekicks Document Q&A](.
 
 ## Using the Git + GitHub Document Collection
 
-When creating a new collection, there is time required to crawl the content, create chunks from the it, and then generate and store embeddings. In the interest of time, we have already created a document collection for use in the tutorial.
+When creating a new collection, there is time required to crawl the content, create chunks from the it, and then generate and store embeddings. In the interest of time, we have already created a public document collection for use in the tutorial. See [Types of Document Collections](../../sidekicks/sidekicks-quickstart#types-of-document-collections) for more info.
 
 The collection has two sources: [Git docs](https://git-scm.com/doc) and [GitHub docs](https://docs.github.com/en).
 
 ### Run some queries
 
 In the Fixie Dashboard, go into [Documents](https://console.fixie.ai/documents). This is where you can view all the Document Collections that you and/or your organization have created.
+
+<img src={DocsDropdown} alt="" width="800"/>
+
+_Make sure you select "Public" or "All" in the drop-down._
 
 1. Click on the card for the ["Git + GitHub" Collection](https://console.fixie.ai/documents/286b5a7d-2bcd-483f-aef5-acf157c5aea5).
 1. Click on ["Query Test"](https://console.fixie.ai/documents/286b5a7d-2bcd-483f-aef5-acf157c5aea5/query-test).
@@ -43,6 +50,8 @@ In the Fixie Dashboard, go into [Documents](https://console.fixie.ai/documents).
 - `how does rerere work`
 
 For each query that you run, you will notice that you are getting back a list of chunks. These chunks were created when Fixie crawled the sources for the document collection. Each chunk also has a score that indicates how similar the chunk is to the query (higher scores mean higher similarity).
+
+<img src={DocsQuery} alt="" width="800"/>
 
 ### Hooking up the GitHub Collection to our Sidekick
 
