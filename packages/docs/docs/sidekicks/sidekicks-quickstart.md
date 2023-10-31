@@ -5,6 +5,8 @@ displayed_sidebar: tutorialSidebar
 import FoxieSidekick from '../../static/img/foxie-sidekick.png'
 import FixieProfileAPIKey from '../../static/img/fixie-profile-api-key.png'
 import Step3Profit from '../../static/img/step-3-profit.png'
+import FixieConsoleEmpty from '../../static/img/fixie-docs-empty.png'
+import PublicCorpora from '../../static/img/fixie-docs-public.png'
 
 # Quickstart: Fixie Sidekicks
 
@@ -140,6 +142,21 @@ page on the Fixie Console. For example:
 
 Surf on over to the Sidekick URL shown by the `fixie deploy` command. You should
 now be able to chat directly with your Sidekick!
+
+## Types of Document Collections
+
+One thing to note, Fixie supports different types of Document Collections:
+
+1. **Owned by me** → These are the document collections you have created and own. This is the default view in the Fixie console when you first sign-in and looks like this:
+
+<img src={FixieConsoleEmpty} alt="Fixie console" width="800"/>
+
+2. **Owned by my team** → If you are a member of a team, you will see all the team's collections here.
+3. **Public** → There are some public collections provided by Fixie. You can see these by selecting "Public" in the Document Collections drop-down or by selecting "All" which will show everything. Here is a view of some public collections:
+
+<img src={PublicCorpora} alt="Fixie console" width="800"/>
+
+In order to save you the time of creating a new collection from scratch, this Quickstart and the [Sidekick Tutorial](../tutorials/sidekickTutorial/part1-intro.md) make use of public document collections.
 
 ## Local Development and Testing
 
