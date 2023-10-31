@@ -20,8 +20,13 @@ type GenerateOptions = {
   model?: string;
 };
 type Generate = (opts: GenerateOptions) => Promise<Response>;
-class Provider {
-  constructor(public func: Generate, public keyPath?: string, public mimeType?: string) {}
+interface Provider {
+  // The function to call to generate speech.
+  func: Generate;
+  // If the generate call returns JSON, the path to the audio data.
+  keyPath?: string;
+  // MIME type override if the response MIME type is absent or wrong.
+  mimeType?: string;
 }
 type ProviderMap = {
   [key: string]: Provider;
@@ -29,7 +34,7 @@ type ProviderMap = {
 const PROVIDER_MAP: ProviderMap = {
   aws: { func: ttsAws },
   azure: { func: ttsAzure },
-  coqui: { func: ttsCoqui },
+  coqui: { func: ttsCoqui, mimeType: AUDIO_WAV_MIME_TYPE },
   eleven: { func: ttsEleven },
   gcp: { func: ttsGcp, keyPath: 'audioContent' },
   lmnt: { func: ttsLmnt },
@@ -132,7 +137,11 @@ export async function GET(request: NextRequest) {
     return new NextResponse(binary, { headers: { 'Content-Type': mimeType } });
   }
   const stream = makeStreamFromReader(timer, response.body!.getReader());
-  return new NextResponse(stream, { headers: response.headers, status: response.status });
+  const headers = new Headers(response.headers);
+  if (provider.mimeType) {
+    headers.set('Content-Type', provider.mimeType);
+  }
+  return new NextResponse(stream, { headers, status: response.status });
 }
 
 /**
@@ -240,7 +249,7 @@ function ttsGcp({ text, voice, rate }: GenerateOptions): Promise<Response> {
  * REST client for Coqui TTS.
  */
 function ttsCoqui({ text, voice, rate }: GenerateOptions): Promise<Response> {
-  const headers = createHeaders({ authorization: getEnvVar('COQUI_API_KEY'), accept: AUDIO_WAV_MIME_TYPE });
+  const headers = createHeaders({ authorization: makeAuth('COQUI_API_KEY'), accept: AUDIO_WAV_MIME_TYPE });
   const url = 'https://app.coqui.ai/api/v2/samples/xtts/render';
   const obj = {
     voice_id: voice,

@@ -1237,6 +1237,8 @@ export function createTextToSpeech({ provider, proto, voice, rate, model, getTok
         return new AzureTextToSpeech(buildUrl!, voice, rate);
       case 'aws':
         return new AwsTextToSpeech(buildUrl!, voice, rate);
+      case 'coqui':
+        return new CoquiTextToSpeech(buildUrl!, voice, rate);
       case 'eleven':
         return new ElevenLabsTextToSpeech(buildUrl!, voice, rate, model);
       case 'gcp':
