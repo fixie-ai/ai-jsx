@@ -29,6 +29,7 @@ type ProviderMap = {
 const PROVIDER_MAP: ProviderMap = {
   aws: { func: ttsAws },
   azure: { func: ttsAzure },
+  coqui: { func: ttsCoqui },
   eleven: { func: ttsEleven },
   gcp: { func: ttsGcp, keyPath: 'audioContent' },
   lmnt: { func: ttsLmnt },
@@ -236,16 +237,32 @@ function ttsGcp({ text, voice, rate }: GenerateOptions): Promise<Response> {
 }
 
 /**
- * REST client for WellSaid TTS.
+ * REST client for Coqui TTS.
  */
-function ttsWellSaid({ text, voice, rate }: GenerateOptions): Promise<Response> {
-  const headers = createHeaders({ x_api_key: getEnvVar('WELLSAID_API_KEY') });
+function ttsCoqui({ text, voice, rate }: GenerateOptions): Promise<Response> {
+  const headers = createHeaders({ authorization: getEnvVar('COQUI_API_KEY'), accept: AUDIO_WAV_MIME_TYPE });
+  const url = 'https://app.coqui.ai/api/v2/samples/xtts/render';
   const obj = {
-    speaker_id: voice,
+    voice_id: voice,
     text,
+    language: 'en'
   };
-  const url = 'https://api.wellsaidlabs.com/v1/tts/stream';
   return postJson(url, headers, obj);
+}
+
+/**
+ * Streaming REST client for LMNT TTS (https://www.lmnt.com)
+ */
+function ttsLmnt({ text, voice, rate }: GenerateOptions): Promise<Response> {
+  const headers = createHeaders({ x_api_key: getEnvVar('LMNT_API_KEY'), accept: AUDIO_WAV_MIME_TYPE });
+  const obj = new URLSearchParams({
+    voice,
+    text,
+    speed: rate.toString(),
+    format: 'wav',
+  });
+  const url = 'https://api.lmnt.com/speech/beta/synthesize';
+  return postForm(url, headers, obj);
 }
 
 /**
@@ -323,18 +340,16 @@ function ttsResembleV2({ text, voice, rate }: GenerateOptions): Promise<Response
 }
 
 /**
- * Streaming REST client for LMNT TTS (https://www.lmnt.com)
+ * REST client for WellSaid TTS.
  */
-function ttsLmnt({ text, voice, rate }: GenerateOptions): Promise<Response> {
-  const headers = createHeaders({ x_api_key: getEnvVar('LMNT_API_KEY'), accept: AUDIO_WAV_MIME_TYPE });
-  const obj = new URLSearchParams({
-    voice,
+function ttsWellSaid({ text, voice, rate }: GenerateOptions): Promise<Response> {
+  const headers = createHeaders({ x_api_key: getEnvVar('WELLSAID_API_KEY') });
+  const obj = {
+    speaker_id: voice,
     text,
-    speed: rate.toString(),
-    format: 'wav',
-  });
-  const url = 'https://api.lmnt.com/speech/beta/synthesize';
-  return postForm(url, headers, obj);
+  };
+  const url = 'https://api.wellsaidlabs.com/v1/tts/stream';
+  return postJson(url, headers, obj);
 }
 
 interface TtsHeaders {
