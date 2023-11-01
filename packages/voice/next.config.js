@@ -9,6 +9,9 @@ const nextConfig = {
       },
     ];
   },
+  experimental: {
+    serverComponentsExternalPackages: ['playht'],
+  },
 };
 
 module.exports = nextConfig;
