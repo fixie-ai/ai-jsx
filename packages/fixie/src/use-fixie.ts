@@ -232,7 +232,8 @@ function useConversationMutations(
   fixieApiUrl: string | undefined,
   agentId: string,
   conversation: Conversation | undefined,
-  setConversation: Dispatch<SetStateAction<Conversation | undefined>>
+  setConversation: Dispatch<SetStateAction<Conversation | undefined>>,
+  onError: (type: 'newConversation' | 'send' | 'regenerate' | 'stop', error: any) => void
 ): {
   sendMessage: (message?: string) => boolean;
   regenerate: (messageId?: string) => boolean;
@@ -363,6 +364,7 @@ function useConversationMutations(
             });
           }
         })
+        .catch((e) => onError('newConversation', e))
         .finally(endRequest);
 
       return true;
@@ -384,6 +386,7 @@ function useConversationMutations(
     client
       .sendMessage(agentId, conversation.id, { message })
       .then((stream) => handleTurnStream(stream, optimisticUserTurnId, optimisticAssistantTurnId, endRequest))
+      .catch((e) => onError('send', e))
       .finally(endRequest);
 
     setConversation((existingConversation) => {
@@ -449,6 +452,7 @@ function useConversationMutations(
     client
       .regenerate(agentId, conversation.id, messageId)
       .then((stream) => handleTurnStream(stream, optimisticUserTurnId, optimisticAssistantTurnId, endRequest))
+      .catch((e) => onError('regenerate', e))
       .finally(endRequest);
 
     // Do an optimistic update.
@@ -505,7 +509,10 @@ function useConversationMutations(
     }
 
     const { endRequest } = startRequest();
-    client.stopGeneration(agentId, conversation.id, lastTurn.id).finally(endRequest);
+    client
+      .stopGeneration(agentId, conversation.id, lastTurn.id)
+      .catch((e) => onError('stop', e))
+      .finally(endRequest);
 
     setConversation((existingConversation) => {
       if (existingConversation?.id !== conversation.id || existingConversation.turns.at(-1)?.id !== messageId) {
@@ -562,7 +569,13 @@ export function useFixie({
     fixieAPIUrl,
     agentId,
     conversation,
-    setConversation
+    setConversation,
+    (type, e) => {
+      if (type === 'newConversation') {
+        setLoadState('error');
+        setLoadError(e);
+      }
+    }
   );
 
   useConversationPoller(fixieAPIUrl, agentId, conversation, setConversation, isStreamingFromApi);
