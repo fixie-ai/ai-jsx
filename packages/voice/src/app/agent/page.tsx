@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSwipeable } from 'react-swipeable';
 import { ChatManager, ChatManagerState } from './chat';
-import { getAgent } from './agents';
+import { getAgent, getAgentImageUrl } from './agents';
 import Image from 'next/image';
 import '../globals.css';
 
@@ -202,7 +202,7 @@ const Button: React.FC<{ onClick: () => void; disabled: boolean; children: React
 const AgentPageComponent: React.FC = () => {
   const searchParams = useSearchParams();
   const agentId = searchParams.get('agent') || 'dr-donut';
-  const agentVoice = getAgent(agentId).ttsVoice;
+  const agentVoice = getAgent(agentId)?.ttsVoice;
   const tapOrClick = typeof window != 'undefined' && 'ontouchstart' in window ? 'Tap' : 'Click';
   const idleText = `${tapOrClick} anywhere to start!`;
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
@@ -357,7 +357,7 @@ const AgentPageComponent: React.FC = () => {
           <Image src="/voice-logo.svg" alt="Fixie Voice" width={322} height={98} priority={true} />
         </div>
         <div className="flex justify-center p-4" {...swipeHandlers}>
-          <Image priority={true} width="384" height="384" src={`/agents/${agentId}.webp`} alt={agentId} />
+          <Image priority={true} width="384" height="384" src={getAgentImageUrl(agentId)} alt={agentId} />
         </div>
         <div>
           {showOutput && (

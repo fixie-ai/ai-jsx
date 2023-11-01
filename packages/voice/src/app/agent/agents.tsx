@@ -155,9 +155,9 @@ const AiFriend: AgentConfig = {
 
 const AGENTS: AgentConfig[] = [AiFriend, DrDonut, RubberDuck, SpanishTutor];
 export function getAgent(agentId: string) {
-  const agent = AGENTS.find((agent) => agent.id == agentId);
-  if (!agent) {
-    throw new Error(`Unknown agentId: ${agentId}`);
-  }
-  return agent;
+  return AGENTS.find((agent) => agent.id == agentId);
+}
+export const getAgentImageUrl = (agentId: string) => {
+  const agent = getAgent(agentId);
+  return agent ? `/agents/{agentId}.webp` : '/agents/fixie.webp';
 }
