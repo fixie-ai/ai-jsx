@@ -11,11 +11,13 @@
     "lint:fix": "yarn lint --fix"
   },
   "dependencies": {
+    "@deepgram/sdk": "^2.4.0",
     "@headlessui/react": "^1.7.15",
     "@heroicons/react": "^2.0.18",
     "@mdx-js/mdx": "^2.3.0",
     "@mdx-js/react": "^2.3.0",
     "@octokit/graphql": "^5.0.6",
+    "@soniox/soniox-node": "^1.2.2",
     "@tailwindcss/forms": "^0.5.3",
     "@vercel/analytics": "^1.1.1",
     "ai": "^2.1.8",
