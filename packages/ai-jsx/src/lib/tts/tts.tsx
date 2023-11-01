@@ -900,6 +900,16 @@ export class AzureTextToSpeech extends RestTextToSpeech {
 }
 
 /**
+ * Text-to-speech implementation that uses the Google Cloud text-to-speech service.
+ */
+export class CoquiTextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = 'c791b5b5-0558-42b8-bb0b-602ac5efc0b9';
+  constructor(urlFunc: BuildUrl, voice: string = CoquiTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('coqui', urlFunc, voice, rate);
+  }
+}
+
+/**
  * Text-to-speech implementation that uses the ElevenLabs text-to-speech service.
  */
 export class ElevenLabsTextToSpeech extends RestTextToSpeech {
@@ -1227,6 +1237,8 @@ export function createTextToSpeech({ provider, proto, voice, rate, model, getTok
         return new AzureTextToSpeech(buildUrl!, voice, rate);
       case 'aws':
         return new AwsTextToSpeech(buildUrl!, voice, rate);
+      case 'coqui':
+        return new CoquiTextToSpeech(buildUrl!, voice, rate);
       case 'eleven':
         return new ElevenLabsTextToSpeech(buildUrl!, voice, rate, model);
       case 'gcp':
