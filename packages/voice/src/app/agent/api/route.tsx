@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
   if (!agent) {
     throw new Error(`Unknown agent: ${json.agentId}`);
   }
-  
+
   let stream;
   if (json.messages.length == 1 && !json.messages[0].content) {
     const initialResponse = _.sample(agent.initialResponses)!;
