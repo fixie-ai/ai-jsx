@@ -93,8 +93,7 @@ export class ChatRequest {
 
   async start() {
     console.log(`[chat] calling agent for "${this.inMessages.at(-1)?.content}"`);
-    // Send agentIds of the form justin/foo or 550e8400-e29b-41d4-a716-446655440000 to Fixie.
-    if (this.agentId.includes('/') || (this.agentId[0] >= '0' && this.agentId[0] <= '9')) {
+    if (this.model === 'fixie') {
       await this.startWithFixie(this.agentId);
     } else {
       await this.startWithLlm(this.agentId);
