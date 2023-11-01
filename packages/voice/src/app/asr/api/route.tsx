@@ -39,7 +39,7 @@ async function getDeepgramToken() {
   const { key } = await deepgramClient.keys.create(projectId, 'Ephemeral websocket key', ['usage:write'], {
     timeToLive: KEY_LIFETIME_SECONDS,
   });
-  return key;
+  return key!;
 }
 
 async function getSonioxToken() {
