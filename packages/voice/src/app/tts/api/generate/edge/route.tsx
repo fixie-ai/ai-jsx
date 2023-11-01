@@ -397,6 +397,8 @@ function makeAuth(keyName: string) {
  */
 function postJson(url: string, headers: Headers, body: Object) {
   headers.append('Content-Type', APPLICATION_JSON_MIME_TYPE);
+  console.log(`POST ${url} ${headers} ${JSON.stringify(body)}`);
+  console.dir(Object.fromEntries(headers.entries()));
   return fetch(url, {
     method: 'POST',
     headers,
