@@ -46,7 +46,7 @@ async function getDeepgramToken() {
 }
 
 async function getSonioxToken() {
-  const response = await sonioxClient.createTemporaryApiKey({usage_type: "blah", expires_in_s: KEY_LIFETIME_SECONDS, client_request_reference: "foo"});
+  const response = await sonioxClient.createTemporaryApiKey({usage_type: "transcribe_websocket", expires_in_s: KEY_LIFETIME_SECONDS, client_request_reference: "test_ref"});
   return response.key;
 }
 
