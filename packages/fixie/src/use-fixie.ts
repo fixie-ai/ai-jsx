@@ -1,6 +1,6 @@
 import { useState, SetStateAction, Dispatch, useEffect, useRef } from 'react';
 import { AgentId, AssistantConversationTurn, TextMessage, ConversationId, Conversation } from './sidekick-types.js';
-import { IsomorphicFixieClient } from './isomorphic-client.js';
+import { FixieClient } from './client.js';
 
 /**
  * The result of the useFixie hook.
@@ -196,26 +196,24 @@ function useConversationPoller(
     let timeout: ReturnType<typeof setTimeout>;
 
     const updateConversation = () =>
-      new IsomorphicFixieClient({ url: fixieApiUrl })
-        .getConversation(agentId, conversationId)
-        .then((newConversation) => {
-          setConversation((existing) => {
-            if (
-              abandoned ||
-              !existing ||
-              existing.id !== newConversation.id ||
-              JSON.stringify(existing) === JSON.stringify(newConversation)
-            ) {
-              return existing;
-            }
-
-            return newConversation;
-          });
-
-          if (!abandoned) {
-            timeout = setTimeout(updateConversation, delay);
+      new FixieClient({ url: fixieApiUrl }).getConversation({ agentId, conversationId }).then((newConversation) => {
+        setConversation((existing) => {
+          if (
+            abandoned ||
+            !existing ||
+            existing.id !== newConversation.id ||
+            JSON.stringify(existing) === JSON.stringify(newConversation)
+          ) {
+            return existing;
           }
+
+          return newConversation;
         });
+
+        if (!abandoned) {
+          timeout = setTimeout(updateConversation, delay);
+        }
+      });
 
     timeout = setTimeout(updateConversation, delay);
     return () => {
@@ -288,7 +286,7 @@ function useConversationMutations(
     }
   }, [pendingRequests, localIdMap, conversation?.id, regenerate, stop]);
 
-  const client = new IsomorphicFixieClient({ url: fixieApiUrl });
+  const client = new FixieClient({ url: fixieApiUrl });
 
   async function handleTurnStream(
     stream: ReadableStream<AssistantConversationTurn>,
@@ -345,7 +343,7 @@ function useConversationMutations(
       // Start a new conversation.
       const { endRequest } = startRequest();
       client
-        .startConversation(agentId, message)
+        .startConversation({ agentId, message })
         .then(async (newConversationStream) => {
           const reader = newConversationStream.getReader();
           while (true) {
@@ -384,7 +382,7 @@ function useConversationMutations(
     const optimisticUserTurnId = `local-user-${requestId}`;
     const optimisticAssistantTurnId = `local-assistant-${requestId}`;
     client
-      .sendMessage(agentId, conversation.id, { message })
+      .sendMessage({ agentId, conversationId: conversation.id, message })
       .then((stream) => handleTurnStream(stream, optimisticUserTurnId, optimisticAssistantTurnId, endRequest))
       .catch((e) => onError('send', e))
       .finally(endRequest);
@@ -450,7 +448,7 @@ function useConversationMutations(
     const optimisticUserTurnId = `local-user-${requestId}`;
     const optimisticAssistantTurnId = `local-assistant-${requestId}`;
     client
-      .regenerate(agentId, conversation.id, messageId)
+      .regenerate({ agentId, conversationId: conversation.id, messageId })
       .then((stream) => handleTurnStream(stream, optimisticUserTurnId, optimisticAssistantTurnId, endRequest))
       .catch((e) => onError('regenerate', e))
       .finally(endRequest);
@@ -510,7 +508,7 @@ function useConversationMutations(
 
     const { endRequest } = startRequest();
     client
-      .stopGeneration(agentId, conversation.id, lastTurn.id)
+      .stopGeneration({ agentId, conversationId: conversation.id, messageId: lastTurn.id })
       .catch((e) => onError('stop', e))
       .finally(endRequest);
 
@@ -594,8 +592,8 @@ export function useFixie({
 
     let abandoned = false;
     setLoadState('loading');
-    new IsomorphicFixieClient({ url: fixieAPIUrl })
-      .getConversation(agentId, userProvidedConversationId)
+    new FixieClient({ url: fixieAPIUrl })
+      .getConversation({ agentId, conversationId: userProvidedConversationId })
       .then((conversation) => {
         if (!abandoned) {
           onNewConversation?.(conversation.id);
