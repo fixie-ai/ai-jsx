@@ -159,5 +159,5 @@ export function getAgent(agentId: string) {
 }
 export const getAgentImageUrl = (agentId: string) => {
   const agent = getAgent(agentId);
-  return agent ? `/agents/{agentId}.webp` : '/agents/fixie.webp';
+  return agent ? `/agents/${agentId}.webp` : '/agents/fixie.webp';
 };
