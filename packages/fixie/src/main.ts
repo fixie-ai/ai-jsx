@@ -215,7 +215,7 @@ corpus
       } else if (owner === 'public') {
         ownerType = 'OWNER_PUBLIC';
       }
-      const result = await client.listCorpora(ownerType, opts.offset, opts.limit);
+      const result = await client.listCorpora(ownerType, opts?.offset, opts?.limit);
       showResult(result, program.opts().raw);
     })
   );
@@ -325,7 +325,7 @@ source
   .action(
     catchErrors(async (corpusId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.listCorpusSources(corpusId, opts.offset, opts.limit);
+      const result = await client.listCorpusSources(corpusId, opts?.offset, opts?.limit);
       showResult(result, program.opts().raw);
     })
   );
@@ -393,7 +393,7 @@ job
   .action(
     catchErrors(async (corpusId: string, sourceId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.listCorpusSourceJobs(corpusId, sourceId, opts.offset, opts.limit);
+      const result = await client.listCorpusSourceJobs(corpusId, sourceId, opts?.offset, opts?.limit);
       showResult(result, program.opts().raw);
     })
   );
@@ -420,7 +420,7 @@ doc
   .action(
     catchErrors(async (corpusId: string, sourceId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.listCorpusSourceDocs(corpusId, sourceId, opts.offset, opts.limit);
+      const result = await client.listCorpusSourceDocs(corpusId, sourceId, opts?.offset, opts?.limit);
       showResult(result, program.opts().raw);
     })
   );
