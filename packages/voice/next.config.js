@@ -10,7 +10,7 @@ const nextConfig = {
     ];
   },
   experimental: {
-    serverComponentsExternalPackages: ['playht'],
+    serverComponentsExternalPackages: ['playht', '@deepgram/sdk', '@soniox/soniox-node'],
   },
 };
 
