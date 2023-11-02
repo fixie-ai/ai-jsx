@@ -86,6 +86,10 @@ export async function POST(request: NextRequest) {
   json.messages.forEach((message: ClientMessage) => console.log(`role=${message.role} content=${message.content}`));
 
   const agent = getAgent((json.agentId as string) ?? 'dr-donut');
+  if (!agent) {
+    throw new Error(`Unknown agent: ${json.agentId}`);
+  }
+
   let stream;
   if (json.messages.length == 1 && !json.messages[0].content) {
     const initialResponse = _.sample(agent.initialResponses)!;
