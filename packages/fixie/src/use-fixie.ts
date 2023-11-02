@@ -196,7 +196,7 @@ function useConversationPoller(
     let timeout: ReturnType<typeof setTimeout>;
 
     const updateConversation = () =>
-      IsomorphicFixieClient.CreateWithoutApiKey(fixieApiUrl)
+      new IsomorphicFixieClient({ url: fixieApiUrl })
         .getConversation(agentId, conversationId)
         .then((newConversation) => {
           setConversation((existing) => {
@@ -288,7 +288,7 @@ function useConversationMutations(
     }
   }, [pendingRequests, localIdMap, conversation?.id, regenerate, stop]);
 
-  const client = IsomorphicFixieClient.CreateWithoutApiKey(fixieApiUrl);
+  const client = new IsomorphicFixieClient({ url: fixieApiUrl });
 
   async function handleTurnStream(
     stream: ReadableStream<AssistantConversationTurn>,
@@ -594,7 +594,7 @@ export function useFixie({
 
     let abandoned = false;
     setLoadState('loading');
-    IsomorphicFixieClient.CreateWithoutApiKey(fixieAPIUrl)
+    new IsomorphicFixieClient({ url: fixieAPIUrl })
       .getConversation(agentId, userProvidedConversationId)
       .then((conversation) => {
         if (!abandoned) {

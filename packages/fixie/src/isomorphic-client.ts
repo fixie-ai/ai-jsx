@@ -49,49 +49,29 @@ export class FixieClientError extends Error {
   }
 }
 
-const debug =
-  typeof process !== 'undefined' &&
-  // Don't make any assumptions about the environment.
-  /* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */
-  process.env?.FIXIE_DEBUG === 'true';
-
 /**
  * A client to the Fixie AI platform.
  *
  * This client can be used on the web or in NodeJS
  */
 export class IsomorphicFixieClient {
-  /**
-   * Use the `Create*` methods instead.
-   */
-  protected constructor(public readonly url: string, public readonly apiKey?: string) {}
+  public readonly apiKey?: string;
+  public readonly url: string;
+  public readonly headers: Record<string, string>;
 
-  static Create(url: string, apiKey?: string) {
-    const apiKeyToUse = apiKey ?? process.env.FIXIE_API_KEY;
-    if (!apiKeyToUse) {
-      throw new Error(
-        'You must pass apiKey to the constructor, or set the FIXIE_API_KEY environment variable. The API key can be found at: https://console.fixie.ai/profile'
-      );
-    }
-    return new this(url, apiKey);
-  }
-
-  /**
-   * Create a new FixieClient without an API key. This is only useful for accessing public APIs, such as the conversation APIs.
-   *
-   * You only need to pass url if you're pointing to a different Fixie backend than the default production. Unless you specificially know you need to do this, you don't.
-   */
-  // This is also useful for running in the console.fixie.ai webapp, because it's on the same host
-  // as the backend and thus doesn't need the API key, assuming we set the auth cookies to be cross-domain.
-  static CreateWithoutApiKey(url?: string) {
-    return new this(url ?? 'https://api.fixie.ai');
+  public constructor({ url, apiKey, headers }: { apiKey?: string; url?: string; headers?: Record<string, string> }) {
+    this.apiKey = apiKey;
+    this.url = url ?? 'https://api.fixie.ai';
+    this.headers = headers ?? {};
   }
 
   /** Send a request to the Fixie API with the appropriate auth headers. */
   async request(path: string, bodyData?: unknown, method?: string, options: RequestInit = {}) {
     const fetchMethod = method ?? (bodyData ? 'POST' : 'GET');
 
-    const headers: RequestInit['headers'] = {};
+    const headers: RequestInit['headers'] = {
+      ...this.headers,
+    };
     if (bodyData) {
       headers['Content-Type'] = 'application/json';
     }
@@ -99,9 +79,6 @@ export class IsomorphicFixieClient {
       headers.Authorization = `Bearer ${this.apiKey}`;
     }
     const url = new URL(path, this.url);
-    if (debug) {
-      console.log(`[Fixie request] ${url}`, bodyData);
-    }
     const res = await fetch(url, {
       ...options,
       method: fetchMethod,
