@@ -6,7 +6,7 @@ sidebar_position: 1
 
 In this tutorial, we're going to introduce the basic concepts of AI.JSX one step at
 a time. All of the code for these tutorials can be found on GitHub at
-https://github.com/fixie-ai/ai-jsx/tree/main/packages/tutorial.
+https://github.com/fixie-ai/ai-jsx/blob/main/packages/tutorial.
 
 Let's start with the basic "hello world" example for AI.JSX,
 which invokes a Large Language Model with a fixed prompt, and
