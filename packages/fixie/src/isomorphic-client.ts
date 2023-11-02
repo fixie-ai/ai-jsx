@@ -220,7 +220,7 @@ export class IsomorphicFixieClient {
 
   /** List the Sources in a given Corpus. */
   listCorpusSources(corpusId: string, offset: number = 0, limit: number = 100): Promise<Jsonifiable> {
-    return this.requestJson(`/api/v1/corpora/${corpusId}/sources&offset=${offset}&limit=${limit}`);
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources?offset=${offset}&limit=${limit}`);
   }
 
   /** Get information about a given Source. */
