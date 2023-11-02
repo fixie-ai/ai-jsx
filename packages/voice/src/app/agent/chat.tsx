@@ -93,7 +93,7 @@ export class ChatRequest {
 
   async start() {
     console.log(`[chat] calling agent for "${this.inMessages.at(-1)?.content}"`);
-    if (this.agentId.includes('/')) {
+    if (this.model === 'fixie') {
       await this.startWithFixie(this.agentId);
     } else {
       await this.startWithLlm(this.agentId);
@@ -156,6 +156,9 @@ export class ChatRequest {
         headers: { 'Content-Type': 'application/json' },
       });
       this.conversationId = response.headers.get('X-Fixie-Conversation-Id')!;
+      console.log(
+        `To view conversation transcript see https://embed.fixie.ai/agents/${agentId}/conversations/${this.conversationId}`
+      );
     }
 
     const reader = response.body!.pipeThrough(new TextDecoderStream()).pipeThrough(jsonLinesTransformer()).getReader();
@@ -378,7 +381,7 @@ export class ChatManager {
     // If it doesn't match an existing request, kick off a new one.
     // If it matches an existing request and the text is finalized, speculative
     // execution worked! Snap forward to the current state of that request.
-    const supportsSpeculativeExecution = !this.model.startsWith('fixie/');
+    const supportsSpeculativeExecution = this.model !== 'fixie';
     if (!request && (final || supportsSpeculativeExecution)) {
       this.dispatchRequest(normalized, newMessages, final);
     } else if (final) {
