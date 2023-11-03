@@ -189,6 +189,7 @@ export class WavDecoder extends AudioDecoder {
   private static readonly WAVE_TYPE = 'WAVE';
   private static readonly RIFF_HEADER_LEN = 12;
   private static readonly CHUNK_HEADER_LEN = 8;
+  private static readonly UNKNOWN_DATA_LEN = 0xffffffff;
   private buffer: Uint8Array = new Uint8Array(0);
   private gotRiff = false;
   private sampleRate?: number;
@@ -212,6 +213,7 @@ export class WavDecoder extends AudioDecoder {
     let ok = true;
     while (ok) {
       // Our buffer should always start with a chunk header, with a 4-byte tag and length.
+      // The data chunk len may be 0, in which case we'll assume the rest of the buffer is data.
       ok = this.buffer.length >= WavDecoder.CHUNK_HEADER_LEN;
       if (ok) {
         const view = new DataView(this.buffer.buffer);
@@ -222,7 +224,7 @@ export class WavDecoder extends AudioDecoder {
         } else if (tag != WavDecoder.DATA_TAG) {
           ok = this.processMetaChunk(tag, len);
         } else {
-          ok = this.processData(len);
+          ok = this.processData(len || WavDecoder.UNKNOWN_DATA_LEN);
         }
       }
     }
@@ -903,7 +905,7 @@ export class AzureTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the Google Cloud text-to-speech service.
  */
 export class CoquiTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = 'c791b5b5-0558-42b8-bb0b-602ac5efc0b9';
+  static readonly DEFAULT_VOICE = 'd91d2f95-1a1d-4062-bad1-f1497bb5b487'; // Gitta Nikolina
   constructor(urlFunc: BuildUrl, voice: string = CoquiTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('coqui', urlFunc, voice, rate);
   }
@@ -1085,11 +1087,10 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
     socket.onclose = (event) => {
       // Reopen the socket if it closed normally, i.e., not due to an error.
       console.log(`[${this.name}] socket closed, code=${event.code} reason=${event.reason}`);
+      this.socket = undefined;
+      this.socketReady = false;
       if (event.code == 1000) {
         this.ensureSocket();
-      } else {
-        this.socket = undefined;
-        this.socketReady = false;
       }
     };
     this.socket = socket;

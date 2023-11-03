@@ -250,10 +250,11 @@ function ttsGcp({ text, voice, rate }: GenerateOptions): Promise<Response> {
  */
 function ttsCoqui({ text, voice, rate }: GenerateOptions): Promise<Response> {
   const headers = createHeaders({ authorization: makeAuth('COQUI_API_KEY'), accept: AUDIO_WAV_MIME_TYPE });
-  const url = 'https://app.coqui.ai/api/v2/samples/xtts/render';
+  const url = 'https://app.coqui.ai/api/v2/samples/xtts/stream?format=wav';
   const obj = {
     voice_id: voice,
     text,
+    speed: rate,
     language: 'en',
   };
   return postJson(url, headers, obj);
