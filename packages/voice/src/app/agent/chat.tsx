@@ -232,6 +232,7 @@ interface ChatManagerInit {
   agentId: string;
   docs: boolean;
   asrLanguage?: string;
+  ttsModel?: string;
   ttsVoice?: string;
 }
 
@@ -255,7 +256,7 @@ export class ChatManager {
   onAudioStart?: (latency: number) => void;
   onAudioEnd?: () => void;
   onError?: () => void;
-  constructor({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, agentId, docs }: ChatManagerInit) {
+  constructor({ asrProvider, asrLanguage, ttsProvider, ttsModel, ttsVoice, model, agentId, docs }: ChatManagerInit) {
     this.micManager = new MicManager();
     this.asr = createSpeechRecognition({
       provider: asrProvider,
@@ -269,6 +270,7 @@ export class ChatManager {
       proto: ttsSplit[1] as TextToSpeechProtocol,
       getToken: getTtsToken,
       buildUrl: buildTtsUrl,
+      model: ttsModel,
       voice: ttsVoice,
       rate: 1.2,
     });
