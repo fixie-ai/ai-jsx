@@ -269,6 +269,7 @@ const AgentPageComponent: React.FC = () => {
     manager.onError = () => {
       manager.stop();
     };
+    return () => manager.stop();
   };
   const changeAgent = (delta: number) => {
     const index = AGENT_IDS.indexOf(agentId);
