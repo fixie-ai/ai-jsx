@@ -1087,11 +1087,10 @@ export abstract class WebSocketTextToSpeech extends WebAudioTextToSpeech {
     socket.onclose = (event) => {
       // Reopen the socket if it closed normally, i.e., not due to an error.
       console.log(`[${this.name}] socket closed, code=${event.code} reason=${event.reason}`);
+      this.socket = undefined;
+      this.socketReady = false;
       if (event.code == 1000) {
         this.ensureSocket();
-      } else {
-        this.socket = undefined;
-        this.socketReady = false;
       }
     };
     this.socket = socket;
