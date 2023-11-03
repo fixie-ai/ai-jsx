@@ -317,9 +317,6 @@ export class FixieClient {
     description?: string;
     displayName?: string;
   }): Promise<Jsonifiable> {
-    /**
-     * Mike says Apify won't like the querystring and fragment, so we'll remove them.
-     */
     const sanitizedStartUrls = startUrls.map((url) => {
       // Delete the query and fragment from the URL.
       const urlObj = new URL(url);
