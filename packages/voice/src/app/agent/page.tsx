@@ -228,7 +228,16 @@ const AgentPageComponent: React.FC = () => {
   useEffect(() => init(), [asrProvider, asrLanguage, ttsProvider, ttsModel, ttsVoice, model, agentId, docs]);
   const init = () => {
     console.log(`[page] init asr=${asrProvider} tts=${ttsProvider} llm=${model} agent=${agentId} docs=${docs}`);
-    const manager = new ChatManager({ asrProvider, asrLanguage, ttsProvider, ttsModel, ttsVoice, model, agentId, docs });
+    const manager = new ChatManager({
+      asrProvider,
+      asrLanguage,
+      ttsProvider,
+      ttsModel,
+      ttsVoice,
+      model,
+      agentId,
+      docs,
+    });
     setChatManager(manager);
     manager.onStateChange = (state) => {
       switch (state) {
