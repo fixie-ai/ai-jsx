@@ -258,6 +258,15 @@ export class FixieClient {
   }
 
   /**
+     * Delete a given Corpus.
+     *
+     * @param options.corpusId The ID of the Corpus to delete.
+     */
+  deleteCorpus({ corpusId }: { corpusId: string }): Promise<Jsonifiable> {
+    return this.requestJson(`/api/v1/corpora/${corpusId}`, undefined, 'DELETE');
+  }
+
+  /**
    * List the Sources in a given Corpus.
    *
    * @param options.corpusId The ID of the Corpus to list Sources for.
