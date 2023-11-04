@@ -258,10 +258,10 @@ export class FixieClient {
   }
 
   /**
-     * Delete a given Corpus.
-     *
-     * @param options.corpusId The ID of the Corpus to delete.
-     */
+   * Delete a given Corpus.
+   *
+   * @param options.corpusId The ID of the Corpus to delete.
+   */
   deleteCorpus({ corpusId }: { corpusId: string }): Promise<Jsonifiable> {
     return this.requestJson(`/api/v1/corpora/${corpusId}`, undefined, 'DELETE');
   }
@@ -355,14 +355,10 @@ export class FixieClient {
   }
 
   /**
-   * Add a new Source to a Corpus.
+   * Add a new file Source to a Corpus.
    *
    * @param options.corpusId The ID of the Corpus to add the Source to.
-   * @param options.startUrls The URLs to start crawling from.
-   * @param options.includeGlobs The glob patterns to include.
-   * @param options.excludeGlobs The glob patterns to exclude.
-   * @param options.maxDocuments The maximum number of documents to crawl.
-   * @param options.maxDepth The maximum depth to crawl.
+   * @param options.files The list of files to include in the Source.
    * @param options.description The description of the new Source.
    * @param options.displayName The display name of the new Source.
    */
