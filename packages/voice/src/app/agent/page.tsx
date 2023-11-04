@@ -208,6 +208,7 @@ const AgentPageComponent: React.FC = () => {
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
   const asrLanguage = searchParams.get('asrLanguage') || undefined;
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
+  const ttsModel = searchParams.get('ttsModel') || undefined;
   const ttsVoice = searchParams.get('ttsVoice') || agentVoice;
   const model = getAgent(agentId) === undefined ? 'fixie' : searchParams.get('llm') || DEFAULT_LLM;
   const docs = searchParams.get('docs') !== null;
@@ -224,10 +225,19 @@ const AgentPageComponent: React.FC = () => {
   const [llmTokenLatency, setLlmTokenLatency] = useState(0);
   const [ttsLatency, setTtsLatency] = useState(0);
   const active = () => chatManager && chatManager!.state != ChatManagerState.IDLE;
-  useEffect(() => init(), [asrProvider, asrLanguage, ttsProvider, ttsVoice, model, agentId, docs]);
+  useEffect(() => init(), [asrProvider, asrLanguage, ttsProvider, ttsModel, ttsVoice, model, agentId, docs]);
   const init = () => {
     console.log(`[page] init asr=${asrProvider} tts=${ttsProvider} llm=${model} agent=${agentId} docs=${docs}`);
-    const manager = new ChatManager({ asrProvider, asrLanguage, ttsProvider, ttsVoice, model, agentId, docs });
+    const manager = new ChatManager({
+      asrProvider,
+      asrLanguage,
+      ttsProvider,
+      ttsModel,
+      ttsVoice,
+      model,
+      agentId,
+      docs,
+    });
     setChatManager(manager);
     manager.onStateChange = (state) => {
       switch (state) {

@@ -164,7 +164,7 @@ const PageComponent: React.FC = () => {
           supportsWs
           link="https://elevenlabs.io"
           costPerKChar={0.18}
-          model="eleven_english_v2"
+          model="eleven_turbo_v2"
           text={text}
         />
         <Tts display="LMNT" provider="lmnt" supportsWs link="https://lmnt.com" costPerKChar={0.2} text={text} />
