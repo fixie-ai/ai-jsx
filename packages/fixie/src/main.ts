@@ -11,7 +11,7 @@ import terminal from 'terminal-kit';
 import { fileURLToPath } from 'url';
 import { FixieAgent } from './agent.js';
 import { AuthenticateOrLogIn, FIXIE_CONFIG_FILE, loadConfig } from './auth.js';
-import { FixieClientError } from './isomorphic-client.js';
+import { FixieClientError } from './client.js';
 
 const [major] = process.version
   .slice(1)
@@ -204,7 +204,7 @@ corpus
   .option('--offset <number>', 'Start offset for results to return')
   .option('--limit <number>', 'Limit on the number of results to return')
   .action(
-    catchErrors(async ({ owner, opts }) => {
+    catchErrors(async ({ owner, ...opts }) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
 
       let ownerType: 'OWNER_ALL' | 'OWNER_USER' | 'OWNER_ORG' | 'OWNER_PUBLIC' = 'OWNER_ALL';
@@ -215,7 +215,7 @@ corpus
       } else if (owner === 'public') {
         ownerType = 'OWNER_PUBLIC';
       }
-      const result = await client.listCorpora(ownerType, opts.offset, opts.limit);
+      const result = await client.listCorpora({ ownerType, offset: opts.offset, limit: opts.limit });
       showResult(result, program.opts().raw);
     })
   );
@@ -237,7 +237,7 @@ corpus
   .action(
     catchErrors(async (name?: string, description?: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.createCorpus(name, description);
+      const result = await client.createCorpus({ name, description });
       showResult(result, program.opts().raw);
     })
   );
@@ -248,7 +248,7 @@ corpus
   .action(
     catchErrors(async (corpusId: string, query: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.queryCorpus(corpusId, query);
+      const result = await client.queryCorpus({ corpusId, query });
       showResult(result, program.opts().raw);
     })
   );
@@ -292,15 +292,15 @@ source
           );
         }
         const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-        const result = await client.addCorpusSource(
+        const result = await client.addCorpusSource({
           corpusId,
           startUrls,
-          includePatterns,
-          excludePatterns,
+          includeGlobs: includePatterns,
+          excludeGlobs: excludePatterns,
           maxDocuments,
           maxDepth,
-          description
-        );
+          description,
+        });
         showResult(result, program.opts().raw);
       }
     )
@@ -312,7 +312,14 @@ source
   .action(
     catchErrors(async (corpusId: string, mimeType: string, filenames: string[]) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.addFileCorpusSource(corpusId, filenames, mimeType);
+      const result = await client.addCorpusFileSource({
+        corpusId,
+        files: filenames.map((file) => ({
+          filename: path.resolve(file),
+          contents: new Blob([fs.readFileSync(path.resolve(file))]),
+          mimeType,
+        })),
+      });
       showResult(result, program.opts().raw);
     })
   );
@@ -325,7 +332,7 @@ source
   .action(
     catchErrors(async (corpusId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.listCorpusSources(corpusId, opts.offset, opts.limit);
+      const result = await client.listCorpusSources({ corpusId, offset: opts.offset, limit: opts.limit });
       showResult(result, program.opts().raw);
     })
   );
@@ -336,7 +343,7 @@ source
   .action(
     catchErrors(async (corpusId: string, sourceId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.getCorpusSource(corpusId, sourceId);
+      const result = await client.getCorpusSource({ corpusId, sourceId });
       showResult(result, program.opts().raw);
     })
   );
@@ -347,7 +354,7 @@ source
   .action(
     catchErrors(async (corpusId: string, sourceId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.deleteCorpusSource(corpusId, sourceId);
+      const result = await client.deleteCorpusSource({ corpusId, sourceId });
       showResult(result, program.opts().raw);
     })
   );
@@ -362,7 +369,7 @@ source
   .action(
     catchErrors(async (corpusId: string, sourceId: string, { force }) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.refreshCorpusSource(corpusId, sourceId, force);
+      const result = await client.refreshCorpusSource({ corpusId, sourceId, force });
       showResult(result, program.opts().raw);
     })
   );
@@ -377,7 +384,7 @@ source
   .action(
     catchErrors(async (corpusId: string, sourceId: string, { force }) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.clearCorpusSource(corpusId, sourceId, force);
+      const result = await client.clearCorpusSource({ corpusId, sourceId, force });
       showResult(result, program.opts().raw);
     })
   );
@@ -393,7 +400,7 @@ job
   .action(
     catchErrors(async (corpusId: string, sourceId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.listCorpusSourceJobs(corpusId, sourceId, opts.offset, opts.limit);
+      const result = await client.listCorpusSourceJobs({ corpusId, sourceId, offset: opts.offset, limit: opts.limit });
       showResult(result, program.opts().raw);
     })
   );
@@ -404,7 +411,7 @@ job
   .action(
     catchErrors(async (corpusId: string, sourceId: string, jobId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.getCorpusSourceJob(corpusId, sourceId, jobId);
+      const result = await client.getCorpusSourceJob({ corpusId, sourceId, jobId });
       showResult(result, program.opts().raw);
     })
   );
@@ -420,18 +427,23 @@ doc
   .action(
     catchErrors(async (corpusId: string, sourceId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.listCorpusSourceDocs(corpusId, sourceId, opts.offset, opts.limit);
+      const result = await client.listCorpusSourceDocuments({
+        corpusId,
+        sourceId,
+        offset: opts.offset,
+        limit: opts.limit,
+      });
       showResult(result, program.opts().raw);
     })
   );
 
 doc
-  .command('get <corpusId> <sourceId> <docId>')
+  .command('get <corpusId> <sourceId> <documentId>')
   .description('Get a document from a corpus source.')
   .action(
-    catchErrors(async (corpusId: string, sourceId: string, docId: string) => {
+    catchErrors(async (corpusId: string, sourceId: string, documentId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.getCorpusSourceDoc(corpusId, sourceId, docId);
+      const result = await client.getCorpusSourceDocument({ corpusId, sourceId, documentId });
       showResult(result, program.opts().raw);
     })
   );

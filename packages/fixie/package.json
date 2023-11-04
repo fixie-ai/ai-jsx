@@ -1,6 +1,6 @@
 {
   "name": "fixie",
-  "version": "3.1.1",
+  "version": "4.0.0",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
@@ -25,6 +25,7 @@
     "@types/apollo-upload-client": "^17.0.2",
     "apollo-upload-client": "^17.0.0",
     "axios": "^1.5.1",
+    "base64-arraybuffer": "^1.0.2",
     "commander": "^11.0.0",
     "execa": "^8.0.1",
     "extract-files": "^13.0.0",
