@@ -916,7 +916,7 @@ export class CoquiTextToSpeech extends RestTextToSpeech {
  */
 export class ElevenLabsTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM'; // Rachel
-  static readonly DEFAULT_MODEL = 'eleven_monolingual_v1';
+  static readonly DEFAULT_MODEL = 'eleven_turbo_v2';
   constructor(
     urlFunc: BuildUrl,
     voice: string = ElevenLabsTextToSpeech.DEFAULT_VOICE,
