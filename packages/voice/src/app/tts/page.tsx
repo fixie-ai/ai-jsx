@@ -169,6 +169,7 @@ const PageComponent: React.FC = () => {
         />
         <Tts display="LMNT" provider="lmnt" supportsWs link="https://lmnt.com" costPerKChar={0.2} text={text} />
         <Tts display="Murf AI" provider="murf" link="https://murf.ai" costPerKChar={1.0} text={text} />
+        <Tts display="OpenAI" provider="openai" link="https://openai.com" costPerKChar={0.015} text={text} />
         <Tts display="PlayHT" provider="playht" link="https://play.ht" costPerKChar={0.04125} text={text} />
         <Tts display="Resemble AI" provider="resemble" link="https://resemble.ai" costPerKChar={0.4} text={text} />
         <Tts

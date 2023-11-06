@@ -1,6 +1,10 @@
 # Changelog
 
-# 0.22.1
+## 0.23.0
+
+- Update the model enums in `ai-jsx/lib/openai`
+
+## [0.22.1](https://github.com/fixie-ai/ai-jsx/commit/90370c40bccc779e5e49e830f917fd35bcbb87f1)
 
 - In the OpenTelemetry logger, ensure that SeverityNumber is set.
 
