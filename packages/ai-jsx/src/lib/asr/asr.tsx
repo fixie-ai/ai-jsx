@@ -474,7 +474,7 @@ export class DeepgramSpeechRecognition extends SpeechRecognitionBase {
       channels: '1',
       sample_rate: this.manager.sampleRate.toString(),
       punctuate: 'true',
-      filler_words: 'true',
+      // filler_words: 'true',
       interim_results: 'true',
       endpointing: '300',
     });
