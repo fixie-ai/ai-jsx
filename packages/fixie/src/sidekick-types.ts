@@ -3,10 +3,6 @@ import { Jsonifiable } from 'type-fest';
 export type AgentId = string;
 export type ConversationId = string;
 export type Metadata = Record<string, Jsonifiable | undefined>;
-export interface MessageRequestParams {
-  message: string;
-  metadata?: Metadata;
-}
 
 export interface BaseConversationTurn<Role extends string> {
   role: Role;

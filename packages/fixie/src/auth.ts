@@ -76,7 +76,7 @@ export async function Authenticate({
     // No key available. Need to punt.
     return null;
   }
-  const client = FixieClient.Create(useApiUrl, useApiKey);
+  const client = new FixieClient({ apiKey: useApiKey, url: useApiUrl });
   const userInfo = await client.userInfo();
   if (userInfo.is_anonymous) {
     return null;
