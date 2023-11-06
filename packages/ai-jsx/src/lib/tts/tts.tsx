@@ -915,7 +915,7 @@ export class CoquiTextToSpeech extends RestTextToSpeech {
  * Text-to-speech implementation that uses the ElevenLabs text-to-speech service.
  */
 export class ElevenLabsTextToSpeech extends RestTextToSpeech {
-  static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM';
+  static readonly DEFAULT_VOICE = '21m00Tcm4TlvDq8ikWAM'; // Rachel
   static readonly DEFAULT_MODEL = 'eleven_turbo_v2';
   constructor(
     urlFunc: BuildUrl,
@@ -948,6 +948,16 @@ export class MurfTextToSpeech extends RestTextToSpeech {
   static readonly DEFAULT_VOICE = 'en-US-natalie';
   constructor(urlFunc: BuildUrl, voice: string = MurfTextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
     super('murf', urlFunc, voice, rate);
+  }
+}
+
+/**
+ * Text-to-speech implementation that uses the OpenAI text-to-speech service.
+ */
+export class OpenAITextToSpeech extends RestTextToSpeech {
+  static readonly DEFAULT_VOICE = 'shimmer';
+  constructor(urlFunc: BuildUrl, voice: string = OpenAITextToSpeech.DEFAULT_VOICE, rate: number = 1.0) {
+    super('openai', urlFunc, voice, rate);
   }
 }
 
@@ -1248,6 +1258,8 @@ export function createTextToSpeech({ provider, proto, voice, rate, model, getTok
         return new LmntTextToSpeech(buildUrl!, voice, rate);
       case 'murf':
         return new MurfTextToSpeech(buildUrl!, voice, rate);
+      case 'openai':
+        return new OpenAITextToSpeech(buildUrl!, voice, rate);
       case 'playht':
         return new PlayHTTextToSpeech(buildUrl!, voice, rate);
       case 'resemble':
