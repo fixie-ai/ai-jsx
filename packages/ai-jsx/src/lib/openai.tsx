@@ -32,7 +32,8 @@ export type ValidCompletionModel =
   | 'text-davinci-002'
   | 'text-curie-001'
   | 'text-babbage-001'
-  | 'text-ada-001';
+  | 'text-ada-001'
+  | 'gpt-3.5-turbo-instruct';
 
 export type ValidChatModel =
   | 'gpt-4'
@@ -41,11 +42,13 @@ export type ValidChatModel =
   | 'gpt-4-32k'
   | 'gpt-4-32k-0314' // discontinue on 06/13/2024
   | 'gpt-4-32k-0613'
+  | 'gpt-4-1106-preview'
   | 'gpt-3.5-turbo'
   | 'gpt-3.5-turbo-0301' // discontinue on 06/13/2024
   | 'gpt-3.5-turbo-0613'
   | 'gpt-3.5-turbo-16k'
-  | 'gpt-3.5-turbo-16k-0613';
+  | 'gpt-3.5-turbo-16k-0613'
+  | 'gpt-3.5-turbo-1106';
 
 /**
  * An OpenAI client that talks to the Azure OpenAI service.
