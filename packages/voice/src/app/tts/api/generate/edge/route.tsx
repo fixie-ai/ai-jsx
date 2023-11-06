@@ -302,7 +302,7 @@ function ttsOpenAI({ text, voice, rate, model }: GenerateOptions): Promise<Respo
   const obj = {
     voice,
     input: text,
-    model: model ?? 'tts-1'
+    model: model ?? 'tts-1',
   };
   const url = 'https://api.openai.com/v1/audio/speech';
   return postJson(url, headers, obj);
