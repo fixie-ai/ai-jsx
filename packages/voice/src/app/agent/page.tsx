@@ -31,7 +31,7 @@ interface LatencyThreshold {
 
 const DEFAULT_ASR_PROVIDER = 'deepgram';
 const DEFAULT_TTS_PROVIDER = 'playht';
-const DEFAULT_LLM = 'gpt-4';
+const DEFAULT_LLM = 'gpt-4-1106-preview';
 const ASR_PROVIDERS = ['aai', 'deepgram', 'gladia', 'revai', 'soniox'];
 const TTS_PROVIDERS = [
   'aws',
@@ -46,7 +46,15 @@ const TTS_PROVIDERS = [
   'resemble',
   'wellsaid',
 ];
-const LLM_MODELS = ['claude-2', 'claude-instant-1', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'];
+const LLM_MODELS = [
+  'claude-2',
+  'claude-instant-1',
+  'gpt-4',
+  'gpt-4-32k',
+  'gpt-4-1106-preview',
+  'gpt-3.5-turbo',
+  'gpt-3.5-turbo-16k',
+];
 const AGENT_IDS = ['ai-friend', 'dr-donut', 'rubber-duck']; //, 'spanish-tutor', 'justin/ultravox', 'justin/fixie'];
 const LATENCY_THRESHOLDS: { [key: string]: LatencyThreshold } = {
   ASR: { good: 300, fair: 500 },
