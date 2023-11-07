@@ -243,6 +243,23 @@ corpus
   );
 
 corpus
+  .command('update <corpusId>')
+  .description('Update corpus metadata.')
+  .option('--name <string>', 'The new display name for this corpus')
+  .option('--description <string>', 'The new description for this corpus')
+  .action(
+    catchErrors(async (corpusId: string, opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.updateCorpus({
+        corpusId,
+        displayName: opts.name ?? undefined,
+        description: opts.description ?? undefined,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+corpus
   .command('query <corpusId> <query>')
   .description('Query a given corpus.')
   .action(
@@ -344,6 +361,24 @@ source
     catchErrors(async (corpusId: string, sourceId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.getCorpusSource({ corpusId, sourceId });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+source
+  .command('update <corpusId> <sourceId>')
+  .description('Update source metadata.')
+  .option('--name <string>', 'The new display name for this source')
+  .option('--description <string>', 'The new description for this source')
+  .action(
+    catchErrors(async (corpusId: string, sourceId: string, opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.updateCorpusSource({
+        corpusId,
+        sourceId,
+        displayName: opts.name ?? undefined,
+        description: opts.description ?? undefined,
+      });
       showResult(result, program.opts().raw);
     })
   );
