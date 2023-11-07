@@ -234,6 +234,39 @@ export class FixieClient {
   }
 
   /**
+   * Update a Corpus.
+   *
+   * @param options.name The new name of the Corpus.
+   * @param options.description The new description of the Corpus.
+   */
+  updateCorpus({
+    corpusId,
+    displayName,
+    description,
+  }: {
+    corpusId: string;
+    displayName?: string;
+    description?: string;
+  }): Promise<Jsonifiable> {
+    const fieldMask: string[] = [];
+    if (displayName !== undefined) {
+      fieldMask.push('displayName');
+    }
+    if (description !== undefined) {
+      fieldMask.push('description');
+    }
+    const body = {
+      corpus: {
+        corpus_id: corpusId,
+        displayName,
+        description,
+      },
+      updateMask: fieldMask.join(','),
+    };
+    return this.requestJson(`/api/v1/corpora/${corpusId}`, body, 'PUT');
+  }
+
+  /**
    * Query a given Corpus.
    *
    * @param options.corpusId The ID of the Corpus to query.
@@ -398,6 +431,42 @@ export class FixieClient {
       },
     };
     return this.requestJson(`/api/v1/corpora/${corpusId}/sources`, body);
+  }
+
+  /**
+   * Update a Source.
+   *
+   * @param options.name The new name of the Source.
+   * @param options.description The new description of the Source.
+   */
+  updateCorpusSource({
+    corpusId,
+    sourceId,
+    displayName,
+    description,
+  }: {
+    corpusId: string;
+    sourceId: string;
+    displayName?: string;
+    description?: string;
+  }): Promise<Jsonifiable> {
+    const fieldMask: string[] = [];
+    if (displayName !== undefined) {
+      fieldMask.push('displayName');
+    }
+    if (description !== undefined) {
+      fieldMask.push('description');
+    }
+    const body = {
+      source: {
+        corpus_id: corpusId,
+        source_id: sourceId,
+        displayName,
+        description,
+      },
+      updateMask: fieldMask.join(','),
+    };
+    return this.requestJson(`/api/v1/corpora/${corpusId}/sources/${sourceId}`, body, 'PUT');
   }
 
   /**
