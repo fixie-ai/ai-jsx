@@ -241,14 +241,18 @@ function tokenLimitForChatModel(
     case 'gpt-4-32k-0314':
     case 'gpt-4-32k-0613':
       return 32768 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
+    case 'gpt-4-1106-preview':
+      return 128_000 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
     case 'gpt-3.5-turbo':
     case 'gpt-3.5-turbo-0301':
     case 'gpt-3.5-turbo-0613':
       return 4096 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
     case 'gpt-3.5-turbo-16k':
     case 'gpt-3.5-turbo-16k-0613':
+    case 'gpt-3.5-turbo-1106':
       return 16384 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
     default:
+      const _: never = model;
       return undefined;
   }
 }
