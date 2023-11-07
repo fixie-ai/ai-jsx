@@ -6,12 +6,15 @@ export interface MessageBase {
 
 export interface FunctionCallMessage extends MessageBase {
   kind: 'functionCall';
+  id?: string;
+  partial?: boolean;
   name: string;
   args: Record<string, string | number | boolean | null>;
 }
 
 export interface FunctionResponseMessage extends MessageBase {
   kind: 'functionResponse';
+  id?: string;
   name: string;
   response: string;
   failed: boolean;
