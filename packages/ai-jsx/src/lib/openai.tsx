@@ -293,6 +293,86 @@ async function tokenCountForConversationMessage(
 }
 
 /**
+ * Identifies any FunctionCall/FunctionResponse IDs that should be represented as ID-less function calls in the completion request.
+ */
+function getUnmatchedFunctionIds(messages: ConversationMessage[]): Set<string> {
+  let activeFunctionCalls: string[] = [];
+  let activeFunctionResponses: string[] = [];
+  const unmatchedIds = new Set<string>(); // IDs that should be represented as ID-less function calls because they were part of an unmatched block.
+
+  const flushActiveIds = () => {
+    const dedupedFunctionCalls = new Set(activeFunctionCalls);
+    const dedupedFunctionResponses = new Set(activeFunctionResponses);
+
+    // If there were any duplicated IDs, or any IDs were in one set but not the other, _all_ the IDs are invalid.
+    const isInvalid =
+      dedupedFunctionCalls.size !== activeFunctionCalls.length ||
+      dedupedFunctionResponses.size !== activeFunctionResponses.length ||
+      !activeFunctionCalls.every((id) => dedupedFunctionResponses.has(id)) ||
+      !activeFunctionResponses.every((id) => dedupedFunctionCalls.has(id));
+
+    if (isInvalid) {
+      for (const id of activeFunctionCalls) {
+        unmatchedIds.add(id);
+      }
+      for (const id of activeFunctionResponses) {
+        unmatchedIds.add(id);
+      }
+    }
+
+    activeFunctionCalls = [];
+    activeFunctionResponses = [];
+  };
+
+  for (const message of messages) {
+    if (message.type === 'functionCall') {
+      if (activeFunctionResponses.length > 0) {
+        flushActiveIds();
+      }
+
+      const id = message.element.props.id;
+      if (id) {
+        activeFunctionCalls.push(id);
+      }
+    } else if (message.type === 'functionResponse') {
+      const id = message.element.props.id;
+      if (id) {
+        activeFunctionResponses.push(id);
+      }
+    } else {
+      flushActiveIds();
+    }
+  }
+  flushActiveIds();
+
+  return unmatchedIds;
+}
+
+/**
+ * Coalesces adjacent assistant messages with tool calls into single messages.
+ */
+function coalesceToolCallMessages(
+  messages: OpenAIClient.Chat.ChatCompletionMessageParam[]
+): OpenAIClient.Chat.ChatCompletionMessageParam[] {
+  return messages.reduce<OpenAIClient.Chat.ChatCompletionMessageParam[]>((mergedMessages, message) => {
+    if (message.role === 'assistant' && message.tool_calls && message.content === '') {
+      const lastMessage = mergedMessages[mergedMessages.length - 1];
+      if (lastMessage.role === 'assistant' && lastMessage.tool_calls) {
+        // Merge with the last message.
+        return [
+          ...mergedMessages.slice(0, -1),
+          {
+            ...lastMessage,
+            tool_calls: [...lastMessage.tool_calls, ...message.tool_calls],
+          },
+        ];
+      }
+    }
+    return mergedMessages.concat([message]);
+  }, []);
+}
+
+/**
  * Represents an OpenAI text chat model (e.g., `gpt-4`).
  */
 export async function* OpenAIChatModel(
@@ -350,54 +430,7 @@ export async function* OpenAIChatModel(
   // OpenAI requires that tool calls with IDs be immediately followed by tool messages with the corresponding IDs.
   // Walk through the conversation to find IDs that don't match up. Anything that doesn't match will be represented
   // as ID-less function calls.
-  let activeFunctionCalls: string[] = [];
-  let activeFunctionResponses: string[] = [];
-  const unmatchedIds = new Set<string>(); // IDs that should be represented as ID-less function calls because they were part of an unmatched block.
-
-  const flushActiveIds = () => {
-    const dedupedFunctionCalls = new Set(activeFunctionCalls);
-    const dedupedFunctionResponses = new Set(activeFunctionResponses);
-
-    // If there were any duplicated IDs, or any IDs were in one set but not the other, _all_ the IDs are invalid.
-    const isInvalid =
-      dedupedFunctionCalls.size !== activeFunctionCalls.length ||
-      dedupedFunctionResponses.size !== activeFunctionResponses.length ||
-      !activeFunctionCalls.every((id) => dedupedFunctionResponses.has(id)) ||
-      !activeFunctionResponses.every((id) => dedupedFunctionCalls.has(id));
-
-    if (isInvalid) {
-      for (const id of activeFunctionCalls) {
-        unmatchedIds.add(id);
-      }
-      for (const id of activeFunctionResponses) {
-        unmatchedIds.add(id);
-      }
-    }
-
-    activeFunctionCalls = [];
-    activeFunctionResponses = [];
-  };
-
-  for (const message of conversationMessages) {
-    if (message.type === 'functionCall') {
-      if (activeFunctionResponses.length > 0) {
-        flushActiveIds();
-      }
-
-      const id = message.element.props.id;
-      if (id) {
-        activeFunctionCalls.push(id);
-      }
-    } else if (message.type === 'functionResponse') {
-      const id = message.element.props.id;
-      if (id) {
-        activeFunctionResponses.push(id);
-      }
-    } else {
-      flushActiveIds();
-    }
-  }
-  flushActiveIds();
+  const unmatchedFunctionCallIds = getUnmatchedFunctionIds(conversationMessages);
 
   const messages = await Promise.all(
     conversationMessages.map(async (message): Promise<OpenAIClient.Chat.ChatCompletionMessageParam> => {
@@ -418,8 +451,8 @@ export async function* OpenAIChatModel(
             content: await render(message.element),
           };
         case 'functionCall':
-          if (message.element.props.id && !unmatchedIds.has(message.element.props.id)) {
-            // N.B. Adjacent tool calls will be merged below.
+          if (message.element.props.id && !unmatchedFunctionCallIds.has(message.element.props.id)) {
+            // N.B. Adjacent tool calls will be coalesced below.
             return {
               role: 'assistant',
               content: '',
@@ -442,7 +475,7 @@ export async function* OpenAIChatModel(
             },
           };
         case 'functionResponse':
-          if (message.element.props.id && !unmatchedIds.has(message.element.props.id)) {
+          if (message.element.props.id && !unmatchedFunctionCallIds.has(message.element.props.id)) {
             return {
               role: 'tool',
               tool_call_id: message.element.props.id,
@@ -467,23 +500,7 @@ export async function* OpenAIChatModel(
     );
   }
 
-  // Merge adjacent tool calls.
-  const mergedMessages = messages.reduce<OpenAIClient.Chat.ChatCompletionMessageParam[]>((mergedMessages, message) => {
-    if (message.role === 'assistant' && message.tool_calls && message.content === '') {
-      const lastMessage = mergedMessages[mergedMessages.length - 1];
-      if (lastMessage.role === 'assistant' && lastMessage.tool_calls) {
-        // Merge with the last message.
-        return [
-          ...mergedMessages.slice(0, -1),
-          {
-            ...lastMessage,
-            tool_calls: [...lastMessage.tool_calls, ...message.tool_calls],
-          },
-        ];
-      }
-    }
-    return mergedMessages.concat([message]);
-  }, []);
+  const mergedMessages = coalesceToolCallMessages(messages);
 
   const openaiTools = !props.functionDefinitions
     ? []
