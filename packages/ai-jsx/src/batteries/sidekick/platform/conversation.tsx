@@ -22,64 +22,37 @@ import { SidekickOutputFormat } from './sidekick.js';
  * window.
  */
 export function getShrinkableConversation(messages: ConversationMessage[], fullConversation: ConversationMessage[]) {
-  // Group messages with tool IDs together because we can't leave unmatched function calls/responses.
-  const groupedMessages: ConversationMessage[][] = [[]];
-  fullConversation.forEach((message) => {
-    if (message.type === 'functionCall' || message.type === 'functionResponse') {
-      if (message.element.props.id) {
-        const lastMessage = groupedMessages.at(-1)?.at(-1);
-        if (lastMessage?.type === 'functionCall' || lastMessage?.type === 'functionResponse') {
-          if (lastMessage.element.props.id) {
-            groupedMessages.at(-1)?.push(message);
-            return;
-          }
-        }
-      }
-    }
-
-    groupedMessages.push([message]);
-  });
-
-  return groupedMessages.map((group, groupIndex) => {
+  return fullConversation.map((message, messageIndex) => {
     // Ensure that nothing in the most recent batch of messages gets dropped.
-    if (messages.length !== fullConversation.length && messages.find((m) => group.includes(m))) {
-      return group.map((message) => message.element);
+    if (messages.length !== fullConversation.length && messages.includes(message)) {
+      return message.element;
     }
 
-    if (group.find((message) => message.type === 'functionResponse')) {
-      // It's a group of function calls and responses. As a first pass, elide FunctionResponses.
-      const elements = group.map((message) =>
-        message.type === 'functionResponse' ? (
+    switch (message.type) {
+      case 'system':
+        // Never drop system messages.
+        return message.element;
+      case 'functionResponse':
+        // As a first pass, elide FunctionResponses.
+        return (
           <Shrinkable
             importance={0}
             replacement={
-              <FunctionResponse id={message.element.props.id} name={message.element.props.name}>
-                [snip...]
-              </FunctionResponse>
+              <Shrinkable importance={messageIndex + 1}>
+                <FunctionResponse id={message.element.props.id} name={message.element.props.name}>
+                  [snip...]
+                </FunctionResponse>
+              </Shrinkable>
             }
           >
             {message.element}
           </Shrinkable>
-        ) : (
-          message.element
-        )
-      );
-
-      // Then prune the whole group.
-      return <Shrinkable importance={groupIndex + 1}>{elements}</Shrinkable>;
-    }
-
-    const message = group[0];
-    switch (message?.type) {
-      case 'system':
-        // Never drop system messages.
-        return message.element;
+        );
       case 'user':
       case 'assistant':
       case 'functionCall':
-      case 'functionResponse':
         // Then prune oldest -> newest messages.
-        return <Shrinkable importance={groupIndex + 1}>{message.element}</Shrinkable>;
+        return <Shrinkable importance={messageIndex + 1}>{message.element}</Shrinkable>;
     }
   });
 }
