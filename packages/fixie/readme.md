@@ -8,7 +8,7 @@ The /src folder has a file called `main.ts` which is the CLI.
 
 ### To test new features added to the CLI
 
-* From the root, run `yarn workspace fixie build-start <command>` where <command> is the command you want to test.
+- From the root, run `yarn workspace fixie build-start <command>` where <command> is the command you want to test.
 
 ## Web APIs
 
