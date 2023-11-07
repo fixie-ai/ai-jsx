@@ -284,7 +284,6 @@ async function* LimitToValidMdx({ children }: { children: AI.Node }, { render, l
       logger.debug({ mdx: frame, mdxCompileError }, 'Holding back invalid MDX');
       continue;
     }
-    logger.debug({ mdx: frame }, 'Streaming valid MDX');
     yield frame;
   }
   return rendered;

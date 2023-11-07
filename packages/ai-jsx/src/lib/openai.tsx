@@ -345,6 +345,63 @@ export async function* OpenAIChatModel(
     promptTokenLimit
   );
 
+  // OpenAI requires that tool calls with IDs be immediately followed by tool messages with the corresponding IDs.
+  // Walk through the conversation to find IDs that don't match up. Anything that doesn't match will be represented
+  // as ID-less function calls.
+  let activeFunctionCalls: string[] = [];
+  let activeFunctionResponses: string[] = [];
+  const unmatchedIds = new Set<string>(); // IDs that should be represented as ID-less function calls because they were part of an unmatched block.
+
+  const flushActiveIds = () => {
+    const dedupedFunctionCalls = new Set(activeFunctionCalls);
+    const dedupedFunctionResponses = new Set(activeFunctionResponses);
+
+    // If there were any duplicated IDs, or any IDs were in one set but not the other, _all_ the IDs are invalid.
+    const isInvalid =
+      dedupedFunctionCalls.size !== activeFunctionCalls.length ||
+      dedupedFunctionResponses.size !== activeFunctionResponses.length ||
+      !activeFunctionCalls.every((id) => dedupedFunctionResponses.has(id)) ||
+      !activeFunctionResponses.every((id) => dedupedFunctionCalls.has(id));
+
+    if (isInvalid) {
+      for (const id of activeFunctionCalls) {
+        unmatchedIds.add(id);
+      }
+      for (const id of activeFunctionResponses) {
+        unmatchedIds.add(id);
+      }
+    }
+
+    activeFunctionCalls = [];
+    activeFunctionResponses = [];
+  };
+
+  for (const message of conversationMessages) {
+    switch (message.type) {
+      case 'functionCall':
+        if (activeFunctionResponses.length > 0) {
+          flushActiveIds();
+        }
+
+        const id = message.element.props.id;
+        if (id) {
+          activeFunctionCalls.push(id);
+        }
+        break;
+      case 'functionResponse': {
+        const id = message.element.props.id;
+        if (id) {
+          activeFunctionResponses.push(id);
+        }
+        break;
+      }
+      default:
+        flushActiveIds();
+        break;
+    }
+  }
+  flushActiveIds();
+
   const messages = await Promise.all(
     conversationMessages.map(async (message): Promise<OpenAIClient.Chat.ChatCompletionMessageParam> => {
       switch (message.type) {
@@ -364,7 +421,7 @@ export async function* OpenAIChatModel(
             content: await render(message.element),
           };
         case 'functionCall':
-          if (message.element.props.id) {
+          if (message.element.props.id && !unmatchedIds.has(message.element.props.id)) {
             // N.B. Adjacent tool calls will be merged below.
             return {
               role: 'assistant',
@@ -388,7 +445,7 @@ export async function* OpenAIChatModel(
             },
           };
         case 'functionResponse':
-          if (message.element.props.id) {
+          if (message.element.props.id && !unmatchedIds.has(message.element.props.id)) {
             return {
               role: 'tool',
               tool_call_id: message.element.props.id,
