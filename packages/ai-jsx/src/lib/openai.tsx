@@ -251,9 +251,11 @@ function tokenLimitForChatModel(
     case 'gpt-3.5-turbo-16k-0613':
     case 'gpt-3.5-turbo-1106':
       return 16384 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
-    default:
+    default: {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const _: never = model;
       return undefined;
+    }
   }
 }
 
@@ -377,27 +379,22 @@ export async function* OpenAIChatModel(
   };
 
   for (const message of conversationMessages) {
-    switch (message.type) {
-      case 'functionCall':
-        if (activeFunctionResponses.length > 0) {
-          flushActiveIds();
-        }
-
-        const id = message.element.props.id;
-        if (id) {
-          activeFunctionCalls.push(id);
-        }
-        break;
-      case 'functionResponse': {
-        const id = message.element.props.id;
-        if (id) {
-          activeFunctionResponses.push(id);
-        }
-        break;
-      }
-      default:
+    if (message.type === 'functionCall') {
+      if (activeFunctionResponses.length > 0) {
         flushActiveIds();
-        break;
+      }
+
+      const id = message.element.props.id;
+      if (id) {
+        activeFunctionCalls.push(id);
+      }
+    } else if (message.type === 'functionResponse') {
+      const id = message.element.props.id;
+      if (id) {
+        activeFunctionResponses.push(id);
+      }
+    } else {
+      flushActiveIds();
     }
   }
   flushActiveIds();
