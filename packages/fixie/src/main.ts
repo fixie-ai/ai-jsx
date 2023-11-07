@@ -255,7 +255,10 @@ corpus
         displayName: opts.name ?? undefined,
         description: opts.description ?? undefined,
       });
-   
+      showResult(result, program.opts().raw);
+    })
+  );
+
 corpus
   .command('delete <corpusId>')
   .description('Delete a corpus.')
