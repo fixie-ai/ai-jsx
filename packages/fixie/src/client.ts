@@ -248,6 +248,9 @@ export class FixieClient {
     displayName?: string;
     description?: string;
   }): Promise<Jsonifiable> {
+    if (!displayName && !description) {
+      throw new Error('Must specify either displayName or description');
+    }
     const fieldMask: string[] = [];
     if (displayName !== undefined) {
       fieldMask.push('displayName');
@@ -450,6 +453,9 @@ export class FixieClient {
     displayName?: string;
     description?: string;
   }): Promise<Jsonifiable> {
+    if (!displayName && !description) {
+      throw new Error('Must specify at least one of displayName or description');
+    }
     const fieldMask: string[] = [];
     if (displayName !== undefined) {
       fieldMask.push('displayName');
