@@ -320,19 +320,10 @@ async function* renderStream(
     const logImpl = renderingContext.getContext(LoggerContext);
     const renderId = uuidv4();
     try {
-      /**
-       * This approach is pretty noisy because there are many internal components about which the users don't care.
-       * For instance, if the user writes <ChatCompletion>, that'll generate a bunch of internal helpers to
-       * locate + call the model provider, etc.
-       *
-       * To get around this, maybe we want components to be able to choose the loglevel used for their rendering.
-       */
-      logImpl.log('debug', renderable, renderId, 'Start rendering element');
       const finalResult = yield* renderingContext.render(
         renderable.render(renderingContext, new BoundLogger(logImpl, renderId, renderable), appendOnly),
         recursiveRenderOpts
       );
-      logImpl.log('debug', renderable, renderId, { finalResult }, 'Finished rendering element');
       return finalResult;
     } catch (ex) {
       logImpl.logException(renderable, renderId, ex);

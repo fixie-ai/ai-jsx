@@ -35,7 +35,21 @@ export function SystemMessage({ children }: { children: Node; metadata?: Record<
  *    ==> 'Sorry to hear that. Can you tell me why?
  * ```
  */
-export function UserMessage({ children }: { name?: string; children: Node; metadata?: Record<string, Jsonifiable> }) {
+export function UserMessage({
+  name,
+  children,
+}: {
+  name?: string;
+  children: Node;
+  metadata?: Record<string, Jsonifiable>;
+}) {
+  if (name) {
+    return (
+      <>
+        ({name}) {children}
+      </>
+    );
+  }
   return children;
 }
 
@@ -99,16 +113,20 @@ export function ConversationHistory(_: {}, { getContext }: AI.ComponentContext) 
  * ```
  */
 export function FunctionCall({
+  id,
   name,
   partial,
   args,
 }: {
   name: string;
+  id?: string;
   partial?: boolean;
   args: Record<string, string | number | boolean | null>;
   metadata?: Record<string, Jsonifiable>;
 }) {
-  return `Call function ${name} with ${partial ? '(incomplete) ' : ''}${JSON.stringify(args)}`;
+  return `Call function ${name}${id ? ` (id ${id})` : ''} with ${partial ? '(incomplete) ' : ''}${JSON.stringify(
+    args
+  )}`;
 }
 
 /**
@@ -128,26 +146,31 @@ export function FunctionCall({
  * ```
  */
 export function FunctionResponse({
+  id,
   name,
   failed,
   children,
 }: {
+  id?: string;
   name: string;
   failed?: boolean;
   children: Node;
   metadata?: Record<string, Jsonifiable>;
 }) {
+  const idOutput = id ? ` (id ${id})` : '';
   if (failed) {
     return (
       <>
-        function {name} failed with {children}
+        function {name}
+        {idOutput} failed with {children}
       </>
     );
   }
 
   return (
     <>
-      function {name} returned {children}
+      function {name}
+      {idOutput} returned {children}
     </>
   );
 }

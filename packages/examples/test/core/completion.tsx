@@ -36,7 +36,7 @@ import nock from 'nock';
 import * as AI from 'ai-jsx';
 import { ChatCompletion } from 'ai-jsx/core/completion';
 import { FunctionCall, FunctionResponse, UserMessage, SystemMessage, Shrinkable } from 'ai-jsx/core/conversation';
-import { OpenAI } from 'ai-jsx/lib/openai';
+import { OpenAI, OpenAIClient } from 'ai-jsx/lib/openai';
 import { Tool } from 'ai-jsx/batteries/use-tools';
 import { Anthropic } from 'ai-jsx/lib/anthropic';
 import { CompletionCreateParams } from '@anthropic-ai/sdk/resources/completions';
@@ -45,7 +45,6 @@ import { Jsonifiable } from 'type-fest';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { SimpleSpanProcessor, InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
 import _ from 'lodash';
-import { type OpenAI as OpenAIClient } from 'openai';
 
 afterEach(() => {
   fetchMock.resetMocks();
@@ -369,18 +368,21 @@ describe('functions', () => {
 
     expect(handleRequest).toHaveBeenCalledWith(
       expect.objectContaining({
-        functions: [
+        tools: [
           {
-            name: 'myFunc',
-            description: 'My function',
-            parameters: {
-              type: 'object',
-              required: ['myParam'],
-              properties: {
-                myParam: {
-                  type: 'string',
-                  enum: ['option1', 'option2'],
-                  description: 'My parameter',
+            type: 'function',
+            function: {
+              name: 'myFunc',
+              description: 'My function',
+              parameters: {
+                type: 'object',
+                required: ['myParam'],
+                properties: {
+                  myParam: {
+                    type: 'string',
+                    enum: ['option1', 'option2'],
+                    description: 'My parameter',
+                  },
                 },
               },
             },
@@ -484,7 +486,7 @@ function mockOpenAIResponse(message: string, handleRequest?: jest.MockedFn<(req:
           function sendDelta(messagePart: string) {
             const response: OpenAIClient.Chat.Completions.ChatCompletionChunk = {
               id: 'cmpl-3QJ8ZjX1J5Z5X',
-              object: 'text_completion',
+              object: 'chat.completion.chunk',
               created: 1624430979,
               model: 'gpt-3.5-turbo',
               choices: [

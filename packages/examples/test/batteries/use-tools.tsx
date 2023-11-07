@@ -14,7 +14,7 @@ async function FakeChatCompletion({ children }: { children: AI.Node }, { render 
   if (nodes.find((n) => n.type === 'functionCall')) {
     return <AssistantMessage>DONE</AssistantMessage>;
   }
-  return <FunctionCall name="myFunc" args={{ parameter: 'test parameter value' }} />;
+  return <FunctionCall id="$myFunc" name="myFunc" args={{ parameter: 'test parameter value' }} />;
 }
 
 it('should call a tool', async () => {
@@ -52,8 +52,8 @@ it('should call a tool', async () => {
   );
 
   expect(result).toMatchInlineSnapshot(`
-    "functionCall: Call function myFunc with {"parameter":"test parameter value"}
-    functionResponse: function myFunc returned TEST PARAMETER VALUE
+    "functionCall: Call function myFunc (id $myFunc) with {"parameter":"test parameter value"}
+    functionResponse: function myFunc (id $myFunc) returned TEST PARAMETER VALUE
     assistant: DONE
     "
   `);
@@ -106,8 +106,8 @@ it('should give tools access to context', async () => {
   );
 
   expect(result).toMatchInlineSnapshot(`
-    "functionCall: Call function myFunc with {"parameter":"test parameter value"}
-    functionResponse: function myFunc returned test parameter value: 42
+    "functionCall: Call function myFunc (id $myFunc) with {"parameter":"test parameter value"}
+    functionResponse: function myFunc (id $myFunc) returned test parameter value: 42
     assistant: DONE
     "
   `);
@@ -156,8 +156,8 @@ it('should handle failures', async () => {
   );
 
   expect(result).toMatchInlineSnapshot(`
-    "functionCall: Call function myFunc with {"parameter":"test parameter value"}
-    functionResponse: function myFunc failed with Error: ERROR!
+    "functionCall: Call function myFunc (id $myFunc) with {"parameter":"test parameter value"}
+    functionResponse: function myFunc (id $myFunc) failed with Error: ERROR!
     assistant: DONE
     "
   `);
