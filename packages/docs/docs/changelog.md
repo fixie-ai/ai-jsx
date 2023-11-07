@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.23.0
+## 0.24.0
+
+- Update OpenAI client to 4.16.0
+- Add support for OpenAI parallel function calls
+
+## [0.23.0](https://github.com/fixie-ai/ai-jsx/commit/e61c8acff105f69458377f94347e920ade5b9772)
 
 - Update the model enums in `ai-jsx/lib/openai`
 

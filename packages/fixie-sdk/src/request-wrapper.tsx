@@ -62,6 +62,8 @@ export function FixieRequestWrapper({
               <Json>
                 {{
                   kind: 'functionCall',
+                  id: message.element.props.id,
+                  partial: message.element.props.partial,
                   name: message.element.props.name,
                   args: message.element.props.args,
                   metadata: message.element.props.metadata,
@@ -74,6 +76,7 @@ export function FixieRequestWrapper({
               <Json>
                 {{
                   kind: 'functionResponse',
+                  id: message.element.props.id,
                   name: message.element.props.name,
                   response: <>{message.element.props.children}</>,
                   metadata: message.element.props.metadata,
@@ -95,7 +98,7 @@ export function FixieRequestWrapper({
         new OpenAIClient({
           apiKey: fixieAuthToken,
           baseURL: new URL('api/openai-proxy/v1', fixieApiUrl).toString(),
-          fetch: globalThis.fetch,
+          fetch: globalThis.fetch as any,
         })
       }
       chatModel="gpt-3.5-turbo"
