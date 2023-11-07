@@ -255,6 +255,14 @@ corpus
         displayName: opts.name ?? undefined,
         description: opts.description ?? undefined,
       });
+   
+corpus
+  .command('delete <corpusId>')
+  .description('Delete a corpus.')
+  .action(
+    catchErrors(async (corpusId: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.deleteCorpus({ corpusId });
       showResult(result, program.opts().raw);
     })
   );
