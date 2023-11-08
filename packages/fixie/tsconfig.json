@@ -17,5 +17,3 @@
   "include": ["src/**/*", "jest.config.ts", ".eslintrc.cjs", "index.ts"],
   "exclude": []
 }
-
-
