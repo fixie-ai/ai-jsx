@@ -500,7 +500,7 @@ export class FixieAgent {
     environmentVariables: Record<string, string> = {}
   ): Promise<AgentRevision> {
     const config = await FixieAgent.LoadConfig(agentPath);
-    const agentId = `${(await client.userInfo()).username}/${config.handle}`;
+    const agentId = config.handle;
     term('🦊 Deploying agent ').green(agentId)('...\n');
 
     // Check that the package.json path exists in this directory.
@@ -549,7 +549,7 @@ export class FixieAgent {
     debug?: boolean;
   }) {
     const config = await FixieAgent.LoadConfig(agentPath);
-    const agentId = `${(await client.userInfo()).username}/${config.handle}`;
+    const agentId = config.handle;
 
     term('🦊 Serving agent ').green(agentId)('...\n');
 

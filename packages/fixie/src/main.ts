@@ -150,13 +150,28 @@ program
 registerDeployCommand(program);
 registerServeCommand(program);
 
-program
-  .command('user')
+const user = program.command('user').description('User related commands');
+
+user
+  .command('get')
   .description('Get information on the current user')
   .action(
     catchErrors(async () => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.userInfo();
+      showResult(result, program.opts().raw);
+    })
+  );
+
+user
+  .command('update')
+  .description('Update information on the current user')
+  .option('--email <string>', 'The new email address for this user')
+  .option('--fullName <string>', 'The new description for this corpus')
+  .action(
+    catchErrors(async (opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.updateUser({ email: opts.email, fullName: opts.fullName });
       showResult(result, program.opts().raw);
     })
   );
@@ -170,7 +185,7 @@ program
     catchErrors(async (options: { force?: boolean; showKey?: boolean }) => {
       const client = await AuthenticateOrLogIn({ forceReauth: options.force ?? false });
       const userInfo = await client.userInfo();
-      term('👤 You are logged into ').green(client.url)(' as ').green(userInfo.username)('\n');
+      term('👤 You are logged into ').green(client.url)(' as ').green(userInfo.email)('\n');
       if (options.showKey) {
         term('🔑 Your FIXIE_API_KEY is: ').red(client.apiKey)('\n');
       } else {

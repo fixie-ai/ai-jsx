@@ -5,22 +5,16 @@ import type { Jsonifiable } from 'type-fest';
 import { AgentId, AssistantConversationTurn, Conversation, ConversationId, Metadata } from './sidekick-types.js';
 import { encode } from 'base64-arraybuffer';
 
-export interface UserInfo {
-  id: number;
-  username: string;
-  is_authenticated: boolean;
-  is_superuser: boolean;
-  is_staff: boolean;
-  is_active: boolean;
-  is_anonymous: boolean;
-  email?: string;
-  first_name?: string;
-  last_name?: string;
-  last_login?: Date;
-  date_joined?: Date;
-  api_token?: string;
-  avatar?: string;
-  organization?: string;
+/** Represents metadata about the currently logged-in user. */
+export interface User {
+  userId: string;
+  email: string;
+  full_name?: string;
+  avatar_url?: string;
+  created: Date;
+  modified: Date;
+  apiToken?: string;
+  lastLogin: Date;
 }
 
 export class AgentDoesNotExistError extends Error {
@@ -179,9 +173,36 @@ export class FixieClient {
   }
 
   /** Return information on the currently logged-in user. */
-  userInfo(): Promise<UserInfo> {
-    const rawUserInfo: unknown = this.requestJson('/api/user');
-    return rawUserInfo as Promise<UserInfo>;
+  userInfo(): Promise<User> {
+    const rawUserInfo: unknown = this.requestJson('/api/v1/users/me');
+    return rawUserInfo as Promise<User>;
+  }
+
+  /**
+   * Update the current user's metadata.
+   *
+   * @param options.email The new email address for this user.
+   * @param options.fullName The new full name for this user.
+   */
+  updateUser({ email, fullName }: { email?: string; fullName?: string }): Promise<User> {
+    if (!email && !fullName) {
+      throw new Error('Must specify either email or fullName');
+    }
+    const fieldMask: string[] = [];
+    if (email !== undefined) {
+      fieldMask.push('email');
+    }
+    if (fullName !== undefined) {
+      fieldMask.push('fullName');
+    }
+    const body = {
+      user: {
+        email,
+        fullName,
+      },
+      updateMask: fieldMask.join(','),
+    };
+    return this.requestJson('/api/v1/users/me', body, 'PUT') as Promise<User>;
   }
 
   /** List Corpora visible to this user.
