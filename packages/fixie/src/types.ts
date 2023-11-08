@@ -1,7 +1,28 @@
+/** This file defines types exposed by the Fixie service API. */
+
+// TODO: Autogenerate this from our proto or OpenAPI specs.
+
 import { Jsonifiable } from 'type-fest';
 
+/** Represents metadata about the currently logged-in user. */
+export interface User {
+  userId: string;
+  email: string;
+  fullName?: string;
+  avatarUrl?: string;
+  created: Date;
+  modified: Date;
+  apiToken?: string;
+  lastLogin: Date;
+}
+
+/** Represents an agent ID. */
 export type AgentId = string;
+
+/** Represents a conversation ID. */
 export type ConversationId = string;
+
+/** Represents a Metadata field. */
 export type Metadata = Record<string, Jsonifiable | undefined>;
 
 export interface BaseConversationTurn<Role extends string> {

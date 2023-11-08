@@ -2,20 +2,8 @@ import { ApolloClient } from '@apollo/client/core/ApolloClient.js';
 import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache.js';
 import createUploadLink from 'apollo-upload-client/public/createUploadLink.js';
 import type { Jsonifiable } from 'type-fest';
-import { AgentId, AssistantConversationTurn, Conversation, ConversationId, Metadata } from './sidekick-types.js';
+import { AgentId, AssistantConversationTurn, Conversation, ConversationId, Metadata, User } from './types.js';
 import { encode } from 'base64-arraybuffer';
-
-/** Represents metadata about the currently logged-in user. */
-export interface User {
-  userId: string;
-  email: string;
-  full_name?: string;
-  avatar_url?: string;
-  created: Date;
-  modified: Date;
-  apiToken?: string;
-  lastLogin: Date;
-}
 
 export class AgentDoesNotExistError extends Error {
   code = 'agent-does-not-exist';
@@ -173,9 +161,9 @@ export class FixieClient {
   }
 
   /** Return information on the currently logged-in user. */
-  userInfo(): Promise<User> {
-    const rawUserInfo: unknown = this.requestJson('/api/v1/users/me');
-    return rawUserInfo as Promise<User>;
+  async userInfo(): Promise<User> {
+    const rawUserInfo: { user: User } = await this.requestJson('/api/v1/users/me');
+    return rawUserInfo.user;
   }
 
   /**

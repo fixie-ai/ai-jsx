@@ -1,5 +1,5 @@
 import { useState, SetStateAction, Dispatch, useEffect, useRef } from 'react';
-import { AgentId, AssistantConversationTurn, TextMessage, ConversationId, Conversation } from './sidekick-types.js';
+import { AgentId, AssistantConversationTurn, TextMessage, ConversationId, Conversation } from './types.js';
 import { FixieClient } from './client.js';
 
 /**

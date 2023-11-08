@@ -21,7 +21,7 @@ Fixie provides a generic hosted UI. You can embed it in your UI, similar to how 
 #### `<FloatingFixieEmbed />`
 
 ```ts
-import { FloatingFixieEmbed } from 'fixie/web';
+import { FloatingFixieEmbed } from 'fixie';
 ```
 
 This React component will place a Fixie chat window floating above your content. It will also create a launcher button. The user can click the button to open and close the Fixie chat window.
@@ -29,7 +29,7 @@ This React component will place a Fixie chat window floating above your content.
 #### `<ControlledFloatingFixieEmbed />`
 
 ```ts
-import { ControlledFloatingFixieEmbed } from 'fixie/web';
+import { ControlledFloatingFixieEmbed } from 'fixie';
 ```
 
 This React component will place a Fixie chat window floating above your content. Unlike `FloatingFixieEmbed`, it does not additionally create a launcher button. Instead, you manage the visibility yourself, via the `visible` prop.
@@ -37,7 +37,7 @@ This React component will place a Fixie chat window floating above your content.
 #### `<InlineFixieEmbed />`
 
 ```ts
-import { InlineFixieEmbed } from 'fixie/web';
+import { InlineFixieEmbed } from 'fixie';
 ```
 
 This React component will embed a Fixie chat window inline with your content.
@@ -49,7 +49,7 @@ If you want to directly integrate Fixie into your webapp, use these APIs.
 #### `useFixie`
 
 ```ts
-import { useFixie } from 'fixie/web';
+import { useFixie } from 'fixie';
 ```
 
 This hook provides a fully managed API for a conversation. It returns a number of fields you can use to drive a rich UI, including loading states and debug diagnostics.
@@ -57,7 +57,7 @@ This hook provides a fully managed API for a conversation. It returns a number o
 #### `FixieClient`
 
 ```ts
-import { FixieClient } from 'fixie/web';
+import { FixieClient } from 'fixie';
 ```
 
 This low-level API provides direct access to the Fixie Conversation and Corpus APIs. You need to manage things like loading state and response parsing on your own, but it's the most flexible.

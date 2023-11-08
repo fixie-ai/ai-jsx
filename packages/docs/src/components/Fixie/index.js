@@ -1,6 +1,6 @@
 import React from 'react';
 import BrowserOnly from '@docusaurus/BrowserOnly';
-import { FloatingFixieEmbed } from 'fixie/web';
+import { FloatingFixieEmbed } from 'fixie';
 
 const FixieSidekick = () => {
   return (
