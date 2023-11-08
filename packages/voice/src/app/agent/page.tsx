@@ -42,6 +42,7 @@ const TTS_PROVIDERS = [
   'lmnt',
   'lmnt-ws',
   'murf',
+  'openai',
   'playht',
   'resemble',
   'wellsaid',
