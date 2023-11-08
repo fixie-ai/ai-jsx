@@ -6,7 +6,8 @@
 
 import { ChatCompletion, FunctionParameters, FunctionResponse } from '../core/completion.js';
 import { Component, ComponentContext, Node, RenderContext } from '../index.js';
-import { Converse, renderToConversation } from '../core/conversation.js';
+import { ConversationMessage, Converse, renderToConversation } from '../core/conversation.js';
+import _ from 'lodash';
 
 /**
  * Represents a tool that can be provided for the Large Language Model.
@@ -66,12 +67,12 @@ export interface UseToolsProps {
  * Executes a function during rendering and wraps the result in a `<FunctionResponse>`.
  */
 export async function ExecuteFunction<T>(
-  { name, func, args }: { name: string; func: Component<T>; args: T },
+  { id, name, func, args }: { id?: string; name: string; func: Component<T>; args: T },
   { render }: ComponentContext
 ) {
   if (typeof func !== 'function') {
     return (
-      <FunctionResponse failed name={name}>
+      <FunctionResponse id={id} failed name={name}>
         Error: unknown function {name}
       </FunctionResponse>
     );
@@ -79,9 +80,13 @@ export async function ExecuteFunction<T>(
 
   try {
     const Func = func;
-    return <FunctionResponse name={name}>{await render(<Func {...args} />)}</FunctionResponse>;
+    return (
+      <FunctionResponse id={id} name={name}>
+        {await render(<Func {...args} />)}
+      </FunctionResponse>
+    );
   } catch (e) {
-    return <FunctionResponse failed name={name}>{`${e}`}</FunctionResponse>;
+    return <FunctionResponse id={id} failed name={name}>{`${e}`}</FunctionResponse>;
   }
 }
 
@@ -139,8 +144,19 @@ export async function UseTools(props: UseToolsProps, { render }: RenderContext) 
         const lastMessage = messages[messages.length - 1];
         switch (lastMessage.type) {
           case 'functionCall': {
-            const { name, args } = lastMessage.element.props;
-            return <ExecuteFunction func={props.tools[name].func} name={name} args={args} />;
+            // Collect all the adjacent function calls and execute them.
+            const functionCalls = _.takeRightWhile(
+              messages,
+              (m) => m.type === 'functionCall'
+            ) as (ConversationMessage & { type: 'functionCall' })[];
+
+            return functionCalls.map(
+              ({
+                element: {
+                  props: { id, name, args },
+                },
+              }) => <ExecuteFunction id={id} func={props.tools[name].func} name={name} args={args} />
+            );
           }
           case 'functionResponse':
           case 'user':

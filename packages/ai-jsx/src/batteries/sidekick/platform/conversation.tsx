@@ -39,7 +39,9 @@ export function getShrinkableConversation(messages: ConversationMessage[], fullC
             importance={0}
             replacement={
               <Shrinkable importance={messageIndex + 1}>
-                <FunctionResponse name={message.element.props.name}>[snip...]</FunctionResponse>
+                <FunctionResponse id={message.element.props.id} name={message.element.props.name}>
+                  [snip...]
+                </FunctionResponse>
               </Shrinkable>
             }
           >
@@ -93,25 +95,38 @@ export function getNextConversationStep(
 
   switch (lastMessage.type) {
     case 'functionCall': {
-      const { name, args } = lastMessage.element.props;
-      const executedFunction = (
-        <ExecuteFunction
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          func={updatedTools[name]?.func}
-          name={name}
-          args={args}
-        />
-      );
-      // If we are using a tool based on redacted functions, we don't want to redact it further
-      if (tools && !(name in tools)) {
-        return executedFunction;
-      }
-      // Function responses can potentially be very large. In that case, we need
-      // some way of handling that so the context window doesn't blow up.
-      return (
-        <LargeFunctionResponseWrapper numChunks={10} maxLength={10500} failedMaxLength={4000}>
-          {executedFunction}
-        </LargeFunctionResponseWrapper>
+      // Collect all the adjacent function calls and execute them.
+      const functionCalls = _.takeRightWhile(messages, (m) => m.type === 'functionCall') as (ConversationMessage & {
+        type: 'functionCall';
+      })[];
+
+      return functionCalls.map(
+        ({
+          element: {
+            props: { id, name, args },
+          },
+        }) => {
+          const executedFunction = (
+            <ExecuteFunction
+              id={id}
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              func={updatedTools[name]?.func}
+              name={name}
+              args={args}
+            />
+          );
+          // If we are using a tool based on redacted functions, we don't want to redact it further
+          if (tools && !(name in tools)) {
+            return executedFunction;
+          }
+          // Function responses can potentially be very large. In that case, we need
+          // some way of handling that so the context window doesn't blow up.
+          return (
+            <LargeFunctionResponseWrapper numChunks={10} maxLength={10500} failedMaxLength={4000}>
+              {executedFunction}
+            </LargeFunctionResponseWrapper>
+          );
+        }
       );
     }
     /**
@@ -242,7 +257,6 @@ async function* LimitToValidMdx({ children }: { children: AI.Node }, { render, l
       logger.debug({ mdx: frame, mdxCompileError }, 'Holding back invalid MDX');
       continue;
     }
-    logger.debug({ mdx: frame }, 'Streaming valid MDX');
     yield frame;
   }
   return rendered;
