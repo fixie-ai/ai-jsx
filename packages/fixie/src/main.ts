@@ -167,7 +167,7 @@ user
   .command('update')
   .description('Update information on the current user')
   .option('--email <string>', 'The new email address for this user')
-  .option('--fullName <string>', 'The new description for this corpus')
+  .option('--fullName <string>', 'The new full name for this user')
   .action(
     catchErrors(async (opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
@@ -646,6 +646,60 @@ revision
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const agent = await FixieAgent.GetAgent(client, agentId);
       const result = await agent.deleteRevision(revisionId);
+      showResult(result, program.opts().raw);
+    })
+  );
+
+const team = program.command('team').description('Team related commands');
+team.alias('teams');
+
+team
+  .command('list')
+  .description('List teams')
+  .option('--offset <number>', 'Start offset for results to return')
+  .option('--limit <number>', 'Limit on the number of results to return')
+  .action(
+    catchErrors(async (opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.listTeams({ offset: opts.offset, limit: opts.limit });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('get <teamId>')
+  .description('Get information about a team')
+  .action(
+    catchErrors(async (teamId: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.getTeam({ teamId });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('delete <teamId>')
+  .description('Delete the given team.')
+  .action(
+    catchErrors(async (teamId: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.deleteTeam({ teamId });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('create')
+  .description('Create a new team')
+  .option('--name <string>', 'The name of the team to create')
+  .option('--description <string>', 'The description for this team')
+  .action(
+    catchErrors(async (opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.createTeam({
+        displayName: opts.name,
+        description: opts.description,
+      });
       showResult(result, program.opts().raw);
     })
   );

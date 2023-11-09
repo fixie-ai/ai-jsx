@@ -2,7 +2,17 @@ import { ApolloClient } from '@apollo/client/core/ApolloClient.js';
 import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache.js';
 import createUploadLink from 'apollo-upload-client/public/createUploadLink.js';
 import type { Jsonifiable } from 'type-fest';
-import { AgentId, AssistantConversationTurn, Conversation, ConversationId, Metadata, User } from './types.js';
+import {
+  AgentId,
+  AssistantConversationTurn,
+  Conversation,
+  ConversationId,
+  Metadata,
+  User,
+  Team,
+  Membership,
+  MembershipRole,
+} from './types.js';
 import { encode } from 'base64-arraybuffer';
 
 export class AgentDoesNotExistError extends Error {
@@ -744,5 +754,88 @@ export class FixieClient {
       undefined,
       'POST'
     );
+  }
+
+  /** Return information about a given user. */
+  async getUser({ userId }: { userId: string }): Promise<User> {
+    const rawUserInfo: { user: User } = await this.requestJson(`/api/v1/users/${userId}`);
+    return rawUserInfo.user;
+  }
+
+  /** Create a new team. */
+  async createTeam({
+    displayName,
+    description,
+    avatarUrl,
+  }: {
+    displayName?: string;
+    description?: string;
+    avatarUrl?: string;
+  }): Promise<Team> {
+    const response: { team: Team } = await this.requestJson('/api/v1/teams', {
+      team: {
+        displayName,
+        description,
+        avatarUrl,
+      },
+    });
+    return response.team;
+  }
+
+  /** Get the given team. */
+  async getTeam({ teamId }: { teamId: string }): Promise<Team> {
+    const response: { team: Team } = await this.requestJson(`/api/v1/teams/${teamId}`);
+    return response.team;
+  }
+
+  /** Delete the given team. */
+  deleteTeam({ teamId }: { teamId: string }): Promise<Jsonifiable> {
+    return this.requestJson(`/api/v1/teams/${teamId}`, undefined, 'DELETE');
+  }
+
+  /**
+   * List the teams visible to the current user.
+   *
+   * @param options.offset The offset into the list of Sources to return.
+   * @param options.limit The maximum number of Sources to return.
+   */
+  listTeams({ offset = 0, limit = 100 }: { offset?: number; limit?: number }): Promise<Jsonifiable> {
+    return this.requestJson(`/api/v1/teams?offset=${offset}&limit=${limit}`);
+  }
+
+  /**
+   * Update the given team's metadata.
+   *
+   * @param options.displayName The new display name for the team.
+   * @param options.description The new description for the team.
+   */
+  async updateTeam({
+    teamId,
+    displayName,
+    description,
+  }: {
+    teamId: string;
+    displayName?: string;
+    description?: string;
+  }): Promise<Team> {
+    if (!displayName && !description) {
+      throw new Error('Must specify either displayName or description');
+    }
+    const fieldMask: string[] = [];
+    if (displayName !== undefined) {
+      fieldMask.push('displayName');
+    }
+    if (description !== undefined) {
+      fieldMask.push('description');
+    }
+    const body = {
+      team: {
+        displayName,
+        description,
+      },
+      updateMask: fieldMask.join(','),
+    };
+    const response: { team: Team } = await this.requestJson(`/api/v1/teams/${teamId}`, body, 'PUT');
+    return response.team;
   }
 }
