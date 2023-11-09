@@ -182,7 +182,7 @@ export class FixieClient {
    * @param options.email The new email address for this user.
    * @param options.fullName The new full name for this user.
    */
-  updateUser({ email, fullName }: { email?: string; fullName?: string }): Promise<User> {
+  async updateUser({ email, fullName }: { email?: string; fullName?: string }): Promise<User> {
     if (!email && !fullName) {
       throw new Error('Must specify either email or fullName');
     }
@@ -200,7 +200,8 @@ export class FixieClient {
       },
       updateMask: fieldMask.join(','),
     };
-    return this.requestJson('/api/v1/users/me', body, 'PUT') as Promise<User>;
+    const result: { user: User } = await this.requestJson('/api/v1/users/me', body, 'PUT');
+    return result.user;
   }
 
   /** List Corpora visible to this user.

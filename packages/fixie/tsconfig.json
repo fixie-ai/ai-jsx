@@ -9,11 +9,10 @@
     "moduleResolution": "node16",
     "jsx": "react",
     "esModuleInterop": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "outDir": ".",
     "declaration": true,
     "lib": ["dom", "dom.iterable", "ES2022"]
   },
-  "include": ["src/**/*", "jest.config.ts", ".eslintrc.cjs", "index.ts"],
+  "include": ["src/*", "jest.config.ts", ".eslintrc.cjs", "index.ts", "web.ts"],
   "exclude": []
 }
