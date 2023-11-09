@@ -839,4 +839,76 @@ export class FixieClient {
     const response: { team: Team } = await this.requestJson(`/api/v1/teams/${teamId}`, body, 'PUT');
     return response.team;
   }
+
+  /**
+   * Invite a new member to a team.
+   *
+   * @param options.teamId The ID of the team to invite the member to.
+   * @param options.email The email address of the member to invite.
+   * @param options.isAdmin Whether the member should be a team admin.
+   */
+  inviteTeamMember({
+    teamId,
+    email,
+    isAdmin,
+  }: {
+    teamId: string;
+    email: string;
+    isAdmin?: boolean;
+  }): Promise<Jsonifiable> {
+    const body = {
+      teamId,
+      email,
+      role: {
+        isAdmin,
+      },
+    };
+    return this.requestJson(`/api/v1/teams/${teamId}/invite`, body, 'POST');
+  }
+
+  /**
+   * Cancel a pending invitation to a team.
+   *
+   * @param options.teamId The ID of the team to cancel the invitation for.
+   * @param options.email The email address of the member to cancel the invitation for.
+   */
+  cancelInvitation({ teamId, email }: { teamId: string; email: string }): Promise<Jsonifiable> {
+    return this.requestJson(`/api/v1/teams/${teamId}/invite/${email}`, null, 'DELETE');
+  }
+
+  /**
+   * Remove a member from a team.
+   *
+   * @param options.teamId The ID of the team to invite the member to.
+   * @param options.userId The user ID of the member to remove.
+   */
+  removeTeamMember({ teamId, userId }: { teamId: string; userId: string }): Promise<Jsonifiable> {
+    return this.requestJson(`/api/v1/teams/${teamId}/members/${userId}`, null, 'DELETE');
+  }
+
+  /**
+   * Update a user's role on a team.
+   *
+   * @param options.teamId The ID of the team to update.
+   * @param options.userId The user ID of the member to update.
+   * @param options.isAdmin Set the admin role for this user.
+   */
+  updateTeamMember({
+    teamId,
+    userId,
+    isAdmin,
+  }: {
+    teamId: string;
+    userId: string;
+    isAdmin: boolean;
+  }): Promise<Jsonifiable> {
+    const body = {
+      teamId,
+      userId,
+      role: {
+        isAdmin,
+      },
+    };
+    return this.requestJson(`/api/v1/teams/${teamId}/members/${userId}`, body, 'PUT');
+  }
 }
