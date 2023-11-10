@@ -76,11 +76,29 @@ export class FixieAgent {
     return url.toString();
   }
 
-  /** Get the agent with the given agent ID. */
-  public static async GetAgent(client: FixieClient, agentId: string): Promise<FixieAgent> {
-    const metadata = await FixieAgent.getAgentById(client, agentId);
-    const agent = new FixieAgent(client, metadata);
-    return agent;
+  /** Get the agent with the given agent ID or handle. */
+  public static async GetAgent({
+    client,
+    agentId,
+    handle,
+  }: {
+    client: FixieClient;
+    agentId?: string;
+    handle?: string;
+  }): Promise<FixieAgent> {
+    if (!agentId && !handle) {
+      throw new Error('Must specify either agentId or handle');
+    }
+    if (agentId && handle) {
+      throw new Error('Must specify either agentId or handle, not both');
+    }
+    let metadata: AgentMetadata;
+    if (agentId) {
+      metadata = await FixieAgent.getAgentById(client, agentId);
+    } else {
+      metadata = await FixieAgent.getAgentByHandle(client, handle!);
+    }
+    return new FixieAgent(client, metadata);
   }
 
   /** Return all agents visible to the user. */
@@ -95,10 +113,12 @@ export class FixieAgent {
         }
       `,
     });
-    return Promise.all(result.data.allAgentsForUser.map((agent: any) => this.GetAgent(client, agent.uuid)));
+    return Promise.all(
+      result.data.allAgentsForUser.map((agent: any) => this.GetAgent({ client, agentId: agent.uuid }))
+    );
   }
 
-  /** Return the metadata associated with the given agent. */
+  /** Return the metadata associated with the given agent by ID. */
   private static async getAgentById(client: FixieClient, agentId: string): Promise<AgentMetadata> {
     const result = await client.gqlClient().query({
       fetchPolicy: 'no-cache',
@@ -126,6 +146,50 @@ export class FixieAgent {
         }
       `,
       variables: { agentId },
+    });
+
+    return {
+      uuid: result.data.agent.uuid,
+      handle: result.data.agent.handle,
+      name: result.data.agent.name,
+      description: result.data.agent.description,
+      moreInfoUrl: result.data.agent.moreInfoUrl,
+      published: result.data.agent.published,
+      created: new Date(result.data.agent.created),
+      modified: new Date(result.data.agent.modified),
+      currentRevision: result.data.agent.currentRevision,
+      allRevisions: result.data.agent.allRevisions,
+    };
+  }
+
+  /** Return the metadata associated with the given agent handle. */
+  private static async getAgentByHandle(client: FixieClient, handle: string): Promise<AgentMetadata> {
+    const result = await client.gqlClient().query({
+      fetchPolicy: 'no-cache',
+      query: gql`
+        query GetAgentByHandle($handle: String!) {
+          agent: agentByHandle(handle: $handle) {
+            agentId
+            uuid
+            handle
+            name
+            description
+            moreInfoUrl
+            created
+            modified
+            published
+            currentRevision {
+              id
+              created
+            }
+            allRevisions {
+              id
+              created
+            }
+          }
+        }
+      `,
+      variables: { handle },
     });
 
     return {
@@ -172,7 +236,7 @@ export class FixieAgent {
       },
     });
     const agentId = result.data.createAgent.agent.uuid;
-    return FixieAgent.GetAgent(client, agentId);
+    return FixieAgent.GetAgent({ client, agentId });
   }
 
   /** Delete this agent. */
@@ -439,10 +503,10 @@ export class FixieAgent {
   }
 
   /** Ensure that the agent is created or updated. */
-  private static async ensureAgent(client: FixieClient, agentId: string, config: AgentConfig): Promise<FixieAgent> {
+  private static async ensureAgent(client: FixieClient, config: AgentConfig): Promise<FixieAgent> {
     let agent: FixieAgent;
     try {
-      agent = await FixieAgent.GetAgent(client, agentId);
+      agent = await FixieAgent.GetAgent({ client, handle: config.handle });
       await agent.update({
         name: config.name,
         description: config.description,
@@ -450,7 +514,7 @@ export class FixieAgent {
       });
     } catch (e) {
       // Try to create the agent instead.
-      term('🦊 Creating new agent ').green(agentId)('...\n');
+      term('🦊 Creating new agent ').green(config.handle)('...\n');
       agent = await FixieAgent.CreateAgent(client, config.handle, config.name, config.description, config.moreInfoUrl);
     }
     return agent;
@@ -500,8 +564,7 @@ export class FixieAgent {
     environmentVariables: Record<string, string> = {}
   ): Promise<AgentRevision> {
     const config = await FixieAgent.LoadConfig(agentPath);
-    const agentId = config.handle;
-    term('🦊 Deploying agent ').green(agentId)('...\n');
+    term('🦊 Deploying agent ').green(config.handle)('...\n');
 
     // Check that the package.json path exists in this directory.
     const packageJsonPath = path.resolve(path.join(agentPath, 'package.json'));
@@ -523,7 +586,7 @@ export class FixieAgent {
       );
     }
 
-    const agent = await this.ensureAgent(client, agentId, config);
+    const agent = await this.ensureAgent(client, config);
     const runtimeParametersSchema = this.inferRuntimeParametersSchema(agentPath);
     const tarball = FixieAgent.getCodePackage(agentPath);
     const spinner = ora(' 🚀 Deploying... (hang tight, this takes a minute or two!)').start();
@@ -549,9 +612,7 @@ export class FixieAgent {
     debug?: boolean;
   }) {
     const config = await FixieAgent.LoadConfig(agentPath);
-    const agentId = config.handle;
-
-    term('🦊 Serving agent ').green(agentId)('...\n');
+    term('🦊 Serving agent ').green(config.handle)('...\n');
 
     // Check if the package.json path exists in this directory.
     const packageJsonPath = path.resolve(path.join(agentPath, 'package.json'));
@@ -632,7 +693,7 @@ export class FixieAgent {
       })();
     }
 
-    const agent = await this.ensureAgent(client, agentId, config);
+    const agent = await this.ensureAgent(client, config);
     const originalRevision = await agent.getCurrentRevision();
     if (originalRevision) {
       term('🥡 Replacing current agent revision ').green(originalRevision.id)('\n');
