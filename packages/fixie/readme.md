@@ -65,7 +65,7 @@ This hook provides a fully managed API for a conversation. It returns a number o
 #### `FixieClient`
 
 ```ts
-import { FixieClient } from 'fixie/web';
+import { FixieClient } from 'fixie';
 ```
 
 This low-level API provides direct access to the Fixie Conversation and Corpus APIs. You need to manage things like loading state and response parsing on your own, but it's the most flexible.
