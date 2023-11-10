@@ -11,6 +11,8 @@ interface UniversalSidekickProps {
 
   /**
    * An interjection to emit when the model requests a function call without emitting any text.
+   *
+   * e.g. "Let me check on that."
    */
   functionCallInterjection?: AI.Node;
 
