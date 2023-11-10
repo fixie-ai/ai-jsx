@@ -106,7 +106,7 @@ export function getNextConversationStep(
   fullConversation: ConversationMessage[],
   outputFormat: SidekickOutputFormat,
   tools: UseToolsProps['tools'] | undefined,
-  functionCallInterjection: AI.Node
+  beforeFunctionCallInterjection: AI.Node
 ) {
   const shrinkableConversation = getShrinkableConversation(messages, fullConversation);
   const lastMessage = messages[messages.length - 1];
@@ -170,7 +170,7 @@ export function getNextConversationStep(
       const lastAssistantMessage = messages.findLast((m) => m.type === 'assistant');
       if (
         hasTools &&
-        functionCallInterjection &&
+        beforeFunctionCallInterjection &&
         // Ensure we don't interject if the last assistant message was already an interjection. (If back to back generations
         // request function calls, we don't want to interject twice.)
         !lastAssistantMessage?.element.props.metadata?.isFunctionCallInterjection
@@ -179,7 +179,7 @@ export function getNextConversationStep(
           <InterjectBeforeFunctionCall
             interjection={
               <AssistantMessage metadata={{ isFunctionCallInterjection: true }}>
-                {functionCallInterjection}
+                {beforeFunctionCallInterjection}
               </AssistantMessage>
             }
           >
