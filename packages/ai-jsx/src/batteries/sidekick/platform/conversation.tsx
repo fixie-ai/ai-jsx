@@ -169,7 +169,6 @@ export function getNextConversationStep(
 
       const lastAssistantMessage = messages.findLast((m) => m.type === 'assistant');
       if (
-        hasTools &&
         beforeFunctionCallInterjection &&
         // Ensure we don't interject if the last assistant message was already an interjection. (If back to back generations
         // request function calls, we don't want to interject twice.)
