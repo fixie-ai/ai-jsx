@@ -10,6 +10,13 @@ interface UniversalSidekickProps {
   systemMessage?: AI.Node;
 
   /**
+   * An interjection to emit when the model requests a function call without emitting any text.
+   *
+   * e.g. "Let me check on that."
+   */
+  functionCallInterjection?: AI.Node;
+
+  /**
    * The conversation to act on. If not specified, uses the <ConversationHistory /> component.
    */
   children?: AI.Node;
@@ -89,7 +96,7 @@ export function Sidekick(props: SidekickProps) {
     <ShowConversation present={(msg) => present(msg, outputFormat)}>
       <Converse
         reply={(messages, fullConversation) =>
-          getNextConversationStep(messages, fullConversation, outputFormat, props.tools)
+          getNextConversationStep(messages, fullConversation, outputFormat, props.tools, props.functionCallInterjection)
         }
       >
         {props.systemMessage}
