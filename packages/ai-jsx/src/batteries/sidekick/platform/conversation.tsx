@@ -11,6 +11,7 @@ import {
   Shrinkable,
   renderToConversation,
   SystemMessage,
+  ShowConversation,
 } from '../../../core/conversation.js';
 import { LargeFunctionResponseWrapper, redactedFunctionTools } from './large-response-handler.js';
 import { ExecuteFunction, UseToolsProps } from '../../use-tools.js';
@@ -69,6 +70,28 @@ export function present(conversationElement: ConversationMessage, outputFormat: 
 }
 
 /**
+ * Interjects content if the first conversation message in the children is a function call.
+ */
+function InterjectBeforeFunctionCall(
+  { interjection, children }: { interjection: AI.Node; children: AI.Node },
+  { memo }: AI.ComponentContext
+) {
+  const memoizedInterjection = memo(interjection);
+  return (
+    <ShowConversation
+      present={(message, index) => {
+        if (index === 0 && message.type === 'functionCall') {
+          return [memoizedInterjection, message.element];
+        }
+        return message.element;
+      }}
+    >
+      {children}
+    </ShowConversation>
+  );
+}
+
+/**
  * This is the conversation state machine. It takes the current conversation and decides how to respond.
  *
  * For instance, if the most recent message is a function call, it will call the function and return a FunctionResponse.
@@ -82,10 +105,12 @@ export function getNextConversationStep(
   messages: ConversationMessage[],
   fullConversation: ConversationMessage[],
   outputFormat: SidekickOutputFormat,
-  tools?: UseToolsProps['tools']
+  tools: UseToolsProps['tools'] | undefined,
+  beforeFunctionCallInterjection: AI.Node
 ) {
   const shrinkableConversation = getShrinkableConversation(messages, fullConversation);
   const lastMessage = messages[messages.length - 1];
+  const hasTools = tools && Object.keys(tools).length > 0;
 
   // Add tools for interacting with redacted function responses (if one exists).
   // We will only take into account the current round of messages (after last UserMessage). In the next round
@@ -136,9 +161,32 @@ export function getNextConversationStep(
     case 'system':
     case 'user':
     case 'functionResponse': {
-      const generation = (
-        <ChatCompletion functionDefinitions={tools ? updatedTools : undefined}>{shrinkableConversation}</ChatCompletion>
+      let generation = (
+        <ChatCompletion functionDefinitions={hasTools ? updatedTools : undefined}>
+          {shrinkableConversation}
+        </ChatCompletion>
       );
+
+      const lastAssistantMessage = messages.findLast((m) => m.type === 'assistant');
+      if (
+        beforeFunctionCallInterjection &&
+        // Ensure we don't interject if the last assistant message was already an interjection. (If back to back generations
+        // request function calls, we don't want to interject twice.)
+        !lastAssistantMessage?.element.props.metadata?.isFunctionCallInterjection
+      ) {
+        generation = (
+          <InterjectBeforeFunctionCall
+            interjection={
+              <AssistantMessage metadata={{ isFunctionCallInterjection: true }}>
+                {beforeFunctionCallInterjection}
+              </AssistantMessage>
+            }
+          >
+            {generation}
+          </InterjectBeforeFunctionCall>
+        );
+      }
+
       return outputFormat === 'text/mdx' ? <RepairMdxInConversation>{generation}</RepairMdxInConversation> : generation;
     }
     default:
