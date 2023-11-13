@@ -23,7 +23,7 @@ export function SidekickSystemMessage({
   useCitationCard,
   outputFormat,
 }: SidekickSystemMessageProps) {
-  /* Format: 'Friday, Nov 10, 2023, 1:46:34 PM' */
+  /* Format: 'Friday, Nov 10, 2023, 1:46:34 PM PST' */
   const dateStringOptions = {
     weekday: 'long',
     year: 'numeric',
@@ -33,23 +33,27 @@ export function SidekickSystemMessage({
     minute: 'numeric',
     second: 'numeric',
     hour12: true,
-    timeZone,
+    timeZone: timeZone ?? 'America/Los_Angeles',
+    timeZoneName: 'short',
   } as const;
 
   const dateTimeSystemMessage = (
     <>
       Current time: {new Date().toLocaleString('en-us', dateStringOptions)}.
-      {timeZone ? `User's local time zone: ${timeZone}. When giving dates, use this time zone.` : ''}
-      If a time is not specified by user, assume it is intended now or in the near future. Timestamps you provide should
-      be human-readable.
+      {timeZone ? ` User's local time zone: ${timeZone}. When giving dates, use this time zone.` : ''}
+      <>
+        {' '}
+        If a time is not specified by user, assume it is intended now or in the near future. Timestamps you provide
+        should be human-readable.
+      </>
     </>
   );
 
   const responseFormatSystemMessage = (
-    <>Do not say "according to the documents I have been given", just answer as if you know the answer.</>
+    <> Do not say "according to the documents I have been given", just answer as if you know the answer.</>
   );
 
-  const styleSystemMessage = <>Speak politely but casually.</>;
+  const styleSystemMessage = <> Speak politely but casually.</>;
 
   const baseComponentNames = [];
   if (includeNextStepsRecommendations) {
@@ -84,7 +88,7 @@ export function SidekickSystemMessage({
       {dateTimeSystemMessage}
       {hasKnowledgeBase && responseFormatSystemMessage}
       {styleSystemMessage}
-      {outputFormatToUse === 'text/markdown' && <>Respond with Markdown.</>}
+      {outputFormatToUse === 'text/markdown' && <> Respond with Markdown.</>}
       {outputFormatToUse === 'text/mdx' && (
         <MdxSystemMessage
           componentNames={allComponents}
