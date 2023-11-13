@@ -101,10 +101,12 @@ export function Sidekick(props: SidekickProps) {
       >
         {props.systemMessage}
         <SidekickSystemMessage
-          timeZone="America/Los_Angeles"
+          // TODO: get timeZone from the user's browser
           includeNextStepsRecommendations={
             outputFormat === 'text/mdx' && (props.includeNextStepsRecommendations ?? true)
           }
+          // check if there are any tools instead of explicitly checking if there's a knowledge base
+          hasKnowledgeBase={Object.keys(props.tools ?? {}).length === 0}
           useCitationCard={outputFormat === 'text/mdx' && (props.useCitationCard ?? true)}
           outputFormat={outputFormat}
           userProvidedGenUIUsageExamples={props.genUIExamples}
