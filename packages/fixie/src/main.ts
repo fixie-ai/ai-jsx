@@ -33,6 +33,15 @@ function showResult(result: any, raw: boolean) {
   }
 }
 
+/** Parse the provided value as a Date. */
+function parseDate(value: string): Date {
+  const parsedDate = new Date(value);
+  if (isNaN(parsedDate.getTime())) {
+    throw new Error('Invalid date format.');
+  }
+  return parsedDate;
+}
+
 /** Deploy an agent from the current directory. */
 function registerDeployCommand(command: Command) {
   command
@@ -592,11 +601,29 @@ agent
 agent
   .command('logs <agentId>')
   .description('Fetch agent logs.')
+  .option('--start <date>', 'Start date', parseDate)
+  .option('--end <date>', 'End date', parseDate)
+  .option('--limit <number>', 'Max number of results to return')
+  .option('--offset <number>', 'Starting offset of results to return')
+  .option('--minSeverity <number>', 'Minimum log severity level')
+  .option('--conversation <string>', 'Conversation ID of logs to return')
+  .option('--message <string>', 'Message ID of logs to return')
   .action(
-    catchErrors(async (agentId: string) => {
+    catchErrors(async (agentId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await FixieAgent.GetAgent({ client, agentId });
-      showResult(await result.getLogs(), program.opts().raw);
+      showResult(
+        await result.getLogs({
+          start: opts.start,
+          end: opts.end,
+          limit: opts.limit,
+          offset: opts.offset,
+          minSeverity: opts.minSeverity,
+          conversationId: opts.conversation,
+          messageId: opts.message,
+        }),
+        program.opts().raw
+      );
     })
   );
 
@@ -649,6 +676,124 @@ revision
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const agent = await FixieAgent.GetAgent({ client, agentId });
       const result = await agent.deleteRevision(revisionId);
+      showResult(result, program.opts().raw);
+    })
+  );
+
+const team = program.command('team').description('Team related commands');
+team.alias('teams');
+
+team
+  .command('list')
+  .description('List teams')
+  .option('--offset <number>', 'Start offset for results to return')
+  .option('--limit <number>', 'Limit on the number of results to return')
+  .action(
+    catchErrors(async (opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.listTeams({ offset: opts.offset, limit: opts.limit });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('get <teamId>')
+  .description('Get information about a team')
+  .action(
+    catchErrors(async (teamId: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.getTeam({ teamId });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('delete <teamId>')
+  .description('Delete the given team')
+  .action(
+    catchErrors(async (teamId: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.deleteTeam({ teamId });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('invite <teamId> <email>')
+  .description('Invite a new member to a team')
+  .option('--admin', 'Invite the new member as a team admin')
+  .action(
+    catchErrors(async (teamId: string, email: string, opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.inviteTeamMember({
+        teamId,
+        email,
+        isAdmin: opts.admin,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('uninvite <teamId> <email>')
+  .description('Cancel a pending invitation for a team membership')
+  .action(
+    catchErrors(async (teamId: string, email: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.cancelInvitation({
+        teamId,
+        email,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('remove <teamId> <userId>')
+  .description('Remove a member from a team')
+  .action(
+    catchErrors(async (teamId: string, userId: string, opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.removeTeamMember({
+        teamId,
+        userId,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('update <teamId> <userId>')
+  .description('Set or clear admin role for a member of a team')
+  .option('--admin', 'Set member as team admin')
+  .option('--no-admin', 'Unset member as team admin')
+  .action(
+    catchErrors(async (teamId: string, userId: string, opts) => {
+      if (opts.admin === undefined) {
+        throw new Error('Must specify --admin or --no-admin');
+      }
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.updateTeamMember({
+        teamId,
+        userId,
+        isAdmin: opts.admin ?? false,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('create')
+  .description('Create a new team')
+  .option('--name <string>', 'The name of the team to create')
+  .option('--description <string>', 'The description for this team')
+  .action(
+    catchErrors(async (opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.createTeam({
+        displayName: opts.name,
+        description: opts.description,
+      });
       showResult(result, program.opts().raw);
     })
   );

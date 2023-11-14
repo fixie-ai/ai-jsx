@@ -16,6 +16,42 @@ export interface User {
   lastLogin: Date;
 }
 
+/** Represents a user's role on a team. */
+export interface MembershipRole {
+  isAdmin: boolean;
+}
+
+/** Represents a user's membership on a team. */
+export interface Membership {
+  teamId: string;
+  user: User;
+  role: MembershipRole;
+  pending: boolean;
+  created: Date;
+  modified: Date;
+}
+
+/** Represents a team. */
+export interface Team {
+  teamId: string;
+  displayName?: string;
+  description?: string;
+  avatarUrl?: string;
+  members: Membership[];
+  created: Date;
+  modified: Date;
+}
+
+/** Represents a pending invitation for a user to join a team. */
+export interface Invitation {
+  inviteCode: string;
+  sender: string;
+  email: string;
+  teamName: string;
+  role: MembershipRole;
+  created: Date;
+}
+
 /** Represents an agent ID. */
 export type AgentId = string;
 
