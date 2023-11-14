@@ -564,7 +564,8 @@ export class WebRtcChatManager implements ChatManager {
     return this.outAnalyzer?.analyzer;
   }
   warmup() {
-    const url = 'ws://localhost:8080/livekit'; //`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/livekit')`;
+    const isLocalHost = window.location.hostname === 'localhost';
+    const url = !isLocalHost ? 'wss://prod-voice-pgaenaxiea-uw.a.run.app' : 'ws://localhost:8080';
     this.socket = new WebSocket(url);
     this.socket.onopen = () => this.handleSocketOpen();
     this.socket.onmessage = (event) => this.handleSocketMessage(event);
