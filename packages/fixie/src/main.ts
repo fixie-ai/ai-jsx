@@ -653,4 +653,122 @@ revision
     })
   );
 
+const team = program.command('team').description('Team related commands');
+team.alias('teams');
+
+team
+  .command('list')
+  .description('List teams')
+  .option('--offset <number>', 'Start offset for results to return')
+  .option('--limit <number>', 'Limit on the number of results to return')
+  .action(
+    catchErrors(async (opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.listTeams({ offset: opts.offset, limit: opts.limit });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('get <teamId>')
+  .description('Get information about a team')
+  .action(
+    catchErrors(async (teamId: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.getTeam({ teamId });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('delete <teamId>')
+  .description('Delete the given team')
+  .action(
+    catchErrors(async (teamId: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.deleteTeam({ teamId });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('invite <teamId> <email>')
+  .description('Invite a new member to a team')
+  .option('--admin', 'Invite the new member as a team admin')
+  .action(
+    catchErrors(async (teamId: string, email: string, opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.inviteTeamMember({
+        teamId,
+        email,
+        isAdmin: opts.admin,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('uninvite <teamId> <email>')
+  .description('Cancel a pending invitation for a team membership')
+  .action(
+    catchErrors(async (teamId: string, email: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.cancelInvitation({
+        teamId,
+        email,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('remove <teamId> <userId>')
+  .description('Remove a member from a team')
+  .action(
+    catchErrors(async (teamId: string, userId: string, opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.removeTeamMember({
+        teamId,
+        userId,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('update <teamId> <userId>')
+  .description('Set or clear admin role for a member of a team')
+  .option('--admin', 'Set member as team admin')
+  .option('--no-admin', 'Unset member as team admin')
+  .action(
+    catchErrors(async (teamId: string, userId: string, opts) => {
+      if (opts.admin === undefined) {
+        throw new Error('Must specify --admin or --no-admin');
+      }
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.updateTeamMember({
+        teamId,
+        userId,
+        isAdmin: opts.admin ?? false,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('create')
+  .description('Create a new team')
+  .option('--name <string>', 'The name of the team to create')
+  .option('--description <string>', 'The description for this team')
+  .action(
+    catchErrors(async (opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.createTeam({
+        displayName: opts.name,
+        description: opts.description,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
 program.parse(process.argv);
