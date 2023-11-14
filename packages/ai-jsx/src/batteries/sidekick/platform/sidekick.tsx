@@ -10,13 +10,6 @@ interface UniversalSidekickProps {
   systemMessage?: AI.Node;
 
   /**
-   * An interjection to emit when the model requests a function call without emitting any text.
-   *
-   * e.g. "Let me check on that."
-   */
-  functionCallInterjection?: AI.Node;
-
-  /**
    * The conversation to act on. If not specified, uses the <ConversationHistory /> component.
    */
   children?: AI.Node;
@@ -96,17 +89,15 @@ export function Sidekick(props: SidekickProps) {
     <ShowConversation present={(msg) => present(msg, outputFormat)}>
       <Converse
         reply={(messages, fullConversation) =>
-          getNextConversationStep(messages, fullConversation, outputFormat, props.tools, props.functionCallInterjection)
+          getNextConversationStep(messages, fullConversation, outputFormat, props.tools)
         }
       >
         {props.systemMessage}
         <SidekickSystemMessage
-          // TODO: get timeZone from the user's browser
+          timeZone="America/Los_Angeles"
           includeNextStepsRecommendations={
             outputFormat === 'text/mdx' && (props.includeNextStepsRecommendations ?? true)
           }
-          // check if there are any tools instead of explicitly checking if there's a knowledge base
-          hasKnowledgeBase={Object.keys(props.tools ?? {}).length === 0}
           useCitationCard={outputFormat === 'text/mdx' && (props.useCitationCard ?? true)}
           outputFormat={outputFormat}
           userProvidedGenUIUsageExamples={props.genUIExamples}

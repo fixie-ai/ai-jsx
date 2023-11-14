@@ -7,9 +7,8 @@ import { SidekickOutputFormat } from './sidekick.js';
 export interface SidekickSystemMessageProps {
   outputFormat: SidekickOutputFormat;
   includeNextStepsRecommendations: boolean;
-  hasKnowledgeBase: boolean;
   useCitationCard: boolean;
-  timeZone?: string;
+  timeZone: string;
   userProvidedGenUIUsageExamples?: Node;
   userProvidedGenUIComponentNames?: string[];
 }
@@ -19,41 +18,27 @@ export function SidekickSystemMessage({
   userProvidedGenUIUsageExamples,
   userProvidedGenUIComponentNames,
   includeNextStepsRecommendations,
-  hasKnowledgeBase,
   useCitationCard,
   outputFormat,
 }: SidekickSystemMessageProps) {
-  /* Format: 'Friday, Nov 10, 2023, 1:46:34 PM PST' */
-  const dateStringOptions = {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    second: 'numeric',
-    hour12: true,
-    timeZone: timeZone ?? 'America/Los_Angeles',
-    timeZoneName: 'short',
-  } as const;
+  const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const currentDate = daysOfWeek[new Date().getDay()];
 
   const dateTimeSystemMessage = (
-    <>
-      Current time: {new Date().toLocaleString('en-us', dateStringOptions)}.
-      {timeZone ? ` User's local time zone: ${timeZone}. When giving dates, use this time zone.` : ''}
-      <>
-        {' '}
-        If a time is not specified by user, assume it is intended now or in the near future. Timestamps you provide
-        should be human-readable.
-      </>
-    </>
+    <SystemMessage>
+      The current date and time is: {new Date().toLocaleString()}. The current day of the week is: {currentDate}. The
+      user's local time zone is {timeZone}. When giving dates, use the user's time zone. If the user does not specify a
+      date or time, assume it is intended either now or in the near future.
+    </SystemMessage>
   );
 
-  const responseFormatSystemMessage = (
-    <> Do not say "according to the documents I have been given", just answer as if you know the answer.</>
+  const responseFramingSystemMessage = (
+    <SystemMessage>
+      Do not say "according to the documents I have been given", just answer as if you know the answer. When you see
+      timestamps in your source data, format them in a human-readable way. Speak politely but casually. Say `use`
+      instead of `utilize`.
+    </SystemMessage>
   );
-
-  const styleSystemMessage = <> Speak politely but casually.</>;
 
   const baseComponentNames = [];
   if (includeNextStepsRecommendations) {
@@ -84,11 +69,10 @@ export function SidekickSystemMessage({
   }
 
   return (
-    <SystemMessage>
+    <>
       {dateTimeSystemMessage}
-      {hasKnowledgeBase && responseFormatSystemMessage}
-      {styleSystemMessage}
-      {outputFormatToUse === 'text/markdown' && <> Respond with Markdown.</>}
+      {responseFramingSystemMessage}
+      {outputFormatToUse === 'text/markdown' && <SystemMessage>Respond with Markdown.</SystemMessage>}
       {outputFormatToUse === 'text/mdx' && (
         <MdxSystemMessage
           componentNames={allComponents}
@@ -103,6 +87,6 @@ export function SidekickSystemMessage({
           }
         />
       )}
-    </SystemMessage>
+    </>
   );
 }
