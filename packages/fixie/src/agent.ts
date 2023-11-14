@@ -303,9 +303,48 @@ export class FixieAgent {
   }
 
   /** Return logs for this Agent. Returns the last 15 minutes of agent logs. */
-  async getLogs(): Promise<AgentLogEntry[]> {
-    // TODO: Expand parameters here to specify start/end times, deal with pagination, etc.
-    const retval = await this.client.request(`/api/v1/agents/${this.metadata.uuid}/logs`);
+  async getLogs({
+    start,
+    end,
+    limit,
+    offset,
+    minSeverity,
+    conversationId,
+    messageId,
+  }: {
+    start?: Date;
+    end?: Date;
+    limit?: number;
+    offset?: number;
+    minSeverity?: number;
+    conversationId?: string;
+    messageId?: string;
+  }): Promise<AgentLogEntry[]> {
+    // We don't actually care about the full URL here. We're only using the
+    // URL to build up the query parameters.
+    const url = new URL('http://localhost/');
+    if (start) {
+      url.searchParams.append('startTimestamp', Math.floor(start.getTime() / 1000).toString());
+    }
+    if (end) {
+      url.searchParams.append('endTimestamp', Math.floor(end.getTime() / 1000).toString());
+    }
+    if (limit) {
+      url.searchParams.append('limit', limit.toString());
+    }
+    if (offset) {
+      url.searchParams.append('offset', offset.toString());
+    }
+    if (minSeverity) {
+      url.searchParams.append('minSeverity', minSeverity.toString());
+    }
+    if (conversationId) {
+      url.searchParams.append('conversationId', conversationId);
+    }
+    if (messageId) {
+      url.searchParams.append('messageId', messageId);
+    }
+    const retval = await this.client.request(`/api/v1/agents/${this.metadata.uuid}/logs${url.search}`);
     if (retval.status !== 200) {
       return [];
     }

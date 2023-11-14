@@ -33,6 +33,15 @@ function showResult(result: any, raw: boolean) {
   }
 }
 
+/** Parse the provided value as a Date. */
+function parseDate(value: string): Date {
+  const parsedDate = new Date(value);
+  if (isNaN(parsedDate.getTime())) {
+    throw new Error('Invalid date format.');
+  }
+  return parsedDate;
+}
+
 /** Deploy an agent from the current directory. */
 function registerDeployCommand(command: Command) {
   command
@@ -592,11 +601,29 @@ agent
 agent
   .command('logs <agentId>')
   .description('Fetch agent logs.')
+  .option('--start <date>', 'Start date', parseDate)
+  .option('--end <date>', 'End date', parseDate)
+  .option('--limit <number>', 'Max number of results to return')
+  .option('--offset <number>', 'Starting offset of results to return')
+  .option('--minSeverity <number>', 'Minimum log severity level')
+  .option('--conversation <string>', 'Conversation ID of logs to return')
+  .option('--message <string>', 'Message ID of logs to return')
   .action(
-    catchErrors(async (agentId: string) => {
+    catchErrors(async (agentId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await FixieAgent.GetAgent({ client, agentId });
-      showResult(await result.getLogs(), program.opts().raw);
+      showResult(
+        await result.getLogs({
+          start: opts.start,
+          end: opts.end,
+          limit: opts.limit,
+          offset: opts.offset,
+          minSeverity: opts.minSeverity,
+          conversationId: opts.conversation,
+          messageId: opts.message,
+        }),
+        program.opts().raw
+      );
     })
   );
 
