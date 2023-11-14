@@ -797,8 +797,8 @@ export class FixieClient {
   /**
    * List the teams visible to the current user.
    *
-   * @param options.offset The offset into the list of Sources to return.
-   * @param options.limit The maximum number of Sources to return.
+   * @param options.offset The offset into the list of teams to return.
+   * @param options.limit The maximum number of teams to return.
    */
   listTeams({ offset = 0, limit = 100 }: { offset?: number; limit?: number }): Promise<Jsonifiable> {
     return this.requestJson(`/api/v1/teams?offset=${offset}&limit=${limit}`);
