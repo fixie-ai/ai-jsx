@@ -186,7 +186,7 @@ export class ChatRequest {
         const currentMessage = currentTurn.messages
           .filter((m: any) => m.kind === 'text')
           .map((m: any) => m.content)
-          .join('');
+          .join('\n');
 
         if (currentMessage === this.outMessage) {
           continue;
