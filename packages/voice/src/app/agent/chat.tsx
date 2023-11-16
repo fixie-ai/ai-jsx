@@ -183,11 +183,10 @@ export class ChatRequest {
 
       if (!this.done) {
         const currentTurn = isStartConversationRequest ? value.turns.at(-1) : value;
-        const currentMessage = currentTurn.messages
-          .filter((m: any) => m.kind === 'text')
-          .map((m: any) => m.content)
-          .join(' ');
 
+        // Map non-text fragments to empty strings so that they don't appear in the transcript,
+        // but still introduce newlines to make clear that any earlier content is complete.
+        const currentMessage = currentTurn.messages.map((m: any) => (m.kind === 'text' ? m.content : '')).join('\n');
         if (currentMessage === this.outMessage) {
           continue;
         }
