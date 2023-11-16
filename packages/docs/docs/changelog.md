@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.24.0
+## 0.26.0
+
+- In the `Sidekick` component:
+  - Remove the MDX repair attempt.
+  - Reduce standard system prompt size.
+
+## [0.25.0](https://github.com/fixie-ai/ai-jsx/commit/e362a16f14f37d75415a89fb8846432e6e7fd89b)
+
+- `Sidekick` can now interject with filler content (e.g. "Let me check on that.") when the model requests a function call.
+
+## [0.24.0](https://github.com/fixie-ai/ai-jsx/commit/b72da82f592f0d9eba12b52b8e89e9abae51a7af)
 
 - Update OpenAI client to 4.16.0
 - Add support for OpenAI parallel function calls
