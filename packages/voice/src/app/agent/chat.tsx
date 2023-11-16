@@ -565,7 +565,7 @@ export class WebRtcChatManager implements ChatManager {
   }
   warmup() {
     const isLocalHost = window.location.hostname === 'localhost';
-    const url = !isLocalHost ? 'wss://prod-voice-pgaenaxiea-uw.a.run.app' : 'ws://localhost:8080';
+    const url = !isLocalHost ? 'https://wsapi.fixie.ai' : 'ws://localhost:8100';
     this.socket = new WebSocket(url);
     this.socket.onopen = () => this.handleSocketOpen();
     this.socket.onmessage = (event) => this.handleSocketMessage(event);
