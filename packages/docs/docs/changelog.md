@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.26.0
+## 0.26.1
+
+- Fix `js-tiktoken` import that fails on 1.0.8.
+
+## [0.26.0](https://github.com/fixie-ai/ai-jsx/commit/c5501a1d1016a3cb27259a79bc38b8d68942f761)
 
 - In the `Sidekick` component:
   - Remove the MDX repair attempt.
