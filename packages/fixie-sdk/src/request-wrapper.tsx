@@ -19,7 +19,7 @@ export const RequestContext = AI.createContext<{
 async function* MessageState({ children }: { children: AI.Node }, { render }: AI.ComponentContext) {
   const renderResult = render(children);
   let didYield = false;
-  for await (const frame of renderResult) {
+  for await (const _ of renderResult) {
     if (!didYield) {
       didYield = true;
       yield 'in-progress';
