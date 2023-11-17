@@ -79,10 +79,15 @@ async function serve({
           Readable.from(
             (async function* () {
               let lastMessages = [];
+              let currentValue = undefined as string | undefined;
               while (true) {
-                let currentValue = undefined as string | undefined;
                 try {
                   const next = await generator.next();
+                  if (!next.done && currentValue == next.value) {
+                    // No change, don't send anything.
+                    continue;
+                  }
+
                   currentValue = next.value;
                   lastMessages = currentValue
                     .split('\n')

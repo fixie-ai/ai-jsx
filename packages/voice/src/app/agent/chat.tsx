@@ -184,11 +184,18 @@ export class ChatRequest {
       if (!this.done) {
         const currentTurn = isStartConversationRequest ? value.turns.at(-1) : value;
 
-        // Map non-text fragments to empty strings so that they don't appear in the transcript,
-        // but still introduce newlines to make clear that any earlier content is complete.
-        const currentMessage = currentTurn.messages.map((m: any) => (m.kind === 'text' ? m.content : '')).join('\n');
-        if (currentMessage === this.outMessage) {
-          continue;
+        const textMessages = currentTurn.messages.filter((m: any) => m.kind === 'text');
+        let currentMessage = '';
+        for (const textMessage of textMessages) {
+          currentMessage += textMessage.content;
+          const messageState = textMessage.state;
+          if (messageState === 'in-progress') {
+            // This message is still being generated, so don't include any text after it.
+            break;
+          } else if (messageState === 'done') {
+            // Append a newline to make clear to the TTS pipeline that the text is complete.
+            currentMessage += '\n';
+          }
         }
 
         // Find the longest matching prefix.

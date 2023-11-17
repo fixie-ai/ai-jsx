@@ -14,6 +14,22 @@ export const RequestContext = AI.createContext<{
 } | null>(null);
 
 /**
+ * Renders to "in-progress" while the children are still being rendered, and "done" when they're done.
+ */
+async function* MessageState({ children }: { children: AI.Node }, { render }: AI.ComponentContext) {
+  const renderResult = render(children);
+  let didYield = false;
+  for await (const frame of renderResult) {
+    if (!didYield) {
+      didYield = true;
+      yield 'in-progress';
+    }
+  }
+
+  return 'done';
+}
+
+/**
  * Wraps a conversational AI.JSX component to be used as a Fixie request handler.
  *
  * Emits newline-delimited JSON for each message.
@@ -49,6 +65,7 @@ export function FixieRequestWrapper({
               <Json>
                 {{
                   kind: 'text',
+                  state: <MessageState>{message.element}</MessageState>,
                   content: message.element,
                   metadata: message.element.props.metadata,
                 }}
