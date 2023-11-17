@@ -71,7 +71,10 @@ async function serve({
           <Handler {...(invokeAgentRequest.parameters ?? {})} />
         </FixieRequestWrapper>
       );
-      const generator = createRenderContext({ enableOpenTelemetry: true }).render(renderable)[Symbol.asyncIterator]();
+
+      // Enable frame batching to run ahead as aggressively as possible and ensure we don't have frame tearing. (See MessageState.)
+      const renderResult = createRenderContext({ enableOpenTelemetry: true }).render(renderable, { batchFrames: true });
+      const generator = renderResult[Symbol.asyncIterator]();
       return res
         .status(200)
         .type('application/jsonl')
@@ -79,15 +82,10 @@ async function serve({
           Readable.from(
             (async function* () {
               let lastMessages = [];
-              let currentValue = undefined as string | undefined;
               while (true) {
+                let currentValue = undefined as string | undefined;
                 try {
                   const next = await generator.next();
-                  if (!next.done && currentValue == next.value) {
-                    // No change, don't send anything.
-                    continue;
-                  }
-
                   currentValue = next.value;
                   lastMessages = currentValue
                     .split('\n')

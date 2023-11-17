@@ -14,7 +14,13 @@ export const RequestContext = AI.createContext<{
 } | null>(null);
 
 /**
- * Renders to "in-progress" while the children are still being rendered, and "done" when they're done.
+ * Renders to "in-progress" while `children` is still being rendered, and "done" when it's done.
+ *
+ * `children` should already be memoized to ensure that it's only rendered once.
+ *
+ * To ensure that this component renders consistently with `children`, a render containing both
+ * nodes MUST use frame batching. Without it, there will be frames where the result of this component
+ * will be inconsistent with the component whose rendering it's tracking.
  */
 async function* MessageState({ children }: { children: AI.Node }, { render }: AI.ComponentContext) {
   const renderResult = render(children);
