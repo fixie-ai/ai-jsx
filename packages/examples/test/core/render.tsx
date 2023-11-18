@@ -1,6 +1,6 @@
 import * as AI from 'ai-jsx';
 
-it('ensures that unbatched synchronous are not batched', async () => {
+it('ensures that synchronous updates are not batched when batchFrames is false', async () => {
   async function* MyComponent() {
     yield '1';
     yield '2';
@@ -17,7 +17,7 @@ it('ensures that unbatched synchronous are not batched', async () => {
   expect(await renderResult).toBe('3');
 });
 
-it('ensures that synchronous updates are batched', async () => {
+it('ensures that synchronous updates are batched when batchFrames is true', async () => {
   async function* MyComponent() {
     yield '1';
     yield '2';
