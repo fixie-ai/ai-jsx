@@ -22,8 +22,7 @@ import { OpenAI as OpenAIClient } from 'openai';
 export { OpenAI as OpenAIClient } from 'openai';
 import { FinalRequestOptions } from 'openai/core';
 import { debugRepresentation } from '../core/debug.js';
-import cl100k_base from 'js-tiktoken/ranks/cl100k_base';
-import { Tiktoken } from 'js-tiktoken/lite';
+import { getEncoding } from 'js-tiktoken';
 import _ from 'lodash';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
@@ -136,7 +135,7 @@ export function OpenAI({
 }
 
 // Preload the tokenizer to avoid a large delay on first use.
-const cl100kTokenizer = new Tiktoken(cl100k_base);
+const cl100kTokenizer = getEncoding('cl100k_base');
 export const tokenizer = {
   encode: (text: string) => cl100kTokenizer.encode(text),
   decode: (tokens: number[]) => cl100kTokenizer.decode(tokens),
