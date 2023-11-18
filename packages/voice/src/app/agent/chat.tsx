@@ -571,7 +571,7 @@ export class WebRtcChatManager implements ChatManager {
   }
   warmup() {
     const isLocalHost = window.location.hostname === 'localhost';
-    const url = !isLocalHost ? 'wss://prod-voice-pgaenaxiea-uw.a.run.app' : 'ws://localhost:8080';
+    const url = !isLocalHost ? 'wss://wsapi.fixie.ai' : 'ws://localhost:8100';
     this.socket = new WebSocket(url);
     this.socket.onopen = () => this.handleSocketOpen();
     this.socket.onmessage = (event) => this.handleSocketMessage(event);
@@ -579,6 +579,7 @@ export class WebRtcChatManager implements ChatManager {
   }
   async start() {
     console.log('[chat] starting');
+    this.audioElement.play();
     const localTracks = await createLocalTracks({ audio: true, video: false });
     this.localAudioTrack = localTracks[0] as LocalAudioTrack;
     console.log('[chat] got mic stream');
@@ -588,7 +589,6 @@ export class WebRtcChatManager implements ChatManager {
       this.room?.localParticipant.publishData(this.textEncoder.encode(JSON.stringify(obj)), DataPacket_Kind.RELIABLE);
     }, 5000);
     this.maybePublishLocalAudio();
-    this.audioElement.play();
     this.changeState(ChatManagerState.LISTENING);
   }
   async stop() {
