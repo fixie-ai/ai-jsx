@@ -193,8 +193,8 @@ export class ChatRequest {
             // This message is still being generated, so don't include any text after it.
             break;
           } else if (messageState === 'done') {
-            // Append a newline to make clear to the TTS pipeline that the text is complete.
-            currentMessage += '\n';
+            // Append two newlines to end the paragraph (i.e. make clear to the TTS pipeline that the text is complete).
+            currentMessage += '\n\n';
           }
         }
 
