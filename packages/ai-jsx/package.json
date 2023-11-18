@@ -385,7 +385,7 @@
     "cli-highlight": "^2.1.11",
     "cli-spinners": "^2.9.0",
     "ink": "^4.2.0",
-    "js-tiktoken": "^1.0.7",
+    "js-tiktoken": "^1.0.8",
     "js-yaml": "^4.1.0",
     "langchain": "^0.0.143",
     "lodash": "^4.17.21",
