@@ -116,10 +116,7 @@ jot it down:
 You can use `npx fixie corpus list` to see the list of corpora you have created.
 
 :::tip Example corpus
-Rather than creating a corpus from scratch, you can also query the existing
-corpus with ID `44094d5a-f817-4c2e-a2a4-8f8a0c936d0f` from your own code.
-This corpus contains a bunch of web pages with exciting facts about foxes, so it
-makes for a good place to test out the query functionality!
+Rather than creating a corpus from scratch, you can also query an existing corpus that has a bunch of web pages with exciting facts about foxes. This corpus has ID `44094d5a-f817-4c2e-a2a4-8f8a0c936d0f` and can be used in your code if you don't want to take the time to create a corpus of your own. If that is the case, you can jump ahead to the section below titled [Querying the Corpus](https://docs.ai-jsx.com/sidekicks/sidekicks-docsqa#querying-the-corpus). Otherwise, you can continue with "Adding Sources to the Corpus" and make your own corpus to use.
 :::
 
 ## Adding Sources to the Corpus
