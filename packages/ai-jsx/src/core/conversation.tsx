@@ -312,7 +312,7 @@ export function Converse({
   children: AI.Node;
 }) {
   // Keep producing rounds until there's a round with no messages.
-  async function* ConverseRound(
+  async function* ConversationRound(
     { currentRound, history }: { currentRound: AI.Node; history: ConversationMessage[] },
     { memo, render }: AI.ComponentContext
   ) {
@@ -324,10 +324,10 @@ export function Converse({
 
     const newHistory = history.concat(currentRoundMessages);
     const nextRound = memo(reply(currentRoundMessages, newHistory.slice()));
-    return [nextRound, <ConverseRound history={newHistory} currentRound={nextRound} />];
+    return [nextRound, <ConversationRound history={newHistory} currentRound={nextRound} />];
   }
 
-  return <ConverseRound history={[]} currentRound={children} />;
+  return <ConversationRound history={[]} currentRound={children} />;
 }
 
 /**
