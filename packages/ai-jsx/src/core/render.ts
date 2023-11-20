@@ -105,6 +105,12 @@ interface RenderOpts<TIntermediate = string, TFinal = string> {
    * Indicates that the stream should be append-only.
    */
   appendOnly?: boolean;
+
+  /**
+   * Indicates that intermediate frames should be skipped if the next
+   * frame is available without performing I/O.
+   */
+  batchFrames?: boolean;
 }
 
 /**
@@ -424,8 +430,35 @@ function createRenderContextInternal(
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         const shouldStop = (opts?.stop || (() => false)) as ElementPredicate;
         const generatorToWrap = renderStream(context, renderable, shouldStop, Boolean(opts?.appendOnly));
+
+        let nextPromise = generatorToWrap.next();
         while (true) {
-          const next = await generatorToWrap.next();
+          let next = await nextPromise;
+
+          if (!next.done && opts?.batchFrames) {
+            // We use `setImmediate` or `setTimeout` to ensure that all (recursively) queued microtasks
+            // are completed. (Promise.then handlers are queued as microtasks.)
+            // See https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide
+            const nullPromise = new Promise<null>((resolve) => {
+              if ('setImmediate' in globalThis) {
+                setImmediate(() => resolve(null));
+              } else {
+                setTimeout(() => resolve(null), 0);
+              }
+            });
+
+            while (!next.done) {
+              nextPromise = generatorToWrap.next();
+
+              // Consume from the generator until the null promise resolves.
+              const nextOrNull = await Promise.race([nextPromise, nullPromise]);
+              if (nextOrNull === null) {
+                break;
+              }
+              next = nextOrNull;
+            }
+          }
+
           const value = opts?.stop ? (next.value as TFinal) : (next.value.join('') as TFinal);
           if (next.done) {
             if (promiseResult === null) {
@@ -443,6 +476,10 @@ function createRenderContextInternal(
           } else {
             // Otherwise yield the (string) value as-is.
             yield value;
+          }
+
+          if (!opts?.batchFrames) {
+            nextPromise = generatorToWrap.next();
           }
         }
       })() as AsyncGenerator<TIntermediate, TFinal>;
