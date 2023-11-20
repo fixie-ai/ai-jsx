@@ -104,8 +104,14 @@ describe('OpenTelemetry', () => {
           "ai.jsx.tree": ""opentel response from OpenAI"",
         },
         {
-          "ai.jsx.completion": "[{"element":"<AssistantMessage @memoizedId=3>\\n  {\\"opentel response from OpenAI\\"}\\n</AssistantMessage>","cost":10}]",
-          "ai.jsx.prompt": "[{"element":"<UserMessage @memoizedId=1>\\n  {\\"hello\\"}\\n</UserMessage>","cost":4}]",
+          "ai.jsx.memoized": true,
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.tag": "Stream",
+          "ai.jsx.tree": ""opentel response from OpenAI"",
+        },
+        {
+          "ai.jsx.completion": "[{"type":"assistant","props":{},"text":"opentel response from OpenAI","cost":10}]",
+          "ai.jsx.prompt": "[{"type":"user","props":{},"text":"hello","cost":4}]",
           "ai.jsx.result": "opentel response from OpenAI",
           "ai.jsx.tag": "OpenAIChatModel",
           "ai.jsx.tree": "<OpenAIChatModel model="gpt-3.5-turbo">
@@ -174,6 +180,14 @@ describe('OpenTelemetry', () => {
       </UserMessage>",
         },
         {
+          "ai.jsx.memoized": true,
+          "ai.jsx.result": "hello",
+          "ai.jsx.tag": "UserMessage",
+          "ai.jsx.tree": "<UserMessage @memoizedId=1>
+        {"hello"}
+      </UserMessage>",
+        },
+        {
           "ai.jsx.result": "hello",
           "ai.jsx.tag": "UserMessage",
           "ai.jsx.tree": "<UserMessage @memoizedId=1>
@@ -219,6 +233,7 @@ describe('OpenTelemetry', () => {
           "ai.jsx.tree": ""opentel response from OpenAI"",
         },
         {
+          "ai.jsx.memoized": true,
           "ai.jsx.result": "opentel response from OpenAI",
           "ai.jsx.tag": "AssistantMessage",
           "ai.jsx.tree": "<AssistantMessage @memoizedId=3>
@@ -226,8 +241,15 @@ describe('OpenTelemetry', () => {
       </AssistantMessage>",
         },
         {
-          "ai.jsx.completion": "[{"element":"<AssistantMessage @memoizedId=3>\\n  {\\"opentel response from OpenAI\\"}\\n</AssistantMessage>","cost":10}]",
-          "ai.jsx.prompt": "[{"element":"<UserMessage @memoizedId=1>\\n  {\\"hello\\"}\\n</UserMessage>","cost":4}]",
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.tag": "AssistantMessage",
+          "ai.jsx.tree": "<AssistantMessage @memoizedId=3>
+        {"opentel response from OpenAI"}
+      </AssistantMessage>",
+        },
+        {
+          "ai.jsx.completion": "[{"type":"assistant","props":{},"text":"opentel response from OpenAI","cost":10}]",
+          "ai.jsx.prompt": "[{"type":"user","props":{},"text":"hello","cost":4}]",
           "ai.jsx.result": "opentel response from OpenAI",
           "ai.jsx.tag": "OpenAIChatModel",
           "ai.jsx.tree": "<OpenAIChatModel model="gpt-3.5-turbo">

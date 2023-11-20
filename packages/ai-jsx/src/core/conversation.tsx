@@ -241,7 +241,7 @@ function toConversationMessages(partialRendering: AI.PartiallyRendered[]): Conve
 async function loggableMessage(
   message: ConversationMessage,
   render: AI.RenderContext['render'],
-  measureCost?: (message: ConversationMessage, render: AI.ComponentContext['render']) => Promise<number>
+  cost?: (message: ConversationMessage, render: AI.ComponentContext['render']) => Promise<number>
 ) {
   let textPromise: PromiseLike<string> | undefined = undefined;
   switch (message.type) {
@@ -261,11 +261,13 @@ async function loggableMessage(
     }
   }
 
-  const costPromise = measureCost?.(message, render);
-  const loggableProps = { ...message.element.props };
-  if ('children' in loggableProps) {
-    delete loggableProps.children;
-  }
+  const costPromise = cost?.(message, render);
+
+  const { children, ...propsWithoutChildren } = {
+    children: undefined,
+    ...message.element.props,
+  };
+  const loggableProps: Record<string, Jsonifiable> = propsWithoutChildren;
 
   return {
     // Use a function so that it doesn't serialize to JSON, but can be accessed if needed.
