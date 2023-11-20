@@ -238,6 +238,47 @@ function toConversationMessages(partialRendering: AI.PartiallyRendered[]): Conve
   });
 }
 
+async function loggableMessage(
+  message: ConversationMessage,
+  render: AI.RenderContext['render'],
+  cost?: (message: ConversationMessage, render: AI.ComponentContext['render']) => Promise<number>
+) {
+  let textPromise: PromiseLike<string> | undefined = undefined;
+  switch (message.type) {
+    case 'user':
+    case 'assistant':
+    case 'system':
+      textPromise = render(message.element);
+      break;
+    case 'functionResponse':
+      textPromise = render(message.element.props.children);
+      break;
+    case 'functionCall':
+      break;
+    default: {
+      const neverMessage: never = message;
+      throw new Error(`Unexpected message type ${(neverMessage as any).type}`);
+    }
+  }
+
+  const costPromise = cost?.(message, render);
+
+  const { children, ...propsWithoutChildren } = {
+    children: undefined,
+    ...message.element.props,
+  };
+  const loggableProps: Record<string, Jsonifiable> = propsWithoutChildren;
+
+  return {
+    // Use a function so that it doesn't serialize to JSON, but can be accessed if needed.
+    getElement: () => message.element,
+    type: message.type,
+    props: loggableProps,
+    text: await textPromise,
+    cost: await costPromise,
+  };
+}
+
 /** @hidden */
 export async function renderToConversation(
   conversation: AI.Node,
@@ -258,13 +299,7 @@ export async function renderToConversation(
   const messages = toConversationMessages(await render(conversationToUse, { stop: isConversationalComponent }));
 
   if (logger && logType) {
-    const loggableMessages = await Promise.all(
-      messages.map(async (m) => ({
-        element: debug(m.element, true),
-        ...(cost && { cost: await cost(m, render) }),
-      }))
-    );
-
+    const loggableMessages = await Promise.all(messages.map((m) => loggableMessage(m, render, cost)));
     logger.setAttribute(`ai.jsx.${logType}`, JSON.stringify(loggableMessages));
     logger.info({ [logType]: { messages: loggableMessages } }, `Got ${logType} conversation`);
   }

@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.27.1
+## 0.28.0
+
+- Improved completion/prompt logging to include explicit message text
+
+## [0.27.1](https://github.com/fixie-ai/ai-jsx/commit/b5e436615df37c7b68986059892d6043b684df18)
 
 - Fix bug where memoized components could duplicate content
 - Refactor `<Converse>` to allow rounds to progress in parallel when content allows
