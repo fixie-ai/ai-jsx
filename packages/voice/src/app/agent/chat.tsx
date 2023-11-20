@@ -183,13 +183,19 @@ export class ChatRequest {
 
       if (!this.done) {
         const currentTurn = isStartConversationRequest ? value.turns.at(-1) : value;
-        const currentMessage = currentTurn.messages
-          .filter((m: any) => m.kind === 'text')
-          .map((m: any) => m.content)
-          .join(' ');
 
-        if (currentMessage === this.outMessage) {
-          continue;
+        const textMessages = currentTurn.messages.filter((m: any) => m.kind === 'text');
+        let currentMessage = '';
+        for (const textMessage of textMessages) {
+          currentMessage += textMessage.content;
+          const messageState = textMessage.state;
+          if (messageState === 'in-progress') {
+            // This message is still being generated, so don't include any text after it.
+            break;
+          } else if (messageState === 'done') {
+            // Append two newlines to end the paragraph (i.e. make clear to the TTS pipeline that the text is complete).
+            currentMessage += '\n\n';
+          }
         }
 
         // Find the longest matching prefix.

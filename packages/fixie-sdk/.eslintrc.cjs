@@ -15,7 +15,10 @@ module.exports = {
 
   rules: {
     'no-unused-vars': 'off',
-    '@typescript-eslint/no-unused-vars': ['warn', { ignoreRestSiblings: true, argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      { ignoreRestSiblings: true, argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+    ],
 
     'no-undef': 'off',
     'no-magic-numbers': 'off',
