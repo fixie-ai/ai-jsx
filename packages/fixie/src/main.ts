@@ -4,7 +4,7 @@
  * This is a command-line tool to interact with the Fixie platform.
  */
 
-import { Command, Option, program } from 'commander';
+import { Command, InvalidArgumentError, Option, program } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import terminal from 'terminal-kit';
@@ -42,6 +42,18 @@ function parseDate(value: string): Date {
   return parsedDate;
 }
 
+function parseJsonObject(value: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(value);
+    if (typeof parsed !== 'object') {
+      throw new Error('Must be an object.');
+    }
+    return parsed;
+  } catch (ex) {
+    throw new InvalidArgumentError('Not a valid JSON object.');
+  }
+}
+
 /** Deploy an agent from the current directory. */
 function registerDeployCommand(command: Command) {
   command
@@ -60,13 +72,28 @@ function registerDeployCommand(command: Command) {
         };
       }
     )
-    .action(async (path: string | undefined, options: { env: Record<string, string> }) => {
-      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      await FixieAgent.DeployAgent(client, path ?? process.cwd(), {
-        FIXIE_API_URL: program.opts().url,
-        ...options.env,
-      });
-    });
+    .option(
+      '--default-parameters <json>',
+      'Default runtime parameters to set for this revision. Must conform to the schema defined by the agent.',
+      parseJsonObject
+    )
+    .action(
+      async (
+        path: string | undefined,
+        options: { env: Record<string, string>; defaultParameters?: Record<string, unknown> }
+      ) => {
+        const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+        await FixieAgent.DeployAgent(
+          client,
+          path ?? process.cwd(),
+          {
+            FIXIE_API_URL: program.opts().url,
+            ...options.env,
+          },
+          options.defaultParameters
+        );
+      }
+    );
 }
 
 /** Run an agent locally. */
@@ -88,19 +115,30 @@ function registerServeCommand(command: Command) {
         };
       }
     )
-    .action(async (path: string | undefined, options: { port: string; env: Record<string, string> }) => {
-      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      await FixieAgent.ServeAgent({
-        client,
-        agentPath: path ?? process.cwd(),
-        port: parseInt(options.port),
-        tunnel: true,
-        environmentVariables: {
-          FIXIE_API_URL: program.opts().url,
-          ...options.env,
-        },
-      });
-    });
+    .option(
+      '--default-parameters <json>',
+      'Default runtime parameters to set for this revision. Must conform to the schema defined by the agent.',
+      parseJsonObject
+    )
+    .action(
+      async (
+        path: string | undefined,
+        options: { port: string; env: Record<string, string>; defaultParameters: Record<string, unknown> }
+      ) => {
+        const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+        await FixieAgent.ServeAgent({
+          client,
+          agentPath: path ?? process.cwd(),
+          port: parseInt(options.port),
+          tunnel: true,
+          environmentVariables: {
+            FIXIE_API_URL: program.opts().url,
+            ...options.env,
+          },
+          defaultRuntimeParameters: options.defaultParameters,
+        });
+      }
+    );
 }
 
 // Get current version of this package.
@@ -752,7 +790,7 @@ team
   .command('remove <teamId> <userId>')
   .description('Remove a member from a team')
   .action(
-    catchErrors(async (teamId: string, userId: string, opts) => {
+    catchErrors(async (teamId: string, userId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.removeTeamMember({
         teamId,

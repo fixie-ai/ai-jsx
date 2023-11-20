@@ -399,12 +399,7 @@ export class FixieAgent {
       `
     );
     const program = TJS.programFromConfig(tsconfigPath, [tempPath]);
-    const schema = TJS.generateSchema(program, 'RuntimeParameters', settings);
-    if (schema && schema.type !== 'object') {
-      throw new Error(`The first argument of your default export must be an object (not ${schema.type})`);
-    }
-
-    return schema;
+    return TJS.generateSchema(program, 'RuntimeParameters', settings);
   }
 
   /** Package the code in the given directory and return the path to the tarball. */
@@ -600,7 +595,8 @@ export class FixieAgent {
   public static async DeployAgent(
     client: FixieClient,
     agentPath: string,
-    environmentVariables: Record<string, string> = {}
+    environmentVariables: Record<string, string> = {},
+    defaultRuntimeParameters: Record<string, unknown> = {}
   ): Promise<AgentRevision> {
     const config = await FixieAgent.LoadConfig(agentPath);
     term('🦊 Deploying agent ').green(config.handle)('...\n');
@@ -629,7 +625,12 @@ export class FixieAgent {
     const runtimeParametersSchema = this.inferRuntimeParametersSchema(agentPath);
     const tarball = FixieAgent.getCodePackage(agentPath);
     const spinner = ora(' 🚀 Deploying... (hang tight, this takes a minute or two!)').start();
-    const revision = await agent.createRevision({ tarball, environmentVariables, runtimeParametersSchema });
+    const revision = await agent.createRevision({
+      tarball,
+      environmentVariables,
+      runtimeParametersSchema,
+      defaultRuntimeParameters,
+    });
     spinner.succeed(`Agent ${config.handle} is running at: ${agent.agentUrl(client.url)}`);
     return revision;
   }
@@ -641,6 +642,7 @@ export class FixieAgent {
     tunnel,
     port,
     environmentVariables,
+    defaultRuntimeParameters = {},
     debug,
   }: {
     client: FixieClient;
@@ -648,6 +650,7 @@ export class FixieAgent {
     tunnel?: boolean;
     port: number;
     environmentVariables: Record<string, string>;
+    defaultRuntimeParameters?: Record<string, unknown>;
     debug?: boolean;
   }) {
     const config = await FixieAgent.LoadConfig(agentPath);
@@ -777,13 +780,16 @@ export class FixieAgent {
           await agent.deleteRevision(currentRevision.id);
           currentRevision = null;
         }
-        currentRevision = await agent.createRevision({ externalUrl: currentUrl, runtimeParametersSchema });
+        currentRevision = await agent.createRevision({
+          externalUrl: currentUrl,
+          runtimeParametersSchema,
+          defaultRuntimeParameters,
+        });
         term('🥡 Created temporary agent revision ').green(currentRevision.id)('\n');
         term('🥡 Agent ').green(config.handle)(' is running at: ').green(agent.agentUrl(client.url))('\n');
       } catch (e: any) {
         term('🥡 Got error trying to create agent revision: ').red(e.message)('\n');
-        console.error(e);
-        continue;
+        throw e;
       }
     }
   }

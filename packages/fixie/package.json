@@ -1,6 +1,6 @@
 {
   "name": "fixie",
-  "version": "5.2.0",
+  "version": "5.3.0",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
@@ -12,8 +12,8 @@
     "build-start": "yarn run build && yarn run start",
     "format": "prettier --write .",
     "test": "yarn run build && yarn run lint",
-    "lint": "eslint .",
-    "lint:fix": "eslint .",
+    "lint": "eslint .  --max-warnings 0",
+    "lint:fix": "eslint . --fix",
     "prepack": "yarn build"
   },
   "volta": {

@@ -2,17 +2,7 @@ import { ApolloClient } from '@apollo/client/core/ApolloClient.js';
 import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache.js';
 import createUploadLink from 'apollo-upload-client/public/createUploadLink.js';
 import type { Jsonifiable } from 'type-fest';
-import {
-  AgentId,
-  AssistantConversationTurn,
-  Conversation,
-  ConversationId,
-  Metadata,
-  User,
-  Team,
-  Membership,
-  MembershipRole,
-} from './types.js';
+import { AgentId, AssistantConversationTurn, Conversation, ConversationId, Metadata, User, Team } from './types.js';
 import { encode } from 'base64-arraybuffer';
 
 export class AgentDoesNotExistError extends Error {
