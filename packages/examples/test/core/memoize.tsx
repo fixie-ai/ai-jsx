@@ -157,6 +157,8 @@ it('works for streams that become append-only using a value', async () => {
 
 it('coalesces frames when there are multiple concurrent renders', async () => {
   async function* Component() {
+    yield 5;
+    yield 4;
     yield AI.AppendOnlyStream;
     yield 3;
     yield 2;
@@ -170,17 +172,22 @@ it('coalesces frames when there are multiple concurrent renders', async () => {
   const iterator1 = ctx.render(element)[Symbol.asyncIterator]();
   const iterator2 = ctx.render(element)[Symbol.asyncIterator]();
 
-  expect((await iterator1.next()).value).toBe('');
-  expect((await iterator2.next()).value).toBe('');
+  expect((await iterator1.next()).value).toBe('5');
+  expect((await iterator2.next()).value).toBe('5');
 
-  expect((await iterator1.next()).value).toBe('3');
-  expect((await iterator1.next()).value).toBe('32');
-  expect((await iterator1.next()).value).toBe('321');
-  expect((await iterator2.next()).value).toBe('321');
+  expect((await iterator1.next()).value).toBe('4');
+  expect((await iterator1.next()).value).toBe('4');
+  expect((await iterator1.next()).value).toBe('43');
 
-  expect(await iterator1.next()).toEqual({ value: '321LIFTOFF', done: true });
-  expect(await iterator2.next()).toEqual({ value: '321LIFTOFF', done: true });
+  expect((await iterator2.next()).value).toBe('4');
+
+  expect((await iterator1.next()).value).toBe('432');
+  expect((await iterator1.next()).value).toBe('4321');
+  expect((await iterator2.next()).value).toBe('4321');
+
+  expect(await iterator1.next()).toEqual({ value: '4321LIFTOFF', done: true });
+  expect(await iterator2.next()).toEqual({ value: '4321LIFTOFF', done: true });
 
   const iterator3 = ctx.render(element)[Symbol.asyncIterator]();
-  expect(await iterator3.next()).toEqual({ value: '321LIFTOFF', done: true });
+  expect(await iterator3.next()).toEqual({ value: '4321LIFTOFF', done: true });
 });

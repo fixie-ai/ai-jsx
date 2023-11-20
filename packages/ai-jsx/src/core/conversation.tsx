@@ -304,32 +304,30 @@ export async function renderToConversation(
  * ```
  *
  */
-export async function* Converse(
-  {
-    reply,
-    children,
-  }: {
-    reply: (messages: ConversationMessage[], fullConversation: ConversationMessage[]) => AI.Renderable;
-    children: AI.Node;
-  },
-  { render, memo, logger }: AI.ComponentContext
-): AI.RenderableStream {
-  yield AI.AppendOnlyStream;
-
-  const fullConversation = [] as ConversationMessage[];
-  let next = children;
-  while (true) {
-    const newMessages = await renderToConversation(next, render, logger);
-    if (newMessages.length === 0) {
-      break;
+export function Converse({
+  reply,
+  children,
+}: {
+  reply: (messages: ConversationMessage[], fullConversation: ConversationMessage[]) => AI.Renderable;
+  children: AI.Node;
+}) {
+  // Keep producing rounds until there's a round with no messages.
+  async function* ConversationRound(
+    { currentRound, history }: { currentRound: AI.Node; history: ConversationMessage[] },
+    { memo, render }: AI.ComponentContext
+  ) {
+    yield;
+    const currentRoundMessages = await renderToConversation(currentRound, render);
+    if (currentRoundMessages.length === 0) {
+      return;
     }
 
-    fullConversation.push(...newMessages);
-    next = memo(reply(newMessages, fullConversation.slice()));
-    yield next;
+    const newHistory = history.concat(currentRoundMessages);
+    const nextRound = memo(reply(currentRoundMessages, newHistory.slice()));
+    return [nextRound, <ConversationRound history={newHistory} currentRound={nextRound} />];
   }
 
-  return AI.AppendOnlyStream;
+  return <ConversationRound history={[]} currentRound={children} />;
 }
 
 /**
