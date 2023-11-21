@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.28.0
+## 0.28.1
+
+- Add `openai.finish_reason` span attribute for `OpenAIChatModel`
+
+## [0.28.0](https://github.com/fixie-ai/ai-jsx/commit/73251358a1121c98e9059c57d3c905b6156447c4)
 
 - Improved completion/prompt logging to include explicit message text
 
