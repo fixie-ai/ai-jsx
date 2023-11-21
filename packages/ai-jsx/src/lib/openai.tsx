@@ -672,10 +672,13 @@ export async function* OpenAIChatModel(
     }
   }
 
-  // Render the completion conversation to log it.
+  // TS doesn't realize that the advance closure can set `finishReason`.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (finishReason) {
     logger.setAttribute('openai.finish_reason', finishReason);
   }
+
+  // Render the completion conversation to log it.
   await renderToConversation(outputMessages, render, logger, 'completion', tokenCountForConversationMessage);
   return AI.AppendOnlyStream;
 }
