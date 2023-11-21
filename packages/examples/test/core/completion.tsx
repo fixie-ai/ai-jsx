@@ -92,7 +92,6 @@ describe('OpenTelemetry', () => {
           "ai.jsx.result": "opentel response from OpenAI",
           "ai.jsx.tag": "Stream",
           "ai.jsx.tree": ""▮"",
-          "openai.finish_reason": "stop",
         },
         {
           "ai.jsx.result": "opentel response from OpenAI",
@@ -200,7 +199,6 @@ describe('OpenTelemetry', () => {
           "ai.jsx.result": "opentel response from OpenAI",
           "ai.jsx.tag": "Stream",
           "ai.jsx.tree": ""▮"",
-          "openai.finish_reason": "stop",
         },
         {
           "ai.jsx.result": "opentel response from OpenAI",

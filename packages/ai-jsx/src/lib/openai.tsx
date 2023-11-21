@@ -546,6 +546,7 @@ export async function* OpenAIChatModel(
 
     throw ex;
   }
+  let finishReason: string | undefined = undefined;
   const iterator = chatResponse[Symbol.asyncIterator]();
 
   // We have a single response iterator, but we'll wrap tokens _within_ the structure of <AssistantMessage> or <FunctionCall>
@@ -569,7 +570,7 @@ export async function* OpenAIChatModel(
     logger.trace({ deltaMessage: next.value }, 'Got delta message');
 
     if (next.value.choices[0].finish_reason) {
-      logger.setAttribute('openai.finish_reason', next.value.choices[0].finish_reason);
+      finishReason = next.value.choices[0].finish_reason;
     }
     return next.value.choices[0].delta;
   }
@@ -672,6 +673,9 @@ export async function* OpenAIChatModel(
   }
 
   // Render the completion conversation to log it.
+  if (finishReason) {
+    logger.setAttribute('openai.finish_reason', finishReason);
+  }
   await renderToConversation(outputMessages, render, logger, 'completion', tokenCountForConversationMessage);
   return AI.AppendOnlyStream;
 }
