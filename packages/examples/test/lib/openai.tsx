@@ -21,7 +21,7 @@ describe('OpenAIChatModel', () => {
                   }),
                 ]);
 
-                yield { choices: [{ delta: { role: 'assistant', content: 'Hi!' } }] };
+                yield { choices: [{ delta: { role: 'assistant', content: 'Hi!' }, finish_reason: 'stop' }] };
               },
             },
           },
