@@ -251,7 +251,7 @@ export interface ChatManagerInit {
   asrLanguage?: string;
   ttsModel?: string;
   ttsVoice?: string;
-  webrtc: boolean;
+  webrtcUrl?: string;
 }
 
 /**
@@ -571,7 +571,7 @@ export class WebRtcChatManager implements ChatManager {
   }
   warmup() {
     const isLocalHost = window.location.hostname === 'localhost';
-    const url = !isLocalHost ? 'wss://wsapi.fixie.ai' : 'ws://localhost:8100';
+    const url = this.params.webrtcUrl ?? (!isLocalHost ? 'wss://wsapi.fixie.ai' : 'ws://localhost:8100');
     this.socket = new WebSocket(url);
     this.socket.onopen = () => this.handleSocketOpen();
     this.socket.onmessage = (event) => this.handleSocketMessage(event);
@@ -695,7 +695,7 @@ export class WebRtcChatManager implements ChatManager {
 }
 
 export function createChatManager(init: ChatManagerInit): ChatManager {
-  if (init.webrtc) {
+  if (init.webrtcUrl !== undefined) {
     return new WebRtcChatManager(init);
   } else {
     return new LocalChatManager(init);
