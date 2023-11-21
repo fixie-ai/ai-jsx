@@ -221,7 +221,7 @@ const AgentPageComponent: React.FC = () => {
   const ttsVoice = searchParams.get('ttsVoice') || agentVoice;
   const model = getAgent(agentId) === undefined ? 'fixie' : searchParams.get('llm') || DEFAULT_LLM;
   const docs = searchParams.get('docs') !== null;
-  const webrtc = searchParams.get('webrtc') !== null;
+  const webrtcUrl = searchParams.get('webrtc') ?? undefined;
   const [showChooser, setShowChooser] = useState(searchParams.get('chooser') !== null);
   const showInput = searchParams.get('input') !== null;
   const showOutput = searchParams.get('output') !== null;
@@ -247,7 +247,7 @@ const AgentPageComponent: React.FC = () => {
       model,
       agentId,
       docs,
-      webrtc,
+      webrtcUrl,
     });
     setChatManager(manager);
     manager.onStateChange = (state) => {
