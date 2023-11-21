@@ -567,6 +567,10 @@ export async function* OpenAIChatModel(
     } while (next.value.choices.length == 0);
 
     logger.trace({ deltaMessage: next.value }, 'Got delta message');
+
+    if (next.value.choices[0].finish_reason !== null) {
+      logger.setAttribute('openai.finish_reason', next.value.choices[0].finish_reason);
+    }
     return next.value.choices[0].delta;
   }
 
