@@ -568,7 +568,7 @@ export async function* OpenAIChatModel(
 
     logger.trace({ deltaMessage: next.value }, 'Got delta message');
 
-    if (next.value.choices[0].finish_reason !== null) {
+    if (next.value.choices[0].finish_reason) {
       logger.setAttribute('openai.finish_reason', next.value.choices[0].finish_reason);
     }
     return next.value.choices[0].delta;
