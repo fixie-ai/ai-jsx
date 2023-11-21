@@ -546,6 +546,7 @@ export async function* OpenAIChatModel(
 
     throw ex;
   }
+  let finishReason: string | undefined = undefined;
   const iterator = chatResponse[Symbol.asyncIterator]();
 
   // We have a single response iterator, but we'll wrap tokens _within_ the structure of <AssistantMessage> or <FunctionCall>
@@ -567,6 +568,10 @@ export async function* OpenAIChatModel(
     } while (next.value.choices.length == 0);
 
     logger.trace({ deltaMessage: next.value }, 'Got delta message');
+
+    if (next.value.choices[0].finish_reason) {
+      finishReason = next.value.choices[0].finish_reason;
+    }
     return next.value.choices[0].delta;
   }
 
@@ -665,6 +670,12 @@ export async function* OpenAIChatModel(
     if (delta !== null) {
       delta = await advance();
     }
+  }
+
+  // TS doesn't realize that the advance closure can set `finishReason`.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (finishReason) {
+    logger.setAttribute('openai.finish_reason', finishReason);
   }
 
   // Render the completion conversation to log it.

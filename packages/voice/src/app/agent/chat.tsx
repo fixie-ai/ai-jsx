@@ -251,7 +251,7 @@ export interface ChatManagerInit {
   asrLanguage?: string;
   ttsModel?: string;
   ttsVoice?: string;
-  webrtc: boolean;
+  webrtcUrl?: string;
 }
 
 /**
@@ -571,7 +571,7 @@ export class WebRtcChatManager implements ChatManager {
   }
   warmup() {
     const isLocalHost = window.location.hostname === 'localhost';
-    const url = !isLocalHost ? 'wss://wsapi.fixie.ai' : 'ws://localhost:8100';
+    const url = this.params.webrtcUrl ?? (!isLocalHost ? 'wss://wsapi.fixie.ai' : 'ws://localhost:8100');
     this.socket = new WebSocket(url);
     this.socket.onopen = () => this.handleSocketOpen();
     this.socket.onmessage = (event) => this.handleSocketMessage(event);
@@ -585,8 +585,8 @@ export class WebRtcChatManager implements ChatManager {
     console.log('[chat] got mic stream');
     this.inAnalyzer = new StreamAnalyzer(this.audioContext, this.localAudioTrack!.mediaStream!);
     this.pinger = setInterval(() => {
-      var obj = { type: 'ping', timestamp: performance.now() };
-      this.room?.localParticipant.publishData(this.textEncoder.encode(JSON.stringify(obj)), DataPacket_Kind.RELIABLE);
+      const obj = { type: 'ping', timestamp: performance.now() };
+      this.sendData(obj);
     }, 5000);
     this.maybePublishLocalAudio();
     this.changeState(ChatManagerState.LISTENING);
@@ -608,7 +608,9 @@ export class WebRtcChatManager implements ChatManager {
     this.changeState(ChatManagerState.IDLE);
   }
   interrupt() {
-    throw new Error('Method not implemented.');
+    console.log('[chat] interrupting');
+    const obj = { type: 'interrupt' };
+    this.sendData(obj);
   }
   private changeState(state: ChatManagerState) {
     if (state != this._state) {
@@ -623,6 +625,9 @@ export class WebRtcChatManager implements ChatManager {
       const opts = { name: 'audio', simulcast: false, source: Track.Source.Microphone };
       this.room.localParticipant.publishTrack(this.localAudioTrack, opts);
     }
+  }
+  private sendData(obj: any) {
+    this.room?.localParticipant.publishData(this.textEncoder.encode(JSON.stringify(obj)), DataPacket_Kind.RELIABLE);
   }
   private handleSocketOpen() {
     console.log('[chat] socket opened');
@@ -678,12 +683,19 @@ export class WebRtcChatManager implements ChatManager {
     if (data.type === 'pong') {
       const elapsed_ms = performance.now() - data.timestamp;
       console.debug(`[chat] worker RTT: ${elapsed_ms.toFixed(0)} ms`);
+    } else if (data.type === 'state') {
+      const newState = data.state;
+      this.changeState(newState);
+    } else if (data.type === 'transcript') {
+      console.log(`[chat] transcript: ${data.text}`);
+    } else if (data.type === 'output') {
+      console.log(`[chat] output: ${data.text}`);
     }
   }
 }
 
 export function createChatManager(init: ChatManagerInit): ChatManager {
-  if (init.webrtc) {
+  if (init.webrtcUrl !== undefined) {
     return new WebRtcChatManager(init);
   } else {
     return new LocalChatManager(init);
