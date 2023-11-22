@@ -30,8 +30,9 @@ import {
   isElement,
   Fragment,
 } from './node.js';
-import { openTelemetryStreamRenderer } from './opentelemetry.js';
+import { OpenTelemetryTracer } from './opentelemetry.js';
 import { getEnvVar } from '../lib/util.js';
+import { Tracer } from './tracer.js';
 
 const appendOnlyStreamSymbol = Symbol('AI.appendOnlyStream');
 
@@ -123,6 +124,7 @@ export interface RenderResult<TIntermediate, TFinal> {
 }
 
 const pushContextSymbol = Symbol('RenderContext.pushContext');
+const tracerSymbol = Symbol('RenderContext.tracer');
 /**
  * A RenderContext is responsible for rendering an AI.JSX Node tree.
  */
@@ -202,6 +204,11 @@ export interface RenderContext {
    * @returns The new `RenderContext`.
    */
   [pushContextSymbol]: <T>(context: Context<T>, value: T) => RenderContext;
+
+  /**
+   * The tracer associated with this context.
+   */
+  [tracerSymbol]: Tracer | undefined;
 }
 
 /** @hidden */
@@ -327,7 +334,12 @@ async function* renderStream(
     const renderId = uuidv4();
     try {
       const finalResult = yield* renderingContext.render(
-        renderable.render(renderingContext, new BoundLogger(logImpl, renderId, renderable), appendOnly),
+        renderable.render(
+          renderingContext,
+          new BoundLogger(logImpl, renderId, renderable),
+          renderingContext[tracerSymbol],
+          appendOnly
+        ),
         recursiveRenderOpts
       );
       return finalResult;
@@ -396,26 +408,38 @@ async function* renderStream(
  * @param logger The logger to use for the new context. If not provided, a new {@link PinoLogger} will be created.
  * @returns A new RenderContext.
  */
-export function createRenderContext(opts?: { logger?: LogImplementation; enableOpenTelemetry?: boolean }) {
+export function createRenderContext(opts?: {
+  logger?: LogImplementation;
+  enableOpenTelemetry?: boolean;
+  tracer?: Tracer;
+}) {
   let renderFn = renderStream;
   let logger = opts?.logger ?? new PinoLogger();
+  let tracer = opts?.tracer;
   if (opts?.enableOpenTelemetry ?? getEnvVar('AIJSX_ENABLE_OPENTELEMETRY', false)) {
-    renderFn = openTelemetryStreamRenderer(renderFn);
+    tracer = new OpenTelemetryTracer();
     logger = new CombinedLogger([logger, new OpenTelemetryLogger()]);
   }
+
+  if (tracer) {
+    renderFn = tracer.wrapRender(renderFn);
+  }
+
   return createRenderContextInternal(
     renderFn,
     {
       [LoggerContext[contextKey].userContextSymbol]: logger,
     },
-    { id: 0 }
+    { id: 0 },
+    opts?.tracer
   );
 }
 
 function createRenderContextInternal(
   renderStream: StreamRenderer,
   userContext: Record<symbol, any>,
-  memoizedIdHolder: { id: number }
+  memoizedIdHolder: { id: number },
+  tracer: Tracer | undefined
 ): RenderContext {
   const context: RenderContext = {
     render: <TFinal extends string | PartiallyRendered[], TIntermediate>(
@@ -539,10 +563,11 @@ function createRenderContextInternal(
       return defaultValue;
     },
 
-    memo: (renderable: Renderable) => withContext(partialMemo(renderable, ++memoizedIdHolder.id), context) as any,
+    memo: (renderable: Renderable) =>
+      withContext(partialMemo(renderable, ++memoizedIdHolder.id, tracer), context) as any,
 
     wrapRender: (getRenderStream) =>
-      createRenderContextInternal(getRenderStream(renderStream), userContext, memoizedIdHolder),
+      createRenderContextInternal(getRenderStream(renderStream), userContext, memoizedIdHolder, tracer),
 
     [pushContextSymbol]: (contextReference, value) =>
       createRenderContextInternal(
@@ -551,8 +576,11 @@ function createRenderContextInternal(
           ...userContext,
           [contextReference[contextKey].userContextSymbol]: value,
         },
-        memoizedIdHolder
+        memoizedIdHolder,
+        tracer
       ),
+
+    [tracerSymbol]: tracer,
   };
 
   return context;

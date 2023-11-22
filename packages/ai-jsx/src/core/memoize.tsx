@@ -9,7 +9,7 @@ import {
 } from './render.js';
 import { Node, Element, getReferencedNode, isIndirectNode, makeIndirectNode, isElement } from './node.js';
 import { Logger } from './log.js';
-import { bindAsyncGeneratorToActiveContext } from './opentelemetry.js';
+import { Tracer } from './tracer.js';
 import _ from 'lodash';
 
 /** @hidden */
@@ -20,20 +20,20 @@ export const memoizedIdSymbol = Symbol('memoizedId');
  * "Partially" memoizes a renderable such that it will only be rendered once in any
  * single `RenderContext`.
  */
-export function partialMemo<T>(element: Element<T>, id: number): Element<T>;
-export function partialMemo(node: Node, id: number): Node;
-export function partialMemo(renderable: Renderable, id: number): Renderable;
-export function partialMemo(renderable: Renderable, id: number): Node | Renderable {
+export function partialMemo<T>(element: Element<T>, id: number, tracer: Tracer | undefined): Element<T>;
+export function partialMemo(node: Node, id: number, tracer: Tracer | undefined): Node;
+export function partialMemo(renderable: Renderable, id: number, tracer: Tracer | undefined): Renderable;
+export function partialMemo(renderable: Renderable, id: number, tracer: Tracer | undefined): Node | Renderable {
   if (typeof renderable !== 'object' || renderable === null) {
     return renderable;
   }
   if (isIndirectNode(renderable)) {
-    const memoized = partialMemo(getReferencedNode(renderable), id);
+    const memoized = partialMemo(getReferencedNode(renderable), id, tracer);
     return makeIndirectNode(renderable, memoized);
   }
 
   if (Array.isArray(renderable)) {
-    return renderable.map((node) => partialMemo(node, id));
+    return renderable.map((node) => partialMemo(node, id, tracer));
   }
   if (isElement(renderable)) {
     if (memoizedIdSymbol in renderable.props) {
@@ -53,14 +53,14 @@ export function partialMemo(renderable: Renderable, id: number): Node | Renderab
     const newElement = {
       ...renderable,
       props: { ...renderable.props, [memoizedIdSymbol]: id },
-      render: (ctx: RenderContext, logger: Logger, isAppendOnlyRender: boolean) => {
+      render: (ctx: RenderContext, logger: Logger, tracer: Tracer | undefined, isAppendOnlyRender: boolean) => {
         if (memoizedValues.has(ctx)) {
           return memoizedValues.get(ctx);
         }
 
         let renderResult: Renderable;
         try {
-          renderResult = partialMemo(renderable.render(ctx, logger, isAppendOnlyRender), id);
+          renderResult = partialMemo(renderable.render(ctx, logger, tracer, isAppendOnlyRender), id, tracer);
         } catch (ex) {
           // Wrap it in a promise so that it throws on await.
           renderResult = Promise.reject(ex);
@@ -83,7 +83,7 @@ export function partialMemo(renderable: Renderable, id: number): Node | Renderab
     const unboundGenerator = renderable[Symbol.asyncIterator]();
 
     // N.B. Async context doesn't get bound to the generator, so we need to do that manually.
-    const generator = bindAsyncGeneratorToActiveContext(unboundGenerator);
+    const generator = tracer?.bindAsyncGeneratorToActiveContext(unboundGenerator) ?? unboundGenerator;
     const sink: (Node | AppendOnlyStreamValue)[] = [];
 
     let completed = false;
@@ -135,8 +135,8 @@ export function partialMemo(renderable: Renderable, id: number): Node | Renderab
           if (nextPromise == null) {
             nextPromise = generator.next().then((result) => {
               const memoized = isAppendOnlyStreamValue(result.value)
-                ? AppendOnlyStream(partialMemo(valueToAppend(result.value), id))
-                : partialMemo(result.value, id);
+                ? AppendOnlyStream(partialMemo(valueToAppend(result.value), id, tracer))
+                : partialMemo(result.value, id, tracer);
 
               sink.push(memoized);
               if (result.done) {
@@ -156,7 +156,7 @@ export function partialMemo(renderable: Renderable, id: number): Node | Renderab
     return renderable;
   }
 
-  const memoizedPromise = renderable.then((r) => partialMemo(r, id));
+  const memoizedPromise = renderable.then((r) => partialMemo(r, id, tracer));
   return {
     [memoizedIdSymbol]: id,
     then: memoizedPromise.then.bind(memoizedPromise),

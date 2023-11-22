@@ -8,9 +8,11 @@
 
 import { RenderContext, Renderable } from './render.js';
 import { Logger } from './log.js';
+import { type Tracer } from './tracer.js';
 
 /** A context that is used to render an AI.JSX component. */
 export interface ComponentContext extends RenderContext {
+  tracer: Tracer | undefined;
   logger: Logger;
   isAppendOnlyRender: boolean;
 }
@@ -33,7 +35,12 @@ export interface Element<P> {
   /** The component properties. */
   props: P;
   /** A function that renders this {@link Element} to a {@link Renderable}. */
-  render: (renderContext: RenderContext, logger: Logger, isAppendOnlyRender: boolean) => Renderable;
+  render: (
+    renderContext: RenderContext,
+    logger: Logger,
+    tracer: Tracer | undefined,
+    isAppendOnlyRender: boolean
+  ) => Renderable;
   /** The {@link RenderContext} associated with this {@link Element}. */
   [attachedContextSymbol]?: RenderContext;
 }
@@ -144,7 +151,8 @@ export function createElement<P extends { children: C | C[] }, C>(
   const result = {
     tag,
     props: propsToPass,
-    render: (ctx, logger, isAppendOnlyRender) => tag(propsToPass, { ...ctx, logger, isAppendOnlyRender }),
+    render: (ctx, logger, tracer, isAppendOnlyRender) =>
+      tag(propsToPass, { ...ctx, logger, tracer, isAppendOnlyRender }),
   } as Element<P>;
   Object.freeze(propsToPass);
   Object.freeze(result);
