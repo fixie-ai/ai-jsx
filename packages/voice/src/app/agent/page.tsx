@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSwipeable } from 'react-swipeable';
-import { ChatManager, ChatManagerState } from './chat';
+import { ChatManager, ChatManagerState, createChatManager } from './chat';
 import { getAgent, getAgentImageUrl } from './agents';
 import Image from 'next/image';
 import '../globals.css';
@@ -31,7 +31,7 @@ interface LatencyThreshold {
 
 const DEFAULT_ASR_PROVIDER = 'deepgram';
 const DEFAULT_TTS_PROVIDER = 'playht';
-const DEFAULT_LLM = 'gpt-4';
+const DEFAULT_LLM = 'gpt-4-1106-preview';
 const ASR_PROVIDERS = ['aai', 'deepgram', 'gladia', 'revai', 'soniox'];
 const TTS_PROVIDERS = [
   'aws',
@@ -42,11 +42,20 @@ const TTS_PROVIDERS = [
   'lmnt',
   'lmnt-ws',
   'murf',
+  'openai',
   'playht',
   'resemble',
   'wellsaid',
 ];
-const LLM_MODELS = ['claude-2', 'claude-instant-1', 'gpt-4', 'gpt-4-32k', 'gpt-3.5-turbo', 'gpt-3.5-turbo-16k'];
+const LLM_MODELS = [
+  'claude-2',
+  'claude-instant-1',
+  'gpt-4',
+  'gpt-4-32k',
+  'gpt-4-1106-preview',
+  'gpt-3.5-turbo',
+  'gpt-3.5-turbo-16k',
+];
 const AGENT_IDS = ['ai-friend', 'dr-donut', 'rubber-duck']; //, 'spanish-tutor', 'justin/ultravox', 'justin/fixie'];
 const LATENCY_THRESHOLDS: { [key: string]: LatencyThreshold } = {
   ASR: { good: 300, fair: 500 },
@@ -212,6 +221,7 @@ const AgentPageComponent: React.FC = () => {
   const ttsVoice = searchParams.get('ttsVoice') || agentVoice;
   const model = getAgent(agentId) === undefined ? 'fixie' : searchParams.get('llm') || DEFAULT_LLM;
   const docs = searchParams.get('docs') !== null;
+  const webrtcUrl = searchParams.get('webrtc') ?? undefined;
   const [showChooser, setShowChooser] = useState(searchParams.get('chooser') !== null);
   const showInput = searchParams.get('input') !== null;
   const showOutput = searchParams.get('output') !== null;
@@ -228,7 +238,7 @@ const AgentPageComponent: React.FC = () => {
   useEffect(() => init(), [asrProvider, asrLanguage, ttsProvider, ttsModel, ttsVoice, model, agentId, docs]);
   const init = () => {
     console.log(`[page] init asr=${asrProvider} tts=${ttsProvider} llm=${model} agent=${agentId} docs=${docs}`);
-    const manager = new ChatManager({
+    const manager = createChatManager({
       asrProvider,
       asrLanguage,
       ttsProvider,
@@ -237,6 +247,7 @@ const AgentPageComponent: React.FC = () => {
       model,
       agentId,
       docs,
+      webrtcUrl,
     });
     setChatManager(manager);
     manager.onStateChange = (state) => {

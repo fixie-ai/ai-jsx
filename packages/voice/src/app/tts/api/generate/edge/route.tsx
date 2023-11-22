@@ -39,6 +39,7 @@ const PROVIDER_MAP: ProviderMap = {
   gcp: { func: ttsGcp, keyPath: 'audioContent' },
   lmnt: { func: ttsLmnt },
   murf: { func: ttsMurf, keyPath: 'encodedAudio' },
+  openai: { func: ttsOpenAI },
   playht: { func: ttsPlayHT },
   resemble1: { func: ttsResembleV1, keyPath: 'item.raw_audio', mimeType: AUDIO_WAV_MIME_TYPE },
   resemble: { func: ttsResembleV2 },
@@ -290,6 +291,20 @@ function ttsMurf({ text, voice, rate }: GenerateOptions): Promise<Response> {
     encodeAsBase64: true,
   };
   const url = 'https://api.murf.ai/v1/speech/generate-with-key';
+  return postJson(url, headers, obj);
+}
+
+/**
+ * REST client for OpenAI TTS (https://platform.openai.com/docs/guides/text-to-speech)
+ */
+function ttsOpenAI({ text, voice, rate, model }: GenerateOptions): Promise<Response> {
+  const headers = createHeaders({ authorization: makeAuth('OPENAI_API_KEY'), accept: AUDIO_MPEG_MIME_TYPE });
+  const obj = {
+    voice,
+    input: text,
+    model: model ?? 'tts-1',
+  };
+  const url = 'https://api.openai.com/v1/audio/speech';
   return postJson(url, headers, obj);
 }
 

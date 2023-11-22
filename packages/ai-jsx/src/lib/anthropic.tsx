@@ -126,9 +126,7 @@ export async function* AnthropicChatModel(
       .map(async (message) => {
         switch (message.type) {
           case 'user':
-            return `${AnthropicSDK.HUMAN_PROMPT}${
-              message.element.props.name ? ` (${message.element.props.name})` : ''
-            } ${await render(message.element)}`;
+            return `${AnthropicSDK.HUMAN_PROMPT} ${await render(message.element)}`;
           case 'assistant':
           case 'functionCall':
           case 'functionResponse':

@@ -14,6 +14,28 @@ export const RequestContext = AI.createContext<{
 } | null>(null);
 
 /**
+ * Renders to "in-progress" while `children` is still being rendered, and "done" when it's done.
+ *
+ * `children` should already be memoized to ensure that it's only rendered once.
+ *
+ * To ensure that this component renders consistently with `children`, a render containing both
+ * nodes MUST use frame batching. Without it, there will be frames where the result of this component
+ * will be inconsistent with the component whose rendering it's tracking.
+ */
+async function* MessageState({ children }: { children: AI.Node }, { render }: AI.ComponentContext) {
+  const renderResult = render(children);
+  let didYield = false;
+  for await (const _ of renderResult) {
+    if (!didYield) {
+      didYield = true;
+      yield 'in-progress';
+    }
+  }
+
+  return 'done';
+}
+
+/**
  * Wraps a conversational AI.JSX component to be used as a Fixie request handler.
  *
  * Emits newline-delimited JSON for each message.
@@ -49,6 +71,7 @@ export function FixieRequestWrapper({
               <Json>
                 {{
                   kind: 'text',
+                  state: <MessageState>{message.element}</MessageState>,
                   content: message.element,
                   metadata: message.element.props.metadata,
                 }}
@@ -62,6 +85,8 @@ export function FixieRequestWrapper({
               <Json>
                 {{
                   kind: 'functionCall',
+                  id: message.element.props.id,
+                  partial: message.element.props.partial,
                   name: message.element.props.name,
                   args: message.element.props.args,
                   metadata: message.element.props.metadata,
@@ -74,6 +99,7 @@ export function FixieRequestWrapper({
               <Json>
                 {{
                   kind: 'functionResponse',
+                  id: message.element.props.id,
                   name: message.element.props.name,
                   response: <>{message.element.props.children}</>,
                   metadata: message.element.props.metadata,
@@ -95,7 +121,7 @@ export function FixieRequestWrapper({
         new OpenAIClient({
           apiKey: fixieAuthToken,
           baseURL: new URL('api/openai-proxy/v1', fixieApiUrl).toString(),
-          fetch: globalThis.fetch,
+          fetch: globalThis.fetch as any,
         })
       }
       chatModel="gpt-3.5-turbo"

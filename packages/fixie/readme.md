@@ -1,6 +1,14 @@
-# Fixie Platform SDK
+# Fixie Platform SDK & CLI
 
 This package contains an SDK and command-line interface to the [Fixie.ai](https://fixie.ai) platform.
+
+## CLI
+
+The /src folder has a file called `main.ts` which is the CLI.
+
+### To test new features added to the CLI
+
+- From the root, run `yarn workspace fixie build-start <command>` where <command> is the command you want to test.
 
 ## Web APIs
 
@@ -12,7 +20,7 @@ This package contains a number of ways for you to integrate a Fixie agent into y
   - [`<InlineFixieEmbed />`](#inlinefixieembed)
 - Bring Your Own Frontend:
   - [`useFixie`](#usefixie)
-  - [`IsomorphicFixieClient`](#isomorphicfixieclient)
+  - [`FixieClient`](#fixieclient)
 
 ### Embed
 
@@ -54,10 +62,10 @@ import { useFixie } from 'fixie/web';
 
 This hook provides a fully managed API for a conversation. It returns a number of fields you can use to drive a rich UI, including loading states and debug diagnostics.
 
-#### `IsomorphicFixieClient`
+#### `FixieClient`
 
 ```ts
-import { IsomorphicFixieClient } from 'fixie/web';
+import { FixieClient } from 'fixie';
 ```
 
 This low-level API provides direct access to the Fixie Conversation and Corpus APIs. You need to manage things like loading state and response parsing on your own, but it's the most flexible.

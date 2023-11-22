@@ -1,6 +1,46 @@
 # Changelog
 
-# 0.22.1
+## 0.28.1
+
+- Add `openai.finish_reason` span attribute for `OpenAIChatModel`
+
+## [0.28.0](https://github.com/fixie-ai/ai-jsx/commit/73251358a1121c98e9059c57d3c905b6156447c4)
+
+- Improved completion/prompt logging to include explicit message text
+
+## [0.27.1](https://github.com/fixie-ai/ai-jsx/commit/b5e436615df37c7b68986059892d6043b684df18)
+
+- Fix bug where memoized components could duplicate content
+- Refactor `<Converse>` to allow rounds to progress in parallel when content allows
+
+## [0.27.0](https://github.com/fixie-ai/ai-jsx/commit/83627e8d5d7bd86dd2fde505962af92bd25a02a1)
+
+- Add new `batchFrames` render option to coalesce ready frames
+
+## [0.26.1](https://github.com/fixie-ai/ai-jsx/commit/6f27bf8b5d1093e5523bd1214bdec2773182144c)
+
+- Fix `js-tiktoken` import that fails on 1.0.8.
+
+## [0.26.0](https://github.com/fixie-ai/ai-jsx/commit/c5501a1d1016a3cb27259a79bc38b8d68942f761)
+
+- In the `Sidekick` component:
+  - Remove the MDX repair attempt.
+  - Reduce standard system prompt size.
+
+## [0.25.0](https://github.com/fixie-ai/ai-jsx/commit/e362a16f14f37d75415a89fb8846432e6e7fd89b)
+
+- `Sidekick` can now interject with filler content (e.g. "Let me check on that.") when the model requests a function call.
+
+## [0.24.0](https://github.com/fixie-ai/ai-jsx/commit/b72da82f592f0d9eba12b52b8e89e9abae51a7af)
+
+- Update OpenAI client to 4.16.0
+- Add support for OpenAI parallel function calls
+
+## [0.23.0](https://github.com/fixie-ai/ai-jsx/commit/e61c8acff105f69458377f94347e920ade5b9772)
+
+- Update the model enums in `ai-jsx/lib/openai`
+
+## [0.22.1](https://github.com/fixie-ai/ai-jsx/commit/90370c40bccc779e5e49e830f917fd35bcbb87f1)
 
 - In the OpenTelemetry logger, ensure that SeverityNumber is set.
 

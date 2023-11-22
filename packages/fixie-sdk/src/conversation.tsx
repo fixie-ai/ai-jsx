@@ -47,10 +47,18 @@ export async function FixieConversation(_: {}, { getContext }: AI.ComponentConte
             <UserMessage metadata={message.metadata}>{message.content}</UserMessage>
           );
         case 'functionCall':
-          return <FunctionCall name={message.name} args={message.args} metadata={message.metadata} />;
+          return (
+            <FunctionCall
+              id={message.id}
+              partial={message.partial}
+              name={message.name}
+              args={message.args}
+              metadata={message.metadata}
+            />
+          );
         case 'functionResponse':
           return (
-            <FunctionResponse name={message.name} failed={message.failed} metadata={message.metadata}>
+            <FunctionResponse id={message.id} name={message.name} failed={message.failed} metadata={message.metadata}>
               {message.response}
             </FunctionResponse>
           );

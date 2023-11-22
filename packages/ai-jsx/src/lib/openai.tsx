@@ -22,8 +22,7 @@ import { OpenAI as OpenAIClient } from 'openai';
 export { OpenAI as OpenAIClient } from 'openai';
 import { FinalRequestOptions } from 'openai/core';
 import { debugRepresentation } from '../core/debug.js';
-import cl100k_base from 'js-tiktoken/ranks/cl100k_base';
-import { Tiktoken } from 'js-tiktoken/lite';
+import { getEncoding } from 'js-tiktoken';
 import _ from 'lodash';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
@@ -32,7 +31,8 @@ export type ValidCompletionModel =
   | 'text-davinci-002'
   | 'text-curie-001'
   | 'text-babbage-001'
-  | 'text-ada-001';
+  | 'text-ada-001'
+  | 'gpt-3.5-turbo-instruct';
 
 export type ValidChatModel =
   | 'gpt-4'
@@ -41,11 +41,13 @@ export type ValidChatModel =
   | 'gpt-4-32k'
   | 'gpt-4-32k-0314' // discontinue on 06/13/2024
   | 'gpt-4-32k-0613'
+  | 'gpt-4-1106-preview'
   | 'gpt-3.5-turbo'
   | 'gpt-3.5-turbo-0301' // discontinue on 06/13/2024
   | 'gpt-3.5-turbo-0613'
   | 'gpt-3.5-turbo-16k'
-  | 'gpt-3.5-turbo-16k-0613';
+  | 'gpt-3.5-turbo-16k-0613'
+  | 'gpt-3.5-turbo-1106';
 
 /**
  * An OpenAI client that talks to the Azure OpenAI service.
@@ -133,7 +135,7 @@ export function OpenAI({
 }
 
 // Preload the tokenizer to avoid a large delay on first use.
-const cl100kTokenizer = new Tiktoken(cl100k_base);
+const cl100kTokenizer = getEncoding('cl100k_base');
 export const tokenizer = {
   encode: (text: string) => cl100kTokenizer.encode(text),
   decode: (tokens: number[]) => cl100kTokenizer.decode(tokens),
@@ -238,15 +240,21 @@ function tokenLimitForChatModel(
     case 'gpt-4-32k-0314':
     case 'gpt-4-32k-0613':
       return 32768 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
+    case 'gpt-4-1106-preview':
+      return 128_000 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
     case 'gpt-3.5-turbo':
     case 'gpt-3.5-turbo-0301':
     case 'gpt-3.5-turbo-0613':
       return 4096 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
     case 'gpt-3.5-turbo-16k':
     case 'gpt-3.5-turbo-16k-0613':
+    case 'gpt-3.5-turbo-1106':
       return 16384 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
-    default:
+    default: {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _: never = model;
       return undefined;
+    }
   }
 }
 
@@ -281,6 +289,86 @@ async function tokenCountForConversationMessage(
         tokenizer.encode(message.element.props.name).length
       );
   }
+}
+
+/**
+ * Identifies any FunctionCall/FunctionResponse IDs that should be represented as ID-less function calls in the completion request.
+ */
+function getUnmatchedFunctionIds(messages: ConversationMessage[]): Set<string> {
+  let activeFunctionCalls: string[] = [];
+  let activeFunctionResponses: string[] = [];
+  const unmatchedIds = new Set<string>(); // IDs that should be represented as ID-less function calls because they were part of an unmatched block.
+
+  const flushActiveIds = () => {
+    const dedupedFunctionCalls = new Set(activeFunctionCalls);
+    const dedupedFunctionResponses = new Set(activeFunctionResponses);
+
+    // If there were any duplicated IDs, or any IDs were in one set but not the other, _all_ the IDs are invalid.
+    const isInvalid =
+      dedupedFunctionCalls.size !== activeFunctionCalls.length ||
+      dedupedFunctionResponses.size !== activeFunctionResponses.length ||
+      !activeFunctionCalls.every((id) => dedupedFunctionResponses.has(id)) ||
+      !activeFunctionResponses.every((id) => dedupedFunctionCalls.has(id));
+
+    if (isInvalid) {
+      for (const id of activeFunctionCalls) {
+        unmatchedIds.add(id);
+      }
+      for (const id of activeFunctionResponses) {
+        unmatchedIds.add(id);
+      }
+    }
+
+    activeFunctionCalls = [];
+    activeFunctionResponses = [];
+  };
+
+  for (const message of messages) {
+    if (message.type === 'functionCall') {
+      if (activeFunctionResponses.length > 0) {
+        flushActiveIds();
+      }
+
+      const id = message.element.props.id;
+      if (id) {
+        activeFunctionCalls.push(id);
+      }
+    } else if (message.type === 'functionResponse') {
+      const id = message.element.props.id;
+      if (id) {
+        activeFunctionResponses.push(id);
+      }
+    } else {
+      flushActiveIds();
+    }
+  }
+  flushActiveIds();
+
+  return unmatchedIds;
+}
+
+/**
+ * Coalesces adjacent assistant messages with tool calls into single messages.
+ */
+function coalesceToolCallMessages(
+  messages: OpenAIClient.Chat.ChatCompletionMessageParam[]
+): OpenAIClient.Chat.ChatCompletionMessageParam[] {
+  return messages.reduce<OpenAIClient.Chat.ChatCompletionMessageParam[]>((mergedMessages, message) => {
+    if (message.role === 'assistant' && message.tool_calls && message.content === '') {
+      const lastMessage = mergedMessages[mergedMessages.length - 1];
+      if (lastMessage.role === 'assistant' && lastMessage.tool_calls) {
+        // Merge with the last message.
+        return [
+          ...mergedMessages.slice(0, -1),
+          {
+            ...lastMessage,
+            tool_calls: [...lastMessage.tool_calls, ...message.tool_calls],
+          },
+        ];
+      }
+    }
+    return mergedMessages.concat([message]);
+  }, []);
 }
 
 /**
@@ -338,8 +426,13 @@ export async function* OpenAIChatModel(
     promptTokenLimit
   );
 
-  const messages: OpenAIClient.Chat.CreateChatCompletionRequestMessage[] = await Promise.all(
-    conversationMessages.map(async (message) => {
+  // OpenAI requires that tool calls with IDs be immediately followed by tool messages with the corresponding IDs.
+  // Walk through the conversation to find IDs that don't match up. Anything that doesn't match will be represented
+  // as ID-less function calls.
+  const unmatchedFunctionCallIds = getUnmatchedFunctionIds(conversationMessages);
+
+  const messages = await Promise.all(
+    conversationMessages.map(async (message): Promise<OpenAIClient.Chat.ChatCompletionMessageParam> => {
       switch (message.type) {
         case 'system':
           return {
@@ -350,7 +443,6 @@ export async function* OpenAIChatModel(
           return {
             role: 'user',
             content: await render(message.element),
-            name: message.element.props.name,
           };
         case 'assistant':
           return {
@@ -358,6 +450,21 @@ export async function* OpenAIChatModel(
             content: await render(message.element),
           };
         case 'functionCall':
+          if (message.element.props.id && !unmatchedFunctionCallIds.has(message.element.props.id)) {
+            // N.B. Adjacent tool calls will be coalesced below.
+            return {
+              role: 'assistant',
+              content: '',
+              tool_calls: [
+                {
+                  type: 'function',
+                  function: { name: message.element.props.name, arguments: JSON.stringify(message.element.props.args) },
+                  id: message.element.props.id,
+                },
+              ],
+            };
+          }
+
           return {
             role: 'assistant',
             content: '',
@@ -367,6 +474,14 @@ export async function* OpenAIChatModel(
             },
           };
         case 'functionResponse':
+          if (message.element.props.id && !unmatchedFunctionCallIds.has(message.element.props.id)) {
+            return {
+              role: 'tool',
+              tool_call_id: message.element.props.id,
+              content: await render(message.element.props.children),
+            };
+          }
+
           return {
             role: 'function',
             name: message.element.props.name,
@@ -384,23 +499,32 @@ export async function* OpenAIChatModel(
     );
   }
 
-  const openaiFunctions = !props.functionDefinitions
+  const mergedMessages = coalesceToolCallMessages(messages);
+
+  const openaiTools = !props.functionDefinitions
     ? []
-    : Object.entries(props.functionDefinitions).map(([functionName, functionDefinition]) => ({
-        name: functionName,
-        description: functionDefinition.description,
-        parameters: getParametersSchema(functionDefinition.parameters),
-      }));
+    : Object.entries(props.functionDefinitions).map<OpenAIClient.Chat.ChatCompletionTool>(
+        ([functionName, functionDefinition]) => ({
+          function: {
+            name: functionName,
+            description: functionDefinition.description,
+            parameters: getParametersSchema(functionDefinition.parameters),
+          },
+          type: 'function',
+        })
+      );
 
   const openai = getContext(openAiClientContext)();
-  const chatCompletionRequest = {
+  const chatCompletionRequest: OpenAIClient.Chat.Completions.ChatCompletionCreateParamsStreaming = {
     model: props.model,
     max_tokens: props.maxTokens,
     temperature: props.temperature,
     top_p: props.topP,
-    messages,
-    functions: openaiFunctions.length > 0 ? openaiFunctions : undefined,
-    function_call: props.forcedFunction ? { name: props.forcedFunction } : undefined,
+    messages: mergedMessages,
+    tools: openaiTools.length > 0 ? openaiTools : undefined,
+    tool_choice: props.forcedFunction
+      ? { function: { name: props.forcedFunction }, type: 'function' as const }
+      : undefined,
     stop: props.stop,
     logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
     stream: true as const,
@@ -422,6 +546,7 @@ export async function* OpenAIChatModel(
 
     throw ex;
   }
+  let finishReason: string | undefined = undefined;
   const iterator = chatResponse[Symbol.asyncIterator]();
 
   // We have a single response iterator, but we'll wrap tokens _within_ the structure of <AssistantMessage> or <FunctionCall>
@@ -443,6 +568,10 @@ export async function* OpenAIChatModel(
     } while (next.value.choices.length == 0);
 
     logger.trace({ deltaMessage: next.value }, 'Got delta message');
+
+    if (next.value.choices[0].finish_reason) {
+      finishReason = next.value.choices[0].finish_reason;
+    }
     return next.value.choices[0].delta;
   }
 
@@ -466,7 +595,7 @@ export async function* OpenAIChatModel(
             accumulatedContent += delta.content;
             yield delta.content;
           }
-          if (delta.function_call) {
+          if (delta.tool_calls) {
             break;
           }
           delta = await advance();
@@ -489,31 +618,44 @@ export async function* OpenAIChatModel(
 
     // TS doesn't realize that the Stream closure can make `delta` be `null`.
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (delta?.function_call) {
+    while (delta?.tool_calls) {
       // Memoize the stream to ensure it renders only once.
       const functionCallStream = memo(
         (async function* () {
+          let id = undefined;
           let name = '';
           let argsJson = '';
           while (delta != null) {
-            if (!delta.function_call) {
+            if (!delta.tool_calls) {
               break;
             }
 
-            if (delta.function_call.name) {
-              name += delta.function_call.name;
+            const toolCall = delta.tool_calls[0];
+            if (toolCall.id) {
+              if (id === undefined) {
+                id = toolCall.id;
+              } else if (id !== toolCall.id) {
+                // The ID changed, so we're done with this function call.
+                break;
+              }
             }
 
-            if (delta.function_call.arguments) {
-              argsJson += delta.function_call.arguments;
+            if (toolCall.function?.name) {
+              name += toolCall.function.name;
             }
 
-            yield <FunctionCall partial name={name} args={JSON.parse(patchedUntruncateJson(argsJson || '{}'))} />;
+            if (toolCall.function?.arguments) {
+              argsJson += toolCall.function.arguments;
+            }
+
+            yield (
+              <FunctionCall id={id} partial name={name} args={JSON.parse(patchedUntruncateJson(argsJson || '{}'))} />
+            );
 
             delta = await advance();
           }
 
-          return <FunctionCall name={name} args={JSON.parse(argsJson || '{}')} />;
+          return <FunctionCall id={id} name={name} args={JSON.parse(argsJson || '{}')} />;
         })()
       );
       yield functionCallStream;
@@ -528,6 +670,12 @@ export async function* OpenAIChatModel(
     if (delta !== null) {
       delta = await advance();
     }
+  }
+
+  // TS doesn't realize that the advance closure can set `finishReason`.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (finishReason) {
+    logger.setAttribute('openai.finish_reason', finishReason);
   }
 
   // Render the completion conversation to log it.

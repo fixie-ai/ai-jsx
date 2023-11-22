@@ -36,7 +36,7 @@ import nock from 'nock';
 import * as AI from 'ai-jsx';
 import { ChatCompletion } from 'ai-jsx/core/completion';
 import { FunctionCall, FunctionResponse, UserMessage, SystemMessage, Shrinkable } from 'ai-jsx/core/conversation';
-import { OpenAI } from 'ai-jsx/lib/openai';
+import { OpenAI, OpenAIClient } from 'ai-jsx/lib/openai';
 import { Tool } from 'ai-jsx/batteries/use-tools';
 import { Anthropic } from 'ai-jsx/lib/anthropic';
 import { CompletionCreateParams } from '@anthropic-ai/sdk/resources/completions';
@@ -45,7 +45,6 @@ import { Jsonifiable } from 'type-fest';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { SimpleSpanProcessor, InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
 import _ from 'lodash';
-import { type OpenAI as OpenAIClient } from 'openai';
 
 afterEach(() => {
   fetchMock.resetMocks();
@@ -105,8 +104,14 @@ describe('OpenTelemetry', () => {
           "ai.jsx.tree": ""opentel response from OpenAI"",
         },
         {
-          "ai.jsx.completion": "[{"element":"<AssistantMessage @memoizedId=3>\\n  {\\"opentel response from OpenAI\\"}\\n</AssistantMessage>","cost":10}]",
-          "ai.jsx.prompt": "[{"element":"<UserMessage @memoizedId=1>\\n  {\\"hello\\"}\\n</UserMessage>","cost":4}]",
+          "ai.jsx.memoized": true,
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.tag": "Stream",
+          "ai.jsx.tree": ""opentel response from OpenAI"",
+        },
+        {
+          "ai.jsx.completion": "[{"type":"assistant","props":{},"text":"opentel response from OpenAI","cost":10}]",
+          "ai.jsx.prompt": "[{"type":"user","props":{},"text":"hello","cost":4}]",
           "ai.jsx.result": "opentel response from OpenAI",
           "ai.jsx.tag": "OpenAIChatModel",
           "ai.jsx.tree": "<OpenAIChatModel model="gpt-3.5-turbo">
@@ -114,6 +119,7 @@ describe('OpenTelemetry', () => {
           {"hello"}
         </UserMessage>
       </OpenAIChatModel>",
+          "openai.finish_reason": "stop",
         },
         {
           "ai.jsx.result": "opentel response from OpenAI",
@@ -175,6 +181,14 @@ describe('OpenTelemetry', () => {
       </UserMessage>",
         },
         {
+          "ai.jsx.memoized": true,
+          "ai.jsx.result": "hello",
+          "ai.jsx.tag": "UserMessage",
+          "ai.jsx.tree": "<UserMessage @memoizedId=1>
+        {"hello"}
+      </UserMessage>",
+        },
+        {
           "ai.jsx.result": "hello",
           "ai.jsx.tag": "UserMessage",
           "ai.jsx.tree": "<UserMessage @memoizedId=1>
@@ -220,6 +234,7 @@ describe('OpenTelemetry', () => {
           "ai.jsx.tree": ""opentel response from OpenAI"",
         },
         {
+          "ai.jsx.memoized": true,
           "ai.jsx.result": "opentel response from OpenAI",
           "ai.jsx.tag": "AssistantMessage",
           "ai.jsx.tree": "<AssistantMessage @memoizedId=3>
@@ -227,8 +242,15 @@ describe('OpenTelemetry', () => {
       </AssistantMessage>",
         },
         {
-          "ai.jsx.completion": "[{"element":"<AssistantMessage @memoizedId=3>\\n  {\\"opentel response from OpenAI\\"}\\n</AssistantMessage>","cost":10}]",
-          "ai.jsx.prompt": "[{"element":"<UserMessage @memoizedId=1>\\n  {\\"hello\\"}\\n</UserMessage>","cost":4}]",
+          "ai.jsx.result": "opentel response from OpenAI",
+          "ai.jsx.tag": "AssistantMessage",
+          "ai.jsx.tree": "<AssistantMessage @memoizedId=3>
+        {"opentel response from OpenAI"}
+      </AssistantMessage>",
+        },
+        {
+          "ai.jsx.completion": "[{"type":"assistant","props":{},"text":"opentel response from OpenAI","cost":10}]",
+          "ai.jsx.prompt": "[{"type":"user","props":{},"text":"hello","cost":4}]",
           "ai.jsx.result": "opentel response from OpenAI",
           "ai.jsx.tag": "OpenAIChatModel",
           "ai.jsx.tree": "<OpenAIChatModel model="gpt-3.5-turbo">
@@ -236,6 +258,7 @@ describe('OpenTelemetry', () => {
           {"hello"}
         </UserMessage>
       </OpenAIChatModel>",
+          "openai.finish_reason": "stop",
         },
         {
           "ai.jsx.result": "opentel response from OpenAI",
@@ -369,18 +392,21 @@ describe('functions', () => {
 
     expect(handleRequest).toHaveBeenCalledWith(
       expect.objectContaining({
-        functions: [
+        tools: [
           {
-            name: 'myFunc',
-            description: 'My function',
-            parameters: {
-              type: 'object',
-              required: ['myParam'],
-              properties: {
-                myParam: {
-                  type: 'string',
-                  enum: ['option1', 'option2'],
-                  description: 'My parameter',
+            type: 'function',
+            function: {
+              name: 'myFunc',
+              description: 'My function',
+              parameters: {
+                type: 'object',
+                required: ['myParam'],
+                properties: {
+                  myParam: {
+                    type: 'string',
+                    enum: ['option1', 'option2'],
+                    description: 'My parameter',
+                  },
                 },
               },
             },
@@ -484,7 +510,7 @@ function mockOpenAIResponse(message: string, handleRequest?: jest.MockedFn<(req:
           function sendDelta(messagePart: string) {
             const response: OpenAIClient.Chat.Completions.ChatCompletionChunk = {
               id: 'cmpl-3QJ8ZjX1J5Z5X',
-              object: 'text_completion',
+              object: 'chat.completion.chunk',
               created: 1624430979,
               model: 'gpt-3.5-turbo',
               choices: [
