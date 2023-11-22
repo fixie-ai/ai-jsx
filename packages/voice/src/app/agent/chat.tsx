@@ -687,7 +687,7 @@ export class WebRtcChatManager implements ChatManager {
       const newState = data.state;
       this.changeState(newState);
     } else if (data.type === 'transcript') {
-      const finalText = data.transcript.final ? " FINAL" : "";
+      const finalText = data.transcript.final ? ' FINAL' : '';
       console.log(`[chat] input: ${data.transcript.text}${finalText}`);
     } else if (data.type === 'output') {
       console.log(`[chat] output: ${data.text}`);
