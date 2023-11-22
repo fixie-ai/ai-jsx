@@ -1,6 +1,23 @@
 # Changelog
 
-## 0.26.1
+## 0.28.1
+
+- Add `openai.finish_reason` span attribute for `OpenAIChatModel`
+
+## [0.28.0](https://github.com/fixie-ai/ai-jsx/commit/73251358a1121c98e9059c57d3c905b6156447c4)
+
+- Improved completion/prompt logging to include explicit message text
+
+## [0.27.1](https://github.com/fixie-ai/ai-jsx/commit/b5e436615df37c7b68986059892d6043b684df18)
+
+- Fix bug where memoized components could duplicate content
+- Refactor `<Converse>` to allow rounds to progress in parallel when content allows
+
+## [0.27.0](https://github.com/fixie-ai/ai-jsx/commit/83627e8d5d7bd86dd2fde505962af92bd25a02a1)
+
+- Add new `batchFrames` render option to coalesce ready frames
+
+## [0.26.1](https://github.com/fixie-ai/ai-jsx/commit/6f27bf8b5d1093e5523bd1214bdec2773182144c)
 
 - Fix `js-tiktoken` import that fails on 1.0.8.
 
