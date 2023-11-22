@@ -2,11 +2,13 @@
   "extends": "@tsconfig/node18/tsconfig.json",
   "include": ["src/**/*", ".eslintrc.cjs"],
   "compilerOptions": {
+    "rootDir": "src",
     "jsx": "react-jsx",
     "jsxImportSource": "ai-jsx",
     "paths": {
       "ai-jsx/jsx-runtime": ["./src/jsx-runtime.ts"],
-      "ai-jsx/react/jsx-runtime": ["./src/react/jsx-runtime.ts"]
+      "ai-jsx/react/jsx-runtime": ["./src/react/jsx-runtime.ts"],
+      "ai-jsx/lib/_shims/*": ["./src/lib/_shims/*"],
     },
     "module": "esnext",
     // This is a potential footgun. We want our code to be isomorphic (run in Node and in the browser).

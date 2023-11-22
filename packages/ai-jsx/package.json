@@ -217,6 +217,26 @@
         "default": "./dist/cjs/lib/replicate-llama2.cjs"
       }
     },
+    "./lib/_shims/async-local-storage": {
+      "browser": {
+        "import": {
+          "types": "./dist/esm/lib/_shims/async-local-storage-stub.d.ts",
+          "default": "./dist/esm/lib/_shims/async-local-storage-stub.js"
+        },
+        "require": {
+          "default": "./dist/cjs/lib/_shims/async-local-storage-stub.cjs"
+        }
+      },
+      "default": {
+        "import": {
+          "types": "./dist/esm/lib/_shims/async-local-storage-node.d.ts",
+          "default": "./dist/esm/lib/_shims/async-local-storage-node.js"
+        },
+        "require": {
+          "default": "./dist/cjs/lib/_shims/async-local-storage-node.cjs"
+        }
+      }
+    },
     "./lib/asr/asr": {
       "import": {
         "types": "./dist/esm/lib/asr/asr.d.ts",
@@ -324,6 +344,18 @@
       },
       "require": {
         "default": "./dist/cjs/stream/index.cjs"
+      }
+    }
+  },
+  "imports": {
+    "#async_hooks": {
+      "import": {
+        "node": "node:async_hooks",
+        "default": "./dist/esm/lib/async-hooks.js"
+      },
+      "require": {
+        "node": "node:async_hooks",
+        "default": "./dist/cjs/lib/async-hooks.cjs"
       }
     }
   },

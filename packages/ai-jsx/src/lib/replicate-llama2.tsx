@@ -73,12 +73,12 @@ export const defaultMaxTokens = 500;
  */
 export async function* Llama2ChatModel(
   props: Llama2ModelProps,
-  { render, logger }: AI.ComponentContext
+  { render, logger, tracer }: AI.ComponentContext
 ): AI.RenderableStream {
   yield AI.AppendOnlyStream;
 
   // TODO: Support token budget/conversation shrinking
-  const messageElements = await renderToConversation(props.children, render, logger, 'prompt');
+  const messageElements = await renderToConversation(props.children, render, logger, tracer, 'prompt');
   const systemMessage = messageElements.filter((e) => e.type == 'system');
   const userMessages = messageElements.filter((e) => e.type == 'user');
   if (systemMessage.length > 1) {
@@ -138,7 +138,7 @@ export async function* Llama2ChatModel(
   yield assistantMessage;
 
   // Render it so that the conversation is logged.
-  await renderToConversation(assistantMessage, render, logger, 'completion');
+  await renderToConversation(assistantMessage, render, logger, tracer, 'completion');
   return AI.AppendOnlyStream;
 }
 

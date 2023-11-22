@@ -388,7 +388,7 @@ export async function* OpenAIChatModel(
         forcedFunction?: never;
       }
     >,
-  { render, getContext, logger, memo }: AI.ComponentContext
+  { render, getContext, logger, tracer, memo }: AI.ComponentContext
 ): AI.RenderableStream {
   if (props.functionDefinitions) {
     if (!chatModelSupportsFunctions(props.model)) {
@@ -421,6 +421,7 @@ export async function* OpenAIChatModel(
     props.children,
     render,
     logger,
+    tracer,
     'prompt',
     tokenCountForConversationMessage,
     promptTokenLimit
@@ -675,11 +676,11 @@ export async function* OpenAIChatModel(
   // TS doesn't realize that the advance closure can set `finishReason`.
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (finishReason) {
-    logger.setAttribute('openai.finish_reason', finishReason);
+    tracer?.currentSpan?.setAttribute('openai.finish_reason', finishReason);
   }
 
   // Render the completion conversation to log it.
-  await renderToConversation(outputMessages, render, logger, 'completion', tokenCountForConversationMessage);
+  await renderToConversation(outputMessages, render, logger, tracer, 'completion', tokenCountForConversationMessage);
   return AI.AppendOnlyStream;
 }
 

@@ -284,6 +284,7 @@ export async function renderToConversation(
   conversation: AI.Node,
   render: AI.ComponentContext['render'],
   logger?: AI.ComponentContext['logger'],
+  tracer?: AI.ComponentContext['tracer'],
   logType?: 'prompt' | 'completion',
   cost?: (message: ConversationMessage, render: AI.ComponentContext['render']) => Promise<number>,
   budget?: number
@@ -300,7 +301,7 @@ export async function renderToConversation(
 
   if (logger && logType) {
     const loggableMessages = await Promise.all(messages.map((m) => loggableMessage(m, render, cost)));
-    logger.setAttribute(`ai.jsx.${logType}`, JSON.stringify(loggableMessages));
+    tracer?.currentSpan?.setAttribute(`ai.jsx.${logType}`, loggableMessages);
     logger.info({ [logType]: { messages: loggableMessages } }, `Got ${logType} conversation`);
   }
 

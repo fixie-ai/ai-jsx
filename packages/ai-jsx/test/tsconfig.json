@@ -2,6 +2,7 @@
   "extends": "../tsconfig-base.json",
   "include": ["*.ts", "*.tsx", "**/*.ts", "**/*.tsx"],
   "compilerOptions": {
+    "rootDir": "..",
     "types": ["jest", "node"],
     "noEmit": true
   }

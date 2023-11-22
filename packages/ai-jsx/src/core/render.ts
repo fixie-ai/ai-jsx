@@ -431,7 +431,7 @@ export function createRenderContext(opts?: {
       [LoggerContext[contextKey].userContextSymbol]: logger,
     },
     { id: 0 },
-    opts?.tracer
+    tracer
   );
 }
 

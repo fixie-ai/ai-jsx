@@ -91,7 +91,7 @@ interface AnthropicChatModelProps extends ModelPropsWithChildren {
 }
 export async function* AnthropicChatModel(
   props: AnthropicChatModelProps,
-  { render, getContext, logger, memo }: AI.ComponentContext
+  { render, getContext, logger, tracer, memo }: AI.ComponentContext
 ): AI.RenderableStream {
   if ('functionDefinitions' in props && props.functionDefinitions) {
     throw new AIJSXError(
@@ -104,7 +104,7 @@ export async function* AnthropicChatModel(
   const messages = await Promise.all(
     // TODO: Support token budget/conversation shrinking
     (
-      await renderToConversation(props.children, render, logger, 'prompt')
+      await renderToConversation(props.children, render, logger, tracer, 'prompt')
     )
       .flatMap<Exclude<ConversationMessage, { type: 'system' }>>((message) => {
         if (message.type === 'system') {
@@ -204,6 +204,6 @@ export async function* AnthropicChatModel(
   yield assistantMessage;
 
   // Flush the stream to ensure that this element completes rendering only after the stream has completed.
-  await renderToConversation(assistantMessage, render, logger, 'completion');
+  await renderToConversation(assistantMessage, render, logger, tracer, 'completion');
   return AI.AppendOnlyStream;
 }
