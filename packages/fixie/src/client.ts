@@ -205,25 +205,21 @@ export class FixieClient {
   }
 
   /** List Corpora visible to this user.
-   * @param options.ownerType
-   *   OWNER_USER: Only list corpora owned by the current user.
-   *   OWNER_ORG: Only list corpora owned by the current user's organization.
-   *   OWNER_PUBLIC: Only list public corpora.
-   *   OWNER_ALL: List all corpora visible to the current user.
+   * @param options.teamId Optional team ID to list corpora for.
    * @param options.offset The offset into the list of corpora to return.
    * @param options.limit The maximum number of corpora to return.
    */
   listCorpora({
-    ownerType,
+    teamId,
     offset = 0,
     limit = 100,
   }: {
-    ownerType?: 'OWNER_USER' | 'OWNER_ORG' | 'OWNER_PUBLIC' | 'OWNER_ALL';
+    teamId?: string;
     offset?: number;
     limit?: number;
   }): Promise<Jsonifiable> {
-    if (ownerType !== undefined) {
-      return this.requestJson(`/api/v1/corpora?owner_type=${ownerType}&offset=${offset}&limit=${limit}`);
+    if (teamId !== undefined) {
+      return this.requestJson(`/api/v1/corpora?team_id=${teamId}&offset=${offset}&limit=${limit}`);
     }
     return this.requestJson(`/api/v1/corpora?offset=${offset}&limit=${limit}`);
   }
@@ -242,9 +238,19 @@ export class FixieClient {
    *
    * @param options.name The name of the new Corpus.
    * @param options.description The description of the new Corpus.
+   * @param options.teamId Optional team ID to own the new Corpus.
    */
-  createCorpus({ name, description }: { name?: string; description?: string }): Promise<Jsonifiable> {
+  createCorpus({
+    name,
+    description,
+    teamId,
+  }: {
+    name?: string;
+    description?: string;
+    teamId?: string;
+  }): Promise<Jsonifiable> {
     const body = {
+      teamId,
       corpus: {
         display_name: name,
         description,
