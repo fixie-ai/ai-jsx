@@ -536,7 +536,7 @@ export class FixieAgent {
     const result = await this.client.gqlClient().mutate({
       mutation: gql`
         mutation SetCurrentAgentRevision($agentUuid: UUID!, $currentRevisionId: ID!) {
-          updateAgent(agentData: { agentUuid: $agentUuid, currentRevisionId: $currentRevisionId }) {
+          updateAgent(agentData: { uuid: $agentUuid, currentRevisionId: $currentRevisionId }) {
             agent {
               currentRevision {
                 id
