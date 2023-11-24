@@ -40,5 +40,5 @@ const _patchedUntruncateJson = 'default' in untruncateJson ? untruncateJson.defa
 
 export function patchedUntruncateJson(str: string) {
   // Remove partial unicode characters: e.g. "\\u5728\\u5fA" -> "\\u5728"
-  return _patchedUntruncateJson(str).replace(/\\u[\dA-F]{0,3}([^\dA-F]|$)/gi, '$1');
+  return _patchedUntruncateJson(str.replace(/\\u[\dA-F]{0,3}$/gi, ''));
 }
