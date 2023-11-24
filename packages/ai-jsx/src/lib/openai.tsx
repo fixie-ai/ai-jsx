@@ -648,9 +648,16 @@ export async function* OpenAIChatModel(
               argsJson += toolCall.function.arguments;
             }
 
-            yield (
-              <FunctionCall id={id} partial name={name} args={JSON.parse(patchedUntruncateJson(argsJson || '{}'))} />
-            );
+            try {
+              yield (
+                <FunctionCall id={id} partial name={name} args={JSON.parse(patchedUntruncateJson(argsJson || '{}'))} />
+              );
+            } catch (e: any) {
+              // If the JSON is incomplete and we get an error, we can ignore it.
+              if (!('Unexpected string in JSON' in e.message || 'Unexpected end of JSON input' in e.message)) {
+                throw e;
+              }
+            }
 
             delta = await advance();
           }
