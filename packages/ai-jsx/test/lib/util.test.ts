@@ -51,9 +51,9 @@ test('Basic untrucation of JSON', () => {
 
 test('Partial unicode characters are removed', () => {
   expect(patchedUntruncateJson('{"a":"\\u5728\\u5fA"}')).toEqual('{"a":"\\u5728"}');
-  expect(patchedUntruncateJson('\\u5728\\u')).toEqual('\\u5728');
-  expect(patchedUntruncateJson('\\u5728\\u0')).toEqual('\\u5728');
-  expect(patchedUntruncateJson('\\u5728\\u5fA')).toEqual('\\u5728');
+  expect(patchedUntruncateJson('"\\u5728\\u')).toEqual('"\\u5728"');
+  expect(patchedUntruncateJson('"\\u5728\\u0')).toEqual('"\\u5728"');
+  expect(patchedUntruncateJson('"\\u5728\\u5fA"')).toEqual('"\\u5728"');
 });
 
 test('Unicode characters are allowed', () => {
