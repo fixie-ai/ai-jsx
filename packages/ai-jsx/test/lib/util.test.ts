@@ -1,4 +1,4 @@
-import { getEnvVar } from '../../dist/cjs/lib/util.cjs';
+import { getEnvVar, patchedUntruncateJson } from '../../dist/cjs/lib/util.cjs';
 
 process.env.EXISTS = 'exists';
 process.env.REACT_APP_ONLY = 'react-value';
@@ -41,4 +41,21 @@ test('env is not defined', () => {
   expect(getEnvVar('DOES_NOT_EXIST', false)).toBeUndefined();
 
   globalThis.process.env = originalEnv;
+});
+
+test('Basic untrucation of JSON', () => {
+  expect(patchedUntruncateJson('{"a":')).toEqual('{}');
+  expect(patchedUntruncateJson('{"a":"b')).toEqual('{"a":"b"}');
+  expect(patchedUntruncateJson('{"a":"b"')).toEqual('{"a":"b"}');
+});
+
+test('Partial unicode characters are removed', () => {
+  expect(patchedUntruncateJson('{"a":"\\u5728\\u5fA"}')).toEqual('{"a":"\\u5728"}');
+  expect(patchedUntruncateJson('\\u5728\\u')).toEqual('\\u5728');
+  expect(patchedUntruncateJson('\\u5728\\u0')).toEqual('\\u5728');
+  expect(patchedUntruncateJson('\\u5728\\u5fA')).toEqual('\\u5728');
+});
+
+test('Unicode characters are allowed', () => {
+  expect(patchedUntruncateJson('{"a":"\\u5728什么是"}')).toEqual('{"a":"\\u5728什么是"}');
 });
