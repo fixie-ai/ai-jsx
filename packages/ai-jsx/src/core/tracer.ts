@@ -10,8 +10,8 @@ export abstract class Span {
 }
 
 export abstract class Tracer<TSpan extends Span = Span> {
-  private storage = new AsyncLocalStorage<{ span: TSpan; memoizedId?: number; memoizedOwner?: boolean }>();
-  private memoizedSubtreeRootsById = new Map<number, TSpan>();
+  private readonly storage = new AsyncLocalStorage<{ span: TSpan; memoizedId?: number; memoizedOwner?: boolean }>();
+  private readonly memoizedSubtreeRootsById = new Map<number, TSpan>();
 
   public abstract trace(
     element: Element<any>,
@@ -92,13 +92,11 @@ export abstract class Tracer<TSpan extends Span = Span> {
                 }
                 return result;
               } catch (ex) {
-                if (!ended) {
-                  try {
-                    ended = true;
-                    span.end('error', ex);
-                  } catch {
-                    // Ignore errors from ending the span.
-                  }
+                try {
+                  ended = true;
+                  span.end('error', ex);
+                } catch {
+                  // Ignore errors from ending the span.
                 }
                 throw ex;
               } finally {
@@ -119,10 +117,13 @@ export abstract class Tracer<TSpan extends Span = Span> {
           });
         });
 
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (resultingGenerator) {
           return resultingGenerator;
         }
-      } catch (ex) {}
+      } catch (ex) {
+        // Do nothing.
+      }
 
       // The tracer either threw an exception or opted not to trace the element.
       return streamRenderer(renderContext, renderable, shouldStop, appendOnly);

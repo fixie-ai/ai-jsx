@@ -81,15 +81,6 @@
         "default": "./dist/cjs/batteries/use-tools.cjs"
       }
     },
-    "./batteries/logging-integrations": {
-      "import": {
-        "types": "./dist/esm/batteries/logging-integrations.d.ts",
-        "default": "./dist/esm/batteries/logging-integrations.js"
-      },
-      "require": {
-        "default": "./dist/cjs/batteries/logging-integrations.cjs"
-      }
-    },
     "./core/completion": {
       "import": {
         "types": "./dist/esm/core/completion.d.ts",
@@ -171,6 +162,15 @@
         "default": "./dist/cjs/core/errors.cjs"
       }
     },
+    "./core/tracer": {
+      "import": {
+        "types": "./dist/esm/core/tracer.d.ts",
+        "default": "./dist/esm/core/tracer.js"
+      },
+      "require": {
+        "default": "./dist/cjs/core/tracer.cjs"
+      }
+    },
     "./batteries/constrained-output": {
       "import": {
         "types": "./dist/esm/batteries/constrained-output.d.ts",
@@ -187,6 +187,15 @@
       },
       "require": {
         "default": "./dist/cjs/lib/openai.cjs"
+      }
+    },
+    "./lib/opentelemetry": {
+      "import": {
+        "types": "./dist/esm/lib/opentelemetry.d.ts",
+        "default": "./dist/esm/lib/opentelemetry.js"
+      },
+      "require": {
+        "default": "./dist/cjs/lib/opentelemetry.cjs"
       }
     },
     "./lib/cohere": {
@@ -347,20 +356,10 @@
       }
     }
   },
-  "imports": {
-    "#async_hooks": {
-      "import": {
-        "node": "node:async_hooks",
-        "default": "./dist/esm/lib/async-hooks.js"
-      },
-      "require": {
-        "node": "node:async_hooks",
-        "default": "./dist/cjs/lib/async-hooks.cjs"
-      }
-    }
-  },
   "devDependencies": {
     "@jest/globals": "^29.5.0",
+    "@opentelemetry/api": "^1.4.1",
+    "@opentelemetry/api-logs": "^0.41.1",
     "@tsconfig/node16": "^1.0.4",
     "@tsconfig/node18": "^2.0.1",
     "@types/eslint": "^8",
@@ -409,9 +408,6 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.5.10",
     "@mdx-js/mdx": "^2.3.0",
-    "@nick.heiner/wandb-fork": "^0.5.2-5",
-    "@opentelemetry/api": "^1.4.1",
-    "@opentelemetry/api-logs": "^0.41.1",
     "@ozymandiasthegreat/vad": "^2.0.7",
     "axios": "^1.4.0",
     "cli-highlight": "^2.1.11",

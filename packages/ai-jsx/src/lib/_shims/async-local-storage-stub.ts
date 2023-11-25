@@ -2,8 +2,6 @@
 export class AsyncLocalStorage<T> {
   private storage: T | undefined = undefined;
 
-  constructor() {}
-
   getStore(): T | undefined {
     return this.storage;
   }

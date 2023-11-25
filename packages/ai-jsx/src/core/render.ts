@@ -30,9 +30,10 @@ import {
   isElement,
   Fragment,
 } from './node.js';
-import { OpenTelemetryTracer } from './opentelemetry.js';
+import { OpenTelemetryTracer } from '../lib/opentelemetry.js';
 import { getEnvVar } from '../lib/util.js';
 import { Tracer } from './tracer.js';
+import { MergeExclusive } from 'type-fest';
 
 const appendOnlyStreamSymbol = Symbol('AI.appendOnlyStream');
 
@@ -150,12 +151,6 @@ export interface RenderContext {
    * @param context The context holder, as returned from `createContext`.
    */
   getContext<T>(context: Context<T>): T;
-
-  /**
-   * Creates a new `RenderContext` by wrapping the existing render function.
-   * @param getRenderer A function that returns the new renderer function.
-   */
-  wrapRender(getRenderer: (r: StreamRenderer) => StreamRenderer): RenderContext;
 
   /**
    * Memoize a {@link Renderable} so it always returns the same thing.
@@ -408,16 +403,25 @@ async function* renderStream(
  * @param logger The logger to use for the new context. If not provided, a new {@link PinoLogger} will be created.
  * @returns A new RenderContext.
  */
-export function createRenderContext(opts?: {
-  logger?: LogImplementation;
-  enableOpenTelemetry?: boolean;
-  tracer?: Tracer;
-}) {
+export function createRenderContext(
+  opts?: {
+    logger?: LogImplementation;
+  } & MergeExclusive<
+    {
+      enableOpenTelemetry?: boolean;
+    },
+    {
+      tracer?: Tracer;
+    }
+  >
+) {
   let renderFn = renderStream;
   let logger = opts?.logger ?? new PinoLogger();
   let tracer = opts?.tracer;
-  if (opts?.enableOpenTelemetry ?? getEnvVar('AIJSX_ENABLE_OPENTELEMETRY', false)) {
-    tracer = new OpenTelemetryTracer();
+  if (tracer === undefined && (opts?.enableOpenTelemetry ?? getEnvVar('AIJSX_ENABLE_OPENTELEMETRY', false))) {
+    tracer = new OpenTelemetryTracer({
+      policy: getEnvVar('AIJSX_OPENTELEMETRY_TRACE_ALL', false) ? 'all' : 'async',
+    });
     logger = new CombinedLogger([logger, new OpenTelemetryLogger()]);
   }
 
@@ -565,9 +569,6 @@ function createRenderContextInternal(
 
     memo: (renderable: Renderable) =>
       withContext(partialMemo(renderable, ++memoizedIdHolder.id, tracer), context) as any,
-
-    wrapRender: (getRenderStream) =>
-      createRenderContextInternal(getRenderStream(renderStream), userContext, memoizedIdHolder, tracer),
 
     [pushContextSymbol]: (contextReference, value) =>
       createRenderContextInternal(

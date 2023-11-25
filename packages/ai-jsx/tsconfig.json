@@ -2,7 +2,7 @@
   "extends": "./tsconfig-base.json",
   "include": ["src/**/*", ".eslintrc.cjs"],
   "compilerOptions": {
-    "outDir": "dist/esm",
+    "outDir": "dist/esm"
   },
   "typedocOptions": {
     "entryPoints": [
