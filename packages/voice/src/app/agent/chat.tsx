@@ -573,7 +573,7 @@ export class WebRtcChatManager implements ChatManager {
   }
   warmup() {
     const isLocalHost = window.location.hostname === 'localhost';
-    const url = this.params.webrtcUrl || (isLocalHost ? 'wss://wsapi.fixie.ai' : 'ws://localhost:8100');
+    const url = this.params.webrtcUrl || (!isLocalHost ? 'wss://wsapi.fixie.ai' : 'ws://localhost:8100');
     this.socket = new WebSocket(url);
     this.socket.onopen = () => this.handleSocketOpen();
     this.socket.onmessage = (event) => this.handleSocketMessage(event);
@@ -677,6 +677,7 @@ export class WebRtcChatManager implements ChatManager {
     const audioTrack = track as RemoteAudioTrack;
     audioTrack.on(TrackEvent.AudioPlaybackStarted, () => console.log(`[chat] audio playback started`));
     audioTrack.on(TrackEvent.AudioPlaybackFailed, (err) => console.error(`[chat] audio playback failed`, err));
+    // TODO Farzad: Figure out why setting audioContext here is necessary.
     audioTrack.setAudioContext(this.audioContext);
     audioTrack.attach(this.audioElement);
     this.outAnalyzer = new StreamAnalyzer(this.audioContext, track.mediaStream!);
