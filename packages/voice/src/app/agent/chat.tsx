@@ -544,6 +544,8 @@ export class WebRtcChatManager implements ChatManager {
   private socket?: WebSocket;
   private room?: Room;
   private localAudioTrack?: LocalAudioTrack;
+  /** True when we should have entered speaking state but didn't due to analyzer not being ready. */
+  private delayedSpeakingState = false;
   private inAnalyzer?: StreamAnalyzer;
   private outAnalyzer?: StreamAnalyzer;
   private pinger?: NodeJS.Timer;
@@ -571,7 +573,7 @@ export class WebRtcChatManager implements ChatManager {
   }
   warmup() {
     const isLocalHost = window.location.hostname === 'localhost';
-    const url = this.params.webrtcUrl || (!isLocalHost ? 'wss://wsapi.fixie.ai' : 'ws://localhost:8100');
+    const url = this.params.webrtcUrl || (isLocalHost ? 'wss://wsapi.fixie.ai' : 'ws://localhost:8100');
     this.socket = new WebSocket(url);
     this.socket.onopen = () => this.handleSocketOpen();
     this.socket.onmessage = (event) => this.handleSocketMessage(event);
@@ -678,7 +680,10 @@ export class WebRtcChatManager implements ChatManager {
     audioTrack.setAudioContext(this.audioContext);
     audioTrack.attach(this.audioElement);
     this.outAnalyzer = new StreamAnalyzer(this.audioContext, track.mediaStream!);
-    this.changeState(ChatManagerState.SPEAKING);
+    if (this.delayedSpeakingState) {
+      this.delayedSpeakingState = false;
+      this.changeState(ChatManagerState.SPEAKING);
+    }
   }
   private handleDataReceived(payload: Uint8Array, participant: any) {
     const data = JSON.parse(this.textDecoder.decode(payload));
@@ -687,12 +692,13 @@ export class WebRtcChatManager implements ChatManager {
       console.debug(`[chat] worker RTT: ${elapsed_ms.toFixed(0)} ms`);
     } else if (data.type === 'state') {
       const newState = data.state;
-      if (newState === 'speaking' && this.outAnalyzer === undefined) {
+      if (newState === ChatManagerState.SPEAKING && this.outAnalyzer === undefined) {
         // Skip the first speaking state, before we've attached the audio element.
         // handleTrackSubscribed will be called soon and will change the state.
-        return;
+        this.delayedSpeakingState = true;
+      } else {
+        this.changeState(newState);
       }
-      this.changeState(newState);
     } else if (data.type === 'transcript') {
       const finalText = data.transcript.final ? ' FINAL' : '';
       console.log(`[chat] input: ${data.transcript.text}${finalText}`);
