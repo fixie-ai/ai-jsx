@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.28.1
+## 0.28.2
+
+- Fix bug where partially streamed unicode characters (e.g. Chinese) would cause an error in OpenAI function calls.
+
+## [0.28.1](https://github.com/fixie-ai/ai-jsx/tree/4c67d845f48585dc3f26e90a9a656471f40c82ed)
 
 - Add `openai.finish_reason` span attribute for `OpenAIChatModel`
 

@@ -36,4 +36,9 @@ export function getEnvVar(name: string, shouldThrow: boolean = true) {
  * There's an ESM issue with untruncate-json, so we need to do this to support running on both client & server.
  */
 /** @hidden */
-export const patchedUntruncateJson = 'default' in untruncateJson ? untruncateJson.default : untruncateJson;
+const _patchedUntruncateJson = 'default' in untruncateJson ? untruncateJson.default : untruncateJson;
+
+export function patchedUntruncateJson(str: string) {
+  // Remove partial unicode characters: e.g. "\\u5728\\u5fA" -> "\\u5728"
+  return _patchedUntruncateJson(str.replace(/\\u[\dA-F]{0,3}$/gi, ''));
+}
