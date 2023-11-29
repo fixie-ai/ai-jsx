@@ -710,7 +710,7 @@ export class WebRtcChatManager implements ChatManager {
 }
 
 export function createChatManager(init: ChatManagerInit): ChatManager {
-  if (init.webrtcUrl !== undefined) {
+  if (init.webrtcUrl !== "0") {
     return new WebRtcChatManager(init);
   } else {
     return new LocalChatManager(init);
