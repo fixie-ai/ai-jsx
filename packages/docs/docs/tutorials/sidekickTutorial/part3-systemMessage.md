@@ -59,7 +59,7 @@ For our Sidekick, we want it to behave as an expert assistant for Git & GitHub. 
 A few things to note in the above message:
 
 - We are defining multiple `<System Message>` objects. This is a convenient way to separate the logic.
-- We are giving the LLM a very specific function called `lookupeGitHubKnowledgeBase` and telling the LLM when it should be used.
+- We are giving the LLM a very specific function called `lookupGitHubKnowledgeBase` and telling the LLM when it should be used.
 - We are giving an instruction to cite the sources. These will include the URLs in the sources of our Document Collection.
 - We are preventing end-users from instructing the Sidekick to take on an alternate persona.
 
