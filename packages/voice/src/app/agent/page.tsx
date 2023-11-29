@@ -266,7 +266,7 @@ const AgentPageComponent: React.FC = () => {
       }
     };
     manager.onInputChange = (text, final) => {
-      setInput(text);     
+      setInput(text);
     };
     manager.onOutputChange = (text, final) => {
       setOutput(text);

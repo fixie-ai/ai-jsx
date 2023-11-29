@@ -513,7 +513,7 @@ export class LocalChatManager implements ChatManager {
    * Handle the end of playout from the TTS.
    */
   private handlePlaybackComplete() {
-    if (this._state != ChatManagerState.SPEAKING) return;    
+    if (this._state != ChatManagerState.SPEAKING) return;
     this.micManager.isEnabled = true;
     this.changeState(ChatManagerState.LISTENING);
   }
@@ -700,9 +700,9 @@ export class WebRtcChatManager implements ChatManager {
         this.changeState(newState);
       }
     } else if (data.type === 'transcript') {
-      this.handleInputChange(data.transcript); 
+      this.handleInputChange(data.transcript);
     } else if (data.type === 'output') {
-      this.handleOutputChange(data.text, data.final);   
+      this.handleOutputChange(data.text, data.final);
     } else if (data.type == 'latency') {
       this.handleLatency(data.kind, data.value);
     }
