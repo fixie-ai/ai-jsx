@@ -704,7 +704,7 @@ export class WebRtcChatManager implements ChatManager {
     } else if (data.type === 'output') {
       this.handleOutputChange(data.text, data.final);   
     } else if (data.type == 'latency') {
-      this.handleLatency(data.kind, data.latency);
+      this.handleLatency(data.kind, data.value);
     }
   }
   private handleInputChange(transcript: Transcript) {
@@ -716,9 +716,9 @@ export class WebRtcChatManager implements ChatManager {
     console.log(`[chat] output: ${text}`);
     this.onOutputChange?.(text, final);
   }
-  private handleLatency(kind: string, latency: number) {
-    console.log(`[chat] latency: ${kind} ${latency.toFixed(0)} ms`);
-    this.onLatencyChange?.(kind, latency);
+  private handleLatency(kind: string, value: number) {
+    console.log(`[chat] latency: ${kind} ${value.toFixed(0)} ms`);
+    this.onLatencyChange?.(kind, value);
   }
 }
 
