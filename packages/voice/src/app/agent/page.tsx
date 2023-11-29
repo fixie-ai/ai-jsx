@@ -265,27 +265,33 @@ const AgentPageComponent: React.FC = () => {
           setHelpText(idleText);
       }
     };
-    manager.onInputChange = (text, final, latency) => {
+    manager.onInputChange = (text, final) => {
       setInput(text);
-      if (final && latency) {
-        setAsrLatency(latency);
-        setLlmResponseLatency(0);
-        setLlmTokenLatency(0);
-        setTtsLatency(0);
-      }
     };
-    manager.onOutputChange = (text, final, latency) => {
+    manager.onOutputChange = (text, final) => {
       setOutput(text);
       if (final) {
         setInput('');
       }
-      setLlmResponseLatency((prev) => (prev ? prev : latency));
     };
-    manager.onAudioGenerate = (latency) => {
-      setLlmTokenLatency(latency);
-    };
-    manager.onAudioStart = (latency) => {
-      setTtsLatency(latency);
+    manager.onLatencyChange = (kind, latency) => {
+      switch (kind) {
+        case 'asr':
+          setAsrLatency(latency);
+          setLlmResponseLatency(0);
+          setLlmTokenLatency(0);
+          setTtsLatency(0);
+          break;
+        case 'llm':
+          setLlmResponseLatency(latency);
+          break;
+        case 'llmt':
+          setLlmTokenLatency(latency);
+          break;
+        case 'tts':
+          setTtsLatency(latency);
+          break;
+      }
     };
     manager.onError = () => {
       manager.stop();
