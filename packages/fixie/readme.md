@@ -1,6 +1,14 @@
-# Fixie Platform SDK
+# Fixie Platform SDK & CLI
 
 This package contains an SDK and command-line interface to the [Fixie.ai](https://fixie.ai) platform.
+
+## CLI
+
+The /src folder has a file called `main.ts` which is the CLI.
+
+### To test new features added to the CLI
+
+- From the root, run `yarn workspace fixie build-start <command>` where <command> is the command you want to test.
 
 ## Web APIs
 
@@ -57,7 +65,7 @@ This hook provides a fully managed API for a conversation. It returns a number o
 #### `FixieClient`
 
 ```ts
-import { FixieClient } from 'fixie/web';
+import { FixieClient } from 'fixie';
 ```
 
 This low-level API provides direct access to the Fixie Conversation and Corpus APIs. You need to manage things like loading state and response parsing on your own, but it's the most flexible.

@@ -6,6 +6,17 @@ import {
   Transcript,
 } from 'ai-jsx/lib/asr/asr';
 import { createTextToSpeech, BuildUrlOptions, TextToSpeechBase, TextToSpeechProtocol } from 'ai-jsx/lib/tts/tts';
+import {
+  createLocalTracks,
+  DataPacket_Kind,
+  LocalAudioTrack,
+  RemoteAudioTrack,
+  RemoteTrack,
+  Room,
+  RoomEvent,
+  Track,
+  TrackEvent,
+} from 'livekit-client';
 
 const DEFAULT_ASR_FRAME_SIZE = 20;
 
@@ -172,13 +183,19 @@ export class ChatRequest {
 
       if (!this.done) {
         const currentTurn = isStartConversationRequest ? value.turns.at(-1) : value;
-        const currentMessage = currentTurn.messages
-          .filter((m: any) => m.kind === 'text')
-          .map((m: any) => m.content)
-          .join('');
 
-        if (currentMessage === this.outMessage) {
-          continue;
+        const textMessages = currentTurn.messages.filter((m: any) => m.kind === 'text');
+        let currentMessage = '';
+        for (const textMessage of textMessages) {
+          currentMessage += textMessage.content;
+          const messageState = textMessage.state;
+          if (messageState === 'in-progress') {
+            // This message is still being generated, so don't include any text after it.
+            break;
+          } else if (messageState === 'done') {
+            // Append two newlines to end the paragraph (i.e. make clear to the TTS pipeline that the text is complete).
+            currentMessage += '\n\n';
+          }
         }
 
         // Find the longest matching prefix.
@@ -225,7 +242,7 @@ export enum ChatManagerState {
   SPEAKING = 'speaking',
 }
 
-interface ChatManagerInit {
+export interface ChatManagerInit {
   asrProvider: string;
   ttsProvider: string;
   model: string;
@@ -234,12 +251,34 @@ interface ChatManagerInit {
   asrLanguage?: string;
   ttsModel?: string;
   ttsVoice?: string;
+  webrtcUrl?: string;
+}
+
+/**
+ * Abstract interface for a voice-based LLM chat session.
+ */
+export interface ChatManager {
+  onStateChange?: (state: ChatManagerState) => void;
+  onInputChange?: (text: string, final: boolean, latency?: number) => void;
+  onOutputChange?: (text: string, final: boolean, latency: number) => void;
+  onAudioGenerate?: (latency: number) => void;
+  onAudioStart?: (latency: number) => void;
+  onAudioEnd?: () => void;
+  onError?: () => void;
+
+  state: ChatManagerState;
+  inputAnalyzer?: AnalyserNode;
+  outputAnalyzer?: AnalyserNode;
+  start(initialMessage?: string): Promise<void>;
+  stop(): void;
+  interrupt(): void;
 }
 
 /**
  * Manages a single chat with a LLM, including speculative execution.
+ * All RPCs are managed from within the browser context.
  */
-export class ChatManager {
+export class LocalChatManager implements ChatManager {
   private _state = ChatManagerState.IDLE;
   private history: ChatMessage[] = [];
   private pendingRequests = new Map<string, ChatRequest>();
@@ -475,5 +514,205 @@ export class ChatManager {
     this.onAudioEnd?.();
     this.micManager.isEnabled = true;
     this.changeState(ChatManagerState.LISTENING);
+  }
+}
+
+export class StreamAnalyzer {
+  source: MediaStreamAudioSourceNode;
+  analyzer: AnalyserNode;
+  constructor(context: AudioContext, stream: MediaStream) {
+    this.source = context.createMediaStreamSource(stream);
+    this.analyzer = context.createAnalyser();
+    this.source.connect(this.analyzer);
+  }
+  stop() {
+    this.source.disconnect();
+  }
+}
+
+/**
+ * Manages a single chat with a LLM, including speculative execution.
+ * All RPCs are performed remotely, and audio is streamed to/from the server via WebRTC.
+ */
+export class WebRtcChatManager implements ChatManager {
+  private params: ChatManagerInit;
+  private audioContext = new AudioContext();
+  private audioElement = new Audio();
+  private textEncoder = new TextEncoder();
+  private textDecoder = new TextDecoder();
+  private _state = ChatManagerState.IDLE;
+  private socket?: WebSocket;
+  private room?: Room;
+  private localAudioTrack?: LocalAudioTrack;
+  /** True when we should have entered speaking state but didn't due to analyzer not being ready. */
+  private delayedSpeakingState = false;
+  private inAnalyzer?: StreamAnalyzer;
+  private outAnalyzer?: StreamAnalyzer;
+  private pinger?: NodeJS.Timer;
+  onStateChange?: (state: ChatManagerState) => void;
+  onInputChange?: (text: string, final: boolean, latency?: number) => void;
+  onOutputChange?: (text: string, final: boolean, latency: number) => void;
+  onAudioGenerate?: (latency: number) => void;
+  onAudioStart?: (latency: number) => void;
+  onAudioEnd?: () => void;
+  onError?: () => void;
+
+  constructor(params: ChatManagerInit) {
+    this.params = params;
+    this.audioElement = new Audio();
+    this.warmup();
+  }
+  get state() {
+    return this._state;
+  }
+  get inputAnalyzer() {
+    return this.inAnalyzer?.analyzer;
+  }
+  get outputAnalyzer() {
+    return this.outAnalyzer?.analyzer;
+  }
+  warmup() {
+    const isLocalHost = window.location.hostname === 'localhost';
+    const url = this.params.webrtcUrl || (!isLocalHost ? 'wss://wsapi.fixie.ai' : 'ws://localhost:8100');
+    this.socket = new WebSocket(url);
+    this.socket.onopen = () => this.handleSocketOpen();
+    this.socket.onmessage = (event) => this.handleSocketMessage(event);
+    this.socket.onclose = (event) => this.handleSocketClose(event);
+  }
+  async start() {
+    console.log('[chat] starting');
+    this.audioElement.play();
+    const localTracks = await createLocalTracks({ audio: true, video: false });
+    this.localAudioTrack = localTracks[0] as LocalAudioTrack;
+    console.log('[chat] got mic stream');
+    this.inAnalyzer = new StreamAnalyzer(this.audioContext, this.localAudioTrack!.mediaStream!);
+    this.pinger = setInterval(() => {
+      const obj = { type: 'ping', timestamp: performance.now() };
+      this.sendData(obj);
+    }, 5000);
+    this.maybePublishLocalAudio();
+    this.changeState(ChatManagerState.LISTENING);
+  }
+  async stop() {
+    console.log('[chat] stopping');
+    clearInterval(this.pinger);
+    this.pinger = undefined;
+    await this.room?.disconnect();
+    this.room = undefined;
+    this.inAnalyzer?.stop();
+    this.outAnalyzer?.stop();
+    this.inAnalyzer = undefined;
+    this.outAnalyzer = undefined;
+    this.localAudioTrack?.stop();
+    this.localAudioTrack = undefined;
+    this.socket?.close();
+    this.socket = undefined;
+    this.changeState(ChatManagerState.IDLE);
+  }
+  interrupt() {
+    console.log('[chat] interrupting');
+    const obj = { type: 'interrupt' };
+    this.sendData(obj);
+  }
+  private changeState(state: ChatManagerState) {
+    if (state != this._state) {
+      console.log(`[chat] ${this._state} -> ${state}`);
+      this._state = state;
+      this.onStateChange?.(state);
+    }
+  }
+  private maybePublishLocalAudio() {
+    if (this.room && this.room.state == 'connected' && this.localAudioTrack) {
+      console.log(`[chat] publishing local audio track`);
+      const opts = { name: 'audio', simulcast: false, source: Track.Source.Microphone };
+      this.room.localParticipant.publishTrack(this.localAudioTrack, opts);
+    }
+  }
+  private sendData(obj: any) {
+    this.room?.localParticipant.publishData(this.textEncoder.encode(JSON.stringify(obj)), DataPacket_Kind.RELIABLE);
+  }
+  private handleSocketOpen() {
+    console.log('[chat] socket opened');
+    const obj = {
+      type: 'init',
+      params: {
+        asr: {
+          provider: this.params.asrProvider,
+          language: this.params.asrLanguage,
+        },
+        tts: {
+          provider: this.params.ttsProvider,
+          model: this.params.ttsModel,
+          voice: this.params.ttsVoice,
+        },
+        agent: {
+          model: this.params.model,
+          agentId: this.params.agentId,
+          docs: this.params.docs,
+        },
+      },
+    };
+    this.socket?.send(JSON.stringify(obj));
+  }
+  private async handleSocketMessage(event: MessageEvent) {
+    const msg = JSON.parse(event.data);
+    switch (msg.type) {
+      case 'room_info':
+        this.room = new Room();
+        await this.room.connect(msg.roomUrl, msg.token);
+        console.log('[chat] connected to room', msg.roomUrl);
+        this.maybePublishLocalAudio();
+        this.room.on(RoomEvent.TrackSubscribed, (track) => this.handleTrackSubscribed(track));
+        this.room.on(RoomEvent.DataReceived, (payload, participant) => this.handleDataReceived(payload, participant));
+        break;
+      default:
+        console.warn('unknown message type', msg.type);
+    }
+  }
+  private handleSocketClose(event: CloseEvent) {
+    console.log(`[chat] socket closed, code=${event.code}, reason=${event.reason}`);
+  }
+  private handleTrackSubscribed(track: RemoteTrack) {
+    console.log(`[chat] subscribed to remote audio track ${track.sid}`);
+    const audioTrack = track as RemoteAudioTrack;
+    audioTrack.on(TrackEvent.AudioPlaybackStarted, () => console.log(`[chat] audio playback started`));
+    audioTrack.on(TrackEvent.AudioPlaybackFailed, (err) => console.error(`[chat] audio playback failed`, err));
+    // TODO Farzad: Figure out why setting audioContext here is necessary.
+    audioTrack.setAudioContext(this.audioContext);
+    audioTrack.attach(this.audioElement);
+    this.outAnalyzer = new StreamAnalyzer(this.audioContext, track.mediaStream!);
+    if (this.delayedSpeakingState) {
+      this.delayedSpeakingState = false;
+      this.changeState(ChatManagerState.SPEAKING);
+    }
+  }
+  private handleDataReceived(payload: Uint8Array, participant: any) {
+    const data = JSON.parse(this.textDecoder.decode(payload));
+    if (data.type === 'pong') {
+      const elapsed_ms = performance.now() - data.timestamp;
+      console.debug(`[chat] worker RTT: ${elapsed_ms.toFixed(0)} ms`);
+    } else if (data.type === 'state') {
+      const newState = data.state;
+      if (newState === ChatManagerState.SPEAKING && this.outAnalyzer === undefined) {
+        // Skip the first speaking state, before we've attached the audio element.
+        // handleTrackSubscribed will be called soon and will change the state.
+        this.delayedSpeakingState = true;
+      } else {
+        this.changeState(newState);
+      }
+    } else if (data.type === 'transcript') {
+      const finalText = data.transcript.final ? ' FINAL' : '';
+      console.log(`[chat] input: ${data.transcript.text}${finalText}`);
+    } else if (data.type === 'output') {
+      console.log(`[chat] output: ${data.text}`);
+    }
+  }
+}
+
+export function createChatManager(init: ChatManagerInit): ChatManager {
+  if (init.webrtcUrl !== undefined) {
+    return new WebRtcChatManager(init);
+  } else {
+    return new LocalChatManager(init);
   }
 }

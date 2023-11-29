@@ -35,7 +35,21 @@ export function SystemMessage({ children }: { children: Node; metadata?: Record<
  *    ==> 'Sorry to hear that. Can you tell me why?
  * ```
  */
-export function UserMessage({ children }: { name?: string; children: Node; metadata?: Record<string, Jsonifiable> }) {
+export function UserMessage({
+  name,
+  children,
+}: {
+  name?: string;
+  children: Node;
+  metadata?: Record<string, Jsonifiable>;
+}) {
+  if (name) {
+    return (
+      <>
+        ({name}) {children}
+      </>
+    );
+  }
   return children;
 }
 
@@ -99,16 +113,20 @@ export function ConversationHistory(_: {}, { getContext }: AI.ComponentContext) 
  * ```
  */
 export function FunctionCall({
+  id,
   name,
   partial,
   args,
 }: {
   name: string;
+  id?: string;
   partial?: boolean;
   args: Record<string, string | number | boolean | null>;
   metadata?: Record<string, Jsonifiable>;
 }) {
-  return `Call function ${name} with ${partial ? '(incomplete) ' : ''}${JSON.stringify(args)}`;
+  return `Call function ${name}${id ? ` (id ${id})` : ''} with ${partial ? '(incomplete) ' : ''}${JSON.stringify(
+    args
+  )}`;
 }
 
 /**
@@ -128,26 +146,31 @@ export function FunctionCall({
  * ```
  */
 export function FunctionResponse({
+  id,
   name,
   failed,
   children,
 }: {
+  id?: string;
   name: string;
   failed?: boolean;
   children: Node;
   metadata?: Record<string, Jsonifiable>;
 }) {
+  const idOutput = id ? ` (id ${id})` : '';
   if (failed) {
     return (
       <>
-        function {name} failed with {children}
+        function {name}
+        {idOutput} failed with {children}
       </>
     );
   }
 
   return (
     <>
-      function {name} returned {children}
+      function {name}
+      {idOutput} returned {children}
     </>
   );
 }
@@ -215,6 +238,47 @@ function toConversationMessages(partialRendering: AI.PartiallyRendered[]): Conve
   });
 }
 
+async function loggableMessage(
+  message: ConversationMessage,
+  render: AI.RenderContext['render'],
+  cost?: (message: ConversationMessage, render: AI.ComponentContext['render']) => Promise<number>
+) {
+  let textPromise: PromiseLike<string> | undefined = undefined;
+  switch (message.type) {
+    case 'user':
+    case 'assistant':
+    case 'system':
+      textPromise = render(message.element);
+      break;
+    case 'functionResponse':
+      textPromise = render(message.element.props.children);
+      break;
+    case 'functionCall':
+      break;
+    default: {
+      const neverMessage: never = message;
+      throw new Error(`Unexpected message type ${(neverMessage as any).type}`);
+    }
+  }
+
+  const costPromise = cost?.(message, render);
+
+  const { children, ...propsWithoutChildren } = {
+    children: undefined,
+    ...message.element.props,
+  };
+  const loggableProps: Record<string, Jsonifiable> = propsWithoutChildren;
+
+  return {
+    // Use a function so that it doesn't serialize to JSON, but can be accessed if needed.
+    getElement: () => message.element,
+    type: message.type,
+    props: loggableProps,
+    text: await textPromise,
+    cost: await costPromise,
+  };
+}
+
 /** @hidden */
 export async function renderToConversation(
   conversation: AI.Node,
@@ -235,13 +299,7 @@ export async function renderToConversation(
   const messages = toConversationMessages(await render(conversationToUse, { stop: isConversationalComponent }));
 
   if (logger && logType) {
-    const loggableMessages = await Promise.all(
-      messages.map(async (m) => ({
-        element: debug(m.element, true),
-        ...(cost && { cost: await cost(m, render) }),
-      }))
-    );
-
+    const loggableMessages = await Promise.all(messages.map((m) => loggableMessage(m, render, cost)));
     logger.setAttribute(`ai.jsx.${logType}`, JSON.stringify(loggableMessages));
     logger.info({ [logType]: { messages: loggableMessages } }, `Got ${logType} conversation`);
   }
@@ -281,32 +339,30 @@ export async function renderToConversation(
  * ```
  *
  */
-export async function* Converse(
-  {
-    reply,
-    children,
-  }: {
-    reply: (messages: ConversationMessage[], fullConversation: ConversationMessage[]) => AI.Renderable;
-    children: AI.Node;
-  },
-  { render, memo, logger }: AI.ComponentContext
-): AI.RenderableStream {
-  yield AI.AppendOnlyStream;
-
-  const fullConversation = [] as ConversationMessage[];
-  let next = children;
-  while (true) {
-    const newMessages = await renderToConversation(next, render, logger);
-    if (newMessages.length === 0) {
-      break;
+export function Converse({
+  reply,
+  children,
+}: {
+  reply: (messages: ConversationMessage[], fullConversation: ConversationMessage[]) => AI.Renderable;
+  children: AI.Node;
+}) {
+  // Keep producing rounds until there's a round with no messages.
+  async function* ConversationRound(
+    { currentRound, history }: { currentRound: AI.Node; history: ConversationMessage[] },
+    { memo, render }: AI.ComponentContext
+  ) {
+    yield;
+    const currentRoundMessages = await renderToConversation(currentRound, render);
+    if (currentRoundMessages.length === 0) {
+      return;
     }
 
-    fullConversation.push(...newMessages);
-    next = memo(reply(newMessages, fullConversation.slice()));
-    yield next;
+    const newHistory = history.concat(currentRoundMessages);
+    const nextRound = memo(reply(currentRoundMessages, newHistory.slice()));
+    return [nextRound, <ConversationRound history={newHistory} currentRound={nextRound} />];
   }
 
-  return AI.AppendOnlyStream;
+  return <ConversationRound history={[]} currentRound={children} />;
 }
 
 /**
