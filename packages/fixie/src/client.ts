@@ -2,26 +2,18 @@ import { ApolloClient } from '@apollo/client/core/ApolloClient.js';
 import { InMemoryCache } from '@apollo/client/cache/inmemory/inMemoryCache.js';
 import createUploadLink from 'apollo-upload-client/public/createUploadLink.js';
 import type { Jsonifiable } from 'type-fest';
-import { AgentId, AssistantConversationTurn, Conversation, ConversationId, Metadata } from './sidekick-types.js';
+import {
+  AgentId,
+  AssistantConversationTurn,
+  Conversation,
+  ConversationId,
+  Metadata,
+  User,
+  Team,
+  Membership,
+  MembershipRole,
+} from './types.js';
 import { encode } from 'base64-arraybuffer';
-
-export interface UserInfo {
-  id: number;
-  username: string;
-  is_authenticated: boolean;
-  is_superuser: boolean;
-  is_staff: boolean;
-  is_active: boolean;
-  is_anonymous: boolean;
-  email?: string;
-  first_name?: string;
-  last_name?: string;
-  last_login?: Date;
-  date_joined?: Date;
-  api_token?: string;
-  avatar?: string;
-  organization?: string;
-}
 
 export class AgentDoesNotExistError extends Error {
   code = 'agent-does-not-exist';
@@ -179,31 +171,55 @@ export class FixieClient {
   }
 
   /** Return information on the currently logged-in user. */
-  userInfo(): Promise<UserInfo> {
-    const rawUserInfo: unknown = this.requestJson('/api/user');
-    return rawUserInfo as Promise<UserInfo>;
+  async userInfo(): Promise<User> {
+    const rawUserInfo: { user: User } = await this.requestJson('/api/v1/users/me');
+    return rawUserInfo.user;
+  }
+
+  /**
+   * Update the current user's metadata.
+   *
+   * @param options.email The new email address for this user.
+   * @param options.fullName The new full name for this user.
+   */
+  async updateUser({ email, fullName }: { email?: string; fullName?: string }): Promise<User> {
+    if (!email && !fullName) {
+      throw new Error('Must specify either email or fullName');
+    }
+    const fieldMask: string[] = [];
+    if (email !== undefined) {
+      fieldMask.push('email');
+    }
+    if (fullName !== undefined) {
+      fieldMask.push('fullName');
+    }
+    const body = {
+      user: {
+        email,
+        fullName,
+      },
+      updateMask: fieldMask.join(','),
+    };
+    const result: { user: User } = await this.requestJson('/api/v1/users/me', body, 'PUT');
+    return result.user;
   }
 
   /** List Corpora visible to this user.
-   * @param options.ownerType
-   *   OWNER_USER: Only list corpora owned by the current user.
-   *   OWNER_ORG: Only list corpora owned by the current user's organization.
-   *   OWNER_PUBLIC: Only list public corpora.
-   *   OWNER_ALL: List all corpora visible to the current user.
+   * @param options.teamId Optional team ID to list corpora for.
    * @param options.offset The offset into the list of corpora to return.
    * @param options.limit The maximum number of corpora to return.
    */
   listCorpora({
-    ownerType,
+    teamId,
     offset = 0,
     limit = 100,
   }: {
-    ownerType?: 'OWNER_USER' | 'OWNER_ORG' | 'OWNER_PUBLIC' | 'OWNER_ALL';
+    teamId?: string;
     offset?: number;
     limit?: number;
   }): Promise<Jsonifiable> {
-    if (ownerType !== undefined) {
-      return this.requestJson(`/api/v1/corpora?owner_type=${ownerType}&offset=${offset}&limit=${limit}`);
+    if (teamId !== undefined) {
+      return this.requestJson(`/api/v1/corpora?team_id=${teamId}&offset=${offset}&limit=${limit}`);
     }
     return this.requestJson(`/api/v1/corpora?offset=${offset}&limit=${limit}`);
   }
@@ -222,9 +238,19 @@ export class FixieClient {
    *
    * @param options.name The name of the new Corpus.
    * @param options.description The description of the new Corpus.
+   * @param options.teamId Optional team ID to own the new Corpus.
    */
-  createCorpus({ name, description }: { name?: string; description?: string }): Promise<Jsonifiable> {
+  createCorpus({
+    name,
+    description,
+    teamId,
+  }: {
+    name?: string;
+    description?: string;
+    teamId?: string;
+  }): Promise<Jsonifiable> {
     const body = {
+      teamId,
       corpus: {
         display_name: name,
         description,
@@ -735,5 +761,160 @@ export class FixieClient {
       undefined,
       'POST'
     );
+  }
+
+  /** Return information about a given user. */
+  async getUser({ userId }: { userId: string }): Promise<User> {
+    const rawUserInfo: { user: User } = await this.requestJson(`/api/v1/users/${userId}`);
+    return rawUserInfo.user;
+  }
+
+  /** Create a new team. */
+  async createTeam({
+    displayName,
+    description,
+    avatarUrl,
+  }: {
+    displayName?: string;
+    description?: string;
+    avatarUrl?: string;
+  }): Promise<Team> {
+    const response: { team: Team } = await this.requestJson('/api/v1/teams', {
+      team: {
+        displayName,
+        description,
+        avatarUrl,
+      },
+    });
+    return response.team;
+  }
+
+  /** Get the given team. */
+  async getTeam({ teamId }: { teamId: string }): Promise<Team> {
+    const response: { team: Team } = await this.requestJson(`/api/v1/teams/${teamId}`);
+    return response.team;
+  }
+
+  /** Delete the given team. */
+  deleteTeam({ teamId }: { teamId: string }): Promise<Jsonifiable> {
+    return this.requestJson(`/api/v1/teams/${teamId}`, undefined, 'DELETE');
+  }
+
+  /**
+   * List the teams visible to the current user.
+   *
+   * @param options.offset The offset into the list of teams to return.
+   * @param options.limit The maximum number of teams to return.
+   */
+  listTeams({ offset = 0, limit = 100 }: { offset?: number; limit?: number }): Promise<Jsonifiable> {
+    return this.requestJson(`/api/v1/teams?offset=${offset}&limit=${limit}`);
+  }
+
+  /**
+   * Update the given team's metadata.
+   *
+   * @param options.displayName The new display name for the team.
+   * @param options.description The new description for the team.
+   */
+  async updateTeam({
+    teamId,
+    displayName,
+    description,
+  }: {
+    teamId: string;
+    displayName?: string;
+    description?: string;
+  }): Promise<Team> {
+    if (!displayName && !description) {
+      throw new Error('Must specify either displayName or description');
+    }
+    const fieldMask: string[] = [];
+    if (displayName !== undefined) {
+      fieldMask.push('displayName');
+    }
+    if (description !== undefined) {
+      fieldMask.push('description');
+    }
+    const body = {
+      team: {
+        displayName,
+        description,
+      },
+      updateMask: fieldMask.join(','),
+    };
+    const response: { team: Team } = await this.requestJson(`/api/v1/teams/${teamId}`, body, 'PUT');
+    return response.team;
+  }
+
+  /**
+   * Invite a new member to a team.
+   *
+   * @param options.teamId The ID of the team to invite the member to.
+   * @param options.email The email address of the member to invite.
+   * @param options.isAdmin Whether the member should be a team admin.
+   */
+  inviteTeamMember({
+    teamId,
+    email,
+    isAdmin,
+  }: {
+    teamId: string;
+    email: string;
+    isAdmin?: boolean;
+  }): Promise<Jsonifiable> {
+    const body = {
+      teamId,
+      email,
+      role: {
+        isAdmin,
+      },
+    };
+    return this.requestJson(`/api/v1/teams/${teamId}/invite`, body, 'POST');
+  }
+
+  /**
+   * Cancel a pending invitation to a team.
+   *
+   * @param options.teamId The ID of the team to cancel the invitation for.
+   * @param options.email The email address of the member to cancel the invitation for.
+   */
+  cancelInvitation({ teamId, email }: { teamId: string; email: string }): Promise<Jsonifiable> {
+    return this.requestJson(`/api/v1/teams/${teamId}/invite/${email}`, null, 'DELETE');
+  }
+
+  /**
+   * Remove a member from a team.
+   *
+   * @param options.teamId The ID of the team to invite the member to.
+   * @param options.userId The user ID of the member to remove.
+   */
+  removeTeamMember({ teamId, userId }: { teamId: string; userId: string }): Promise<Jsonifiable> {
+    return this.requestJson(`/api/v1/teams/${teamId}/members/${userId}`, null, 'DELETE');
+  }
+
+  /**
+   * Update a user's role on a team.
+   *
+   * @param options.teamId The ID of the team to update.
+   * @param options.userId The user ID of the member to update.
+   * @param options.isAdmin Set the admin role for this user.
+   */
+  updateTeamMember({
+    teamId,
+    userId,
+    isAdmin,
+  }: {
+    teamId: string;
+    userId: string;
+    isAdmin: boolean;
+  }): Promise<Jsonifiable> {
+    const body = {
+      teamId,
+      userId,
+      role: {
+        isAdmin,
+      },
+    };
+    return this.requestJson(`/api/v1/teams/${teamId}/members/${userId}`, body, 'PUT');
   }
 }

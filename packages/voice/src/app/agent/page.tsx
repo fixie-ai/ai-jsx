@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSwipeable } from 'react-swipeable';
-import { ChatManager, ChatManagerState } from './chat';
+import { ChatManager, ChatManagerState, createChatManager } from './chat';
 import { getAgent, getAgentImageUrl } from './agents';
 import Image from 'next/image';
 import '../globals.css';
@@ -221,6 +221,7 @@ const AgentPageComponent: React.FC = () => {
   const ttsVoice = searchParams.get('ttsVoice') || agentVoice;
   const model = getAgent(agentId) === undefined ? 'fixie' : searchParams.get('llm') || DEFAULT_LLM;
   const docs = searchParams.get('docs') !== null;
+  const webrtcUrl = searchParams.get('webrtc') ?? undefined;
   const [showChooser, setShowChooser] = useState(searchParams.get('chooser') !== null);
   const showInput = searchParams.get('input') !== null;
   const showOutput = searchParams.get('output') !== null;
@@ -237,7 +238,7 @@ const AgentPageComponent: React.FC = () => {
   useEffect(() => init(), [asrProvider, asrLanguage, ttsProvider, ttsModel, ttsVoice, model, agentId, docs]);
   const init = () => {
     console.log(`[page] init asr=${asrProvider} tts=${ttsProvider} llm=${model} agent=${agentId} docs=${docs}`);
-    const manager = new ChatManager({
+    const manager = createChatManager({
       asrProvider,
       asrLanguage,
       ttsProvider,
@@ -246,6 +247,7 @@ const AgentPageComponent: React.FC = () => {
       model,
       agentId,
       docs,
+      webrtcUrl,
     });
     setChatManager(manager);
     manager.onStateChange = (state) => {

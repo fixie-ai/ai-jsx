@@ -22,8 +22,7 @@ import { OpenAI as OpenAIClient } from 'openai';
 export { OpenAI as OpenAIClient } from 'openai';
 import { FinalRequestOptions } from 'openai/core';
 import { debugRepresentation } from '../core/debug.js';
-import cl100k_base from 'js-tiktoken/ranks/cl100k_base';
-import { Tiktoken } from 'js-tiktoken/lite';
+import { getEncoding } from 'js-tiktoken';
 import _ from 'lodash';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
@@ -136,7 +135,7 @@ export function OpenAI({
 }
 
 // Preload the tokenizer to avoid a large delay on first use.
-const cl100kTokenizer = new Tiktoken(cl100k_base);
+const cl100kTokenizer = getEncoding('cl100k_base');
 export const tokenizer = {
   encode: (text: string) => cl100kTokenizer.encode(text),
   decode: (tokens: number[]) => cl100kTokenizer.decode(tokens),
@@ -547,6 +546,7 @@ export async function* OpenAIChatModel(
 
     throw ex;
   }
+  let finishReason: string | undefined = undefined;
   const iterator = chatResponse[Symbol.asyncIterator]();
 
   // We have a single response iterator, but we'll wrap tokens _within_ the structure of <AssistantMessage> or <FunctionCall>
@@ -568,6 +568,10 @@ export async function* OpenAIChatModel(
     } while (next.value.choices.length == 0);
 
     logger.trace({ deltaMessage: next.value }, 'Got delta message');
+
+    if (next.value.choices[0].finish_reason) {
+      finishReason = next.value.choices[0].finish_reason;
+    }
     return next.value.choices[0].delta;
   }
 
@@ -644,9 +648,19 @@ export async function* OpenAIChatModel(
               argsJson += toolCall.function.arguments;
             }
 
-            yield (
-              <FunctionCall id={id} partial name={name} args={JSON.parse(patchedUntruncateJson(argsJson || '{}'))} />
-            );
+            let partialArgs: Record<string, string | number | boolean | null> | undefined = undefined;
+            try {
+              partialArgs = JSON.parse(patchedUntruncateJson(argsJson || '{}'));
+            } catch (e: any) {
+              // If the JSON is incomplete and we get an error, we can ignore it.
+              const acceptedErrorPattern = /Unexpected .* JSON/;
+              if (!acceptedErrorPattern.test(e.message)) {
+                throw e;
+              }
+            }
+            if (partialArgs !== undefined) {
+              yield <FunctionCall id={id} partial name={name} args={partialArgs} />;
+            }
 
             delta = await advance();
           }
@@ -666,6 +680,12 @@ export async function* OpenAIChatModel(
     if (delta !== null) {
       delta = await advance();
     }
+  }
+
+  // TS doesn't realize that the advance closure can set `finishReason`.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  if (finishReason) {
+    logger.setAttribute('openai.finish_reason', finishReason);
   }
 
   // Render the completion conversation to log it.

@@ -23,6 +23,7 @@ export interface FunctionResponseMessage extends MessageBase {
 export interface TextMessage extends MessageBase {
   kind: 'text';
   content: string;
+  state?: 'in-progress' | 'done';
 }
 
 export type Message = FunctionCallMessage | FunctionResponseMessage | TextMessage;
