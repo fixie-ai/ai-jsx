@@ -660,7 +660,7 @@ export class WebRtcChatManager implements ChatManager {
       case 'room_info':
         this.room = new Room();
         await this.room.connect(msg.roomUrl, msg.token);
-        console.log('[chat] connected to room', msg.roomUrl);
+        console.log('[chat] connected to room', this.room.name);
         this.maybePublishLocalAudio();
         this.room.on(RoomEvent.TrackSubscribed, (track) => this.handleTrackSubscribed(track));
         this.room.on(RoomEvent.DataReceived, (payload, participant) => this.handleDataReceived(payload, participant));
@@ -670,9 +670,18 @@ export class WebRtcChatManager implements ChatManager {
     }
   }
   private handleSocketClose(event: CloseEvent) {
-    console.log(`[chat] socket closed, code=${event.code}, reason=${event.reason}`);
-    // This client is worthless without a connection, so go ahead and reconnect immediately.
-    this.warmup();
+    if (event.code === 1000) {
+      // We initiated this shutdown, so we've already cleaned up.
+      // Reconnect to prepare for the next session.
+      console.log("[chat] socket closed normally");
+      this.warmup();
+    } else if (event.code === 1006) {
+      // This occurs when running a Next.js app in debug mode and the ChatManager is
+      // initialized twice, the first socket will receive this error that we can ignore.
+    } else {
+      console.warn(`[chat] socket closed unexpectedly: ${event.code} ${event.reason}`);
+      this.onError?.();
+    }
   }
   private handleTrackSubscribed(track: RemoteTrack) {
     console.log(`[chat] subscribed to remote audio track ${track.sid}`);
