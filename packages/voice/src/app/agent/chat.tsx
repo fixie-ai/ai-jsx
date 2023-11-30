@@ -673,7 +673,7 @@ export class WebRtcChatManager implements ChatManager {
     if (event.code === 1000) {
       // We initiated this shutdown, so we've already cleaned up.
       // Reconnect to prepare for the next session.
-      console.log("[chat] socket closed normally");
+      console.log('[chat] socket closed normally');
       this.warmup();
     } else if (event.code === 1006) {
       // This occurs when running a Next.js app in debug mode and the ChatManager is
