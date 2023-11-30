@@ -592,7 +592,6 @@ export class WebRtcChatManager implements ChatManager {
       this.sendData(obj);
     }, 5000);
     this.maybePublishLocalAudio();
-    this.changeState(ChatManagerState.LISTENING);
   }
   async stop() {
     console.log('[chat] stopping');
