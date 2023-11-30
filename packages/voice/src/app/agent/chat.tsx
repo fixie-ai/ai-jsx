@@ -671,6 +671,8 @@ export class WebRtcChatManager implements ChatManager {
   }
   private handleSocketClose(event: CloseEvent) {
     console.log(`[chat] socket closed, code=${event.code}, reason=${event.reason}`);
+    // This client is worthless without a connection, so go ahead and reconnect immediately.
+    this.warmup();
   }
   private handleTrackSubscribed(track: RemoteTrack) {
     console.log(`[chat] subscribed to remote audio track ${track.sid}`);
