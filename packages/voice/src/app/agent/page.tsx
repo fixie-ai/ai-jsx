@@ -65,10 +65,19 @@ const LATENCY_THRESHOLDS: { [key: string]: LatencyThreshold } = {
   Total: { good: 1300, fair: 2000 },
 };
 
-const updateSearchParams = (param: string, value: string) => {
+const updateSearchParams = (param: string, value?: string, reload = false) => {
   const params = new URLSearchParams(window.location.search);
-  params.set(param, value);
-  window.location.search = params.toString();
+  if (value !== undefined) {
+    params.set(param, value);
+  } else {
+    params.delete(param);
+  }
+  const newUrl = `${window.location.pathname}?${params}`;
+  if (reload) {
+    window.location.replace(newUrl);
+  } else {
+    window.history.pushState({}, '', newUrl);
+  }
 };
 
 const Dropdown: React.FC<{ label: string; param: string; value: string; options: string[] }> = ({
@@ -81,7 +90,7 @@ const Dropdown: React.FC<{ label: string; param: string; value: string; options:
     <label className="text-xs ml-2 font-bold">{label}</label>
     <select
       value={value}
-      onChange={(e) => updateSearchParams(param, e.target.value)}
+      onChange={(e) => updateSearchParams(param, e.target.value, true)}
       className="text-xs ml-1 pt-1 pb-1 border rounded"
     >
       {options.map((option) => (
@@ -301,7 +310,7 @@ const AgentPageComponent: React.FC = () => {
   const changeAgent = (delta: number) => {
     const index = AGENT_IDS.indexOf(agentId);
     const newIndex = (index + delta + AGENT_IDS.length) % AGENT_IDS.length;
-    updateSearchParams('agent', AGENT_IDS[newIndex]);
+    updateSearchParams('agent', AGENT_IDS[newIndex], true);
   };
   const handleStart = () => {
     setInput('');
@@ -333,10 +342,14 @@ const AgentPageComponent: React.FC = () => {
       handleStop();
       event.preventDefault();
     } else if (event.keyCode == 67) {
-      setShowChooser((prev) => !prev);
+      const newVal = !showChooser;
+      setShowChooser(newVal);
+      updateSearchParams('chooser', newVal ? '1' : undefined);
       event.preventDefault();
     } else if (event.keyCode == 83) {
-      setShowStats((prev) => !prev);
+      const newVal = !showStats;
+      setShowStats(newVal);
+      updateSearchParams('stats', newVal ? '1' : undefined);
       event.preventDefault();
     } else if (event.keyCode == 37) {
       handleStop();
