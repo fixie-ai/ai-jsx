@@ -77,7 +77,7 @@ const updateSearchParams = (param: string, value?: string, reload = false) => {
     window.location.replace(newUrl);
   } else {
     window.history.pushState({}, '', newUrl);
-  }  
+  }
 };
 
 const Dropdown: React.FC<{ label: string; param: string; value: string; options: string[] }> = ({
@@ -341,7 +341,7 @@ const AgentPageComponent: React.FC = () => {
       updateSearchParams('chooser', newVal ? '1' : undefined);
       event.preventDefault();
     } else if (event.keyCode == 83) {
-      const newVal = !showStats
+      const newVal = !showStats;
       setShowStats(newVal);
       updateSearchParams('stats', newVal ? '1' : undefined);
       event.preventDefault();
