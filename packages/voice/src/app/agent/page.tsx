@@ -116,8 +116,12 @@ const Stat: React.FC<{ name: string; latency: number; showName?: boolean }> = ({
   return (
     <span className={`font-mono text-xs mr-2 ${color}`}>
       {' '}
-      {showName && <span className="font-bold">{name}</span> }
-      {(showName || latency > 0) && <><pre className="inline">{valueText}</pre> ms</>}
+      {showName && <span className="font-bold">{name}</span>}
+      {(showName || latency > 0) && (
+        <>
+          <pre className="inline">{valueText}</pre> ms
+        </>
+      )}
     </span>
   );
 };
@@ -384,15 +388,21 @@ const AgentPageComponent: React.FC = () => {
           <Dropdown label="LLM" param="llm" value={model} options={LLM_MODELS} />
           <Dropdown label="TTS" param="tts" value={ttsProvider} options={TTS_PROVIDERS} />
         </div>
-      )}      
+      )}
       <div className="absolute top-1 right-1">
-        {showStats && (<>
-          <Stat name="ASR" latency={asrLatency} />
-          <Stat name="LLM" latency={llmResponseLatency} />
-          <Stat name="LLMT" latency={llmTokenLatency} />
-          <Stat name="TTS" latency={ttsLatency} />
-          </>)}
-        <Stat name="Total" latency={asrLatency + llmResponseLatency + llmTokenLatency + ttsLatency} showName={showStats}/>
+        {showStats && (
+          <>
+            <Stat name="ASR" latency={asrLatency} />
+            <Stat name="LLM" latency={llmResponseLatency} />
+            <Stat name="LLMT" latency={llmTokenLatency} />
+            <Stat name="TTS" latency={ttsLatency} />
+          </>
+        )}
+        <Stat
+          name="Total"
+          latency={asrLatency + llmResponseLatency + llmTokenLatency + ttsLatency}
+          showName={showStats}
+        />
       </div>
       <div className="w-full flex flex-col items-center justify-center text-center">
         <div>
