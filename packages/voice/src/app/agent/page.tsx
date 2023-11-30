@@ -32,7 +32,7 @@ interface LatencyThreshold {
 const DEFAULT_ASR_PROVIDER = 'deepgram';
 const DEFAULT_TTS_PROVIDER = 'playht';
 const DEFAULT_LLM = 'gpt-4-1106-preview';
-const ASR_PROVIDERS = ['aai', 'deepgram', 'gladia', 'revai', 'soniox'];
+const ASR_PROVIDERS = ['aai', 'deepgram', 'deepgram-turbo', 'gladia', 'revai', 'soniox'];
 const TTS_PROVIDERS = [
   'aws',
   'azure',
