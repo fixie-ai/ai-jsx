@@ -87,7 +87,7 @@ could also query the GitHub API directly. This is easy to do with a tool!
 
 It turns out GitHub has a fairly comprehensive [GraphQL API](https://docs.github.com/en/graphql)
 that can be used to access live data about code repositories, pull requests, issues, and more.
-Since this API is also well-documented (and this this documentation is part of the
+Since this API is also well-documented (and this documentation is part of the
 Fixie Corpus we have created earlier), it is straightforward to add in a tool that will
 query the GraphQL API directly.
 
