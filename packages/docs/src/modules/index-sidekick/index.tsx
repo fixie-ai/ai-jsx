@@ -21,7 +21,7 @@ export const Sidekick = () => {
         </Section.Subtitle>
 
         <Section.Subtitle className={styles.subheader} left>
-          <Link to="./sidekicks/sidekicks-quickstart/">
+          <Link to="https://fixie.ai/docs/sidekicks/sidekicks-quickstart">
             <ActionCard
               icon={<SvgImage image={<SKFlowImage />} title="An icon showing a conversational sidekick" />}
               title="Start Building a Sidekick"
