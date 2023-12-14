@@ -20,32 +20,6 @@ const sidebars = {
   tutorialSidebar: [
     {
       type: 'category',
-      label: 'Sidekicks',
-      collapsible: true,
-      collapsed: false,
-      items: [
-        'sidekicks/sidekicks-quickstart',
-        'sidekicks/sidekicks-docsqa',
-        // Start Sidekicks Tutorials
-        {
-          type: 'category',
-          label: 'Sidekicks Tutorial',
-          collapsible: true,
-          collapsed: true,
-          items: [
-            'tutorials/sidekickTutorial/part1-intro',
-            'tutorials/sidekickTutorial/part2-docsQA',
-            'tutorials/sidekickTutorial/part3-systemMessage',
-            'tutorials/sidekickTutorial/part4-tools',
-            'tutorials/sidekickTutorial/part5-genUI',
-            'tutorials/sidekickTutorial/part6-embedding',
-            'tutorials/sidekickTutorial/part7-conclusion',
-          ],
-        },
-      ],
-    },
-    {
-      type: 'category',
       label: 'AI.JSX',
       collapsible: true,
       collapsed: false,
