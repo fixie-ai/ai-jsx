@@ -1,0 +1,14 @@
+{
+  "redirects": [
+    {
+      "source": "/sidekicks/:path*",
+      "destination": "https://fixie.ai/docs/sidekicks/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/tutorials/sidekickTutorial/:path*",
+      "destination": "https://fixie.ai/docs/tutorials/sidekickTutorial/:path*",
+      "permanent": true
+    }
+  ]
+}
