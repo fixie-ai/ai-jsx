@@ -10,6 +10,7 @@
   "type": "module",
   "scripts": {
     "dev": "fixie serve",
+    "deploy": "fixie deploy",
     "typecheck": "tsc -p tsconfig.json",
     "build": "yarn run typecheck",
     "prepack": "yarn build"

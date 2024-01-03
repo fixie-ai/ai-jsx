@@ -1,14 +1,14 @@
 {
   "name": "fixie",
-  "version": "1.8.0",
+  "version": "6.0.1",
   "license": "MIT",
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://fixie.ai",
   "type": "module",
   "scripts": {
-    "build": "rm -rf dist && tsc",
-    "start": "node --no-warnings dist/main.js",
+    "build": "tsc",
+    "start": "node --no-warnings src/main.js",
     "build-start": "yarn run build && yarn run start",
     "format": "prettier --write .",
     "test": "yarn run build && yarn run lint",
@@ -19,20 +19,20 @@
   "volta": {
     "extends": "../../package.json"
   },
-  "bin": "./dist/main.js",
+  "bin": "./src/main.js",
+  "main": "./index.js",
+  "types": "./index.d.ts",
   "dependencies": {
     "@apollo/client": "^3.8.1",
     "@types/apollo-upload-client": "^17.0.2",
-    "ai-jsx": "^0.18.2",
     "apollo-upload-client": "^17.0.0",
     "axios": "^1.5.1",
+    "base64-arraybuffer": "^1.0.2",
     "commander": "^11.0.0",
     "execa": "^8.0.1",
     "extract-files": "^13.0.0",
-    "firebase": "^10.4.0",
     "graphql": "^16.8.0",
     "js-yaml": "^4.1.0",
-    "lodash": "^4.17.21",
     "open": "^9.1.0",
     "ora": "^7.0.1",
     "terminal-kit": "^3.0.0",
@@ -42,8 +42,8 @@
     "watcher": "^2.3.0"
   },
   "peerDependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "^16.8.0  || ^17.0.0 || ^18.0.0",
+    "react-dom": "^16.8.0  || ^17.0.0 || ^18.0.0"
   },
   "peerDependenciesMeta": {
     "@types/react-dom": {
@@ -61,7 +61,6 @@
     "@tsconfig/node18": "^2.0.1",
     "@types/extract-files": "^8.1.1",
     "@types/js-yaml": "^4.0.5",
-    "@types/lodash": "^4.14.198",
     "@types/node": "^20.4.1",
     "@types/react": "^18.2.22",
     "@types/react-dom": "^18.2.7",
@@ -76,5 +75,8 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

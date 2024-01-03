@@ -8,7 +8,7 @@
     "eslint-import-resolver-typescript": "^3.5.5",
     "eslint-plugin-import": "^2.27.5",
     "prettier": "^2.8.8",
-    "turbo": "^1.10.4",
+    "turbo": "^1.10.16",
     "typescript": "^5.1.3"
   },
   "type": "module",
@@ -35,5 +35,8 @@
     "packages/*",
     "packages/sandboxes/*"
   ],
-  "packageManager": "yarn@3.6.0"
+  "packageManager": "yarn@3.6.0",
+  "engines": {
+    "node": "18.x"
+  }
 }

@@ -11,7 +11,16 @@ import terminal from 'terminal-kit';
 import { fileURLToPath } from 'url';
 import { FixieAgent } from './agent.js';
 import { AuthenticateOrLogIn, FIXIE_CONFIG_FILE, loadConfig } from './auth.js';
-import { FixieClientError } from './isomorphic-client.js';
+import { FixieClientError } from './client.js';
+
+const [major] = process.version
+  .slice(1)
+  .split('.')
+  .map((x) => parseInt(x));
+if (major < 18) {
+  console.error(`This CLI requires Node.js v18 or later. (Detected version ${process.version})`);
+  process.exit(1);
+}
 
 const { terminal: term } = terminal;
 
@@ -22,6 +31,15 @@ function showResult(result: any, raw: boolean) {
   } else {
     term.green(JSON.stringify(result, null, 2));
   }
+}
+
+/** Parse the provided value as a Date. */
+function parseDate(value: string): Date {
+  const parsedDate = new Date(value);
+  if (isNaN(parsedDate.getTime())) {
+    throw new Error('Invalid date format.');
+  }
+  return parsedDate;
 }
 
 /** Deploy an agent from the current directory. */
@@ -118,6 +136,7 @@ function errorHandler(error: any) {
     term.green(JSON.stringify(error.detail, null, 2));
   } else {
     term('❌ Error: ')(error.message)('\n');
+    term.red(error.stack)('\n');
   }
 }
 
@@ -141,13 +160,28 @@ program
 registerDeployCommand(program);
 registerServeCommand(program);
 
-program
-  .command('user')
+const user = program.command('user').description('User related commands');
+
+user
+  .command('get')
   .description('Get information on the current user')
   .action(
     catchErrors(async () => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await client.userInfo();
+      showResult(result, program.opts().raw);
+    })
+  );
+
+user
+  .command('update')
+  .description('Update information on the current user')
+  .option('--email <string>', 'The new email address for this user')
+  .option('--fullName <string>', 'The new full name for this user')
+  .action(
+    catchErrors(async (opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.updateUser({ email: opts.email, fullName: opts.fullName });
       showResult(result, program.opts().raw);
     })
   );
@@ -161,7 +195,7 @@ program
     catchErrors(async (options: { force?: boolean; showKey?: boolean }) => {
       const client = await AuthenticateOrLogIn({ forceReauth: options.force ?? false });
       const userInfo = await client.userInfo();
-      term('👤 You are logged into ').green(client.url)(' as ').green(userInfo.username)('\n');
+      term('👤 You are logged into ').green(client.url)(' as ').green(userInfo.email)('\n');
       if (options.showKey) {
         term('🔑 Your FIXIE_API_KEY is: ').red(client.apiKey)('\n');
       } else {
@@ -188,23 +222,17 @@ corpus.alias('corpora');
 
 corpus
   .command('list')
-  .description('List all corpora.')
-  .addOption(
-    new Option('-o, --owner <ownerType>', 'Type of corpora to list.').choices(['user', 'org', 'public', 'all'])
+  .description('List corpora.')
+  .option(
+    '--teamId <string>',
+    "The team ID to list corpora for. If unspecified, the current user's corpora will be listed."
   )
+  .option('--offset <number>', 'Start offset for results to return')
+  .option('--limit <number>', 'Limit on the number of results to return')
   .action(
-    catchErrors(async ({ owner }) => {
+    catchErrors(async (opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-
-      let ownerType: 'OWNER_ALL' | 'OWNER_USER' | 'OWNER_ORG' | 'OWNER_PUBLIC' = 'OWNER_ALL';
-      if (owner === 'user') {
-        ownerType = 'OWNER_USER';
-      } else if (owner === 'org') {
-        ownerType = 'OWNER_ORG';
-      } else if (owner === 'public') {
-        ownerType = 'OWNER_PUBLIC';
-      }
-      const result = await client.listCorpora(ownerType);
+      const result = await client.listCorpora({ teamId: opts.teamId, offset: opts.offset, limit: opts.limit });
       showResult(result, program.opts().raw);
     })
   );
@@ -221,12 +249,47 @@ corpus
   );
 
 corpus
-  .command('create [name] [description]')
+  .command('create')
   .description('Create a corpus.')
+  .option('--name <string>', 'The display name for this corpus')
+  .option('--description <string>', 'The description for this corpus')
+  .option('--teamId <string>', 'The team ID to own the new Corpus. If unspecified, the current user will own it.')
   .action(
-    catchErrors(async (name?: string, description?: string) => {
+    catchErrors(async (opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.createCorpus(name, description);
+      const result = await client.createCorpus({
+        name: opts.name,
+        description: opts.description,
+        teamId: opts?.teamId,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+corpus
+  .command('update <corpusId>')
+  .description('Update corpus metadata.')
+  .option('--name <string>', 'The new display name for this corpus')
+  .option('--description <string>', 'The new description for this corpus')
+  .action(
+    catchErrors(async (corpusId: string, opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.updateCorpus({
+        corpusId,
+        displayName: opts.name ?? undefined,
+        description: opts.description ?? undefined,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+corpus
+  .command('delete <corpusId>')
+  .description('Delete a corpus.')
+  .action(
+    catchErrors(async (corpusId: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.deleteCorpus({ corpusId });
       showResult(result, program.opts().raw);
     })
   );
@@ -237,7 +300,7 @@ corpus
   .action(
     catchErrors(async (corpusId: string, query: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.queryCorpus(corpusId, query);
+      const result = await client.queryCorpus({ corpusId, query });
       showResult(result, program.opts().raw);
     })
   );
@@ -248,9 +311,9 @@ source.alias('sources');
 source
   .command('add <corpusId> <startUrls...>')
   .description('Add a web source to a corpus.')
+  .option('--description <string>', 'A human-readable description for the source')
   .option('--max-documents <number>', 'Maximum number of documents to crawl')
   .option('--max-depth <number>', 'Maximum depth to crawl')
-  .option('--description <string>', 'A human-readable description for the source')
   .option('--include-patterns <pattern...>', 'URL patterns to include in the crawl')
   .option('--exclude-patterns <pattern...>', 'URL patterns to exclude from the crawl')
   .action(
@@ -281,15 +344,15 @@ source
           );
         }
         const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-        const result = await client.addCorpusSource(
+        const result = await client.addCorpusSource({
           corpusId,
           startUrls,
-          includePatterns,
-          excludePatterns,
+          includeGlobs: includePatterns,
+          excludeGlobs: excludePatterns,
           maxDocuments,
           maxDepth,
-          description
-        );
+          description,
+        });
         showResult(result, program.opts().raw);
       }
     )
@@ -301,7 +364,14 @@ source
   .action(
     catchErrors(async (corpusId: string, mimeType: string, filenames: string[]) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.addFileCorpusSource(corpusId, filenames, mimeType);
+      const result = await client.addCorpusFileSource({
+        corpusId,
+        files: filenames.map((file) => ({
+          filename: path.resolve(file),
+          contents: new Blob([fs.readFileSync(path.resolve(file))]),
+          mimeType,
+        })),
+      });
       showResult(result, program.opts().raw);
     })
   );
@@ -309,10 +379,12 @@ source
 source
   .command('list <corpusId>')
   .description('List sources of a corpus.')
+  .option('--offset <number>', 'Start offset for results to return')
+  .option('--limit <number>', 'Limit on the number of results to return')
   .action(
-    catchErrors(async (corpusId: string) => {
+    catchErrors(async (corpusId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.listCorpusSources(corpusId);
+      const result = await client.listCorpusSources({ corpusId, offset: opts.offset, limit: opts.limit });
       showResult(result, program.opts().raw);
     })
   );
@@ -323,7 +395,25 @@ source
   .action(
     catchErrors(async (corpusId: string, sourceId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.getCorpusSource(corpusId, sourceId);
+      const result = await client.getCorpusSource({ corpusId, sourceId });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+source
+  .command('update <corpusId> <sourceId>')
+  .description('Update source metadata.')
+  .option('--name <string>', 'The new display name for this source')
+  .option('--description <string>', 'The new description for this source')
+  .action(
+    catchErrors(async (corpusId: string, sourceId: string, opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.updateCorpusSource({
+        corpusId,
+        sourceId,
+        displayName: opts.name ?? undefined,
+        description: opts.description ?? undefined,
+      });
       showResult(result, program.opts().raw);
     })
   );
@@ -334,7 +424,7 @@ source
   .action(
     catchErrors(async (corpusId: string, sourceId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.deleteCorpusSource(corpusId, sourceId);
+      const result = await client.deleteCorpusSource({ corpusId, sourceId });
       showResult(result, program.opts().raw);
     })
   );
@@ -349,7 +439,7 @@ source
   .action(
     catchErrors(async (corpusId: string, sourceId: string, { force }) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.refreshCorpusSource(corpusId, sourceId, force);
+      const result = await client.refreshCorpusSource({ corpusId, sourceId, force });
       showResult(result, program.opts().raw);
     })
   );
@@ -364,7 +454,7 @@ source
   .action(
     catchErrors(async (corpusId: string, sourceId: string, { force }) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.clearCorpusSource(corpusId, sourceId, force);
+      const result = await client.clearCorpusSource({ corpusId, sourceId, force });
       showResult(result, program.opts().raw);
     })
   );
@@ -375,10 +465,12 @@ job.alias('jobs');
 job
   .command('list <corpusId> <sourceId>')
   .description('List jobs for a given source.')
+  .option('--offset <number>', 'Start offset for results to return')
+  .option('--limit <number>', 'Limit on the number of results to return')
   .action(
-    catchErrors(async (corpusId: string, sourceId: string) => {
+    catchErrors(async (corpusId: string, sourceId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.listCorpusSourceJobs(corpusId, sourceId);
+      const result = await client.listCorpusSourceJobs({ corpusId, sourceId, offset: opts.offset, limit: opts.limit });
       showResult(result, program.opts().raw);
     })
   );
@@ -389,7 +481,7 @@ job
   .action(
     catchErrors(async (corpusId: string, sourceId: string, jobId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.getCorpusSourceJob(corpusId, sourceId, jobId);
+      const result = await client.getCorpusSourceJob({ corpusId, sourceId, jobId });
       showResult(result, program.opts().raw);
     })
   );
@@ -400,21 +492,28 @@ doc.alias('docs');
 doc
   .command('list <corpusId> <sourceId>')
   .description('List documents for a given corpus source.')
+  .option('--offset <number>', 'Start offset for results to return')
+  .option('--limit <number>', 'Limit on the number of results to return')
   .action(
-    catchErrors(async (corpusId: string, sourceId: string) => {
+    catchErrors(async (corpusId: string, sourceId: string, opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.listCorpusSourceDocs(corpusId, sourceId);
+      const result = await client.listCorpusSourceDocuments({
+        corpusId,
+        sourceId,
+        offset: opts.offset,
+        limit: opts.limit,
+      });
       showResult(result, program.opts().raw);
     })
   );
 
 doc
-  .command('get <corpusId> <sourceId> <docId>')
+  .command('get <corpusId> <sourceId> <documentId>')
   .description('Get a document from a corpus source.')
   .action(
-    catchErrors(async (corpusId: string, sourceId: string, docId: string) => {
+    catchErrors(async (corpusId: string, sourceId: string, documentId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.getCorpusSourceDoc(corpusId, sourceId, docId);
+      const result = await client.getCorpusSourceDocument({ corpusId, sourceId, documentId });
       showResult(result, program.opts().raw);
     })
   );
@@ -425,11 +524,12 @@ agent.alias('agents');
 agent
   .command('list')
   .description('List all agents.')
+  .option('--teamId <string>', 'The team ID to list agents for. If unspecified, the current user will be used.')
   .action(
     catchErrors(async () => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
       const result = await FixieAgent.ListAgents(client);
-      showResult(await Promise.all(result.map((agent) => agent.agentId)), program.opts().raw);
+      showResult(await Promise.all(result.map((agent) => agent.metadata)), program.opts().raw);
     })
   );
 
@@ -439,8 +539,14 @@ agent
   .action(
     catchErrors(async (agentId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await FixieAgent.GetAgent(client, agentId);
-      showResult(result.metadata, program.opts().raw);
+      try {
+        const result = await FixieAgent.GetAgent({ client, agentId });
+        showResult(result.metadata, program.opts().raw);
+      } catch (e) {
+        // Try again with the agent handle.
+        const result = await FixieAgent.GetAgent({ client, handle: agentId });
+        showResult(result.metadata, program.opts().raw);
+      }
     })
   );
 
@@ -450,7 +556,7 @@ agent
   .action(
     catchErrors(async (agentHandle: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const agent = await FixieAgent.GetAgent(client, agentHandle);
+      const agent = await FixieAgent.GetAgent({ client, handle: agentHandle });
       const result = agent.delete();
       showResult(result, program.opts().raw);
     })
@@ -462,7 +568,7 @@ agent
   .action(
     catchErrors(async (agentHandle: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const agent = await FixieAgent.GetAgent(client, agentHandle);
+      const agent = await FixieAgent.GetAgent({ client, handle: agentHandle });
       const result = agent.update({ published: true });
       showResult(result, program.opts().raw);
     })
@@ -474,23 +580,61 @@ agent
   .action(
     catchErrors(async (agentHandle: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const agent = await FixieAgent.GetAgent(client, agentHandle);
+      const agent = await FixieAgent.GetAgent({ client, handle: agentHandle });
       const result = agent.update({ published: false });
       showResult(result, program.opts().raw);
     })
   );
 
 agent
-  .command('create <agentHandle> [agentName] [agentDescription] [agentMoreInfoUrl]')
+  .command('create <agentHandle>')
   .description('Create an agent.')
+  .option('--name <string>', 'Agent name')
+  .option('--description <string>', 'Agent description')
+  .option('--url <string>', 'More info URL for agent')
+  .option('--teamId <string>', 'Team ID to own the new agent. If not specified, the current user will own it.')
   .action(
-    catchErrors(
-      async (agentHandle: string, agentName?: string, agentDescription?: string, agentMoreInfoUrl?: string) => {
-        const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-        const result = await FixieAgent.CreateAgent(client, agentHandle, agentName, agentDescription, agentMoreInfoUrl);
-        showResult(result.metadata, program.opts().raw);
-      }
-    )
+    catchErrors(async (agentHandle: string, opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await FixieAgent.CreateAgent({
+        client,
+        handle: agentHandle,
+        teamId: opts.teamId,
+        name: opts.name,
+        description: opts.description,
+        moreInfoUrl: opts.url,
+      });
+      showResult(result.metadata, program.opts().raw);
+    })
+  );
+
+agent
+  .command('logs <agentId>')
+  .description('Fetch agent logs.')
+  .option('--start <date>', 'Start date', parseDate)
+  .option('--end <date>', 'End date', parseDate)
+  .option('--limit <number>', 'Max number of results to return')
+  .option('--offset <number>', 'Starting offset of results to return')
+  .option('--minSeverity <number>', 'Minimum log severity level')
+  .option('--conversation <string>', 'Conversation ID of logs to return')
+  .option('--message <string>', 'Message ID of logs to return')
+  .action(
+    catchErrors(async (agentId: string, opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await FixieAgent.GetAgent({ client, agentId });
+      showResult(
+        await result.getLogs({
+          start: opts.start,
+          end: opts.end,
+          limit: opts.limit,
+          offset: opts.offset,
+          minSeverity: opts.minSeverity,
+          conversationId: opts.conversation,
+          messageId: opts.message,
+        }),
+        program.opts().raw
+      );
+    })
   );
 
 registerDeployCommand(agent);
@@ -505,7 +649,7 @@ revision
   .action(
     catchErrors(async (agentId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = (await FixieAgent.GetAgent(client, agentId)).metadata.allRevisions;
+      const result = (await FixieAgent.GetAgent({ client, agentId })).metadata.allRevisions;
       showResult(result, program.opts().raw);
     })
   );
@@ -516,7 +660,7 @@ revision
   .action(
     catchErrors(async (agentId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const agent = await FixieAgent.GetAgent(client, agentId);
+      const agent = await FixieAgent.GetAgent({ client, agentId });
       const result = await agent.getCurrentRevision();
       showResult(result, program.opts().raw);
     })
@@ -528,7 +672,7 @@ revision
   .action(
     catchErrors(async (agentId: string, revisionId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const agent = await FixieAgent.GetAgent(client, agentId);
+      const agent = await FixieAgent.GetAgent({ client, agentId });
       const result = await agent.setCurrentRevision(revisionId);
       showResult(result, program.opts().raw);
     })
@@ -540,8 +684,126 @@ revision
   .action(
     catchErrors(async (agentId: string, revisionId: string) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const agent = await FixieAgent.GetAgent(client, agentId);
+      const agent = await FixieAgent.GetAgent({ client, agentId });
       const result = await agent.deleteRevision(revisionId);
+      showResult(result, program.opts().raw);
+    })
+  );
+
+const team = program.command('team').description('Team related commands');
+team.alias('teams');
+
+team
+  .command('list')
+  .description('List teams')
+  .option('--offset <number>', 'Start offset for results to return')
+  .option('--limit <number>', 'Limit on the number of results to return')
+  .action(
+    catchErrors(async (opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.listTeams({ offset: opts.offset, limit: opts.limit });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('get <teamId>')
+  .description('Get information about a team')
+  .action(
+    catchErrors(async (teamId: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.getTeam({ teamId });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('delete <teamId>')
+  .description('Delete the given team')
+  .action(
+    catchErrors(async (teamId: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.deleteTeam({ teamId });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('invite <teamId> <email>')
+  .description('Invite a new member to a team')
+  .option('--admin', 'Invite the new member as a team admin')
+  .action(
+    catchErrors(async (teamId: string, email: string, opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.inviteTeamMember({
+        teamId,
+        email,
+        isAdmin: opts.admin,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('uninvite <teamId> <email>')
+  .description('Cancel a pending invitation for a team membership')
+  .action(
+    catchErrors(async (teamId: string, email: string) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.cancelInvitation({
+        teamId,
+        email,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('remove <teamId> <userId>')
+  .description('Remove a member from a team')
+  .action(
+    catchErrors(async (teamId: string, userId: string, opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.removeTeamMember({
+        teamId,
+        userId,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('update <teamId> <userId>')
+  .description('Set or clear admin role for a member of a team')
+  .option('--admin', 'Set member as team admin')
+  .option('--no-admin', 'Unset member as team admin')
+  .action(
+    catchErrors(async (teamId: string, userId: string, opts) => {
+      if (opts.admin === undefined) {
+        throw new Error('Must specify --admin or --no-admin');
+      }
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.updateTeamMember({
+        teamId,
+        userId,
+        isAdmin: opts.admin ?? false,
+      });
+      showResult(result, program.opts().raw);
+    })
+  );
+
+team
+  .command('create')
+  .description('Create a new team')
+  .option('--name <string>', 'The name of the team to create')
+  .option('--description <string>', 'The description for this team')
+  .action(
+    catchErrors(async (opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await client.createTeam({
+        displayName: opts.name,
+        description: opts.description,
+      });
       showResult(result, program.opts().raw);
     })
   );

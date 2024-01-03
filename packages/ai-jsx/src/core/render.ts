@@ -105,6 +105,12 @@ interface RenderOpts<TIntermediate = string, TFinal = string> {
    * Indicates that the stream should be append-only.
    */
   appendOnly?: boolean;
+
+  /**
+   * Indicates that intermediate frames should be skipped if the next
+   * frame is available without performing I/O.
+   */
+  batchFrames?: boolean;
 }
 
 /**
@@ -320,19 +326,10 @@ async function* renderStream(
     const logImpl = renderingContext.getContext(LoggerContext);
     const renderId = uuidv4();
     try {
-      /**
-       * This approach is pretty noisy because there are many internal components about which the users don't care.
-       * For instance, if the user writes <ChatCompletion>, that'll generate a bunch of internal helpers to
-       * locate + call the model provider, etc.
-       *
-       * To get around this, maybe we want components to be able to choose the loglevel used for their rendering.
-       */
-      logImpl.log('debug', renderable, renderId, 'Start rendering element');
       const finalResult = yield* renderingContext.render(
         renderable.render(renderingContext, new BoundLogger(logImpl, renderId, renderable), appendOnly),
         recursiveRenderOpts
       );
-      logImpl.log('debug', renderable, renderId, { finalResult }, 'Finished rendering element');
       return finalResult;
     } catch (ex) {
       logImpl.logException(renderable, renderId, ex);
@@ -433,8 +430,35 @@ function createRenderContextInternal(
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         const shouldStop = (opts?.stop || (() => false)) as ElementPredicate;
         const generatorToWrap = renderStream(context, renderable, shouldStop, Boolean(opts?.appendOnly));
+
+        let nextPromise = generatorToWrap.next();
         while (true) {
-          const next = await generatorToWrap.next();
+          let next = await nextPromise;
+
+          if (!next.done && opts?.batchFrames) {
+            // We use `setImmediate` or `setTimeout` to ensure that all (recursively) queued microtasks
+            // are completed. (Promise.then handlers are queued as microtasks.)
+            // See https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide
+            const nullPromise = new Promise<null>((resolve) => {
+              if ('setImmediate' in globalThis) {
+                setImmediate(() => resolve(null));
+              } else {
+                setTimeout(() => resolve(null), 0);
+              }
+            });
+
+            while (!next.done) {
+              nextPromise = generatorToWrap.next();
+
+              // Consume from the generator until the null promise resolves.
+              const nextOrNull = await Promise.race([nextPromise, nullPromise]);
+              if (nextOrNull === null) {
+                break;
+              }
+              next = nextOrNull;
+            }
+          }
+
           const value = opts?.stop ? (next.value as TFinal) : (next.value.join('') as TFinal);
           if (next.done) {
             if (promiseResult === null) {
@@ -452,6 +476,10 @@ function createRenderContextInternal(
           } else {
             // Otherwise yield the (string) value as-is.
             yield value;
+          }
+
+          if (!opts?.batchFrames) {
+            nextPromise = generatorToWrap.next();
           }
         }
       })() as AsyncGenerator<TIntermediate, TFinal>;

@@ -53,7 +53,7 @@ export interface FixieEmbedProps extends React.IframeHTMLAttributes<HTMLIFrameEl
   fixieHost?: string;
 }
 
-const defaultFixieHost = 'https://fixie.vercel.app';
+const defaultFixieHost = 'https://embed.fixie.ai';
 
 /**
  * A component to embed the Generic Fixie Chat UI on your page.
@@ -188,7 +188,7 @@ export function FloatingFixieEmbed({ fixieHost, ...restProps }: FixieEmbedProps)
   );
 }
 
-function getBaseIframeProps({
+export function getBaseIframeProps({
   speak,
   debug,
   agentSendsGreeting,
@@ -200,7 +200,10 @@ function getBaseIframeProps({
   FixieEmbedProps,
   'speak' | 'debug' | 'fixieHost' | 'agentId' | 'agentSendsGreeting' | 'chatTitle' | 'primaryColor'
 >) {
-  const embedUrl = new URL(`/embed/${agentId}`, fixieHost ?? defaultFixieHost);
+  const embedUrl = new URL(
+    agentId.includes('/') ? `/embed/${agentId}` : `/agents/${agentId}`,
+    fixieHost ?? defaultFixieHost
+  );
   if (speak) {
     embedUrl.searchParams.set('speak', '1');
   }

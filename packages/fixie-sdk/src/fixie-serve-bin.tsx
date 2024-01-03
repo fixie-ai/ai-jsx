@@ -7,12 +7,12 @@ import { hideBin } from 'yargs/helpers';
 import { fastify } from 'fastify';
 import { Readable } from 'stream';
 import { createRenderContext, Component } from 'ai-jsx';
-import { FixieAPIContext } from 'ai-jsx/batteries/fixie';
 import { InvokeAgentRequest } from './types.js';
-import { FixieRequestWrapper, RequestContext } from './request-wrapper.js';
+import { FixieRequestWrapper } from './request-wrapper.js';
 
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import path from 'path';
+import { debugRepresentation } from 'ai-jsx/core/debug';
 
 async function serve({
   packagePath,
@@ -61,17 +61,20 @@ async function serve({
     try {
       const invokeAgentRequest = req.body as InvokeAgentRequest;
       const renderable = (
-        <FixieAPIContext.Provider value={{ url: fixieApiUrl, authToken: (req as any).fixieAuthToken }}>
-          <RequestContext.Provider
-            value={{ request: invokeAgentRequest, agentId: (req as any).fixieVerifiedToken.payload.aid }}
-          >
-            <FixieRequestWrapper>
-              <Handler {...(invokeAgentRequest.parameters ?? {})} />
-            </FixieRequestWrapper>
-          </RequestContext.Provider>
-        </FixieAPIContext.Provider>
+        <FixieRequestWrapper
+          request={invokeAgentRequest}
+          fixieApiUrl={fixieApiUrl}
+          fixieAuthToken={(req as any).fixieAuthToken}
+          agentId={(req as any).fixieVerifiedToken.payload.aid}
+          {...debugRepresentation((e) => e.props.children)}
+        >
+          <Handler {...(invokeAgentRequest.parameters ?? {})} />
+        </FixieRequestWrapper>
       );
-      const generator = createRenderContext({ enableOpenTelemetry: true }).render(renderable)[Symbol.asyncIterator]();
+
+      // Enable frame batching to run ahead as aggressively as possible and ensure we don't have frame tearing. (See MessageState.)
+      const renderResult = createRenderContext({ enableOpenTelemetry: true }).render(renderable, { batchFrames: true });
+      const generator = renderResult[Symbol.asyncIterator]();
       return res
         .status(200)
         .type('application/jsonl')

@@ -76,12 +76,14 @@ export async function Authenticate({
     // No key available. Need to punt.
     return null;
   }
-  const client = FixieClient.Create(useApiUrl, useApiKey);
-  const userInfo = await client.userInfo();
-  if (userInfo.is_anonymous) {
+  try {
+    const client = new FixieClient({ apiKey: useApiKey, url: useApiUrl });
+    await client.userInfo();
+    return client;
+  } catch (error: any) {
+    // If the client is not authenticated, we will get a 401 error.
     return null;
   }
-  return client;
 }
 
 /** Returns an authenticated FixieClient, starting an OAuth flow to authenticate the user if necessary. */
@@ -100,9 +102,11 @@ export async function AuthenticateOrLogIn({
       configFile,
     });
     if (client) {
-      const userInfo = await client.userInfo();
-      if (!userInfo.is_anonymous) {
+      try {
+        await client.userInfo();
         return client;
+      } catch (error: any) {
+        // If the client is not authenticated, we will get a 401 error.
       }
     }
   }
@@ -120,7 +124,7 @@ export async function AuthenticateOrLogIn({
   const userInfo = await client.userInfo();
   term('🎉 Successfully logged into ')
     .green(apiUrl ?? FIXIE_API_URL)(' as ')
-    .green(userInfo.username)('\n');
+    .green(userInfo.email)('\n');
   return client;
 }
 

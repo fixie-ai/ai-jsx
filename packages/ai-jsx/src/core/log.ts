@@ -129,6 +129,15 @@ export class OpenTelemetryLogger extends LogImplementation {
   ): void {
     this.logger.emit({
       severityText: level.toUpperCase(),
+      severityNumber: {
+        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#field-severitynumber
+        trace: 1,
+        debug: 5,
+        info: 9,
+        warn: 13,
+        error: 17,
+        fatal: 21,
+      }[level],
       body: typeof metadataOrMessage === 'object' ? message ?? '' : metadataOrMessage,
       attributes: {
         element: `<${element.tag.name}>`,

@@ -3,8 +3,8 @@ import { InvokeAgentRequest } from './types.js';
 import { ShowConversation, ConversationHistoryContext } from 'ai-jsx/core/conversation';
 import { Json } from './json.js';
 import { FixieConversation } from './conversation.js';
-import { OpenAI, OpenAIClient, ValidChatModel as OpenAIChatModel } from 'ai-jsx/lib/openai';
-import { Anthropic, AnthropicClient, ValidChatModel as AnthropicChatModel } from 'ai-jsx/lib/anthropic';
+import { OpenAI, OpenAIClient } from 'ai-jsx/lib/openai';
+import { Anthropic, AnthropicClient } from 'ai-jsx/lib/anthropic';
 import { cohereContext } from 'ai-jsx/lib/cohere';
 import { FixieAPIContext } from 'ai-jsx/batteries/fixie';
 
@@ -14,12 +14,54 @@ export const RequestContext = AI.createContext<{
 } | null>(null);
 
 /**
+ * Renders to "in-progress" while `children` is still being rendered, and "done" when it's done.
+ *
+ * `children` should already be memoized to ensure that it's only rendered once.
+ *
+ * To ensure that this component renders consistently with `children`, a render containing both
+ * nodes MUST use frame batching. Without it, there will be frames where the result of this component
+ * will be inconsistent with the component whose rendering it's tracking.
+ */
+async function* MessageState({ children }: { children: AI.Node }, { render }: AI.ComponentContext) {
+  const renderResult = render(children);
+  let didYield = false;
+  for await (const _ of renderResult) {
+    if (!didYield) {
+      didYield = true;
+      yield 'in-progress';
+    }
+  }
+
+  return 'done';
+}
+
+/**
  * Wraps a conversational AI.JSX component to be used as a Fixie request handler.
  *
  * Emits newline-delimited JSON for each message.
  */
-export function FixieRequestWrapper({ children }: { children: AI.Node }, { getContext, memo }: AI.ComponentContext) {
-  let wrappedNode: AI.Node = (
+export function FixieRequestWrapper({
+  children,
+  fixieApiUrl,
+  fixieAuthToken,
+  request,
+  agentId,
+}: {
+  children: AI.Node;
+  fixieApiUrl: string;
+  fixieAuthToken: string;
+  agentId: string;
+  request: InvokeAgentRequest;
+}) {
+  let wrappedNode = children;
+
+  wrappedNode = (
+    <ConversationHistoryContext.Provider value={<FixieConversation />}>
+      {wrappedNode}
+    </ConversationHistoryContext.Provider>
+  );
+
+  wrappedNode = (
     <ShowConversation
       present={(message) => {
         switch (message.type) {
@@ -29,6 +71,7 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
               <Json>
                 {{
                   kind: 'text',
+                  state: <MessageState>{message.element}</MessageState>,
                   content: message.element,
                   metadata: message.element.props.metadata,
                 }}
@@ -42,6 +85,8 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
               <Json>
                 {{
                   kind: 'functionCall',
+                  id: message.element.props.id,
+                  partial: message.element.props.partial,
                   name: message.element.props.name,
                   args: message.element.props.args,
                   metadata: message.element.props.metadata,
@@ -54,6 +99,7 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
               <Json>
                 {{
                   kind: 'functionResponse',
+                  id: message.element.props.id,
                   name: message.element.props.name,
                   response: <>{message.element.props.children}</>,
                   metadata: message.element.props.metadata,
@@ -64,38 +110,22 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
         }
       }}
     >
-      {children}
+      {wrappedNode}
     </ShowConversation>
   );
 
-  const { url: apiBaseUrl, authToken } = getContext(FixieAPIContext);
-
-  const requestContext = getContext(RequestContext);
-  if (!requestContext) {
-    throw new Error('RequestContext must be provided to FixieRequestWrapper.');
-  }
-  const { request } = requestContext;
-
-  const modelProvider = request.generationParams?.modelProvider?.toLowerCase() ?? 'openai';
-  if (modelProvider !== 'openai' && modelProvider !== 'anthropic') {
-    throw new Error(`The model provider ("${request.generationParams?.modelProvider}") is not supported.`);
-  }
-
-  // Set both OpenAI and Anthropic Clients, but only configure the requested one as the default ChatCompletion model.
+  // Set both OpenAI and Anthropic Clients, but set the default chat/completion models to OpenAI.
   wrappedNode = (
     <OpenAI
       client={
         new OpenAIClient({
-          apiKey: authToken,
-          baseURL: new URL('api/openai-proxy/v1', apiBaseUrl).toString(),
-          fetch: globalThis.fetch,
+          apiKey: fixieAuthToken,
+          baseURL: new URL('api/openai-proxy/v1', fixieApiUrl).toString(),
+          fetch: globalThis.fetch as any,
         })
       }
-      chatModel={
-        !request.generationParams?.modelProvider || request.generationParams.modelProvider.toLowerCase() === 'openai'
-          ? (request.generationParams?.model as OpenAIChatModel | undefined) ?? 'gpt-3.5-turbo'
-          : undefined
-      }
+      chatModel="gpt-3.5-turbo"
+      completionModel="text-davinci-003"
     >
       {wrappedNode}
     </OpenAI>
@@ -104,12 +134,11 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
   wrappedNode = (
     <Anthropic
       client={
-        new AnthropicClient({ authToken, apiKey: null, baseURL: new URL('api/anthropic-proxy', apiBaseUrl).toString() })
-      }
-      chatModel={
-        request.generationParams?.modelProvider?.toLowerCase() === 'anthropic'
-          ? (request.generationParams.model as AnthropicChatModel | undefined) ?? 'claude-instant-1'
-          : undefined
+        new AnthropicClient({
+          authToken: fixieAuthToken,
+          apiKey: null,
+          baseURL: new URL('api/anthropic-proxy', fixieApiUrl).toString(),
+        })
       }
     >
       {wrappedNode}
@@ -119,15 +148,19 @@ export function FixieRequestWrapper({ children }: { children: AI.Node }, { getCo
   // Add the Cohere client.
   wrappedNode = (
     <cohereContext.Provider
-      value={{ api_key: authToken, api_url: new URL('api/cohere-proxy/v1', apiBaseUrl).toString() }}
+      value={{ api_key: fixieAuthToken, api_url: new URL('api/cohere-proxy/v1', fixieApiUrl).toString() }}
     >
       {wrappedNode}
     </cohereContext.Provider>
   );
 
-  return (
-    <ConversationHistoryContext.Provider value={memo(<FixieConversation />)}>
+  wrappedNode = <RequestContext.Provider value={{ request, agentId }}>{wrappedNode}</RequestContext.Provider>;
+
+  wrappedNode = (
+    <FixieAPIContext.Provider value={{ url: fixieApiUrl, authToken: fixieAuthToken }}>
       {wrappedNode}
-    </ConversationHistoryContext.Provider>
+    </FixieAPIContext.Provider>
   );
+
+  return wrappedNode;
 }

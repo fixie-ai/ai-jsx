@@ -1,14 +1,25 @@
-import { present } from './conversation.js';
-import { UseTools } from './use-tools-eject.js';
+import { getNextConversationStep, present } from './conversation.js';
 import { SidekickSystemMessage } from './system-message.js';
 import { UseToolsProps } from '../../use-tools.js';
 import * as AI from '../../../index.js';
-import { ConversationHistory, ShowConversation } from '../../../core/conversation.js';
+import { ConversationHistory, Converse, ShowConversation } from '../../../core/conversation.js';
 import { MergeExclusive } from 'type-fest';
 
 interface UniversalSidekickProps {
   tools?: UseToolsProps['tools'];
   systemMessage?: AI.Node;
+
+  /**
+   * An interjection to emit when the model requests a function call without emitting any text.
+   *
+   * e.g. "Let me check on that."
+   */
+  functionCallInterjection?: AI.Node;
+
+  /**
+   * The conversation to act on. If not specified, uses the <ConversationHistory /> component.
+   */
+  children?: AI.Node;
 }
 
 type OutputFormatSidekickProps = MergeExclusive<
@@ -77,21 +88,32 @@ type OutputFormatSidekickProps = MergeExclusive<
 
 export type SidekickProps = UniversalSidekickProps & OutputFormatSidekickProps;
 
+export type SidekickOutputFormat = Exclude<SidekickProps['outputFormat'], undefined>;
+
 export function Sidekick(props: SidekickProps) {
+  const outputFormat = props.outputFormat ?? 'text/mdx';
   return (
-    <ShowConversation present={present}>
-      <UseTools tools={props.tools ?? undefined} showSteps>
+    <ShowConversation present={(msg) => present(msg, outputFormat)}>
+      <Converse
+        reply={(messages, fullConversation) =>
+          getNextConversationStep(messages, fullConversation, outputFormat, props.tools, props.functionCallInterjection)
+        }
+      >
+        {props.systemMessage}
         <SidekickSystemMessage
-          timeZone="America/Los_Angeles"
-          includeNextStepsRecommendations={props.includeNextStepsRecommendations ?? true}
-          useCitationCard={props.useCitationCard ?? true}
-          outputFormat={props.outputFormat ?? 'text/mdx'}
+          // TODO: get timeZone from the user's browser
+          includeNextStepsRecommendations={
+            outputFormat === 'text/mdx' && (props.includeNextStepsRecommendations ?? true)
+          }
+          // check if there are any tools instead of explicitly checking if there's a knowledge base
+          hasKnowledgeBase={Object.keys(props.tools ?? {}).length === 0}
+          useCitationCard={outputFormat === 'text/mdx' && (props.useCitationCard ?? true)}
+          outputFormat={outputFormat}
           userProvidedGenUIUsageExamples={props.genUIExamples}
           userProvidedGenUIComponentNames={props.genUIComponentNames}
         />
-        <ConversationHistory />
-        {props.systemMessage}
-      </UseTools>
+        {props.children ?? <ConversationHistory />}
+      </Converse>
     </ShowConversation>
   );
 }

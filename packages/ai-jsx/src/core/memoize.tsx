@@ -94,6 +94,7 @@ export function partialMemo(renderable: Renderable, id: number): Node | Renderab
       async *[Symbol.asyncIterator](): AsyncGenerator<Node | AppendOnlyStreamValue, Node | AppendOnlyStreamValue> {
         let index = 0;
         let isAppendOnly = false;
+        let didYieldSomething = false;
 
         while (true) {
           if (index < sink.length) {
@@ -102,6 +103,13 @@ export function partialMemo(renderable: Renderable, id: number): Node | Renderab
             while (index < sink.length) {
               let value = sink[index++];
               if (isAppendOnlyStreamValue(value)) {
+                if (!isAppendOnly && didYieldSomething && concatenatedNodes.length > 0) {
+                  // The stream is transitioning to append-only, but we previously yielded a value
+                  // that needs to be replaced before we start appending. Yield the replacement
+                  // value (`concatenatedNodes`) before we start appending.
+                  yield concatenatedNodes;
+                  concatenatedNodes = [];
+                }
                 isAppendOnly = true;
                 value = valueToAppend(value);
               }
@@ -119,6 +127,7 @@ export function partialMemo(renderable: Renderable, id: number): Node | Renderab
               return valueToYield;
             }
 
+            didYieldSomething = true;
             yield valueToYield;
             continue;
           }

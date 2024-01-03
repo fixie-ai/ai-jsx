@@ -128,7 +128,7 @@ export type FunctionParameters = Record<string, PlainFunctionParameter> | z.ZodO
 function AutomaticCompletionModel({ children, ...props }: ModelPropsWithChildren) {
   if (getEnvVar('OPENAI_API_KEY', false) || getEnvVar('OPENAI_API_BASE', false)) {
     return (
-      <OpenAICompletionModel model="text-davinci-003" {...props}>
+      <OpenAICompletionModel model="gpt-3.5-turbo-instruct" {...props}>
         {children}
       </OpenAICompletionModel>
     );
