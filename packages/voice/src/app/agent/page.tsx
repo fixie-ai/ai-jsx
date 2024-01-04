@@ -229,6 +229,7 @@ const AgentPageComponent: React.FC = () => {
   const tapOrClick = typeof window != 'undefined' && 'ontouchstart' in window ? 'Tap' : 'Click';
   const idleText = `${tapOrClick} anywhere to start!`;
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
+  const asrModel = searchParams.get('asrModel') || undefined;
   const asrLanguage = searchParams.get('asrLanguage') || undefined;
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
   const ttsModel = searchParams.get('ttsModel') || undefined;
@@ -254,6 +255,7 @@ const AgentPageComponent: React.FC = () => {
     console.log(`[page] init asr=${asrProvider} tts=${ttsProvider} llm=${model} agent=${agentId} docs=${docs}`);
     const manager = createChatManager({
       asrProvider,
+      asrModel,
       asrLanguage,
       ttsProvider,
       ttsModel,
