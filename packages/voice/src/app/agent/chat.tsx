@@ -251,6 +251,7 @@ export interface ChatManagerInit {
   model: string;
   agentId: string;
   docs: boolean;
+  asrModel?: string;
   asrLanguage?: string;
   ttsModel?: string;
   ttsVoice?: string;
@@ -638,6 +639,7 @@ export class WebRtcChatManager implements ChatManager {
       params: {
         asr: {
           provider: this.params.asrProvider,
+          model: this.params.asrModel,
           language: this.params.asrLanguage,
         },
         tts: {
