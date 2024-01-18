@@ -87,7 +87,7 @@ export class ChatRequest {
   public outMessage = '';
   public conversationId?: string;
   public done = false;
-  public onUpdate?: (request: ChatRequest, newText: string) => void;
+  public onUpdate?: (request: ChatRequest, newText: string, firstToken: boolean) => void;
   public onComplete?: (request: ChatRequest) => void;
   public startMillis?: number;
   public requestLatency?: number;
@@ -135,8 +135,9 @@ export class ChatRequest {
         console.log(`[chat] received agent response, latency=${this.requestLatency.toFixed(0)} ms`);
       }
 
+      const firstToken = this.outMessage.length === 0;
       this.outMessage += newText;
-      this.onUpdate?.(this, newText);
+      this.onUpdate?.(this, newText, firstToken);
     }
   }
 
@@ -173,6 +174,7 @@ export class ChatRequest {
     }
 
     const reader = response.body!.pipeThrough(new TextDecoderStream()).pipeThrough(jsonLinesTransformer()).getReader();
+    let firstToken = true;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -214,7 +216,8 @@ export class ChatRequest {
         }
 
         this.outMessage = currentMessage;
-        this.onUpdate?.(this, delta);
+        this.onUpdate?.(this, delta, firstToken);
+        firstToken = false;
 
         if (currentTurn.state === 'done') {
           this.ensureComplete();
@@ -248,10 +251,11 @@ export interface ChatManagerInit {
   model: string;
   agentId: string;
   docs: boolean;
+  asrModel?: string;
   asrLanguage?: string;
   ttsModel?: string;
   ttsVoice?: string;
-  webrtc: boolean;
+  webrtcUrl?: string;
 }
 
 /**
@@ -259,11 +263,9 @@ export interface ChatManagerInit {
  */
 export interface ChatManager {
   onStateChange?: (state: ChatManagerState) => void;
-  onInputChange?: (text: string, final: boolean, latency?: number) => void;
-  onOutputChange?: (text: string, final: boolean, latency: number) => void;
-  onAudioGenerate?: (latency: number) => void;
-  onAudioStart?: (latency: number) => void;
-  onAudioEnd?: () => void;
+  onInputChange?: (text: string, final: boolean) => void;
+  onOutputChange?: (text: string, final: boolean) => void;
+  onLatencyChange?: (kind: string, latency: number) => void;
   onError?: () => void;
 
   state: ChatManagerState;
@@ -289,11 +291,9 @@ export class LocalChatManager implements ChatManager {
   private readonly agentId: string;
   private readonly docs: boolean;
   onStateChange?: (state: ChatManagerState) => void;
-  onInputChange?: (text: string, final: boolean, latency?: number) => void;
-  onOutputChange?: (text: string, final: boolean, latency: number) => void;
-  onAudioGenerate?: (latency: number) => void;
-  onAudioStart?: (latency: number) => void;
-  onAudioEnd?: () => void;
+  onInputChange?: (text: string, final: boolean) => void;
+  onOutputChange?: (text: string, final: boolean) => void;
+  onLatencyChange?: (kind: string, latency: number) => void;
   onError?: () => void;
   constructor({ asrProvider, asrLanguage, ttsProvider, ttsModel, ttsVoice, model, agentId, docs }: ChatManagerInit) {
     this.micManager = new MicManager();
@@ -402,7 +402,7 @@ export class LocalChatManager implements ChatManager {
         final ? ' FINAL' : ''
       } latency=${adjustedLatency?.toFixed(0)} ms`
     );
-    this.onInputChange?.(text, final, latency);
+    this.onInputChange?.(text, final);
 
     // Ignore partial transcripts if VAD indicates the user is still speaking.
     if (!final && this.micManager.isVoiceActive) {
@@ -417,6 +417,7 @@ export class LocalChatManager implements ChatManager {
     if (final) {
       this.history = newMessages;
       this.micManager.isEnabled = false;
+      this.onLatencyChange?.('asr', adjustedLatency!);
     }
 
     // If it doesn't match an existing request, kick off a new one.
@@ -434,7 +435,7 @@ export class LocalChatManager implements ChatManager {
    */
   private dispatchRequest(normalized: string, messages: ChatMessage[], final: boolean) {
     const request = new ChatRequest(messages, this.model, this.agentId, this.docs, final);
-    request.onUpdate = (request, newText) => this.handleRequestUpdate(request, newText);
+    request.onUpdate = (request, newText, firstToken) => this.handleRequestUpdate(request, newText, firstToken);
     request.onComplete = (request) => this.handleRequestDone(request);
     this.pendingRequests.set(normalized, request);
     request.start();
@@ -446,7 +447,7 @@ export class LocalChatManager implements ChatManager {
     request.active = true;
     this.tts.play(request.outMessage);
     if (!request.done) {
-      this.onOutputChange?.(request.outMessage, false, request.requestLatency!);
+      this.onOutputChange?.(request.outMessage, false);
     } else {
       this.finishRequest(request);
     }
@@ -464,9 +465,12 @@ export class LocalChatManager implements ChatManager {
    * Handle new in-progress responses from the LLM. If the request is not marked
    * as active, it's a speculative request that we ignore for now.
    */
-  private handleRequestUpdate(request: ChatRequest, newText: string) {
+  private handleRequestUpdate(request: ChatRequest, newText: string, firstToken: boolean) {
     if (request.active) {
-      this.onOutputChange?.(request.outMessage, false, request.requestLatency!);
+      this.onOutputChange?.(request.outMessage, false);
+      if (firstToken) {
+        this.onLatencyChange?.('llm', request.streamLatency!);
+      }
       this.tts.play(newText);
     }
   }
@@ -489,14 +493,14 @@ export class LocalChatManager implements ChatManager {
     const assistantMessage = new ChatMessage('assistant', request.outMessage, request.conversationId);
     this.history.push(assistantMessage);
     this.pendingRequests.clear();
-    this.onOutputChange?.(request.outMessage, true, request.requestLatency!);
+    this.onOutputChange?.(request.outMessage, true);
   }
   /**
    * Handle the start of generation from the TTS.
    */
   private handleGenerationStart() {
     if (this._state != ChatManagerState.THINKING) return;
-    this.onAudioGenerate?.(this.tts.bufferLatency!);
+    this.onLatencyChange?.('llmt', this.tts.bufferLatency!);
   }
   /**
    * Handle the start of playout from the TTS.
@@ -504,14 +508,13 @@ export class LocalChatManager implements ChatManager {
   private handlePlaybackStart() {
     if (this._state != ChatManagerState.THINKING) return;
     this.changeState(ChatManagerState.SPEAKING);
-    this.onAudioStart?.(this.tts.latency! - this.tts.bufferLatency!);
+    this.onLatencyChange?.('tts', this.tts.latency! - this.tts.bufferLatency!);
   }
   /**
    * Handle the end of playout from the TTS.
    */
   private handlePlaybackComplete() {
     if (this._state != ChatManagerState.SPEAKING) return;
-    this.onAudioEnd?.();
     this.micManager.isEnabled = true;
     this.changeState(ChatManagerState.LISTENING);
   }
@@ -544,15 +547,15 @@ export class WebRtcChatManager implements ChatManager {
   private socket?: WebSocket;
   private room?: Room;
   private localAudioTrack?: LocalAudioTrack;
+  /** True when we should have entered speaking state but didn't due to analyzer not being ready. */
+  private delayedSpeakingState = false;
   private inAnalyzer?: StreamAnalyzer;
   private outAnalyzer?: StreamAnalyzer;
   private pinger?: NodeJS.Timer;
   onStateChange?: (state: ChatManagerState) => void;
-  onInputChange?: (text: string, final: boolean, latency?: number) => void;
-  onOutputChange?: (text: string, final: boolean, latency: number) => void;
-  onAudioGenerate?: (latency: number) => void;
-  onAudioStart?: (latency: number) => void;
-  onAudioEnd?: () => void;
+  onInputChange?: (text: string, final: boolean) => void;
+  onOutputChange?: (text: string, final: boolean) => void;
+  onLatencyChange?: (kind: string, latency: number) => void;
   onError?: () => void;
 
   constructor(params: ChatManagerInit) {
@@ -571,7 +574,7 @@ export class WebRtcChatManager implements ChatManager {
   }
   warmup() {
     const isLocalHost = window.location.hostname === 'localhost';
-    const url = !isLocalHost ? 'wss://wsapi.fixie.ai' : 'ws://localhost:8100';
+    const url = this.params.webrtcUrl || (!isLocalHost ? 'wss://wsapi.fixie.ai' : 'ws://localhost:8100');
     this.socket = new WebSocket(url);
     this.socket.onopen = () => this.handleSocketOpen();
     this.socket.onmessage = (event) => this.handleSocketMessage(event);
@@ -579,6 +582,7 @@ export class WebRtcChatManager implements ChatManager {
   }
   async start() {
     console.log('[chat] starting');
+    this.audioContext.resume();
     this.audioElement.play();
     const localTracks = await createLocalTracks({ audio: true, video: false });
     this.localAudioTrack = localTracks[0] as LocalAudioTrack;
@@ -589,7 +593,6 @@ export class WebRtcChatManager implements ChatManager {
       this.sendData(obj);
     }, 5000);
     this.maybePublishLocalAudio();
-    this.changeState(ChatManagerState.LISTENING);
   }
   async stop() {
     console.log('[chat] stopping');
@@ -636,6 +639,7 @@ export class WebRtcChatManager implements ChatManager {
       params: {
         asr: {
           provider: this.params.asrProvider,
+          model: this.params.asrModel,
           language: this.params.asrLanguage,
         },
         tts: {
@@ -657,18 +661,29 @@ export class WebRtcChatManager implements ChatManager {
     switch (msg.type) {
       case 'room_info':
         this.room = new Room();
-        await this.room.connect(msg.roomUrl, msg.token);
-        console.log('[chat] connected to room', msg.roomUrl);
-        this.maybePublishLocalAudio();
         this.room.on(RoomEvent.TrackSubscribed, (track) => this.handleTrackSubscribed(track));
         this.room.on(RoomEvent.DataReceived, (payload, participant) => this.handleDataReceived(payload, participant));
+        await this.room.connect(msg.roomUrl, msg.token);
+        console.log('[chat] connected to room', this.room.name);
+        this.maybePublishLocalAudio();
         break;
       default:
         console.warn('unknown message type', msg.type);
     }
   }
   private handleSocketClose(event: CloseEvent) {
-    console.log(`[chat] socket closed, code=${event.code}, reason=${event.reason}`);
+    if (event.code === 1000) {
+      // We initiated this shutdown, so we've already cleaned up.
+      // Reconnect to prepare for the next session.
+      console.log('[chat] socket closed normally');
+      this.warmup();
+    } else if (event.code === 1006) {
+      // This occurs when running a Next.js app in debug mode and the ChatManager is
+      // initialized twice, the first socket will receive this error that we can ignore.
+    } else {
+      console.warn(`[chat] socket closed unexpectedly: ${event.code} ${event.reason}`);
+      this.onError?.();
+    }
   }
   private handleTrackSubscribed(track: RemoteTrack) {
     console.log(`[chat] subscribed to remote audio track ${track.sid}`);
@@ -677,6 +692,10 @@ export class WebRtcChatManager implements ChatManager {
     audioTrack.on(TrackEvent.AudioPlaybackFailed, (err) => console.error(`[chat] audio playback failed`, err));
     audioTrack.attach(this.audioElement);
     this.outAnalyzer = new StreamAnalyzer(this.audioContext, track.mediaStream!);
+    if (this.delayedSpeakingState) {
+      this.delayedSpeakingState = false;
+      this.changeState(ChatManagerState.SPEAKING);
+    }
   }
   private handleDataReceived(payload: Uint8Array, participant: any) {
     const data = JSON.parse(this.textDecoder.decode(payload));
@@ -685,17 +704,38 @@ export class WebRtcChatManager implements ChatManager {
       console.debug(`[chat] worker RTT: ${elapsed_ms.toFixed(0)} ms`);
     } else if (data.type === 'state') {
       const newState = data.state;
-      this.changeState(newState);
+      if (newState === ChatManagerState.SPEAKING && this.outAnalyzer === undefined) {
+        // Skip the first speaking state, before we've attached the audio element.
+        // handleTrackSubscribed will be called soon and will change the state.
+        this.delayedSpeakingState = true;
+      } else {
+        this.changeState(newState);
+      }
     } else if (data.type === 'transcript') {
-      console.log(`[chat] transcript: ${data.text}`);
+      this.handleInputChange(data.transcript);
     } else if (data.type === 'output') {
-      console.log(`[chat] output: ${data.text}`);
+      this.handleOutputChange(data.text, data.final);
+    } else if (data.type == 'latency') {
+      this.handleLatency(data.kind, data.value);
     }
+  }
+  private handleInputChange(transcript: Transcript) {
+    const finalText = transcript.final ? ' FINAL' : '';
+    console.log(`[chat] input: ${transcript.text}${finalText}`);
+    this.onInputChange?.(transcript.text, transcript.final);
+  }
+  private handleOutputChange(text: string, final: boolean) {
+    console.log(`[chat] output: ${text}`);
+    this.onOutputChange?.(text, final);
+  }
+  private handleLatency(kind: string, value: number) {
+    console.log(`[chat] latency: ${kind} ${value.toFixed(0)} ms`);
+    this.onLatencyChange?.(kind, value);
   }
 }
 
 export function createChatManager(init: ChatManagerInit): ChatManager {
-  if (init.webrtc) {
+  if (init.webrtcUrl !== '0') {
     return new WebRtcChatManager(init);
   } else {
     return new LocalChatManager(init);

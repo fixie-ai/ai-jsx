@@ -96,7 +96,7 @@ const config = {
         },
         items: [
           {
-            to: 'sidekicks/sidekicks-quickstart',
+            to: 'getting-started',
             position: 'left',
             label: 'Learn',
           },

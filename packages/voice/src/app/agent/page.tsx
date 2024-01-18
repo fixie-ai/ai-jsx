@@ -32,7 +32,7 @@ interface LatencyThreshold {
 const DEFAULT_ASR_PROVIDER = 'deepgram';
 const DEFAULT_TTS_PROVIDER = 'playht';
 const DEFAULT_LLM = 'gpt-4-1106-preview';
-const ASR_PROVIDERS = ['aai', 'deepgram', 'gladia', 'revai', 'soniox'];
+const ASR_PROVIDERS = ['aai', 'deepgram', 'deepgram-turbo', 'gladia', 'revai', 'soniox'];
 const TTS_PROVIDERS = [
   'aws',
   'azure',
@@ -65,10 +65,19 @@ const LATENCY_THRESHOLDS: { [key: string]: LatencyThreshold } = {
   Total: { good: 1300, fair: 2000 },
 };
 
-const updateSearchParams = (param: string, value: string) => {
+const updateSearchParams = (param: string, value?: string, reload = false) => {
   const params = new URLSearchParams(window.location.search);
-  params.set(param, value);
-  window.location.search = params.toString();
+  if (value !== undefined) {
+    params.set(param, value);
+  } else {
+    params.delete(param);
+  }
+  const newUrl = `${window.location.pathname}?${params}`;
+  if (reload) {
+    window.location.replace(newUrl);
+  } else {
+    window.history.pushState({}, '', newUrl);
+  }
 };
 
 const Dropdown: React.FC<{ label: string; param: string; value: string; options: string[] }> = ({
@@ -81,7 +90,7 @@ const Dropdown: React.FC<{ label: string; param: string; value: string; options:
     <label className="text-xs ml-2 font-bold">{label}</label>
     <select
       value={value}
-      onChange={(e) => updateSearchParams(param, e.target.value)}
+      onChange={(e) => updateSearchParams(param, e.target.value, true)}
       className="text-xs ml-1 pt-1 pb-1 border rounded"
     >
       {options.map((option) => (
@@ -93,7 +102,7 @@ const Dropdown: React.FC<{ label: string; param: string; value: string; options:
   </>
 );
 
-const Stat: React.FC<{ name: string; latency: number }> = ({ name, latency }) => {
+const Stat: React.FC<{ name: string; latency: number; showName?: boolean }> = ({ name, latency, showName = true }) => {
   let valueText = (latency ? `${latency.toFixed(0)}` : '-').padStart(4, ' ');
   for (let i = valueText.length; i < 4; i++) {
     valueText = ' ' + valueText;
@@ -107,7 +116,12 @@ const Stat: React.FC<{ name: string; latency: number }> = ({ name, latency }) =>
   return (
     <span className={`font-mono text-xs mr-2 ${color}`}>
       {' '}
-      <span className="font-bold">{name}</span> <pre className="inline">{valueText}</pre> ms
+      {showName && <span className="font-bold">{name}</span>}
+      {(showName || latency > 0) && (
+        <>
+          <pre className="inline">{valueText}</pre> ms
+        </>
+      )}
     </span>
   );
 };
@@ -215,13 +229,14 @@ const AgentPageComponent: React.FC = () => {
   const tapOrClick = typeof window != 'undefined' && 'ontouchstart' in window ? 'Tap' : 'Click';
   const idleText = `${tapOrClick} anywhere to start!`;
   const asrProvider = searchParams.get('asr') || DEFAULT_ASR_PROVIDER;
+  const asrModel = searchParams.get('asrModel') || undefined;
   const asrLanguage = searchParams.get('asrLanguage') || undefined;
   const ttsProvider = searchParams.get('tts') || DEFAULT_TTS_PROVIDER;
   const ttsModel = searchParams.get('ttsModel') || undefined;
   const ttsVoice = searchParams.get('ttsVoice') || agentVoice;
   const model = getAgent(agentId) === undefined ? 'fixie' : searchParams.get('llm') || DEFAULT_LLM;
   const docs = searchParams.get('docs') !== null;
-  const webrtc = searchParams.get('webrtc') !== null;
+  const webrtcUrl = searchParams.get('webrtc') ?? undefined;
   const [showChooser, setShowChooser] = useState(searchParams.get('chooser') !== null);
   const showInput = searchParams.get('input') !== null;
   const showOutput = searchParams.get('output') !== null;
@@ -240,6 +255,7 @@ const AgentPageComponent: React.FC = () => {
     console.log(`[page] init asr=${asrProvider} tts=${ttsProvider} llm=${model} agent=${agentId} docs=${docs}`);
     const manager = createChatManager({
       asrProvider,
+      asrModel,
       asrLanguage,
       ttsProvider,
       ttsModel,
@@ -247,7 +263,7 @@ const AgentPageComponent: React.FC = () => {
       model,
       agentId,
       docs,
-      webrtc,
+      webrtcUrl,
     });
     setChatManager(manager);
     manager.onStateChange = (state) => {
@@ -265,27 +281,33 @@ const AgentPageComponent: React.FC = () => {
           setHelpText(idleText);
       }
     };
-    manager.onInputChange = (text, final, latency) => {
+    manager.onInputChange = (text, final) => {
       setInput(text);
-      if (final && latency) {
-        setAsrLatency(latency);
-        setLlmResponseLatency(0);
-        setLlmTokenLatency(0);
-        setTtsLatency(0);
-      }
     };
-    manager.onOutputChange = (text, final, latency) => {
+    manager.onOutputChange = (text, final) => {
       setOutput(text);
       if (final) {
         setInput('');
       }
-      setLlmResponseLatency((prev) => (prev ? prev : latency));
     };
-    manager.onAudioGenerate = (latency) => {
-      setLlmTokenLatency(latency);
-    };
-    manager.onAudioStart = (latency) => {
-      setTtsLatency(latency);
+    manager.onLatencyChange = (kind, latency) => {
+      switch (kind) {
+        case 'asr':
+          setAsrLatency(latency);
+          setLlmResponseLatency(0);
+          setLlmTokenLatency(0);
+          setTtsLatency(0);
+          break;
+        case 'llm':
+          setLlmResponseLatency(latency);
+          break;
+        case 'llmt':
+          setLlmTokenLatency(latency);
+          break;
+        case 'tts':
+          setTtsLatency(latency);
+          break;
+      }
     };
     manager.onError = () => {
       manager.stop();
@@ -295,7 +317,7 @@ const AgentPageComponent: React.FC = () => {
   const changeAgent = (delta: number) => {
     const index = AGENT_IDS.indexOf(agentId);
     const newIndex = (index + delta + AGENT_IDS.length) % AGENT_IDS.length;
-    updateSearchParams('agent', AGENT_IDS[newIndex]);
+    updateSearchParams('agent', AGENT_IDS[newIndex], true);
   };
   const handleStart = () => {
     setInput('');
@@ -327,10 +349,14 @@ const AgentPageComponent: React.FC = () => {
       handleStop();
       event.preventDefault();
     } else if (event.keyCode == 67) {
-      setShowChooser((prev) => !prev);
+      const newVal = !showChooser;
+      setShowChooser(newVal);
+      updateSearchParams('chooser', newVal ? '1' : undefined);
       event.preventDefault();
     } else if (event.keyCode == 83) {
-      setShowStats((prev) => !prev);
+      const newVal = !showStats;
+      setShowStats(newVal);
+      updateSearchParams('stats', newVal ? '1' : undefined);
       event.preventDefault();
     } else if (event.keyCode == 37) {
       handleStop();
@@ -365,15 +391,21 @@ const AgentPageComponent: React.FC = () => {
           <Dropdown label="TTS" param="tts" value={ttsProvider} options={TTS_PROVIDERS} />
         </div>
       )}
-      {showStats && (
-        <div className="absolute top-1 right-1">
-          <Stat name="ASR" latency={asrLatency} />
-          <Stat name="LLM" latency={llmResponseLatency} />
-          <Stat name="LLMT" latency={llmTokenLatency} />
-          <Stat name="TTS" latency={ttsLatency} />
-          <Stat name="Total" latency={asrLatency + llmResponseLatency + llmTokenLatency + ttsLatency} />
-        </div>
-      )}
+      <div className="absolute top-1 right-1">
+        {showStats && (
+          <>
+            <Stat name="ASR" latency={asrLatency} />
+            <Stat name="LLM" latency={llmResponseLatency} />
+            <Stat name="LLMT" latency={llmTokenLatency} />
+            <Stat name="TTS" latency={ttsLatency} />
+          </>
+        )}
+        <Stat
+          name="Total"
+          latency={asrLatency + llmResponseLatency + llmTokenLatency + ttsLatency}
+          showName={showStats}
+        />
+      </div>
       <div className="w-full flex flex-col items-center justify-center text-center">
         <div>
           <Image src="/voice-logo.svg" alt="Fixie Voice" width={322} height={98} priority={true} />

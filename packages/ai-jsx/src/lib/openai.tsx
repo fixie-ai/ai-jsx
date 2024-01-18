@@ -648,9 +648,19 @@ export async function* OpenAIChatModel(
               argsJson += toolCall.function.arguments;
             }
 
-            yield (
-              <FunctionCall id={id} partial name={name} args={JSON.parse(patchedUntruncateJson(argsJson || '{}'))} />
-            );
+            let partialArgs: Record<string, string | number | boolean | null> | undefined = undefined;
+            try {
+              partialArgs = JSON.parse(patchedUntruncateJson(argsJson || '{}'));
+            } catch (e: any) {
+              // If the JSON is incomplete and we get an error, we can ignore it.
+              const acceptedErrorPattern = /Unexpected .* JSON/;
+              if (!acceptedErrorPattern.test(e.message)) {
+                throw e;
+              }
+            }
+            if (partialArgs !== undefined) {
+              yield <FunctionCall id={id} partial name={name} args={partialArgs} />;
+            }
 
             delta = await advance();
           }

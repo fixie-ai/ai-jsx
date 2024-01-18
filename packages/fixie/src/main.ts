@@ -174,6 +174,7 @@ function errorHandler(error: any) {
     term.green(JSON.stringify(error.detail, null, 2));
   } else {
     term('❌ Error: ')(error.message)('\n');
+    term.red(error.stack)('\n');
   }
 }
 
@@ -259,25 +260,17 @@ corpus.alias('corpora');
 
 corpus
   .command('list')
-  .description('List all corpora.')
-  .addOption(
-    new Option('-o, --owner <ownerType>', 'Type of corpora to list.').choices(['user', 'org', 'public', 'all'])
+  .description('List corpora.')
+  .option(
+    '--teamId <string>',
+    "The team ID to list corpora for. If unspecified, the current user's corpora will be listed."
   )
   .option('--offset <number>', 'Start offset for results to return')
   .option('--limit <number>', 'Limit on the number of results to return')
   .action(
-    catchErrors(async ({ owner, ...opts }) => {
+    catchErrors(async (opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-
-      let ownerType: 'OWNER_ALL' | 'OWNER_USER' | 'OWNER_ORG' | 'OWNER_PUBLIC' = 'OWNER_ALL';
-      if (owner === 'user') {
-        ownerType = 'OWNER_USER';
-      } else if (owner === 'org') {
-        ownerType = 'OWNER_ORG';
-      } else if (owner === 'public') {
-        ownerType = 'OWNER_PUBLIC';
-      }
-      const result = await client.listCorpora({ ownerType, offset: opts.offset, limit: opts.limit });
+      const result = await client.listCorpora({ teamId: opts.teamId, offset: opts.offset, limit: opts.limit });
       showResult(result, program.opts().raw);
     })
   );
@@ -294,12 +287,19 @@ corpus
   );
 
 corpus
-  .command('create [name] [description]')
+  .command('create')
   .description('Create a corpus.')
+  .option('--name <string>', 'The display name for this corpus')
+  .option('--description <string>', 'The description for this corpus')
+  .option('--teamId <string>', 'The team ID to own the new Corpus. If unspecified, the current user will own it.')
   .action(
-    catchErrors(async (name?: string, description?: string) => {
+    catchErrors(async (opts) => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-      const result = await client.createCorpus({ name, description });
+      const result = await client.createCorpus({
+        name: opts.name,
+        description: opts.description,
+        teamId: opts?.teamId,
+      });
       showResult(result, program.opts().raw);
     })
   );
@@ -562,6 +562,7 @@ agent.alias('agents');
 agent
   .command('list')
   .description('List all agents.')
+  .option('--teamId <string>', 'The team ID to list agents for. If unspecified, the current user will be used.')
   .action(
     catchErrors(async () => {
       const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
@@ -624,16 +625,25 @@ agent
   );
 
 agent
-  .command('create <agentHandle> [agentName] [agentDescription] [agentMoreInfoUrl]')
+  .command('create <agentHandle>')
   .description('Create an agent.')
+  .option('--name <string>', 'Agent name')
+  .option('--description <string>', 'Agent description')
+  .option('--url <string>', 'More info URL for agent')
+  .option('--teamId <string>', 'Team ID to own the new agent. If not specified, the current user will own it.')
   .action(
-    catchErrors(
-      async (agentHandle: string, agentName?: string, agentDescription?: string, agentMoreInfoUrl?: string) => {
-        const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
-        const result = await FixieAgent.CreateAgent(client, agentHandle, agentName, agentDescription, agentMoreInfoUrl);
-        showResult(result.metadata, program.opts().raw);
-      }
-    )
+    catchErrors(async (agentHandle: string, opts) => {
+      const client = await AuthenticateOrLogIn({ apiUrl: program.opts().url });
+      const result = await FixieAgent.CreateAgent({
+        client,
+        handle: agentHandle,
+        teamId: opts.teamId,
+        name: opts.name,
+        description: opts.description,
+        moreInfoUrl: opts.url,
+      });
+      showResult(result.metadata, program.opts().raw);
+    })
   );
 
 agent

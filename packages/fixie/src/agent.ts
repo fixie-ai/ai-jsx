@@ -44,6 +44,7 @@ export interface AgentConfig {
 export interface AgentRevision {
   id: string;
   created: Date;
+  isCurrent: boolean;
 }
 
 /** Represents an Agent Log entry. */
@@ -207,19 +208,40 @@ export class FixieAgent {
   }
 
   /** Create a new Agent. */
-  public static async CreateAgent(
-    client: FixieClient,
-    handle: string,
-    name?: string,
-    description?: string,
-    moreInfoUrl?: string,
-    published?: boolean
-  ): Promise<FixieAgent> {
+  public static async CreateAgent({
+    client,
+    handle,
+    teamId,
+    name,
+    description,
+    moreInfoUrl,
+    published,
+  }: {
+    client: FixieClient;
+    handle: string;
+    teamId?: string;
+    name?: string;
+    description?: string;
+    moreInfoUrl?: string;
+    published?: boolean;
+  }): Promise<FixieAgent> {
     const result = await client.gqlClient().mutate({
       mutation: gql`
-        mutation CreateAgent($handle: String!, $description: String, $moreInfoUrl: String, $published: Boolean) {
+        mutation CreateAgent(
+          $handle: String!
+          $teamId: String
+          $description: String
+          $moreInfoUrl: String
+          $published: Boolean
+        ) {
           createAgent(
-            agentData: { handle: $handle, description: $description, moreInfoUrl: $moreInfoUrl, published: $published }
+            agentData: {
+              handle: $handle
+              teamId: $teamId
+              description: $description
+              moreInfoUrl: $moreInfoUrl
+              published: $published
+            }
           ) {
             agent {
               uuid
@@ -229,6 +251,7 @@ export class FixieAgent {
       `,
       variables: {
         handle,
+        teamId,
         name,
         description,
         moreInfoUrl,
@@ -243,15 +266,16 @@ export class FixieAgent {
   delete() {
     return this.client.gqlClient().mutate({
       mutation: gql`
-        mutation DeleteAgent($handle: String!) {
-          deleteAgent(agentData: { handle: $handle }) {
+        mutation DeleteAgent($uuid: UUID!) {
+          deleteAgent(agentData: { uuid: $uuid }) {
             agent {
+              uuid
               handle
             }
           }
         }
       `,
-      variables: { handle: this.handle },
+      variables: { uuid: this.metadata.uuid },
     });
   }
 
@@ -270,7 +294,8 @@ export class FixieAgent {
     await this.client.gqlClient().mutate({
       mutation: gql`
         mutation UpdateAgent(
-          $handle: String!
+          $uuid: UUID!
+          $handle: String
           $name: String
           $description: String
           $moreInfoUrl: String
@@ -278,6 +303,7 @@ export class FixieAgent {
         ) {
           updateAgent(
             agentData: {
+              uuid: $uuid
               handle: $handle
               name: $name
               description: $description
@@ -292,6 +318,7 @@ export class FixieAgent {
         }
       `,
       variables: {
+        uuid: this.metadata.uuid,
         handle: this.handle,
         name,
         description,
@@ -431,7 +458,7 @@ export class FixieAgent {
     const result = await this.client.gqlClient().mutate({
       mutation: gql`
         mutation CreateAgentRevision(
-          $handle: String!
+          $agentUuid: UUID!
           $metadata: [RevisionMetadataKeyValuePairInput!]!
           $makeCurrent: Boolean!
           $externalDeployment: ExternalDeploymentInput
@@ -439,7 +466,7 @@ export class FixieAgent {
           $defaultRuntimeParameters: JSONString
         ) {
           createAgentRevision(
-            agentHandle: $handle
+            agentUuid: $agentUuid
             makeCurrent: $makeCurrent
             revision: {
               metadata: $metadata
@@ -456,7 +483,7 @@ export class FixieAgent {
         }
       `,
       variables: {
-        handle: this.handle,
+        agentUuid: this.metadata.uuid,
         metadata: [],
         makeCurrent: true,
         defaultRuntimeParameters: JSON.stringify(opts.defaultRuntimeParameters),
@@ -503,8 +530,8 @@ export class FixieAgent {
   public async setCurrentRevision(revisionId: string): Promise<AgentRevision> {
     const result = await this.client.gqlClient().mutate({
       mutation: gql`
-        mutation SetCurrentAgentRevision($handle: String!, $currentRevisionId: ID!) {
-          updateAgent(agentData: { handle: $handle, currentRevisionId: $currentRevisionId }) {
+        mutation SetCurrentAgentRevision($agentUuid: UUID!, $currentRevisionId: ID!) {
+          updateAgent(agentData: { uuid: $agentUuid, currentRevisionId: $currentRevisionId }) {
             agent {
               currentRevision {
                 id
@@ -514,7 +541,7 @@ export class FixieAgent {
           }
         }
       `,
-      variables: { handle: this.handle, currentRevisionId: revisionId },
+      variables: { agentUuid: this.metadata.uuid, currentRevisionId: revisionId },
       fetchPolicy: 'no-cache',
     });
     return result.data.updateAgent.agent.currentRevision as AgentRevision;
@@ -523,15 +550,15 @@ export class FixieAgent {
   public async deleteRevision(revisionId: string): Promise<void> {
     await this.client.gqlClient().mutate({
       mutation: gql`
-        mutation DeleteAgentRevision($handle: String!, $revisionId: ID!) {
-          deleteAgentRevision(agentHandle: $handle, revisionId: $revisionId) {
+        mutation DeleteAgentRevision($agentUuid: UUID!, $revisionId: ID!) {
+          deleteAgentRevision(agentUuid: $agentUuid, revisionId: $revisionId) {
             agent {
               agentId
             }
           }
         }
       `,
-      variables: { handle: this.handle, revisionId },
+      variables: { agentUuid: this.metadata.uuid, revisionId },
       fetchPolicy: 'no-cache',
     });
   }
@@ -549,7 +576,13 @@ export class FixieAgent {
     } catch (e) {
       // Try to create the agent instead.
       term('🦊 Creating new agent ').green(config.handle)('...\n');
-      agent = await FixieAgent.CreateAgent(client, config.handle, config.name, config.description, config.moreInfoUrl);
+      agent = await FixieAgent.CreateAgent({
+        client,
+        handle: config.handle,
+        name: config.name,
+        description: config.description,
+        moreInfoUrl: config.moreInfoUrl,
+      });
     }
     return agent;
   }
