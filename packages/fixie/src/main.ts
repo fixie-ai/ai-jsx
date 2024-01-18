@@ -4,7 +4,7 @@
  * This is a command-line tool to interact with the Fixie platform.
  */
 
-import { Command, InvalidArgumentError, Option, program } from 'commander';
+import { Command, InvalidArgumentError, program } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import terminal from 'terminal-kit';
