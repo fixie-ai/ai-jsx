@@ -669,11 +669,14 @@ export class FixieCorpus<ChunkMetadata extends Jsonifiable = Jsonifiable> implem
     return {
       description,
       parameters: {
-        query: {
-          description: 'The search query. It will be embedded and used in a vector search against the corpus.',
-          type: 'string',
-          required: true,
+        type: 'object',
+        properties: {
+          query: {
+            description: 'The search query. It will be embedded and used in a vector search against the corpus.',
+            type: 'string',
+          },
         },
+        required: ['query'],
       },
       func: async function FixieCorpusQuery({ query }: { query: string }, { getContext }) {
         const corpus = new FixieCorpus(corpusId, getContext(FixieAPIContext));

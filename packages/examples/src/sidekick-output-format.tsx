@@ -7,11 +7,14 @@ const tools: Record<string, Tool> = {
   lookUpFlight: {
     description: 'Look up a flight',
     parameters: {
-      flightNumber: {
-        description: 'The flight number',
-        type: 'string',
-        required: true,
+      type: 'object',
+      properties: {
+        flightNumber: {
+          description: 'The flight number',
+          type: 'string',
+        },
       },
+      required: ['flightNumber'],
     },
     func: ({ flightNumber }: { flightNumber: string }) =>
       JSON.stringify({

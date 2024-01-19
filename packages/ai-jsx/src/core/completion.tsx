@@ -9,9 +9,7 @@ import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
 import { AnthropicChatModel } from '../lib/anthropic.js';
-import z from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import _ from 'lodash';
+import { type JSONSchema7 } from 'json-schema';
 export {
   UserMessage,
   SystemMessage,
@@ -58,67 +56,8 @@ export type ModelComponent<T extends ModelPropsWithChildren> = Component<T>;
  */
 export interface FunctionDefinition {
   description?: string;
-  parameters: FunctionParameters;
+  parameters: JSONSchema7 & { type?: 'object' };
 }
-
-/**
- * This function creates a [JSON Schema](https://json-schema.org/) object to describe
- * parameters for a {@link FunctionDefinition}.
- *
- * See {@link FunctionParameters} for more information on what parameters are supported.
- */
-export function getParametersSchema(parameters: FunctionParameters) {
-  if (parameters instanceof z.ZodObject) {
-    return zodToJsonSchema(parameters);
-  }
-  return {
-    type: 'object',
-    required: Object.keys(parameters).filter((name) => parameters[name].required),
-    properties: Object.keys(parameters).reduce(
-      (map: Record<string, any>, paramName) => ({
-        ...map,
-        [paramName]: _.omit(parameters[paramName], 'required'),
-      }),
-      {}
-    ),
-  };
-}
-
-/**
- * Represents parameters to a {@link FunctionDefinition}.
- *
- * This is a simplified version of the `parameters` field in {@link ChatCompletionFunctions}: https://platform.openai.com/docs/api-reference/chat/create#chat/create-parameters.
- *
- *
- * If you want to pass a field to {@link FunctionParameters} that isn't supported on this type, you can use a {@link z.ZodObject} schema instead.
- */
-export interface PlainFunctionParameter {
-  description?: string;
-  type?: string;
-  /**
-   * The possible values this param can take.
-   */
-  enum?: string[];
-  required: boolean;
-}
-
-/**
- * Represents parameters to a {@link FunctionDefinition}.
- *
- * This type allows two ways for specifying parameters:
- * - For simple use cases, a record of parameter names to {@link PlainFunctionParameter} objects.
- * - For more complex use cases, a {@link z.ZodObject} schema object (`zod` is a standard runtime type definition & checking library).
- *
- * @note If using a Zod schema, the top-level schema must be an object as per OpenAI specifications:
- * https://platform.openai.com/docs/api-reference/chat/create#chat/create-parameters
- *
- * For example, to describe a list of strings, the following is not accepted:
- * `const schema: z.Schema = z.array(z.string())`
- *
- * Instead, you can wrap it in an object like so:
- * `const schema: z.ZodObject = z.object({ arr: z.array(z.string()) })`
- */
-export type FunctionParameters = Record<string, PlainFunctionParameter> | z.ZodObject<any>;
 
 /**
  * If env var `OPENAI_API_KEY` is defined, use Open AI as the completion model provider.

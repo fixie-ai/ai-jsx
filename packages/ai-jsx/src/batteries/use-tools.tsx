@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-import { ChatCompletion, FunctionParameters, FunctionResponse } from '../core/completion.js';
+import { ChatCompletion, FunctionDefinition, FunctionResponse } from '../core/completion.js';
 import { Component, ComponentContext, Node, RenderContext } from '../index.js';
 import { ConversationMessage, Converse, renderToConversation } from '../core/conversation.js';
 import _ from 'lodash';
@@ -12,17 +12,7 @@ import _ from 'lodash';
 /**
  * Represents a tool that can be provided for the Large Language Model.
  */
-export interface Tool {
-  /**
-   * A description of what the tool does.
-   */
-  description: string;
-
-  /**
-   * A map of parameter names to their description and type.
-   */
-  parameters: FunctionParameters;
-
+export interface Tool extends FunctionDefinition {
   /**
    * A function that invokes the tool.
    *
@@ -32,7 +22,6 @@ export interface Tool {
    * can return a `string` or any AI.JSX {@link Node}, synchronously or
    * asynchronously.
    */
-  // Can we use Zod to do better than any?
   func: Component<any>;
 }
 
@@ -54,13 +43,6 @@ export interface UseToolsProps {
    * Whether the result should include intermediate steps, for example, the execution of the function and its response.
    */
   showSteps?: boolean;
-
-  /**
-   * User data the AI can use to determine what parameters to invoke the tool with.
-   *
-   * For instance, if the user's query can be "what's the weather like at my current location", you might pass `userData` as { "location": "Seattle" }.
-   */
-  userData?: string;
 }
 
 /**
@@ -102,7 +84,7 @@ export async function ExecuteFunction<T>(
  *  // Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".
  *  async function activeScene({sceneName}: {sceneName: string}) { ... Code to activate a scene ... }
  *
- *  import z from 'zod';
+
  *  const tools: Record<string, Tool> = {
  *    turnLightsOn: {
  *      description: "Turn the lights on in the user's home",
@@ -117,11 +99,14 @@ export async function ExecuteFunction<T>(
  *    activeScene: {
  *      description: `Activate a scene in the user's lighting settings, like "Bedtime" or "Midday".`,
  *      parameters: {
- *        sceneName: {
- *          description: "The scene to activate the lighting in.",
- *          type: "string",
- *          required: true,
+ *        type: "object",
+ *        properties: {
+ *          sceneName: {
+ *            description: "The scene to activate the lighting in.",
+ *            type: "string",
+ *           },
  *        },
+ *        required: ["sceneName"],
  *      },
  *      func: activeScene,
  *    },

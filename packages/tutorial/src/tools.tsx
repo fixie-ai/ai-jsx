@@ -31,22 +31,28 @@ function StockAgent(props: { query: string }) {
     checkStockPrice: {
       description: 'Check the price of a stock.',
       parameters: {
-        symbol: {
-          description: 'The stock symbol to check the price of.',
-          type: 'string',
-          required: true,
+        type: 'object' as const,
+        properties: {
+          symbol: {
+            description: 'The symbol of the stock to get price for.',
+            type: 'string' as const,
+          },
         },
+        required: ['symbol'],
       },
       func: checkStockPrice,
     },
     getHistoricalPrices: {
       description: 'Return historical prices for a stock.',
       parameters: {
-        symbol: {
-          description: 'The stock symbol to get historical prices for.',
-          type: 'string',
-          required: true,
+        type: 'object' as const,
+        properties: {
+          symbol: {
+            description: 'The stock symbol to get historical prices for.',
+            type: 'string' as const,
+          },
         },
+        required: ['symbol'],
       },
       func: getHistoricalPrices,
     },

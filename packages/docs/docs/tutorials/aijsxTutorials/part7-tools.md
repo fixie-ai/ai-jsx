@@ -21,22 +21,28 @@ const tools = {
   checkStockPrice: {
     description: 'Check the price of a stock.',
     parameters: {
-      symbol: {
-        description: 'The symbol of the stock to get price for.',
-        type: 'string',
-        required: true,
+      type: 'object',
+      properties: {
+        symbol: {
+          description: 'The symbol of the stock to get price for.',
+          type: 'string',
+        },
       },
+      required: ['symbol'],
     },
     func: checkStockPrice,
   },
   getHistoricalPrices: {
     description: 'Return historical prices for a stock.',
     parameters: {
-      symbol: {
-        description: 'The symbol of the stock to get price for.',
-        type: 'string',
-        required: true,
+      type: 'object',
+      properties: {
+        symbol: {
+          description: 'The symbol of the stock to get price for.',
+          type: 'string',
+        },
       },
+      required: ['symbol'],
     },
     func: getHistoricalPrices,
   },

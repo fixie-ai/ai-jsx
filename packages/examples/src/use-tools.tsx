@@ -13,11 +13,14 @@ function App({ query }: { query: string }) {
     evaluate_expression: {
       description: 'Evaluates a mathematical expression',
       parameters: {
-        expression: {
-          description: 'The mathematical expression to evaluate',
-          type: 'string',
-          required: true,
+        type: 'object',
+        properties: {
+          expression: {
+            description: 'The mathematical expression to evaluate',
+            type: 'string',
+          },
         },
+        required: ['expression'],
       },
       func: evaluate,
     },

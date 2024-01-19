@@ -10,11 +10,14 @@ const tools: Record<string, Tool> = {
   runGithubGraphqlQuery: {
     description: 'Run a GraphQL query against the Github API',
     parameters: {
-      query: {
-        description: 'The GraphQL query to run',
-        type: 'string',
-        required: true,
+      type: 'object',
+      properties: {
+        query: {
+          description: 'The GraphQL query to run',
+          type: 'string',
+        },
       },
+      required: ['query'],
     },
     func: async ({ query }: { query: string }) => {
       const response = await fetch('https://api.github.com/graphql', {
