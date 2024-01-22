@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.28.2
+## 0.30.0
+
+- Changed the `FunctionDefinition` and `Tool` types to explicit JSON Schema. Zod types must now be explicitly
+  converted to JSON Schema, and the `required` semantics now match JSON Schema.
+
+## [0.28.2](https://github.com/fixie-ai/ai-jsx/tree/524cf2d69eb63426a098723997e39f0dda5a37c2)
 
 - Fix bug where partially streamed unicode characters (e.g. Chinese) would cause an error in OpenAI function calls.
 
