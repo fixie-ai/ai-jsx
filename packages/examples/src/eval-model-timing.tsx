@@ -3,17 +3,19 @@ import { Tool, UseTools } from 'ai-jsx/batteries/use-tools';
 import { UserMessage, SystemMessage } from 'ai-jsx/core/conversation';
 import { LogImplementation, LogLevel } from 'ai-jsx/core/log';
 import { OpenAI, ValidChatModel } from 'ai-jsx/lib/openai';
-import z from 'zod';
 
 export const tools: Record<string, Tool> = {
   lookUpAcmeCorpKnowledgeBase: {
     description: 'Look up information about Acme Corp from its customer support and developer docs',
     parameters: {
-      query: {
-        description: 'The search query. It will be embedded and used in a vector search against the corpus.',
-        type: 'string',
-        required: true,
+      type: 'object',
+      properties: {
+        query: {
+          description: 'The search query. It will be embedded and used in a vector search against the corpus.',
+          type: 'string',
+        },
       },
+      required: ['query'],
     },
     func: () => null,
   },
@@ -24,82 +26,81 @@ export const tools: Record<string, Tool> = {
   },
   printJson: {
     description: 'Print a JSON response',
-    // @ts-expect-error
-    parameters: z.record(z.unknown()),
+    parameters: {},
     func: () => null,
   },
   listConversations: {
     description: 'List conversations for a mailbox. Each conversation result is summarized.',
-    parameters: z.object({
-      embed: z.string().optional().describe('Allows embedding/loading of sub-entities, allowed values are: threads'),
-      mailbox: z
-        .number()
-        .optional()
-        .describe('Filters conversations from a specific mailbox id. Use comma separated values for more mailboxes'),
-      status: z
-        .union([
-          z.literal('active'),
-          z.literal('all'),
-          z.literal('closed'),
-          z.literal('open'),
-          z.literal('pending'),
-          z.literal('spam'),
-        ])
-        .optional()
-        .describe('Filter conversation by status (defaults to active)'),
-      tag: z.string().optional().describe('Filter conversation by tags. Use comma separated values for more tags'),
-      assigned_to: z.number().optional().describe('Filters conversations by assignee id'),
-      modifiedSince: z
-        .string()
-        .optional()
-        .describe('Filters conversations modified after this timestamp, e.g. 2018-05-04T12:00:03Z'),
-      number: z.number().optional().describe('Looks up conversation by conversation number'),
-      sortField: z
-        .union([
-          z.literal('createdAt'),
-          z.literal('customerEmail'),
-          z.literal('customerName'),
-          z.literal('mailboxid'),
-          z.literal('modifiedAt'),
-          z.literal('number'),
-          z.literal('score'),
-          z.literal('status'),
-          z.literal('subject'),
-          z.literal('waitingSince'),
-        ])
-        .optional()
-        .describe('Sorts the result by specified field'),
-      sortOrder: z
-        .union([z.literal('desc'), z.literal('asc')])
-        .optional()
-        .describe('Sort order. Default is desc'),
-      page: z.number().optional().describe('Page number'),
-    }),
+    parameters: {
+      type: 'object',
+      properties: {
+        embed: { type: 'string', description: 'Allows embedding/loading of sub-entities, allowed values are: threads' },
+        mailbox: {
+          type: 'number',
+          description:
+            'Filters conversations from a specific mailbox id. Use comma separated values for more mailboxes',
+        },
+        status: {
+          type: 'string',
+          enum: ['active', 'all', 'closed', 'open', 'pending', 'spam'],
+          description: 'Filter conversation by status (defaults to active)',
+        },
+        tag: { type: 'string', description: 'Filter conversation by tags. Use comma separated values for more tags' },
+        assignedTo: { type: 'number', description: 'Filters conversations by assignee id' },
+        modifiedSince: {
+          type: 'string',
+          description: 'Filters conversations modified after this timestamp, e.g. 2018-05-04T12:00:03Z',
+        },
+        number: { type: 'number', description: 'Looks up conversation by conversation number' },
+        sortField: {
+          type: 'string',
+          enum: [
+            'createdAt',
+            'customerEmail',
+            'customerName',
+            'mailboxid',
+            'modifiedAt',
+            'number',
+            'score',
+            'status',
+            'subject',
+            'waitingSince',
+          ],
+          description: 'Sorts the result by specified field',
+        },
+        sortOrder: { type: 'string', enum: ['desc', 'asc'], description: 'Sort order. Default is desc' },
+        page: { type: 'number', description: 'Page number' },
+      },
+    },
     func: () => null,
   },
   getConversation: {
     description: 'Get full details for a conversation by ID',
     parameters: {
-      id: {
-        description: 'The ID of the conversation',
-        type: 'number',
-        required: true,
+      type: 'object',
+      properties: {
+        id: {
+          description: 'The ID of the conversation',
+          type: 'number',
+        },
       },
+      required: ['id'],
     },
     func: () => null,
   },
   listUsers: {
     description: 'List users on this Acme Corp plan',
     parameters: {
-      email: {
-        description: 'Optional filter param for looking up users by email using exact match.',
-        type: 'string',
-        required: false,
-      },
-      mailbox: {
-        description: 'Optional filter param for looking up users by mailbox.',
-        type: 'number',
-        required: false,
+      type: 'object',
+      properties: {
+        email: {
+          description: 'Optional filter param for looking up users by email using exact match.',
+          type: 'string',
+        },
+        mailbox: {
+          description: 'Optional filter param for looking up users by mailbox.',
+          type: 'number',
+        },
       },
     },
     func: () => null,
@@ -107,11 +108,13 @@ export const tools: Record<string, Tool> = {
   getUser: {
     description: 'Get a user by ID',
     parameters: {
-      id: {
-        description: 'The ID of the user',
-        type: 'number',
-        required: true,
+      properties: {
+        id: {
+          description: 'The ID of the user',
+          type: 'number',
+        },
       },
+      required: ['id'],
     },
     func: () => null,
   },
@@ -123,49 +126,46 @@ export const tools: Record<string, Tool> = {
     description:
       'The company report provides statistics about your company performance over a given time range. You may optionally specify two time ranges to see how performance changed between the two ranges. Note: The reporting endpoints are only available to Plus and Company plans. Account Owners for Standard plans can add access to these via an add-on.',
     parameters: {
-      start: {
-        description: "Start of the interval in ISO 8601 format (yyyy-MM-dd'T'HH:mm:ss'Z') (e.g. 2019-05-02T12:00:00Z)",
-        type: 'string',
-        required: true,
+      type: 'object',
+      properties: {
+        start: {
+          description:
+            "Start of the interval in ISO 8601 format (yyyy-MM-dd'T'HH:mm:ss'Z') (e.g. 2019-05-02T12:00:00Z)",
+          type: 'string',
+        },
+        end: {
+          description: "End of the interval in ISO 8601 format (yyyy-MM-dd'T'HH:mm:ss'Z') (e.g. 2019-05-02T12:00:00Z)",
+          type: 'string',
+        },
+        previousStart: {
+          description:
+            "Start of the previous interval in ISO 8601 format (yyyy-MM-dd'T'HH:mm:ss'Z') (e.g. 2019-05-02T12:00:00Z)",
+          type: 'string',
+        },
+        previousEnd: {
+          description:
+            "End of the previous interval in ISO 8601 format (yyyy-MM-dd'T'HH:mm:ss'Z') (e.g. 2019-05-02T12:00:00Z)",
+          type: 'string',
+        },
+        mailboxes: {
+          description: 'List of comma separated ids to filter on mailboxes',
+          type: 'number',
+        },
+        tags: {
+          description: 'List of comma separated ids to filter on tags',
+          type: 'number',
+        },
+        types: {
+          description: 'List of comma separated conversation types to filter on, valid values are email, chat, phone',
+          type: 'string',
+          enum: ['email', 'chat', 'phone'],
+        },
+        folders: {
+          description: 'List of comma separated folder ids to filter on folders',
+          type: 'number',
+        },
       },
-      end: {
-        description: "End of the interval in ISO 8601 format (yyyy-MM-dd'T'HH:mm:ss'Z') (e.g. 2019-05-02T12:00:00Z)",
-        type: 'string',
-        required: true,
-      },
-      previousStart: {
-        description:
-          "Start of the previous interval in ISO 8601 format (yyyy-MM-dd'T'HH:mm:ss'Z') (e.g. 2019-05-02T12:00:00Z)",
-        type: 'string',
-        required: false,
-      },
-      previousEnd: {
-        description:
-          "End of the previous interval in ISO 8601 format (yyyy-MM-dd'T'HH:mm:ss'Z') (e.g. 2019-05-02T12:00:00Z)",
-        type: 'string',
-        required: false,
-      },
-      mailboxes: {
-        description: 'List of comma separated ids to filter on mailboxes',
-        type: 'number',
-        required: false,
-      },
-      tags: {
-        description: 'List of comma separated ids to filter on tags',
-        type: 'number',
-        required: false,
-      },
-      types: {
-        description: 'List of comma separated conversation types to filter on, valid values are email, chat, phone',
-        type: 'string',
-        enum: ['email', 'chat', 'phone'],
-        required: false,
-      },
-      folders: {
-        description: 'List of comma separated folder ids to filter on folders',
-        type: 'number',
-        required: false,
-      },
+      required: ['start', 'end'],
     },
     func: () => null,
   },

@@ -35,11 +35,14 @@ it('should call a tool', async () => {
             myFunc: {
               description: 'Test tool',
               parameters: {
-                parameter: {
-                  description: 'Test parameter',
-                  type: 'string',
-                  required: true,
+                type: 'object',
+                properties: {
+                  parameter: {
+                    description: 'Test parameter',
+                    type: 'string',
+                  },
                 },
+                required: ['parameter'],
               },
               func: ({ parameter }: { parameter: string }) => parameter.toLocaleUpperCase(),
             },
@@ -88,11 +91,14 @@ it('should give tools access to context', async () => {
               myFunc: {
                 description: 'Test tool',
                 parameters: {
-                  parameter: {
-                    description: 'Test parameter',
-                    type: 'string',
-                    required: true,
+                  type: 'object',
+                  properties: {
+                    parameter: {
+                      description: 'Test parameter',
+                      type: 'string',
+                    },
                   },
+                  required: ['parameter'],
                 },
                 func: MyTool,
               },
@@ -138,11 +144,14 @@ it('should handle failures', async () => {
               myFunc: {
                 description: 'Test tool',
                 parameters: {
-                  parameter: {
-                    description: 'Test parameter',
-                    type: 'string',
-                    required: true,
+                  type: 'object',
+                  properties: {
+                    parameter: {
+                      description: 'Test parameter',
+                      type: 'string',
+                    },
                   },
+                  required: ['parameter'],
                 },
                 func: MyTool,
               },

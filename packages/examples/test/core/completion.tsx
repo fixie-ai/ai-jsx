@@ -370,12 +370,15 @@ describe('functions', () => {
       myFunc: {
         description: 'My function',
         parameters: {
-          myParam: {
-            description: 'My parameter',
-            type: 'string',
-            enum: ['option1', 'option2'],
-            required: true,
+          type: 'object',
+          properties: {
+            myParam: {
+              description: 'My parameter',
+              type: 'string',
+              enum: ['option1', 'option2'],
+            },
           },
+          required: ['myParam'],
         },
         func: () => undefined,
       },
@@ -423,12 +426,15 @@ describe('functions', () => {
       myFunc: {
         description: 'My function',
         parameters: {
-          myParam: {
-            description: 'My parameter',
-            type: 'string',
-            enum: ['option1', 'option2'],
-            required: true,
+          type: 'object',
+          properties: {
+            myParam: {
+              description: 'My parameter',
+              type: 'string',
+              enum: ['option1', 'option2'],
+            },
           },
+          required: ['myParam'],
         },
         func: () => undefined,
       },

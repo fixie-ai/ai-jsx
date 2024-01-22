@@ -189,11 +189,14 @@ export function redactedFunctionTools(messages: ConversationMessage[]): UseTools
     loadBySimilarity: {
       description: 'Query the response of the "latest redacted function call" by using semantic similarity search.',
       parameters: {
-        query: {
-          type: 'string',
-          description: 'A query string.',
-          required: true,
+        type: 'object',
+        properties: {
+          query: {
+            type: 'string',
+            description: 'A query string.',
+          },
         },
+        required: ['query'],
       },
       func: ({ query }) => (
         <RerankerFormatted

@@ -6166,6 +6166,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/json-schema@npm:^7.0.15":
+  version: 7.0.15
+  resolution: "@types/json-schema@npm:7.0.15"
+  checksum: 97ed0cb44d4070aecea772b7b2e2ed971e10c81ec87dd4ecc160322ffa55ff330dace1793489540e3e318d90942064bb697cc0f8989391797792d919737b3b98
+  languageName: node
+  linkType: hard
+
 "@types/json5@npm:^0.0.29":
   version: 0.0.29
   resolution: "@types/json5@npm:0.0.29"
@@ -7289,6 +7296,7 @@ __metadata:
     "@types/eslint": ^8
     "@types/jest": ^29.5.2
     "@types/js-yaml": ^4.0.5
+    "@types/json-schema": ^7.0.15
     "@types/lodash": ^4.14.194
     "@types/node": ^20.2.1
     "@types/react": ^18.2.7

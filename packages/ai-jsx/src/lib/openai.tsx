@@ -10,7 +10,6 @@ import {
   FunctionDefinition,
   ModelProps,
   ModelPropsWithChildren,
-  getParametersSchema,
 } from '../core/completion.js';
 import { AssistantMessage, ConversationMessage, FunctionCall, renderToConversation } from '../core/conversation.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
@@ -508,7 +507,7 @@ export async function* OpenAIChatModel(
           function: {
             name: functionName,
             description: functionDefinition.description,
-            parameters: getParametersSchema(functionDefinition.parameters),
+            parameters: functionDefinition.parameters as Record<string, unknown>,
           },
           type: 'function',
         })

@@ -4,7 +4,7 @@
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://ai-jsx.com",
-  "version": "0.28.2",
+  "version": "0.29.0",
   "volta": {
     "extends": "../../package.json"
   },
@@ -381,6 +381,7 @@
     "@opentelemetry/api": "^1.4.1",
     "@opentelemetry/api-logs": "^0.41.1",
     "@ozymandiasthegreat/vad": "^2.0.7",
+    "@types/json-schema": "^7.0.15",
     "axios": "^1.4.0",
     "cli-highlight": "^2.1.11",
     "cli-spinners": "^2.9.0",
