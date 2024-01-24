@@ -1,9 +1,0 @@
-{
-  "extends": ["//"],
-  "$schema": "https://turbo.build/schema.json",
-  "pipeline": {
-    "build": {
-      "outputs": ["*.js", "*.d.ts", "src/**/*.js", "src/**/*.d.ts"]
-    }
-  }
-}
