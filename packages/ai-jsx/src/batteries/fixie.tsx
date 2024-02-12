@@ -1,4 +1,4 @@
-import { createContext } from '../core/render.js';
+import { createContext } from '../index.js';
 import { getEnvVar } from '../lib/util.js';
 
 export interface FixieAPIConfiguration {

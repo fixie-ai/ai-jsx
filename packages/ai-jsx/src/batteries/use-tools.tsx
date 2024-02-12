@@ -38,11 +38,6 @@ export interface UseToolsProps {
    * The conversation in which the AI can use a tool.
    */
   children: Node;
-
-  /**
-   * Whether the result should include intermediate steps, for example, the execution of the function and its response.
-   */
-  showSteps?: boolean;
 }
 
 /**
@@ -122,8 +117,8 @@ export async function ExecuteFunction<T>(
  * ```
  *
  */
-export async function UseTools(props: UseToolsProps, { render }: RenderContext) {
-  const converse = (
+export function UseTools(props: UseToolsProps) {
+  return (
     <Converse
       reply={(messages, fullConversation) => {
         const lastMessage = messages[messages.length - 1];
@@ -135,21 +130,24 @@ export async function UseTools(props: UseToolsProps, { render }: RenderContext) 
               (m) => m.type === 'functionCall'
             ) as (ConversationMessage & { type: 'functionCall' })[];
 
-            return functionCalls.map(
-              ({
-                element: {
-                  props: { id, name, args },
-                },
-              }) => <ExecuteFunction id={id} func={props.tools[name].func} name={name} args={args} />
-            );
+            return (context) =>
+              Promise.all(
+                functionCalls.map(async (functionCall) => {
+                  const name = await context.render(functionCall.attributes.name).toStringAsync();
+                  return (
+                    <ExecuteFunction
+                      id={functionCall.attributes.id}
+                      func={props.tools[name].func}
+                      name={name}
+                      args={JSON.parse(await functionCall.toStringAsync())}
+                    />
+                  );
+                })
+              );
           }
           case 'functionResponse':
           case 'user':
-            return (
-              <ChatCompletion functionDefinitions={props.tools}>
-                {fullConversation.map((m) => m.element)}
-              </ChatCompletion>
-            );
+            return <ChatCompletion functionDefinitions={props.tools}>{fullConversation}</ChatCompletion>;
           default:
             return null;
         }
@@ -158,11 +156,4 @@ export async function UseTools(props: UseToolsProps, { render }: RenderContext) 
       {props.children}
     </Converse>
   );
-
-  if (props.showSteps) {
-    return converse;
-  }
-
-  const messages = await renderToConversation(converse, render);
-  return messages.length && messages[messages.length - 1].element;
 }

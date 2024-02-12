@@ -6,5 +6,4 @@
  * @packageDocumentation
  */
 
-export * from './core/node.js';
-export * from './core/render.js';
+export * from './core/render3.js';

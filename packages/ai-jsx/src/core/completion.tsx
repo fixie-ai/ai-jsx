@@ -3,8 +3,8 @@
  * @packageDocumentation
  */
 
-import * as AI from '../index.js';
-import { Node, Component, RenderContext } from '../index.js';
+import * as AI from './render3.js';
+import { Node, Component, RenderContext } from './render3.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
 import { OpenAIChatModel, OpenAICompletionModel } from '../lib/openai.js';
 import { getEnvVar } from '../lib/util.js';
@@ -129,7 +129,7 @@ const completionContext = AI.createContext<[ModelComponent<ModelPropsWithChildre
  */
 export function CompletionProvider<T extends ModelPropsWithChildren>(
   { component, children, ...newDefaults }: { component?: ModelComponent<T> } & T,
-  { getContext }: RenderContext
+  { getContext }: AI.RenderContext
 ) {
   const [existingComponent, previousDefaults] = getContext(completionContext);
   return (

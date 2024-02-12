@@ -1,10 +1,41 @@
-import * as AI from './index.js';
+import { Jsonifiable } from 'type-fest';
+import {
+  Node as AINode,
+  Component as AIComponent,
+  Element as AIElement,
+  createElement,
+  symbols,
+  RenderNode,
+} from './core/render3.js';
 
 /** @hidden */
+
+interface IntrinsicProps {
+  children?: AINode;
+  [key: string]: any;
+}
+
+interface ChatMessageProps extends IntrinsicProps {
+  metadata?: Record<string, Jsonifiable>;
+}
+
+interface FunctionMessageProps extends ChatMessageProps {
+  id?: string;
+  name: RenderNode;
+}
+
 export declare namespace JSX {
-  type ElementType = AI.Component<any>;
-  interface Element extends AI.Element<any> {}
-  interface IntrinsicElements {}
+  type ElementType = AIComponent<any> | string | symbol;
+  interface Element extends AIElement<any> {}
+  interface IntrinsicElements {
+    system: ChatMessageProps;
+    user: { name?: string } & ChatMessageProps;
+    assistant: ChatMessageProps;
+    functionCall: FunctionMessageProps;
+    functionResponse: FunctionMessageProps;
+    shrinkable: { importance: number; replacement?: AINode } & IntrinsicProps;
+    [key: string]: IntrinsicProps;
+  }
   interface ElementChildrenAttribute {
     children: {};
   }
@@ -14,7 +45,7 @@ export declare namespace JSX {
 export function jsx(type: any, config: any, maybeKey?: any) {
   const configWithKey = maybeKey !== undefined ? { ...config, key: maybeKey } : config;
   const children = config && Array.isArray(config.children) ? config.children : [];
-  return AI.createElement(type, configWithKey, ...children);
+  return createElement(type, configWithKey, ...children);
 }
 /** @hidden */
 export const jsxDEV = jsx;
@@ -23,4 +54,4 @@ export const jsxDEV = jsx;
 export const jsxs = jsx;
 
 /** @hidden */
-export const Fragment = AI.Fragment;
+export const Fragment = symbols.fragment;

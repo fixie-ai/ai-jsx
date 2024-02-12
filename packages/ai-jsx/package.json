@@ -234,97 +234,6 @@
       "require": {
         "default": "./dist/cjs/lib/tts/tts.cjs"
       }
-    },
-    "./react": {
-      "import": {
-        "types": "./dist/esm/react/index.d.ts",
-        "default": "./dist/esm/react/index.js"
-      },
-      "require": {
-        "default": "./dist/cjs/react/index.cjs"
-      }
-    },
-    "./react/jsx-runtime": {
-      "import": {
-        "types": "./dist/esm/react/jsx-runtime.d.ts",
-        "default": "./dist/esm/react/jsx-runtime.js"
-      },
-      "require": {
-        "default": "./dist/cjs/react/jsx-runtime.cjs"
-      }
-    },
-    "./react/jsx-dev-runtime": {
-      "import": {
-        "types": "./dist/esm/react/jsx-runtime.d.ts",
-        "default": "./dist/esm/react/jsx-runtime.js"
-      },
-      "require": {
-        "default": "./dist/cjs/react/jsx-runtime.cjs"
-      }
-    },
-    "./react/map": {
-      "import": {
-        "types": "./dist/esm/react/map.d.ts",
-        "default": "./dist/esm/react/map.js"
-      },
-      "require": {
-        "types": "./dist/cjs/react/map.d.cts",
-        "default": "./dist/cjs/react/map.cjs"
-      }
-    },
-    "./react/completion": {
-      "import": {
-        "types": "./dist/esm/react/completion.d.ts",
-        "default": "./dist/esm/react/completion.js"
-      },
-      "require": {
-        "default": "./dist/cjs/react/completion.cjs"
-      }
-    },
-    "./react/jit-ui/mdx": {
-      "import": {
-        "types": "./dist/esm/react/jit-ui/mdx.d.ts",
-        "default": "./dist/esm/react/jit-ui/mdx.js"
-      },
-      "require": {
-        "default": "./dist/cjs/react/jit-ui/mdx.cjs"
-      }
-    },
-    "./experimental/next": {
-      "import": {
-        "types": "./dist/esm/experimental/next/index.d.ts",
-        "default": "./dist/esm/experimental/next/index.js"
-      },
-      "require": {
-        "default": "./dist/cjs/experimental/next/index.cjs"
-      }
-    },
-    "./experimental/next/chat": {
-      "import": {
-        "types": "./dist/esm/experimental/next/chat.d.ts",
-        "default": "./dist/esm/experimental/next/chat.js"
-      },
-      "require": {
-        "default": "./dist/cjs/experimental/next/chat.cjs"
-      }
-    },
-    "./experimental/next/chat.client": {
-      "import": {
-        "types": "./dist/esm/experimental/next/chat.client.d.ts",
-        "default": "./dist/esm/experimental/next/chat.client.js"
-      },
-      "require": {
-        "default": "./dist/cjs/experimental/next/chat.client.cjs"
-      }
-    },
-    "./stream": {
-      "import": {
-        "types": "./dist/esm/stream/index.d.ts",
-        "default": "./dist/esm/stream/index.js"
-      },
-      "require": {
-        "default": "./dist/cjs/stream/index.cjs"
-      }
     }
   },
   "devDependencies": {
@@ -353,6 +262,7 @@
     "react": "^18.2.0",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
+    "tsx": "^4.7.0",
     "type-fest": "^3.10.0",
     "typescript": "^5.1.3",
     "write-json-file": "^5.0.0"
@@ -392,6 +302,7 @@
     "lodash": "^4.17.21",
     "ml-distance": "^4.0.1",
     "mpg123-decoder": "^0.4.9",
+    "nanoid": "^5.0.5",
     "openai": "^4.16.0",
     "pino": "^8.14.1",
     "remark-gfm": "^3.0.1",

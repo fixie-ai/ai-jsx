@@ -1,7 +1,6 @@
 import * as AI from '../index.js';
 import { Node } from '../index.js';
 import { AIJSXError, ErrorCode } from '../core/errors.js';
-import { debug } from './debug.js';
 import _ from 'lodash';
 import { Jsonifiable } from 'type-fest';
 
@@ -17,8 +16,8 @@ import { Jsonifiable } from 'type-fest';
  *    </ChatCompletion>
  * ```
  */
-export function SystemMessage({ children }: { children: Node; metadata?: Record<string, Jsonifiable> }) {
-  return children;
+export function SystemMessage({ children, metadata }: { children: Node; metadata?: Record<string, Jsonifiable> }) {
+  return <system metadata={metadata}>{children}</system>;
 }
 
 /**
@@ -38,19 +37,17 @@ export function SystemMessage({ children }: { children: Node; metadata?: Record<
 export function UserMessage({
   name,
   children,
+  metadata,
 }: {
   name?: string;
   children: Node;
   metadata?: Record<string, Jsonifiable>;
 }) {
-  if (name) {
-    return (
-      <>
-        ({name}) {children}
-      </>
-    );
-  }
-  return children;
+  return (
+    <user name={name} metadata={metadata}>
+      {children}
+    </user>
+  );
 }
 
 /**
@@ -69,8 +66,8 @@ export function UserMessage({
  *
  *    ==> "Ok, thanks for that feedback. I'll cancel your account."
  */
-export function AssistantMessage({ children }: { children: Node; metadata?: Record<string, Jsonifiable> }) {
-  return children;
+export function AssistantMessage({ children, metadata }: { children: Node; metadata?: Record<string, Jsonifiable> }) {
+  return <assistant metadata={metadata}>{children}</assistant>;
 }
 
 /**
@@ -115,8 +112,8 @@ export function ConversationHistory(_: {}, { getContext }: AI.ComponentContext) 
 export function FunctionCall({
   id,
   name,
-  partial,
   args,
+  metadata,
 }: {
   name: string;
   id?: string;
@@ -124,9 +121,11 @@ export function FunctionCall({
   args: Record<string, string | number | boolean | null>;
   metadata?: Record<string, Jsonifiable>;
 }) {
-  return `Call function ${name}${id ? ` (id ${id})` : ''} with ${partial ? '(incomplete) ' : ''}${JSON.stringify(
-    args
-  )}`;
+  return (
+    <functionCall id={id} name={name} metadata={metadata}>
+      {JSON.stringify(args)}
+    </functionCall>
+  );
 }
 
 /**
@@ -148,8 +147,8 @@ export function FunctionCall({
 export function FunctionResponse({
   id,
   name,
-  failed,
   children,
+  metadata,
 }: {
   id?: string;
   name: string;
@@ -157,126 +156,37 @@ export function FunctionResponse({
   children: Node;
   metadata?: Record<string, Jsonifiable>;
 }) {
-  const idOutput = id ? ` (id ${id})` : '';
-  if (failed) {
-    return (
-      <>
-        function {name}
-        {idOutput} failed with {children}
-      </>
-    );
-  }
-
   return (
-    <>
-      function {name}
-      {idOutput} returned {children}
-    </>
+    <functionResponse id={id} name={name} metdata={metadata}>
+      {children}
+    </functionResponse>
   );
-}
-
-interface ConversationMessageType<T, C extends AI.Component<any>> {
-  type: T;
-  element: AI.Element<AI.PropsOfComponent<C>>;
 }
 
 /**
  * A type that represents a conversation message.
  */
 export type ConversationMessage =
-  | ConversationMessageType<'user', typeof UserMessage>
-  | ConversationMessageType<'assistant', typeof AssistantMessage>
-  | ConversationMessageType<'system', typeof SystemMessage>
-  | ConversationMessageType<'functionCall', typeof FunctionCall>
-  | ConversationMessageType<'functionResponse', typeof FunctionResponse>;
+  | AI.RenderedIntrinsicElement<'user'>
+  | AI.RenderedIntrinsicElement<'assistant'>
+  | AI.RenderedIntrinsicElement<'system'>
+  | AI.RenderedIntrinsicElement<'functionCall'>
+  | AI.RenderedIntrinsicElement<'functionResponse'>;
 
-/** @hidden */
-export function isConversationalComponent(element: AI.Element<any>): boolean {
-  return (
-    [UserMessage, AssistantMessage, SystemMessage, FunctionCall, FunctionResponse] as AI.Component<any>[]
-  ).includes(element.tag);
-}
+export const isConversationMessage = (element: AI.RenderElement): element is ConversationMessage =>
+  element.type in ['user', 'assistant', 'system', 'functionCall', 'functionResponse'];
 
-function assertNoMeaningfulStringContent(partialRendering: AI.PartiallyRendered[]): AI.Element<any>[] {
-  const invalidChildren = partialRendering.filter((el) => typeof el === 'string' && el.trim()) as string[];
-  if (invalidChildren.length) {
-    throw new AIJSXError(
-      `Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "${invalidChildren.join(
-        '", "'
-      )}". To fix this, wrap this content in the appropriate child type (e.g. UserMessage).`,
-      ErrorCode.ChatCompletionInvalidInput,
-      'user',
-      {
-        invalidChildren,
-      }
-    );
+export async function toConversationMessages(renderElement: AI.RenderElement) {
+  const messages: ConversationMessage[] = [];
+  for await (const [message, _] of AI.traverse(renderElement, {
+    yield: isConversationMessage,
+    descend: (e) => !isConversationMessage(e),
+  })) {
+    messages.push(message);
   }
 
-  return partialRendering.filter(AI.isElement);
-}
-
-function toConversationMessages(partialRendering: AI.PartiallyRendered[]): ConversationMessage[] {
-  return assertNoMeaningfulStringContent(partialRendering).map<ConversationMessage>((e) => {
-    switch (e.tag) {
-      case UserMessage:
-        return { type: 'user', element: e };
-      case AssistantMessage:
-        return { type: 'assistant', element: e };
-      case SystemMessage:
-        return { type: 'system', element: e };
-      case FunctionCall:
-        return { type: 'functionCall', element: e };
-      case FunctionResponse:
-        return { type: 'functionResponse', element: e };
-      default:
-        throw new AIJSXError(
-          `Unexpected tag (${e.tag}) in conversation`,
-          ErrorCode.UnexpectedPartialRenderResult,
-          'internal'
-        );
-    }
-  });
-}
-
-async function loggableMessage(
-  message: ConversationMessage,
-  render: AI.RenderContext['render'],
-  cost?: (message: ConversationMessage, render: AI.ComponentContext['render']) => Promise<number>
-) {
-  let textPromise: PromiseLike<string> | undefined = undefined;
-  switch (message.type) {
-    case 'user':
-    case 'assistant':
-    case 'system':
-      textPromise = render(message.element);
-      break;
-    case 'functionResponse':
-      textPromise = render(message.element.props.children);
-      break;
-    case 'functionCall':
-      break;
-    default: {
-      const neverMessage: never = message;
-      throw new Error(`Unexpected message type ${(neverMessage as any).type}`);
-    }
-  }
-
-  const costPromise = cost?.(message, render);
-
-  const { children, ...propsWithoutChildren } = {
-    children: undefined,
-    ...message.element.props,
-  };
-  const loggableProps: Record<string, Jsonifiable> = propsWithoutChildren;
-
-  return {
-    // Use a function so that it doesn't serialize to JSON, but can be accessed if needed.
-    getElement: () => message.element,
-    type: message.type,
-    props: loggableProps,
-    text: await textPromise,
-    cost: await costPromise,
-  };
+  await Promise.all(messages.map((message) => message.untilComplete()));
+  return messages;
 }
 
 /** @hidden */
@@ -296,12 +206,9 @@ export async function renderToConversation(
     ) : (
       conversation
     );
-  const messages = toConversationMessages(await render(conversationToUse, { stop: isConversationalComponent }));
-
+  const messages = await toConversationMessages(render(conversationToUse));
   if (logger && logType) {
-    const loggableMessages = await Promise.all(messages.map((m) => loggableMessage(m, render, cost)));
-    logger.setAttribute(`ai.jsx.${logType}`, JSON.stringify(loggableMessages));
-    logger.info({ [logType]: { messages: loggableMessages } }, `Got ${logType} conversation`);
+    logger.info({ [logType]: { messages } }, `Got ${logType} conversation`);
   }
 
   return messages;
@@ -347,18 +254,17 @@ export function Converse({
   children: AI.Node;
 }) {
   // Keep producing rounds until there's a round with no messages.
-  async function* ConversationRound(
+  async function ConversationRound(
     { currentRound, history }: { currentRound: AI.Node; history: ConversationMessage[] },
-    { memo, render }: AI.ComponentContext
+    { render }: AI.ComponentContext
   ) {
-    yield;
     const currentRoundMessages = await renderToConversation(currentRound, render);
     if (currentRoundMessages.length === 0) {
       return;
     }
 
     const newHistory = history.concat(currentRoundMessages);
-    const nextRound = memo(reply(currentRoundMessages, newHistory.slice()));
+    const nextRound = render(reply(currentRoundMessages, newHistory.slice()));
     return [nextRound, <ConversationRound history={newHistory} currentRound={nextRound} />];
   }
 
@@ -390,41 +296,21 @@ export async function* ShowConversation(
     present?: (message: ConversationMessage, index: number) => AI.Node;
     onComplete?: (conversation: ConversationMessage[], render: AI.RenderContext['render']) => Promise<void> | void;
   },
-  { render, isAppendOnlyRender }: AI.ComponentContext
-): AI.RenderableStream {
-  // If we're in an append-only render, do the transformation in an append-only manner so as not to block.
-  if (isAppendOnlyRender) {
-    yield AI.AppendOnlyStream;
-  }
-
-  let lastFrame = [] as AI.PartiallyRendered[];
-  let conversationMessages = [] as ConversationMessage[];
-
-  function handleFrame(frame: AI.PartiallyRendered[]): AI.Node {
-    if (isAppendOnlyRender) {
-      const delta = toConversationMessages(frame.slice(lastFrame.length));
-      conversationMessages = conversationMessages.concat(delta);
-      lastFrame = frame;
-      return delta.map(present ?? ((m) => m.element));
+  { render }: AI.ComponentContext
+) {
+  let index = 0;
+  const renderedChildren = render(children);
+  if (present) {
+    for await (const [message, _] of AI.traverse(renderedChildren, {
+      yield: isConversationMessage,
+      descend: () => !isConversationMessage,
+    })) {
+      yield present(message, index);
+      index++;
     }
-
-    conversationMessages = toConversationMessages(frame);
-    return toConversationMessages(frame).map(present ?? ((m) => m.element));
   }
 
-  const finalFrame = yield* render(children, {
-    map: handleFrame,
-    stop: isConversationalComponent,
-    appendOnly: isAppendOnlyRender,
-  });
-
-  // Prioritize rendering by yielding the final frame before running the `onComplete` handler.
-  yield handleFrame(finalFrame);
-  await onComplete?.(conversationMessages, render);
-
-  // N.B. This may not have been an append-only stream until now, but by returning this
-  // we can indicate that we've already yielded the final frame.
-  return AI.AppendOnlyStream;
+  await onComplete?.(await toConversationMessages(renderedChildren), render);
 }
 
 /**
@@ -471,178 +357,82 @@ export async function ShrinkConversation(
   },
   { render, logger }: AI.ComponentContext
 ) {
-  /**
-   * We construct a tree of immutable and shrinkable nodes such that shrinkable nodes
-   * can contain other nodes.
-   */
-  type TreeNode = ImmutableTreeNode | ShrinkableTreeNode;
+  let currentTree: AI.RenderElement = render(children);
 
-  interface ImmutableTreeNode {
-    type: 'immutable';
-    element: AI.Element<any>;
-    cost: number;
-  }
+  // Cache the costs of each message to avoid recalculating them on each iteration.
+  const costCache = new Map<AI.RenderElement, number>();
 
-  interface ShrinkableTreeNode {
-    type: 'shrinkable';
-    element: AI.Element<AI.PropsOfComponent<typeof InternalShrinkable>>;
-    cost: number;
-    children: TreeNode[];
-  }
-
-  /** Converts a conversational `AI.Node` into a shrinkable tree. */
-  async function conversationToTreeRoots(conversation: AI.Node): Promise<TreeNode[]> {
-    const rendered = assertNoMeaningfulStringContent(
-      await render(conversation, {
-        stop: (e) => isConversationalComponent(e) || e.tag === InternalShrinkable,
-      })
-    );
-
-    return Promise.all(
-      rendered.map<Promise<TreeNode>>(async (value) => {
-        if (value.tag === InternalShrinkable) {
-          const children = await conversationToTreeRoots(value.props.children);
-          return { type: 'shrinkable', element: value, cost: aggregateCost(children), children };
-        }
-
-        return {
-          type: 'immutable',
-          element: value,
-          cost: await costFn(toConversationMessages([value])[0], render),
-        };
-      })
-    );
-  }
-
-  /** Finds the least important node in any of the trees, considering cost as a second factor. */
-  function leastImportantNode(roots: TreeNode[]): ShrinkableTreeNode | undefined {
-    function compareImportance(nodeA: ShrinkableTreeNode, nodeB: ShrinkableTreeNode) {
-      // If the two nodes are of the same importance, consider the higher cost node less important.
-      return nodeA.element.props.importance - nodeB.element.props.importance || nodeB.cost - nodeA.cost;
-    }
-
-    let current = undefined as ShrinkableTreeNode | undefined;
-    roots.forEach((node) => {
-      if (node.type !== 'shrinkable') {
-        return;
+  while (true) {
+    // Calculate the cost of the current tree.
+    const messages = await toConversationMessages(currentTree);
+    const costPromises = messages.map(async (message) => {
+      if (!costCache.has(message)) {
+        costCache.set(message, await costFn(message, render));
       }
 
-      if (current === undefined || compareImportance(node, current) < 0) {
-        current = node;
-      }
-
-      const leastImportantDescendant = leastImportantNode(node.children);
-      if (leastImportantDescendant !== undefined && compareImportance(leastImportantDescendant, current) < 0) {
-        current = leastImportantDescendant;
-      }
+      return costCache.get(message)!;
     });
+    const cost = (await Promise.all(costPromises)).reduce((a, b) => a + b, 0);
 
-    return current;
-  }
-
-  function aggregateCost(roots: TreeNode[]): number {
-    return _.sumBy(roots, (node) => node.cost);
-  }
-
-  /** Replaces a single ShrinkableTreeNode in the tree. */
-  async function replaceNode(roots: TreeNode[], nodeToReplace: ShrinkableTreeNode): Promise<TreeNode[]> {
-    const newRoots = await Promise.all(
-      roots.flatMap<Promise<TreeNode[]>>(async (root) => {
-        if (root === nodeToReplace) {
-          return conversationToTreeRoots(root.element.props.replacement);
-        }
-
-        if (root.type !== 'shrinkable') {
-          return [root];
-        }
-
-        // Look for a replacement among the children and recalculate the cost.
-        const replacementChildren = await replaceNode(root.children, nodeToReplace);
-        return [
-          {
-            type: 'shrinkable',
-            element: root.element,
-            cost: aggregateCost(replacementChildren),
-            children: replacementChildren,
-          },
-        ];
-      })
-    );
-
-    return newRoots.flat(1);
-  }
-
-  /** Converts the shrinkable tree into a single AI.Node for rendering. */
-  function treeRootsToNode(roots: TreeNode[]): AI.Node {
-    return roots.map((root) => (root.type === 'immutable' ? root.element : treeRootsToNode(root.children)));
-  }
-
-  const rendered = await render(children, {
-    stop: (e) => isConversationalComponent(e) || e.tag === InternalShrinkable,
-  });
-
-  // If there are no shrinkable elements, there's no need to evaluate the cost.
-  const shrinkableOrConversationElements = assertNoMeaningfulStringContent(rendered);
-  if (!shrinkableOrConversationElements.find((value) => value.tag === InternalShrinkable)) {
-    return shrinkableOrConversationElements;
-  }
-
-  let roots = await conversationToTreeRoots(shrinkableOrConversationElements);
-  while (aggregateCost(roots) > budget) {
-    const nodeToReplace = leastImportantNode(roots);
-    if (nodeToReplace === undefined) {
-      // Nothing left to replace.
-      break;
+    if (cost <= budget) {
+      // If the cost doesn't surprass the budget, we're done.
+      return currentTree;
     }
 
+    // Find the least important node in the tree.
+    let leastImportantNodeAndPath: [AI.RenderedIntrinsicElement<'shrinkable'>, AI.RenderElement[]] | undefined =
+      undefined;
+    for await (const [node, path] of AI.traverse(currentTree, {
+      yield: (e): e is AI.RenderedIntrinsicElement<'shrinkable'> => e.type === 'shrinkable',
+      descend: () => true,
+    })) {
+      if (
+        leastImportantNodeAndPath === undefined ||
+        node.attributes.importance < leastImportantNodeAndPath[0].attributes.importance
+      ) {
+        // TODO: Consider using cost as a second factor for importance.
+        leastImportantNodeAndPath = [node, path];
+      }
+    }
+
+    if (leastImportantNodeAndPath === undefined) {
+      // If there are no shrinkable nodes, we're done.
+      return currentTree;
+    }
+
+    const [nodeToReplace, path] = leastImportantNodeAndPath;
+
+    // Replace the least important node with its replacement.
     logger.debug(
       {
-        node: debug(nodeToReplace.element.props.children, true),
-        importance: nodeToReplace.element.props.importance,
-        replacement: debug(nodeToReplace.element.props.replacement, true),
-        nodeCost: nodeToReplace.cost,
-        totalCost: aggregateCost(roots),
+        nodeToReplace,
+        totalCost: cost,
         budget,
       },
       'Replacing shrinkable content'
     );
-
-    // N.B. This currently quadratic in that each time we replace a node we search the entire
-    // tree for the least important node (and then search again to replace it). If we end up
-    // doing many replacements we should be smarter about this.
-    roots = await replaceNode(roots, nodeToReplace);
+    currentTree = AI.replaceSubtree(currentTree, path, (node) =>
+      node === nodeToReplace ? nodeToReplace.renderContext.render(nodeToReplace.attributes.replacement) : node
+    );
   }
-
-  return treeRootsToNode(roots);
 }
 
 /**
  * @hidden
  * Indicates that a portion of a conversation is "shrinkable".
  */
-export function Shrinkable(
-  { children, importance, replacement }: { children: Node; importance: number; replacement?: Node },
-  { memo }: AI.ComponentContext
-) {
-  // We render to a separate component so that:
-  //
-  // a) The memoization happens in the expected context (that of the <Shrinkable>)
-  // b) The memoization can be applied directly to the replacement and children
-  //
-  // This allows `children` and `replacement` to be taken off the props of <InternalShrinkable>
-  // and be correctly memoized, which would not otherwise be the case even if the <Shrinkable>
-  // or <InternalShrinkable> were memoized.
+export function Shrinkable({
+  children,
+  importance,
+  replacement,
+}: {
+  children: Node;
+  importance: number;
+  replacement?: Node;
+}) {
   return (
-    <InternalShrinkable importance={importance} replacement={replacement && memo(replacement)}>
-      {children && memo(children)}
-    </InternalShrinkable>
+    <shrinkable importance={importance} replacement={replacement}>
+      {children}
+    </shrinkable>
   );
-}
-
-/**
- * @hidden
- * An internal component to facilitate prop memoization. See comment in {@link Shrinkable}.
- */
-function InternalShrinkable({ children }: { children: Node; importance: number; replacement: Node }) {
-  return children;
 }

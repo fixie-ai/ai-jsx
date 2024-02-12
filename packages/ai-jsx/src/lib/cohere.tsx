@@ -139,7 +139,7 @@ export function MarkdownChunkFormatter({ children }: { children: string }) {
   return (
     <>
       {'```chunk\n'}
-      {children.replaceAll('```', '\\`\\`\\`')}
+      {children.replace(/```/g, '\\`\\`\\`')}
       {'\n```'}
     </>
   );

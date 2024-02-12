@@ -20,7 +20,6 @@ import { getEnvVar, patchedUntruncateJson } from './util.js';
 import { OpenAI as OpenAIClient } from 'openai';
 export { OpenAI as OpenAIClient } from 'openai';
 import { FinalRequestOptions } from 'openai/core';
-import { debugRepresentation } from '../core/debug.js';
 import { getEncoding } from 'js-tiktoken';
 import _ from 'lodash';
 
@@ -171,16 +170,14 @@ function chatModelSupportsFunctions(model: ValidChatModel) {
 export async function* OpenAICompletionModel(
   props: ModelPropsWithChildren & { model: ValidCompletionModel; logitBias?: Record<string, number> },
   { render, getContext, logger }: AI.ComponentContext
-): AI.RenderableStream {
-  yield AI.AppendOnlyStream;
-
+) {
   const openai = getContext(openAiClientContext)();
   const completionRequest = {
     model: props.model,
     max_tokens: props.maxTokens,
     temperature: props.temperature,
     top_p: props.topP,
-    prompt: await render(props.children),
+    prompt: await render(props.children).toStringAsync(),
     stop: props.stop,
     stream: true as const,
     logit_bias: props.logitBias ? logitBiasOfTokens(props.logitBias) : undefined,
@@ -211,8 +208,6 @@ export async function* OpenAICompletionModel(
   }
 
   logger.debug({ completion: resultSoFar }, 'Finished createCompletion');
-
-  return AI.AppendOnlyStream;
 }
 
 function estimateFunctionTokenCount(functions: Record<string, FunctionDefinition>): number {
@@ -259,7 +254,7 @@ function tokenLimitForChatModel(
 
 async function tokenCountForConversationMessage(
   message: ConversationMessage,
-  render: AI.RenderContext['render']
+  _: AI.RenderContext['render']
 ): Promise<number> {
   const TOKENS_PER_MESSAGE = 3;
   const TOKENS_PER_NAME = 1;
@@ -267,26 +262,25 @@ async function tokenCountForConversationMessage(
     case 'user':
       return (
         TOKENS_PER_MESSAGE +
-        tokenizer.encode(await render(message.element)).length +
-        (message.element.props.name ? tokenizer.encode(message.element.props.name).length + TOKENS_PER_NAME : 0)
+        tokenizer.encode(await message.toStringAsync()).length +
+        (message.attributes.name ? tokenizer.encode(message.attributes.name).length + TOKENS_PER_NAME : 0)
       );
     case 'assistant':
     case 'system':
-      return TOKENS_PER_MESSAGE + tokenizer.encode(await render(message.element)).length;
+      return TOKENS_PER_MESSAGE + tokenizer.encode(await message.toStringAsync()).length;
     case 'functionCall':
+    case 'functionResponse': {
+      const name =
+        typeof message.attributes.name === 'string'
+          ? message.attributes.name
+          : await message.attributes.name.toStringAsync();
       return (
         TOKENS_PER_MESSAGE +
         TOKENS_PER_NAME +
-        tokenizer.encode(message.element.props.name).length +
-        tokenizer.encode(JSON.stringify(message.element.props.args)).length
+        tokenizer.encode(name).length +
+        tokenizer.encode(await message.toStringAsync()).length
       );
-    case 'functionResponse':
-      return (
-        TOKENS_PER_MESSAGE +
-        TOKENS_PER_NAME +
-        tokenizer.encode(await render(message.element.props.children)).length +
-        tokenizer.encode(message.element.props.name).length
-      );
+    }
   }
 }
 
@@ -328,12 +322,12 @@ function getUnmatchedFunctionIds(messages: ConversationMessage[]): Set<string> {
         flushActiveIds();
       }
 
-      const id = message.element.props.id;
+      const id = message.attributes.id;
       if (id) {
         activeFunctionCalls.push(id);
       }
     } else if (message.type === 'functionResponse') {
-      const id = message.element.props.id;
+      const id = message.attributes.id;
       if (id) {
         activeFunctionResponses.push(id);
       }
@@ -373,7 +367,7 @@ function coalesceToolCallMessages(
 /**
  * Represents an OpenAI text chat model (e.g., `gpt-4`).
  */
-export async function* OpenAIChatModel(
+export async function OpenAIChatModel(
   props: ModelPropsWithChildren & {
     model: ValidChatModel;
     logitBias?: Record<string, number>;
@@ -387,8 +381,8 @@ export async function* OpenAIChatModel(
         forcedFunction?: never;
       }
     >,
-  { render, getContext, logger, memo }: AI.ComponentContext
-): AI.RenderableStream {
+  { render, getContext, logger }: AI.ComponentContext
+) {
   if (props.functionDefinitions) {
     if (!chatModelSupportsFunctions(props.model)) {
       throw new AIJSXError(
@@ -406,8 +400,6 @@ export async function* OpenAIChatModel(
       'user'
     );
   }
-
-  yield AI.AppendOnlyStream;
 
   let promptTokenLimit = tokenLimitForChatModel(props.model, props.functionDefinitions);
 
@@ -436,20 +428,20 @@ export async function* OpenAIChatModel(
         case 'system':
           return {
             role: 'system',
-            content: await render(message.element),
+            content: await message.toStringAsync(),
           };
         case 'user':
           return {
             role: 'user',
-            content: await render(message.element),
+            content: await message.toStringAsync(),
           };
         case 'assistant':
           return {
             role: 'assistant',
-            content: await render(message.element),
+            content: await message.toStringAsync(),
           };
         case 'functionCall':
-          if (message.element.props.id && !unmatchedFunctionCallIds.has(message.element.props.id)) {
+          if (message.attributes.id && !unmatchedFunctionCallIds.has(message.attributes.id)) {
             // N.B. Adjacent tool calls will be coalesced below.
             return {
               role: 'assistant',
@@ -457,8 +449,11 @@ export async function* OpenAIChatModel(
               tool_calls: [
                 {
                   type: 'function',
-                  function: { name: message.element.props.name, arguments: JSON.stringify(message.element.props.args) },
-                  id: message.element.props.id,
+                  function: {
+                    name: await render(message.attributes.name).toStringAsync(),
+                    arguments: await message.toStringAsync(),
+                  },
+                  id: message.attributes.id,
                 },
               ],
             };
@@ -468,23 +463,23 @@ export async function* OpenAIChatModel(
             role: 'assistant',
             content: '',
             function_call: {
-              name: message.element.props.name,
-              arguments: JSON.stringify(message.element.props.args),
+              name: await render(message.attributes.name).toStringAsync(),
+              arguments: await message.toStringAsync(),
             },
           };
         case 'functionResponse':
-          if (message.element.props.id && !unmatchedFunctionCallIds.has(message.element.props.id)) {
+          if (message.attributes.id && !unmatchedFunctionCallIds.has(message.attributes.id)) {
             return {
               role: 'tool',
-              tool_call_id: message.element.props.id,
-              content: await render(message.element.props.children),
+              tool_call_id: message.attributes.id,
+              content: await message.toStringAsync(),
             };
           }
 
           return {
             role: 'function',
-            name: message.element.props.name,
-            content: await render(message.element.props.children),
+            name: await render(message.attributes.name).toStringAsync(),
+            content: await message.toStringAsync(),
           };
       }
     })
@@ -530,9 +525,10 @@ export async function* OpenAIChatModel(
   };
 
   logger.debug({ chatCompletionRequest }, 'Calling createChatCompletion');
-  let chatResponse;
+  const promise = openai.chat.completions.create(chatCompletionRequest);
+  let chatResponse: Awaited<typeof promise>;
   try {
-    chatResponse = await openai.chat.completions.create(chatCompletionRequest);
+    chatResponse = await promise;
   } catch (ex) {
     if (ex instanceof OpenAIClient.APIError) {
       throw new AIJSXError(
@@ -545,151 +541,70 @@ export async function* OpenAIChatModel(
 
     throw ex;
   }
-  let finishReason: string | undefined = undefined;
-  const iterator = chatResponse[Symbol.asyncIterator]();
 
-  // We have a single response iterator, but we'll wrap tokens _within_ the structure of <AssistantMessage> or <FunctionCall>
-  // components. This:
-  //  - Allows our stream to be append-only and therefore eagerly rendered in append-only contexts.
-  //  - Preserves the output structure to allow callers to extract/separate <AssistantMessage> and <FunctionCall> messages.
-  //  - Allows the intermediate states of the stream to include "partial" <FunctionCall> elements with healed JSON.
-  //
-  // This requires some gymnastics because several components will share a single iterator that can only be consumed once.
-  // That is, the logical loop execution is spread over multiple functions (closures over the shared iterator).
-  async function advance() {
-    // Eat any empty chunks, typically seen at the beginning of the stream.
-    let next;
-    do {
-      next = await iterator.next();
-      if (next.done) {
-        return null;
-      }
-    } while (next.value.choices.length == 0);
-
-    logger.trace({ deltaMessage: next.value }, 'Got delta message');
-
-    if (next.value.choices[0].finish_reason) {
-      finishReason = next.value.choices[0].finish_reason;
-    }
-    return next.value.choices[0].delta;
-  }
-
-  let isAssistant = false;
-  let delta = await advance();
-  const outputMessages = [] as AI.Node[];
-  while (delta !== null) {
-    if (delta.role === 'assistant') {
-      isAssistant = true;
-    }
-
-    if (isAssistant && delta.content) {
-      // Memoize the stream to ensure it renders only once.
-      let accumulatedContent = '';
-      let complete = false;
-      const Stream = async function* (): AI.RenderableStream {
-        yield AI.AppendOnlyStream;
-
-        while (delta !== null) {
-          if (delta.content) {
-            accumulatedContent += delta.content;
-            yield delta.content;
-          }
-          if (delta.tool_calls) {
-            break;
-          }
-          delta = await advance();
+  return AI.fork(async function* (create) {
+    // XXX/psalas: figure out what to do with finish reason
+    let finishReason: string | undefined = undefined;
+    const iterator = chatResponse[Symbol.asyncIterator]();
+    async function nextDelta() {
+      // Eat any empty chunks, typically seen at the beginning of the stream.
+      let next;
+      do {
+        next = await iterator.next();
+        if (next.done) {
+          return null;
         }
-        complete = true;
+      } while (next.value.choices.length == 0);
 
-        return AI.AppendOnlyStream;
-      };
-      const assistantMessage = memo(
-        <AssistantMessage>
-          <Stream {...debugRepresentation(() => `${accumulatedContent}${complete ? '' : '▮'}`)} />
-        </AssistantMessage>
-      );
-      yield assistantMessage;
+      logger.trace({ deltaMessage: next.value }, 'Got delta message');
 
-      // Ensure the assistant stream is flushed by rendering it.
-      await render(assistantMessage);
-      outputMessages.push(assistantMessage);
+      if (next.value.choices[0].finish_reason) {
+        finishReason = next.value.choices[0].finish_reason;
+      }
+      return next.value.choices[0].delta;
     }
 
-    // TS doesn't realize that the Stream closure can make `delta` be `null`.
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    while (delta?.tool_calls) {
-      // Memoize the stream to ensure it renders only once.
-      const functionCallStream = memo(
-        (async function* () {
-          let id = undefined;
-          let name = '';
-          let argsJson = '';
-          while (delta != null) {
-            if (!delta.tool_calls) {
-              break;
-            }
+    let delta = await nextDelta();
+    while (delta !== null) {
+      if (delta.tool_calls?.length) {
+        const forkedToolName = create();
+        const forkedToolArgs = create();
 
-            const toolCall = delta.tool_calls[0];
-            if (toolCall.id) {
-              if (id === undefined) {
-                id = toolCall.id;
-              } else if (id !== toolCall.id) {
-                // The ID changed, so we're done with this function call.
-                break;
-              }
-            }
+        let currentId: string | undefined = undefined;
+        while (delta?.tool_calls?.length && (currentId === undefined || delta.tool_calls[0]?.id === currentId)) {
+          if (currentId === undefined && delta.tool_calls[0]?.id) {
+            currentId = delta.tool_calls[0].id;
 
-            if (toolCall.function?.name) {
-              name += toolCall.function.name;
-            }
-
-            if (toolCall.function?.arguments) {
-              argsJson += toolCall.function.arguments;
-            }
-
-            let partialArgs: Record<string, string | number | boolean | null> | undefined = undefined;
-            try {
-              partialArgs = JSON.parse(patchedUntruncateJson(argsJson || '{}'));
-            } catch (e: any) {
-              // If the JSON is incomplete and we get an error, we can ignore it.
-              const acceptedErrorPattern = /Unexpected .* JSON/;
-              if (!acceptedErrorPattern.test(e.message)) {
-                throw e;
-              }
-            }
-            if (partialArgs !== undefined) {
-              yield <FunctionCall id={id} partial name={name} args={partialArgs} />;
-            }
-
-            delta = await advance();
+            yield (
+              <functionCall id={currentId} name={render(forkedToolName.node)}>
+                {forkedToolArgs.node}
+              </functionCall>
+            );
           }
 
-          return <FunctionCall id={id} name={name} args={JSON.parse(argsJson || '{}')} />;
-        })()
-      );
-      yield functionCallStream;
+          if (delta.tool_calls[0]?.function?.name) {
+            yield forkedToolName.append(delta.tool_calls[0].function.name);
+          }
 
-      // Ensure the functionCallStream is flushed by rendering it.
-      await render(functionCallStream);
-      outputMessages.push(functionCallStream);
+          if (delta.tool_calls[0]?.function?.arguments) {
+            yield forkedToolArgs.append(delta.tool_calls[0].function.arguments);
+          }
+
+          delta = await nextDelta();
+        }
+      } else if (delta.content) {
+        const forkedAssistantMessage = create();
+        yield <assistant>{forkedAssistantMessage.node}</assistant>;
+
+        while (delta && !delta.tool_calls) {
+          if (delta.content) {
+            yield forkedAssistantMessage.append(delta.content);
+          }
+          delta = await nextDelta();
+        }
+      }
     }
-
-    // TS doesn't realize that the functionCallStream closure can make `delta` be `null`.
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (delta !== null) {
-      delta = await advance();
-    }
-  }
-
-  // TS doesn't realize that the advance closure can set `finishReason`.
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (finishReason) {
-    logger.setAttribute('openai.finish_reason', finishReason);
-  }
-
-  // Render the completion conversation to log it.
-  await renderToConversation(outputMessages, render, logger, 'completion', tokenCountForConversationMessage);
-  return AI.AppendOnlyStream;
+  });
 }
 
 /**
@@ -713,7 +628,7 @@ export async function* DalleImageGen(
     />
   );
 
-  const prompt = await render(children);
+  const prompt = await render(children).toStringAsync();
 
   const openai = getContext(openAiClientContext)();
 

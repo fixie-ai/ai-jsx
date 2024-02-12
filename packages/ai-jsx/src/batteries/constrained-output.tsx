@@ -310,14 +310,9 @@ async function* ObjectCompletionWithRetry(
  *
  * @hidden
  */
-export async function* JsonChatCompletionFunctionCall(
-  { schema, validators, children, ...props }: ObjectCompletion,
-  { render }: AI.ComponentContext
-) {
-  // If a schema is provided, it is added to the list of validators as well as the prompt.
-  const validatorsAndSchema = schema ? [schema.parse, ...(validators ?? [])] : validators ?? [];
-
-  const childrenWithCompletion = (
+export function JsonChatCompletionFunctionCall({ schema, validators, children, ...props }: ObjectCompletion) {
+  // XXX/psalas: do we need to do anything with validators?
+  return (
     <ChatCompletion
       {...props}
       functionDefinitions={{
@@ -335,45 +330,4 @@ export async function* JsonChatCompletionFunctionCall(
       </SystemMessage>
     </ChatCompletion>
   );
-
-  const frames = render(childrenWithCompletion, { stop: (e) => e.tag === FunctionCall, map: (e) => e });
-  for await (const frame of frames) {
-    const functionCall = frame.find((e) => AI.isElement(e) && e.tag === FunctionCall) as
-      | AI.Element<AI.PropsOfComponent<typeof FunctionCall>>
-      | undefined;
-    if (!functionCall) {
-      continue;
-    }
-
-    const jsonResult = functionCall.props.args;
-    try {
-      for (const validator of validatorsAndSchema) {
-        validator(jsonResult);
-      }
-    } catch (e: any) {
-      continue;
-    }
-    yield JSON.stringify(jsonResult);
-  }
-
-  const functionCall = (await frames).find((e) => AI.isElement(e) && e.tag === FunctionCall) as
-    | AI.Element<AI.PropsOfComponent<typeof FunctionCall>>
-    | undefined;
-
-  if (functionCall === undefined) {
-    return null;
-  }
-
-  const jsonResult = functionCall.props.args;
-  try {
-    for (const validator of validatorsAndSchema) {
-      validator(jsonResult);
-    }
-  } catch (e: any) {
-    throw new CompletionError('The model did not produce a valid JSON object', 'runtime', {
-      output: JSON.stringify(jsonResult),
-      validationError: e.message,
-    });
-  }
-  return JSON.stringify(jsonResult);
 }

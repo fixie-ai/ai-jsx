@@ -1,197 +1,197 @@
-/**
- * This module provides logging functions.
- * @packageDocumentation
- */
+// /**
+//  * This module provides logging functions.
+//  * @packageDocumentation
+//  */
 
-import _ from 'lodash';
-import pino from 'pino';
-import { Element } from './node.js';
-import opentelemetry from '@opentelemetry/api';
-import { logs, type Logger as OpenTelemetryLoggerInterface } from '@opentelemetry/api-logs';
-import { getEnvVar } from '../lib/util.js';
+// import _ from 'lodash';
+// import pino from 'pino';
+// import { Element } from './node.js';
+// import opentelemetry from '@opentelemetry/api';
+// import { logs, type Logger as OpenTelemetryLoggerInterface } from '@opentelemetry/api-logs';
+// import { getEnvVar } from '../lib/util.js';
 
-export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
+// export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
 
-/**
- * A Logger represents an object that can log messages.
- */
-export type Logger = Record<LogLevel, (obj: object | string, msg?: string) => void> & {
-  setAttribute: (key: string, value: string) => void;
-};
+// /**
+//  * A Logger represents an object that can log messages.
+//  */
+// export type Logger = Record<LogLevel, (obj: object | string, msg?: string) => void> & {
+//   setAttribute: (key: string, value: string) => void;
+// };
 
-/**
- * An abstract class that represents an implementation of {@link Logger}.
- */
-export abstract class LogImplementation {
-  protected readonly loggedExceptions = new WeakMap<object, boolean>();
+// /**
+//  * An abstract class that represents an implementation of {@link Logger}.
+//  */
+// export abstract class LogImplementation {
+//   protected readonly loggedExceptions = new WeakMap<object, boolean>();
 
-  /**
-   * @param level The logging level.
-   * @param element The element from which the log originated.
-   * @param renderId A unique identifier associated with the rendering request for this element.
-   * @param metadataOrMessage An object to be included in the log, or a message to log.
-   * @param message The message to log, if `metadataOrMessage` is an object.
-   */
-  abstract log(
-    level: LogLevel,
-    element: Element<any>,
-    renderId: string,
-    metadataOrMessage: object | string,
-    message?: string
-  ): void;
+//   /**
+//    * @param level The logging level.
+//    * @param element The element from which the log originated.
+//    * @param renderId A unique identifier associated with the rendering request for this element.
+//    * @param metadataOrMessage An object to be included in the log, or a message to log.
+//    * @param message The message to log, if `metadataOrMessage` is an object.
+//    */
+//   abstract log(
+//     level: LogLevel,
+//     element: Element<any>,
+//     renderId: string,
+//     metadataOrMessage: object | string,
+//     message?: string
+//   ): void;
 
-  /**
-   * Logs exceptions thrown during an element's render. By default invokes `log` with level `"error"`
-   * for the element that threw the exception and level `"trace"` for elements through which the exception
-   * propagated. This will not be invoked for `ErrorBoundary` components that handle errors from their children.
-   *
-   * @param element The element from which the exception originated or through which the exception was propagated.
-   * @param renderId A unique identifier associated with the rendering request for this element.
-   * @param exception The thrown exception.
-   */
-  logException(element: Element<object>, renderId: string, exception: unknown) {
-    let alreadyLoggedException = false;
-    if (typeof exception === 'object' && exception !== null) {
-      alreadyLoggedException = this.loggedExceptions.has(exception);
-      if (!alreadyLoggedException) {
-        this.loggedExceptions.set(exception, true);
-      }
-    }
+//   /**
+//    * Logs exceptions thrown during an element's render. By default invokes `log` with level `"error"`
+//    * for the element that threw the exception and level `"trace"` for elements through which the exception
+//    * propagated. This will not be invoked for `ErrorBoundary` components that handle errors from their children.
+//    *
+//    * @param element The element from which the exception originated or through which the exception was propagated.
+//    * @param renderId A unique identifier associated with the rendering request for this element.
+//    * @param exception The thrown exception.
+//    */
+//   logException(element: Element<object>, renderId: string, exception: unknown) {
+//     let alreadyLoggedException = false;
+//     if (typeof exception === 'object' && exception !== null) {
+//       alreadyLoggedException = this.loggedExceptions.has(exception);
+//       if (!alreadyLoggedException) {
+//         this.loggedExceptions.set(exception, true);
+//       }
+//     }
 
-    const elementTag = `<${element.tag.name}>`;
-    this.log(
-      alreadyLoggedException ? 'trace' : 'error',
-      element,
-      renderId,
-      { exception },
-      `Rendering element ${elementTag} failed with exception: ${exception}`
-    );
-  }
+//     const elementTag = `<${element.tag.name}>`;
+//     this.log(
+//       alreadyLoggedException ? 'trace' : 'error',
+//       element,
+//       renderId,
+//       { exception },
+//       `Rendering element ${elementTag} failed with exception: ${exception}`
+//     );
+//   }
 
-  /**
-   * Sets an attribute to be associated with the rendering of a particular element.
-   */
-  setAttribute(_element: Element<any>, _renderId: string, _key: string, _value: string) {}
-}
+//   /**
+//    * Sets an attribute to be associated with the rendering of a particular element.
+//    */
+//   setAttribute(_element: Element<any>, _renderId: string, _key: string, _value: string) {}
+// }
 
-/**
- * An implementation of {@link LogImplementation} that does nothing.
- */
-export class NoOpLogImplementation extends LogImplementation {
-  log(): void {}
-}
+// /**
+//  * An implementation of {@link LogImplementation} that does nothing.
+//  */
+// export class NoOpLogImplementation extends LogImplementation {
+//   log(): void {}
+// }
 
-const defaultPinoLogger = _.once(() => {
-  const logEnv = getEnvVar('AIJSX_LOG', false) ?? 'silent';
-  const [level, file] = logEnv.split(':', 2);
-  // @ts-expect-error
-  return pino({ name: 'ai-jsx', level }, file && pino.destination(file));
-});
+// const defaultPinoLogger = _.once(() => {
+//   const logEnv = getEnvVar('AIJSX_LOG', false) ?? 'silent';
+//   const [level, file] = logEnv.split(':', 2);
+//   // @ts-expect-error
+//   return pino({ name: 'ai-jsx', level }, file && pino.destination(file));
+// });
 
-/**
- * An implementation of {@link LogImplementation} that uses the `pino` logging library.
- */
-export class PinoLogger extends LogImplementation {
-  constructor(private readonly pino: pino.Logger = defaultPinoLogger()) {
-    super();
-  }
+// /**
+//  * An implementation of {@link LogImplementation} that uses the `pino` logging library.
+//  */
+// export class PinoLogger extends LogImplementation {
+//   constructor(private readonly pino: pino.Logger = defaultPinoLogger()) {
+//     super();
+//   }
 
-  log(
-    level: LogLevel,
-    element: Element<object>,
-    renderId: string,
-    metadataOrMessage: string | object,
-    message?: string | undefined
-  ): void {
-    const [objectToLog, messageToLog] =
-      typeof metadataOrMessage === 'object' ? [metadataOrMessage, message] : [{}, metadataOrMessage];
-    this.pino[level]({ ...objectToLog, renderId, element: `<${element.tag.name}>` }, messageToLog);
-  }
-}
+//   log(
+//     level: LogLevel,
+//     element: Element<object>,
+//     renderId: string,
+//     metadataOrMessage: string | object,
+//     message?: string | undefined
+//   ): void {
+//     const [objectToLog, messageToLog] =
+//       typeof metadataOrMessage === 'object' ? [metadataOrMessage, message] : [{}, metadataOrMessage];
+//     this.pino[level]({ ...objectToLog, renderId, element: `<${element.tag.name}>` }, messageToLog);
+//   }
+// }
 
-/**
- * An implementation of {@link LogImplementation} that logs to the
- * registered OpenTelemetry LoggerProvider.
- */
-export class OpenTelemetryLogger extends LogImplementation {
-  private readonly logger: OpenTelemetryLoggerInterface;
+// /**
+//  * An implementation of {@link LogImplementation} that logs to the
+//  * registered OpenTelemetry LoggerProvider.
+//  */
+// export class OpenTelemetryLogger extends LogImplementation {
+//   private readonly logger: OpenTelemetryLoggerInterface;
 
-  constructor() {
-    super();
-    this.logger = logs.getLoggerProvider().getLogger('ai.jsx');
-  }
-  log(
-    level: LogLevel,
-    element: Element<any>,
-    renderId: string,
-    metadataOrMessage: string | object,
-    message?: string | undefined
-  ): void {
-    this.logger.emit({
-      severityText: level.toUpperCase(),
-      severityNumber: {
-        // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#field-severitynumber
-        trace: 1,
-        debug: 5,
-        info: 9,
-        warn: 13,
-        error: 17,
-        fatal: 21,
-      }[level],
-      body: typeof metadataOrMessage === 'object' ? message ?? '' : metadataOrMessage,
-      attributes: {
-        element: `<${element.tag.name}>`,
-        renderId,
-        ...(typeof metadataOrMessage === 'object' ? metadataOrMessage : {}),
-      },
-    });
-  }
+//   constructor() {
+//     super();
+//     this.logger = logs.getLoggerProvider().getLogger('ai.jsx');
+//   }
+//   log(
+//     level: LogLevel,
+//     element: Element<any>,
+//     renderId: string,
+//     metadataOrMessage: string | object,
+//     message?: string | undefined
+//   ): void {
+//     this.logger.emit({
+//       severityText: level.toUpperCase(),
+//       severityNumber: {
+//         // https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/logs/data-model.md#field-severitynumber
+//         trace: 1,
+//         debug: 5,
+//         info: 9,
+//         warn: 13,
+//         error: 17,
+//         fatal: 21,
+//       }[level],
+//       body: typeof metadataOrMessage === 'object' ? message ?? '' : metadataOrMessage,
+//       attributes: {
+//         element: `<${element.tag.name}>`,
+//         renderId,
+//         ...(typeof metadataOrMessage === 'object' ? metadataOrMessage : {}),
+//       },
+//     });
+//   }
 
-  setAttribute(element: Element<any>, renderId: string, key: string, value: string): void {
-    // Set the attribute on the current span.
-    const span = opentelemetry.trace.getActiveSpan();
-    if (span) {
-      span.setAttribute(key, value);
-    }
-  }
-}
+//   setAttribute(element: Element<any>, renderId: string, key: string, value: string): void {
+//     // Set the attribute on the current span.
+//     const span = opentelemetry.trace.getActiveSpan();
+//     if (span) {
+//       span.setAttribute(key, value);
+//     }
+//   }
+// }
 
-/**
- * An implementation of {@link LogImplementation} that logs to multiple underlying LogImplementations.
- */
-export class CombinedLogger extends LogImplementation {
-  constructor(private readonly loggers: LogImplementation[]) {
-    super();
-  }
+// /**
+//  * An implementation of {@link LogImplementation} that logs to multiple underlying LogImplementations.
+//  */
+// export class CombinedLogger extends LogImplementation {
+//   constructor(private readonly loggers: LogImplementation[]) {
+//     super();
+//   }
 
-  log(...args: Parameters<LogImplementation['log']>): void {
-    this.loggers.forEach((l) => l.log(...args));
-  }
+//   log(...args: Parameters<LogImplementation['log']>): void {
+//     this.loggers.forEach((l) => l.log(...args));
+//   }
 
-  logException(...args: Parameters<LogImplementation['logException']>): void {
-    this.loggers.forEach((l) => l.logException(...args));
-  }
+//   logException(...args: Parameters<LogImplementation['logException']>): void {
+//     this.loggers.forEach((l) => l.logException(...args));
+//   }
 
-  setAttribute(...args: Parameters<LogImplementation['setAttribute']>): void {
-    this.loggers.forEach((l) => l.setAttribute(...args));
-  }
-}
+//   setAttribute(...args: Parameters<LogImplementation['setAttribute']>): void {
+//     this.loggers.forEach((l) => l.setAttribute(...args));
+//   }
+// }
 
-/**
- * A BoundLogger binds a {@link LogImplementation} to a specific render of an Element.
- */
-export class BoundLogger implements Logger {
-  constructor(
-    private readonly impl: LogImplementation,
-    private readonly renderId: string,
-    private readonly element: Element<any>
-  ) {}
+// /**
+//  * A BoundLogger binds a {@link LogImplementation} to a specific render of an Element.
+//  */
+// export class BoundLogger implements Logger {
+//   constructor(
+//     private readonly impl: LogImplementation,
+//     private readonly renderId: string,
+//     private readonly element: Element<any>
+//   ) {}
 
-  fatal = (obj: object | string, msg?: string) => this.impl.log('fatal', this.element, this.renderId, obj, msg);
-  error = (obj: object | string, msg?: string) => this.impl.log('error', this.element, this.renderId, obj, msg);
-  warn = (obj: object | string, msg?: string) => this.impl.log('warn', this.element, this.renderId, obj, msg);
-  info = (obj: object | string, msg?: string) => this.impl.log('info', this.element, this.renderId, obj, msg);
-  debug = (obj: object | string, msg?: string) => this.impl.log('debug', this.element, this.renderId, obj, msg);
-  trace = (obj: object | string, msg?: string) => this.impl.log('trace', this.element, this.renderId, obj, msg);
-  setAttribute = (key: string, value: string) => this.impl.setAttribute(this.element, this.renderId, key, value);
-}
+//   fatal = (obj: object | string, msg?: string) => this.impl.log('fatal', this.element, this.renderId, obj, msg);
+//   error = (obj: object | string, msg?: string) => this.impl.log('error', this.element, this.renderId, obj, msg);
+//   warn = (obj: object | string, msg?: string) => this.impl.log('warn', this.element, this.renderId, obj, msg);
+//   info = (obj: object | string, msg?: string) => this.impl.log('info', this.element, this.renderId, obj, msg);
+//   debug = (obj: object | string, msg?: string) => this.impl.log('debug', this.element, this.renderId, obj, msg);
+//   trace = (obj: object | string, msg?: string) => this.impl.log('trace', this.element, this.renderId, obj, msg);
+//   setAttribute = (key: string, value: string) => this.impl.setAttribute(this.element, this.renderId, key, value);
+// }

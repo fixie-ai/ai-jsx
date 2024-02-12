@@ -1,5 +1,4 @@
 import untruncateJson from 'untruncate-json';
-import { AIJSXError } from '../core/errors.js';
 
 /** @hidden */
 export function getEnvVar(name: string, shouldThrow: boolean = true) {
@@ -25,9 +24,7 @@ export function getEnvVar(name: string, shouldThrow: boolean = true) {
   // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/no-unnecessary-condition
   const result = env?.[name] || env?.[reactAppName];
   if (result === undefined && shouldThrow) {
-    throw new AIJSXError(`Please specify env var '${name}' or '${reactAppName}'.`, 1000, 'user', {
-      checkedNames: [name, reactAppName],
-    });
+    throw new Error(`Please specify env var '${name}' or '${reactAppName}'.`);
   }
   return result;
 }

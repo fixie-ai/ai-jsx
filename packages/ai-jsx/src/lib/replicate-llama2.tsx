@@ -71,12 +71,7 @@ export const defaultMaxTokens = 500;
  *
  * @hidden
  */
-export async function* Llama2ChatModel(
-  props: Llama2ModelProps,
-  { render, logger }: AI.ComponentContext
-): AI.RenderableStream {
-  yield AI.AppendOnlyStream;
-
+export async function Llama2ChatModel(props: Llama2ModelProps, { render, logger }: AI.ComponentContext) {
   // TODO: Support token budget/conversation shrinking
   const messageElements = await renderToConversation(props.children, render, logger, 'prompt');
   const systemMessage = messageElements.filter((e) => e.type == 'system');
@@ -117,29 +112,24 @@ export async function* Llama2ChatModel(
     );
   }
 
-  yield AI.AppendOnlyStream;
   const llama2Args: Llama2ChatModelArgs = {
     max_length: props.maxTokens ?? defaultMaxTokens,
     repetition_penalty: props.repetitionPenalty,
     temperature: props.temperature,
     top_p: props.topP,
-    prompt: await render(userMessages[0].element),
-    system_prompt: systemMessage.length ? await render(systemMessage[0].element) : undefined,
+    prompt: await userMessages[0].toStringAsync(),
+    system_prompt: systemMessage.length ? await systemMessage[0].toStringAsync() : undefined,
   };
-  const assistantMessage = (
-    <AssistantMessage>
+
+  return (
+    <assistant>
       {await fetchLlama2(
         'replicate/llama70b-v2-chat:2d19859030ff705a87c746f7e96eea03aefb71f166725aee39692f1476566d48',
         llama2Args,
         logger
       )}
-    </AssistantMessage>
+    </assistant>
   );
-  yield assistantMessage;
-
-  // Render it so that the conversation is logged.
-  await renderToConversation(assistantMessage, render, logger, 'completion');
-  return AI.AppendOnlyStream;
 }
 
 /**
@@ -147,12 +137,8 @@ export async function* Llama2ChatModel(
  *
  * @hidden
  */
-export async function* Llama2CompletionModel(
-  props: Llama2ModelProps,
-  { render, logger }: AI.ComponentContext
-): AI.RenderableStream {
-  yield AI.AppendOnlyStream;
-  const prompt = await render(props.children);
+export async function Llama2CompletionModel(props: Llama2ModelProps, { render, logger }: AI.ComponentContext) {
+  const prompt = await render(props.children).toStringAsync();
   const llama2Args: Llama2ModelArgs = {
     prompt,
     max_length: props.maxTokens ?? defaultMaxTokens,
@@ -160,13 +146,11 @@ export async function* Llama2CompletionModel(
     top_p: props.topP,
   };
   logger.debug({ llama2Args }, 'Calling Llama2');
-  const response = await fetchLlama2(
+  return fetchLlama2(
     'replicate/llama70b-v2:14ce4448d5e7e9ed0c37745ac46eca157aab09061f0c179ac2b323b5de56552b',
     llama2Args,
     logger
   );
-  yield response;
-  return AI.AppendOnlyStream;
 }
 
 /**
