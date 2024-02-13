@@ -1,6 +1,6 @@
 import * as AI from 'ai-jsx';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
-import { showInspector } from 'ai-jsx/core/inspector';
+import { showJSX } from './utils.js';
 
 const BIG_TEXT = `Four score and seven years ago our fathers brought forth on this continent a new nation, conceived in liberty,
 and dedicated to the proposition that all men are created equal.
@@ -21,7 +21,7 @@ const tokenLen = (text: String) => text.length / 4;
 const MAX_TOKEN_LEN = 250;
 
 async function Summarizer({ children }: { children: AI.Node }, { render }: AI.ComponentContext) {
-  const text = await render(children);
+  const text = await render(children).toStringAsync();
   if (tokenLen(text) <= MAX_TOKEN_LEN) {
     return (
       <ChatCompletion>
@@ -47,4 +47,4 @@ function App() {
   return <Summarizer>{BIG_TEXT}</Summarizer>;
 }
 
-showInspector(<App />);
+showJSX(<App />);

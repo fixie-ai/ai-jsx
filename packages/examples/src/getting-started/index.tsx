@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url';
 import * as AI from 'ai-jsx';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { ImageGen } from 'ai-jsx/core/image-gen';
-import { showInspector } from 'ai-jsx/core/inspector';
 import { Node } from 'ai-jsx';
 
 function loadData() {
@@ -22,8 +21,9 @@ async function App() {
   );
 }
 
-showInspector(<App />);
-// console.log(await AI.createRenderContext().render(<App />));
+for await (const output of AI.createRenderContext().render(<App />)) {
+  process.stdout.write(output);
+}
 
 function MakeCharacter() {
   return (
@@ -66,8 +66,8 @@ function WriteStory() {
 
 // Disable the linter because this getting started file has two examples in one, and this one isn't used right now.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function WriteStoryWithImage(props: {}, { memo }: AI.ComponentContext) {
-  const story = memo(<WriteStory />);
+function WriteStoryWithImage(props: {}, { render }: AI.ComponentContext) {
+  const story = render(<WriteStory />);
   return (
     <>
       Banner URL:{' '}

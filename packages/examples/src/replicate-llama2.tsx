@@ -1,8 +1,6 @@
 import { ChatCompletion, SystemMessage, UserMessage, Completion } from 'ai-jsx/core/completion';
 import { ReplicateLlama2 } from 'ai-jsx/lib/replicate-llama2';
-import * as AI from 'ai-jsx';
-import { pino } from 'pino';
-import { PinoLogger } from 'ai-jsx/core/log';
+import { showJSX } from './utils.js';
 
 function Question() {
   return (
@@ -40,15 +38,4 @@ function App() {
   );
 }
 
-const logger = pino({
-  name: 'ai-jsx',
-  level: process.env.loglevel ?? 'debug',
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-    },
-  },
-});
-
-console.log(await AI.createRenderContext({ logger: new PinoLogger(logger) }).render(<App />));
+showJSX(<App />);

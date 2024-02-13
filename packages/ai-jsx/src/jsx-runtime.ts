@@ -4,9 +4,9 @@ import {
   Component as AIComponent,
   Element as AIElement,
   createElement,
-  symbols,
   RenderNode,
 } from './core/render3.js';
+export { Fragment } from './core/symbols.js';
 
 /** @hidden */
 
@@ -44,14 +44,10 @@ export declare namespace JSX {
 /** @hidden */
 export function jsx(type: any, config: any, maybeKey?: any) {
   const configWithKey = maybeKey !== undefined ? { ...config, key: maybeKey } : config;
-  const children = config && Array.isArray(config.children) ? config.children : [];
-  return createElement(type, configWithKey, ...children);
+  return createElement(type, configWithKey);
 }
 /** @hidden */
 export const jsxDEV = jsx;
 
 /** @hidden */
 export const jsxs = jsx;
-
-/** @hidden */
-export const Fragment = symbols.fragment;

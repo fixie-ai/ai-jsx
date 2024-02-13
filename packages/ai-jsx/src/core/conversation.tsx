@@ -174,7 +174,7 @@ export type ConversationMessage =
   | AI.RenderedIntrinsicElement<'functionResponse'>;
 
 export const isConversationMessage = (element: AI.RenderElement): element is ConversationMessage =>
-  element.type in ['user', 'assistant', 'system', 'functionCall', 'functionResponse'];
+  ['user', 'assistant', 'system', 'functionCall', 'functionResponse' as string | symbol].includes(element.type);
 
 export async function toConversationMessages(renderElement: AI.RenderElement) {
   const messages: ConversationMessage[] = [];
@@ -303,7 +303,7 @@ export async function* ShowConversation(
   if (present) {
     for await (const [message, _] of AI.traverse(renderedChildren, {
       yield: isConversationMessage,
-      descend: () => !isConversationMessage,
+      descend: (msg) => !isConversationMessage(msg),
     })) {
       yield present(message, index);
       index++;
@@ -411,6 +411,7 @@ export async function ShrinkConversation(
       },
       'Replacing shrinkable content'
     );
+
     currentTree = AI.replaceSubtree(currentTree, path, (node) =>
       node === nodeToReplace ? nodeToReplace.renderContext.render(nodeToReplace.attributes.replacement) : node
     );

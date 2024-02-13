@@ -4,9 +4,9 @@
  */
 
 import { ScoredChunk, FixieCorpus } from 'ai-jsx/batteries/docs';
-import { showInspector } from 'ai-jsx/core/inspector';
 
 import promptly from 'promptly';
+import { showJSX } from './utils.js';
 const { prompt } = promptly;
 
 function ChunkFormatter({ doc }: { doc: ScoredChunk<any> }) {
@@ -29,4 +29,4 @@ async function App({ corpusId }: { corpusId: string }) {
 }
 
 const corpusId = await prompt('Fixie Corpus ID: ');
-showInspector(<App corpusId={corpusId} />);
+showJSX(<App corpusId={corpusId} />);

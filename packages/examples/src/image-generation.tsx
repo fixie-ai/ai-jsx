@@ -2,8 +2,8 @@ import * as AI from 'ai-jsx';
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { ImageGen } from 'ai-jsx/core/image-gen';
 
-function RecipeWithImage(_: {}, { memo }: AI.ComponentContext) {
-  const recipeTitle = memo(
+function RecipeWithImage(_: {}, { render }: AI.ComponentContext) {
+  const recipeTitle = render(
     <ChatCompletion temperature={1}>
       <SystemMessage>You are a Michelin Star Head Chef</SystemMessage>
       <UserMessage>Come up with a title for an exotic sushi.</UserMessage>
@@ -18,4 +18,8 @@ function RecipeWithImage(_: {}, { memo }: AI.ComponentContext) {
   );
 }
 
-console.log(await AI.createRenderContext().render(<RecipeWithImage />));
+console.log(
+  await AI.createRenderContext()
+    .render(<RecipeWithImage />)
+    .toStringAsync()
+);

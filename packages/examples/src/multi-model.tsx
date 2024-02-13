@@ -1,6 +1,6 @@
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
 import { OpenAI } from 'ai-jsx/lib/openai';
-import { showInspector } from 'ai-jsx/core/inspector';
+import { showJSX } from './utils.js';
 
 function MultiModel() {
   const challenge = (
@@ -26,4 +26,4 @@ function MultiModel() {
   );
 }
 
-showInspector(<MultiModel />);
+showJSX(<MultiModel />);

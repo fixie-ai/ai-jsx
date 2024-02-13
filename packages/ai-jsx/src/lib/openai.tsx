@@ -571,8 +571,12 @@ export async function OpenAIChatModel(
         const forkedToolArgs = create();
 
         let currentId: string | undefined = undefined;
-        while (delta?.tool_calls?.length && (currentId === undefined || delta.tool_calls[0]?.id === currentId)) {
-          if (currentId === undefined && delta.tool_calls[0]?.id) {
+        while (delta?.tool_calls?.length) {
+          if (delta.tool_calls[0]?.id) {
+            if (currentId && currentId !== delta.tool_calls[0].id) {
+              // Start a new function call if the ID changes.
+              break;
+            }
             currentId = delta.tool_calls[0].id;
 
             yield (
@@ -592,6 +596,9 @@ export async function OpenAIChatModel(
 
           delta = await nextDelta();
         }
+
+        forkedToolArgs.close();
+        forkedToolName.close();
       } else if (delta.content) {
         const forkedAssistantMessage = create();
         yield <assistant>{forkedAssistantMessage.node}</assistant>;
@@ -602,6 +609,10 @@ export async function OpenAIChatModel(
           }
           delta = await nextDelta();
         }
+
+        forkedAssistantMessage.close();
+      } else {
+        delta = await nextDelta();
       }
     }
   });

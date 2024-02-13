@@ -1,5 +1,5 @@
 import { ChatCompletion, SystemMessage, UserMessage } from 'ai-jsx/core/completion';
-import { showInspector } from 'ai-jsx/core/inspector';
+import { showJSX } from './utils.js';
 
 function App() {
   return (
@@ -10,4 +10,4 @@ function App() {
   );
 }
 
-showInspector(<App />);
+showJSX(<App />);

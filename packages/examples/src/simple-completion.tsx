@@ -1,5 +1,5 @@
 import { Completion } from 'ai-jsx/core/completion';
-import { showInspector } from 'ai-jsx/core/inspector';
+import { showJSX } from './utils.js';
 
 function App() {
   return (
@@ -10,5 +10,4 @@ function App() {
   );
 }
 
-showInspector(<App />);
-// console.log(await AI.createRenderContext().render(<App />));
+showJSX(<App />);

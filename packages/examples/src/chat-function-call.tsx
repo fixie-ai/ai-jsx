@@ -1,4 +1,3 @@
-import { showInspector } from 'ai-jsx/core/inspector';
 import {
   ChatCompletion,
   ChatProvider,
@@ -7,6 +6,8 @@ import {
   FunctionCall,
   FunctionResponse,
 } from 'ai-jsx/core/completion';
+import { show } from './utils.js';
+import { createRenderContext } from 'ai-jsx';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ModelProducesFunctionCall({ query }: { query: string }) {
@@ -58,5 +59,4 @@ function ModelProducesFinalResponse({ query }: { query: string }) {
   );
 }
 
-showInspector(<ModelProducesFunctionCall query="What is 2523231 * 2382382?" />);
-// showInspector(<ModelProducesFinalResponse query="What is 2523231 * 2382382?" />);
+show(createRenderContext().render(<ModelProducesFunctionCall query="What is 2523231 * 2382382?" />));

@@ -1,20 +1,19 @@
-import { nanoid } from 'nanoid';
+import { v4 } from 'uuid';
 import { AbortEvent, ErrorEvent, CompleteEvent, RenderEvents } from './render-events.js';
 import {
   Node,
   ComponentContext,
   Context,
-  IsRenderElement,
   LogContext,
   RenderContext,
   RenderElement,
   RenderNode,
   Renderable,
-  symbols,
 } from './render3.js';
+import * as Symbols from './symbols.js';
 
 export class RenderElementImpl extends EventTarget implements RenderElement {
-  public readonly [IsRenderElement]: true = true;
+  public readonly [Symbols.IsRenderElement]: true = true;
   private readonly children: RenderNode[] = [];
   private readonly errorPromise: Promise<never>;
 
@@ -45,7 +44,7 @@ export class RenderElementImpl extends EventTarget implements RenderElement {
 
     if (children) {
       if (Array.isArray(children)) {
-        children.forEach(this.addChild);
+        children.forEach((c) => this.addChild(c));
       } else if (typeof children === 'object' && Symbol.asyncIterator in children) {
         this.asyncIterator = children[Symbol.asyncIterator]();
       } else {
@@ -136,18 +135,22 @@ export class RenderElementImpl extends EventTarget implements RenderElement {
         yield* toStringIterable(child, localBuffer);
       }
 
-      if (!renderNode.isComplete()) {
+      if (!renderNode.isComplete(true)) {
         // We're going to block on the async children, so flush the buffer.
         yield* flushBuffer();
 
         let asyncChildNodesCount = 0;
         for await (const child of renderNode.asyncChildNodes) {
           asyncChildNodesCount++;
-          if (asyncChildNodesCount < childNodesCount) {
+          if (asyncChildNodesCount <= childNodesCount) {
             // We already saw this child previously.
             continue;
           }
           yield* toStringIterable(child, localBuffer);
+
+          if (!renderNode.isComplete(true)) {
+            yield* flushBuffer();
+          }
         }
       }
 
@@ -227,7 +230,7 @@ export class RenderContextImpl implements RenderContext {
   constructor(private readonly userContext: Record<symbol, unknown>) {}
   render(renderable: Renderable, abortSignal?: AbortSignal): RenderElement {
     const result = this.renderInternal(renderable, abortSignal);
-    return typeof result === 'string' ? new RenderElementImpl(symbols.fragment, {}, this, abortSignal, result) : result;
+    return typeof result === 'string' ? new RenderElementImpl(Symbols.Fragment, {}, this, abortSignal, result) : result;
   }
 
   private renderInternal(renderable: Renderable, abortSignal?: AbortSignal | undefined): RenderNode {
@@ -245,15 +248,17 @@ export class RenderContextImpl implements RenderContext {
         break;
       case 'function': {
         const logImplementation = this.getContext(LogContext);
-        const renderId = nanoid();
+        const renderId = v4();
         try {
           const result = this.renderInternal(
-            renderable(
-              Object.create(this, {
-                logger: { value: logImplementation.bind(renderable.tag, renderable.props, renderId) },
-                abortSignal: { value: abortSignal },
-              })
-            ),
+            renderable({
+              render: (renderable: Renderable, abortSignal?: AbortSignal) => this.render(renderable, abortSignal),
+              attach: (node: Node) => this.attach(node),
+              getContext: <T>(ctx: Context<T>) => this.getContext(ctx),
+              setContext: <T>(ctx: Context<T>, value: T) => this.setContext(ctx, value),
+              logger: logImplementation.bind(renderable.tag, renderable.props, renderId),
+              abortSignal,
+            }),
             abortSignal
           );
           if (typeof result !== 'string') {
@@ -274,7 +279,7 @@ export class RenderContextImpl implements RenderContext {
 
           // Embed the error in the render tree.
           return new RenderElementImpl(
-            symbols.error,
+            Symbols.Error,
             { error: e },
             this,
             abortSignal,
@@ -295,13 +300,13 @@ export class RenderContextImpl implements RenderContext {
       return '';
     }
 
-    if (IsRenderElement in renderable) {
+    if (Symbols.IsRenderElement in renderable) {
       return renderable;
     }
 
     if (Array.isArray(renderable)) {
       return new RenderElementImpl(
-        symbols.fragment,
+        Symbols.Fragment,
         {},
         this,
         abortSignal,
@@ -312,7 +317,7 @@ export class RenderContextImpl implements RenderContext {
     if ('then' in renderable) {
       const awaitable = renderable.then((value) => renderContext.renderInternal(value, abortSignal));
       return new RenderElementImpl(
-        symbols.async,
+        Symbols.Async,
         {},
         this,
         abortSignal,
@@ -324,7 +329,7 @@ export class RenderContextImpl implements RenderContext {
 
     if (Symbol.asyncIterator in renderable) {
       return new RenderElementImpl(
-        symbols.stream,
+        Symbols.Stream,
         {},
         this,
         abortSignal,

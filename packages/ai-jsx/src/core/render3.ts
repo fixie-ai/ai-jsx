@@ -1,14 +1,13 @@
 import { type JSX } from '../jsx-runtime.js';
 import { RenderEvents } from './render-events.js';
 import { RenderContextImpl, RenderElementImpl } from './render-impl.js';
+import { IsRenderElement } from './symbols.js';
 
 export interface Element<P = unknown> {
   tag?: Component<P> | string | symbol;
   props?: P;
   (componentContext: ComponentContext): Renderable;
 }
-
-export const IsRenderElement = Symbol.for('ai.jsx.isRenderElement');
 
 export interface RenderElement extends AsyncIterable<string> {
   readonly [IsRenderElement]: true;
@@ -107,23 +106,16 @@ export class ConsoleLogImplementation extends LogImplementation {
     metadataOrMessage: object | string,
     message?: string
   ): void {
-    console[level === 'fatal' ? 'error' : level](message ?? metadataOrMessage, {
-      component,
-      props,
-      renderId,
-      metadata: message ? metadataOrMessage : undefined,
-    });
+    // console[level === 'fatal' ? 'error' : level](message ?? metadataOrMessage, {
+    //   component,
+    //   props,
+    //   renderId,
+    //   metadata: message ? metadataOrMessage : undefined,
+    // });
   }
 }
 
 export const LogContext = createContext<LogImplementation>(new ConsoleLogImplementation());
-
-export const symbols = {
-  stream: Symbol.for('ai.jsx.stream'),
-  fragment: Symbol.for('ai.jsx.fragment'),
-  async: Symbol.for('ai.jsx.async'),
-  error: Symbol.for('ai.jsx.error'),
-};
 
 export function createElement<P extends { children: C }, C>(
   tag: Component<P> | string | symbol,
@@ -150,12 +142,16 @@ export function createElement<P extends { children: C | C[] }, C>(
       return tag(propsToPass, ctx);
     }
 
+    const childrenToRender = (
+      Array.isArray(propsToPass.children) ? propsToPass.children.flat(Infinity as 1) : [propsToPass.children]
+    ) as Node[];
+
     return new RenderElementImpl(
       tag,
       propsToPass,
       ctx,
       ctx.abortSignal,
-      (children as Node[]).flat(Infinity as 1).map((c) => ctx.render(c))
+      childrenToRender.map((c) => (typeof c === 'string' ? c : ctx.render(c, ctx.abortSignal)))
     );
   };
 
@@ -185,11 +181,13 @@ export function replace(renderElement: RenderElement, replacer: (element: Render
     renderElement.attributes,
     renderElement.renderContext,
     renderElement.abortSignal,
-    (async function* () {
-      for await (const node of renderElement.asyncChildNodes) {
-        yield replacer(node);
-      }
-    })()
+    renderElement.isComplete(true)
+      ? Array.from(renderElement.childNodes).map(replacer)
+      : (async function* () {
+          for await (const node of renderElement.asyncChildNodes) {
+            yield replacer(node);
+          }
+        })()
   );
 }
 
@@ -198,42 +196,35 @@ export function replaceSubtree(
   path: RenderElement[],
   replacer: (element: RenderNode) => RenderNode
 ): RenderElement {
-  if (path.length === 0) {
-    return replace(renderElement, replacer);
+  function replaceHelper(
+    element: RenderElement,
+    pathWithoutRoot: RenderElement[],
+    replacer: (element: RenderNode) => RenderNode
+  ): RenderElement {
+    if (pathWithoutRoot.length === 0) {
+      return replace(element, replacer);
+    }
+    const [head, ...tail] = pathWithoutRoot;
+    return replace(element, (node) => (node === head ? replaceHelper(head, tail, replacer) : node));
   }
+
+  if (path.length === 0) {
+    // Replacing the root.
+    const rootReplacement = replacer(renderElement);
+    if (typeof rootReplacement === 'string') {
+      throw new Error('Cannot replace the root with a string.');
+    }
+    return rootReplacement;
+  }
+
   const [head, ...tail] = path;
-  return replace(renderElement, (node) => (node === head ? replaceSubtree(head, tail, replacer) : node));
+  if (head !== renderElement) {
+    // The path doesn't lead to the root.
+    throw new Error('The path must start from the root.');
+  }
+
+  return replaceHelper(renderElement, tail, replacer);
 }
-
-// class AsyncQueue<T> {
-//   private readonly queue: T[] = [];
-//   private resolvePromise: (isDone: boolean) => void = () => {};
-//   private donePromise = new Promise<boolean>((resolve) => (this.resolvePromise = resolve));
-
-//   public push(value: T) {
-//     this.queue.push(value);
-//     this.resolvePromise(false);
-//     this.donePromise = new Promise((resolve) => (this.resolvePromise = resolve));
-//   }
-
-//   public async *[Symbol.asyncIterator](): AsyncIterable<T> {
-//     while (true) {
-//       while (this.queue.length > 0) {
-//         yield this.queue.shift()!;
-//       }
-
-//       if (await this.donePromise) {
-//         return;
-//       }
-//     }
-//   }
-
-//   public close() {
-//     Object.freeze(this.queue);
-//     this.resolvePromise(true);
-//     this.resolvePromise = () => {};
-//   }
-// }
 
 export interface RenderedIntrinsicElement<T extends string & keyof JSX.IntrinsicElements> extends RenderElement {
   type: T;

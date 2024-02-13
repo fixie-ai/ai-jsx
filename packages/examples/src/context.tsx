@@ -1,31 +1,33 @@
-import { showInspector } from 'ai-jsx/core/inspector';
 import * as AI from 'ai-jsx';
 import { Completion } from 'ai-jsx/core/completion';
-import { Inline } from 'ai-jsx/core/inline';
+import { Inline, __ } from 'ai-jsx/core/inline';
 import { Node, RenderContext } from 'ai-jsx';
+import { showJSX } from './utils.js';
 
 const Temperature = AI.createContext(0.0);
 
 function CharacterGenerator(props: Record<string, never>, { getContext }: RenderContext) {
-  const inlineCompletion = (prompt: Node) => (
-    <Completion stop={['"']} temperature={getContext(Temperature)}>
-      {prompt}
-    </Completion>
-  );
+  function JsonStringCompletion({ children }: { children: Node }) {
+    return (
+      <Completion stop={['"']} temperature={getContext(Temperature)}>
+        {children}
+      </Completion>
+    );
+  }
 
   return (
     <Inline>
       The following is a character profile for an RPG game in JSON format:{'\n'}
       {'{'}
-      {'\n  '}"class": "{inlineCompletion}",
-      {'\n  '}"name": "{inlineCompletion}",
-      {'\n  '}"mantra": "{inlineCompletion}"{'\n'}
+      {'\n  '}"class": "{__(JsonStringCompletion)}",
+      {'\n  '}"name": "{__(JsonStringCompletion)}",
+      {'\n  '}"mantra": "{__(JsonStringCompletion)}"{'\n'}
       {'}'}
     </Inline>
   );
 }
 
-showInspector(
+showJSX(
   <>
     <Temperature.Provider value={0.0}>
       🥶🥶🥶:{'\n'}

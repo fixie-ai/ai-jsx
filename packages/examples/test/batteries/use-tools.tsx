@@ -23,14 +23,13 @@ it('should call a tool', async () => {
     <ShowConversation
       present={(m) => (
         <>
-          {m.type}: {m.element}
+          {m.type}: {m}
           {'\n'}
         </>
       )}
     >
       <ChatProvider component={FakeChatCompletion}>
         <UseTools
-          showSteps
           tools={{
             myFunc: {
               description: 'Test tool',
@@ -78,7 +77,7 @@ it('should give tools access to context', async () => {
     <ShowConversation
       present={(m) => (
         <>
-          {m.type}: {m.element}
+          {m.type}: {m}
           {'\n'}
         </>
       )}
@@ -86,7 +85,6 @@ it('should give tools access to context', async () => {
       <myContext.Provider value={42}>
         <ChatProvider component={FakeChatCompletion}>
           <UseTools
-            showSteps
             tools={{
               myFunc: {
                 description: 'Test tool',
@@ -131,7 +129,7 @@ it('should handle failures', async () => {
     <ShowConversation
       present={(m) => (
         <>
-          {m.type}: {m.element}
+          {m.type}: {m}
           {'\n'}
         </>
       )}
@@ -139,7 +137,6 @@ it('should handle failures', async () => {
       <myContext.Provider value={42}>
         <ChatProvider component={FakeChatCompletion}>
           <UseTools
-            showSteps
             tools={{
               myFunc: {
                 description: 'Test tool',

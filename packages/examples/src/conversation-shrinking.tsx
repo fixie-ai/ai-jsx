@@ -1,7 +1,7 @@
 import * as AI from 'ai-jsx';
 import { ChatCompletion } from 'ai-jsx/core/completion';
 import { ShowConversation, UserMessage, Shrinkable } from 'ai-jsx/core/conversation';
-import { showInspector } from 'ai-jsx/core/inspector';
+import { showJSX } from './utils.js';
 
 function App() {
   const messages = [] as AI.Node[];
@@ -13,7 +13,7 @@ function App() {
     }
 
     messages.push(
-      <Shrinkable importance={0}>
+      <Shrinkable importance={0 - messages.length}>
         <UserMessage>{counting.join(' ')}</UserMessage>
       </Shrinkable>
     );
@@ -26,7 +26,7 @@ function App() {
       <ShowConversation
         present={(m) => (
           <>
-            {m.type}: {m.element}
+            {m.type}: {m}
             {'\n'}
           </>
         )}
@@ -41,4 +41,4 @@ function App() {
   );
 }
 
-showInspector(<App />);
+showJSX(<App />);
