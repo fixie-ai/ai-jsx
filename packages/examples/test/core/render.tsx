@@ -88,3 +88,48 @@ describe('subtree replacement', () => {
     }
   });
 });
+
+it('frame iteration should iterate over frames', async () => {
+  let resolveInitialPromise: () => void = () => {};
+  const initialPromise = new Promise<void>((r) => {
+    resolveInitialPromise = r;
+  });
+
+  const ctx = AI.createRenderContext();
+  const renderElement = ctx.render(
+    <b>
+      <i>
+        1.{' '}
+        {async function* gen() {
+          await initialPromise;
+          yield 'Hello, ';
+          await new Promise((r) => setTimeout(r, 100));
+          yield 'world!';
+        }}
+        {'\n'}
+      </i>
+      <u>
+        2.{' '}
+        {async function* gen() {
+          await initialPromise;
+          yield 'Hello, ';
+          await new Promise((r) => setTimeout(r, 200));
+          yield 'goodbye!';
+        }}
+      </u>
+    </b>
+  );
+
+  const expectedFrames = [
+    '1. \n2. ',
+    '1. Hello, \n2. Hello, ',
+    '1. Hello, world!\n2. Hello, ',
+    '1. Hello, world!\n2. Hello, goodbye!',
+  ];
+  const frames = [];
+  for await (const frame of AI.frames(renderElement)) {
+    resolveInitialPromise();
+    frames.push(frame.toString());
+  }
+  expect(frames).toEqual(expectedFrames);
+});

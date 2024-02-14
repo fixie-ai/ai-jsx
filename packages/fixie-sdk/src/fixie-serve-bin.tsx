@@ -6,13 +6,13 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { fastify } from 'fastify';
 import { Readable } from 'stream';
-import { createRenderContext, Component } from 'ai-jsx';
-import { InvokeAgentRequest } from './types.js';
+import { createRenderContext, Component, traverse, RenderElement, frames } from 'ai-jsx';
+import { InvokeAgentRequest, Message } from './types.js';
 import { FixieRequestWrapper } from './request-wrapper.js';
 
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import path from 'path';
-import { debugRepresentation } from 'ai-jsx/core/debug';
+import { isConversationMessage } from 'ai-jsx/core/conversation';
 
 async function serve({
   packagePath,
@@ -66,42 +66,76 @@ async function serve({
           fixieApiUrl={fixieApiUrl}
           fixieAuthToken={(req as any).fixieAuthToken}
           agentId={(req as any).fixieVerifiedToken.payload.aid}
-          {...debugRepresentation((e) => e.props.children)}
         >
           <Handler {...(invokeAgentRequest.parameters ?? {})} />
         </FixieRequestWrapper>
       );
 
-      // Enable frame batching to run ahead as aggressively as possible and ensure we don't have frame tearing. (See MessageState.)
-      const renderResult = createRenderContext({ enableOpenTelemetry: true }).render(renderable, { batchFrames: true });
-      const generator = renderResult[Symbol.asyncIterator]();
+      const renderElement = createRenderContext().render(renderable);
       return res
         .status(200)
         .type('application/jsonl')
         .send(
           Readable.from(
             (async function* () {
-              let lastMessages = [];
-              while (true) {
-                let currentValue = undefined as string | undefined;
-                try {
-                  const next = await generator.next();
-                  currentValue = next.value;
-                  lastMessages = currentValue
-                    .split('\n')
-                    .slice(0, -1)
-                    .map((msg) => JSON.parse(msg));
-                  yield `${JSON.stringify({ messages: lastMessages, state: next.done ? 'done' : 'in-progress' })}\n`;
-                  if (next.done) {
-                    break;
+              function renderElementToJson(renderElement: RenderElement): Message[] {
+                const messages: Message[] = [];
+
+                for (const [node, _] of traverse(renderElement, {
+                  yield: isConversationMessage,
+                  descend: (e) => !isConversationMessage(e),
+                })) {
+                  switch (node.type) {
+                    case 'user':
+                    case 'assistant':
+                      messages.push({
+                        kind: 'text',
+                        state: node.isComplete() ? 'done' : 'in-progress',
+                        content: node.toString(),
+                        metadata: node.attributes.metadata,
+                      });
+                      break;
+                    case 'system':
+                      break;
+                    case 'functionCall':
+                      messages.push({
+                        kind: 'functionCall',
+                        id: node.attributes.id,
+                        partial: !node.isComplete(),
+                        name: node.attributes.name.toString(),
+                        args: JSON.parse(node.toString()), // XXX/psalas: untruncate json
+                        metadata: node.attributes.metadata,
+                      });
+                      break;
+                    case 'functionResponse':
+                      messages.push({
+                        kind: 'functionResponse',
+                        id: node.attributes.id,
+                        failed: false, // XXX/psalas: propagate failure?
+                        name: node.attributes.name.toString(),
+                        response: node.toString(),
+                        metadata: node.attributes.metadata,
+                      });
+                      break;
                   }
-                } catch (ex) {
-                  const errorDetail = `Error during generation: ${ex}${ex instanceof Error ? ` ${ex.stack}` : ''}`;
-                  console.error({ currentValue, errorDetail });
-                  yield `${JSON.stringify({ messages: lastMessages, errorDetail, state: 'error' })}\n`;
-                  await generator.return?.();
-                  break;
                 }
+
+                return messages;
+              }
+
+              let lastMessages: Message[] = [];
+              try {
+                for await (const frame of frames(renderElement)) {
+                  lastMessages = renderElementToJson(frame);
+                  yield `${JSON.stringify({
+                    messages: lastMessages,
+                    state: frame.isComplete() ? 'done' : 'in-progress',
+                  })}\n`;
+                }
+              } catch (ex) {
+                const errorDetail = `Error during generation: ${ex}${ex instanceof Error ? ` ${ex.stack}` : ''}`;
+                console.error({ renderElement, errorDetail });
+                yield `${JSON.stringify({ messages: lastMessages, errorDetail, state: 'error' })}\n`;
               }
             })()
           )

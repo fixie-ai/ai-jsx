@@ -19,43 +19,45 @@ async function FakeChatCompletion({ children }: { children: AI.Node }, { render 
 
 it('should call a tool', async () => {
   const renderCtx = AI.createRenderContext();
-  const result = await renderCtx.render(
-    <ShowConversation
-      present={(m) => (
-        <>
-          {m.type}: {m}
-          {'\n'}
-        </>
-      )}
-    >
-      <ChatProvider component={FakeChatCompletion}>
-        <UseTools
-          tools={{
-            myFunc: {
-              description: 'Test tool',
-              parameters: {
-                type: 'object',
-                properties: {
-                  parameter: {
-                    description: 'Test parameter',
-                    type: 'string',
+  const result = await renderCtx
+    .render(
+      <ShowConversation
+        present={(m) => (
+          <>
+            {m.type}: {m}
+            {'\n'}
+          </>
+        )}
+      >
+        <ChatProvider component={FakeChatCompletion}>
+          <UseTools
+            tools={{
+              myFunc: {
+                description: 'Test tool',
+                parameters: {
+                  type: 'object',
+                  properties: {
+                    parameter: {
+                      description: 'Test parameter',
+                      type: 'string',
+                    },
                   },
+                  required: ['parameter'],
                 },
-                required: ['parameter'],
+                func: ({ parameter }: { parameter: string }) => parameter.toLocaleUpperCase(),
               },
-              func: ({ parameter }: { parameter: string }) => parameter.toLocaleUpperCase(),
-            },
-          }}
-        >
-          <UserMessage>Hello!</UserMessage>
-        </UseTools>
-      </ChatProvider>
-    </ShowConversation>
-  );
+            }}
+          >
+            <UserMessage>Hello!</UserMessage>
+          </UseTools>
+        </ChatProvider>
+      </ShowConversation>
+    )
+    .toStringAsync();
 
   expect(result).toMatchInlineSnapshot(`
-    "functionCall: Call function myFunc (id $myFunc) with {"parameter":"test parameter value"}
-    functionResponse: function myFunc (id $myFunc) returned TEST PARAMETER VALUE
+    "functionCall: {"parameter":"test parameter value"}
+    functionResponse: TEST PARAMETER VALUE
     assistant: DONE
     "
   `);
@@ -73,45 +75,47 @@ it('should give tools access to context', async () => {
   }
 
   const renderCtx = AI.createRenderContext();
-  const result = await renderCtx.render(
-    <ShowConversation
-      present={(m) => (
-        <>
-          {m.type}: {m}
-          {'\n'}
-        </>
-      )}
-    >
-      <myContext.Provider value={42}>
-        <ChatProvider component={FakeChatCompletion}>
-          <UseTools
-            tools={{
-              myFunc: {
-                description: 'Test tool',
-                parameters: {
-                  type: 'object',
-                  properties: {
-                    parameter: {
-                      description: 'Test parameter',
-                      type: 'string',
+  const result = await renderCtx
+    .render(
+      <ShowConversation
+        present={(m) => (
+          <>
+            {m.type}: {m}
+            {'\n'}
+          </>
+        )}
+      >
+        <myContext.Provider value={42}>
+          <ChatProvider component={FakeChatCompletion}>
+            <UseTools
+              tools={{
+                myFunc: {
+                  description: 'Test tool',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      parameter: {
+                        description: 'Test parameter',
+                        type: 'string',
+                      },
                     },
+                    required: ['parameter'],
                   },
-                  required: ['parameter'],
+                  func: MyTool,
                 },
-                func: MyTool,
-              },
-            }}
-          >
-            <UserMessage>Hello!</UserMessage>
-          </UseTools>
-        </ChatProvider>
-      </myContext.Provider>
-    </ShowConversation>
-  );
+              }}
+            >
+              <UserMessage>Hello!</UserMessage>
+            </UseTools>
+          </ChatProvider>
+        </myContext.Provider>
+      </ShowConversation>
+    )
+    .toStringAsync();
 
   expect(result).toMatchInlineSnapshot(`
-    "functionCall: Call function myFunc (id $myFunc) with {"parameter":"test parameter value"}
-    functionResponse: function myFunc (id $myFunc) returned test parameter value: 42
+    "functionCall: {"parameter":"test parameter value"}
+    functionResponse: test parameter value: 42
     assistant: DONE
     "
   `);
@@ -125,45 +129,47 @@ it('should handle failures', async () => {
   }
 
   const renderCtx = AI.createRenderContext();
-  const result = await renderCtx.render(
-    <ShowConversation
-      present={(m) => (
-        <>
-          {m.type}: {m}
-          {'\n'}
-        </>
-      )}
-    >
-      <myContext.Provider value={42}>
-        <ChatProvider component={FakeChatCompletion}>
-          <UseTools
-            tools={{
-              myFunc: {
-                description: 'Test tool',
-                parameters: {
-                  type: 'object',
-                  properties: {
-                    parameter: {
-                      description: 'Test parameter',
-                      type: 'string',
+  const result = await renderCtx
+    .render(
+      <ShowConversation
+        present={(m) => (
+          <>
+            {m.type}: {m}
+            {'\n'}
+          </>
+        )}
+      >
+        <myContext.Provider value={42}>
+          <ChatProvider component={FakeChatCompletion}>
+            <UseTools
+              tools={{
+                myFunc: {
+                  description: 'Test tool',
+                  parameters: {
+                    type: 'object',
+                    properties: {
+                      parameter: {
+                        description: 'Test parameter',
+                        type: 'string',
+                      },
                     },
+                    required: ['parameter'],
                   },
-                  required: ['parameter'],
+                  func: MyTool,
                 },
-                func: MyTool,
-              },
-            }}
-          >
-            <UserMessage>Hello!</UserMessage>
-          </UseTools>
-        </ChatProvider>
-      </myContext.Provider>
-    </ShowConversation>
-  );
+              }}
+            >
+              <UserMessage>Hello!</UserMessage>
+            </UseTools>
+          </ChatProvider>
+        </myContext.Provider>
+      </ShowConversation>
+    )
+    .toStringAsync();
 
   expect(result).toMatchInlineSnapshot(`
-    "functionCall: Call function myFunc (id $myFunc) with {"parameter":"test parameter value"}
-    functionResponse: function myFunc (id $myFunc) failed with Error: ERROR!
+    "functionCall: {"parameter":"test parameter value"}
+    functionResponse: Error: ERROR!
     assistant: DONE
     "
   `);

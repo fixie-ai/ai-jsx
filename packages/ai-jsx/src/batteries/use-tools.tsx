@@ -59,7 +59,7 @@ export async function ExecuteFunction<T>(
     const Func = func;
     return (
       <FunctionResponse id={id} name={name}>
-        {await render(<Func {...args} />)}
+        {await render(<Func {...args} />).untilComplete()}
       </FunctionResponse>
     );
   } catch (e) {

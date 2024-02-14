@@ -178,7 +178,7 @@ export const isConversationMessage = (element: AI.RenderElement): element is Con
 
 export async function toConversationMessages(renderElement: AI.RenderElement) {
   const messages: ConversationMessage[] = [];
-  for await (const [message, _] of AI.traverse(renderElement, {
+  for await (const [message, _] of AI.traverseAsync(renderElement, {
     yield: isConversationMessage,
     descend: (e) => !isConversationMessage(e),
   })) {
@@ -301,13 +301,15 @@ export async function* ShowConversation(
   let index = 0;
   const renderedChildren = render(children);
   if (present) {
-    for await (const [message, _] of AI.traverse(renderedChildren, {
+    for await (const [message, _] of AI.traverseAsync(renderedChildren, {
       yield: isConversationMessage,
       descend: (msg) => !isConversationMessage(msg),
     })) {
       yield present(message, index);
       index++;
     }
+  } else {
+    yield children;
   }
 
   await onComplete?.(await toConversationMessages(renderedChildren), render);
@@ -382,7 +384,7 @@ export async function ShrinkConversation(
     // Find the least important node in the tree.
     let leastImportantNodeAndPath: [AI.RenderedIntrinsicElement<'shrinkable'>, AI.RenderElement[]] | undefined =
       undefined;
-    for await (const [node, path] of AI.traverse(currentTree, {
+    for await (const [node, path] of AI.traverseAsync(currentTree, {
       yield: (e): e is AI.RenderedIntrinsicElement<'shrinkable'> => e.type === 'shrinkable',
       descend: () => true,
     })) {

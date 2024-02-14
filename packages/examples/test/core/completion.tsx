@@ -286,11 +286,13 @@ afterEach(() => {
 it('passes creates a chat completion', async () => {
   mockOpenAIResponse('response from OpenAI');
 
-  const result = await AI.createRenderContext().render(
-    <ChatCompletion>
-      <UserMessage>Hello</UserMessage>
-    </ChatCompletion>
-  );
+  const result = await AI.createRenderContext()
+    .render(
+      <ChatCompletion>
+        <UserMessage>Hello</UserMessage>
+      </ChatCompletion>
+    )
+    .toStringAsync();
   expect(result).toEqual('response from OpenAI');
 });
 
@@ -302,13 +304,15 @@ it('throws an error when a bare string is passsed to chat completion', async () 
   }
 
   await expect(() =>
-    AI.createRenderContext().render(
-      <ChatCompletion>
-        <Fak />
-        This should not be here
-        <UserMessage>Correct</UserMessage>
-      </ChatCompletion>
-    )
+    AI.createRenderContext()
+      .render(
+        <ChatCompletion>
+          <Fak />
+          This should not be here
+          <UserMessage>Correct</UserMessage>
+        </ChatCompletion>
+      )
+      .toStringAsync()
   ).rejects.toThrowErrorMatchingInlineSnapshot(
     `"Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "fak", "This should not be here". To fix this, wrap this content in the appropriate child type (e.g. UserMessage)."`
   );
@@ -318,12 +322,14 @@ it('throws an error when a string is passsed in a shrinkable to chat completion'
   mockOpenAIResponse('response from OpenAI');
 
   await expect(() =>
-    AI.createRenderContext().render(
-      <ChatCompletion>
-        <Shrinkable importance={0}>Wrong</Shrinkable>
-        <UserMessage>Correct</UserMessage>
-      </ChatCompletion>
-    )
+    AI.createRenderContext()
+      .render(
+        <ChatCompletion>
+          <Shrinkable importance={0}>Wrong</Shrinkable>
+          <UserMessage>Correct</UserMessage>
+        </ChatCompletion>
+      )
+      .toStringAsync()
   ).rejects.toThrowErrorMatchingInlineSnapshot(
     `"Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "Wrong". To fix this, wrap this content in the appropriate child type (e.g. UserMessage)."`
   );
@@ -337,12 +343,14 @@ it('accepts conversational elements not being the top level', async () => {
   }
 
   expect(
-    await AI.createRenderContext().render(
-      <ChatCompletion>
-        <MySystemMessage />
-        <UserMessage>Correct</UserMessage>
-      </ChatCompletion>
-    )
+    await AI.createRenderContext()
+      .render(
+        <ChatCompletion>
+          <MySystemMessage />
+          <UserMessage>Correct</UserMessage>
+        </ChatCompletion>
+      )
+      .toStringAsync()
   ).toEqual('response from OpenAI');
 });
 
@@ -352,15 +360,17 @@ it('throws an error when a bare string is passsed as a replacement', async () =>
   const largeString = 'a'.repeat(1e3);
 
   await expect(() =>
-    AI.createRenderContext().render(
-      <ChatCompletion maxTokens={4000}>
-        <Shrinkable replacement="bare replacement, which is invalid" importance={0}>
-          <UserMessage>{largeString}</UserMessage>
-        </Shrinkable>
-      </ChatCompletion>
-    )
+    AI.createRenderContext()
+      .render(
+        <ChatCompletion maxTokens={4000}>
+          <Shrinkable replacement="bare replacement, which is invalid" importance={0}>
+            <UserMessage>{largeString}</UserMessage>
+          </Shrinkable>
+        </ChatCompletion>
+      )
+      .toStringAsync()
   ).rejects.toThrowErrorMatchingInlineSnapshot(
-    `"Every child of ChatCompletion render to one of: SystemMessage, UserMessage, AssistantMessage, FunctionCall, FunctionResponse. However, some components rendered to bare strings instead. Those strings are: "bare replacement, which is invalid". To fix this, wrap this content in the appropriate child type (e.g. UserMessage)."`
+    `"ChatCompletion must have at least one child that's a SystemMessage, UserMessage, AssistantMessage, FunctionCall, or FunctionResponse, but no such children were found."`
   );
 });
 
@@ -387,11 +397,13 @@ describe('functions', () => {
     const handleRequest = jest.fn();
     mockOpenAIResponse('', handleRequest);
 
-    await AI.createRenderContext().render(
-      <ChatCompletion functionDefinitions={functions}>
-        <UserMessage>Hello</UserMessage>
-      </ChatCompletion>
-    );
+    await AI.createRenderContext()
+      .render(
+        <ChatCompletion functionDefinitions={functions}>
+          <UserMessage>Hello</UserMessage>
+        </ChatCompletion>
+      )
+      .toStringAsync();
 
     expect(handleRequest).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -440,26 +452,30 @@ describe('functions', () => {
       },
     };
 
-    const result = await AI.createRenderContext().render(
-      <OpenAI chatModel="gpt-4-32k">
-        <ChatCompletion functionDefinitions={functions}>
-          <UserMessage>Hello</UserMessage>
-        </ChatCompletion>
-      </OpenAI>
-    );
+    const result = await AI.createRenderContext()
+      .render(
+        <OpenAI chatModel="gpt-4-32k">
+          <ChatCompletion functionDefinitions={functions}>
+            <UserMessage>Hello</UserMessage>
+          </ChatCompletion>
+        </OpenAI>
+      )
+      .toStringAsync();
 
     expect(result).toEqual('response from OpenAI');
   });
 
   it('throws an error for models that do not support functions', () =>
     expect(() =>
-      AI.createRenderContext().render(
-        <Anthropic chatModel="claude-2">
-          <ChatCompletion functionDefinitions={{}}>
-            <UserMessage>Hello</UserMessage>
-          </ChatCompletion>
-        </Anthropic>
-      )
+      AI.createRenderContext()
+        .render(
+          <Anthropic chatModel="claude-2">
+            <ChatCompletion functionDefinitions={{}}>
+              <UserMessage>Hello</UserMessage>
+            </ChatCompletion>
+          </Anthropic>
+        )
+        .toStringAsync()
     ).rejects.toThrowErrorMatchingInlineSnapshot(
       `"Anthropic does not support function calling, but function definitions were provided."`
     ));
@@ -469,15 +485,17 @@ describe('anthropic', () => {
   it('handles function calls/responses', async () => {
     const handleRequest = jest.fn();
     mockAnthropicResponse('response from Anthropic', handleRequest);
-    const result = await AI.createRenderContext().render(
-      <Anthropic chatModel="claude-2">
-        <ChatCompletion>
-          <UserMessage>Hello</UserMessage>
-          <FunctionCall name="myFunc" args={{ myParam: 'option1' }} />
-          <FunctionResponse name="myFunc">12345</FunctionResponse>
-        </ChatCompletion>
-      </Anthropic>
-    );
+    const result = await AI.createRenderContext()
+      .render(
+        <Anthropic chatModel="claude-2">
+          <ChatCompletion>
+            <UserMessage>Hello</UserMessage>
+            <FunctionCall name="myFunc" args={{ myParam: 'option1' }} />
+            <FunctionResponse name="myFunc">12345</FunctionResponse>
+          </ChatCompletion>
+        </Anthropic>
+      )
+      .toStringAsync();
     expect(handleRequest.mock.calls[0][0].prompt).toMatchInlineSnapshot(`
       "
 
@@ -485,11 +503,11 @@ describe('anthropic', () => {
 
 
 
-      Assistant: Call function myFunc with {"myParam":"option1"}
+      Assistant: {"myParam":"option1"}
 
 
 
-      Assistant: function myFunc returned 12345
+      Assistant: 12345
 
 
 

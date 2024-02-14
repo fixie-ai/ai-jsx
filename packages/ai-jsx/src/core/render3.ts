@@ -234,7 +234,28 @@ export interface RenderedIntrinsicElement<T extends string & keyof JSX.Intrinsic
 type TypePredicate<T extends RenderElement = RenderElement> = (element: RenderElement) => element is T;
 type Predicate = (element: RenderElement) => boolean;
 
-export async function* traverse<T extends RenderElement>(
+export function* traverse<T extends RenderElement>(
+  renderElement: RenderElement,
+  options: { yield?: TypePredicate<T>; yieldPost?: TypePredicate<T>; descend?: Predicate; path?: RenderElement[] }
+): Iterable<[T, RenderElement[]]> {
+  if (options.yield?.(renderElement)) {
+    yield [renderElement, options.path ?? []];
+  }
+
+  if (options.descend?.(renderElement)) {
+    for (const child of renderElement.childNodes) {
+      if (typeof child === 'object') {
+        yield* traverse(child, { ...options, path: (options.path ?? []).concat(renderElement) });
+      }
+    }
+  }
+
+  if (options.yieldPost?.(renderElement)) {
+    yield [renderElement, options.path ?? []];
+  }
+}
+
+export async function* traverseAsync<T extends RenderElement>(
   renderElement: RenderElement,
   options: { yield?: TypePredicate<T>; yieldPost?: TypePredicate<T>; descend?: Predicate; path?: RenderElement[] }
 ): AsyncGenerator<[T, RenderElement[]]> {
@@ -245,7 +266,7 @@ export async function* traverse<T extends RenderElement>(
   if (options.descend?.(renderElement)) {
     for await (const child of renderElement.asyncChildNodes) {
       if (typeof child === 'object') {
-        yield* traverse(child, { ...options, path: (options.path ?? []).concat(renderElement) });
+        yield* traverseAsync(child, { ...options, path: (options.path ?? []).concat(renderElement) });
       }
     }
   }
@@ -313,4 +334,90 @@ export function fork(
       yield node;
     }
   };
+}
+
+export async function* frames(
+  renderElement: RenderElement,
+  options: { includeInitial?: boolean } = {}
+): AsyncIterable<RenderElement> {
+  class IteratorState {
+    done: boolean = false;
+    currentPromise: Promise<RenderNode | null> | null = null;
+    lastResolution: RenderNode | null = null;
+
+    constructor(public iterator: AsyncIterator<RenderNode>) {}
+
+    promise(): Promise<RenderNode | null> | null {
+      this.lastResolution = null;
+      if (this.currentPromise) {
+        return this.currentPromise;
+      }
+      if (this.done) {
+        return null;
+      }
+
+      this.currentPromise = this.iterator.next().then((result) => {
+        this.currentPromise = null;
+        if (result.done) {
+          this.done = true;
+          this.lastResolution = null;
+        } else {
+          this.lastResolution = result.value;
+        }
+
+        return this.lastResolution;
+      });
+
+      return this.currentPromise;
+    }
+  }
+
+  let iterators: IteratorState[] = [];
+  function registerChild(child: RenderNode) {
+    if (typeof child === 'object' && !child.isComplete()) {
+      iterators.push(new IteratorState(frames(child, { includeInitial: false })[Symbol.asyncIterator]()));
+    }
+  }
+
+  if (options.includeInitial ?? true) {
+    yield renderElement;
+  }
+
+  // Consume the synchronous children first.
+  let readyChildren = 0;
+  for (const child of renderElement.childNodes) {
+    registerChild(child);
+    ++readyChildren;
+  }
+
+  // Then start consumeing any asynchronous children.
+  iterators.push(
+    new IteratorState(
+      (async function* asyncChildren() {
+        for await (const child of renderElement.asyncChildNodes) {
+          if (readyChildren > 0) {
+            --readyChildren;
+            continue;
+          }
+          registerChild(child);
+          yield child;
+        }
+      })()
+    )
+  );
+
+  while (true) {
+    iterators = iterators.filter((i) => !i.done);
+    if (iterators.length === 0) {
+      return;
+    }
+
+    await Promise.race(iterators.map((i) => i.promise()));
+    if (iterators.find((value) => value.lastResolution !== null) === undefined) {
+      // No new RenderNode was added (iterators were only _finished_); skip it.
+      continue;
+    }
+
+    yield renderElement;
+  }
 }
