@@ -38,7 +38,11 @@ export type ValidChatModel =
   | 'claude-instant-1.1-100k'
   | 'claude-instant-1.0'
   | 'claude-2'
-  | 'claude-2.0';
+  | 'claude-2.0'
+  | 'claude-3-haiku-20240307',
+  | 'claude-3-sonnet-20240229',
+  | 'claude-3-opus-20240229';
+  
 
 /**
  * If you use an Anthropic model without specifying the max tokens for the completion, this value will be used as the default.
