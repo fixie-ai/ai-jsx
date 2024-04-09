@@ -2,6 +2,11 @@
 
 ## 0.30.0
 
+- Added support for Claude 3 and messages API in `AnthropicChatModel`
+- Relaxed function calling check for `OpenAIChatModel`
+
+## [0.29.0](https://github.com/fixie-ai/ai-jsx/tree/4ce9b17471ff6cd8e3928d189d254dca8e65e9ba)
+
 - Changed the `FunctionDefinition` and `Tool` types to explicit JSON Schema. Zod types must now be explicitly
   converted to JSON Schema, and the `required` semantics now match JSON Schema.
 

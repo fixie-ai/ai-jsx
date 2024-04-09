@@ -29,6 +29,8 @@ export interface ModelProps {
   maxTokens?: number;
   /** The number of tokens to reserve for the generation. */
   reservedTokens?: number;
+  /** Maximum number of input tokens to allow.  */
+  maxInputTokens?: number;
   /** A list of stop tokens. */
   stop?: string[];
 
@@ -37,6 +39,16 @@ export interface ModelProps {
    *
    * @see https://platform.openai.com/docs/api-reference/chat/create#chat/create-top_p */
   topP?: number;
+
+  /**
+   * Any function definitions (tools) that the model can choose to invoke.
+   */
+  functionDefinitions?: Record<string, FunctionDefinition>;
+
+  /**
+   * If specified, the model will be forced to use this function.
+   */
+  forcedFunction?: string;
 }
 
 /**

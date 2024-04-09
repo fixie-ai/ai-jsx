@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import { Jsonifiable, MergeExclusive } from 'type-fest';
+import { Jsonifiable } from 'type-fest';
 import {
   ChatProvider,
   CompletionProvider,
@@ -41,6 +41,8 @@ export type ValidChatModel =
   | 'gpt-4-32k-0314' // discontinue on 06/13/2024
   | 'gpt-4-32k-0613'
   | 'gpt-4-1106-preview'
+  | 'gpt-4-0125-preview'
+  | 'gpt-4-turbo-preview'
   | 'gpt-3.5-turbo'
   | 'gpt-3.5-turbo-0301' // discontinue on 06/13/2024
   | 'gpt-3.5-turbo-0613'
@@ -157,15 +159,6 @@ function logitBiasOfTokens(tokens: Record<string, number>) {
 }
 
 /**
- * Returns true if the given model supports function calling.
- * @param model The model to check.
- * @returns True if the model supports function calling, false otherwise.
- */
-function chatModelSupportsFunctions(model: ValidChatModel) {
-  return model.startsWith('gpt-4') || model.startsWith('gpt-3.5-turbo');
-}
-
-/**
  * Represents an OpenAI text completion model (e.g., `text-davinci-003`).
  */
 export async function* OpenAICompletionModel(
@@ -225,10 +218,9 @@ function estimateFunctionTokenCount(functions: Record<string, FunctionDefinition
 function tokenLimitForChatModel(
   model: ValidChatModel,
   functionDefinitions?: Record<string, FunctionDefinition>
-): number | undefined {
+): number {
   const TOKENS_CONSUMED_BY_REPLY_PREFIX = 3;
-  const functionEstimate =
-    chatModelSupportsFunctions(model) && functionDefinitions ? estimateFunctionTokenCount(functionDefinitions) : 0;
+  const functionEstimate = functionDefinitions ? estimateFunctionTokenCount(functionDefinitions) : 0;
 
   switch (model) {
     case 'gpt-4':
@@ -240,11 +232,13 @@ function tokenLimitForChatModel(
     case 'gpt-4-32k-0613':
       return 32768 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
     case 'gpt-4-1106-preview':
+    case 'gpt-4-0125-preview':
+    case 'gpt-4-turbo-preview':
       return 128_000 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
-    case 'gpt-3.5-turbo':
     case 'gpt-3.5-turbo-0301':
     case 'gpt-3.5-turbo-0613':
       return 4096 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
+    case 'gpt-3.5-turbo':
     case 'gpt-3.5-turbo-16k':
     case 'gpt-3.5-turbo-16k-0613':
     case 'gpt-3.5-turbo-1106':
@@ -252,12 +246,12 @@ function tokenLimitForChatModel(
     default: {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const _: never = model;
-      return undefined;
+      return 16384 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
     }
   }
 }
 
-async function tokenCountForConversationMessage(
+export async function tokenCountForConversationMessage(
   message: ConversationMessage,
   render: AI.RenderContext['render']
 ): Promise<number> {
@@ -377,29 +371,10 @@ export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & {
     model: ValidChatModel;
     logitBias?: Record<string, number>;
-  } & MergeExclusive<
-      {
-        functionDefinitions: Record<string, FunctionDefinition>;
-        forcedFunction: string;
-      },
-      {
-        functionDefinitions?: never;
-        forcedFunction?: never;
-      }
-    >,
+  },
   { render, getContext, logger, memo }: AI.ComponentContext
 ): AI.RenderableStream {
-  if (props.functionDefinitions) {
-    if (!chatModelSupportsFunctions(props.model)) {
-      throw new AIJSXError(
-        `The ${props.model} model does not support function calling, but function definitions were provided.`,
-        ErrorCode.ChatModelDoesNotSupportFunctions,
-        'user'
-      );
-    }
-  }
-
-  if (props.forcedFunction && !Object.keys(props.functionDefinitions).includes(props.forcedFunction)) {
+  if (props.forcedFunction && !Object.keys(props.functionDefinitions ?? {}).includes(props.forcedFunction)) {
     throw new AIJSXError(
       `The function ${props.forcedFunction} was forced, but no function with that name was defined.`,
       ErrorCode.ChatCompletionBadInput,
@@ -409,12 +384,8 @@ export async function* OpenAIChatModel(
 
   yield AI.AppendOnlyStream;
 
-  let promptTokenLimit = tokenLimitForChatModel(props.model, props.functionDefinitions);
-
-  // If reservedTokens (or maxTokens) is set, reserve that many tokens for the reply.
-  if (promptTokenLimit !== undefined) {
-    promptTokenLimit -= props.reservedTokens ?? props.maxTokens ?? 0;
-  }
+  const modelTokenLimit = tokenLimitForChatModel(props.model, props.functionDefinitions);
+  const promptTokenLimit = props.maxInputTokens ?? modelTokenLimit - (props.reservedTokens ?? props.maxTokens ?? 0);
 
   const conversationMessages = await renderToConversation(
     props.children,

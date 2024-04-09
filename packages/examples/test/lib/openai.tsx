@@ -14,7 +14,7 @@ describe('OpenAIChatModel', () => {
           chat: {
             completions: {
               async *create(req) {
-                expect(req.max_tokens).toBe(4096);
+                expect(req.max_tokens).toBe(10 ** 10);
                 expect(req.messages).toEqual([
                   expect.objectContaining({
                     content: 'Hello!',
@@ -27,7 +27,7 @@ describe('OpenAIChatModel', () => {
           },
         }}
       >
-        <ChatCompletion maxTokens={4096}>
+        <ChatCompletion maxTokens={10 ** 10}>
           <Shrinkable importance={0} replacement={<UserMessage>Hello!</UserMessage>}>
             <UserMessage>This should be replaced</UserMessage>
           </Shrinkable>
@@ -61,7 +61,7 @@ describe('OpenAIChatModel', () => {
           },
         }}
       >
-        <ChatCompletion reservedTokens={4096}>
+        <ChatCompletion reservedTokens={10 ** 10}>
           <Shrinkable importance={0} replacement={<UserMessage>Hello!</UserMessage>}>
             <UserMessage>This should be replaced</UserMessage>
           </Shrinkable>
