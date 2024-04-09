@@ -323,7 +323,7 @@ export async function* JsonChatCompletionFunctionCall(
       functionDefinitions={{
         print: {
           description: 'Prints the response in a human readable format.',
-          parameters: schema,
+          parameters: schema as any,
         },
       }}
       forcedFunction="print"

@@ -2,6 +2,7 @@ import { showInspector } from 'ai-jsx/core/inspector';
 import {
   ChatCompletion,
   ChatProvider,
+  FunctionDefinition,
   SystemMessage,
   UserMessage,
   FunctionCall,
@@ -22,7 +23,7 @@ function ModelProducesFunctionCall({ query }: { query: string }) {
               required: true,
             },
           },
-        },
+        } as FunctionDefinition,
       }}
     >
       <SystemMessage>You are a tool that may use functions to answer a user question.</SystemMessage>
@@ -46,7 +47,7 @@ function ModelProducesFinalResponse({ query }: { query: string }) {
                 required: true,
               },
             },
-          },
+          } as FunctionDefinition,
         }}
       >
         <SystemMessage>You are a tool that may use functions to answer a user question.</SystemMessage>

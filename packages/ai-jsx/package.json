@@ -4,7 +4,7 @@
   "repository": "fixie-ai/ai-jsx",
   "bugs": "https://github.com/fixie-ai/ai-jsx/issues",
   "homepage": "https://ai-jsx.com",
-  "version": "0.29.0",
+  "version": "0.30.0",
   "volta": {
     "extends": "../../package.json"
   },
@@ -375,7 +375,7 @@
     "react": "^16.8.0  || ^17.0.0 || ^18.0.0"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.5.10",
+    "@anthropic-ai/sdk": "^0.20.1",
     "@mdx-js/mdx": "^2.3.0",
     "@nick.heiner/wandb-fork": "^0.5.2-5",
     "@opentelemetry/api": "^1.4.1",

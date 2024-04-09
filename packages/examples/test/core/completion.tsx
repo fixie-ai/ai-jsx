@@ -31,15 +31,19 @@ jestFetchMock.enableFetchMocks();
 process.env.OPENAI_API_KEY = 'fake-openai-key';
 process.env.ANTHROPIC_API_KEY = 'fake-anthropic-key';
 
-import nock from 'nock';
-
 import * as AI from 'ai-jsx';
 import { ChatCompletion } from 'ai-jsx/core/completion';
-import { FunctionCall, FunctionResponse, UserMessage, SystemMessage, Shrinkable } from 'ai-jsx/core/conversation';
+import {
+  FunctionCall,
+  FunctionResponse,
+  UserMessage,
+  SystemMessage,
+  Shrinkable,
+  AssistantMessage,
+} from 'ai-jsx/core/conversation';
 import { OpenAI, OpenAIClient } from 'ai-jsx/lib/openai';
 import { Tool } from 'ai-jsx/batteries/use-tools';
 import { Anthropic } from 'ai-jsx/lib/anthropic';
-import { CompletionCreateParams } from '@anthropic-ai/sdk/resources/completions';
 import { Jsonifiable } from 'type-fest';
 
 import { NodeSDK } from '@opentelemetry/sdk-node';
@@ -82,7 +86,7 @@ describe('OpenTelemetry', () => {
         {"hello"}
       </UserMessage>]",
           "ai.jsx.tag": "ShrinkConversation",
-          "ai.jsx.tree": "<ShrinkConversation cost={tokenCountForConversationMessage} budget={4093}>
+          "ai.jsx.tree": "<ShrinkConversation cost={tokenCountForConversationMessage} budget={16381}>
         <UserMessage>
           {"hello"}
         </UserMessage>
@@ -167,7 +171,7 @@ describe('OpenTelemetry', () => {
         {"hello"}
       </UserMessage>]",
           "ai.jsx.tag": "ShrinkConversation",
-          "ai.jsx.tree": "<ShrinkConversation cost={tokenCountForConversationMessage} budget={4093}>
+          "ai.jsx.tree": "<ShrinkConversation cost={tokenCountForConversationMessage} budget={16381}>
         <UserMessage>
           {"hello"}
         </UserMessage>
@@ -353,7 +357,7 @@ it('throws an error when a bare string is passsed as a replacement', async () =>
 
   await expect(() =>
     AI.createRenderContext().render(
-      <ChatCompletion maxTokens={4000}>
+      <ChatCompletion maxInputTokens={1}>
         <Shrinkable replacement="bare replacement, which is invalid" importance={0}>
           <UserMessage>{largeString}</UserMessage>
         </Shrinkable>
@@ -450,52 +454,313 @@ describe('functions', () => {
 
     expect(result).toEqual('response from OpenAI');
   });
-
-  it('throws an error for models that do not support functions', () =>
-    expect(() =>
-      AI.createRenderContext().render(
-        <Anthropic chatModel="claude-2">
-          <ChatCompletion functionDefinitions={{}}>
-            <UserMessage>Hello</UserMessage>
-          </ChatCompletion>
-        </Anthropic>
-      )
-    ).rejects.toThrowErrorMatchingInlineSnapshot(
-      `"Anthropic does not support function calling, but function definitions were provided."`
-    ));
 });
 
 describe('anthropic', () => {
-  it('handles function calls/responses', async () => {
-    const handleRequest = jest.fn();
-    mockAnthropicResponse('response from Anthropic', handleRequest);
+  it('adapts message types correctly', async () => {
     const result = await AI.createRenderContext().render(
-      <Anthropic chatModel="claude-2">
+      <Anthropic
+        chatModel="claude-3-haiku-20240307"
+        client={{
+          ...({} as any),
+          messages: {
+            ...({} as any),
+            async *create(request) {
+              expect(request).toMatchInlineSnapshot(`
+{
+  "max_tokens": 1000,
+  "messages": [
+    {
+      "content": [
+        {
+          "text": "Hello",
+          "type": "text",
+        },
+      ],
+      "role": "user",
+    },
+    {
+      "content": [
+        {
+          "text": "Hi there!",
+          "type": "text",
+        },
+        {
+          "text": "How are you?",
+          "type": "text",
+        },
+      ],
+      "role": "assistant",
+    },
+    {
+      "content": [
+        {
+          "text": "For subsequent replies you will adhere to the following instructions: This is a system message in the middle of the conversation.",
+          "type": "text",
+        },
+      ],
+      "role": "user",
+    },
+    {
+      "content": [
+        {
+          "text": "Okay, I will do that.",
+          "type": "text",
+        },
+      ],
+      "role": "assistant",
+    },
+    {
+      "content": [
+        {
+          "text": "Good.",
+          "type": "text",
+        },
+        {
+          "text": "And how are you?",
+          "type": "text",
+        },
+      ],
+      "role": "user",
+    },
+    {
+      "content": [
+        {
+          "text": "<function_calls>
+<invoke>
+<tool_name>myFunc</tool_name>
+<parameters>
+<myParam>option1</myParam>
+</parameters>
+</invoke>
+</function_calls>",
+          "type": "text",
+        },
+      ],
+      "role": "assistant",
+    },
+    {
+      "content": [
+        {
+          "text": "<function_results>
+<result>
+<tool_name>myFunc</tool_name>
+<stdout>
+12345
+</stdout>
+</invoke>
+</function_results>",
+          "type": "text",
+        },
+      ],
+      "role": "user",
+    },
+  ],
+  "model": "claude-3-haiku-20240307",
+  "stop_sequences": undefined,
+  "stream": true,
+  "system": "This is a system message.
+
+And this is another one.",
+  "temperature": undefined,
+  "top_p": undefined,
+}
+`);
+              yield { type: 'content_block_delta', delta: { type: 'text_delta', text: 'response from Anthropic' } };
+            },
+          },
+        }}
+      >
         <ChatCompletion>
+          <SystemMessage>This is a system message.</SystemMessage>
+          <SystemMessage>And this is another one.</SystemMessage>
           <UserMessage>Hello</UserMessage>
-          <FunctionCall name="myFunc" args={{ myParam: 'option1' }} />
-          <FunctionResponse name="myFunc">12345</FunctionResponse>
+          <AssistantMessage>Hi there!</AssistantMessage>
+          <AssistantMessage>How are you?</AssistantMessage>
+          <SystemMessage>This is a system message in the middle of the conversation.</SystemMessage>
+          <UserMessage>Good.</UserMessage>
+          <UserMessage>And how are you?</UserMessage>
+          <FunctionCall id="tool1" name="myFunc" args={{ myParam: 'option1' }} />
+          <FunctionResponse id="tool1" name="myFunc">
+            12345
+          </FunctionResponse>
         </ChatCompletion>
       </Anthropic>
     );
-    expect(handleRequest.mock.calls[0][0].prompt).toMatchInlineSnapshot(`
-      "
-
-      Human: Hello
-
-
-
-      Assistant: Call function myFunc with {"myParam":"option1"}
-
-
-
-      Assistant: function myFunc returned 12345
-
-
-
-      Assistant:"
-    `);
     expect(result).toEqual('response from Anthropic');
+  });
+
+  it('adapts message types correctly to the beta tools api', async () => {
+    const result = await AI.createRenderContext().render(
+      <Anthropic
+        chatModel="claude-3-haiku-20240307"
+        useBetaTools
+        client={{
+          ...({} as any),
+          beta: {
+            ...({} as any),
+            tools: {
+              ...({} as any),
+              messages: {
+                ...({} as any),
+                create(request) {
+                  expect(request).toMatchInlineSnapshot(`
+{
+  "max_tokens": 1000,
+  "messages": [
+    {
+      "content": [
+        {
+          "text": "Hello",
+          "type": "text",
+        },
+      ],
+      "role": "user",
+    },
+    {
+      "content": [
+        {
+          "text": "Hi there!",
+          "type": "text",
+        },
+        {
+          "text": "How are you?",
+          "type": "text",
+        },
+      ],
+      "role": "assistant",
+    },
+    {
+      "content": [
+        {
+          "text": "For subsequent replies you will adhere to the following instructions: This is a system message in the middle of the conversation.",
+          "type": "text",
+        },
+      ],
+      "role": "user",
+    },
+    {
+      "content": [
+        {
+          "text": "Okay, I will do that.",
+          "type": "text",
+        },
+      ],
+      "role": "assistant",
+    },
+    {
+      "content": [
+        {
+          "text": "Good.",
+          "type": "text",
+        },
+        {
+          "text": "And how are you?",
+          "type": "text",
+        },
+      ],
+      "role": "user",
+    },
+    {
+      "content": [
+        {
+          "id": "tool1",
+          "input": {
+            "myParam": "option1",
+          },
+          "name": "myFunc",
+          "type": "tool_use",
+        },
+      ],
+      "role": "assistant",
+    },
+    {
+      "content": [
+        {
+          "content": [
+            {
+              "text": "12345",
+              "type": "text",
+            },
+          ],
+          "is_error": undefined,
+          "tool_use_id": "tool1",
+          "type": "tool_result",
+        },
+      ],
+      "role": "user",
+    },
+  ],
+  "model": "claude-3-haiku-20240307",
+  "stop_sequences": undefined,
+  "stream": false,
+  "system": "This is a system message.
+
+And this is another one.",
+  "temperature": undefined,
+  "tools": [
+    {
+      "description": "My function",
+      "input_schema": {
+        "type": "object",
+      },
+      "name": "hello",
+    },
+  ],
+  "top_p": undefined,
+}
+`);
+                  return Promise.resolve({
+                    content: [
+                      {
+                        type: 'text',
+                        text: 'response from Anthropic\n',
+                      },
+                      {
+                        type: 'tool_use',
+                        name: 'myFunc',
+                        id: 'tool1',
+                        input: {
+                          myParam: 'option1',
+                        },
+                      },
+                    ],
+                  });
+                },
+              },
+            },
+          },
+        }}
+      >
+        <ChatCompletion
+          functionDefinitions={{
+            hello: {
+              description: 'My function',
+              parameters: {
+                type: 'object',
+              },
+            },
+          }}
+        >
+          <SystemMessage>This is a system message.</SystemMessage>
+          <SystemMessage>And this is another one.</SystemMessage>
+          <UserMessage>Hello</UserMessage>
+          <AssistantMessage>Hi there!</AssistantMessage>
+          <AssistantMessage>How are you?</AssistantMessage>
+          <SystemMessage>This is a system message in the middle of the conversation.</SystemMessage>
+          <UserMessage>Good.</UserMessage>
+          <UserMessage>And how are you?</UserMessage>
+          <FunctionCall id="tool1" name="myFunc" args={{ myParam: 'option1' }} />
+          <FunctionResponse id="tool1" name="myFunc">
+            12345
+          </FunctionResponse>
+        </ChatCompletion>
+      </Anthropic>
+    );
+    expect(result).toMatchInlineSnapshot(`
+      "response from Anthropic
+      Call function myFunc (id tool1) with {"myParam":"option1"}"
+    `);
   });
 });
 
@@ -547,37 +812,4 @@ function mockOpenAIResponse(message: string, handleRequest?: jest.MockedFn<(req:
       };
     }
   );
-}
-
-function mockAnthropicResponse(
-  message: string,
-  handleRequest?: jest.MockedFn<(req: CompletionCreateParams) => Promise<void>>
-) {
-  const SSE_PREFIX = 'data: ';
-  const SSE_TERMINATOR = '\n\n';
-
-  nock('https://api.anthropic.com')
-    .post('/v1/complete')
-    .reply(200, (_uri: string, requestBody: CompletionCreateParams) => {
-      handleRequest?.(requestBody);
-
-      function createDelta(messagePart: string) {
-        const response = {
-          completion: messagePart,
-          stop_reason: null,
-          model: requestBody.model,
-        };
-        return `event: completion\n${SSE_PREFIX}${JSON.stringify(response)}${SSE_TERMINATOR}`;
-      }
-
-      const completionEvents = message.split('').map(createDelta).join('\n');
-
-      const finalResponse = {
-        completion: '',
-        stop_reason: 'stop_sequence',
-        model: requestBody.model,
-      };
-
-      return `${completionEvents}event: completion\n${SSE_PREFIX}${JSON.stringify(finalResponse)}${SSE_TERMINATOR}`;
-    });
 }
