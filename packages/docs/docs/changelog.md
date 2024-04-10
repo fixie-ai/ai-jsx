@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.30.1
+## 0.30.2
+
+- Fix double Anthropic requests
+
+## [0.30.1](https://github.com/fixie-ai/ai-jsx/tree/7d7ca5987b638969478940a779dededdbe1abbfb)
 
 - Add new OpenAI models
 

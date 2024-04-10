@@ -340,7 +340,7 @@ export async function* AnthropicChatModel(
   const responsePromise = anthropic.messages.create(anthropicCompletionRequest);
   let response: Awaited<typeof responsePromise>;
   try {
-    response = await anthropic.messages.create(anthropicCompletionRequest);
+    response = await responsePromise;
   } catch (err) {
     if (err instanceof AnthropicSDK.APIError) {
       throw new AIJSXError(
