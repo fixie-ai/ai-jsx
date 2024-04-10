@@ -25,32 +25,26 @@ import { getEncoding } from 'js-tiktoken';
 import _ from 'lodash';
 
 // https://platform.openai.com/docs/models/model-endpoint-compatibility
-export type ValidCompletionModel =
-  | 'text-davinci-003'
-  | 'text-davinci-002'
-  | 'text-curie-001'
-  | 'text-babbage-001'
-  | 'text-ada-001'
-  | 'gpt-3.5-turbo-instruct';
+export type ValidCompletionModel = 'davinci-002' | 'babbage-002' | 'gpt-3.5-turbo-instruct';
 
+// curl 'https://api.openai.com/v1/models' -H "Authorization: Bearer $OPENAI_API_KEY" | jq -r '.data[] | .id' | sort | awk '/^gpt/ && !/vision/ && !/instruct/ { print "| \"" $0 "\"" }'
 export type ValidChatModel =
-  | 'gpt-4-turbo'
-  | 'gpt-4-turbo-2024-04-09'
-  | 'gpt-4'
-  | 'gpt-4-0314' // discontinue on 06/13/2024
-  | 'gpt-4-0613'
-  | 'gpt-4-32k'
-  | 'gpt-4-32k-0314' // discontinue on 06/13/2024
-  | 'gpt-4-32k-0613'
-  | 'gpt-4-1106-preview'
-  | 'gpt-4-0125-preview'
-  | 'gpt-4-turbo-preview'
   | 'gpt-3.5-turbo'
-  | 'gpt-3.5-turbo-0301' // discontinue on 06/13/2024
+  | 'gpt-3.5-turbo-0125'
+  | 'gpt-3.5-turbo-0301'
   | 'gpt-3.5-turbo-0613'
+  | 'gpt-3.5-turbo-1106'
   | 'gpt-3.5-turbo-16k'
   | 'gpt-3.5-turbo-16k-0613'
-  | 'gpt-3.5-turbo-1106';
+  | 'gpt-4'
+  | 'gpt-4-0125-preview'
+  | 'gpt-4-0613'
+  | 'gpt-4-1106-preview'
+  | 'gpt-4-32k'
+  | 'gpt-4-32k-0613'
+  | 'gpt-4-turbo'
+  | 'gpt-4-turbo-2024-04-09'
+  | 'gpt-4-turbo-preview';
 
 /**
  * An OpenAI client that talks to the Azure OpenAI service.
@@ -226,11 +220,9 @@ function tokenLimitForChatModel(
 
   switch (model) {
     case 'gpt-4':
-    case 'gpt-4-0314':
     case 'gpt-4-0613':
       return 8192 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
     case 'gpt-4-32k':
-    case 'gpt-4-32k-0314':
     case 'gpt-4-32k-0613':
       return 32768 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
     case 'gpt-4-1106-preview':
@@ -246,6 +238,7 @@ function tokenLimitForChatModel(
     case 'gpt-3.5-turbo-16k':
     case 'gpt-3.5-turbo-16k-0613':
     case 'gpt-3.5-turbo-1106':
+    case 'gpt-3.5-turbo-0125':
       return 16384 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
     default: {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
