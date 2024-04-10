@@ -125,7 +125,7 @@ export function FixieRequestWrapper({
         })
       }
       chatModel="gpt-3.5-turbo"
-      completionModel="text-davinci-003"
+      completionModel="gpt-3.5-turbo-instruct"
     >
       {wrappedNode}
     </OpenAI>
