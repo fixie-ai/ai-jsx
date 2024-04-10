@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.30.0
+## 0.30.1
+
+- Add new OpenAI models
+
+## [0.30.0](https://github.com/fixie-ai/ai-jsx/tree/feecd641159e0ede554d6890a550dd172d8e24db)
 
 - Added support for Claude 3 and messages API in `AnthropicChatModel`
 - Relaxed function calling check for `OpenAIChatModel`

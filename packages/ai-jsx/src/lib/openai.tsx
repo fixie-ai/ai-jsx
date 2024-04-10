@@ -34,6 +34,8 @@ export type ValidCompletionModel =
   | 'gpt-3.5-turbo-instruct';
 
 export type ValidChatModel =
+  | 'gpt-4-turbo'
+  | 'gpt-4-turbo-2024-04-09'
   | 'gpt-4'
   | 'gpt-4-0314' // discontinue on 06/13/2024
   | 'gpt-4-0613'
@@ -234,6 +236,8 @@ function tokenLimitForChatModel(
     case 'gpt-4-1106-preview':
     case 'gpt-4-0125-preview':
     case 'gpt-4-turbo-preview':
+    case 'gpt-4-turbo-2024-04-09':
+    case 'gpt-4-turbo':
       return 128_000 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
     case 'gpt-3.5-turbo-0301':
     case 'gpt-3.5-turbo-0613':
