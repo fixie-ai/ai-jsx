@@ -13,8 +13,7 @@ export declare namespace JSX {
 /** @hidden */
 export function jsx(type: any, config: any, maybeKey?: any) {
   const configWithKey = maybeKey !== undefined ? { ...config, key: maybeKey } : config;
-  const children = config && Array.isArray(config.children) ? config.children : [];
-  return AI.createElement(type, configWithKey, ...children);
+  return AI.createElement(type, configWithKey);
 }
 /** @hidden */
 export const jsxDEV = jsx;

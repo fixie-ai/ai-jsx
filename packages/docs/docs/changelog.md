@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.30.2
+## 0.31.0
+
+- Fix incorrect unwrapping of JSX array `children`.
+
+## [0.30.2](https://github.com/fixie-ai/ai-jsx/tree/29071540b051a7a6db2b7986bc544debde82298a)
 
 - Fix double Anthropic requests
 
