@@ -8,8 +8,6 @@ import * as AI from '../index.js';
 import { Element, ElementPredicate, Node, RenderContext } from '../index.js';
 import { memoizedIdSymbol } from './memoize.js';
 
-const maxStringLength = 1000;
-
 const debugRepresentationSymbol = Symbol('AI.JSX debug representation');
 
 /**
@@ -32,14 +30,28 @@ export function debugRepresentation(fn: (element: Element<any>) => unknown) {
   };
 }
 
+function isEmptyJSXValue(x: unknown) {
+  return x === undefined || x === null || typeof x === 'boolean' || (Array.isArray(x) && x.length == 0);
+}
+
 /**
  * Used by {@link DebugTree} to render a tree of {@link Node}s.
  * @hidden
  */
-export function debug(value: unknown, expandJSXChildren: boolean = true): string {
+export function debug(value: unknown, expandJSXChildren: boolean = true, maxStringLength = 2048): string {
   const previouslyMemoizedElements = new Set<Element<any>>();
+  let remainingLength = maxStringLength;
 
   function debugRec(value: unknown, indent: string, context: 'code' | 'children' | 'props'): string {
+    if (remainingLength <= 0) {
+      return '{...}';
+    }
+    const result = debugRecHelper(value, indent, context);
+    remainingLength -= result.length;
+    return result;
+  }
+
+  function debugRecHelper(value: unknown, indent: string, context: 'code' | 'children' | 'props'): string {
     if (AI.isIndirectNode(value)) {
       return debugRec(AI.getReferencedNode(value), indent, context);
     }
@@ -98,16 +110,16 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
 
       if (value.props) {
         for (const key of Object.keys(value.props)) {
+          if (remainingLength <= 0) {
+            results.push(' {...}');
+            break;
+          }
+
           const propValue = value.props[key];
           if (key === 'children' || propValue === undefined) {
             continue;
           } else {
-            const valueStr = debugRec(propValue, indent, 'props');
-            if (valueStr.length > maxStringLength) {
-              results.push(` ${key}=<omitted large object>`);
-            } else {
-              results.push(` ${key}=${valueStr}`);
-            }
+            results.push(` ${key}=${debugRec(propValue, indent, 'props')}`);
           }
         }
       }
@@ -135,12 +147,19 @@ export function debug(value: unknown, expandJSXChildren: boolean = true): string
           return `{${child}}`;
       }
     } else if (Array.isArray(value)) {
-      const filter =
-        context === 'children'
-          ? (x: unknown) =>
-              x !== undefined && x !== null && typeof x !== 'boolean' && !(Array.isArray(x) && x.length == 0)
-          : () => true;
-      const values = value.filter(filter).map((v) => debugRec(v, indent, context === 'children' ? 'children' : 'code'));
+      const values: string[] = [];
+
+      for (const item of value) {
+        if (remainingLength <= 0) {
+          values.push('{...}');
+          break;
+        }
+        if (context === 'children' && isEmptyJSXValue(item)) {
+          continue;
+        }
+        values.push(debugRec(item, indent, context === 'children' ? 'children' : 'code'));
+      }
+
       switch (context) {
         case 'children':
           return values.join(`\n${indent}`);
