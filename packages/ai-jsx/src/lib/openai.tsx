@@ -40,11 +40,20 @@ export type ValidChatModel =
   | 'gpt-4-0125-preview'
   | 'gpt-4-0613'
   | 'gpt-4-1106-preview'
+  | 'gpt-4-1106-vision-preview'
   | 'gpt-4-32k'
   | 'gpt-4-32k-0613'
   | 'gpt-4-turbo'
   | 'gpt-4-turbo-2024-04-09'
-  | 'gpt-4-turbo-preview';
+  | 'gpt-4-turbo-preview'
+  | 'gpt-4-vision-preview';
+
+const visionModels: Partial<Record<ValidChatModel, true>> = {
+  'gpt-4-1106-vision-preview': true,
+  'gpt-4-turbo-2024-04-09': true,
+  'gpt-4-turbo': true,
+  'gpt-4-vision-preview': true,
+};
 
 /**
  * An OpenAI client that talks to the Azure OpenAI service.
@@ -230,6 +239,8 @@ function tokenLimitForChatModel(
     case 'gpt-4-turbo-preview':
     case 'gpt-4-turbo-2024-04-09':
     case 'gpt-4-turbo':
+    case 'gpt-4-vision-preview':
+    case 'gpt-4-1106-vision-preview':
       return 128_000 - functionEstimate - TOKENS_CONSUMED_BY_REPLY_PREFIX;
     case 'gpt-3.5-turbo-0301':
     case 'gpt-3.5-turbo-0613':
@@ -248,19 +259,70 @@ function tokenLimitForChatModel(
   }
 }
 
-export async function tokenCountForConversationMessage(
+const imageTokenCost = Symbol('imageTokenCost');
+interface ImagePartWithTokenCost extends OpenAIClient.ChatCompletionContentPartImage {
+  [imageTokenCost]: () => number;
+}
+type PromptPart = OpenAIClient.ChatCompletionContentPartText | ImagePartWithTokenCost;
+
+async function renderWithImages(render: AI.RenderContext['render'], element: Node): Promise<PromptPart[]> {
+  const textAndImages = await render(element, { stop: (node) => node.tag === Image });
+  const content: PromptPart[] = [];
+
+  textAndImages.forEach((node: string | AI.Element<AI.PropsOfComponent<typeof Image>>) => {
+    if (typeof node === 'string') {
+      const lastContentPart = content.at(-1);
+      if (lastContentPart?.type === 'text') {
+        // Merge adjacent text nodes.
+        lastContentPart.text += node;
+      } else {
+        content.push({ type: 'text', text: node });
+      }
+    } else {
+      content.push({
+        type: 'image_url',
+        image_url: { url: node.props.url, detail: node.props.detail as any },
+        [imageTokenCost]() {
+          if (node.props.inputTokens) {
+            return node.props.inputTokens;
+          }
+
+          // https://platform.openai.com/docs/guides/vision/calculating-costs
+          if (node.props.detail === 'high') {
+            // Assume 6 tiles.
+            return 6 * 170 + 85;
+          }
+
+          // Otherwise assume low detail.
+          return 85;
+        },
+      });
+    }
+  });
+
+  return content;
+}
+
+async function tokenCountForConversationMessage(
   message: ConversationMessage,
-  render: AI.RenderContext['render']
+  render: AI.RenderContext['render'],
+  includeImages: boolean
 ): Promise<number> {
   const TOKENS_PER_MESSAGE = 3;
   const TOKENS_PER_NAME = 1;
   switch (message.type) {
-    case 'user':
+    case 'user': {
+      const textAndImages: PromptPart[] = includeImages
+        ? await renderWithImages(render, message.element)
+        : [{ type: 'text', text: await render(message.element) }];
       return (
         TOKENS_PER_MESSAGE +
-        tokenizer.encode(await render(message.element)).length +
+        textAndImages
+          .map((part) => (part.type === 'text' ? tokenizer.encode(part.text).length : part[imageTokenCost]()))
+          .reduce((a, b) => a + b, 0) +
         (message.element.props.name ? tokenizer.encode(message.element.props.name).length + TOKENS_PER_NAME : 0)
       );
+    }
     case 'assistant':
     case 'system':
       return TOKENS_PER_MESSAGE + tokenizer.encode(await render(message.element)).length;
@@ -368,6 +430,7 @@ export async function* OpenAIChatModel(
   props: ModelPropsWithChildren & {
     model: ValidChatModel;
     logitBias?: Record<string, number>;
+    includeImages?: boolean;
   },
   { render, getContext, logger, memo }: AI.ComponentContext
 ): AI.RenderableStream {
@@ -383,13 +446,17 @@ export async function* OpenAIChatModel(
 
   const modelTokenLimit = tokenLimitForChatModel(props.model, props.functionDefinitions);
   const promptTokenLimit = props.maxInputTokens ?? modelTokenLimit - (props.reservedTokens ?? props.maxTokens ?? 0);
+  const includeImages = props.includeImages ?? props.model in visionModels;
+
+  const tokenCostForMessage = (message: ConversationMessage) =>
+    tokenCountForConversationMessage(message, render, includeImages);
 
   const conversationMessages = await renderToConversation(
     props.children,
     render,
     logger,
     'prompt',
-    tokenCountForConversationMessage,
+    tokenCostForMessage,
     promptTokenLimit
   );
 
@@ -406,11 +473,30 @@ export async function* OpenAIChatModel(
             role: 'system',
             content: await render(message.element),
           };
-        case 'user':
+        case 'user': {
+          if (includeImages) {
+            const content = await renderWithImages(render, message.element);
+            // Prefer to pass as a single string if possible.
+            if (content.some((part) => part.type !== 'text')) {
+              return {
+                role: 'user',
+                content,
+              };
+            }
+
+            return {
+              role: 'user',
+              content: (content as OpenAIClient.ChatCompletionContentPartText[])
+                .map((part: OpenAIClient.ChatCompletionContentPartText) => part.text)
+                .join(''),
+            };
+          }
+
           return {
             role: 'user',
             content: await render(message.element),
           };
+        }
         case 'assistant':
           return {
             role: 'assistant',
@@ -656,7 +742,7 @@ export async function* OpenAIChatModel(
   }
 
   // Render the completion conversation to log it.
-  await renderToConversation(outputMessages, render, logger, 'completion', tokenCountForConversationMessage);
+  await renderToConversation(outputMessages, render, logger, 'completion', tokenCostForMessage);
   return AI.AppendOnlyStream;
 }
 
