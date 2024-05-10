@@ -285,13 +285,13 @@ export async function renderToConversation(
   render: AI.ComponentContext['render'],
   logger?: AI.ComponentContext['logger'],
   logType?: 'prompt' | 'completion',
-  cost?: (message: ConversationMessage, render: AI.ComponentContext['render']) => Promise<number>,
+  cost?: (message: ConversationMessage) => Promise<number>,
   budget?: number
 ) {
   const cachedCosts = new WeakMap<AI.Element<any>, Promise<number>>();
   function cachedCost(message: ConversationMessage): Promise<number> {
     if (!cachedCosts.has(message.element)) {
-      cachedCosts.set(message.element, cost!(message, render));
+      cachedCosts.set(message.element, cost!(message));
     }
 
     return cachedCosts.get(message.element)!;

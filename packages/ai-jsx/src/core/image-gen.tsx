@@ -89,15 +89,6 @@ export function ImageGen({ children, ...props }: ImageGenPropsWithChildren, { ge
   );
 }
 
-export interface GeneratedImageProps {
-  /** The image URL. */
-  url: string;
-  /** The prompt used for generating the image. Currently only used for debugging.  */
-  prompt: string;
-  /** The model used for generating the image. Currently only used for debugging. */
-  modelName: string;
-}
-
 /**
  * This component represents an image via a single `url` prop.
  * It is a wrapper for the output of {@link ImageGen} to allow for first-class support of images.
@@ -106,6 +97,17 @@ export interface GeneratedImageProps {
  * - In terminal-based environments, this component will be rendered as a URL.
  * - In browser-based environments, this component will be rendered as an `img` tag.
  */
-export function Image(props: GeneratedImageProps) {
+export function Image(props: {
+  /** The image URL. */
+  url: string;
+  /** The prompt used for generating the image. Currently only used for debugging.  */
+  prompt?: string;
+  /** The model used for generating the image. Currently only used for debugging. */
+  modelName?: string;
+  /** The level of detail required. */
+  detail?: string;
+  /** The number of input tokens required. */
+  inputTokens?: number;
+}) {
   return props.url;
 }

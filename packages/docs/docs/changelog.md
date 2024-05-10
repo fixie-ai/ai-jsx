@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.32.0
+## 0.33.0
+
+- Add support for passing `<Image>` to OpenAI models.
+
+## [0.32.0](https://github.com/fixie-ai/ai-jsx/tree/e7b3e2e444659a49e04693337c2af023c506fbe6)
 
 - Improve rendering performance:
   - Change `<ShrinkConversation>` to cache token costs when remeasuring the same elements
