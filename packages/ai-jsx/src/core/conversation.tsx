@@ -241,7 +241,7 @@ function toConversationMessages(partialRendering: AI.PartiallyRendered[]): Conve
 async function loggableMessage(
   message: ConversationMessage,
   render: AI.RenderContext['render'],
-  cost?: (message: ConversationMessage, render: AI.ComponentContext['render']) => Promise<number>
+  cost?: (message: ConversationMessage) => Promise<number>
 ) {
   let textPromise: PromiseLike<string> | undefined = undefined;
   switch (message.type) {
@@ -261,7 +261,7 @@ async function loggableMessage(
     }
   }
 
-  const costPromise = cost?.(message, render);
+  const costPromise = cost?.(message);
 
   const { children, ...propsWithoutChildren } = {
     children: undefined,
@@ -288,9 +288,18 @@ export async function renderToConversation(
   cost?: (message: ConversationMessage, render: AI.ComponentContext['render']) => Promise<number>,
   budget?: number
 ) {
+  const cachedCosts = new WeakMap<AI.Element<any>, Promise<number>>();
+  function cachedCost(message: ConversationMessage): Promise<number> {
+    if (!cachedCosts.has(message.element)) {
+      cachedCosts.set(message.element, cost!(message, render));
+    }
+
+    return cachedCosts.get(message.element)!;
+  }
+
   const conversationToUse =
     cost && budget ? (
-      <ShrinkConversation cost={cost} budget={budget}>
+      <ShrinkConversation cost={cachedCost} budget={budget}>
         {conversation}
       </ShrinkConversation>
     ) : (
@@ -299,7 +308,7 @@ export async function renderToConversation(
   const messages = toConversationMessages(await render(conversationToUse, { stop: isConversationalComponent }));
 
   if (logger && logType) {
-    const loggableMessages = await Promise.all(messages.map((m) => loggableMessage(m, render, cost)));
+    const loggableMessages = await Promise.all(messages.map((m) => loggableMessage(m, render, cost && cachedCost)));
     logger.setAttribute(`ai.jsx.${logType}`, JSON.stringify(loggableMessages));
     logger.info({ [logType]: { messages: loggableMessages } }, `Got ${logType} conversation`);
   }
@@ -465,7 +474,7 @@ export async function ShrinkConversation(
     budget,
     children,
   }: {
-    cost: (message: ConversationMessage, render: AI.RenderContext['render']) => Promise<number>;
+    cost: (message: ConversationMessage) => Promise<number>;
     budget: number;
     children: Node;
   },
@@ -508,7 +517,7 @@ export async function ShrinkConversation(
         return {
           type: 'immutable',
           element: value,
-          cost: await costFn(toConversationMessages([value])[0], render),
+          cost: await costFn(toConversationMessages([value])[0]),
         };
       })
     );
@@ -597,9 +606,9 @@ export async function ShrinkConversation(
 
     logger.debug(
       {
-        node: debug(nodeToReplace.element.props.children, true),
+        node: debug(nodeToReplace.element.props.children, false),
         importance: nodeToReplace.element.props.importance,
-        replacement: debug(nodeToReplace.element.props.replacement, true),
+        replacement: debug(nodeToReplace.element.props.replacement, false),
         nodeCost: nodeToReplace.cost,
         totalCost: aggregateCost(roots),
         budget,

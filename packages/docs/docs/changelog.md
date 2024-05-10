@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.31.0
+## 0.32.0
+
+- Improve rendering performance:
+  - Change `<ShrinkConversation>` to cache token costs when remeasuring the same elements
+  - Reduce performance impact of debug logging
+
+## [0.31.0](https://github.com/fixie-ai/ai-jsx/tree/07a6072ef77ffb8403786cf02538d2afc11f61f5)
 
 - Fix incorrect unwrapping of JSX array `children`.
 

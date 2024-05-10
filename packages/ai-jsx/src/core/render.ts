@@ -412,6 +412,77 @@ export function createRenderContext(opts?: { logger?: LogImplementation; enableO
   );
 }
 
+async function* createRenderGenerator<TIntermediate, TFinal>(
+  context: RenderContext,
+  renderStream: StreamRenderer,
+  renderable: Renderable,
+  opts: RenderOpts<TIntermediate, TFinal> | undefined,
+  onComplete: (value: TFinal) => void
+): AsyncGenerator<TIntermediate, TFinal> {
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  const shouldStop: ElementPredicate = opts?.stop || (() => false);
+  const generatorToWrap = renderStream(context, renderable, shouldStop, Boolean(opts?.appendOnly));
+
+  let nextPromise = generatorToWrap.next();
+  while (true) {
+    let next = await nextPromise;
+
+    if (!next.done && opts?.batchFrames) {
+      // We use `setImmediate` or `setTimeout` to ensure that all (recursively) queued microtasks
+      // are completed. (Promise.then handlers are queued as microtasks.)
+      // See https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide
+      const nullPromise = new Promise<null>((resolve) => {
+        if ('setImmediate' in globalThis) {
+          setImmediate(() => resolve(null));
+        } else {
+          setTimeout(() => resolve(null), 0);
+        }
+      });
+
+      while (!next.done) {
+        nextPromise = generatorToWrap.next();
+
+        // Consume from the generator until the null promise resolves.
+        const nextOrNull = await Promise.race([nextPromise, nullPromise]);
+        if (nextOrNull === null) {
+          break;
+        }
+        next = nextOrNull;
+      }
+    }
+
+    const value = opts?.stop ? (next.value as TFinal) : (next.value.join('') as TFinal);
+    if (next.done) {
+      onComplete(value);
+      return value;
+    }
+
+    if (opts?.map) {
+      // If there's a mapper provided, use it.
+      yield opts.map(value);
+    } else if (opts?.stop) {
+      // If we're doing partial rendering, exclude any elements we stopped on (to avoid accidentally leaking elements up).
+      yield (value as PartiallyRendered[]).filter((e) => !isElement(e)).join('') as unknown as TIntermediate;
+    } else {
+      // Otherwise yield the (string) value as-is.
+      yield value as unknown as TIntermediate;
+    }
+
+    if (!opts?.batchFrames) {
+      nextPromise = generatorToWrap.next();
+    }
+  }
+}
+
+async function flushGenerator<T>(generator: AsyncGenerator<unknown, T>): Promise<T> {
+  while (true) {
+    const next = await generator.next();
+    if (next.done) {
+      return next.value;
+    }
+  }
+}
+
 function createRenderContextInternal(
   renderStream: StreamRenderer,
   userContext: Record<symbol, any>,
@@ -425,64 +496,9 @@ function createRenderContextInternal(
       let promiseResult = null as Promise<any> | null;
       let hasReturnedGenerator = false;
 
-      // Construct the generator that handles the provided options
-      const generator = (async function* () {
-        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-        const shouldStop = (opts?.stop || (() => false)) as ElementPredicate;
-        const generatorToWrap = renderStream(context, renderable, shouldStop, Boolean(opts?.appendOnly));
-
-        let nextPromise = generatorToWrap.next();
-        while (true) {
-          let next = await nextPromise;
-
-          if (!next.done && opts?.batchFrames) {
-            // We use `setImmediate` or `setTimeout` to ensure that all (recursively) queued microtasks
-            // are completed. (Promise.then handlers are queued as microtasks.)
-            // See https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide
-            const nullPromise = new Promise<null>((resolve) => {
-              if ('setImmediate' in globalThis) {
-                setImmediate(() => resolve(null));
-              } else {
-                setTimeout(() => resolve(null), 0);
-              }
-            });
-
-            while (!next.done) {
-              nextPromise = generatorToWrap.next();
-
-              // Consume from the generator until the null promise resolves.
-              const nextOrNull = await Promise.race([nextPromise, nullPromise]);
-              if (nextOrNull === null) {
-                break;
-              }
-              next = nextOrNull;
-            }
-          }
-
-          const value = opts?.stop ? (next.value as TFinal) : (next.value.join('') as TFinal);
-          if (next.done) {
-            if (promiseResult === null) {
-              promiseResult = Promise.resolve(value);
-            }
-            return value;
-          }
-
-          if (opts?.map) {
-            // If there's a mapper provided, use it.
-            yield opts.map(value);
-          } else if (opts?.stop) {
-            // If we're doing partial rendering, exclude any elements we stopped on (to avoid accidentally leaking elements up).
-            yield (value as PartiallyRendered[]).filter((e) => !isElement(e)).join('');
-          } else {
-            // Otherwise yield the (string) value as-is.
-            yield value;
-          }
-
-          if (!opts?.batchFrames) {
-            nextPromise = generatorToWrap.next();
-          }
-        }
-      })() as AsyncGenerator<TIntermediate, TFinal>;
+      const generator = createRenderGenerator(context, renderStream, renderable, opts, (value) => {
+        promiseResult ||= Promise.resolve(value);
+      });
 
       return {
         then: (onFulfilled?, onRejected?) => {
@@ -495,16 +511,7 @@ function createRenderContextInternal(
               );
             }
 
-            const flush = async () => {
-              while (true) {
-                const next = await generator.next();
-                if (next.done) {
-                  return next.value;
-                }
-              }
-            };
-
-            promiseResult = flush();
+            promiseResult = flushGenerator(generator);
           }
 
           return promiseResult.then(onFulfilled, onRejected);

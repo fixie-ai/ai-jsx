@@ -86,7 +86,7 @@ describe('OpenTelemetry', () => {
         {"hello"}
       </UserMessage>]",
           "ai.jsx.tag": "ShrinkConversation",
-          "ai.jsx.tree": "<ShrinkConversation cost={tokenCountForConversationMessage} budget={16381}>
+          "ai.jsx.tree": "<ShrinkConversation cost={cachedCost} budget={16381}>
         <UserMessage>
           {"hello"}
         </UserMessage>
@@ -171,7 +171,7 @@ describe('OpenTelemetry', () => {
         {"hello"}
       </UserMessage>]",
           "ai.jsx.tag": "ShrinkConversation",
-          "ai.jsx.tree": "<ShrinkConversation cost={tokenCountForConversationMessage} budget={16381}>
+          "ai.jsx.tree": "<ShrinkConversation cost={cachedCost} budget={16381}>
         <UserMessage>
           {"hello"}
         </UserMessage>
