@@ -108,6 +108,8 @@ export function Image(props: {
   detail?: string;
   /** The number of input tokens required. */
   inputTokens?: number;
+  /** Fallback content to be rendered when stringifying. */
+  children?: Node;
 }) {
-  return props.url;
+  return 'children' in props ? props.children : props.url;
 }
