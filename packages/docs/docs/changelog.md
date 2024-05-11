@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.33.0
+## 0.33.1
+
+- Allow `<Image>` fallback content to be customized.
+
+## [0.33.0](https://github.com/fixie-ai/ai-jsx/tree/2df9c5e98b5507dd4b59bd9cf04cc6a92148db90)
 
 - Add support for passing `<Image>` to OpenAI models.
 
